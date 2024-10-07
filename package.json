@@ -1,0 +1,37 @@
+{
+  "name": "my-remix2",
+  "version": "1.0.0",
+  "description": "desc",
+  "type": "module",
+  "main": "vite.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node ./server.js",
+    "start": "cross-env NODE_ENV=production node ./server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "5.20.0",
+    "@remix-run/express": "^2.12.1",
+    "@remix-run/node": "^2.12.1",
+    "@remix-run/react": "^2.12.1",
+    "@types/node": "^22.7.4",
+    "cross-env": "^7.0.3",
+    "express": "^4.21.0",
+    "isbot": "4",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-simple-maps": "^3.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.12.1",
+    "@types/react": "^18.3.11",
+    "prisma": "^5.20.0",
+    "vite": "^5.4.8"
+  }
+}

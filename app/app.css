@@ -1,0 +1,16 @@
+.top-nav > nav > a {
+	margin-left: 10px;
+	text-decoration: none;
+	color: blue;
+}
+.top-nav > nav > a.active {
+	text-decoration: underline;
+}
+form > label {
+	display: block;
+}
+.map {
+	width: 300px;
+	height: 300px;
+}
+
