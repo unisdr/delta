@@ -13,12 +13,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Session {
+  id        String   @id @default(uuid()) // Unique session ID stored in the cookie
+  userId    Int      // The user ID for the session
+  expiresAt DateTime // Session expiration
+  user      User     @relation(fields: [userId], references: [id]) // Relation to the User model
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
-//	items Item[]
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  sessions     Session[] 
+  posts     Post[]   // Example of relation with another model (Post)
+  // items  Item[]   // Uncomment if you have a relation to an Item model
 }
 
 model Post {

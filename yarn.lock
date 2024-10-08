@@ -1055,6 +1055,11 @@
   dependencies:
     "@types/estree" "*"
 
+"@types/bcryptjs@^2.4.6":
+  version "2.4.6"
+  resolved "https://registry.npmjs.org/@types/bcryptjs/-/bcryptjs-2.4.6.tgz#2b92e3c2121c66eba3901e64faf8bb922ec291fa"
+  integrity sha512-9xlo6R2qDs5uixm0bcIqCeMCE6HiQsIyel9KQySStiyqNl2tnj2mP3DX1Nf56MD6KMenNNlBBsy3LJ7gUEQPXQ==
+
 "@types/cookie@^0.6.0":
   version "0.6.0"
   resolved "https://registry.npmjs.org/@types/cookie/-/cookie-0.6.0.tgz#eac397f28bf1d6ae0ae081363eca2f425bedf0d5"
@@ -1310,6 +1315,11 @@ base64-js@^1.3.1:
   version "1.5.1"
   resolved "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
+
+bcryptjs@^2.4.3:
+  version "2.4.3"
+  resolved "https://registry.npmjs.org/bcryptjs/-/bcryptjs-2.4.3.tgz#9ab5627b93e60621ff7cdac5da9733027df1d0cb"
+  integrity sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==
 
 binary-extensions@^2.0.0:
   version "2.3.0"
@@ -3878,6 +3888,18 @@ remark-rehype@^10.0.0:
     mdast-util-to-hast "^12.1.0"
     unified "^10.0.0"
 
+remix-auth-form@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.npmjs.org/remix-auth-form/-/remix-auth-form-1.5.0.tgz#e9ad7068ef54f0c46739b649dc3fbac42e18aabc"
+  integrity sha512-xWM7T41vi4ZsIxL3f8gz/D6g2mxrnYF7LnG+rG3VqwHh6l13xCoKLraxzWRdbKMVKKQCMISKZRXAeJh9/PQwBA==
+
+remix-auth@^3.7.0:
+  version "3.7.0"
+  resolved "https://registry.npmjs.org/remix-auth/-/remix-auth-3.7.0.tgz#cc6a5ebac68f56814b77cb467a63cc99d30404b8"
+  integrity sha512-2QVjp2nJVaYxuFBecMQwzixCO7CLSssttLBU5eVlNcNlVeNMmY1g7OkmZ1Ogw9sBcoMXZ18J7xXSK0AISVFcfQ==
+  dependencies:
+    uuid "^8.3.2"
+
 "require-like@>= 0.1.1":
   version "0.1.2"
   resolved "https://registry.npmjs.org/require-like/-/require-like-0.1.2.tgz#ad6f30c13becd797010c468afa775c0c0a6b47fa"
@@ -4494,6 +4516,11 @@ utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
+
+uuid@^8.3.2:
+  version "8.3.2"
+  resolved "https://registry.npmjs.org/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
+  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 uvu@^0.5.0:
   version "0.5.6"
