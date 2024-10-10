@@ -5,9 +5,12 @@
   "type": "module",
   "main": "vite.config.js",
   "scripts": {
+    "build": "remix vite:build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node ./server.js",
-    "start": "cross-env NODE_ENV=production node ./server.js"
+    "start": "cross-env NODE_ENV=development node ./server.js",
+    "start2": "remix-serve ./build/server/index.js",
+    "typecheck": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +20,7 @@
     "@remix-run/express": "^2.12.1",
     "@remix-run/node": "^2.12.1",
     "@remix-run/react": "^2.12.1",
+    "@remix-run/serve": "^2.12.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.7.4",
     "bcryptjs": "^2.4.3",
