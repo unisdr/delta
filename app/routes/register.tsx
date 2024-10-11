@@ -54,7 +54,7 @@ export default function Screen() {
 					<input type="password" name="password" defaultValue={data?.password}></input>
 					<FieldErrors errors={errors} field="password"></FieldErrors>
 				</Field>
-				<SubmitButton></SubmitButton>
+				<SubmitButton label="Register"></SubmitButton>
 			</Form>
 		</>
 	);
