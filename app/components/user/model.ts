@@ -12,8 +12,8 @@ import {
 import { prisma } from "~/db.server";
 
 type RegisterResult = 
-  | { ok: true; }
-  | { ok: false; errors: Errors<RegisterFields> };
+	| { ok: true; }
+	| { ok: false; errors: Errors<RegisterFields> };
 
 interface RegisterFields {
 	email: string
@@ -24,6 +24,10 @@ interface RegisterFields {
 // this measurements is from another implementation
 // https://github.com/kelektiv/node.bcrypt.js#readme
 const bcryptRounds = 10
+
+function passwordHash(password: string): string {
+	return bcrypt.hashSync(password, bcryptRounds);
+}
 
 export async function register({email, password}: RegisterFields): Promise<RegisterResult> {
 	let errors: Errors<RegisterFields> = {}
@@ -37,12 +41,10 @@ export async function register({email, password}: RegisterFields): Promise<Regis
 	if (hasErrors(errors)) {
 		return { ok: false, errors }
 	}
-	const passwordHash = bcrypt.hashSync(password, bcryptRounds);
-
 	const user = await prisma.user.create({
 		data: {
 			email: email,
-			password: passwordHash,
+			password: passwordHash(password),
 			firstName: "",
 			lastName: ""
 		}
@@ -53,8 +55,8 @@ export async function register({email, password}: RegisterFields): Promise<Regis
 }
 
 export type LoginResult = 
-  | { ok: true, userId: number}
-  | { ok: false };
+	| { ok: true, userId: number}
+	| { ok: false };
 
 export async function login(email: string, password: string): Promise<LoginResult> {
 	const user = await prisma.user.findUnique({
@@ -72,7 +74,6 @@ export async function login(email: string, password: string): Promise<LoginResul
 
 	return { ok: false}
 }
-
 
 export interface Errors2 {
 	field1?: string;
@@ -107,8 +108,116 @@ export function Validate(data: Data){
 	}
 	if (Object.keys(errors).length == 0) {
 		return undefined
-  }
+	}
 	return errors
 }
 
+type SetupAdminAccountResult = 
+	| { ok: true; }
+	| { ok: false; errors: Errors<SetupAdminAccountFields> };
 
+interface SetupAdminAccountFields {
+	email: string
+	firstName: string
+	lastName: string
+	password: string
+	passwordRepeat: string
+}
+
+export function setupAdminAccountFieldsFromMap(data: { [key: string]: string }): SetupAdminAccountFields {
+	const fields: (keyof SetupAdminAccountFields)[] = [
+		"email",
+		"firstName",
+		"lastName",
+		"password",
+		"passwordRepeat"
+	];
+	 return Object.fromEntries(
+		fields.map(field => [field, data[field] || ""])
+	) as unknown as SetupAdminAccountFields;
+}
+
+export async function setupAdminAccount(fields: SetupAdminAccountFields): Promise<SetupAdminAccountResult> {
+	let errors: Errors<SetupAdminAccountFields> = {}
+	errors.form = []
+	errors.fields = {}
+	if (fields.email == "") {
+		errors.fields.email = ["Email is empty"]
+	}
+	if (fields.firstName == ""){
+		errors.fields.firstName = ["First name is empty"]
+	}
+	if (fields.password == "") {
+		errors.fields.password = ["Password is empty"]
+	} else if (fields.passwordRepeat == "") {
+		errors.fields.passwordRepeat = ["Please repeat password"]
+	} else if (fields.password != fields.passwordRepeat){
+		const msg = "Passwords do not match"
+		errors.form.push(msg)
+		errors.fields.password = [msg]
+		errors.fields.passwordRepeat = [msg]
+	}
+
+	if (hasErrors(errors)) {
+		return { ok: false, errors }
+	}
+
+	const user = await prisma.user.create({
+		data: {
+			email: fields.email,
+			password: passwordHash(fields.password),
+			firstName: fields.firstName,
+			lastName: fields.lastName,
+		}
+	})
+	console.log("setupAdminAccount", user)
+
+	return { ok: true }
+}
+
+type VerifyEmailResult = 
+	| { ok: true; }
+	| { ok: false; errors: Errors<VerifyEmailFields> };
+
+interface VerifyEmailFields {
+	code: string
+}
+
+export async function verifyEmail(userId: number, code: string): Promise<VerifyEmailResult> {
+	let errors: Errors<VerifyEmailFields> = {}
+	errors.form = []
+	errors.fields = {}
+	if (!code) {
+		errors.fields.code = ["Verification code is required"];
+	}
+	if (hasErrors(errors)) {
+		return { ok: false, errors };
+	}
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+	});
+	if (!user) {
+		errors.form = ["Application Error. User not found"];
+		return { ok: false, errors };
+	}
+	if (user.emailVerificationCode !== code) {
+		errors.fields.code = ["Invalid verification code"];
+		return { ok: false, errors };
+	}
+
+	if (user.emailVerificationExpiresAt < new Date()) {
+		errors.fields.code = ["Verification code has expired"];
+		return { ok: false, errors };
+	}
+
+	await prisma.user.update({
+		where: { id: userId },
+		data: {
+			emailVerified: true,
+			emailVerificationCode: "",
+			emailVerificationExpiresAt: new Date("1970-01-01T00:00:00.000Z"),
+		},
+	});
+
+	return { ok: true };
+}

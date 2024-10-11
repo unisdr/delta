@@ -1,4 +1,4 @@
-import { redirect } from "@remix-run/node";
+import { ActionFunction, redirect } from "@remix-run/node";
 import {
 	LoaderFunction,
 	LoaderFunctionArgs,
@@ -58,10 +58,6 @@ export async function requireUser(request: Request) {
 	return user;
 }
 
-export function authLoaderGetAuth(args: any): User {
-	return args.user
-}
-
 export function authLoader(loader: LoaderFunction): LoaderFunction {
 	return async (args) => {
 		const user = await requireUser(args.request);
@@ -71,3 +67,22 @@ export function authLoader(loader: LoaderFunction): LoaderFunction {
 		});
 	};
 }
+
+export function authLoaderGetAuth(args: any): User {
+	return args.user
+}
+
+export function authAction(action: ActionFunction): ActionFunction {
+	return async (args) => {
+		const user = await requireUser(args.request);
+		return action({
+			...(args as any),
+			user
+		});
+	};
+}
+
+export function authActionGetAuth(args: any): User {
+	return args.user
+}
+

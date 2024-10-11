@@ -27,8 +27,11 @@ interface FieldProps {
 export function Field({children, label}:FieldProps){
 	return (
 		<div className="form-field">
-			<label>{label}</label>
+			<label>{label}
+			<div>
 			{children}
+			</div>
+			</label>
 		</div>
 	)
 }
@@ -56,10 +59,14 @@ export function FieldErrors<T>({errors, field}:FieldErrorsProps<T>) {
 	);
 }
 
-export function SubmitButton(){
+interface SubmitButtonProps {
+	label: string
+}
+
+export function SubmitButton({label}: SubmitButtonProps){
 	return (
 		<div className="form-buttons">
-			<button>Submit</button>
+			<button>{label}</button>
 		</div>
 	)
 }
