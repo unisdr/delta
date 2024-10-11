@@ -20,6 +20,7 @@ function Nav() {
 	const menu = [
 		{link: "data", text: "Data"},
 		{link: "analytics", text: "Analytics"},
+		{link: "settings", text: "Settings"},
 	]
   return (
     <nav>
