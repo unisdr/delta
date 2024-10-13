@@ -19,6 +19,18 @@ export function hasErrors<T>(errors: Errors<T>): boolean {
 	return false;
 }
 
+interface FormMessageProps {
+	children: React.ReactNode;
+}
+
+export function FormMessage({children}:FormMessageProps){
+	return (
+		<div className="form-message">
+			{children}
+		</div>
+	)
+}
+
 interface FieldProps {
 	children: React.ReactNode;
 	label: string

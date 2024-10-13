@@ -28,9 +28,6 @@ import {
 } from "~/components/user/model";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-
-//.........................
-
 	const data = formStringData(await request.formData());
 	const data2 = setupAdminAccountFieldsFromMap(data) 
 	const res = await setupAdminAccount(data2);
@@ -38,7 +35,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return json({ data, errors: res.errors });
 	}
 
-	return redirect("/verify_email");
+	const headers = await createUserSession(res.userId);
+	return redirect("/user/verify_email", { headers });
 };
 
 export const loader = async () => {

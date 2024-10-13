@@ -1,12 +1,11 @@
-import type {
-	ActionFunctionArgs,
-} from "@remix-run/node";
 import {
+	ActionFunctionArgs,
 	json,
 	redirect
 } from "@remix-run/node";
 import {
 	useActionData,
+	Link,
 } from "@remix-run/react";
 import {
 	Form,
@@ -30,19 +29,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		password: formData.password || "",
 	}
 	const res = await login(data.email, data.password);
-	console.log("login attempt done", data.email, data.password, res)
 	if (!res.ok){
 		let errors: FormErrors<LoginFields> = {
 			form: ["Email or password do not match"],
 		}
-
 		return json({ data, errors });
 	}
 
 	const headers = await createUserSession(res.userId);
-
-	console.log("headers to set", headers)
-
 	return redirect("/", { headers });
 };
 
@@ -58,7 +52,6 @@ export default function Screen() {
 
 	return (
 		<>
-			<pre>/login</pre>
 			<Form errors={errors}>
 				<Field label="Email">
 					<input type="email" name="email" defaultValue={data?.email}></input>
@@ -66,6 +59,7 @@ export default function Screen() {
 				<Field label="Password">
 					<input type="password" name="password" defaultValue={data?.password}></input>
 				</Field>
+				<Link to="/user/forgot_password">Forgot password</Link>
 				<SubmitButton label="Login"></SubmitButton>
 			</Form>
 		</>

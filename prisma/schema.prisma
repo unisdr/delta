@@ -32,7 +32,11 @@ model User {
 
 	emailVerified Boolean @default(false)
 	emailVerificationCode String @default("")
+	emailVerificationSentAt DateTime @default("1970-01-01T00:00:00.000Z")
 	emailVerificationExpiresAt DateTime @default("1970-01-01T00:00:00.000Z")
+
+	resetPasswordToken String @default("")
+	resetPasswordExpiresAt DateTime @default("1970-01-01T00:00:00.000Z")
 }
 
 model Post {

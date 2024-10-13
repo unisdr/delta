@@ -1,8 +1,9 @@
-import { ActionFunction, redirect } from "@remix-run/node";
 import {
 	LoaderFunction,
 	LoaderFunctionArgs,
-	json
+	ActionFunction,
+	ActionFunctionArgs,
+	redirect
 } from "@remix-run/node";
 
 import {
@@ -22,7 +23,9 @@ import {
 	LoginResult as ModelLoginResult
 } from "~/components/user/model"
 
-import { sessionCookie } from "~/util/session";
+import {
+	getUserFromSession
+} from "~/util/session";
 
 type LoginResult = ModelLoginResult;
 
@@ -30,56 +33,38 @@ export async function login(email: string, password: string): Promise<LoginResul
 	return modelLogin(email, password)
 }
 
-export async function getUserFromSession(request: Request) {
-	const session = await sessionCookie.getSession(request.headers.get("Cookie"));
-	const sessionId = session.get("sessionId");
-
-	if (!sessionId) {
-		return null;
-	}
-
-	const sessionData = await prisma.session.findUnique({
-		where: { id: sessionId },
-		include: { user: true },
-	});
-
-	if (!sessionData || sessionData.expiresAt < new Date()) {
-		return null;
-	}
-
-	return sessionData.user;
-}
-
 export async function requireUser(request: Request) {
 	const user = await getUserFromSession(request);
 	if (!user) {
-		throw redirect("/login");
+		throw redirect("/user/login");
 	}
 	return user;
 }
 
-export function authLoader(loader: LoaderFunction): LoaderFunction {
-	return async (args) => {
+export function authLoader<T extends LoaderFunction>(fn: T): T {
+	return (async (args: LoaderFunctionArgs) => {
 		const user = await requireUser(args.request);
-		return loader({
+
+		return fn({
 			...(args as any),
-			user
+			user,
 		});
-	};
+	}) as T;
 }
 
 export function authLoaderGetAuth(args: any): User {
 	return args.user
 }
 
-export function authAction(action: ActionFunction): ActionFunction {
-	return async (args) => {
+export function authAction<T extends ActionFunction>(fn: T): T {
+	return (async (args: ActionFunctionArgs) => {
 		const user = await requireUser(args.request);
-		return action({
+
+		return fn({
 			...(args as any),
-			user
+			user,
 		});
-	};
+	}) as T;
 }
 
 export function authActionGetAuth(args: any): User {

@@ -1,8 +1,9 @@
 import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
+	Links,
+	Meta,
+	Outlet,
+	Scripts,
+	Link
 } from "@remix-run/react";
 
 import type {LinksFunction} from "@remix-run/node";
@@ -13,7 +14,7 @@ import { NavLink } from "react-router-dom";
 import appStylesHref from "./app.css?url";
 
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: appStylesHref },
+	{ rel: "stylesheet", href: appStylesHref },
 ];
 
 function Nav() {
@@ -22,42 +23,43 @@ function Nav() {
 		{link: "analytics", text: "Analytics"},
 		{link: "settings", text: "Settings"},
 	]
-  return (
-    <nav>
-      {menu.map((item, index) => (
-        <NavLink
-          key={index}
-          to={`/${item.link}`}
-          className={({ isActive, isPending }) =>
-            isActive ? "active" : isPending ? "pending" : ""
-          }
-        >
-        {item.text}
-        </NavLink>
-      ))}
-    </nav>
-  );
+	return (
+		<nav>
+			{menu.map((item, index) => (
+				<NavLink
+					key={index}
+					to={`/${item.link}`}
+					className={({ isActive, isPending }) =>
+						isActive ? "active" : isPending ? "pending" : ""
+					}
+				>
+				{item.text}
+				</NavLink>
+			))}
+			<Link to="/user/logout">Logout</Link>
+		</nav>
+	);
 }
 
 export default function App() {
-  return (
-    <html>
-      <head>
-        <link
-          rel="icon"
-          href="data:image/x-icon;base64,AA"
-        />
-        <Meta />
-        <Links />
-      </head>
-      <body>
+	return (
+		<html>
+			<head>
+				<link
+					rel="icon"
+					href="data:image/x-icon;base64,AA"
+				/>
+				<Meta />
+				<Links />
+			</head>
+			<body>
 				<div className="top-nav">
 				<Nav />
 				</div>
-        <Outlet />
-        <Scripts />
-      </body>
-    </html>
-  );
+				<Outlet />
+				<Scripts />
+			</body>
+		</html>
+	);
 }
 

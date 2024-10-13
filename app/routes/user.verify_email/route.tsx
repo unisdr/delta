@@ -11,7 +11,8 @@ import {
 
 import {
 		useLoaderData,
-		useActionData
+		useActionData,
+		Link
 } from "@remix-run/react";
 
 import {
@@ -31,6 +32,8 @@ import {
 	SubmitButton,
 } from "~/components/form"
 
+import { formatTimestamp } from "~/util/time";
+
 export const action = authAction(async (actionArgs) => {
 	const { request } = actionArgs;
 	const user = authActionGetAuth(actionArgs);
@@ -46,21 +49,17 @@ export const action = authAction(async (actionArgs) => {
 
 export const loader = authLoader(async (loaderArgs) => {
 	const user = authLoaderGetAuth(loaderArgs)
-	return json({ userEmail: user.email });
+	return json({
+		userEmail: user.email,
+		// passing this as date does not work in remix, the type of data received is string on the other end
+		// set it explicitly to string here so the type matches
+		sentAt: user.emailVerificationSentAt
+	});
 });
 
-interface PageData {
-	userEmail: string
-}
 
 export default function Data() {
-	const loaderData = useLoaderData<typeof loader>();
-	let pageData: PageData = {
-		userEmail: ""
-	}
-	if (loaderData){
-		pageData = loaderData
-	}
+	const pageData = useLoaderData<typeof loader>();
 
 	const actionData = useActionData<typeof action>();
 	const errors = actionData?.errors
@@ -69,9 +68,9 @@ export default function Data() {
  return (
 		<div>
 			<h2>Please verify your account</h2>
-			<p>A one time password has been sent to your email.</p>
+			<p>A one-time password has been sent to your email on {formatTimestamp(pageData.sentAt)}.</p>
 
-			<p>Enter the code we sent to you at {pageData.userEmail}</p>
+			<p>Enter the code we sent to you at {pageData.userEmail}.</p>
 
 			<Form errors={errors}>
 				<Field label="Code">
@@ -80,7 +79,7 @@ export default function Data() {
 				</Field>
 				<p>Code expires in 5:00 (TODO: remove this)</p>
 				<p>
-					<a href="#">Send again</a>
+					<Link to="/user/verify_email_send_again">Send again</Link>
 				</p>
 				<SubmitButton label="Complete account setup"></SubmitButton>
 			</Form>

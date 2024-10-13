@@ -1,6 +1,10 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
 import { formStringData } from "~/util/httputil";
 import bcrypt from 'bcryptjs';
+
+
+import fs from 'fs';
+import path from 'path';
 
 export type Data = Prisma.ItemCreateInput;
 
@@ -10,6 +14,10 @@ import {
 } from "~/components/form"
 
 import { prisma } from "~/db.server";
+import { sendEmail } from "~/util/email";
+import { addHours } from "~/util/time";
+
+import { randomBytes } from 'crypto';
 
 type RegisterResult = 
 	| { ok: true; }
@@ -75,6 +83,71 @@ export async function login(email: string, password: string): Promise<LoginResul
 	return { ok: false}
 }
 
+export async function resetPasswordSilentIfNotFound(email: string) {
+	const user = await prisma.user.findUnique({
+		where: { email: email },
+	});
+	if (!user) {
+		console.log("reset password, user not found", "email", email)
+		return
+	}
+
+	const resetToken = randomBytes(32).toString("hex");
+
+	const expiresAt = addHours(new Date(), 1);
+
+	await prisma.user.update({
+		where: { email: email },
+		data: {
+			resetPasswordToken: resetToken,
+			resetPasswordExpiresAt: expiresAt,
+		},
+	});
+
+	if (!process.env.WEBSITE_URL){
+		throw "provide WEBSITE_URL in env"
+	}
+
+	const resetURL = `${process.env.WEBSITE_URL}/user/reset_password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+	const subject =  "Password Reset Request"
+	const text = `You requested a password reset. Click the link to reset your password: ${resetURL}`
+	const html = `<p>You requested a password reset. Click the link below to reset your password:</p>
+<a href="${resetURL}">${resetURL}</a>
+<p>This link will expire in 1 hour.</p>`
+
+	await sendEmail(user.email, subject, text, html);
+}
+
+export async function resetPassword(email: string, token: string, newPassword: string){
+	const user = await prisma.user.findUnique({
+		where: { email: email },
+	});
+	if (!user) {
+		return { ok: false, error: "User not found" };
+	}
+	if (user.resetPasswordToken !== token) {
+		return { ok: false, error: "Invalid or expired token" };
+	}
+	const now = new Date();
+	if (user.resetPasswordExpiresAt && user.resetPasswordExpiresAt < now) {
+		return { ok: false, error: "Token has expired" };
+	}
+	if (!newPassword){
+		return { ok: false, error: "Empty password" };
+	}
+	const hashedPassword = passwordHash(newPassword)
+	await prisma.user.update({
+		where: { email: email },
+		data: {
+			password: hashedPassword,
+			resetPasswordToken: "",
+		},
+	});
+
+	return { ok: true };
+}
+
 export interface Errors2 {
 	field1?: string;
 	field2?: string;
@@ -113,7 +186,7 @@ export function Validate(data: Data){
 }
 
 type SetupAdminAccountResult = 
-	| { ok: true; }
+	| { ok: true; userId: number}
 	| { ok: false; errors: Errors<SetupAdminAccountFields> };
 
 interface SetupAdminAccountFields {
@@ -162,7 +235,10 @@ export async function setupAdminAccount(fields: SetupAdminAccountFields): Promis
 		return { ok: false, errors }
 	}
 
-	const user = await prisma.user.create({
+	let user
+
+	try {
+	user = await prisma.user.create({
 		data: {
 			email: fields.email,
 			password: passwordHash(fields.password),
@@ -170,9 +246,49 @@ export async function setupAdminAccount(fields: SetupAdminAccountFields): Promis
 			lastName: fields.lastName,
 		}
 	})
+} catch (e) {
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+			errors.fields.email = ["A user with this email already exists"];
+			return { ok: false, errors };
+		}
+		// Handle any other unexpected errors
+		throw e;
+	}
+
 	console.log("setupAdminAccount", user)
 
-	return { ok: true }
+	sendEmailVerification(user)
+
+	return { ok: true, userId: user.id }
+}
+
+
+function generateVerificationCode(digits: number): string {
+	const min = Math.pow(10, digits - 1);
+	const max = Math.pow(10, digits) - 1;
+	return Math.floor(min + Math.random() * (max - min + 1)).toString();
+}
+
+const digitsInVerificationCode = 6
+
+export async function sendEmailVerification(user: User) {
+	const verificationCode = generateVerificationCode(digitsInVerificationCode);
+	const expirationTime = addHours(new Date(), 24);
+
+	await prisma.user.update({
+		where: { id: user.id },
+		data: {
+			emailVerificationSentAt: new Date(),
+			emailVerificationCode: verificationCode,
+			emailVerificationExpiresAt: expirationTime,
+		},
+	});
+
+	const subject = "Verify Your Email";
+	const text = `Your verification code is ${verificationCode}. It expires in 24 hours.`;
+	const html = `<p>Your verification code is <strong>${verificationCode}</strong>. It expires in 24 hours.</p>`;
+
+	await sendEmail(user.email, subject, text, html);
 }
 
 type VerifyEmailResult = 

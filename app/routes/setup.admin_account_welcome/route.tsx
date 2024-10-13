@@ -35,10 +35,10 @@ export default function Screen() {
 </h2>
 			<p>Track disaster impacts, including damages, losses, and human effects, to support better recovery and resilience.</p>
 			<div>
-			<Link to="/setup_admin_account">Setup account</Link>
+			<Link to="/setup/admin_account">Setup account</Link>
 			</div>
 			<div>
-			<Link to="/setup_admin_account_sso">Setup using SSO</Link>
+			<Link to="/setup/admin_account_sso">Setup using SSO</Link>
 			</div>
 		</>
 	);

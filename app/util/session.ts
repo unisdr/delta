@@ -59,8 +59,6 @@ export async function getUserFromSession(request: Request) {
 export async function logout(request: Request) {
 	const session = await sessionCookie.getSession(request.headers.get("Cookie"));
 	return {
-		headers: {
-			"Set-Cookie": await sessionCookie.destroySession(session),
-		},
+		"Set-Cookie": await sessionCookie.destroySession(session),
 	};
 }
