@@ -6,7 +6,9 @@ import {
 	authLoader,
 	authLoaderGetAuth,
 	authAction,
-	authActionGetAuth
+	authActionGetAuth,
+	authLoaderAllowUnverifiedEmail,
+	authActionAllowUnverifiedEmail
 } from "~/util/auth";
 
 import {
@@ -34,7 +36,7 @@ import {
 
 import { formatTimestamp } from "~/util/time";
 
-export const action = authAction(async (actionArgs) => {
+export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
 	const { request } = actionArgs;
 	const user = authActionGetAuth(actionArgs);
 	const data = formStringData(await request.formData());
@@ -47,7 +49,7 @@ export const action = authAction(async (actionArgs) => {
 	return redirect("/");
 });
 
-export const loader = authLoader(async (loaderArgs) => {
+export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
 	const user = authLoaderGetAuth(loaderArgs)
 	return json({
 		userEmail: user.email,

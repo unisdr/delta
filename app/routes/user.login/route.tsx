@@ -1,6 +1,7 @@
 import {
 	ActionFunctionArgs,
 	json,
+	LoaderFunctionArgs,
 	redirect
 } from "@remix-run/node";
 import {
@@ -15,7 +16,10 @@ import {
 } from "~/components/form"
 import { login } from "~/util/auth"
 import { formStringData } from "~/util/httputil";
-import { createUserSession } from "~/util/session";
+import {
+	getUserFromSession,
+	createUserSession
+} from "~/util/session";
 
 interface LoginFields {
 	email: string
@@ -40,7 +44,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return redirect("/", { headers });
 };
 
-export const loader = async () => {
+export const loader = async ({request}:LoaderFunctionArgs) => {
+	const user = await getUserFromSession(request)
+	if (user){
+		return redirect("/");
+	}
 	return json(null);
 };
 

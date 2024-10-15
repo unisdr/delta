@@ -53,12 +53,13 @@ export default function Screen() {
 		<>
 			<h2>Setup account</h2>
 			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.</p>
+			<p>* Required information</p>
 			<Form errors={errors}>
-				<Field label="Email">
+				<Field label="Email *">
 					<input type="email" name="email" defaultValue={data?.email}></input>
 					<FieldErrors errors={errors} field="email"></FieldErrors>
 				</Field>
-				<Field label="First name">
+				<Field label="First name *">
 					<input type="text" name="firstName" defaultValue={data?.firstName}></input>
 					<FieldErrors errors={errors} field="firstName"></FieldErrors>
 				</Field>
@@ -66,11 +67,11 @@ export default function Screen() {
 					<input type="text" name="lastName" defaultValue={data?.lastName}></input>
 					<FieldErrors errors={errors} field="lastName"></FieldErrors>
 				</Field>
-				<Field label="Password">
+				<Field label="Password *">
 					<input type="password" name="password" defaultValue={data?.password}></input>
 					<FieldErrors errors={errors} field="password"></FieldErrors>
 				</Field>
-				<Field label="Repeat password">
+				<Field label="Repeat password *">
 					<input type="password" name="passwordRepeat" defaultValue={data?.passwordRepeat}></input>
 					<FieldErrors errors={errors} field="passwordRepeat"></FieldErrors>
 				</Field>

@@ -35,7 +35,18 @@ export async function login(email: string, password: string): Promise<LoginResul
 
 export async function requireUser(request: Request) {
 	const user = await getUserFromSession(request);
-	if (!user) {
+	if (!user){
+		throw redirect("/user/login");
+	}
+	if (!user.emailVerified) {
+		throw redirect("/user/verify_email");
+	}
+	return user;
+}
+
+export async function requireUserAllowUnverifiedEmail(request: Request) {
+	const user = await getUserFromSession(request);
+	if (!user){
 		throw redirect("/user/login");
 	}
 	return user;
@@ -52,6 +63,17 @@ export function authLoader<T extends LoaderFunction>(fn: T): T {
 	}) as T;
 }
 
+export function authLoaderAllowUnverifiedEmail<T extends LoaderFunction>(fn: T): T {
+	return (async (args: LoaderFunctionArgs) => {
+		const user = await requireUserAllowUnverifiedEmail(args.request);
+
+		return fn({
+			...(args as any),
+			user,
+		});
+	}) as T;
+}
+
 export function authLoaderGetAuth(args: any): User {
 	return args.user
 }
@@ -59,7 +81,16 @@ export function authLoaderGetAuth(args: any): User {
 export function authAction<T extends ActionFunction>(fn: T): T {
 	return (async (args: ActionFunctionArgs) => {
 		const user = await requireUser(args.request);
+		return fn({
+			...(args as any),
+			user,
+		});
+	}) as T;
+}
 
+export function authActionAllowUnverifiedEmail<T extends ActionFunction>(fn: T): T {
+	return (async (args: ActionFunctionArgs) => {
+		const user = await requireUserAllowUnverifiedEmail(args.request);
 		return fn({
 			...(args as any),
 			user,
