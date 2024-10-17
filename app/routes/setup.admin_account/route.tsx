@@ -25,7 +25,7 @@ import {
 import {
 	setupAdminAccount,
 	setupAdminAccountFieldsFromMap,
-} from "~/components/user/model";
+} from "~/.server/models/user";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const data = formStringData(await request.formData());

@@ -14,12 +14,15 @@ import {
 	Errors as FormErrors,
 	SubmitButton,
 } from "~/components/form"
-import { login } from "~/util/auth"
 import { formStringData } from "~/util/httputil";
 import {
 	getUserFromSession,
 	createUserSession
 } from "~/util/session";
+import {
+	login,
+} from "~/.server/models/user"
+
 
 interface LoginFields {
 	email: string

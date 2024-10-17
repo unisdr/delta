@@ -20,7 +20,7 @@ import {
 } from "@remix-run/react";
 
 export const loader = authLoader(async (loaderArgs) => {
-	const user = authLoaderGetAuth(loaderArgs)
+	const { user } = authLoaderGetAuth(loaderArgs)
 	return json({ message: `Hello ${user.email}` });
 });
 

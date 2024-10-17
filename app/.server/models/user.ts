@@ -3,9 +3,6 @@ import { formStringData } from "~/util/httputil";
 import bcrypt from 'bcryptjs';
 
 
-import fs from 'fs';
-import path from 'path';
-
 export type Data = Prisma.ItemCreateInput;
 
 import {
@@ -18,6 +15,8 @@ import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
 
 import { randomBytes } from 'crypto';
+
+import * as OTPAuth from "otpauth";
 
 type RegisterResult = 
 	| { ok: true; }
@@ -35,6 +34,10 @@ const bcryptRounds = 10
 
 function passwordHash(password: string): string {
 	return bcrypt.hashSync(password, bcryptRounds);
+}
+
+async function passwordHashCompare(password: string, passwordHash: string){
+	return await bcrypt.compare(password, passwordHash);
 }
 
 export async function register({email, password}: RegisterFields): Promise<RegisterResult> {
@@ -75,13 +78,42 @@ export async function login(email: string, password: string): Promise<LoginResul
 		return {ok: false}
 	}
 
-	const isPasswordValid = await bcrypt.compare(password, user.password);
+	const isPasswordValid = await passwordHashCompare(password, user.password);
 	if (isPasswordValid) {
 		return { ok: true, userId: user.id};
 	}
 
 	return { ok: false}
 }
+
+
+export type LoginTotpResult = 
+	| { ok: true}
+	| { ok: false, error: string };
+
+export async function loginTotp(userId: number, token: string): Promise<LoginTotpResult> {
+	const user = await prisma.user.findUnique({
+		where: {id: userId},
+	})
+
+	if (!user){
+		return {ok: false, error: "Application error. User not found."}
+	}
+
+	if (!user.totpEnabled){
+		return {ok: false, error: "Application error. TOTP not enabled for user."}
+	}
+
+	const isValid = await isValidTotp(user, token)
+
+	if (!isValid){
+		return {ok: false, error: "TOTP token not correct."}
+	}
+
+
+	return {ok: true}
+}
+
 
 export async function resetPasswordSilentIfNotFound(email: string) {
 	const user = await prisma.user.findUnique({
@@ -337,3 +369,177 @@ export async function verifyEmail(userId: number, code: string): Promise<VerifyE
 
 	return { ok: true };
 }
+
+export interface ChangePasswordFields {
+	currentPassword: string
+	newPassword: string
+	confirmPassword: string
+}
+
+type ChangePasswordResult = 
+	| { ok: true; }
+	| { ok: false; errors: Errors<ChangePasswordFields> };
+
+export async function changePassword(userId: number, fields:ChangePasswordFields): Promise<ChangePasswordResult> {
+	let errors: Errors<ChangePasswordFields> = {};
+	errors.form = [];
+	errors.fields = {};
+
+	const { currentPassword, newPassword, confirmPassword } = fields;
+
+	if (!currentPassword) {
+		errors.fields.currentPassword = ["Current password is required"];
+	}
+
+	if (!newPassword) {
+		errors.fields.newPassword = ["New password is required"];
+	}
+
+	if (newPassword && confirmPassword !== newPassword) {
+		errors.fields.confirmPassword = ["New passwords do not match"];
+	}
+
+	if (hasErrors(errors)) {
+		return { ok: false, errors };
+	}
+
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+	});
+
+	if (!user) {
+		errors.form = ["Application error. User not found"];
+		return { ok: false, errors };
+	}
+
+	const passwordValid = await passwordHashCompare(currentPassword, user.password);
+	if (!passwordValid) {
+		errors.fields.currentPassword = ["Current password is incorrect"];
+		return { ok: false, errors };
+	}
+
+	const hashedPassword = passwordHash(newPassword);
+
+	await prisma.user.update({
+		where: { id: userId },
+		data: {
+			password: hashedPassword,
+		},
+	});
+
+	return { ok: true };
+}
+
+function totpSettings(userEmail: string, secret: string){
+	return new OTPAuth.TOTP({
+		issuer: process.env.TOTP_ISSUER || "example-app",
+		label: userEmail,
+		algorithm: "SHA1",
+		digits: 6,
+		period: 30,
+		secret: secret
+	});
+}
+
+type GenerateTotpResult = 
+	| { ok: true; secret: string; secretUrl: string }
+	| { ok: false; error: string };
+
+export async function generateTotpIfNotSet(userId: number): Promise<GenerateTotpResult> {
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+	});
+
+	if (!user) {
+		throw "User not found"
+	}
+
+	if (user.totpEnabled){
+		return {ok: false, error: "TOTP already enabled"}
+	}
+
+	if (user.totpSecret){
+		return {ok: true, secret: user.totpSecret, secretUrl: user.totpSecretUrl}
+	}
+
+	const totp = totpSettings(user.email, "")
+
+	const secret = totp.secret.base32;
+	// url with secret and params
+	const secretUrl = totp.toString();
+
+	await prisma.user.update({
+		where: { id: userId },
+		data: {
+			totpSecret: secret,
+			totpSecretUrl: secretUrl,
+		},
+	});
+
+	return {
+		ok: true,
+		secret,
+		secretUrl,
+	};
+}
+
+async function isValidTotp(user: User, token: string): Promise<boolean> {
+	if (!user.totpSecret){
+		throw "TOTP secret not set"
+	}
+	if (!token){
+		return false
+	}
+	const totp = totpSettings(user.email, user.totpSecret)
+	let delta = totp.validate({ token, window: 1 });
+	if (delta === null){
+		return false
+	}
+	return true
+}
+
+type SetTotpEnabledResult = 
+	| { ok: true; }
+	| { ok: false; error: string };
+
+export async function setTotpEnabled(userId: number, token: string, enabled: boolean): Promise<SetTotpEnabledResult> {
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+	});
+
+	if (!user) {
+		throw "User not found"
+	}
+
+	if (!token){
+		return {ok: false, error: "Empty token"}
+	}
+
+	const isValid = await isValidTotp(user, token);
+
+	if (!isValid){
+		return {ok: false, error: "Invalid token"}
+	}
+
+	let data;
+
+	if (enabled){
+		data = {
+			totpEnabled: enabled
+		}
+	} else {
+		data = {
+			totpEnabled: enabled,
+			totpSecret: "",
+			totpSecretUrl: ""
+		}
+	}
+
+	await prisma.user.update({
+		where: { id: userId },
+		data: data,
+	});
+
+	return {ok: true}
+}
+

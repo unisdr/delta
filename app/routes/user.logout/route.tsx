@@ -3,7 +3,7 @@ import {
 	redirect
 } from "@remix-run/node";
 
-import {logout} from "~/util/session";
+import {logout} from "~/util/auth";
 
 export const loader = async ({request}:LoaderFunctionArgs) => {
 

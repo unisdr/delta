@@ -25,6 +25,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 export const loader = async () => {
+	console.log("NODE_ENV", process.env.NODE_ENV)
 	return json(null);
 };
 

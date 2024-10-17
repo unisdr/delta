@@ -16,7 +16,9 @@ import {
 } from "~/components/form"
 import { login } from "~/util/auth"
 import { formStringData } from "~/util/httputil";
-import { resetPasswordSilentIfNotFound } from "~/components/user/model";
+import {
+	resetPasswordSilentIfNotFound
+} from "~/.server/models/user";
 
 interface FormFields {
 	email: string

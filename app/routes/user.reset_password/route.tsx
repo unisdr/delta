@@ -19,7 +19,7 @@ import {
 
 import {
 	resetPassword,
-} from "~/components/user/model"
+} from "~/.server/models/user";
 
 import { formStringData } from "~/util/httputil";
 

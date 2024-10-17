@@ -17,7 +17,9 @@ import {
 } from "~/components/form"
 
 import { formStringData } from "~/util/httputil";
-import { register } from "~/components/user/model";
+import {
+	register
+} from "~/.server/models/user";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const data = formStringData(await request.formData());

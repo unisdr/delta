@@ -48,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = authLoader(async (loaderArgs) => {
-	const user = authLoaderGetAuth(loaderArgs)
+	const { user } = authLoaderGetAuth(loaderArgs)
 	return json({ message: `Hello ${user.email}` });
 });
 

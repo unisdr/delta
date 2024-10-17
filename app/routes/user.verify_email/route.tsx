@@ -19,7 +19,7 @@ import {
 
 import {
 	verifyEmail
-} from "~/components/user/model";
+} from "~/.server/models/user";
 
 import { formStringData } from "~/util/httputil";
 
@@ -38,7 +38,7 @@ import { formatTimestamp } from "~/util/time";
 
 export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
 	const { request } = actionArgs;
-	const user = authActionGetAuth(actionArgs);
+	const { user } = authActionGetAuth(actionArgs);
 	const data = formStringData(await request.formData());
 	const code = data.code || "";
 	const userId = user.id
@@ -50,7 +50,7 @@ export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
 });
 
 export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
-	const user = authLoaderGetAuth(loaderArgs)
+	const { user } = authLoaderGetAuth(loaderArgs)
 	return json({
 		userEmail: user.email,
 		// passing this as date does not work in remix, the type of data received is string on the other end

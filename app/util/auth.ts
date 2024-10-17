@@ -7,98 +7,145 @@ import {
 } from "@remix-run/node";
 
 import {
-	Errors as FormErrors,
-} from "~/components/form"
-
-import {
-	prisma
-} from "~/db.server";
-
-import {
 	User
 } from "@prisma/client";
 
 import {
-	login as modelLogin,
-	LoginResult as ModelLoginResult
-} from "~/components/user/model"
-
-import {
-	getUserFromSession
+	cookieSessionDestroy,
+	getUserFromSession,
+	sessionMarkTotpAuthed,
+	UserSession
 } from "~/util/session";
 
-type LoginResult = ModelLoginResult;
+import * as user from "~/.server/models/user"
 
-export async function login(email: string, password: string): Promise<LoginResult> {
-	return modelLogin(email, password)
+export async function login(email: string, password: string): Promise<user.LoginResult> {
+	return await user.login(email, password)
+}
+
+export async function loginTotp(userId: number, sessionId: string, code: string): Promise<user.LoginTotpResult> {
+	const res = await user.loginTotp(userId, code);
+	if (!res.ok){
+		return res
+	}
+	sessionMarkTotpAuthed(sessionId)
+	return {ok: true}
+}
+
+export async function logout(request: Request) {
+	return cookieSessionDestroy(request)
 }
 
 export async function requireUser(request: Request) {
-	const user = await getUserFromSession(request);
-	if (!user){
+	const userSession = await getUserFromSession(request);
+	if (!userSession){
 		throw redirect("/user/login");
 	}
+	const { user, session } = userSession
 	if (!user.emailVerified) {
 		throw redirect("/user/verify_email");
 	}
-	return user;
+	if (user.totpEnabled && !session.totpAuthed){
+		throw redirect("/user/totp_login");
+	}
+	return userSession;
 }
 
 export async function requireUserAllowUnverifiedEmail(request: Request) {
-	const user = await getUserFromSession(request);
-	if (!user){
+	const userSession = await getUserFromSession(request);
+	if (!userSession){
 		throw redirect("/user/login");
 	}
-	return user;
+	return userSession;
+}
+
+export async function requireUserAllowNoTotp(request: Request) {
+	const userSession = await getUserFromSession(request);
+	if (!userSession){
+		throw redirect("/user/login");
+	}
+	const { user } = userSession
+	if (!user.emailVerified) {
+		throw redirect("/user/verify_email");
+	}
+	return userSession;
 }
 
 export function authLoader<T extends LoaderFunction>(fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
-		const user = await requireUser(args.request);
+		const userSession = await requireUser(args.request);
 
 		return fn({
 			...(args as any),
-			user,
+			userSession,
 		});
 	}) as T;
 }
 
 export function authLoaderAllowUnverifiedEmail<T extends LoaderFunction>(fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
-		const user = await requireUserAllowUnverifiedEmail(args.request);
+		const userSession = await requireUserAllowUnverifiedEmail(args.request);
 
 		return fn({
 			...(args as any),
-			user,
+			userSession,
 		});
 	}) as T;
 }
 
-export function authLoaderGetAuth(args: any): User {
-	return args.user
+export function authLoaderAllowNoTotp<T extends LoaderFunction>(fn: T): T {
+	return (async (args: LoaderFunctionArgs) => {
+		const userSession = await requireUserAllowNoTotp(args.request);
+
+		return fn({
+			...(args as any),
+			userSession,
+		});
+	}) as T;
+}
+
+
+export function authLoaderGetAuth(args: any): UserSession {
+	if (!args.userSession || !args.userSession.user){
+		throw "Missing user session"
+	}
+	return args.userSession
 }
 
 export function authAction<T extends ActionFunction>(fn: T): T {
 	return (async (args: ActionFunctionArgs) => {
-		const user = await requireUser(args.request);
+		const userSession = await requireUser(args.request);
 		return fn({
 			...(args as any),
-			user,
+			userSession,
 		});
 	}) as T;
 }
 
 export function authActionAllowUnverifiedEmail<T extends ActionFunction>(fn: T): T {
 	return (async (args: ActionFunctionArgs) => {
-		const user = await requireUserAllowUnverifiedEmail(args.request);
+		const userSession = await requireUserAllowUnverifiedEmail(args.request);
 		return fn({
 			...(args as any),
-			user,
+			userSession,
 		});
 	}) as T;
 }
 
-export function authActionGetAuth(args: any): User {
-	return args.user
+export function authActionAllowNoTotp<T extends ActionFunction>(fn: T): T {
+	return (async (args: ActionFunctionArgs) => {
+		const userSession = await requireUserAllowNoTotp(args.request);
+		return fn({
+			...(args as any),
+			userSession,
+		});
+	}) as T;
+}
+
+export function authActionGetAuth(args: any): UserSession {
+	if (!args.userSession || !args.userSession.user){
+		throw "Missing user session"
+	}
+	return args.userSession
 }
 

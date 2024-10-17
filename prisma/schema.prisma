@@ -15,9 +15,10 @@ datasource db {
 
 model Session {
 	id				String	 @id @default(uuid()) // Unique session ID stored in the cookie
-	userId		Int			 // The user ID for the session
-	expiresAt DateTime // Session expiration
-	user			User		 @relation(fields: [userId], references: [id]) // Relation to the User model
+	userId	Int
+	user			User		 @relation(fields: [userId], references: [id])
+	lastActiveAt DateTime @default("1970-01-01T00:00:00.000Z")
+	totpAuthed Boolean @default(false)
 }
 
 model User {
@@ -27,9 +28,7 @@ model User {
 	email			String	 @unique
 	password	String
 	sessions		 Session[] 
-	posts			Post[]	 // Example of relation with another model (Post)
-	// items	Item[]	 // Uncomment if you have a relation to an Item model
-
+	posts			Post[]
 	emailVerified Boolean @default(false)
 	emailVerificationCode String @default("")
 	emailVerificationSentAt DateTime @default("1970-01-01T00:00:00.000Z")
@@ -37,6 +36,10 @@ model User {
 
 	resetPasswordToken String @default("")
 	resetPasswordExpiresAt DateTime @default("1970-01-01T00:00:00.000Z")
+
+	totpEnabled Boolean @default(false)
+	totpSecret String @default("")
+	totpSecretUrl String @default("")
 }
 
 model Post {
