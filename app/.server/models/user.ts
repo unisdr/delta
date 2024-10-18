@@ -449,7 +449,7 @@ type GenerateTotpResult =
 	| { ok: true; secret: string; secretUrl: string }
 	| { ok: false; error: string };
 
-const totpSecretSize = 20
+const totpSecretSize = 16
 
 export async function generateTotpIfNotSet(userId: number): Promise<GenerateTotpResult> {
 	const user = await prisma.user.findUnique({
