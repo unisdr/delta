@@ -6,6 +6,15 @@
 .top-nav > nav > a.active {
 	text-decoration: underline;
 }
+.secondary-nav > nav > a {
+	margin-left: 10px;
+	text-decoration: none;
+	color: blue;
+}
+.secondary-nav > nav > a.active {
+	text-decoration: underline;
+}
+
 form > label {
 	display: block;
 }
@@ -14,3 +23,17 @@ form > label {
 	height: 300px;
 }
 
+
+
+.flex {
+	display: flex;
+	flex-direction: row;
+	flex-basis: 100%;
+	flex: 1;
+  }
+  
+.flex .box {
+	padding: 20px;
+	border: 1px solid gainsboro;
+	margin: 10px;
+}
