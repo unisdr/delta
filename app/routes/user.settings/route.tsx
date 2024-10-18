@@ -20,12 +20,12 @@ export default function Screen() {
 	return (
 		<>
 			<ul>
-			<li><Link to="/user/change_password">Change Password</Link></li>
+			<li><Link to="/user/change-password">Change Password</Link></li>
 			
 			{!ld.totpEnabled ? (
-			<li><Link to="/user/totp_enable">Enable TOTP</Link></li>
+			<li><Link to="/user/totp-enable">Enable TOTP</Link></li>
 			) : (
-			<li><Link to="/user/totp_disable">Disable TOTP</Link></li>)}
+			<li><Link to="/user/totp-disable">Disable TOTP</Link></li>)}
 			</ul>
 		</>
 	);

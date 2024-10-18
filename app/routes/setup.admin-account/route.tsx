@@ -36,7 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	}
 
 	const headers = await createUserSession(res.userId);
-	return redirect("/user/verify_email", { headers });
+	return redirect("/user/verify-email", { headers });
 };
 
 export const loader = async () => {

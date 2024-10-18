@@ -125,7 +125,7 @@ function InactivityWarning(props: InactivityWarningProps){
 	const fetcher = useFetcher();
 	const handleRefreshSession = () => {
 		setLastActivity(new Date());
-		fetcher.load("/user/refresh_session");
+		fetcher.load("/user/refresh-session");
 	};
 
 	return (

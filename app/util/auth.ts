@@ -43,10 +43,10 @@ export async function requireUser(request: Request) {
 	}
 	const { user, session } = userSession
 	if (!user.emailVerified) {
-		throw redirect("/user/verify_email");
+		throw redirect("/user/verify-email");
 	}
 	if (user.totpEnabled && !session.totpAuthed){
-		throw redirect("/user/totp_login");
+		throw redirect("/user/totp-login");
 	}
 	return userSession;
 }
@@ -66,7 +66,7 @@ export async function requireUserAllowNoTotp(request: Request) {
 	}
 	const { user } = userSession
 	if (!user.emailVerified) {
-		throw redirect("/user/verify_email");
+		throw redirect("/user/verify-email");
 	}
 	return userSession;
 }

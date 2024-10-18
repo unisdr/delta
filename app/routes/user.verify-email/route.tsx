@@ -81,7 +81,7 @@ export default function Data() {
 				</Field>
 				<p>Code expires in 5:00 (TODO: remove this)</p>
 				<p>
-					<Link to="/user/verify_email_send_again">Send again</Link>
+					<Link to="/user/verify-email-send-again">Send again</Link>
 				</p>
 				<SubmitButton label="Complete account setup"></SubmitButton>
 			</Form>

@@ -18,5 +18,5 @@ import {
 export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
 	const { user } = authLoaderGetAuth(loaderArgs)
 	await sendEmailVerification(user)
-	return redirect("/user/verify_email");
+	return redirect("/user/verify-email");
 });

@@ -70,7 +70,7 @@ export default function Screen() {
 				<Field label="Password">
 					<input type="password" name="password" defaultValue={data?.password}></input>
 				</Field>
-				<Link to="/user/forgot_password">Forgot password</Link>
+				<Link to="/user/forgot-password">Forgot password</Link>
 				<SubmitButton label="Login"></SubmitButton>
 			</Form>
 		</>

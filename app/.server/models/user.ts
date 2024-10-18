@@ -140,7 +140,7 @@ export async function resetPasswordSilentIfNotFound(email: string) {
 		throw "provide WEBSITE_URL in env"
 	}
 
-	const resetURL = `${process.env.WEBSITE_URL}/user/reset_password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+	const resetURL = `${process.env.WEBSITE_URL}/user/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
 	const subject =  "Password Reset Request"
 	const text = `You requested a password reset. Click the link to reset your password: ${resetURL}`
