@@ -49,6 +49,7 @@ export const action = authAction(async (actionArgs) => {
 export const loader = authLoader(async (loaderArgs) => {
 	const { user } = authLoaderGetAuth(loaderArgs)
 	const res = await generateTotpIfNotSet(user.id)
+	console.log("totp res", res)
 	return json(res);
 });
 

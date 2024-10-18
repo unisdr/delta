@@ -431,6 +431,10 @@ export async function changePassword(userId: number, fields:ChangePasswordFields
 }
 
 function totpSettings(userEmail: string, secret: string){
+	if (!secret){
+		throw "provide secret"
+	}
+
 	return new OTPAuth.TOTP({
 		issuer: process.env.TOTP_ISSUER || "example-app",
 		label: userEmail,
@@ -444,6 +448,8 @@ function totpSettings(userEmail: string, secret: string){
 type GenerateTotpResult = 
 	| { ok: true; secret: string; secretUrl: string }
 	| { ok: false; error: string };
+
+const totpSecretSize = 20
 
 export async function generateTotpIfNotSet(userId: number): Promise<GenerateTotpResult> {
 	const user = await prisma.user.findUnique({
@@ -462,9 +468,14 @@ export async function generateTotpIfNotSet(userId: number): Promise<GenerateTotp
 		return {ok: true, secret: user.totpSecret, secretUrl: user.totpSecretUrl}
 	}
 
-	const totp = totpSettings(user.email, "")
+	const secret = new OTPAuth.Secret({ size: totpSecretSize }).base32;
 
-	const secret = totp.secret.base32;
+	const totp = totpSettings(user.email, secret)
+
+	if (!secret) {
+		throw "Application Error";
+	}
+
 	// url with secret and params
 	const secretUrl = totp.toString();
 
@@ -527,6 +538,7 @@ export async function setTotpEnabled(userId: number, token: string, enabled: boo
 		data = {
 			totpEnabled: enabled
 		}
+
 	} else {
 		data = {
 			totpEnabled: enabled,
@@ -539,6 +551,10 @@ export async function setTotpEnabled(userId: number, token: string, enabled: boo
 		where: { id: userId },
 		data: data,
 	});
+
+	if (enabled){
+		return await loginTotp(userId, token);
+	}
 
 	return {ok: true}
 }
