@@ -1,18 +1,40 @@
-import { prisma } from "~/db.server";
-
 import {
 	useLoaderData,
+	Link
 } from "@remix-run/react";
 
-import { Link } from "@remix-run/react";
+import {
+	json
+} from "@remix-run/node";
 
-export const loader = async () => {
-	const items = await prisma.item.findMany()
-	return { items };
-};
+import { prisma } from "~/db.server";
+
+import { Item } from "@prisma/client";
+
+import {
+	authLoaderWithRole,
+} from "~/util/auth";
+
+import { Pagination } from "~/components/pagination/view"
+import { executeQueryForPagination } from "~/components/pagination/api.server"
+
+export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
+	const { request } = loaderArgs;
+
+	const select = ["id", "field1", "field2"] as const;
+	const res = await executeQueryForPagination<Item,typeof select[number]>(request, prisma.item, [...select], {})
+
+	return json({
+		...res,
+	})
+});
 
 export default function Data() {
-	const { items } = useLoaderData<typeof loader>();
+		const ld = useLoaderData<typeof loader>();
+	const { items } = ld
+
+	const pagination = Pagination(ld.pagination)
+
 	return (
 		<div>
 			<a href="/data/new">New</a>
@@ -40,6 +62,9 @@ export default function Data() {
 					))}
 				</tbody>
 			</table>
+
+			{pagination}
+
 		</div>
 	);
 }

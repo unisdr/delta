@@ -1,73 +1,108 @@
 import {
 	json,
-	LoaderFunctionArgs,
-	ActionFunctionArgs,
-	redirect,
 } from "@remix-run/node";
 
 import {
 		useLoaderData,
-		useActionData
+		useActionData,
 } from "@remix-run/react";
 
+import {
+	FormResponse
+} from "~/components/form";
 
-import { DataForm } from "~/components/data/form";
-import { Data, ValidateFormData } from "~/components/data/model";
+import {
+	DataFields,
+	dataUpdate
+} from "~/.server/models/item";
 
+import {
+	DataForm,
+	dataFieldsFromMap
+} from "~/components/data/form";
 
 import { prisma } from "~/db.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const { id } = params;
-  if (!id) {
-    throw new Response("Missing item ID", { status: 400 });
-  }
-  const data = await prisma.item.findUnique({
-    where: { id: Number(id) },
-  });
-  if (!data) {
-    throw new Response("Item not found", { status: 404 });
-  }
-  return json({ data });
-};
+import {
+	authLoaderWithRole,
+	authActionWithRole,
+} from "~/util/auth";
 
+import { formStringData } from "~/util/httputil";
 
-export async function action({
-  request,
-	params
-}: ActionFunctionArgs) {
-  const { id } = params;
-  if (!id) {
-    throw new Response("Missing item ID", { status: 400 });
-  }
-	const res = ValidateFormData(await request.formData());
-  if (res.errors) {
-    return json(res);
-  }
-	const item = await prisma["item"].update({
-		where: {
-			id: Number(id), 
-		},
-		data: res.data
-  })
-	console.log("Updated item", item)
-  return redirect(`/data`);
-}
-
-export default function Edit() {
-	let data: Data
-  const loaderData = useLoaderData<typeof loader>();
-	data = loaderData.data
-  const actionData = useActionData<typeof action>();
-  const errors = actionData?.errors
-	if (actionData) {
-		data = actionData.data
+export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
+	const { id } = loaderArgs.params;
+	if (!id) {
+		throw new Response("Missing item ID", { status: 400 });
 	}
-  //const navigation = useNavigation();
-	//  const isSubmitting =
-  //  navigation.formAction === "/data/new";
+	const item = await prisma.item.findUnique({
+		where: { id: Number(id) },
+	});
+	if (!item) {
+		throw new Response("Item not found", { status: 404 });
+	}
+	return json({
+		data: {
+			id: item.id,
+			field1: item.field1,
+			field2: item.field2,
+		},
+	});
+})
 
-  return <DataForm edit={true} errors={errors} data={data} />;
+type ActionResponse = FormResponse<DataFields>
+
+export const action = authActionWithRole("EditData", async (actionArgs) => {
+	const { request, params } = actionArgs;
+	const id = Number(params.id);
+	if (!id) {
+		throw new Response("Missing ID", { status: 400 });
+	}
+	const formData = formStringData(await request.formData());
+	const data = dataFieldsFromMap(formData);
+	const res = await dataUpdate(id, data);
+
+	if (!res.ok){
+		return json<ActionResponse>({
+			ok: false,
+			data: data,
+			errors: res.errors
+		})
+	}
+	return json<ActionResponse>({
+		ok: true,
+		data: data,
+	})
+});
+
+export default function Screen() {
+	let fields: DataFields
+	const loaderData = useLoaderData<typeof loader>();
+	fields = loaderData.data;
+	let errors = {};
+	let changed = false;
+	const actionData = useActionData<typeof action>();
+	if (actionData) {
+		fields = actionData.data;
+		if (!actionData.ok){
+			errors = actionData.errors;
+		} else {
+			changed = true;
+		}
+	}
+
+	const dataForm = DataForm({
+		edit: true,
+		fields: fields,
+		errors: errors
+	})
+
+	return (
+		<>
+		{changed ? <p>The data was updated.</p> : null}
+		{dataForm}
+		</>
+	)
+
 }
-
 

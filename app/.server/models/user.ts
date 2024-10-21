@@ -18,15 +18,6 @@ import { randomBytes } from 'crypto';
 
 import * as OTPAuth from "otpauth";
 
-type RegisterResult = 
-	| { ok: true; }
-	| { ok: false; errors: Errors<RegisterFields> };
-
-interface RegisterFields {
-	email: string
-	password: string
-}
-
 // rounds=10: ~10 hashes/sec
 // this measurements is from another implementation
 // https://github.com/kelektiv/node.bcrypt.js#readme
@@ -38,31 +29,6 @@ function passwordHash(password: string): string {
 
 async function passwordHashCompare(password: string, passwordHash: string){
 	return await bcrypt.compare(password, passwordHash);
-}
-
-export async function register({email, password}: RegisterFields): Promise<RegisterResult> {
-	let errors: Errors<RegisterFields> = {}
-	errors.fields = {}
-	if (email == "") {
-		errors.fields.email = ["Email is empty"]
-	}
-	if (password == "") {
-		errors.fields.password = ["Password is empty"]
-	}
-	if (hasErrors(errors)) {
-		return { ok: false, errors }
-	}
-	const user = await prisma.user.create({
-		data: {
-			email: email,
-			password: passwordHash(password),
-			firstName: "",
-			lastName: ""
-		}
-	})
-	console.log("created user in db", user)
-
-	return { ok: true }
 }
 
 export type LoginResult = 
@@ -272,6 +238,7 @@ export async function setupAdminAccount(fields: SetupAdminAccountFields): Promis
 	try {
 	user = await prisma.user.create({
 		data: {
+			role: "admin",
 			email: fields.email,
 			password: passwordHash(fields.password),
 			firstName: fields.firstName,
@@ -557,5 +524,78 @@ export async function setTotpEnabled(userId: number, token: string, enabled: boo
 	}
 
 	return {ok: true}
+}
+
+
+type AdminUpdateUserResult = 
+	| { ok: true; userId: number}
+	| { ok: false; errors: Errors<AdminUpdateUserFields> };
+
+export interface AdminUpdateUserFields {
+	email: string
+	firstName: string
+	lastName: string
+	role: string
+}
+
+export function adminUpdateUserFieldsFromMap(data: { [key: string]: string }): AdminUpdateUserFields {
+	const fields: (keyof AdminUpdateUserFields)[] = [
+		"email",
+		"firstName",
+		"lastName",
+		"role"
+	];
+	 return Object.fromEntries(
+		fields.map(field => [field, data[field] || ""])
+	) as unknown as AdminUpdateUserFields;
+}
+
+export async function adminUpdateUser(id: number, fields: AdminUpdateUserFields): Promise<AdminUpdateUserResult> {
+	let errors: Errors<AdminUpdateUserFields> = {}
+	errors.form = []
+	errors.fields = {}
+	if (fields.email == "") {
+		errors.fields.email = ["Email is empty"]
+	}
+	if (fields.firstName == ""){
+		errors.fields.firstName = ["First name is empty"]
+	}
+	if (fields.role == ""){
+		errors.fields.role = ["Role is required"]
+	}
+
+	if (hasErrors(errors)) {
+		return { ok: false, errors }
+	}
+
+	let user
+
+	try {
+		user = await prisma.user.update({
+			where: { id: id },
+			data: {
+				email: fields.email,
+				firstName: fields.firstName,
+				lastName: fields.lastName,
+				role: fields.role
+			},
+		});
+	} catch (e) {
+	if (e instanceof Prisma.PrismaClientKnownRequestError) {
+		if (e.code === 'P2002') {
+			errors.fields.email = ["A user with this email already exists"];
+			return { ok: false, errors };
+		}
+		if (e.code === 'P2025') {
+			errors.form.push("User was not found using provided ID.");
+			return { ok: false, errors };
+		}
+	}
+		throw e;
+	}
+
+	// sendEmailVerification(user);
+
+	return { ok: true, userId: user.id };
 }
 

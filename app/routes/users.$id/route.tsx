@@ -13,12 +13,13 @@ import {
 	authLoaderWithRole,
 } from "~/util/auth";
 
-export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
+
+export const loader = authLoaderWithRole("ViewUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
-	const item = await prisma.item.findUnique({
+	const item = await prisma.user.findUnique({
 		where: { id: Number(id) },
 	});
 	if (!item) {
@@ -27,21 +28,23 @@ export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
 	return json({
 		item: {
 			id: item.id,
-			field1: item.field1,
-			field2: item.field2,
+			email: item.email,
+			firstName: item.firstName,
+			lastName: item.lastName,
 		},
 	});
 })
-
 
 export default function Data() {
 	const {item} = useLoaderData<typeof loader>();
 	return (
 		<div>
-			<Link to={`/data/edit/${item.id}`}>Edit</Link>
+			<Link to={`/users/edit/${item.id}`}>Edit</Link>
+			<Link to="/users">Back to Users</Link>
 			<p>ID: {item.id}</p>
-			<p>Field1: {item.field1}</p>
-			<p>Field2: {item.field2}</p>
+			<p>Email: {item.email}</p>
+			<p>First Name: {item.firstName}</p>
+			<p>Last Name: {item.lastName}</p>
 		</div>
 	);
 }

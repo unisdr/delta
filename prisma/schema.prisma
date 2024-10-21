@@ -23,6 +23,7 @@ model Session {
 
 model User {
 	id				Int			 @id @default(autoincrement())
+	role String @default("")
 	firstName String
 	lastName	String
 	email			String	 @unique

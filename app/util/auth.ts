@@ -6,9 +6,6 @@ import {
 	redirect
 } from "@remix-run/node";
 
-import {
-	User
-} from "@prisma/client";
 
 import {
 	cookieSessionDestroy,
@@ -18,6 +15,7 @@ import {
 } from "~/util/session";
 
 import * as user from "~/.server/models/user"
+import {PermissionId, roleHasPermission} from "~/components/user/roles";
 
 export async function login(email: string, password: string): Promise<user.LoginResult> {
 	return await user.login(email, password)
@@ -82,6 +80,20 @@ export function authLoader<T extends LoaderFunction>(fn: T): T {
 	}) as T;
 }
 
+export function authLoaderWithRole<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
+	return (async (args: LoaderFunctionArgs) => {
+		const userSession = await requireUser(args.request);
+		if (!roleHasPermission(userSession.user.role, permission)){
+		throw new Response("Forbidden", { status: 403 });
+	}
+
+		return fn({
+			...(args as any),
+			userSession,
+		});
+	}) as T;
+}
+
 export function authLoaderAllowUnverifiedEmail<T extends LoaderFunction>(fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUserAllowUnverifiedEmail(args.request);
@@ -115,6 +127,20 @@ export function authLoaderGetAuth(args: any): UserSession {
 export function authAction<T extends ActionFunction>(fn: T): T {
 	return (async (args: ActionFunctionArgs) => {
 		const userSession = await requireUser(args.request);
+		return fn({
+			...(args as any),
+			userSession,
+		});
+	}) as T;
+}
+
+
+export function authActionWithRole<T extends ActionFunction>(permission: PermissionId, fn: T): T {
+	return (async (args: ActionFunctionArgs) => {
+		const userSession = await requireUser(args.request);
+		if (!roleHasPermission(userSession.user.role, permission)){
+		throw new Response("Forbidden", { status: 403 });
+	}
 		return fn({
 			...(args as any),
 			userSession,

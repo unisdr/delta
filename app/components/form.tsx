@@ -1,5 +1,9 @@
 import { Form as ReactForm } from "@remix-run/react";
 
+export type FormResponse<T> =
+	| { ok: true; data: T}
+	| { ok: false; data: T, errors: Errors<T> };
+
 export interface Errors<T> {
 	form?: string[]
 	fields?: Partial<Record<keyof T, string[]>>

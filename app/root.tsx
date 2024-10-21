@@ -59,7 +59,6 @@ interface NavProps {
 function Nav(props: NavProps) {
 	const menu = [
 		{link: "data", text: "Data"},
-		{link: "analytics", text: "Analytics"},
 		{link: "settings", text: "Settings"},
 		{link: "user/settings", text: "Settings (todo 2)"},
 	]

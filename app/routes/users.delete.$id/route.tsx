@@ -8,16 +8,15 @@ import {
 	authLoaderWithRole,
 } from "~/util/auth";
 
-export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
+export const loader = authLoaderWithRole("EditUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
-	await prisma.item.delete({
+	await prisma.user.delete({
 	where: {
 		id: Number(id), 
 	},
 	})
-	return redirect(`/data`);
+	return redirect(`/users`);
 })
-
