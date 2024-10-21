@@ -34,3 +34,4 @@ The software tools and technologies used to build the DTS web application. This 
 * Remix
 * Prisma
 * PostgreSQL
+* TypeScript
