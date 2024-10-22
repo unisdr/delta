@@ -22,7 +22,7 @@ import {
 } from "~/util/auth";
 import {
 	setTotpEnabled
-} from "~/.server/models/user";
+} from "~/backend.server/models/user";
 import {
 	redirectWithMessage
 } from "~/util/session";

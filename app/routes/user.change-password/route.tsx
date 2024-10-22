@@ -20,7 +20,7 @@ import {
 import {
 	ChangePasswordFields,
 	changePassword
-} from "~/.server/models/user";
+} from "~/backend.server/models/user";
 import {
 	redirectWithMessage
 } from "~/util/session";

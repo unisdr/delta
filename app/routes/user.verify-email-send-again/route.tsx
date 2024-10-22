@@ -13,7 +13,7 @@ import {
 
 import {
 	sendEmailVerification
-} from "~/.server/models/user";
+} from "~/backend.server/models/user";
 
 export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
 	const { user } = authLoaderGetAuth(loaderArgs)

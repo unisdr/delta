@@ -19,7 +19,7 @@ import {
 
 import {
 	verifyEmail
-} from "~/.server/models/user";
+} from "~/backend.server/models/user";
 
 import { formStringData } from "~/util/httputil";
 

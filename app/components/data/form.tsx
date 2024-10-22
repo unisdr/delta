@@ -2,7 +2,7 @@ import {
 		Link
 } from "@remix-run/react";
 
-import { DataFields } from "~/.server/models/item"
+import { DataFields } from "~/backend.server/models/item"
 
 import {
 	Form,

@@ -14,7 +14,7 @@ import {
 	UserSession
 } from "~/util/session";
 
-import * as user from "~/.server/models/user"
+import * as user from "~/backend.server/models/user"
 import {PermissionId, roleHasPermission} from "~/components/user/roles";
 
 export async function login(email: string, password: string): Promise<user.LoginResult> {

@@ -20,7 +20,7 @@ import {
 	AdminUpdateUserFields,
 	adminUpdateUser,
 	adminUpdateUserFieldsFromMap,
-} from "~/.server/models/user";
+} from "~/backend.server/models/user";
 
 import {
 	ValidRoles

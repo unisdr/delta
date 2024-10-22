@@ -21,7 +21,7 @@ import {
 } from "~/util/session";
 import {
 	login,
-} from "~/.server/models/user"
+} from "~/backend.server/models/user"
 
 
 interface LoginFields {
