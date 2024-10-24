@@ -10,27 +10,33 @@ import {
  } from "@remix-run/react";
 
 import {
-	authLoader,
-	authLoaderGetAuth
+	authLoaderGetAuth,
+	authLoaderWithRole
 } from "~/util/auth";
+
+import {
+	getSupportedTimeZone,
+} from "~/util/timezone";
+
+import {
+	getCurrency,
+} from "~/util/currency";
+
 
 import { NavSettings } from "~/routes/settings/nav";
 
-export const loader = authLoader(async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs);
-	const timeZone = Intl.supportedValuesOf('timeZone');
+export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
+	const { user } = authLoaderGetAuth(loaderArgs)
+	const timeZones:string[] = getSupportedTimeZone();
+	const currency:string[] = getCurrency();
 
-	return json({ message: `Hello ${user.email}`, timeZone: timeZone });
+	return json({ message: `Hello ${user.email}`, currency:currency, timeZones:timeZones, });
 });
 
 
-/**
- * References: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/supportedValuesOf
- * 
- */
 export default function Settings() {
 	const loaderData = useLoaderData<typeof loader>();
-	console.log("loaderData", loaderData.timeZone);
+	// console.log("loaderData", loaderData);
 
 	const box2colStyle = {
 		width: "50%",
@@ -47,21 +53,30 @@ export default function Settings() {
 			<h2></h2>
 			<div className="flex">
 				<div className="box" style={box2colStyle}>
-					<label>
-						Time zone: 
-						<select>
-							<option disabled value="">Select from list</option>
-						</select>
-					</label>
+					<div>
+						<label>
+							Time zone:  &nbsp;
+							<select>
+								<option disabled value="">Select from list</option>
+								{loaderData.timeZones.map((item, index) => (
+									<option key={index} value={item}>{item}</option>
+								))}
+							</select>
+						</label>
+					</div>
 				</div>
 				<div className="box" style={box2colStyle}>
-					<label>
-						System language: 
-						<select>
-							<option disabled value="">Select from list</option>
-							<option value="en">English</option>
-						</select>
-					</label>
+					<div>
+						<label>
+							Currency: &nbsp;
+							<select>
+								<option disabled value="">Select from list</option>
+								{loaderData.currency.map((item, index) => (
+									<option key={index} value={item}>{item}</option>
+								))}
+							</select>
+						</label>
+					</div>
 				</div>
 			</div>
 			<div className="flex">
