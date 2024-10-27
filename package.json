@@ -6,7 +6,7 @@
   "main": "vite.config.js",
   "scripts": {
     "build": "remix vite:build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cross-env NODE_ENV=test yarn run tsx app/tests/all.ts",
     "dev": "node ./server.js",
     "start": "cross-env NODE_ENV=development node ./server.js",
     "start2": "remix-serve ./build/server/index.js",
@@ -14,7 +14,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "UNLICENSED",
+  "private": true,
   "dependencies": {
     "@prisma/client": "5.20.0",
     "@remix-run/express": "^2.12.1",
@@ -22,9 +23,9 @@
     "@remix-run/react": "^2.12.1",
     "@remix-run/serve": "^2.12.1",
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^22.7.4",
     "bcryptjs": "^2.4.3",
     "cross-env": "^7.0.3",
+    "dotenv-cli": "^7.4.2",
     "express": "^4.21.0",
     "isbot": "4",
     "nodemailer": "^6.9.15",
@@ -34,9 +35,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "remix-auth": "^3.7.0",
-    "remix-auth-form": "^1.5.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "remix-auth-form": "^1.5.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.12.1",
@@ -44,6 +43,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.3.11",
     "prisma": "^5.20.0",
+    "tsx": "^4.19.1",
     "vite": "^5.4.8"
   }
 }

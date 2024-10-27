@@ -12,6 +12,7 @@ SESSION_SECRET="not-random-dev-secret" # should be random string for production
 npm install --global yarn
 yarn install
 yarn prisma generate
+yarn prisma migrate dev
 yarn run dev
 ```
 
@@ -23,6 +24,12 @@ yarn prisma db push
 Install remix-serve
 ```
 yarn add @remix-run/serve
+```
+
+### Run tests
+```
+yarn run dotenv -e .env.test prisma migrate dev
+yarn run test
 ```
 
 ### Technology Stack

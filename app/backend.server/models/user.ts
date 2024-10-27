@@ -1,4 +1,8 @@
-import { Prisma, User } from "@prisma/client";
+import {
+	Prisma,
+	PrismaClient,
+	User
+} from "@prisma/client";
 import { formStringData } from "~/util/httputil";
 import bcrypt from 'bcryptjs';
 
@@ -116,7 +120,6 @@ export async function resetPasswordSilentIfNotFound(email: string) {
 
 	await sendEmail(user.email, subject, text, html);
 }
-
 export async function resetPassword(email: string, token: string, newPassword: string){
 	const user = await prisma.user.findUnique({
 		where: { email: email },
