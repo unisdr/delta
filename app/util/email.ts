@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { stringToBoolean } from "~/util/string";
 
 function emailTransportType(): string {
 	return process.env.EMAIL_TRANSPORT || 'file'
@@ -14,7 +15,7 @@ function createTransporter() {
 		return nodemailer.createTransport({
 			host: process.env.SMTP_HOST,
 			port: parseInt(process.env.SMTP_PORT || '587', 10),
-			secure: !!process.env.SMTP_SECURE,
+			secure: stringToBoolean( process.env.SMTP_SECURE || "" ),
 			auth: {
 				user: process.env.SMTP_USER,
 				pass: process.env.SMTP_PASS,
