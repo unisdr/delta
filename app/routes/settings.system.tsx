@@ -81,12 +81,12 @@ export default function Settings() {
 			</div>
 			<div className="flex">
 				<div className="box" style={box2colStyle}>
-					<dd>
-						<dt><strong>Date installed:</strong> 09-01-2025</dt>
-						<dt><strong>Last updated:</strong> 12-01-2025 T00:00:0000:00</dt>
-						<dt><strong>Update available:</strong>  00.00.02:</dt>
-						<dt><strong>System up to date</strong></dt>
-					</dd>
+					<ul>
+						<li><strong>Date installed:</strong> 09-01-2025</li>
+						<li><strong>Last updated:</strong> 12-01-2025 T00:00:0000:00</li>
+						<li><strong>Update available:</strong>  00.00.02:</li>
+						<li><strong>System up to date</strong></li>
+					</ul>
 					
 
 				</div>

@@ -31,6 +31,8 @@ import {
 
 import { useEffect, useState } from "react";
 
+import { configSiteName } from "~/util/config";
+
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/css/style-dts.css' },
 	{ rel: "stylesheet", href: appStylesHref },
@@ -45,7 +47,8 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 
 	return json({
 		loggedIn: !!user,
-		flashMessage: message
+		flashMessage: message,
+		configSiteName: configSiteName(),
 	}, {
 	headers: {
 		"Set-Cookie": await commitCookieSession(session),
@@ -171,7 +174,7 @@ function SessionMessage({message}: SessionMessageProps) {
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {loggedIn, flashMessage} = loaderData
+	const {loggedIn, flashMessage, configSiteName} = loaderData
 
 	return (
 		<html lang="en">
@@ -195,7 +198,7 @@ export default function Screen() {
 							<div className="dts-header">
 								<div className='dts-header__logo'>
 									<img src="https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg" alt="DLDT logo mark" />
-									<div className='dts-header__logo-text' dir="auto">Disaster Losses<br />and Damage Tracking</div>
+									<div className='dts-header__logo-text' dir="auto">{ configSiteName }</div>
 								</div>
 								<div className="dts-header__main-menu">
 									<nav className="mg-mega-wrapper dts-mega-wrapper" aria-label="Main Navigation">
