@@ -19,18 +19,18 @@ Why ORM library or similar would be better than this?
 
 But if there are no great ORM libraries, this could be a better option.
 
-https://github.com/brianc/node-postgres
-Created in 2010.
-One main developer.
+- https://github.com/brianc/node-postgres
+- Created in 2010.
+- One main developer.
 
-https://github.com/porsager/postgres
-Safe query generation using tagged template functions.
-Created in 2019.
-One main developer.
+- https://github.com/porsager/postgres
+- Safe query generation using tagged template functions.
+- Created in 2019.
+- One main developer.
 
 ## Drizzle (good alternative)
-https://orm.drizzle.team/
-https://github.com/drizzle-team/drizzle-orm
+- https://orm.drizzle.team/
+- https://github.com/drizzle-team/drizzle-orm
 
 ### Summary
 Matches all requirements other than it's a relatively new project.
@@ -60,16 +60,16 @@ db.select({
 ```
 
 ### Transactions
-No manual transactions (not important)
-https://github.com/drizzle-team/drizzle-orm/issues/966
+- No manual transactions (not important)
+- https://github.com/drizzle-team/drizzle-orm/issues/966
 
 ### Project info
-Created in 2022-07
-Two main developers
+- Created in 2022-07
+- Two main developers
 
 ## PgTyped (good alternative)
-https://pgtyped.dev/
-https://github.com/adelsz/pgtyped
+- https://pgtyped.dev/
+- https://github.com/adelsz/pgtyped
 
 Query validation based on the current schema in the database.
 
@@ -90,8 +90,8 @@ May need to add common filters manually to all queries, such as is_deleted = 0. 
 For some complex dynamic queries, using driver directly could be ok.
 
 ### Project info
-Created in 2019.
-One main developer
+- Created in 2019.
+- One main developer
 
 # Alternatives
 
