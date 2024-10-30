@@ -8,6 +8,7 @@
     "build": "remix vite:build",
     "test": "cross-env NODE_ENV=test yarn run tsx app/tests/all.ts",
     "dev": "node ./server.js",
+    "dev2": "remix vite:dev --host",
     "start": "cross-env NODE_ENV=development node ./server.js",
     "start2": "remix-serve ./build/server/index.js",
     "typecheck": "tsc"
