@@ -1,8 +1,15 @@
+import { dr } from "~/db.server";
+import {
+	eq,
+} from "drizzle-orm";
+
+import {
+	itemTable
+} from '~/drizzle/schema';
+
 import {
 	redirect,
 } from "@remix-run/node";
-
-import { prisma } from "~/db.server";
 
 import {
 	authLoaderWithRole,
@@ -13,11 +20,9 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
-	await prisma.item.delete({
-	where: {
-		id: Number(id), 
-	},
-	})
+	await dr
+		.delete(itemTable)
+		.where(eq(itemTable.id, Number(id)));
 	return redirect(`/data`);
 })
 

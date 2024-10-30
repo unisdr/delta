@@ -1,3 +1,13 @@
+import { dr } from "~/db.server";
+import {
+	eq,
+} from "drizzle-orm";
+
+import {
+	itemTable
+} from '~/drizzle/schema';
+
+
 import {
 	json,
 } from "@remix-run/node";
@@ -21,7 +31,6 @@ import {
 	dataFieldsFromMap
 } from "~/components/data/form";
 
-import { prisma } from "~/db.server";
 
 import {
 	authLoaderWithRole,
@@ -35,12 +44,13 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
-	const item = await prisma.item.findUnique({
-		where: { id: Number(id) },
-	});
-	if (!item) {
+		const res = await dr.select().from(itemTable).where(eq(itemTable.id, Number(id)));
+
+	if (!res || res.length === 0) {
 		throw new Response("Item not found", { status: 404 });
 	}
+
+	const item = res[0];
 	return json({
 		data: {
 			id: item.id,

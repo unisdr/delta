@@ -1,3 +1,12 @@
+import { dr } from "~/db.server";
+import {
+	eq,
+} from "drizzle-orm";
+
+import {
+	userTable
+} from '~/drizzle/schema';
+
 import {
 	json
 } from "@remix-run/node";
@@ -7,7 +16,6 @@ import {
 		Link
 } from "@remix-run/react";
 
-import { prisma } from "~/db.server";
 
 import {
 	authLoaderWithRole,
@@ -19,12 +27,15 @@ export const loader = authLoaderWithRole("ViewUsers", async (loaderArgs) => {
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
-	const item = await prisma.user.findUnique({
-		where: { id: Number(id) },
-	});
-	if (!item) {
+
+		const res = await dr.select().from(userTable).where(eq(userTable.id, Number(id)));
+
+	if (!res || res.length === 0) {
 		throw new Response("Item not found", { status: 404 });
 	}
+
+	const item = res[0];
+
 	return json({
 		item: {
 			id: item.id,

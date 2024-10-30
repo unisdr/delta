@@ -1,26 +1,10 @@
-import type {
-	ActionFunctionArgs,
-} from "@remix-run/node";
 import {
 	json,
-	redirect
 } from "@remix-run/node";
-import {
-	useActionData,
-} from "@remix-run/react";
-import {
-	Form,
-	Field,
-	Errors as FormErrors,
-	SubmitButton,
-} from "~/components/form"
-import { login } from "~/util/auth"
-import { formStringData } from "~/util/httputil";
-import { createUserSession } from "~/util/session";
 
 import { Link } from "react-router-dom";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async () => {
 	return json(null);
 }
 

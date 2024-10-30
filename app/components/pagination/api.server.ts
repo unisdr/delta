@@ -1,5 +1,10 @@
-import { prisma } from "~/db.server";
-import { Prisma } from "@prisma/client";
+
+import { dr } from "~/db.server";
+
+import {
+	count
+} from "drizzle-orm";
+
 
 const defaultPageSize = 100;
 
@@ -19,7 +24,8 @@ export function paginationQueryFromURL(request: Request){
 	}
 }
 
-export async function executeQueryForPagination<T, K extends keyof T>(request: Request, prismaObject: any, select: K[], where: any){
+/*
+export async function executeQueryForPaginationPrisma<T, K extends keyof T>(request: Request, prismaObject: any, select: K[], where: any){
 
 	let selectMap = {} as { [key in K]: boolean };
 
@@ -52,3 +58,34 @@ select.forEach((field) => {
 		}
 	}
 }
+
+*/
+
+export async function executeQueryForPagination<T>(
+	request: Request,
+	table: any,
+	select: Record<string, any>,
+	where: any
+) {
+	const pagination = paginationQueryFromURL(request);
+
+
+	const totalItemsRes = await dr.select({ count: count() }).from(table).where(where);
+	const totalItems = totalItemsRes[0].count;
+
+	const items = await dr
+		.select(select)
+		.from(table)
+		.where(where)
+		.offset(pagination.query.skip)
+		.limit(pagination.query.take);
+	return {
+		items: items as [T],
+		pagination: {
+			totalItems,
+			itemsOnThisPage: items.length,
+			...pagination.viewData,
+		},
+	};
+}
+

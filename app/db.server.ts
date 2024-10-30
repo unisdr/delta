@@ -1,19 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import * as schema from "./drizzle/schema"
 
-let prisma: PrismaClient;
+// TODO: for tests
+// import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
 
-declare global {
-  var __db: PrismaClient | undefined;
-}
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient();
-} else {
-  if (!global.__db) {
-    global.__db = new PrismaClient();
-  }
-  prisma = global.__db;
-}
-
-export { prisma };
+export const dr = drizzle(process.env.DATABASE_URL!, { schema });
 

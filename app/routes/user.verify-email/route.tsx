@@ -70,7 +70,10 @@ export default function Data() {
  return (
 		<div>
 			<h2>Please verify your account</h2>
-			<p>A one-time password has been sent to your email on {formatTimestamp(pageData.sentAt)}.</p>
+
+	{pageData.sentAt ? (
+ 	<p>A one-time password has been sent to your email on {formatTimestamp(pageData.sentAt)}.</p>
+) : null}
 
 			<p>Enter the code we sent to you at {pageData.userEmail}.</p>
 

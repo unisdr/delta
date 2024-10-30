@@ -1,12 +1,17 @@
-import { Prisma } from "@prisma/client";
-
 import {
 	Errors,
 	hasErrors,
 } from "~/components/form";
 
-import { prisma } from "~/db.server";
+import { dr } from "~/db.server";
 
+import {
+	itemTable,
+} from '~/drizzle/schema';
+
+import {
+	eq,
+} from "drizzle-orm";
 
 export interface DataFields {
 	field1: string
@@ -45,16 +50,15 @@ export async function dataCreate(fields: DataFields): Promise<DataCreateResult> 
 		return validationRes
 	}
 
-	let res
-
-	res = await prisma.item.create({
-		data: {
+	const res = await dr
+		.insert(itemTable)
+		.values({
 			field1: fields.field1,
-			field2: fields.field2
-		},
-	});
+			field2: fields.field2,
+		})
+		.returning({ id: itemTable.id });
 
-	return { ok: true, id: res.id };
+	return { ok: true, id: res[0].id };
 }
 
 type DataUpdateResult = DataCreateResult;
@@ -68,26 +72,24 @@ export async function dataUpdate(id: number, fields: DataFields): Promise<DataUp
 	let errors: Errors<DataFields> = {}
 	errors.form = []
 	errors.fields = {}
-	let res
 
 	try {
-		res = await prisma.item.update({
-			where: { id: id },
-			data: {
-				field1: fields.field1,
-				field2: fields.field2
-			},
-		});
-	} catch (e) {
-	if (e instanceof Prisma.PrismaClientKnownRequestError) {
-		if (e.code === 'P2025') {
-			errors.form.push("Item was not found using provided ID.");
-			return { ok: false, errors };
+		const res = await dr
+			.update(itemTable)
+			.set({
+			field1: fields.field1,
+			field2: fields.field2,
+			})
+			.where(eq(itemTable.id, id))
+			.returning({ id: itemTable.id });
+
+		if (!res || res.length === 0) {
+		errors.form.push("Item was not found using provided ID.");
+		return { ok: false, errors };
 		}
-	}
+		return { ok: true, id: res[0].id };
+	} catch (e: any) {
 		throw e;
 	}
-
-	return { ok: true, id: res.id };
 }
 

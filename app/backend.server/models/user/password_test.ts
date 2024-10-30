@@ -9,13 +9,13 @@ import {
 	PasswordCharClass
 } from './password';
 import assert from 'node:assert';
-import {testPrismaClient} from '~/tests/db';
+import {testDb} from '~/tests/db';
 
 describe('isCommonPassword', async () => {
-	const db = testPrismaClient()
+	const db = testDb()
 	const fn = isCommonPassword
 	describe('no data', async () => {
-		await db.commonPasswords.deleteMany()
+		//await db.commonPasswords.deleteMany()
 		it("no data", async () => {
 		await assert.rejects(
 			async () => {
@@ -29,12 +29,13 @@ describe('isCommonPassword', async () => {
 		});
 	})
 	describe('with data', async () => {
+		/*
 		await db.commonPasswords.deleteMany()
 		await db.commonPasswords.createMany({
 			data: [
 				{password: "abc"},
 			]
-		})
+		})*/
 		it("no data", async () => {
 			assert.equal(await fn(db, "abc"), true)
 		});

@@ -1,7 +1,3 @@
-import {
-	Prisma,
-} from "@prisma/client";
-
 // Password rules
 // - at least 12 characters long
 // - different from initial password
@@ -16,7 +12,10 @@ import {
 // - not based on words in any language or simple patters
 // prevent reuse of previous five passwords
 
-export async function isCommonPassword(db: Prisma.TransactionClient, password: string) {
+export async function isCommonPassword(db: any, password: string) {
+	// TODO
+	return  false
+	/*
 	{
 		const res = await db.commonPasswords.findFirst()
 		if (!res){
@@ -27,7 +26,7 @@ export async function isCommonPassword(db: Prisma.TransactionClient, password: s
 	const res = await db.commonPasswords.findUnique({
 		where: {password: password},
 	})
-	return !!res
+	return !!res*/
 }
 
 export enum PasswordCharClass {

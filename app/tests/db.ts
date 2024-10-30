@@ -1,5 +1,3 @@
-import { PrismaClient } from '@prisma/client';
-
-export function testPrismaClient(){
-	return new PrismaClient();
+export function testDb(){
+	return null;
 }

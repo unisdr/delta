@@ -1,22 +1,28 @@
+import { dr } from "~/db.server";
 import {
-	Prisma,
-	PrismaClient,
-	User
-} from "@prisma/client";
+	InferSelectModel,
+	eq,
+} from "drizzle-orm";
+
+import {
+	sessionTable,
+	userTable,
+	User,
+	Item,
+	ItemInsert
+} from '~/drizzle/schema';
+
 import { formStringData } from "~/util/httputil";
 import bcrypt from 'bcryptjs';
-
-
-export type Data = Prisma.ItemCreateInput;
 
 import {
 	Errors,
 	hasErrors,
 } from "~/components/form"
 
-import { prisma } from "~/db.server";
 import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
+import { errorIsNotUnique } from "~/util/db";
 
 import { randomBytes } from 'crypto';
 
@@ -40,13 +46,11 @@ export type LoginResult =
 	| { ok: false };
 
 export async function login(email: string, password: string): Promise<LoginResult> {
-	const user = await prisma.user.findUnique({
-		where: { email: email },
-	})
-
-	if (!user){
+	const res = await dr.select().from(userTable).where(eq(userTable.email, email));
+	if (res.length == 0){
 		return {ok: false}
 	}
+	const user = res[0]
 
 	const isPasswordValid = await passwordHashCompare(password, user.password);
 	if (isPasswordValid) {
@@ -62,13 +66,11 @@ export type LoginTotpResult =
 	| { ok: false, error: string };
 
 export async function loginTotp(userId: number, token: string): Promise<LoginTotpResult> {
-	const user = await prisma.user.findUnique({
-		where: {id: userId},
-	})
-
-	if (!user){
+	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
+	if (res.length == 0){
 		return {ok: false, error: "Application error. User not found."}
 	}
+	const user = res[0];
 
 	if (!user.totpEnabled){
 		return {ok: false, error: "Application error. TOTP not enabled for user."}
@@ -86,25 +88,25 @@ export async function loginTotp(userId: number, token: string): Promise<LoginTot
 
 
 export async function resetPasswordSilentIfNotFound(email: string) {
-	const user = await prisma.user.findUnique({
-		where: { email: email },
-	});
-	if (!user) {
-		console.log("reset password, user not found", "email", email)
-		return
-	}
+	const res = await dr.select().from(userTable).where(eq(userTable.email, email));
+
+	if (!res || res.length === 0) {
+	console.log("reset password, user not found", "email", email);
+	return;
+}
+	const user = res[0];
 
 	const resetToken = randomBytes(32).toString("hex");
 
 	const expiresAt = addHours(new Date(), 1);
 
-	await prisma.user.update({
-		where: { email: email },
-		data: {
-			resetPasswordToken: resetToken,
-			resetPasswordExpiresAt: expiresAt,
-		},
-	});
+	await dr
+	.update(userTable)
+	.set({
+		resetPasswordToken: resetToken,
+		resetPasswordExpiresAt: expiresAt,
+	})
+	.where(eq(userTable.email, email));
 
 	if (!process.env.WEBSITE_URL){
 		throw "provide WEBSITE_URL in env"
@@ -121,12 +123,13 @@ export async function resetPasswordSilentIfNotFound(email: string) {
 	await sendEmail(user.email, subject, text, html);
 }
 export async function resetPassword(email: string, token: string, newPassword: string){
-	const user = await prisma.user.findUnique({
-		where: { email: email },
-	});
-	if (!user) {
+		const res = await dr.select().from(userTable).where(eq(userTable.email, email));
+
+	if (!res || res.length === 0) {
 		return { ok: false, error: "User not found" };
 	}
+
+	const user = res[0];
 	if (user.resetPasswordToken !== token) {
 		return { ok: false, error: "Invalid or expired token" };
 	}
@@ -138,13 +141,13 @@ export async function resetPassword(email: string, token: string, newPassword: s
 		return { ok: false, error: "Empty password" };
 	}
 	const hashedPassword = passwordHash(newPassword)
-	await prisma.user.update({
-		where: { email: email },
-		data: {
-			password: hashedPassword,
-			resetPasswordToken: "",
-		},
-	});
+	await dr
+	.update(userTable)
+	.set({
+		password: hashedPassword,
+		resetPasswordToken: "",
+	})
+	.where(eq(userTable.email, email));
 
 	return { ok: true };
 }
@@ -155,7 +158,7 @@ export interface Errors2 {
 }
 
 export interface DataWithErrors {
-	data: Data
+	data: ItemInsert
 	errors?: Errors2
 }
 
@@ -172,7 +175,7 @@ export function ValidateFormData(formData: FormData): DataWithErrors {
 	}
 }
 
-export function Validate(data: Data){
+export function Validate(data: ItemInsert){
 	let errors: Errors2 = {} 
 	if (data.field1 == ""){
 		errors.field1 = "Empty field1"
@@ -236,28 +239,24 @@ export async function setupAdminAccount(fields: SetupAdminAccountFields): Promis
 		return { ok: false, errors }
 	}
 
-	let user
+	let user: User
 
 	try {
-	user = await prisma.user.create({
-		data: {
+		const res = await dr.insert(userTable).values({
 			role: "admin",
 			email: fields.email,
 			password: passwordHash(fields.password),
 			firstName: fields.firstName,
 			lastName: fields.lastName,
-		}
-	})
-} catch (e) {
-		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+		}).returning()
+		user = res[0]
+	} catch (e: any) {
+		if (errorIsNotUnique(e, "user", "email")) {
 			errors.fields.email = ["A user with this email already exists"];
 			return { ok: false, errors };
 		}
-		// Handle any other unexpected errors
 		throw e;
 	}
-
-	console.log("setupAdminAccount", user)
 
 	sendEmailVerification(user)
 
@@ -273,18 +272,19 @@ function generateVerificationCode(digits: number): string {
 
 const digitsInVerificationCode = 6
 
-export async function sendEmailVerification(user: User) {
+export async function sendEmailVerification(user: InferSelectModel<typeof userTable>) {
 	const verificationCode = generateVerificationCode(digitsInVerificationCode);
 	const expirationTime = addHours(new Date(), 24);
 
-	await prisma.user.update({
-		where: { id: user.id },
-		data: {
-			emailVerificationSentAt: new Date(),
-			emailVerificationCode: verificationCode,
-			emailVerificationExpiresAt: expirationTime,
-		},
-	});
+	await dr
+	.update(userTable)
+	.set({
+		emailVerificationSentAt: new Date(),
+		emailVerificationCode: verificationCode,
+		emailVerificationExpiresAt: expirationTime,
+	})
+	.where(eq(userTable.id, user.id));
+
 
 	const subject = "Verify Your Email";
 	const text = `Your verification code is ${verificationCode}. It expires in 24 hours.`;
@@ -311,13 +311,14 @@ export async function verifyEmail(userId: number, code: string): Promise<VerifyE
 	if (hasErrors(errors)) {
 		return { ok: false, errors };
 	}
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-	});
-	if (!user) {
+	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
+
+	if (!res || res.length === 0) {
 		errors.form = ["Application Error. User not found"];
 		return { ok: false, errors };
 	}
+	const user = res[0];
+
 	if (user.emailVerificationCode !== code) {
 		errors.fields.code = ["Invalid verification code"];
 		return { ok: false, errors };
@@ -328,14 +329,14 @@ export async function verifyEmail(userId: number, code: string): Promise<VerifyE
 		return { ok: false, errors };
 	}
 
-	await prisma.user.update({
-		where: { id: userId },
-		data: {
-			emailVerified: true,
-			emailVerificationCode: "",
-			emailVerificationExpiresAt: new Date("1970-01-01T00:00:00.000Z"),
-		},
-	});
+	await dr
+	.update(userTable)
+	.set({
+		emailVerified: true,
+		emailVerificationCode: "",
+		emailVerificationExpiresAt: new Date("1970-01-01T00:00:00.000Z"),
+	})
+	.where(eq(userTable.id, userId));
 
 	return { ok: true };
 }
@@ -373,14 +374,14 @@ export async function changePassword(userId: number, fields:ChangePasswordFields
 		return { ok: false, errors };
 	}
 
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-	});
+	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
 
-	if (!user) {
-		errors.form = ["Application error. User not found"];
-		return { ok: false, errors };
-	}
+if (!res || res.length === 0) {
+  errors.form = ["Application error. User not found"];
+  return { ok: false, errors };
+}
+
+const user = res[0];
 
 	const passwordValid = await passwordHashCompare(currentPassword, user.password);
 	if (!passwordValid) {
@@ -390,12 +391,13 @@ export async function changePassword(userId: number, fields:ChangePasswordFields
 
 	const hashedPassword = passwordHash(newPassword);
 
-	await prisma.user.update({
-		where: { id: userId },
-		data: {
-			password: hashedPassword,
-		},
-	});
+	await dr
+	.update(userTable)
+	.set({
+		password: hashedPassword,
+	})
+	.where(eq(userTable.id, userId));
+
 
 	return { ok: true };
 }
@@ -422,13 +424,14 @@ type GenerateTotpResult =
 const totpSecretSize = 16
 
 export async function generateTotpIfNotSet(userId: number): Promise<GenerateTotpResult> {
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-	});
 
-	if (!user) {
-		throw "User not found"
+	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
+
+	if (!res || res.length === 0) {
+		throw "User not found";
 	}
+
+	const user = res[0];
 
 	if (user.totpEnabled){
 		return {ok: false, error: "TOTP already enabled"}
@@ -449,13 +452,13 @@ export async function generateTotpIfNotSet(userId: number): Promise<GenerateTotp
 	// url with secret and params
 	const secretUrl = totp.toString();
 
-	await prisma.user.update({
-		where: { id: userId },
-		data: {
-			totpSecret: secret,
-			totpSecretUrl: secretUrl,
-		},
-	});
+	await dr
+	.update(userTable)
+	.set({
+		totpSecret: secret,
+		totpSecretUrl: secretUrl,
+	})
+	.where(eq(userTable.id, userId));
 
 	return {
 		ok: true,
@@ -484,13 +487,14 @@ type SetTotpEnabledResult =
 	| { ok: false; error: string };
 
 export async function setTotpEnabled(userId: number, token: string, enabled: boolean): Promise<SetTotpEnabledResult> {
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-	});
 
-	if (!user) {
-		throw "User not found"
+	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
+
+	if (!res || res.length === 0) {
+	throw "User not found";
 	}
+
+	const user = res[0];
 
 	if (!token){
 		return {ok: false, error: "Empty token"}
@@ -517,10 +521,10 @@ export async function setTotpEnabled(userId: number, token: string, enabled: boo
 		}
 	}
 
-	await prisma.user.update({
-		where: { id: userId },
-		data: data,
-	});
+	await dr
+	.update(userTable)
+	.set(data)
+	.where(eq(userTable.id, userId));
 
 	if (enabled){
 		return await loginTotp(userId, token);
@@ -571,34 +575,33 @@ export async function adminUpdateUser(id: number, fields: AdminUpdateUserFields)
 		return { ok: false, errors }
 	}
 
-	let user
 
 	try {
-		user = await prisma.user.update({
-			where: { id: id },
-			data: {
-				email: fields.email,
-				firstName: fields.firstName,
-				lastName: fields.lastName,
-				role: fields.role
-			},
-		});
-	} catch (e) {
-	if (e instanceof Prisma.PrismaClientKnownRequestError) {
-		if (e.code === 'P2002') {
-			errors.fields.email = ["A user with this email already exists"];
-			return { ok: false, errors };
-		}
-		if (e.code === 'P2025') {
+		const res = await dr
+		.update(userTable)
+		.set({
+			email: fields.email,
+			firstName: fields.firstName,
+			lastName: fields.lastName,
+			role: fields.role,
+		})
+		.where(eq(userTable.id, id))
+		.returning({ id: userTable.id });
+
+		if (res.length == 0){
 			errors.form.push("User was not found using provided ID.");
 			return { ok: false, errors };
 		}
+} catch (e: any) {
+	if (errorIsNotUnique(e, "user", "email")) {
+		errors.fields.email = ["A user with this email already exists"];
+	return { ok: false, errors };
 	}
-		throw e;
-	}
+	throw e;
+}
 
 	// sendEmailVerification(user);
 
-	return { ok: true, userId: user.id };
+	return { ok: true, userId: id };
 }
 

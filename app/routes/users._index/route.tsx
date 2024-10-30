@@ -7,9 +7,6 @@ import {
 	json
 } from "@remix-run/node";
 
-import { prisma } from "~/db.server";
-
-import { Prisma, User } from "@prisma/client";
 
 import {
 	authLoaderWithRole,
@@ -17,12 +14,14 @@ import {
 
 import { Pagination } from "~/components/pagination/view"
 import { executeQueryForPagination } from "~/components/pagination/api.server"
+import {userTable} from "~/drizzle/schema";
 
 export const loader = authLoaderWithRole("ViewUsers",async (loaderArgs) => {
 	const { request } = loaderArgs;
 	const url = new URL(request.url);
 	const search = url.searchParams.get("search") || "";
 
+	/*
 	let where: Prisma.UserWhereInput = {}
 	if (search){
 		where = {
@@ -47,16 +46,36 @@ export const loader = authLoaderWithRole("ViewUsers",async (loaderArgs) => {
 				},
 			],
 		}
+	}*/
+
+	/*
+	const select = ["id", "email", "firstName", "lastName", "role"] as const;
+	const res = await executeQueryForPagination<User,typeof select[number]>(request, prisma.user, [...select], where)*/
+
+	const select = {
+		id: userTable.id,
+		email: userTable.email,
+		firstName: userTable.firstName,
+		lastName: userTable.lastName,
+		role: userTable.role,
 	}
 
-	const select = ["id", "email", "firstName", "lastName", "role"] as const;
-	const res = await executeQueryForPagination<User,typeof select[number]>(request, prisma.user, [...select], where)
+	const res = await executeQueryForPagination<UserRes>(request, userTable, select, null)
 
 	return json({
 		...res,
 		search
 	})
 });
+
+interface UserRes {
+	id: number
+	email: string
+	firstName: string
+	lastName: string
+	role: string
+}
+
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();

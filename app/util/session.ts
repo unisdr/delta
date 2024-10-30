@@ -2,16 +2,19 @@ import {
 	createCookieSessionStorage,
 	Session
 } from "@remix-run/node";
-import { prisma } from "~/db.server";
+import { dr } from "~/db.server";
+import {
+	sessionTable,
+	userTable
+} from '~/drizzle/schema';
 
 import {
 	redirect,
 } from "@remix-run/react";
 
 import {
-	User,
-	Session as SessionInDB,
-} from "@prisma/client";
+	InferSelectModel,
+	eq } from "drizzle-orm";
 
 if (!process.env.SESSION_SECRET){
 	throw "provide SESSION_SECRET in .env"
@@ -38,14 +41,16 @@ export const getCookieSession = sessionCookie.getSession;
 export const commitCookieSession = sessionCookie.commitSession;
 
 export async function createUserSession(userId: number) {
-	const sessionId = await prisma.session.create({
-		data: {
-			userId,
-			lastActiveAt: new Date(),
-		},
-	});
+	const sessionRow: typeof sessionTable.$inferInsert = {
+		userId,
+		lastActiveAt: new Date(),
+	};
+
+	const res = await dr.insert(sessionTable).values(sessionRow).returning();
+	const sessionId = res[0].id;
+
 	const session = await sessionCookie.getSession();
-	session.set("sessionId", sessionId.id);
+	session.set("sessionId", sessionId);
 	const setCookie = await sessionCookie.commitSession(session)
 	return {
 		"Set-Cookie": setCookie,
@@ -56,10 +61,10 @@ export async function sessionMarkTotpAuthed(sessionId: string){
 	if (!sessionId) {
 		return
 	}
-	await prisma.session.update({
-		where: { id: sessionId },
-		data: { totpAuthed: true }
-	});
+
+	await dr.update(sessionTable)
+		.set({ totpAuthed: true })
+		.where(eq(sessionTable.id, sessionId));
 }
 
 export async function cookieSessionDestroy(request: Request) {
@@ -72,9 +77,9 @@ export async function cookieSessionDestroy(request: Request) {
 const sessionActivityTimeoutMinutes = 40
 
 export interface UserSession {
-	user: User
+	user: InferSelectModel<typeof userTable>
 	sessionId: string
-	session: SessionInDB
+	session: InferSelectModel<typeof sessionTable>
 }
 
 export async function getUserFromSession(request: Request): Promise<UserSession | undefined> {
@@ -83,9 +88,15 @@ export async function getUserFromSession(request: Request): Promise<UserSession 
 
 	if (!sessionId) return;
 
-	const sessionData = await prisma.session.findUnique({
-		where: { id: sessionId },
-		include: { user: true },
+	if (typeof sessionId != "string") return
+
+	// TODO: currently sessions are not deleted when users are deleted, fix this
+
+	const sessionData = await dr.query.sessionTable.findFirst({
+		where: eq(sessionTable.id, sessionId),
+		with: {
+			user: true,
+		},
 	});
 
 	if (!sessionData){
@@ -99,10 +110,9 @@ export async function getUserFromSession(request: Request): Promise<UserSession 
 		return;
 	}
 
-	await prisma.session.update({
-		where: { id: sessionId },
-		data: { lastActiveAt: now}
-	});
+	await dr.update(sessionTable)
+		.set({ lastActiveAt: now })
+		.where(eq(sessionTable.id, sessionId));
 
 	return {
 		user: sessionData.user,

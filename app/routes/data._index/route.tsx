@@ -7,22 +7,37 @@ import {
 	json
 } from "@remix-run/node";
 
-import { prisma } from "~/db.server";
+import {
+	itemTable,
+	Item,
+} from '~/drizzle/schema';
 
-import { Item } from "@prisma/client";
 
 import {
 	authLoaderWithRole,
 } from "~/util/auth";
 
+interface ItemRes {
+	id: number
+	field1: string
+	field2: string
+}
+
 import { Pagination } from "~/components/pagination/view"
 import { executeQueryForPagination } from "~/components/pagination/api.server"
+import {number} from "prop-types";
 
 export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
 	const { request } = loaderArgs;
 
-	const select = ["id", "field1", "field2"] as const;
-	const res = await executeQueryForPagination<Item,typeof select[number]>(request, prisma.item, [...select], {})
+	//const select = ["id", "field1", "field2"] as const;
+	//const res = await executeQueryForPagination<Item,typeof select[number]>(request, itemTable, [...select], {})
+	const select = {
+		id: itemTable.id,
+		field1: itemTable.field1,
+		field2: itemTable.field2
+	};
+	const res = await executeQueryForPagination<ItemRes>(request, itemTable, select, null)
 
 	return json({
 		...res,
