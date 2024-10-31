@@ -14,9 +14,10 @@ import {
 } from "~/util/auth";
 
 import { 
-	configSsoAzureB2C, 
-	SSOAzureB2C
+	configSsoAzureB2C 
 } from "~/util/config";
+
+import { SSOAzureB2C as interfaceSSOAzureB2C} from "~/util/ssoauzeb2c";
 
 import {
 	logiStep1GetCode
@@ -24,10 +25,10 @@ import {
 
 export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
 	const { user } = authLoaderGetAuth(loaderArgs);
-	const jsonAzureB2C:SSOAzureB2C = configSsoAzureB2C();
+	const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
 	const ssoAzureUserFlow = 'B2C_1_UN_UNDRR_SIGNUP_SIGNIN';
 	const urlSSO = 'https://' + jsonAzureB2C.tenant + '.b2clogin.com/' + jsonAzureB2C.tenant + '.onmicrosoft.com/oauth2/v2.0';
-	const urlSSOLogin= urlSSO + '/authorize?p='+ ssoAzureUserFlow +'&client_id='+ jsonAzureB2C.client_id +'&nonce=defaultNonce&redirect_uri='+ encodeURIComponent( jsonAzureB2C.redirect_url ) +'&scope=openid+email&response_type=code&prompt=login';
+	const urlSSOLogin= urlSSO + '/authorize?p='+ ssoAzureUserFlow +'&client_id='+ jsonAzureB2C.client_id +'&nonce=defaultNonce&redirect_uri='+ encodeURIComponent( jsonAzureB2C.login_redirect_url ) +'&scope=openid+email&response_type=code&prompt=login';
 	const urlSSOCode2Token = urlSSO + '/token?p='+ ssoAzureUserFlow;
 	const url = new URL(loaderArgs.request.url);
 	const code = url.searchParams.get('code') || '';
@@ -57,7 +58,7 @@ export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
 	// 	}
 	// }
 
-	console.log(logiStep1GetCode('xxxxx'));
+	console.log(logiStep1GetCode());
 	
 	// console.log( url.searchParams.get('code') );
 	

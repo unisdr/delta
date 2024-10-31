@@ -1,3 +1,6 @@
+
+import { SSOAzureB2C as interfaceSSOAzureB2C } from "~/util/ssoauzeb2c";
+
 /**
  * Get the Website URL.
  */
@@ -14,19 +17,17 @@ export function configSiteName(): string {
 		return value;
 };
 
-export interface SSOAzureB2C {
-	client_id: string;
-	client_secret: string;
-		redirect_url: string;
-		tenant: string;
-}
-
-export function configSsoAzureB2C(): SSOAzureB2C {
-		const data:SSOAzureB2C = { 
-				client_id: _configSsoAzureB2ClientID(), 
-				client_secret: _configSsoAzureB2ClientSecret(),
-				redirect_url: _configSsoAzureB2CRedirectURL(),
-				tenant: _configSsoAzureB2CTenant(),
+export function configSsoAzureB2C(): interfaceSSOAzureB2C {
+		const data:interfaceSSOAzureB2C = { 
+			client_id: _configSsoAzureB2ClientID(), 
+			client_secret: _configSsoAzureB2ClientSecret(),
+			login_userflow: _configSsoAzureB2CLoginUserFlow(),
+			login_redirect_url: _configSsoAzureB2CLoginRedirectURL(),
+			edit_userflow: _configSsoAzureB2CEditUserFlow(),
+			edit_redirect_url: _configSsoAzureB2CEditRedirectURL(),
+			reset_userflow: _configSsoAzureB2CResetUserFlow(),
+			reset_redirect_url: _configSsoAzureB2CEditResetURL(),
+			tenant: _configSsoAzureB2CTenant(),
 		};
 
 		return data;
@@ -42,9 +43,34 @@ function _configSsoAzureB2ClientSecret(): string {
 		return value;
 };
 
-function _configSsoAzureB2CRedirectURL(): string {
-		const value = process.env.SSO_AZURE_B2C_CLIENT_REDIRECT_URL || '';
+function _configSsoAzureB2CLoginUserFlow(): string {
+	const value = process.env.SSO_AZURE_B2C_USERFLOW_LOGIN || '';
+	return value;
+};
+
+function _configSsoAzureB2CLoginRedirectURL(): string {
+		const value = process.env.SSO_AZURE_B2C_USERFLOW_LOGIN_REDIRECT_URL || '';
 		return value;
+};
+
+function _configSsoAzureB2CEditUserFlow(): string {
+	const value = process.env.SSO_AZURE_B2C_USERFLOW_EDIT || '';
+	return value;
+};
+
+function _configSsoAzureB2CEditRedirectURL(): string {
+	const value = process.env.SSO_AZURE_B2C_USERFLOW_EDIT_REDIRECT_URL || '';
+	return value;
+};
+
+function _configSsoAzureB2CResetUserFlow(): string {
+	const value = process.env.SSO_AZURE_B2C_USERFLOW_RESET || '';
+	return value;
+};
+
+function _configSsoAzureB2CEditResetURL(): string {
+	const value = process.env.SSO_AZURE_B2C_USERFLOW_RESET_REDIRECT_URL || '';
+	return value;
 };
 
 function _configSsoAzureB2CTenant(): string {
