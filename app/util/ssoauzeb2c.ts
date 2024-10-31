@@ -17,7 +17,7 @@ export interface SSOAzureB2C {
 	tenant: string;
 }
 
-function _baseURL(): string {
+export function baseURL(): string {
     const jsonAzureB2C:SSOAzureB2C = configSsoAzureB2C();
     const baseURL = `https://${jsonAzureB2C.tenant}.b2clogin.com/${jsonAzureB2C.tenant}.onmicrosoft.com/oauth2/v2.0`;
     return baseURL;
@@ -29,11 +29,11 @@ function _baseURL(): string {
  * @param value 
  * @returns string
  */
-export function logiStep1GetCode() {
+export function loginGetCode() {
     const jsonAzureB2C:SSOAzureB2C = configSsoAzureB2C();
     let redirectURL = jsonAzureB2C.login_redirect_url.trim();
     redirectURL = encodeURIComponent(redirectURL);
-    const url = `${_baseURL()}/authorize?p=${jsonAzureB2C.login_userflow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=openid+email&response_type=code&prompt=login`;
+    const url = `${baseURL()}/authorize?p=${jsonAzureB2C.login_userflow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=openid+email&response_type=code&prompt=login`;
 
     //const urlSSOLogin= urlSSO + '/authorize?p='+ ssoAzureUserFlow +'&client_id='+ jsonAzureB2C.client_id +'&nonce=defaultNonce&redirect_uri='+ encodeURIComponent( jsonAzureB2C.redirect_url ) +'&scope=openid+email&response_type=code&prompt=login';
 
@@ -45,9 +45,11 @@ export function logiStep1GetCode() {
     return redirect(url, 302);
 }
 
-export function loginStep2Code2Token(): string {
+export function decodeToken(pToken:string) {
+    const jsonAzureB2C:SSOAzureB2C = configSsoAzureB2C();
+    const decoded = jwtDecode(pToken);
 
-    return '';
+    return decoded;
 }
 
 export function editProfile(pRedirectURL:string) {
@@ -55,7 +57,7 @@ export function editProfile(pRedirectURL:string) {
     const userFlow = 'B2C_1_UN_UNDRR_PROFILE_EDITING';
     let redirectURL = pRedirectURL.trim();
     redirectURL = encodeURIComponent(redirectURL);
-    const url = `${_baseURL()}/authorize?p=${userFlow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=openid&response_type=code&prompt=none`;
+    const url = `${baseURL()}/authorize?p=${userFlow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=openid&response_type=code&prompt=none`;
     
 }
 
@@ -64,7 +66,7 @@ export function passwordReset(pRedirectURL:string) {
     const userFlow = 'B2C_1_UN_UNDRR_PASSWORD_RESET';
     let redirectURL = pRedirectURL.trim();
     redirectURL = encodeURIComponent(redirectURL);
-    const url = `${_baseURL()}/authorize?p=${userFlow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=openid&response_type=code&prompt=none`;
+    const url = `${baseURL()}/authorize?p=${userFlow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=openid&response_type=code&prompt=none`;
 }
 
 /*

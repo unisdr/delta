@@ -23,7 +23,7 @@ export default function Screen() {
 			<Link to="/setup/admin-account">Setup account</Link>
 			</div>
 			<div>
-			<Link to="/setup/admin-account_sso">Setup using SSO</Link>
+			<Link to="/setup/admin-account-sso">Setup using SSO</Link>
 			</div>
 		</>
 	);

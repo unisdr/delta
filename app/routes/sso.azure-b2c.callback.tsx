@@ -1,6 +1,7 @@
 import {
 	json,
-	redirect
+	redirect,
+	LoaderFunction
 } from "@remix-run/node";
 
 import { 
@@ -20,51 +21,64 @@ import {
 import { SSOAzureB2C as interfaceSSOAzureB2C} from "~/util/ssoauzeb2c";
 
 import {
-	logiStep1GetCode
+	decodeToken
 } from "~/util/ssoauzeb2c"
 
-export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs);
+export const loader:LoaderFunction = async ( { request } ) => {
+	console.log("NODE_ENV", process.env.NODE_ENV)
+
 	const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
 	const ssoAzureUserFlow = 'B2C_1_UN_UNDRR_SIGNUP_SIGNIN';
 	const urlSSO = 'https://' + jsonAzureB2C.tenant + '.b2clogin.com/' + jsonAzureB2C.tenant + '.onmicrosoft.com/oauth2/v2.0';
 	const urlSSOLogin= urlSSO + '/authorize?p='+ ssoAzureUserFlow +'&client_id='+ jsonAzureB2C.client_id +'&nonce=defaultNonce&redirect_uri='+ encodeURIComponent( jsonAzureB2C.login_redirect_url ) +'&scope=openid+email&response_type=code&prompt=login';
 	const urlSSOCode2Token = urlSSO + '/token?p='+ ssoAzureUserFlow;
-	const url = new URL(loaderArgs.request.url);
+	const url = new URL(request.url);
 	const code = url.searchParams.get('code') || '';
 
+
 	// https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch
-	//// Code is working
-	// if (code) {
-	// 	try {
-	// 		const response = await fetch(urlSSOCode2Token, {
-	// 			method: 'POST',
-	// 			headers:{
-	// 			'Content-Type': 'application/x-www-form-urlencoded'
-	// 			},    
-	// 			body: new URLSearchParams({
-	// 				'client_id': jsonAzureB2C.client_id,
-	// 				'client_secret': jsonAzureB2C.client_secret,
-	// 				'code': code,
-	// 				'grant_type': 'authorization_code'
-	// 			})
-	// 		});
+	if (code) {
+		try {
+			const response = await fetch(urlSSOCode2Token, {
+				method: 'POST',
+				headers:{
+				'Content-Type': 'application/x-www-form-urlencoded'
+				},    
+				body: new URLSearchParams({
+					'client_id': jsonAzureB2C.client_id,
+					'client_secret': jsonAzureB2C.client_secret,
+					'code': code,
+					'grant_type': 'authorization_code'
+				})
+			});
 
-	// 		const result = await response.json();
-	// 		console.log( result );
-	// 	}
-	// 	catch (error) { 
-	// 		console.error('Error:', error); 
-	// 	}
-	// }
+			const result = await response.json();
+			console.log( result );
+			if ("id_token" in result) {
+				console.log( decodeToken( result.id_token ) );
+			}
+			
+		}
+		catch (error) { 
+			console.error('Error:', error); 
+		}
+	}
 
-	console.log(logiStep1GetCode());
+
+	// return json(null);
+	return json({ urlSSOLogin:urlSSOLogin, code:code });
+};
+
+// export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
+// 	const { user } = authLoaderGetAuth(loaderArgs);
+
+// 	console.log(logiStep1GetCode());
 	
-	// console.log( url.searchParams.get('code') );
+// 	// console.log( url.searchParams.get('code') );
 	
 
-	return json({ message: `Hello ${user.email}`, urlSSOLogin:urlSSOLogin, code:code });
-});
+// 	return json({ message: `Hello ${user.email}`, urlSSOLogin:urlSSOLogin, code:code });
+// });
 
 // http://dts.ddev.site:3000/sso/azure-b2c/callback
 // https://app.dts.ddev.site/sso/azure-b2c/callback
@@ -74,7 +88,7 @@ export default function SsoAzureB2cCallback() {
 	return (
 	  <div>
 		<p>STEP 1: <Link to={ loaderData.urlSSOLogin }>{ loaderData.urlSSOLogin }</Link></p>
-		<p>STEP 2x: { loaderData.code }</p>
+		<p>STEP 2: { loaderData.code }</p>
 	  </div>
 	);
 }

@@ -1,7 +1,7 @@
 import {
 	json,
 } from "@remix-run/node";
-import { logiStep1GetCode }  from "~/util/ssoauzeb2c";
+import { loginGetCode }  from "~/util/ssoauzeb2c";
 
 export const action = async () => {
 	return json(null);
@@ -10,7 +10,7 @@ export const action = async () => {
 export const loader = async () => {
 	console.log("NODE_ENV", process.env.NODE_ENV)
 
-	return logiStep1GetCode();
+	return loginGetCode();
 
 	// return json(null);
 };
