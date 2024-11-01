@@ -73,6 +73,10 @@ export default function Screen() {
 				<Link to="/user/forgot-password">Forgot password</Link>
 				<SubmitButton label="Login"></SubmitButton>
 			</Form>
+			<p>&nbsp;</p>
+			<div>
+			<Link to="/sso/azure-b2c/callback?action=login">Login using Azure B2C SSO</Link>
+			</div>
 		</>
 	);
 }

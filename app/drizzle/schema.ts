@@ -68,7 +68,8 @@ export const userTable = pgTable("user", {
 	totpSecret: zeroText(),
 	totpSecretUrl: zeroText(),
 	organization: zeroText(),
-	hydrometCheUser: zeroBool()
+	hydrometCheUser: zeroBool(),
+	authType: text().notNull().default("form"),
 });
 
 export type User = typeof userTable.$inferSelect;
