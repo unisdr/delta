@@ -121,11 +121,11 @@ function InactivityWarning(props: InactivityWarningProps){
 		return () => clearInterval(interval);
 	}, [lastActivity]);
 
+	const fetcher = useFetcher();
+
 	if (!props.loggedIn){
 		return null;
 	}
-
-	const fetcher = useFetcher();
 	const handleRefreshSession = () => {
 		setLastActivity(new Date());
 		fetcher.load("/user/refresh-session");
