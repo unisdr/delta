@@ -1,6 +1,7 @@
 import { dr } from "~/db.server";
 import {
 	InferSelectModel,
+	and,
 	eq,
 } from "drizzle-orm";
 
@@ -18,6 +19,7 @@ import bcrypt from 'bcryptjs';
 import {
 	Errors,
 	hasErrors,
+	initErrorField,
 } from "~/components/form"
 
 import { sendEmail } from "~/util/email";
@@ -27,6 +29,7 @@ import { errorIsNotUnique } from "~/util/db";
 import { randomBytes } from 'crypto';
 
 import * as OTPAuth from "otpauth";
+import {configSiteURL} from "~/util/config";
 
 // rounds=10: ~10 hashes/sec
 // this measurements is from another implementation
@@ -38,6 +41,9 @@ function passwordHash(password: string): string {
 }
 
 async function passwordHashCompare(password: string, passwordHash: string){
+	if (password == "" || passwordHash == ""){
+		return false
+	}
 	return await bcrypt.compare(password, passwordHash);
 }
 
@@ -51,7 +57,6 @@ export async function login(email: string, password: string): Promise<LoginResul
 		return {ok: false}
 	}
 	const user = res[0]
-
 	const isPasswordValid = await passwordHashCompare(password, user.password);
 	if (isPasswordValid) {
 		return { ok: true, userId: user.id};
@@ -108,11 +113,7 @@ export async function resetPasswordSilentIfNotFound(email: string) {
 	})
 	.where(eq(userTable.email, email));
 
-	if (!process.env.WEBSITE_URL){
-		throw "provide WEBSITE_URL in env"
-	}
-
-	const resetURL = `${process.env.WEBSITE_URL}/user/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+	const resetURL = `${configSiteURL()}/user/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
 	const subject =  "Password Reset Request"
 	const text = `You requested a password reset. Click the link to reset your password: ${resetURL}`
@@ -189,6 +190,52 @@ export function Validate(data: ItemInsert){
 	return errors
 }
 
+
+interface EmailField {
+	email: string;
+}
+
+function validateEmail(data: EmailField, errors: Errors<EmailField>) {
+	let email = initErrorField(errors, "email")
+	if (data.email == "") {
+		email.push("Email is required");
+	}
+}
+
+interface NameFields {
+	firstName: string;
+	lastName: string;
+}
+function validateName(data: NameFields, errors: Errors<NameFields>) {
+	let firstName = initErrorField(errors, "firstName")
+	if (data.firstName == "") {
+		firstName.push("First name is required");
+	}
+}
+
+interface PasswordFields {
+	password: string;
+	passwordRepeat: string;
+}
+
+function validatePassword(data: PasswordFields, errors: Errors<PasswordFields>) {
+	let password = initErrorField(errors, "password")
+	let passwordRepeat = initErrorField(errors, "passwordRepeat")
+	errors.form = errors.form || [];
+	if (data.password == "") {
+		password.push("Password is empty");
+	} 
+	if (data.passwordRepeat == "") {
+		passwordRepeat.push("Please repeat password");
+	} 
+	if (data.password != "" && data.passwordRepeat != "" && data.password != data.passwordRepeat) {
+		const msg = "Passwords do not match";
+		errors.form.push(msg);
+		password.push(msg);
+		passwordRepeat.push(msg);
+	}
+}
+
 type SetupAdminAccountResult = 
 	| { ok: true; userId: number}
 	| { ok: false; errors: Errors<SetupAdminAccountFields> };
@@ -218,22 +265,10 @@ export async function setupAdminAccount(fields: SetupAdminAccountFields): Promis
 	let errors: Errors<SetupAdminAccountFields> = {}
 	errors.form = []
 	errors.fields = {}
-	if (fields.email == "") {
-		errors.fields.email = ["Email is empty"]
-	}
-	if (fields.firstName == ""){
-		errors.fields.firstName = ["First name is empty"]
-	}
-	if (fields.password == "") {
-		errors.fields.password = ["Password is empty"]
-	} else if (fields.passwordRepeat == "") {
-		errors.fields.passwordRepeat = ["Please repeat password"]
-	} else if (fields.password != fields.passwordRepeat){
-		const msg = "Passwords do not match"
-		errors.form.push(msg)
-		errors.fields.password = [msg]
-		errors.fields.passwordRepeat = [msg]
-	}
+
+	validateEmail(fields, errors);
+	validateName(fields, errors);
+	validatePassword(fields, errors);
 
 	if (hasErrors(errors)) {
 		return { ok: false, errors }
@@ -377,8 +412,8 @@ export async function changePassword(userId: number, fields:ChangePasswordFields
 	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
 
 if (!res || res.length === 0) {
-  errors.form = ["Application error. User not found"];
-  return { ok: false, errors };
+	errors.form = ["Application error. User not found"];
+	return { ok: false, errors };
 }
 
 const user = res[0];
@@ -575,7 +610,6 @@ export async function adminUpdateUser(id: number, fields: AdminUpdateUserFields)
 		return { ok: false, errors }
 	}
 
-
 	try {
 		const res = await dr
 		.update(userTable)
@@ -603,5 +637,205 @@ export async function adminUpdateUser(id: number, fields: AdminUpdateUserFields)
 	// sendEmailVerification(user);
 
 	return { ok: true, userId: id };
+}
+
+
+type AdminInviteUserResult = 
+	| { ok: true }
+	| { ok: false; errors: Errors<AdminInviteUserFields> };
+
+export interface AdminInviteUserFields {
+	firstName: string
+	lastName: string
+	email: string
+	organization: string
+	hydrometCheUser: boolean
+	role: string
+}
+
+export function adminInviteUserFieldsFromMap(data: { [key: string]: string }): AdminInviteUserFields {
+	const fields: (keyof AdminInviteUserFields)[] = [
+		"email",
+		"firstName",
+		"lastName",
+		"organization",
+		"role",
+	];
+	let res = Object.fromEntries(
+		fields.map(field => [field, data[field] || ""])
+	) as Omit<AdminInviteUserFields, "hydrometCheUser">;
+	const result: AdminInviteUserFields = {
+		...res,
+		hydrometCheUser: data.hydrometCheUser === "on",
+	};
+	return result;
+}
+
+export async function adminInviteUser(fields: AdminInviteUserFields): Promise<AdminInviteUserResult> {
+	let errors: Errors<AdminInviteUserFields> = {};
+	errors.form = [];
+	errors.fields = {};
+
+	if (fields.email == "") {
+		errors.fields.email = ["Email is required"];
+	}
+	if (fields.firstName == "") {
+		errors.fields.firstName = ["First name is required"];
+	}
+	if (fields.role == "") {
+		errors.fields.role = ["Role is required"];
+	}
+	if (fields.organization == "") {
+		errors.fields.organization = ["Organization is required"];
+	}
+
+	if (hasErrors(errors)) {
+		return { ok: false, errors };
+	}
+
+	try {
+		const res = await dr
+			.insert(userTable)
+			.values({
+				email: fields.email,
+				firstName: fields.firstName,
+				lastName: fields.lastName,
+				role: fields.role,
+				organization: fields.organization,
+				hydrometCheUser: fields.hydrometCheUser
+			}).returning()
+		const user = res[0]
+		await sendInvite(user)
+	} catch (e: any) {
+		if (errorIsNotUnique(e, "user", "email")) {
+			errors.fields.email = ["A user with this email already exists"];
+			return { ok: false, errors };
+		}
+		throw e;
+	}
+
+
+	return { ok: true };
+}
+
+export async function sendInvite(user: User) {
+	const inviteCode = randomBytes(32).toString("hex");
+	const expirationTime = addHours(new Date(), 7 * 24);
+
+	await dr
+	.update(userTable)
+	.set({
+		inviteSentAt: new Date(),
+		inviteCode: inviteCode,
+		inviteExpiresAt: expirationTime,
+	})
+	.where(eq(userTable.id, user.id));
+
+	const inviteURL = configSiteURL() + "/user/accept-invite?inviteCode=" + inviteCode
+
+	const subject = "Invite";
+	const text = `${inviteURL}`;
+	const html = `<p><a href="${inviteURL}">${inviteURL}</a></p>`;
+
+	await sendEmail(user.email, subject, text, html);
+}
+
+type ValidateInviteCodeResult = 
+	| { ok: true, userId: number}
+	| { ok: false, error: string };
+
+export async function validateInviteCode(code: string): Promise<ValidateInviteCodeResult> {
+	if (!code) {
+		return { ok: false, error: "Invite code is required" };
+	}
+
+	const res = await dr
+		.select()
+		.from(userTable)
+		.where(eq(userTable.inviteCode, code));
+
+	if (!res.length) {
+		return { ok: false, error: "Invalid invite code" };
+	}
+
+	const user = res[0];
+	const now = new Date();
+
+	if (user.inviteExpiresAt < now) {
+		return { ok: false, error: "Invite code has expired" };
+	}
+
+	return {
+		ok: true,
+		userId: user.id,
+	};
+}
+
+
+type AcceptInviteResult = 
+	| { ok: true; userId: number}
+	| { ok: false; errors: Errors<AcceptInviteFields> };
+
+interface AcceptInviteFields {
+	firstName: string
+	lastName: string
+	password: string
+	passwordRepeat: string
+}
+
+export function AcceptInviteFieldsFromMap(data: { [key: string]: string }): AcceptInviteFields {
+	const fields: (keyof AcceptInviteFields)[] = [
+		"firstName",
+		"lastName",
+		"password",
+		"passwordRepeat"
+	];
+	 return Object.fromEntries(
+		fields.map(field => [field, data[field] || ""])
+	) as unknown as AcceptInviteFields;
+}
+
+export async function acceptInvite(inviteCode: string, fields: AcceptInviteFields): Promise<AcceptInviteResult> {
+	let errors: Errors<AcceptInviteFields> = {}
+	errors.form = []
+	errors.fields = {}
+
+	const codeRes = await validateInviteCode(inviteCode)
+	if (!codeRes.ok){
+		errors.form = [codeRes.error]
+		return { ok: false, errors }
+	}
+
+	const userId = codeRes.userId
+
+	validateName(fields, errors);
+	validatePassword(fields, errors);
+
+	if (hasErrors(errors)) {
+		return { ok: false, errors }
+	}
+
+	let user: User
+
+	const res = await dr
+		.update(userTable)
+		.set({
+			inviteCode: "",
+			password: passwordHash(fields.password),
+			firstName: fields.firstName,
+			lastName: fields.lastName,
+			emailVerified: true
+		})
+		.where(eq(userTable.id, userId))
+		.returning()
+
+	if (res.length === 0){
+		errors.form = ["Application Error. User not found"]
+		return { ok: false, errors }
+	}
+
+	user = res[0]
+
+	return { ok: true, userId: user.id }
 }
 

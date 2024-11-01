@@ -1,7 +1,7 @@
 export const ValidRoles = [
-	{id: "admin", label: "Admin"},
-	{id: "contributor", label: "Contributor"},
-	{id: "data-viewer", label: "Data Viewer"},
+	{id: "admin", label: "Admin", desc: "Allows to admin"},
+	{id: "contributor", label: "Contributor", desc: "Allows to contribute"},
+	{id: "data-viewer", label: "Data Viewer", desc: "Allows to view"},
 ] as const;
 
 export const Permissions = [
@@ -9,6 +9,7 @@ export const Permissions = [
 	{id: "EditUsers", role: "admin", label: "Edit other user details"},
 	{id: "ViewData", role: "data-viewer", label: "View data"},
 	{id: "EditData", role: "contributor", label: "Edit data"},
+	{id: "InviteUsers", role: "admin", label: "Invite users"},
 ] as const;
 
 export type PermissionId = typeof Permissions[number]["id"];

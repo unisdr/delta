@@ -13,6 +13,16 @@ import {
 	relations
 } from "drizzle-orm";
 
+function zeroTimestamp(){
+	return timestamp().notNull().default(sql`'2000-01-01T00:00:00.000Z'`)
+}
+function zeroText(){
+	return text().notNull().default("")
+}
+function zeroBool(){
+	return boolean().notNull().default(false)
+}
+
 const timestamps = {
 	updatedAt: timestamp(),
 	createdAt: timestamp().notNull().defaultNow(),
@@ -23,8 +33,8 @@ export const sessionTable = pgTable("session", {
 	...timestamps,
 	id: uuid().primaryKey().defaultRandom(),
 	userId: integer().notNull(),
-	lastActiveAt: timestamp().notNull().default(sql`'1970-01-01T00:00:00.000Z'`),
-	totpAuthed: boolean("totpAuthed").notNull().default(false),
+	lastActiveAt: zeroTimestamp(),
+	totpAuthed: zeroBool(),
 });
 
 export type Session = typeof sessionTable.$inferSelect;
@@ -40,20 +50,25 @@ export const sessionsRelations = relations(sessionTable, ({ one }) => ({
 export const userTable = pgTable("user", {
 	...timestamps,
 	id: serial().primaryKey(),
-	role: text().notNull().default(""),
-	firstName: text().notNull(),
-	lastName: text().notNull(),
+	role: zeroText(),
+	firstName: zeroText(),
+	lastName: zeroText(),
 	email: text().notNull().unique(),
-	password: text().notNull(),
-	emailVerified: boolean().default(false),
-	emailVerificationCode: text().default(""),
+	password: zeroText(),
+	emailVerified: zeroBool(),
+	emailVerificationCode: zeroText(),
 	emailVerificationSentAt: timestamp(),
-	emailVerificationExpiresAt: timestamp().notNull().default(sql`'1970-01-01T00:00:00.000Z'`),
-	resetPasswordToken: text().default(""),
-	resetPasswordExpiresAt: timestamp(),
-	totpEnabled: boolean().default(false),
-	totpSecret: text().notNull().default(""),
-	totpSecretUrl: text().notNull().default(""),
+	emailVerificationExpiresAt: zeroTimestamp(),
+	inviteCode: zeroText(),
+	inviteSentAt: timestamp(),
+	inviteExpiresAt: zeroTimestamp(),
+	resetPasswordToken: zeroText(),
+	resetPasswordExpiresAt: zeroTimestamp(),
+	totpEnabled: zeroBool(),
+	totpSecret: zeroText(),
+	totpSecretUrl: zeroText(),
+	organization: zeroText(),
+	hydrometCheUser: zeroBool()
 });
 
 export type User = typeof userTable.$inferSelect;

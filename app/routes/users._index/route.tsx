@@ -85,7 +85,7 @@ export default function Data() {
 
 	return (
 		<div>
-			<a href="/users/new">New</a>
+			<a href="/users/invite">Invite</a>
 			<form method="get" action="/users">
 				<input
 					type="text"

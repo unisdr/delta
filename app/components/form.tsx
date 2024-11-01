@@ -9,6 +9,12 @@ export interface Errors<T> {
 	fields?: Partial<Record<keyof T, string[]>>
 }
 
+export function initErrorField<T>(errors: Errors<T>, field: keyof T): string[] {
+	errors.fields = errors.fields || {};
+	errors.fields[field] = errors.fields[field] || [];
+	return errors.fields[field] as string[];
+}
+
 export function hasErrors<T>(errors: Errors<T>): boolean {
 	if (errors.form && errors.form.length > 0) {
 		return true;
