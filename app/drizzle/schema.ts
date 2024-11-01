@@ -54,6 +54,7 @@ export const userTable = pgTable("user", {
 	totpEnabled: boolean().default(false),
 	totpSecret: text().notNull().default(""),
 	totpSecretUrl: text().notNull().default(""),
+	authType: text().notNull().default("form"),
 });
 
 export type User = typeof userTable.$inferSelect;
