@@ -1,0 +1,3 @@
+Some code in this directory is based on:
+https://github.com/undp/design-system
+Licensed under MIT license.
