@@ -31,7 +31,7 @@ yarn run dotenv -e .env.test prisma migrate dev
 yarn run test
 ```
 
-### Technology Stack
+## Technology Stack
 
 The software tools and technologies used to build the DTS web application. This includes programming languages, frameworks, libraries, patterns, servers, UI/UX solutions, software, and tools used by developers.
 
@@ -41,3 +41,7 @@ The software tools and technologies used to build the DTS web application. This 
 * Remix
 * Drizzle ORM
 * PostgreSQL
+
+## Other Resources
+
+* [HTML & CSS Templates] https://rawgit.com/PreventionWeb/templates/dts/dts/dist/template-index.html
