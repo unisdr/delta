@@ -181,7 +181,8 @@ export default function Screen() {
 			<head>
 				<link
 					rel="icon"
-					href="data:image/x-icon;base64,AA"
+					type="image/x-icon" 
+					href="/favicon.ico"
 				/>
 				<Meta />
 				<Links />
