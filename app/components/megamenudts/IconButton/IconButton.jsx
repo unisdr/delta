@@ -1,4 +1,4 @@
-import { Icons } from "../../../Atom/Icons/Icons";
+import { Icons } from "~/components/megamenudts/icons";
 
 export function IconButton({ onClick, icon }) {
   return (

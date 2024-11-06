@@ -14,72 +14,13 @@ import {
 	authLoaderGetAuth
 } from "~/util/auth";
 
-import MegaMenu from '~/components/megamenu/MegaMenu';
-import MegaMenuSimple from '~/components/megamenu/MegaMenuSimple';
+import MegaMenuDts from '~/components/megamenudts/MegaMenuDts';
 
 import { useState, useEffect } from "react";
 
 export const loader = authLoader(async () => {
 	return json(null);
 });
-
-export const sectionsSimple = () => ([
-    {
-      title: "Highlights",
-      bannerHeading: "Highlights",
-      bannerDescription: "Gaze upon statistics in wonder...",
-      items: [
-        {
-          title: "Item 1",
-          url: "#",
-          items: [
-            {
-              title: "Sub-item 1",
-              url: "#",
-            },
-            {
-              title: "Sub-item 2",
-              url: "#",
-              items: [
-                {
-                  title: "Sub-item 3",
-                  url: "#",
-                },
-                {
-                  title: "Sub-item 4",
-                  url: "#",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          title: "Item 1",
-          url: "#",
-          items: [
-            {
-              title: "Sub-item 1",
-              url: "#",
-            },
-            {
-              title: "Sub-item 2",
-              url: "#",
-              items: [
-                {
-                  title: "Sub-item 3",
-                  url: "#",
-                },
-                {
-                  title: "Sub-item 4",
-                  url: "#",
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ])
 
 export const sections = () => ([
     {
@@ -114,6 +55,7 @@ export const sections = () => ([
     }
   ])
 
+
 export default function Screen(){
 	// only render in the browser, not server
 	// since it uses window breakpoints to know the sizing
@@ -125,8 +67,7 @@ export default function Screen(){
 
 	return (
 		<>
-			<MegaMenuSimple delay={600} sections={sectionsSimple()} />
-			<MegaMenu delay={600} sections={sections()} />
+			<MegaMenuDts delay={600} sections={sections()} />
 		</>
 	)
 }

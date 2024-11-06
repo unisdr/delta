@@ -3,10 +3,12 @@ import { Breakpoints } from './constants';
 
 // Function to determine the current breakpoint
 const getBreakpoint = (width) => {
-  if (width < Breakpoints.MOBILE) return 'mobile'; // Extra small devices
-  if (width < Breakpoints.TABLET) return 'tablet'; // Small devices (mobile)
-  if (width < Breakpoints.DESKTOP) return 'desktop'; // Medium devices (tablet)
-  return 'desktop'
+  if (width < Breakpoints.MOBILE) return 'mobile'; // Small devices (mobile)
+  else if (width < Breakpoints.TABLET) return 'mobilelandscape'; // Medium devices (mobile)
+  else if (width < Breakpoints.LAPTOP) return 'tablet'; // Medium devices (tablet)
+  else if (width < Breakpoints.DESKTOP) return 'laptop'; // Large devices (laptop)
+  else if (width < Breakpoints.DESKTOPWIDE) return 'desktop'; // Large devices (desktop)
+  else return 'desktopwide' // Extra large devices (desktop)
 };
 
 
