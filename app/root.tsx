@@ -19,7 +19,6 @@ import {
 
 import { LoaderFunctionArgs, NavLink } from "react-router-dom";
 
-import appStylesHref from "./app.css?url";
 
 import {
 	getUserFromSession,
@@ -33,9 +32,11 @@ import { useEffect, useState } from "react";
 
 import { configSiteName } from "~/util/config";
 
+import allStylesHref from "./styles/all.css?url";
+
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/css/style-dts.css' },
-	{ rel: "stylesheet", href: appStylesHref },
+	{ rel: "stylesheet", href: allStylesHref },
 ];
 
 export const loader = async ({request}:LoaderFunctionArgs) => {

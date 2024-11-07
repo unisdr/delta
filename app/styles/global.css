@@ -23,8 +23,6 @@ form > label {
 	height: 300px;
 }
 
-
-
 .flex {
 	display: flex;
 	flex-direction: row;
@@ -37,3 +35,4 @@ form > label {
 	border: 1px solid gainsboro;
 	margin: 10px;
 }
+
