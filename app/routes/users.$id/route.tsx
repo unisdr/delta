@@ -42,7 +42,10 @@ export const loader = authLoaderWithRole("ViewUsers", async (loaderArgs) => {
 			email: item.email,
 			firstName: item.firstName,
 			lastName: item.lastName,
-			role: item.role
+			role: item.role,
+			organization: item.organization,
+			emailVerified: item.emailVerified,
+			authType: item.authType,
 		},
 	});
 })
@@ -58,6 +61,9 @@ export default function Data() {
 			<p>First Name: {item.firstName}</p>
 			<p>Last Name: {item.lastName}</p>
 			<p>Role: {item.role}</p>
+			<p>Organization: {item.organization}</p>
+			<p>Email Verified: { String(item.emailVerified) }</p>
+			<p>Auth Type: {item.authType}</p>
 		</div>
 	);
 }
