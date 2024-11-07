@@ -1,3 +1,5 @@
+import type { MetaFunction } from '@remix-run/node';
+
 import {
 	json,
 } from "@remix-run/node";
@@ -13,11 +15,17 @@ export const loader = async () => {
 	return json(null);
 };
 
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Welcome to admin setup - DTS" },
+		{ name: "description", content: "Admin setup." },
+	];
+};
+
 export default function Screen() {
 	return (
 		<>
-			<h2>Welcome to the Disaster tracking system.
-</h2>
+			<h2>Welcome to the Disaster tracking system.</h2>
 			<p>Track disaster impacts, including damages, losses, and human effects, to support better recovery and resilience.</p>
 			<div>
 			<Link to="/setup/admin-account">Setup account</Link>
