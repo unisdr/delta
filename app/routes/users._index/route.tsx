@@ -1,3 +1,5 @@
+import type { MetaFunction } from '@remix-run/node';
+
 import {
 	useLoaderData,
 	Link
@@ -15,6 +17,13 @@ import {
 import { Pagination } from "~/components/pagination/view"
 import { executeQueryForPagination } from "~/components/pagination/api.server"
 import {userTable} from "~/drizzle/schema";
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Users - DTS" },
+		{ name: "description", content: "System settings." },
+	];
+};
 
 export const loader = authLoaderWithRole("ViewUsers",async (loaderArgs) => {
 	const { request } = loaderArgs;
@@ -58,6 +67,9 @@ export const loader = authLoaderWithRole("ViewUsers",async (loaderArgs) => {
 		firstName: userTable.firstName,
 		lastName: userTable.lastName,
 		role: userTable.role,
+		organization: userTable.organization,
+		emailVerified: userTable.emailVerified,
+		authType: userTable.authType,
 	}
 
 	const res = await executeQueryForPagination<UserRes>(request, userTable, select, null)
@@ -74,6 +86,10 @@ interface UserRes {
 	firstName: string
 	lastName: string
 	role: string
+	organization: string
+	emailVerified: string
+	auth: string
+	authType: string
 }
 
 
@@ -95,13 +111,16 @@ export default function Data() {
 				/>
 				<button type="submit">Search</button>
 			</form>
-			<table>
+			<table border={1} cellPadding={5} cellSpacing={1}>
 				<thead>
 					<tr>
 						<th>Email</th>
 						<th>First Name</th>
 						<th>Last Name</th>
 						<th>Role</th>
+						<th>Organization</th>
+						<th>Email Verified</th>
+						<th>Auth</th>
 						<th></th>
 					</tr>
 				</thead>
@@ -115,6 +134,9 @@ export default function Data() {
 							<td>{item.firstName}</td>
 							<td>{item.lastName}</td>
 							<td>{item.role}</td>
+							<td>{item.organization}</td>
+							<td>{item.emailVerified.toString()}</td>
+							<td>{item.authType}</td>
 							<td>
 								<Link to={`/users/${item.id}`}>View</Link>&nbsp;
 								<Link to={`/users/edit/${item.id}`}>Edit</Link>&nbsp;

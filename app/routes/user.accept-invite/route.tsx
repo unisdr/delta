@@ -8,6 +8,7 @@ import {
 	useActionData,
 	useLoaderData,
 } from "@remix-run/react";
+import { Link } from "react-router-dom";
 import {
 	Form,
 	Field,
@@ -27,9 +28,11 @@ import {
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("inviteCode") || "";
+	const sso = url.searchParams.get("sso") || "";
 	const res = await validateInviteCode(inviteCode);
 	return json({
 		inviteCode: inviteCode,
+		sso: sso,
 		inviteCodeValidation: res
 	});
 };
@@ -88,6 +91,10 @@ export default function Screen() {
 				</Field>
 				<SubmitButton label="Setup account"></SubmitButton>
 			</Form>
+			<p>&nbsp;</p>
+			<div>
+				<Link to={ `/user/accept-invite?inviteCode=${inviteCode}&sso=sso_azure_b2c` }>Complete the registration by logging-in using Azure B2C SSO</Link>
+			</div>
 		</>
 	);
 }

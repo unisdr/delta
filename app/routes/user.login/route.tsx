@@ -1,3 +1,5 @@
+import type { MetaFunction } from '@remix-run/node';
+
 import {
 	ActionFunctionArgs,
 	json,
@@ -55,6 +57,13 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 	return json(null);
 };
 
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Login - DTS" },
+		{ name: "description", content: "Login." },
+	];
+};
+
 export default function Screen() {
 	const actionData = useActionData<typeof action>();
 
@@ -64,14 +73,24 @@ export default function Screen() {
 	return (
 		<>
 			<Form errors={errors}>
-				<Field label="Email">
-					<input type="email" name="email" defaultValue={data?.email}></input>
-				</Field>
-				<Field label="Password">
-					<input type="password" name="password" defaultValue={data?.password}></input>
-				</Field>
+				<div className="dts-form-component">
+					<Field label="Email">
+						<span className="mg-u-sr-only">Email address*</span>
+						<input type="email" autoComplete="off" name="email" placeholder="Enter email address*" defaultValue={data?.email} required></input>
+					</Field>
+				</div>
+				<div className="dts-form-component">
+					<Field label="Password">
+						<span className="mg-u-sr-only">Password*</span>
+						<input type="password" autoComplete="off" name="password" placeholder="Enter password*" defaultValue={data?.password} required></input>
+					</Field>
+				</div>
+				
 				<Link to="/user/forgot-password">Forgot password</Link>
-				<SubmitButton label="Login"></SubmitButton>
+				<div className="dts-dialog__form-actions">
+					<SubmitButton label="Login"></SubmitButton>	
+				</div>
+				
 			</Form>
 			<p>&nbsp;</p>
 			<div>
