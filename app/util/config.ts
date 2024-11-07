@@ -1,4 +1,9 @@
 
+/**
+ * See Remix documentaion on how to handle environment variables
+ * depending on the hosting platform: 
+ * https://remix.run/docs/en/main/guides/envvars
+ */
 import { SSOAzureB2C as interfaceSSOAzureB2C } from "~/util/ssoauzeb2c";
 
 /**

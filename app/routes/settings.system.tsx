@@ -1,3 +1,5 @@
+import type { MetaFunction } from '@remix-run/node';
+
 import {
 	json,
 	redirect
@@ -32,6 +34,13 @@ export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
 
 	return json({ message: `Hello ${user.email}`, currency:currency, timeZones:timeZones, });
 });
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "System Settings - DTS" },
+		{ name: "description", content: "System settings." },
+	];
+};
 
 
 export default function Settings() {
