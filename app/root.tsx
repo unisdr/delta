@@ -34,6 +34,11 @@ import { configSiteName } from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
+import {
+	Header,
+} from "~/components/header/header"
+
+
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/css/style-dts.css' },
 	{ rel: "stylesheet", href: allStylesHref },
@@ -57,6 +62,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 	});
 };
 
+/*
 interface NavProps {
 	loggedIn: boolean
 }
@@ -85,7 +91,7 @@ function Nav(props: NavProps) {
 			) : null }
 		</nav>
 	);
-}
+}*/
 
 interface InactivityWarningProps {
 	loggedIn: boolean
@@ -195,65 +201,15 @@ export default function Screen() {
 				<InactivityWarning loggedIn={loggedIn} />
 				<SessionMessage message={flashMessage} />
 				<div className="dts-page-container">
+					{ loggedIn && (
 					<header>
 						<div className="mg-container">
-							<div className="dts-header">
-								<div className='dts-header__logo'>
-									<img src="https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg" alt="DLDT logo mark" />
-									<div className='dts-header__logo-text' dir="auto">{ configSiteName }</div>
-								</div>
-								<div className="dts-header__main-menu">
-									<nav className="mg-mega-wrapper dts-mega-wrapper" aria-label="Main Navigation">
-									<div className="mg-mega-topbar">
-										<button className="mg-mega-topbar__item">
-										<svg aria-hidden="true" focusable="false" role="img">
-											<use href="assets/icons/information_outline.svg#information"></use>
-										</svg>
-										Data
-										</button>
-										<button className="mg-mega-topbar__item">
-										<svg aria-hidden="true" focusable="false" role="img">
-											<use href="assets/icons/eye-show-password.svg#eye-show"></use>
-										</svg>
-										Analysis
-										</button>
-										<button className="mg-mega-topbar__item">
-										<svg aria-hidden="true" focusable="false" role="img">
-											<use href="assets/icons/help-outline.svg#help-outline"></use>
-										</svg>
-										About
-										</button>
-										<button className="mg-mega-topbar__item">
-										<svg aria-hidden="true" focusable="false" role="img">
-											<use href="assets/icons/settings.svg#settings"></use>
-										</svg>
-										Settings
-										</button>
-										<button className="mg-mega-topbar__item">
-										<svg aria-hidden="true" focusable="false" role="img">
-											<use href="assets/icons/user-profile.svg#user"></use>
-										</svg>
-										Log in
-										</button>
-										<button className="mg-mega-topbar__item" aria-label="{title}">
-										<svg aria-hidden="true" focusable="false" role="img">
-											<use href="assets/icons/user-profile.svg#user"></use>
-										</svg>
-										</button>
-									</div>
-									</nav>
-								</div>
-							</div>
+							<Header siteName={configSiteName}/>
 						</div>
-					</header>
+					</header> ) }
 					<main className="dts-main-container">
 						<section>
 							<div className="mg-container">
-								<div className="top-nav">
-									<hr />
-		                            <Nav loggedIn={loggedIn} />
-									<hr />
-								</div>
 								<Outlet />
 							</div>
 						</section>

@@ -41,10 +41,10 @@ function navItems(): Lvl1Item[] {
 				id: "group1",
 				lvl3: [
 					{
-						title: "Data Insights 1",
+						title: "Data example",
 						lvl4: [
-							{ name: "Item 1", link: "#" },
-							{ name: "Item 2", link: "#" },
+							{ name: "Data 1", link: "/data" },
+							{ name: "Data 2", link: "/data" },
 						],
 					},
 					{
@@ -140,12 +140,40 @@ function navItems(): Lvl1Item[] {
 	},
 	{
 		name: "Settings",
-		title: "User Settings",
+		title: "User and System Settings",
 		icon: "undp/calendar",
 		lvl2: [
 			{
+				name: "Main settings",
+				id: "main-settings",
+				lvl3: [
+					{
+						title: "System",
+						lvl4: [
+							{ name: "Access Management", link: "/settings/access-mgmt" },
+							{ name: "System settings", link: "/settings/system" },
+							{ name: "Geographic levels", link: "/settings/geography" },
+							{ name: "Sectors", link: "/settings/sectors" },
+						],
+					},
+					{
+						title: "Users",
+						lvl4: [
+							{ name: "User management", link: "/users" },
+						],
+					},
+					{
+						title: "Your profile",
+						lvl4: [
+							{ name: "Change password", link: "/user/change-password" },
+							{ name: "TOTP (2FA)", link: "/user/totp-enable" },
+						],
+					},
+				],
+			},
+			{
 				name: "User",
-				id: "user",
+				id: "user-settings",
 				lvl3: [
 					{
 						title: "Account",
@@ -159,10 +187,10 @@ function navItems(): Lvl1Item[] {
 		],
 	},
 	{
-		name: "Log in",
+		name: "Log out",
 		title: "User Login",
 		icon: "undp/calendar",
-		link: "#"
+		link: "/user/logout"
 	},
 ];
 }

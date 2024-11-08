@@ -5,6 +5,7 @@ import {
 	useLoaderData,
 	useActionData,
 	Link,
+		redirect
 } from "@remix-run/react";
 import {
 	Form,
@@ -47,11 +48,14 @@ export const action = authAction(async (actionArgs) => {
 		return json({ok: false, errors: errors})
 	}
 
-	return redirectWithMessage(request, "/user/settings", {type:"info", text:"TOTP disabled"})
+	return redirectWithMessage(request, "/", {type:"info", text:"TOTP disabled"})
 });
 
 export const loader = authLoader(async (loaderArgs) => {
 	const { user } = authLoaderGetAuth(loaderArgs)
+	if (!user.totpEnabled){
+		return redirect("/user/totp-enable")
+	}
 	return json({enabled: user.totpEnabled});
 });
 
