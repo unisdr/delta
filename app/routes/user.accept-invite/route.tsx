@@ -24,6 +24,7 @@ import {
 	AcceptInviteFieldsFromMap,
 	validateInviteCode,
 } from "~/backend.server/models/user"
+import { loginGetCode } from "~/util/ssoauzeb2c"
 
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const url = new URL(request.url);
@@ -93,6 +94,7 @@ export default function Screen() {
 			</Form>
 			<p>&nbsp;</p>
 			<div>
+				loginGetCode
 				<Link to={ `/user/accept-invite?inviteCode=${inviteCode}&sso=sso_azure_b2c` }>Complete the registration by logging-in using Azure B2C SSO</Link>
 			</div>
 		</>

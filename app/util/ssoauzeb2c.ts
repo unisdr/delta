@@ -10,6 +10,7 @@ export interface SSOAzureB2C {
 	client_secret: string;
 	login_userflow: string;
 	login_redirect_url: string;
+	login_redirect_url_admin: string;
 	edit_userflow: string;
 	edit_redirect_url: string;
 	reset_userflow: string;
@@ -40,6 +41,16 @@ export function baseURL(): string {
 export function loginGetCode() {
     const jsonAzureB2C:SSOAzureB2C = configSsoAzureB2C();
     let redirectURL = jsonAzureB2C.login_redirect_url.trim();
+    let scope = 'openid+email';
+    redirectURL = encodeURIComponent(redirectURL);
+    const url = `${baseURL()}/authorize?p=${jsonAzureB2C.login_userflow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=${scope}&response_type=code&prompt=login`;
+
+    return redirect(url, 302);
+}
+
+export function loginGetCodeAdmin() {
+    const jsonAzureB2C:SSOAzureB2C = configSsoAzureB2C();
+    let redirectURL = jsonAzureB2C.login_redirect_url_admin.trim();
     let scope = 'openid+email';
     redirectURL = encodeURIComponent(redirectURL);
     const url = `${baseURL()}/authorize?p=${jsonAzureB2C.login_userflow}&client_id=${jsonAzureB2C.client_id}&nonce=defaultNonce&redirect_uri=${redirectURL}&scope=${scope}&response_type=code&prompt=login`;

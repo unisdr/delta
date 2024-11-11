@@ -25,7 +25,7 @@ Licensed under MIT License
 ## Other Resources
 
 * [HTML & CSS Templates] https://rawgit.com/PreventionWeb/templates/dts/dts/dist/template-index.html
-
+* [Figma Design System] https://www.figma.com/design/noegprarmNGSsk4BQlMVtY/DLDTS-Design-System-and-Screens?node-id=1569-5938&node-type=canvas&t=13qOkaBV7VQnRkzY-0
 
 ## Running locally
 
