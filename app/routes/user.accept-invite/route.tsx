@@ -30,11 +30,34 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("inviteCode") || "";
 	const sso = url.searchParams.get("sso") || "";
+	const action = url.searchParams.get("action") || "";
+	const state = url.searchParams.get("state") || "";
+	const code = url.searchParams.get("code") || "";
 	const res = await validateInviteCode(inviteCode);
+
+	if ( action == 'sso_azure_b2c' ) {
+		return loginGetCode(inviteCode);
+	}
+
+	if ( state ) {
+		console.log( state );
+		console.log( decodeURI(state) );
+		console.log( decodeURIComponent(state) );
+		console.log( encodeURIComponent(state) );
+		console.log( '' );
+	}
+
+	if ( code ) {
+		console.log( code );
+		console.log( '' );
+	}
+
 	return json({
 		inviteCode: inviteCode,
 		sso: sso,
-		inviteCodeValidation: res
+		inviteCodeValidation: res,
+		code: code,
+		state: state,
 	});
 };
 
@@ -94,8 +117,7 @@ export default function Screen() {
 			</Form>
 			<p>&nbsp;</p>
 			<div>
-				loginGetCode
-				<Link to={ `/user/accept-invite?inviteCode=${inviteCode}&sso=sso_azure_b2c` }>Complete the registration by logging-in using Azure B2C SSO</Link>
+				<Link to={ `/user/accept-invite?inviteCode=${inviteCode}&sso=sso_azure_b2c&action=sso_azure_b2c` }>Complete the registration by logging-in using Azure B2C SSO</Link>
 			</div>
 		</>
 	);
