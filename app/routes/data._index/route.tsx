@@ -9,7 +9,6 @@ import {
 
 import {
 	itemTable,
-	Item,
 } from '~/drizzle/schema';
 
 
@@ -25,7 +24,6 @@ interface ItemRes {
 
 import { Pagination } from "~/components/pagination/view"
 import { executeQueryForPagination } from "~/components/pagination/api.server"
-import {number} from "prop-types";
 
 export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
 	const { request } = loaderArgs;

@@ -1,3 +1,9 @@
+import {dr} from '~/db.server';
+import {commonPasswordsTable} from '~/drizzle/schema';
+import { eq } from 'drizzle-orm';
+
+
+
 // Password rules
 // - at least 12 characters long
 // - different from initial password
@@ -12,21 +18,20 @@
 // - not based on words in any language or simple patters
 // prevent reuse of previous five passwords
 
-export async function isCommonPassword(db: any, password: string) {
-	// TODO
-	return  false
-	/*
-	{
-		const res = await db.commonPasswords.findFirst()
-		if (!res){
-			throw Error("common passwords table was not imported")
-		}
+export async function isCommonPassword(password: string) {
+
+	const tableCheck = await dr.select().from(commonPasswordsTable).limit(1);
+	if (tableCheck.length === 0) {
+		throw new Error("Common passwords table was not imported");
 	}
 
-	const res = await db.commonPasswords.findUnique({
-		where: {password: password},
-	})
-	return !!res*/
+	const result = await dr
+		.select()
+		.from(commonPasswordsTable)
+		.where(eq(commonPasswordsTable.password, password))
+		.limit(1);
+
+	return result.length > 0;
 }
 
 export enum PasswordCharClass {
@@ -36,7 +41,7 @@ export enum PasswordCharClass {
 	Punctuation = "PUNCTUATION",
 }
 
-	type PasswordCharClasses = Set<PasswordCharClass>
+type PasswordCharClasses = Set<PasswordCharClass>
 
 function hasLowerCase(str: string) {
 	return str.toUpperCase() != str;
@@ -48,17 +53,17 @@ function hasUpperCase(str: string) {
 
 export function characterClasses(password: string): PasswordCharClasses {
 	const res: PasswordCharClasses = new Set();
-	if (hasLowerCase(password)){
+	if (hasLowerCase(password)) {
 		res.add(PasswordCharClass.Lowercase);
 	}
-	if (hasUpperCase(password)){
+	if (hasUpperCase(password)) {
 		res.add(PasswordCharClass.Uppercase);
 	}
-	if (/[0-9]/.test(password)){
+	if (/[0-9]/.test(password)) {
 		res.add(PasswordCharClass.Digit);
 	}
 	// !@#$%^&*()+=\`{}[]:";'< >?,./
-	if (/[!@#$%^&*()+=\\`{}\[\]:";'< >?,.\/]/.test(password)){
+	if (/[!@#$%^&*()+=\\`{}\[\]:";'< >?,.\/]/.test(password)) {
 		res.add(PasswordCharClass.Punctuation);
 	}
 	return res
@@ -88,7 +93,7 @@ export function checkPasswordComplexity(password: string): PasswordCompexity {
 		res.error = PasswordErrorType.TooShort;
 		return res
 	}
-	if (res.characterClasses.size < 2){
+	if (res.characterClasses.size < 2) {
 		res.error = PasswordErrorType.InsufficientCharacterClasses
 		return res
 	}

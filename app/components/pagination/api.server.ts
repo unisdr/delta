@@ -1,21 +1,33 @@
 
-import { dr } from "~/db.server";
+import {dr} from "~/db.server";
 
 import {
-	count
+	count,
 } from "drizzle-orm";
 
 
-const defaultPageSize = 100;
 
-export function paginationQueryFromURL(request: Request){
+
+
+const defaultPageSize = 50;
+
+export function paginationQueryFromURL(request: Request, extraParams: string[]) {
 	const url = new URL(request.url);
 	const page = parseInt(url.searchParams.get("page") || "1", 10);
 	const pageSize = defaultPageSize;
+
+	const params: Record<string, string[]> = {};
+	for (const param of extraParams) {
+		const values = url.searchParams.getAll(param);
+		if (values.length > 0) {
+			params[param] = values;
+		}
+	}
 	return {
 		viewData: {
 			page,
 			pageSize,
+			extraParams: params,
 		},
 		query: {
 			skip: (page - 1) * pageSize,
@@ -30,7 +42,7 @@ export async function executeQueryForPaginationPrisma<T, K extends keyof T>(requ
 	let selectMap = {} as { [key in K]: boolean };
 
 select.forEach((field) => {
- 	selectMap[field] = true;
+	  selectMap[field] = true;
 });
 
 	const pagination = paginationQueryFromURL(request);
@@ -65,12 +77,12 @@ export async function executeQueryForPagination<T>(
 	request: Request,
 	table: any,
 	select: Record<string, any>,
-	where: any
+	where: any,
 ) {
-	const pagination = paginationQueryFromURL(request);
+	const pagination = paginationQueryFromURL(request, []);
 
 
-	const totalItemsRes = await dr.select({ count: count() }).from(table).where(where);
+	const totalItemsRes = await dr.select({count: count()}).from(table).where(where);
 	const totalItems = totalItemsRes[0].count;
 
 	const items = await dr
@@ -84,6 +96,34 @@ export async function executeQueryForPagination<T>(
 		pagination: {
 			totalItems,
 			itemsOnThisPage: items.length,
+			...pagination.viewData,
+		},
+	};
+}
+
+export async function executeQueryForPagination2<T>(
+	request: Request,
+	q: any,
+	q2: (query: any) => any,
+	extraParams: string[]
+) {
+
+	const pagination = paginationQueryFromURL(request, extraParams);
+
+	const countQ = dr.select({count: count()});
+	const totalItemsRes: any = await q2(countQ);
+	const totalItems = Number(totalItemsRes[0]?.count);
+
+	const items = await q2(q)
+		.offset(pagination.query.skip)
+		.limit(pagination.query.take)
+		.execute();
+
+	return {
+		items: items as T[],
+		pagination: {
+			totalItems,
+			itemsOnThisPage: Number(items.length),
 			...pagination.viewData,
 		},
 	};

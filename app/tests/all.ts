@@ -1,5 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import {initDB, endDB} from '~/db.server';
+import '~/backend.server/models/all_test.ts'
+import { before, after } from 'node:test';
 
 function splitInto2(str: string, delimiter: string): [string, string] {
 	const index = str.indexOf(delimiter);
@@ -40,7 +43,15 @@ export function loadEnvFile(type: string) {
 
 loadEnvFile("test")
 
-console.log("database url", process.env["DATABASE_URL"])
+before(async () => {
+	console.log("initing test db")
+	initDB()
+});
 
-import '~/backend.server/models/all_test.ts'
+after(async () => {
+	console.log("ending test db")
+	endDB()
+});
+
+
 

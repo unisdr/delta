@@ -1,5 +1,5 @@
 import { deepEqual } from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { before, beforeEach, describe, it } from 'node:test';
 
 import { 
 	checkPasswordComplexity,
@@ -9,41 +9,51 @@ import {
 	PasswordCharClass
 } from './password';
 import assert from 'node:assert';
-import {testDb} from '~/tests/db';
+
+import {dr} from '~/db.server';
+import {commonPasswordsTable} from '~/drizzle/schema';
+import { sql } from 'drizzle-orm';
+
 
 describe('isCommonPassword', async () => {
-	const db = testDb()
 	const fn = isCommonPassword
 	describe('no data', async () => {
-		//await db.commonPasswords.deleteMany()
+
+		beforeEach(async () => {
+			await dr.execute(sql`TRUNCATE ${commonPasswordsTable};`);
+		})
+
 		it("no data", async () => {
 		await assert.rejects(
 			async () => {
-				await fn(db, "abc")
+				await fn("abc")
 			},
 			{
 				name: 'Error',
-				message: 'common passwords table was not imported',
+				message: 'Common passwords table was not imported',
 			},
 		);
 		});
 	})
+
 	describe('with data', async () => {
-		/*
-		await db.commonPasswords.deleteMany()
-		await db.commonPasswords.createMany({
-			data: [
+
+		beforeEach(async () => {
+			await dr.execute(sql`TRUNCATE ${commonPasswordsTable};`);
+			await dr.insert(commonPasswordsTable).values([
 				{password: "abc"},
-			]
-		})*/
+			])
+		})
+
+
 		it("no data", async () => {
-			assert.equal(await fn(db, "abc"), true)
+			assert.equal(await fn("abc"), true)
 		});
 		it("common", async () => {
-			assert.equal(await fn(db, "abc"), true)
+			assert.equal(await fn("abc"), true)
 		});
 		it("not common", async () => {
-			assert.equal(await fn(db, "abcd"), false)
+			assert.equal(await fn("abcd"), false)
 		});
 	});
 });

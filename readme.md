@@ -55,8 +55,7 @@ yarn add @remix-run/serve
 
 ### Run tests
 ```
-TODO
-yarn run dotenv -e .env.test prisma migrate dev
+yarn run dotenv -e .env.test drizzle-kit push
 yarn run test
 ```
 
