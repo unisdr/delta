@@ -67,6 +67,35 @@ export type LoginAzureB2CResult =
 	| { ok: true, userId: number}
 	| { ok: false, error: string };
 
+export async function registerAzureB2C(pEmail: string, pFirstName: string, pLastName: string): Promise<LoginAzureB2CResult> {
+	const res = await dr.select().from(userTable).where(
+		and(
+			eq(userTable.email, pEmail)
+		)
+	);
+
+	if (!res || res.length === 0) {
+		return { ok: false, error: "Email address doesn't exists"};
+	}
+	if (!pFirstName || pFirstName.length === 0) {
+		return { ok: false, error: "User first name is required"};
+	}
+	const user = res[0];
+
+	await dr
+	.update(userTable)
+	.set({
+		firstName: pFirstName,
+		lastName: pLastName,
+		emailVerified: true,
+		authType: 'sso_azure_b2c',
+		inviteCode: '',
+	})
+	.where(eq(userTable.email, pEmail));
+
+	return { ok: true, userId: user.id};
+}
+
 export async function loginAzureB2C(pEmail: string, pFirstName: string, pLastName: string): Promise<LoginAzureB2CResult> {
 	const res = await dr.select().from(userTable).where(
 		and(
@@ -371,6 +400,51 @@ export async function setupAdminAccountSSOAzureB2C(fields: SetupAdminAccountFiel
 	sendEmailVerification(user)
 
 	return { ok: true, userId: user.id }
+}
+
+
+export async function setupAccountSSOAzureB2C(fields: SetupAdminAccountFields): Promise<SetupAdminAccountResult> {
+	let errors: Errors<SetupAdminAccountFields> = {}
+	errors.form = []
+	errors.fields = {}
+	if (fields.email == "") {
+		errors.fields.email = ["Email is empty"]
+	}
+	if (fields.firstName == ""){
+		errors.fields.firstName = ["First name is empty"]
+	}
+
+	if (hasErrors(errors)) {
+		return { ok: false, errors }
+	}
+
+	let user: User
+
+
+	
+
+	try {
+		const updatedUserId: {updatedId: number}[] = await dr
+		.update(userTable)
+		.set({
+			password: '',
+			authType: 'sso_azure_b2c',
+			emailVerified: true
+		})
+		.where(eq(userTable.email, fields.email))
+		.returning({ updatedId: userTable.id });
+
+		console.log(updatedUserId);
+	} catch (e: any) {
+		if (errorIsNotUnique(e, "user", "email")) {
+			errors.fields.email = ["A user with this email already exists"];
+			return { ok: false, errors };
+		}
+		throw e;
+	}
+	
+
+	return { ok: true, userId: 7  }
 }
 
 

@@ -30,14 +30,16 @@ import {
 
 import { useEffect, useState } from "react";
 
-import { configSiteName } from "~/util/config";
+import { configSiteLogo, configSiteName } from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
 import {
 	Header,
 } from "~/components/header/header"
-
+import {
+	Footer,
+} from "~/components/footer/footer"
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/css/style-dts.css' },
@@ -55,6 +57,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		loggedIn: !!user,
 		flashMessage: message,
 		configSiteName: configSiteName(),
+		configSiteLogo: configSiteLogo(),
 	}, {
 	headers: {
 		"Set-Cookie": await commitCookieSession(session),
@@ -181,7 +184,7 @@ function SessionMessage({message}: SessionMessageProps) {
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {loggedIn, flashMessage, configSiteName} = loaderData
+	const {loggedIn, flashMessage, configSiteName, configSiteLogo} = loaderData
 
 	return (
 		<html lang="en">
@@ -204,7 +207,7 @@ export default function Screen() {
 					{ loggedIn && (
 					<header>
 						<div className="mg-container">
-							<Header siteName={configSiteName}/>
+							<Header siteName={configSiteName} siteLogo={configSiteLogo} />
 						</div>
 					</header> ) }
 					<main className="dts-main-container">
@@ -214,7 +217,9 @@ export default function Screen() {
 							</div>
 						</section>
 					</main>
-					<footer></footer>
+					<footer>
+						<Footer siteName={configSiteName} />
+					</footer>
 				</div>
 				<Scripts />
 			</body>

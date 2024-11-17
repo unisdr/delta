@@ -22,11 +22,23 @@ export function configSiteName(): string {
 		return value;
 };
 
+/**
+ * Get the Website Logo Image URL.
+ */
+export function configSiteLogo(): string {
+	// const value = process.env.WEBSITE_LOGO || '';
+
+	//Temporary not to break the layout
+	const value = process.env.WEBSITE_LOGO || 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg';
+	return value;
+};
+
 export function configSsoAzureB2C(): interfaceSSOAzureB2C {
-		const data:interfaceSSOAzureB2C = { 
+		const data:interfaceSSOAzureB2C = {
 			client_id: _configSsoAzureB2ClientID(), 
 			client_secret: _configSsoAzureB2ClientSecret(),
 			login_userflow: _configSsoAzureB2CLoginUserFlow(),
+			login_redirect_url_admin: _configSsoAzureB2CLoginRedirectURLAdmin(),
 			login_redirect_url: _configSsoAzureB2CLoginRedirectURL(),
 			edit_userflow: _configSsoAzureB2CEditUserFlow(),
 			edit_redirect_url: _configSsoAzureB2CEditRedirectURL(),
@@ -50,6 +62,11 @@ function _configSsoAzureB2ClientSecret(): string {
 
 function _configSsoAzureB2CLoginUserFlow(): string {
 	const value = process.env.SSO_AZURE_B2C_USERFLOW_LOGIN || '';
+	return value;
+};
+
+function _configSsoAzureB2CLoginRedirectURLAdmin(): string {
+	const value = process.env.SSO_AZURE_B2C_USERFLOW_LOGIN_ADMIN_REDIRECT_URL || '';
 	return value;
 };
 

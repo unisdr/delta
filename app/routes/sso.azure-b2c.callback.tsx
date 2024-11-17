@@ -17,7 +17,9 @@ import {
 
 import { 
 	SSOAzureB2C as interfaceSSOAzureB2C, 
-	baseURL
+	baseURL,
+	decodeToken,
+	loginGetCode
 } from "~/util/ssoauzeb2c";
 
 import {
@@ -26,10 +28,6 @@ import {
 	loginAzureB2C
 } from "~/backend.server/models/user";
 
-import {
-	decodeToken,
-	loginGetCode
-} from "~/util/ssoauzeb2c"
 
 import { object } from "prop-types";
 
@@ -58,7 +56,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 		return json({ errors:queryStringDesc });
 	}
 	else if (queryStringAction == 'login') {
-		return loginGetCode();
+		return loginGetCode('');
 	}
 	else if (queryStringCode) {
 		try {

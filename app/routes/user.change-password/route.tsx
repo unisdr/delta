@@ -66,34 +66,45 @@ export default function Screen() {
 
 	return (
 		<>
-			<h1>Change Password</h1>
-			<Form errors={errors}>
-				<Field label="Current Password">
-					<input
-						type="password"
-						name="currentPassword"
-						defaultValue={data.currentPassword}
-					/>
-					<FieldErrors errors={errors} field="currentPassword"></FieldErrors>
-				</Field>
-				<Field label="New Password">
-					<input
-						type="password"
-						name="newPassword"
-						defaultValue={data.newPassword}
-					/>
-					<FieldErrors errors={errors} field="newPassword"></FieldErrors>
-				</Field>
-				<Field label="Confirm New Password">
-					<input
-						type="password"
-						name="confirmPassword"
-						defaultValue={data.confirmPassword}
-					/>
-					<FieldErrors errors={errors} field="confirmPassword"></FieldErrors>
-				</Field>
-				<SubmitButton label="Change Password" />
-			</Form>
+			<header className="dts-page-title">
+				<div className="mg-container">
+					<h1 className="dts-heading-1">Change Password</h1>
+				</div>
+			</header>
+			<section>
+				<div className="mg-container">
+					<div>
+						<Form errors={errors}>
+							<Field label="Current Password">
+								<input
+									type="password"
+									name="currentPassword"
+									defaultValue={data.currentPassword}
+								/>
+								<FieldErrors errors={errors} field="currentPassword"></FieldErrors>
+							</Field>
+							<Field label="New Password">
+								<input
+									type="password"
+									name="newPassword"
+									defaultValue={data.newPassword}
+								/>
+								<FieldErrors errors={errors} field="newPassword"></FieldErrors>
+							</Field>
+							<Field label="Confirm New Password">
+								<input
+									type="password"
+									name="confirmPassword"
+									defaultValue={data.confirmPassword}
+								/>
+								<FieldErrors errors={errors} field="confirmPassword"></FieldErrors>
+							</Field>
+							<SubmitButton label="Change Password" />
+						</Form>
+
+					</div>
+				</div>
+			</section>
 			<Link to="/user/settings">Back to User Settings</Link>
 		</>
 	);

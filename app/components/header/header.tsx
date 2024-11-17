@@ -7,10 +7,25 @@ import {
 import {Lvl1Item} from "~/components/megamenu2/common"
 
 interface HeaderProps {
-	siteName: string
+	siteName: string;
+	siteLogo: string;
 }
 
-export function Header({siteName}: HeaderProps){
+interface LogoProps {
+	src: string;
+	alt: string;
+}
+
+const LogoComponent = ({src, alt }:LogoProps) => {
+	if (src.length === 0) {
+		return '';
+	}
+	else {
+		return <img src={src} alt={alt} />;
+	}
+};
+
+export function Header({siteName, siteLogo}: HeaderProps){
 	const [isClient, setIsClient] = useState(false);
 
 	useEffect(() => {
@@ -18,14 +33,16 @@ export function Header({siteName}: HeaderProps){
 	}, []);
 
 	return (
-		<header className={`dts-main-header ${isClient ? "js-enabled" : ""}`}>
-			<div className="logo">
-				<img src="https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg" alt="DLDT logo" />
-				<span className="title">{siteName}</span>
-				<span className="empty"></span>
-			</div>
-			<MegaMenu items={navItems()} />
-		</header>
+		<>
+			<header className={`dts-main-header ${isClient ? "js-enabled" : ""}`}>
+				<div className="logo">
+					<LogoComponent src={siteLogo} alt='' />
+					<span className="title">{siteName}</span>
+					<span className="empty"></span>
+				</div>
+				<MegaMenu items={navItems()} />
+			</header>
+		</>
 	)
 }
 
