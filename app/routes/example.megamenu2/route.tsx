@@ -48,7 +48,7 @@ export default function Screen(){
 	return (
 		<>
 			<p>Hello!</p>
-			<Header siteName={configSiteName}/>
+			<Header siteLogo="" siteName={configSiteName}/>
 		</>
 	)
 }

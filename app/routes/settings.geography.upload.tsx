@@ -12,7 +12,7 @@ import {
 } from "@remix-run/node";
 import {
 	UserError,
-	importCSV
+	importZip
 } from "~/backend.server/models/division";
 
 import {
@@ -26,7 +26,7 @@ export const loader = authLoaderWithRole("EditData", async () => {
 });
 
 export const action = authActionWithRole("EditData", async ({request}: ActionFunctionArgs) => {
-	let fileString = "";
+	let fileBytes: Uint8Array|null = null;
 
 	const uploadHandler = unstable_composeUploadHandlers(
 		async ({name, contentType, data, filename}) => {
@@ -36,7 +36,7 @@ export const action = authActionWithRole("EditData", async ({request}: ActionFun
 				chunks.push(chunk);
 			}
 			const fileBuffer = Buffer.concat(chunks);
-			fileString = fileBuffer.toString();
+			fileBytes = new Uint8Array(fileBuffer);
 			return "test";
 		},
 	);
@@ -45,7 +45,10 @@ export const action = authActionWithRole("EditData", async ({request}: ActionFun
 		uploadHandler
 	);
 	try {
-		let res = await importCSV(fileString)
+		if (!fileBytes){
+			throw "File was not set"
+		}
+		let res = await importZip(fileBytes)
 		return {ok: true, imported: res.size};
 	} catch (err) {
 		if (err instanceof UserError) {

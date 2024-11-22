@@ -27,19 +27,20 @@ describe("divisions", async () => {
 			);
 		})
 
-		it("has data", async () => {
+		it.only("has data", async () => {
 			await dr.execute(sql`TRUNCATE ${divisionTable};`);
 
 			let data = `
-	id, 	parent,en ,fr
-	1,, 	 en1,fr1
-	2,,en2,fr2
-	3,1,en1.1,fr1.1
-	4,1,en1.2,
+	id, 	parent,geodata,en ,fr
+	1,,g1, 	 en1,fr1
+	2,,g2,en2,fr2
+	3,1,g3,en1.1,fr1.1
+	4,1,g4,en1.2,
 	`
 
 
-			await importCSV(data)
+			let importRes = await importCSV(data)
+			assert.equal(importRes.get("1")?.GeodataFileName, "g1")
 
 			let getData = async function () {
 				const parent = aliasedTable(divisionTable, "parent")
@@ -57,7 +58,7 @@ describe("divisions", async () => {
 
 			let res = await getData()
 
-			console.log("got data", res)
+			//console.log("got data", res)
 
 			let expected: any = [
 				{
@@ -87,8 +88,8 @@ describe("divisions", async () => {
 
 
 			data = `
-	id, 	parent,es
-	1,,es1
+	id, 	parent,geodata,es
+	1,,g1,es1
 	`
 
 
@@ -96,7 +97,7 @@ describe("divisions", async () => {
 
 			res = await getData()
 
-			console.log("got data", res)
+			//console.log("got data", res)
 			expected[0] = {
 				import_id: "1",
 				parent_import_id: null,
@@ -116,11 +117,11 @@ describe("divisions", async () => {
 			await dr.execute(sql`TRUNCATE ${divisionTable};`);
 
 			let data = `
-			id, 	parent,en ,fr, it
-			1,, 	 en1,fr1,
-			2,,en2,,
-			3,1,en1.1,fr1.1,
-			4,1,en1.2,,
+			id, 	parent,geodata,en ,fr, it
+			1,,g1, 	 en1,fr1,
+			2,,g2,en2,,
+			3,1,g3,en1.1,fr1.1,
+			4,1,g4,en1.2,,
 			`
 
 			await importCSV(data)
@@ -141,16 +142,16 @@ describe("divisions", async () => {
 			await dr.execute(sql`TRUNCATE ${divisionTable};`);
 
 			let data = `
-			id, 	parent,en ,fr, it
-			1,, 	 en1,fr1,
-			2,,en2,,
-			3,1,en1.1,fr1.1,
-			4,1,en1.2,,
+			id, 	parent,geodata,en ,fr, it
+			1,,g1, 	 en1,fr1,
+			2,,g2,en2,,
+			3,1,g3,en1.1,fr1.1,
+			4,1,g4,en1.2,,
 			`
 
 			let idMap = await importCSV(data)
 
-			let res = await divisionBreadcrumb(["en"], idMap.get("4")!);
+			let res = await divisionBreadcrumb(["en"], idMap.get("4")!.DBID);
 			let expected = [
 				{id: idMap.get("1"), nameLang: "en", name: "en1", parentId: null},
 				{id: idMap.get("4"), nameLang: "en", name: "en1.2", parentId: idMap.get("1")},

@@ -109,7 +109,8 @@ export const divisionTable = pgTable("division", {
 	importId: text("import_id").unique(),
 	//country: integer("country"),
 	parentId: integer("parent_id").references((): AnyPgColumn => divisionTable.id),
-	name: zeroStrMap("name")
+	name: zeroStrMap("name"),
+	geojson: jsonb("geojson"),
 }, (table) => [
 	index("parent_idx").on(table.parentId),
 ]);

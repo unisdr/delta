@@ -1,9 +1,8 @@
-import {SQL, asc, sql, eq, isNull} from 'drizzle-orm';
+import {SQL, sql, eq, isNull} from 'drizzle-orm';
 
 import {selectTranslated} from './common';
 
 import {
-	country1Table,
 	divisionTable,
 	DivitionInsert,
 } from '~/drizzle/schema';
@@ -12,23 +11,13 @@ import {dr} from '~/db.server';
 
 import {parse} from 'csv-parse';
 
-export async function getCountries(langs: string[]) {
-	let tr = selectTranslated(country1Table.name, "name", langs)
-	let select: {
-		id: typeof country1Table.id
-		name: SQL<string>
-		nameLang: SQL<string>
-	} = {
-		id: country1Table.id,
-		name: tr.name,
-		nameLang: tr.nameLang
-	};
-	const res = await dr
-		.select(select)
-		.from(country1Table)
-		.orderBy(asc(tr.name));
+import JSZip from "jszip";
 
-	return res;
+export class UserError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "UserError";
+	}
 }
 
 export async function divisionsAllLanguages(parentId: number | null): Promise<Record<string, number>> {
@@ -139,15 +128,48 @@ async function parseCSV(data: string): Promise<string[][]> {
 	});
 }
 
+export async function importZip(zipBytes: Uint8Array) {
+	const zip = await JSZip.loadAsync(zipBytes);
+	const divisionsFileName = "divisions-v1.csv"
+	const file = zip.files[divisionsFileName];
+	const csvStr = await file.async("string");
+	const importRes = await importCSV(csvStr);
+
+	for (const [_, v] of importRes) {
+		let gf = v.GeodataFileName;
+		let file = zip.files["geodata/" + gf]
+		if (!file) {
+			throw new UserError(`CSV has {gf} in geodata column, but no file with the same name found in geodata folder in ZIP archive.`)
+		}
+		const geodataStr = await file.async("string")
+
+		await dr
+			.update(divisionTable)
+			.set({
+				geojson: geodataStr,
+			})
+			.where(eq(divisionTable.id, v.DBID));
+	}
+
+	return importRes;
+}
+
+export type ImportRes = {
+	ImportID: string;
+	DBID: number;
+	GeodataFileName: string;
+};
+
 type DivisionMap = Record<
 	string,
 	{
 		parent: string;
+		geodata: string;
 		name: Record<string, string>;
 	}
 >;
 
-export async function importCSV(csvStr: string): Promise<Map<string, number>> {
+export async function importCSV(csvStr: string): Promise<Map<string, ImportRes>> {
 	csvStr = csvStr.trim()
 	if (!csvStr) {
 		throw (new UserError("Empty CSV"))
@@ -166,7 +188,10 @@ export async function importCSV(csvStr: string): Promise<Map<string, number>> {
 	if (headers[1] != "parent") {
 		throw (new UserError("Column 2 must have name 'parent'"))
 	}
-	let langs = headers.slice(2)
+	if (headers[2] != "geodata") {
+		throw (new UserError("Column 3 must have name 'geodata'"))
+	}
+	let langs = headers.slice(3)
 	let rows = all.slice(1)
 
 	let byID: DivisionMap = {}
@@ -178,31 +203,36 @@ export async function importCSV(csvStr: string): Promise<Map<string, number>> {
 
 		let id = row[0];
 		let parent = row[1];
+		let geodata = row[2]
 		let name: Record<string, string> = {};
 		langs.forEach((lang, i) => {
-			let v = row[2 + i];
+			let v = row[3 + i];
 			if (v) {
-				name[lang] = row[2 + i];
+				name[lang] = row[3 + i];
 			}
 		});
-		byID[id] = {parent: parent, name: name}
+		byID[id] = {geodata, parent, name}
 	}
-
 
 	const idMap = new Map<string, number>();
 	for (const id of Object.keys(byID)) {
 		await importDivision(byID, id, idMap);
 	}
-	return idMap
-}
 
+	let res = new Map<string, ImportRes>();
 
-export class UserError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = "UserError";
+	for (const [k, v] of idMap) {
+		res.set(k, {
+			ImportID: k,
+			DBID: v,
+			GeodataFileName: byID[k].geodata
+		})
 	}
+
+	return res
 }
+
+
 
 
 async function importDivision(

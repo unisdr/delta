@@ -19,9 +19,13 @@ import {
 
 import {Breadcrumb} from "~/components/division";
 
-import {divisionBreadcrumb, DivisionBreadcrumbRow } from "~/backend.server/models/division";
+import {divisionBreadcrumb, DivisionBreadcrumbRow} from "~/backend.server/models/division";
 
+import {useState, useEffect} from "react";
 
+import type {SerializeFrom} from "@remix-run/server-runtime";
+
+import DTSMap from "~/components/dtsmap/dtsmap";
 
 export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	const {id} = loaderArgs.params;
@@ -48,17 +52,18 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 
 });
 
+interface CommonProps {
+	loaderData: SerializeFrom<typeof loader>
+}
 
-
-export default function Screen() {
-	const {division, breadcrumbs} = useLoaderData<typeof loader>();
-
+function Common({loaderData}: CommonProps) {
+	const {division, breadcrumbs} = loaderData
 	return (
-		<div>
+		<>
 			<h1>Division Details</h1>
 			<Link to={`/settings/geography/edit/${division.id}`}>Edit</Link>
 			<p>ID: {division.id}</p>
-			<Breadcrumb rows={breadcrumbs} linkLast={true}/>
+			<Breadcrumb rows={breadcrumbs} linkLast={true} />
 			<p>Parent ID: {division.parentId || "-"}</p>
 			<h2>Names:</h2>
 			<ul>
@@ -68,6 +73,29 @@ export default function Screen() {
 					</li>
 				))}
 			</ul>
+		</>
+	);
+}
+
+export default function Screen() {
+	const loaderData = useLoaderData<typeof loader>();
+
+	// only render in the browser, not server
+	const [isClient, setIsClient] = useState(false);
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
+	return (
+		<div>
+			<Common loaderData={loaderData} />
+			{isClient && (
+				loaderData.division.geojson ? (
+				<DTSMap geoData={loaderData.division.geojson} />
+				) : (
+					<p>No geodata for this division</p>
+				)
+			)}
 		</div>
 	);
 }
