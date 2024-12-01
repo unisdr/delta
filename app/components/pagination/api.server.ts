@@ -129,3 +129,28 @@ export async function executeQueryForPagination2<T>(
 	};
 }
 
+export interface OffsetLimit {
+	offset: number
+	limit: number
+}
+
+export async function executeQueryForPagination3<T>(
+	request: Request,
+	totalItems: number,
+	q: (pagination: OffsetLimit) => Promise<T[]>,
+	extraParams: string[]
+) {
+
+	const pagination = paginationQueryFromURL(request, extraParams);
+
+	const items = await q({offset: pagination.query.skip, limit: pagination.query.take})
+
+	return {
+		items: items,
+		pagination: {
+			totalItems,
+			itemsOnThisPage: Number(items.length),
+			...pagination.viewData,
+		},
+	};
+}

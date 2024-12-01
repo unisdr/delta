@@ -21,27 +21,31 @@ import {
 	authLoaderWithRole,
 } from "~/util/auth";
 
+import {
+	getItemNumberId
+} from "~/backend.server/components/view"
+
+interface ItemRes {
+	id: number
+	field1: string
+	field2: string
+}
+
 export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
-	const { id } = loaderArgs.params;
-	if (!id) {
-		throw new Response("Missing item ID", { status: 400 });
-	}
-	const res = await dr.select().from(itemTable).where(eq(itemTable.id, Number(id)));
-
-	if (!res || res.length === 0) {
-		throw new Response("Item not found", { status: 404 });
-	}
-
-	const item = res[0];
-	return json({
+	const {params} = loaderArgs;
+	const item = await getItemNumberId(params, dr.select({
+		id: itemTable.id,
+		field1: itemTable.field1,
+		field2: itemTable.field2,
+	}).from(itemTable), itemTable) as ItemRes
+	return {
 		item: {
 			id: item.id,
 			field1: item.field1,
 			field2: item.field2,
 		},
-	});
+	};
 })
-
 
 export default function Data() {
 	const {item} = useLoaderData<typeof loader>();

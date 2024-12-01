@@ -1,5 +1,5 @@
 export function formStringData(formData: FormData){
-	let res: { [key: string]: string } = {};
+	let res: Record<string, string> = {};
 	for (const [key, value] of formData.entries()) {
   	if (typeof value === "string") {
     	res[key] = value;
