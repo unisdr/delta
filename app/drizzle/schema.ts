@@ -33,16 +33,14 @@ function zeroStrMap(name: string) {
 function zeroInteger(name: string) {
 	return integer(name).notNull().default(0)
 }
-const timestamps = {
+const createdUpdatedTimestamps = {
 	updatedAt: timestamp("updated_at"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
-	deletedAt: timestamp("deleted_at"),
 }
 
 export const sessionTable = pgTable("session", {
-	...timestamps,
 	id: uuid("id").primaryKey().defaultRandom(),
-	userId: integer("user_id").notNull(),
+	userId: integer("user_id").notNull().references(() => userTable.id),
 	lastActiveAt: zeroTimestamp("last_active_at"),
 	totpAuthed: zeroBool("totp_authed"),
 });
@@ -58,7 +56,6 @@ export const sessionsRelations = relations(sessionTable, ({one}) => ({
 }));
 
 export const userTable = pgTable("user", {
-	...timestamps,
 	id: serial("id").primaryKey(),
 	role: zeroText("role"),
 	firstName: zeroText("first_name"),
@@ -85,22 +82,38 @@ export const userTable = pgTable("user", {
 export type User = typeof userTable.$inferSelect;
 export type UserInsert = typeof userTable.$inferInsert;
 
+export const apiKeyTable = pgTable("api_key", {
+	...createdUpdatedTimestamps,
+	id: serial("id").primaryKey(),
+	secret: text("secret").notNull().unique(),
+	name: zeroText("name"),
+	managedByUserId: integer("user_id").notNull().references(() => userTable.id),
+});
+
+export type ApiKey = typeof apiKeyTable.$inferSelect;
+export type ApiKeyInsert = typeof apiKeyTable.$inferInsert;
+
+export const apiKeyRelations = relations(apiKeyTable, ({one}) => ({
+	managedByUser: one(userTable, {
+		fields: [apiKeyTable.managedByUserId],
+		references: [userTable.id],
+	}),
+}));
+
+export const devExample1Table = pgTable("dev_example1", {
+	id: serial("id").primaryKey(),
+	field1: text("field1").notNull().unique(),
+});
+
+export type DevExample1 = typeof devExample1Table.$inferSelect;
+export type DevExample1Insert = typeof devExample1Table.$inferInsert;
+
 export const commonPasswordsTable = pgTable("commonPasswords", {
 	password: text("password").primaryKey(),
 });
 
 export type CommonPassword = typeof commonPasswordsTable.$inferSelect;
 export type CommonPasswordInsert = typeof commonPasswordsTable.$inferInsert;
-
-export const itemTable = pgTable("item", {
-	...timestamps,
-	id: serial("id").primaryKey(),
-	field1: text("field1").notNull(),
-	field2: text("field2"),
-});
-
-export type Item = typeof itemTable.$inferSelect;
-export type ItemInsert = typeof itemTable.$inferInsert;
 
 export const country1Table = pgTable("country1", {
 	id: serial("id").primaryKey(),
@@ -127,9 +140,23 @@ export const eventTable = pgTable("event", {
 	// parent
 });
 
-export const eventRel2 = relations(eventTable, ({many}) => ({
-	parents: many(eventRelationshipTable, {relationName: "child"}),
-	children: many(eventRelationshipTable, {relationName: "parent"})
+// using 2 letter relationship names, as a workaround for this bug
+// https://github.com/drizzle-team/drizzle-orm/issues/2066
+export const eventRel = relations(eventTable, ({one, many}) => ({
+	// hazard event
+	he: one(hazardEventTable, {
+		fields: [eventTable.id],
+		references: [hazardEventTable.id],
+	}),
+	// disaster event
+	de: one(disasterEventTable, {
+		fields: [eventTable.id],
+		references: [disasterEventTable.id],
+	}),
+	// parents
+	ps: many(eventRelationshipTable, {relationName: "c"}),
+	// children
+	cs: many(eventRelationshipTable, {relationName: "p"})
 }));
 
 export type Event = typeof eventTable.$inferSelect;
@@ -148,15 +175,15 @@ export const eventRelationshipTable = pgTable("event_relationship", {
 });
 
 export const eventRelationshipRel = relations(eventRelationshipTable, ({one}) => ({
-	parent: one(eventTable, {
+	p: one(eventTable, {
 		fields: [eventRelationshipTable.parentId],
 		references: [eventTable.id],
-		relationName: "parent",
+		relationName: "p",
 	}),
-	child: one(eventTable, {
+	c: one(eventTable, {
 		fields: [eventRelationshipTable.childId],
 		references: [eventTable.id],
-		relationName: "child"
+		relationName: "c"
 	}),
 }));
 
@@ -219,13 +246,13 @@ export const disasterEventTable = pgTable("disaster_event", {
 	disasterDeclaration: zeroBool("disaster_declaration"),
 	disasterDeclarationType: zeroBool("disaster_declaration_type"),
 	disasterDeclarationEffect: zeroBool("disaster_declaration_effect"),
-	disasterDeclarationDate: zeroTimestamp("disaster_declaration_date"),
+	disasterDeclarationDate: timestamp("disaster_declaration_date"),
 	warningIssuedLevelsSeverity: zeroText("warning_issued_levels_severity"),
-	warningIssuedDate: zeroTimestamp("warning_issued_date"),
-	preliminaryAssessmentDate: zeroTimestamp("preliminary_assesment_date"),
+	warningIssuedDate: timestamp("warning_issued_date"),
+	preliminaryAssessmentDate: timestamp("preliminary_assesment_date"),
 	responseOperations: zeroText("response_oprations"),
-	postDisasterAssementDate: zeroTimestamp("post_disaster_assessment_date"),
-	reAssementDate: zeroTimestamp("re_assessment_date"),
+	postDisasterAssementDate: timestamp("post_disaster_assessment_date"),
+	reAssementDate: timestamp("re_assessment_date"),
 	dataSource: zeroText("data_source"),
 	originatorRecorderOfInformation: zeroText("originator_recorder_of_information"),
 	effectsTotalLocalCurrency: zeroInteger("effects_total_local_currency"),

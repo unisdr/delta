@@ -8,17 +8,15 @@ import {
 import {
 	userTable,
 	User,
-	ItemInsert
 } from '~/drizzle/schema';
 
-import { formStringData } from "~/util/httputil";
 import bcrypt from 'bcryptjs';
 
 import {
 	Errors,
 	hasErrors,
 	initErrorField,
-} from "~/components/form"
+} from "~/frontend/form"
 
 import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
@@ -222,39 +220,6 @@ export interface Errors2 {
 	field2?: string;
 }
 
-export interface DataWithErrors {
-	data: ItemInsert
-	errors?: Errors2
-}
-
-export function ValidateFormData(formData: FormData): DataWithErrors {
-	const data = formStringData(formData)
-	const data2 = {
-		field1: data.field1 || "",
-		field2: data.field2 || "",
-	}
-	const errors = Validate(data2)
-	return {
-		errors: errors,
-		data: data2
-	}
-}
-
-export function Validate(data: ItemInsert){
-	let errors: Errors2 = {} 
-	if (data.field1 == ""){
-		errors.field1 = "Empty field1"
-	}
-	if (data.field2 == ""){
-		errors.field2 = "Empty field2"
-	}
-	if (Object.keys(errors).length == 0) {
-		return undefined
-	}
-	return errors
-}
-
-
 interface EmailField {
 	email: string;
 }
@@ -418,10 +383,6 @@ export async function setupAccountSSOAzureB2C(fields: SetupAdminAccountFields): 
 		return { ok: false, errors }
 	}
 
-	let user: User
-
-
-	
 
 	try {
 		const updatedUserId: {updatedId: number}[] = await dr
@@ -443,7 +404,7 @@ export async function setupAccountSSOAzureB2C(fields: SetupAdminAccountFields): 
 		throw e;
 	}
 	
-
+	// TODO: remove hardcoded userId
 	return { ok: true, userId: 7  }
 }
 

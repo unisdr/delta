@@ -1,11 +1,12 @@
 import {
 	CreateResult,
+	DeleteResult,
 	UpdateResult
-} from "~/backend.server/components/form";
+} from "~/backend.server/handlers/form";
 import {
 	Errors,
 	hasErrors,
-} from "~/components/form";
+} from "~/frontend/form";
 import {eventTable, Event, hazardEventTable, HazardEvent, eventRelationshipTable, DisasterEvent, disasterEventTable} from "~/drizzle/schema";
 
 import {dr} from "~/db.server";
@@ -125,6 +126,51 @@ export type HazardEventViewModel = Exclude<Awaited<ReturnType<typeof hazardEvent
 	undefined
 >;
 
+const hazardBasicInfoJoin = {
+	hazard: {
+		with: {
+			cluster: {
+				with: {
+					class: true
+				}
+			}
+		}
+	}
+} as const
+
+const hazardParentJoin = {
+	event: {
+		with: {
+			ps: {
+				with: {
+					p: {
+						with: {
+							he: {
+								with: {
+									...hazardBasicInfoJoin
+								}
+							}
+						}
+					}
+				}
+			},
+			cs: {
+				with: {
+					c: {
+						with: {
+							he: {
+								with: {
+									...hazardBasicInfoJoin
+								}
+							}
+						}
+					}
+				}
+			},
+		},
+	}
+} as const
+
 export async function hazardEventById(id: any) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
@@ -132,24 +178,40 @@ export async function hazardEventById(id: any) {
 	const res = await dr.query.hazardEventTable.findFirst({
 		where: eq(hazardEventTable.id, id),
 		with: {
-			event: {
-				with: {
-					parents: true,
-					children: true
-				}
-			},
-			hazard: {
-				with: {
-					cluster: {
-						with: {
-							class: true
-						}
-					}
-				}
-			}
-		},
+			...hazardBasicInfoJoin,
+			...hazardParentJoin
+		}
 	});
 	return res
+}
+
+export async function hazardEventDelete(id: string): Promise<DeleteResult> {
+	try {
+		await dr.transaction(async (tx) => {
+			await tx
+				.delete(hazardEventTable)
+				.where(eq(hazardEventTable.id, String(id)));
+
+			await tx
+				.delete(eventRelationshipTable)
+				.where(eq(eventRelationshipTable.childId, String(id)));
+
+			await tx
+				.delete(eventTable)
+				.where(eq(eventTable.id, String(id)));
+
+		})
+	} catch (error: any) {
+		if (
+			error?.code === "23503" &&
+			error?.message.includes("event_relationship_parent_id_event_id_fk")
+		) {
+			return {ok: false, "error": "Delete events that are caused by this event first"}
+		} else {
+			throw error;
+		}
+	}
+	return {ok: true}
 }
 
 
@@ -248,8 +310,8 @@ export async function disasterEventById(id: any) {
 		with: {
 			event: {
 				with: {
-					parents: true,
-					children: true
+					ps: true,
+					cs: true
 				}
 			},
 		}
@@ -257,3 +319,21 @@ export async function disasterEventById(id: any) {
 	return res
 }
 
+
+export async function disasterEventDelete(id: string): Promise<DeleteResult> {
+	await dr.transaction(async (tx) => {
+		await tx
+			.delete(disasterEventTable)
+			.where(eq(disasterEventTable.id, id));
+
+		/*
+	await tx
+		.delete(eventRelationshipTable)
+		.where(eq(eventRelationshipTable.childId, String(id)));
+*/
+		await tx
+			.delete(eventTable)
+			.where(eq(eventTable.id, id));
+	})
+	return {ok: true}
+}

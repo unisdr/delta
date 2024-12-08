@@ -15,7 +15,8 @@ import {
 } from "~/util/session";
 
 import * as user from "~/backend.server/models/user"
-import {PermissionId, roleHasPermission} from "~/components/user/roles";
+import {apiAuth} from "~/backend.server/models/api_key"
+import {PermissionId, roleHasPermission} from "~/frontend/user/roles";
 
 export async function login(email: string, password: string): Promise<user.LoginResult> {
 	return await user.login(email, password)
@@ -23,7 +24,7 @@ export async function login(email: string, password: string): Promise<user.Login
 
 export async function loginTotp(userId: number, sessionId: string, code: string): Promise<user.LoginTotpResult> {
 	const res = await user.loginTotp(userId, code);
-	if (!res.ok){
+	if (!res.ok) {
 		return res
 	}
 	sessionMarkTotpAuthed(sessionId)
@@ -36,14 +37,16 @@ export async function logout(request: Request) {
 
 export async function requireUser(request: Request) {
 	const userSession = await getUserFromSession(request);
-	if (!userSession){
-		throw redirect("/user/login");
+	if (!userSession) {
+		const url = new URL(request.url);
+		const redirectTo = url.pathname + url.search;
+		throw redirect(`/user/login?redirectTo=${encodeURIComponent(redirectTo)}`);
 	}
-	const { user, session } = userSession
+	const {user, session} = userSession
 	if (!user.emailVerified) {
 		throw redirect("/user/verify-email");
 	}
-	if (user.totpEnabled && !session.totpAuthed){
+	if (user.totpEnabled && !session.totpAuthed) {
 		throw redirect("/user/totp-login");
 	}
 	return userSession;
@@ -51,7 +54,7 @@ export async function requireUser(request: Request) {
 
 export async function requireUserAllowUnverifiedEmail(request: Request) {
 	const userSession = await getUserFromSession(request);
-	if (!userSession){
+	if (!userSession) {
 		throw redirect("/user/login");
 	}
 	return userSession;
@@ -59,10 +62,10 @@ export async function requireUserAllowUnverifiedEmail(request: Request) {
 
 export async function requireUserAllowNoTotp(request: Request) {
 	const userSession = await getUserFromSession(request);
-	if (!userSession){
+	if (!userSession) {
 		throw redirect("/user/login");
 	}
-	const { user } = userSession
+	const {user} = userSession
 	if (!user.emailVerified) {
 		throw redirect("/user/verify-email");
 	}
@@ -83,9 +86,9 @@ export function authLoader<T extends LoaderFunction>(fn: T): T {
 export function authLoaderWithRole<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUser(args.request);
-		if (!roleHasPermission(userSession.user.role, permission)){
-		throw new Response("Forbidden", { status: 403 });
-	}
+		if (!roleHasPermission(userSession.user.role, permission)) {
+			throw new Response("Forbidden", {status: 403});
+		}
 
 		return fn({
 			...(args as any),
@@ -116,9 +119,18 @@ export function authLoaderAllowNoTotp<T extends LoaderFunction>(fn: T): T {
 	}) as T;
 }
 
+export function authLoaderApi<T extends LoaderFunction>(fn: T): T {
+	return (async (args: LoaderFunctionArgs) => {
+		const apiKey = await apiAuth(args.request);
+		return fn({
+			...(args as any),
+			apiKey,
+		});
+	}) as T;
+}
 
 export function authLoaderGetAuth(args: any): UserSession {
-	if (!args.userSession || !args.userSession.user){
+	if (!args.userSession || !args.userSession.user) {
 		throw "Missing user session"
 	}
 	return args.userSession
@@ -138,9 +150,9 @@ export function authAction<T extends ActionFunction>(fn: T): T {
 export function authActionWithRole<T extends ActionFunction>(permission: PermissionId, fn: T): T {
 	return (async (args: ActionFunctionArgs) => {
 		const userSession = await requireUser(args.request);
-		if (!roleHasPermission(userSession.user.role, permission)){
-		throw new Response("Forbidden", { status: 403 });
-	}
+		if (!roleHasPermission(userSession.user.role, permission)) {
+			throw new Response("Forbidden", {status: 403});
+		}
 		return fn({
 			...(args as any),
 			userSession,
@@ -168,8 +180,19 @@ export function authActionAllowNoTotp<T extends ActionFunction>(fn: T): T {
 	}) as T;
 }
 
+export function authActionApi<T extends ActionFunction>(fn: T): T {
+	return (async (args: ActionFunctionArgs) => {
+		const apiKey = await apiAuth(args.request);
+		return fn({
+			...(args as any),
+			apiKey,
+		});
+	}) as T;
+}
+
+
 export function authActionGetAuth(args: any): UserSession {
-	if (!args.userSession || !args.userSession.user){
+	if (!args.userSession || !args.userSession.user) {
 		throw "Missing user session"
 	}
 	return args.userSession

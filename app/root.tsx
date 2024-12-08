@@ -36,10 +36,10 @@ import allStylesHref from "./styles/all.css?url";
 
 import {
 	Header,
-} from "~/components/header/header"
+} from "~/frontend/header/header"
 import {
 	Footer,
-} from "~/components/footer/footer"
+} from "~/frontend/footer/footer"
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/css/style-dts.css' },
