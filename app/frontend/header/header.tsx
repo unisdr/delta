@@ -51,7 +51,7 @@ function navItems(): Lvl1Item[] {
 		{
 			name: "Data",
 			title: "Data by country",
-			icon: "undp/calendar",
+			icon: "other/data",
 			lvl2: [
 				{
 					name: "Group 1",
@@ -62,6 +62,7 @@ function navItems(): Lvl1Item[] {
 							lvl4: [
 								{name: "Hazardous events", link: "/hazard-event"},
 								{name: "Disaster events", link: "/disaster-event"},
+								{name: "HIPs import", link: "/setup/import-hip"},
 							],
 						},
 						{
@@ -98,7 +99,7 @@ function navItems(): Lvl1Item[] {
 		{
 			name: "Analysis",
 			title: "In-depth Analysis",
-			icon: "undp/calendar",
+			icon: "other/analysis",
 			lvl2: [
 				{
 					name: "Trends",
@@ -138,7 +139,7 @@ function navItems(): Lvl1Item[] {
 		{
 			name: "About",
 			title: "About Us",
-			icon: "undp/calendar",
+			icon: "other/about",
 			lvl2: [
 				{
 					name: "Project Info",
@@ -158,7 +159,7 @@ function navItems(): Lvl1Item[] {
 		{
 			name: "Settings",
 			title: "User and System Settings",
-			icon: "undp/calendar",
+			icon: "other/settings",
 			lvl2: [
 				{
 					name: "Main settings",
