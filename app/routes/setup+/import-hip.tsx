@@ -80,7 +80,7 @@ async function processPage(page: number) {
 		throw "Exceeded max pages, infinite loop?"
 	}
 
-	const url = "https://program.unisdr.org/sso-undrr/api/integration/pw/hips?page=" + page;
+	const url = "https://tools.undrr.org/sso-undrr/api/integration/pw/hips?page=" + page;
 	const resp = await fetch(url);
 	const res = await resp.json() as HipApi;
 	const data = res.data;
