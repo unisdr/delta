@@ -8,18 +8,27 @@ export function NavSettings() {
 		{link: "settings/sectors", text: "Sectors"},
 	]
 	return (
-		<nav>
-			{menu.map((item, index) => (
-				<NavLink
-					key={index}
-					to={`/${item.link}`}
-					className={({ isActive, isPending }) =>
-						isActive ? "active" : isPending ? "pending" : ""
-					}
-				>
-				{item.text}
-				</NavLink>
-			))}
+		<nav className="dts-sub-navigation">
+			<div className="mg-container">
+    			<div className="dts-sub-navigation__container">
+      				<ul>
+					{menu.map((item, index) => (
+						<li>
+							<NavLink
+								key={index}
+								to={`/${item.link}`}
+								className={({ isActive, isPending }) =>
+									isActive ? "active" : isPending ? "pending" : ""
+								}
+							>
+							{item.text}
+							</NavLink>
+						</li>
+
+					))}
+					</ul>
+				</div>
+			</div>
 		</nav>
 	);
 }

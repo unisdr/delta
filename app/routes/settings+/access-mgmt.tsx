@@ -18,12 +18,19 @@ export const loader = authLoader(async (loaderArgs) => {
 
 export default function Settings() {
 	return (
-	  <div>
-		<h1>Access management</h1>
-		<div className="secondary-nav">
-			<NavSettings />
-		</div>
-		
-	  </div>
+		<>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Access management</h1>
+					</div>
+				</header>
+				<NavSettings />
+			</div>
+			<section>
+				<div className="mg-container">
+				</div>
+			</section>
+		</>
 	);
 }
