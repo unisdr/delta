@@ -21,6 +21,7 @@ import {
 	authLoaderWithRole,
 } from "~/util/auth";
 
+import { NavSettings } from "~/routes/settings/nav";
 
 export const loader = authLoaderWithRole("ViewUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
@@ -52,20 +53,30 @@ export const loader = authLoaderWithRole("ViewUsers", async (loaderArgs) => {
 
 export default function Data() {
 	const {item} = useLoaderData<typeof loader>();
-	return (
-		<div>
-			<Link to={`/users/edit/${item.id}`}>Edit</Link>
-			<Link to="/users">Back to Users</Link>
-			<p>ID: {item.id}</p>
-			<p>Email: {item.email}</p>
-			<p>First Name: {item.firstName}</p>
-			<p>Last Name: {item.lastName}</p>
-			<p>Role: {item.role}</p>
-			<p>Organization: {item.organization}</p>
-			<p>Email Verified: { String(item.emailVerified) }</p>
-			<p>Auth Type: {item.authType}</p>
+	return (<>
+		<div className="dts-page-header">
+			<header className="dts-page-title">
+				<div className="mg-container">
+					<h1 className="dts-heading-1">Access management</h1>
+				</div>
+			</header>
+			<NavSettings />
 		</div>
-	);
+		<section>
+			<div className="mg-container">
+				<Link to={`/settings/access-mgmnt/edit/${item.id}`}>Edit</Link>
+				<Link to="/settings/access-mgmnt/">Back to Users</Link>
+				<p>ID: {item.id}</p>
+				<p>Email: {item.email}</p>
+				<p>First Name: {item.firstName}</p>
+				<p>Last Name: {item.lastName}</p>
+				<p>Role: {item.role}</p>
+				<p>Organization: {item.organization}</p>
+				<p>Email Verified: { String(item.emailVerified) }</p>
+				<p>Auth Type: {item.authType}</p>
+			</div>
+		</section>
+	</>);
 }
 
 

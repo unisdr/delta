@@ -168,17 +168,11 @@ function navItems(): Lvl1Item[] {
 						{
 							title: "System",
 							lvl4: [
-								{name: "Access Management", link: "/settings/access-mgmt"},
+								{name: "Access Management", link: "/settings/access-mgmnt"},
 								{name: "System settings", link: "/settings/system"},
 								{name: "Geographic levels", link: "/settings/geography"},
 								{name: "Sectors", link: "/settings/sectors"},
 								{name: "API Keys", link: "/settings/api-key"},
-							],
-						},
-						{
-							title: "Users",
-							lvl4: [
-								{name: "User management", link: "/users"},
 							],
 						},
 						{
