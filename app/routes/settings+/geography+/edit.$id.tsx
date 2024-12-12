@@ -25,6 +25,7 @@ import {
 } from "drizzle-orm";
 import {DivisionForm} from "~/frontend/division";
 import {formStringData} from "~/util/httputil";
+import {NavSettings} from "~/routes/settings/nav";
 
 export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	const {id} = loaderArgs.params;
@@ -106,9 +107,20 @@ export default function Screen() {
 
 	return (
 		<>
-			{changed ? <p>The data was updated.</p> : null}
-			{dataForm}
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Geographic levels</h1>
+					</div>
+				</header>
+				<NavSettings />
+			</div>
+			<section>
+				<div className="mg-container">
+					{changed ? <p>The data was updated.</p> : null}
+					{dataForm}
+				</div>
+			</section>
 		</>
 	)
-
 }

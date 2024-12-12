@@ -27,6 +27,8 @@ import type {SerializeFrom} from "@remix-run/server-runtime";
 
 import DTSMap from "~/frontend/dtsmap/dtsmap";
 
+import {NavSettings} from "~/routes/settings/nav";
+
 export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	const {id} = loaderArgs.params;
 	if (!id) {
@@ -43,7 +45,6 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	if (item.parentId) {
 		breadcrumbs = await divisionBreadcrumb(["en"], item.parentId)
 	}
-
 
 	return {
 		division: item,
@@ -87,15 +88,27 @@ export default function Screen() {
 	}, []);
 
 	return (
-		<div>
-			<Common loaderData={loaderData} />
-			{isClient && (
-				loaderData.division.geojson ? (
-				<DTSMap geoData={loaderData.division.geojson} />
-				) : (
-					<p>No geodata for this division</p>
-				)
-			)}
-		</div>
+		<>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Geographic levels</h1>
+					</div>
+				</header>
+				<NavSettings />
+			</div>
+			<section>
+				<div className="mg-container">
+					<Common loaderData={loaderData} />
+					{isClient && (
+						loaderData.division.geojson ? (
+						<DTSMap geoData={loaderData.division.geojson} />
+						) : (
+							<p>No geodata for this division</p>
+						)
+					)}
+				</div>
+			</section>
+		</>
 	);
 }
