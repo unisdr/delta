@@ -24,8 +24,10 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"~": path.resolve(__dirname, "app"), // Define "~" as an alias for the "app" directory
+			"~node_modules": path.resolve(__dirname, "node_modules"), // Points to "node_modules"
 		},
 	},
+	publicDir: path.resolve(__dirname, "public"), // Ensures the "public" folder is correctly configured
 });
 
 
