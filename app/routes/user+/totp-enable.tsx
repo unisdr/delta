@@ -75,22 +75,32 @@ export default function Screen() {
 
 	return (
 		<>
-			<p>Enable TOTP</p>
-			<p>{ld.secret}</p>
-			<p>{ld.secretUrl}</p>
-			<img src={qrCodeUrl} alt="QR Code" />
-			<Form errors={errors}>
-				<Field label="Generated Code">
-					<input
-						type="text"
-						name="code"
-						defaultValue={data.code}
-					/>
-					<FieldErrors errors={errors} field="code"></FieldErrors>
-				</Field>
-				<SubmitButton label="Enable TOTP" />
-			</Form>
-			<Link to="/user/settings">Back to User Settings</Link>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Enable TOTP</h1>
+					</div>
+				</header>
+			</div>
+			<section>
+				<div className="mg-container">
+					<p>{ld.secret}</p>
+					<p>{ld.secretUrl}</p>
+					<img src={qrCodeUrl} alt="QR Code" />
+					<Form errors={errors}>
+						<Field label="Generated Code">
+							<input
+								type="text"
+								name="code"
+								defaultValue={data.code}
+							/>
+							<FieldErrors errors={errors} field="code"></FieldErrors>
+						</Field>
+						<SubmitButton className="mg-button mg-button-primary" label="Enable TOTP" />
+					</Form>
+					<Link to="/user/settings">Back to User Settings</Link>
+				</div>
+			</section>
 		</>
 	);
 }

@@ -211,11 +211,7 @@ export default function Screen() {
 						</div>
 					</header> ) }
 					<main className="dts-main-container">
-						<section>
-							<div className="mg-container">
-								<Outlet />
-							</div>
-						</section>
+						<Outlet />
 					</main>
 					<footer>
 						<Footer siteName={configSiteName} />

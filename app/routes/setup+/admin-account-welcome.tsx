@@ -34,7 +34,7 @@ export default function Screen() {
 		<>
 			<form className="dts-form dts-form--vertical">
 				<div className="dts-form__header">
-				<span>{ configSiteName }</span>
+				<span>&nbsp;</span>
 				</div>
 				<div className="dts-form__intro">
 					<h2 className="dts-heading-1">Welcome to the { configSiteName }.</h2>

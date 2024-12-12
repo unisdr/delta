@@ -43,6 +43,8 @@ import {
 
 import { formStringData } from "~/util/httputil";
 
+import { NavSettings } from "~/routes/settings/nav";
+
 export const loader = authLoaderWithRole("EditUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
 	if (!id) {
@@ -106,36 +108,48 @@ export default function Screen() {
 		}
 	}
 	return (<>
-		<h2>Edit User</h2>
-		<Form errors={errors}>
-			<Field label="Email">
-				<input type="email" name="email" defaultValue={fields.email} />
-				<FieldErrors errors={errors} field="email"></FieldErrors>
-			</Field>
-			<Field label="First Name">
-				<input type="text" name="firstName" defaultValue={fields.firstName} />
-				<FieldErrors errors={errors} field="firstName"></FieldErrors>
-			</Field>
-			<Field label="Last Name">
-				<input type="text" name="lastName" defaultValue={fields.lastName} />
-				<FieldErrors errors={errors} field="lastName"></FieldErrors>
-			</Field>
-			<Field label="Role">
-				<select name="role" defaultValue={fields.role}>
-					<option value="" disabled>
-					Select a role
-					</option>
-					{ValidRoles.map((role) => (
-					<option key={role.id} value={role.id}>
-						{role.label}
-					</option>
-					))}
-					
-				</select>
-				<FieldErrors errors={errors} field="role"></FieldErrors>
-			</Field>
-				<SubmitButton label="Edit User" />
-		</Form>
-		<Link to="/users">Back to Users</Link>
+		<div className="dts-page-header">
+			<header className="dts-page-title">
+				<div className="mg-container">
+					<h1 className="dts-heading-1">Access management</h1>
+				</div>
+			</header>
+			<NavSettings />
+		</div>
+		<section>
+			<div className="mg-container">
+				<h2>Edit User</h2>
+				<Form errors={errors}>
+					<Field label="Email *">
+						<input type="email" name="email" defaultValue={fields.email} required />
+						<FieldErrors errors={errors} field="email"></FieldErrors>
+					</Field>
+					<Field label="First Name *">
+						<input type="text" name="firstName" defaultValue={fields.firstName} required />
+						<FieldErrors errors={errors} field="firstName"></FieldErrors>
+					</Field>
+					<Field label="Last Name">
+						<input type="text" name="lastName" defaultValue={fields.lastName} />
+						<FieldErrors errors={errors} field="lastName"></FieldErrors>
+					</Field>
+					<Field label="Role">
+						<select name="role" defaultValue={fields.role}>
+							<option value="" disabled>
+							Select a role
+							</option>
+							{ValidRoles.map((role) => (
+							<option key={role.id} value={role.id}>
+								{role.label}
+							</option>
+							))}
+							
+						</select>
+						<FieldErrors errors={errors} field="role"></FieldErrors>
+					</Field>
+						<SubmitButton className="mg-button mg-button-primary" label="Edit User" />
+				</Form>
+				<Link to="/settings/access-mgmnt/">Back to Users</Link>
+			</div>
+		</section>
 	</>)
 }

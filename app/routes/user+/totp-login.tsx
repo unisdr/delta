@@ -67,15 +67,19 @@ export default function Screen() {
 	const errors = actionData?.errors
 	return (
 		<>
-			<Form errors={errors}>
-				<Field label="Generated Code">
-					<input
-						type="text"
-						name="code"
-					/>
-				</Field>
-				<SubmitButton label="Login with TOTP" />
-			</Form>
+			<section>
+				<div className="mg-container">
+					<Form errors={errors}>
+						<Field label="Generated Code">
+							<input
+								type="text"
+								name="code"
+							/>
+						</Field>
+						<SubmitButton className="mg-button mg-button-primary" label="Login with TOTP" />
+					</Form>
+				</div>
+			</section>
 		</>
 	);
 }

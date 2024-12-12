@@ -102,15 +102,25 @@ export function FieldErrors2({errors}: FieldErrors2Props) {
 }
 
 interface SubmitButtonProps {
-	label: string
+	label: string;
+	className?: string;
 }
 
-export function SubmitButton({label}: SubmitButtonProps) {
-	return (
-		<div className="form-buttons">
-			<button>{label}</button>
-		</div>
-	)
+export function SubmitButton({label, className}: SubmitButtonProps) {
+	if (className?.length === 0) {
+		return (
+			<div className="form-buttons">
+				<button>{label}</button>
+			</div>
+		)
+	}
+	else {
+		return (
+			<div className="form-buttons">
+				<button className={className}>{label}</button>
+			</div>
+		)
+	}
 }
 
 interface FormProps<T> {
