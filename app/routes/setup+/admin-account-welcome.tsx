@@ -41,8 +41,8 @@ export default function Screen() {
 					<p>Track disaster impacts, including damages, losses, and human effects, to support better recovery and resilience.</p>
 				</div>
 				<div className="dts-form__actions">
-					<a href="/setup/admin-account" className="mg-button mg-button-primary">Set up account</a>
-					<a href="/setup/admin-account-sso" className="mg-button mg-button-outline">Set up account using SSO</a>
+					<Link to="/setup/admin-account" className="mg-button mg-button-primary">Set up account</Link>
+					<Link to="/setup/admin-account-sso" className="mg-button mg-button-outline">Set up account using SSO</Link>
 				</div>
 			</form>
 

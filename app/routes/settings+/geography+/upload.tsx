@@ -20,6 +20,7 @@ import {
 	Link
 } from "@remix-run/react";
 
+import {NavSettings} from "~/routes/settings/nav";
 
 export const loader = authLoaderWithRole("EditData", async () => {
 	return null;
@@ -75,19 +76,33 @@ export default function Screen() {
 		}
 	}
 	return (
-		<form method="post" encType="multipart/form-data">
-			{submitted && <p>Imported or updated {imported} records</p>}
-			{error ? (
-				<p>{error}</p>
-			) : null}
-			<label>
-				File upload<br />
-				<input name="file" type="file"></input>
-			</label>
-			<input type="submit" value="Submit" />
-			<div>
-				<Link to="/settings/geography">Back to List</Link>
+		<>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Geographic levels</h1>
+					</div>
+				</header>
+				<NavSettings />
 			</div>
-		</form>
+			<section>
+				<div className="mg-container">
+					<form method="post" encType="multipart/form-data">
+						{submitted && <p>Imported or updated {imported} records</p>}
+						{error ? (
+							<p>{error}</p>
+						) : null}
+						<label>
+							File upload<br />
+							<input name="file" type="file"></input>
+						</label>
+						<input className="mg-button mg-button-primary" type="submit" value="Submit" />
+						<div>
+							<Link to="/settings/geography">Back to List</Link>
+						</div>
+					</form>
+				</div>
+			</section>
+		</>
 	);
 }

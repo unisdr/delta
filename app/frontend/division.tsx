@@ -63,7 +63,7 @@ export function DivisionForm({edit, fields, errors, breadcrumbs}: DivisionFormPr
 					))}
 
 
-				<SubmitButton label={edit ? "Update Division" : "Create Division"} />
+				<SubmitButton className="mg-button mg-button-primary" label={edit ? "Update Division" : "Create Division"} />
 			</Form>
 
 			<Link to={"/settings/geography?parent=" + fields.parentId}>Back to List</Link>
