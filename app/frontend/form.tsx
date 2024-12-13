@@ -125,15 +125,16 @@ export function SubmitButton({label, className}: SubmitButtonProps) {
 
 interface FormProps<T> {
 	children: React.ReactNode;
-	errors?: Errors<T>
+	errors?: Errors<T>,
+	className?: string,
 }
 
-export function Form<T>({children, errors}: FormProps<T>) {
+export function Form<T>({children, errors, className}: FormProps<T>) {
 	errors = errors || {};
 	errors.form = errors.form || [];
 
 	return (
-		<ReactForm method="post">
+		<ReactForm className={className} method="post">
 			{errors.form.length > 0 ? (
 				<>
 					<h2>Form Errors</h2>

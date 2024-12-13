@@ -89,31 +89,34 @@ export default function Screen() {
 
 	return (
 		<>
-			<Form errors={errors}>
-				<input type="hidden" value={loaderData.redirectTo} />
-				<div className="dts-form-component">
-					<Field label="Email">
-						<span className="mg-u-sr-only">Email address*</span>
-						<input type="email" autoComplete="off" name="email" placeholder="Enter email address*" defaultValue={data?.email} required></input>
-					</Field>
-				</div>
-				<div className="dts-form-component">
-					<Field label="Password">
-						<span className="mg-u-sr-only">Password*</span>
-						<input type="password" autoComplete="off" name="password" placeholder="Enter password*" defaultValue={data?.password} required></input>
-					</Field>
-				</div>
 
-				<Link to="/user/forgot-password">Forgot password</Link>
-				<div className="dts-dialog__form-actions">
-					<SubmitButton label="Login"></SubmitButton>
-				</div>
 
-			</Form>
-			<p>&nbsp;</p>
-			<div>
-				<Link to="/sso/azure-b2c/callback?action=login">Login using Azure B2C SSO</Link>
-			</div>
+			
+					<Form className="dts-form dts-form--vertical" errors={errors}>
+						<input type="hidden" value={loaderData.redirectTo} />
+						<div className="dts-form-component">
+							<Field label="Email">
+								<span className="mg-u-sr-only">Email address*</span>
+								<input type="email" autoComplete="off" name="email" placeholder="Enter email address*" defaultValue={data?.email} required></input>
+							</Field>
+						</div>
+						<div className="dts-form-component">
+							<Field label="Password">
+								<span className="mg-u-sr-only">Password*</span>
+								<input type="password" autoComplete="off" name="password" placeholder="Enter password*" defaultValue={data?.password} required></input>
+							</Field>
+						</div>
+
+						<Link to="/user/forgot-password">Forgot password</Link>
+						<div className="dts-dialog__form-actions">
+							<SubmitButton className='mg-button mg-button-primary' label="Login"></SubmitButton>
+						</div>
+
+						<p>&nbsp;</p>
+						<div>
+							<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/callback?action=login">Login using Azure B2C SSO</Link>
+						</div>
+					</Form>
 		</>
 	);
 }
