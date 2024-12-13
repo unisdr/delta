@@ -112,7 +112,7 @@ export default function Data() {
 
 					{ld.data.pagination.totalItems ? (
 						<>
-							<table>
+							<table className="dts-table">
 								<thead>
 									<tr>
 										<th>ID</th>
@@ -121,6 +121,7 @@ export default function Data() {
 										<th>Hazard ID</th>
 										<th>Hazard Name</th>
 										<th>Event Description</th>
+										<th></th>
 									</tr>
 								</thead>
 								<tbody>

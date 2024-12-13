@@ -84,7 +84,7 @@ export default function Settings() {
 						/>
 						<button type="submit">Search</button>
 					</form>
-					<table border={1} cellPadding={5} cellSpacing={1}>
+					<table className="dts-table" border={1} cellPadding={5} cellSpacing={1}>
 						<thead>
 							<tr>
 								<th>Email</th>

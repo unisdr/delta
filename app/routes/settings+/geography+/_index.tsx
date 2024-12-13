@@ -100,7 +100,7 @@ function linkOrText(linkUrl: string, text: string | number) {
 
 export function DivisionsTable({items, langs}: DivisionsTableProps) {
 	return (
-		<table>
+		<table className="dts-table">
 			<thead>
 				<tr>
 					<th>ID</th>

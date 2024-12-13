@@ -20,7 +20,24 @@ export const loader = createViewLoader({
 });
 
 export default function Screen() {
-	return ViewScreen({
+	const viewScreen = ViewScreen({
 		viewComponent: DisasterEventView
 	})
+
+	return (
+		<>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Disaster events</h1>
+					</div>
+				</header>
+			</div>
+			<section>
+				<div className="mg-container">
+					{ viewScreen }
+				</div>
+			</section>
+		</>
+	);
 }

@@ -23,7 +23,7 @@ export function DataScreen<T>({
 			<a href={`${baseRoute}/edit/new`}>New {resourceName}</a>
 			{paginationData.totalItems ? (
 				<>
-					<table>
+					<table className="dts-table">
 						<thead>
 							<tr>
 								{columns.map((col, index) => (
