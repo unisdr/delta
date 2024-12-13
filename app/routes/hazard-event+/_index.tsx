@@ -88,68 +88,79 @@ export default function Data() {
 
 	const pagination = Pagination(ld.data.pagination)
 
-	return (
-		<div>
-			<a href="/hazard-event/new">New</a>
-
-			<div className="dts-filter">
-				<h3>Filters</h3>
-				<Form>
-					<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
-					<input type="submit" value="Apply" />
-					<Link to="/hazard-event">Clear filters</Link>
-				</Form>
-			</div>
-
-			{ld.data.pagination.totalItems ? (
-				<>
-					<table>
-						<thead>
-							<tr>
-								<th>ID</th>
-								<th>Start Date</th>
-								<th>End Date</th>
-								<th>Hazard ID</th>
-								<th>Hazard Name</th>
-								<th>Event Description</th>
-							</tr>
-						</thead>
-						<tbody>
-							{items.map((item, index) => (
-								<tr key={index}>
-									<td>
-										<Link to={`/hazard-event/${item.id}`}>{item.id.slice(0, 5)}</Link>
-									</td>
-									<td>
-										{formatDate(item.startDate)}
-									</td>
-									<td>
-										{formatDate(item.endDate)}
-									</td>
-									<td>
-										{item.hazardId}
-									</td>
-									<td>
-										{item.hazard.nameEn}
-									</td>
-									<td>
-										{item.description}
-									</td>
-									<td>
-										<ActionLinks route={route} id={item.id} />
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-					{pagination}
-				</>
-			)
-				: "No hazardous events"
-			}
-
+	return (<>
+		<div className="dts-page-header">
+			<header className="dts-page-title">
+				<div className="mg-container">
+					<h1 className="dts-heading-1">Hazardous events</h1>
+				</div>
+			</header>
 		</div>
-	);
+		<section>
+			<div className="mg-container">
+				<div>
+					<a href="/hazard-event/new">New</a>
+
+					<div className="dts-filter">
+						<h3>Filters</h3>
+						<Form>
+							<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
+							<input type="submit" className="mg-button mg-button-primary" value="Apply" />
+							<Link to="/hazard-event">Clear filters</Link>
+						</Form>
+					</div>
+
+					{ld.data.pagination.totalItems ? (
+						<>
+							<table>
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Start Date</th>
+										<th>End Date</th>
+										<th>Hazard ID</th>
+										<th>Hazard Name</th>
+										<th>Event Description</th>
+									</tr>
+								</thead>
+								<tbody>
+									{items.map((item, index) => (
+										<tr key={index}>
+											<td>
+												<Link to={`/hazard-event/${item.id}`}><abbr title={item.id}>{item.id.slice(0, 5)}</abbr></Link>
+											</td>
+											<td>
+												{formatDate(item.startDate)}
+											</td>
+											<td>
+												{formatDate(item.endDate)}
+											</td>
+											<td>
+												{item.hazardId}
+											</td>
+											<td>
+												{item.hazard.nameEn}
+											</td>
+											<td>
+												{item.description}
+											</td>
+											<td>
+												<ActionLinks route={route} id={item.id} />
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+							{pagination}
+						</>
+					)
+						: "No hazardous events"
+					}
+
+				</div>
+			</div>
+		</section>
+	</>);
 }
 
 
