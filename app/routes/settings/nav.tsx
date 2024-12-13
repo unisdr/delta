@@ -13,7 +13,7 @@ export function NavSettings() {
     			<div className="dts-sub-navigation__container">
       				<ul>
 					{menu.map((item, index) => (
-						<li>
+						<li key={index}>
 							<NavLink
 								key={index}
 								to={`/${item.link}`}
