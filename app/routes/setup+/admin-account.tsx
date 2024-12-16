@@ -42,7 +42,7 @@ export default function Screen() {
 	const data = actionData?.data;
   
 	return (
-	  <>
+	  <> 
 		<Form className="dts-form dts-form--vertical">
 		  <div className="dts-form__header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
 			<a
