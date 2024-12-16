@@ -37,7 +37,8 @@ export default function Data() {
 	const {items, pagination} = ld.data;
 
 	return DataScreen({
-		resourceName: "Dev Example 1",
+		plural: "Dev examples",
+		resourceName: "Dev example 1",
 		baseRoute: route,
 		columns: ["ID", "Field 1", "Actions"],
 		items: items,

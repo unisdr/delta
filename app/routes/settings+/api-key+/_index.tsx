@@ -39,7 +39,8 @@ export default function Data() {
 	const ld = useLoaderData<typeof loader>();
 	const {items, pagination} = ld.data;
 	const dataScreen = DataScreen({
-		resourceName: "API Key",
+		plural: "API keys",
+		resourceName: "API key",
 		baseRoute: route,
 		columns: ["ID", "Created at", "Managed by", "Key Name", "Actions"],
 		items: items,
