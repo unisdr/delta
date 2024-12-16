@@ -32,21 +32,21 @@ export default function Screen() {
 
 	return (
 		<>
-			<form className="dts-form dts-form--vertical">
-				<div className="dts-form__header">
-				<span>&nbsp;</span>
-				</div>
-				<div className="dts-form__intro">
-					<h2 className="dts-heading-1">Welcome to the { configSiteName }.</h2>
-					<p>Track disaster impacts, including damages, losses, and human effects, to support better recovery and resilience.</p>
-				</div>
-				<div className="dts-form__actions">
-					<Link to="/setup/admin-account" className="mg-button mg-button-primary">Set up account</Link>
-					<Link to="/setup/admin-account-sso" className="mg-button mg-button-outline">Set up account using SSO</Link>
-				</div>
-			</form>
-
-
+			<div className="mg-container">
+				<form className="dts-form dts-form--vertical">
+					<div className="dts-form__header">
+					<span>&nbsp;</span>
+					</div>
+					<div className="dts-form__intro">
+						<h2 className="dts-heading-1">Welcome to the { configSiteName }.</h2>
+						<p>Track disaster impacts, including damages, losses, and human effects, to support better recovery and resilience.</p>
+					</div>
+					<div className="dts-form__actions">
+						<Link to="/setup/admin-account" className="mg-button mg-button-primary">Set up account</Link>
+						<Link to="/setup/admin-account-sso" className="mg-button mg-button-outline">Set up account using SSO</Link>
+					</div>
+				</form>
+			</div>
 		</>
 	);
 }

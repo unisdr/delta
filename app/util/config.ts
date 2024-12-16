@@ -5,6 +5,7 @@
  * https://remix.run/docs/en/main/guides/envvars
  */
 import {SSOAzureB2C as interfaceSSOAzureB2C} from "~/util/ssoauzeb2c";
+import { stringToBoolean } from "~/util/string";
 
 /**
  * Get the Website URL.
@@ -101,5 +102,6 @@ function _configSsoAzureB2CTenant(): string {
 };
 
 export function configApprovedRecordsArePublic(): boolean {
-	return process.env.APPROVED_RECORDS_ARE_PUBLIC == "true" ? true : false
+	const value = stringToBoolean( process.env.APPROVED_RECORDS_ARE_PUBLIC || "1" );
+	return value;
 };
