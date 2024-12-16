@@ -46,7 +46,7 @@ export function ListView(args: ListViewArgs) {
 
 			{ld.data.pagination.totalItems ? (
 				<>
-					<table>
+					<table className="dts-table">
 						<thead>
 							<tr>
 								<th>ID</th>

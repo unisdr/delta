@@ -106,28 +106,39 @@ export function FieldErrors2({errors}: FieldErrors2Props) {
 }
 
 interface SubmitButtonProps {
-	label: string
+	label: string;
+	className?: string;
 }
 
-export function SubmitButton({label}: SubmitButtonProps) {
-	return (
-		<div className="form-buttons">
-			<button>{label}</button>
-		</div>
-	)
+export function SubmitButton({label, className}: SubmitButtonProps) {
+	if (className?.length === 0) {
+		return (
+			<div className="form-buttons">
+				<button>{label}</button>
+			</div>
+		)
+	}
+	else {
+		return (
+			<div className="form-buttons">
+				<button className={className}>{label}</button>
+			</div>
+		)
+	}
 }
 
 interface FormProps<T> {
 	children: React.ReactNode;
-	errors?: Errors<T>
+	errors?: Errors<T>;
+	className?: string;
 }
 
-export function Form<T>({children, errors}: FormProps<T>) {
+export function Form<T>({children, errors, className}: FormProps<T>) {
 	errors = errors || {};
 	errors.form = errors.form || [];
 
 	return (
-		<ReactForm method="post">
+		<ReactForm method="post" className={className}>
 			{errors.form.length > 0 ? (
 				<>
 					<h2>Form Errors</h2>
@@ -484,7 +495,7 @@ export function FormScreen<T>(props: FormScreenProps<T>) {
 }
 
 interface ViewScreenProps<T> {
-	viewComponent: React.ComponentType<{ item: T }>;
+	viewComponent: React.ComponentType<{item: T}>;
 }
 
 export function ViewScreen<T>(props: ViewScreenProps<T>) {
@@ -497,7 +508,7 @@ export function ViewScreen<T>(props: ViewScreenProps<T>) {
 }
 
 interface ViewScreenPublicApprovedProps<T> {
-	viewComponent: React.ComponentType<{ item: T, isPublic: boolean }>;
+	viewComponent: React.ComponentType<{item: T, isPublic: boolean}>;
 }
 
 export function ViewScreenPublicApproved<T>(props: ViewScreenPublicApprovedProps<T>) {
@@ -506,7 +517,7 @@ export function ViewScreenPublicApproved<T>(props: ViewScreenPublicApprovedProps
 	if (!ld.item) {
 		throw "invalid";
 	}
-	if (ld.isPublic === undefined){
+	if (ld.isPublic === undefined) {
 		throw "loader does not expose isPublic"
 	}
 	return <ViewComponent isPublic={ld.isPublic} item={ld.item} />;
@@ -525,26 +536,37 @@ interface ViewComponentProps {
 
 export function ViewComponent(props: ViewComponentProps) {
 	return (
-		<div>
-			<p>
-				<Link to={props.path}>{props.plural}</Link>
-			</p>
-			{!props.isPublic && (
-				<>
+		<>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">{props.plural}</h1>
+					</div>
+				</header>
+			</div>
+			<section>
+				<div className="mg-container">
 					<p>
-						<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
+						<Link to={props.path}>{props.plural}</Link>
 					</p>
-					<p>
-						<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
-					</p>
-					{props.extraActions}
-				</>
-			)}
-			<h2>{props.singular}</h2>
-			<p>ID: {String(props.id)}</p>
-			{props.extraInfo}
-			{props.children}
-		</div>
+					{!props.isPublic && (
+						<>
+							<p>
+								<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
+							</p>
+							<p>
+								<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
+							</p>
+							{props.extraActions}
+						</>
+					)}
+					<h2>{props.singular}</h2>
+					<p>ID: {String(props.id)}</p>
+					{props.extraInfo}
+					{props.children}
+				</div>
+			</section>
+		</>
 	);
 }
 
@@ -565,23 +587,38 @@ interface FormViewProps {
 
 export function FormView(props: FormViewProps) {
 	return (
-		<div>
-			<p>
-				<Link to={props.path}>{props.plural}</Link>
-			</p>
-			{props.edit && props.id && (
-				<p>
-					<Link to={`${props.path}/${String(props.id)}`}>View</Link>
-				</p>
-			)}
-			<h2>{props.singular}</h2>
-			{props.edit && props.id && <p>ID: {String(props.id)}</p>}
-			{props.infoNodes}
-			<Form errors={props.errors}>
-				<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
-				<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
-			</Form>
-		</div>
+
+		<>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">{props.plural}</h1>
+					</div>
+				</header>
+			</div>
+			<section>
+				<div className="mg-container">
+
+
+					<p>
+						<Link to={props.path}>{props.plural}</Link>
+					</p>
+					{props.edit && props.id && (
+						<p>
+							<Link to={`${props.path}/${String(props.id)}`}>View</Link>
+						</p>
+					)}
+					<h2>{props.singular}</h2>
+					{props.edit && props.id && <p>ID: {String(props.id)}</p>}
+					{props.infoNodes}
+					<Form errors={props.errors}>
+						<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
+						<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+					</Form>
+				</div>
+			</section>
+
+		</>
 	);
 }
 

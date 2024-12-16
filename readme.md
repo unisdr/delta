@@ -1,15 +1,15 @@
 # Build and run
-# 
+
 ## Technology Stack
 
 The software tools and technologies used to build the DTS web application. This includes programming languages, frameworks, libraries, patterns, servers, UI/UX solutions, software, and tools used by developers.
 
 * TypeScript
-* Node
+* Node (version 22)
 * React
 * Remix
 * Drizzle ORM
-* PostgreSQL
+* PostgreSQL (version 16 with PostGIS add-on)
 
 ## License
 TODO
@@ -29,13 +29,15 @@ Licensed under MIT License
 
 ## Running locally
 
-### Install PostgreSQL
+### Manual
 
-### Configure application
+#### Install PostgreSQL
 
-Rename example.env to .env and adjust the options.
+#### Configure application
 
-### Build and run
+Copy example.env to .env and adjust the options.
+
+#### Build and run
 ```
 npm install --global yarn
 yarn install
@@ -43,19 +45,13 @@ yarn run drizzle-kit push
 yarn run dev
 ```
 
-Run database migration scripts
-```
-yarn prisma db push
-```
-
-Install remix-serve
-```
-yarn add @remix-run/serve
-```
-
-### Run tests
+#### Run tests
 ```
 yarn run dotenv -e .env.test drizzle-kit push
 yarn run test
 ```
 
+## Admin Setup
+
+* Setup the admin account: http://localhost:3000/setup/admin-account-welcome
+* Import HIPs taxonomy: http://localhost:3000/setup/import-hip

@@ -36,3 +36,6 @@ form > label {
 	margin: 10px;
 }
 
+.dts-sub-navigation ul li a.active {
+	border-color: #004f91;
+  }

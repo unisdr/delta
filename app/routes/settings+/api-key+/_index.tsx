@@ -38,8 +38,7 @@ export const loader = createPaginatedLoader(
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
 	const {items, pagination} = ld.data;
-
-	return DataScreen({
+	const dataScreen = DataScreen({
 		resourceName: "API Key",
 		baseRoute: route,
 		columns: ["ID", "Created at", "Managed by", "Key Name", "Actions"],
@@ -59,5 +58,20 @@ export default function Data() {
 			</tr>
 		),
 	});
+
+	return (<>
+		<div className="dts-page-header">
+			<header className="dts-page-title">
+				<div className="mg-container">
+					<h1 className="dts-heading-1">API Keys</h1>
+				</div>
+			</header>
+		</div>
+		<section>
+			<div className="mg-container">
+				{dataScreen}
+			</div>
+		</section>
+	</>);
 }
 

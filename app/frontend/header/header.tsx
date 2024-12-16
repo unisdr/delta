@@ -175,7 +175,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
 		{
 			name: "Data",
 			title: "Data by country",
-			icon: "undp/calendar",
+			icon: "other/data",
 			lvl2: [
 				{
 					name: "Group 1",
@@ -186,6 +186,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
 							lvl4: [
 								{name: "Hazardous events", link: "/hazard-event"},
 								{name: "Disaster events", link: "/disaster-event"},
+								{name: "HIPs import", link: "/setup/import-hip"},
 							],
 						},
 						{
@@ -222,7 +223,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
 		{
 			name: "Analysis",
 			title: "In-depth Analysis",
-			icon: "undp/calendar",
+			icon: "other/analysis",
 			lvl2: [
 				{
 					name: "Trends",
@@ -262,7 +263,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
 		{
 			name: "About",
 			title: "About Us",
-			icon: "undp/calendar",
+			icon: "other/about",
 			lvl2: [
 				{
 					name: "Project Info",
@@ -282,7 +283,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
 		{
 			name: "Settings",
 			title: "User and System Settings",
-			icon: "undp/calendar",
+			icon: "other/settings",
 			lvl2: [
 				{
 					name: "Main settings",
@@ -291,17 +292,11 @@ function navItemsLoggedIn(): Lvl1Item[] {
 						{
 							title: "System",
 							lvl4: [
-								{name: "Access Management", link: "/settings/access-mgmt"},
+								{name: "Access Management", link: "/settings/access-mgmnt"},
 								{name: "System settings", link: "/settings/system"},
 								{name: "Geographic levels", link: "/settings/geography"},
 								{name: "Sectors", link: "/settings/sectors"},
 								{name: "API Keys", link: "/settings/api-key"},
-							],
-						},
-						{
-							title: "Users",
-							lvl4: [
-								{name: "User management", link: "/users"},
 							],
 						},
 						{

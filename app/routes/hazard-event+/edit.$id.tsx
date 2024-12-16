@@ -77,5 +77,5 @@ export default function Screen() {
 		form: HazardEventForm,
 		edit: true,
 		id: ld.item.id
-	})
+	});
 }

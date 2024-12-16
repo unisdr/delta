@@ -100,7 +100,7 @@ function linkOrText(linkUrl: string, text: string | number) {
 
 export function DivisionsTable({items, langs}: DivisionsTableProps) {
 	return (
-		<table>
+		<table className="dts-table">
 			<thead>
 				<tr>
 					<th>ID</th>
@@ -141,25 +141,33 @@ export default function Screen() {
 	const pagination = Pagination(ld.pagination)
 
 	return (
-		<div>
-			<h1>Geographic levels</h1>
-			<div className="secondary-nav">
+		<>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Geographic levels</h1>
+					</div>
+				</header>
 				<NavSettings />
 			</div>
-			<p>
-				<a href="/settings/geography/upload">Upload CSV</a>
-			</p>
+			<section>
+				<div className="mg-container">
+						<p>
+						<a href="/settings/geography/upload">Upload CSV</a>
+					</p>
 
-			{ld.pagination.totalItems > 0 ? (
-				<>
-					<LanguageCheckboxes langs={ld.langs} selectedLangs={ld.selectedLangs} />
-					<Breadcrumb rows={ld.breadcrumbs} />
-					<DivisionsTable langs={ld.selectedLangs} items={ld.items} />
-					{pagination}
-				</>
-			) : (
-				<p>No administrative divisions configured. Please upload CSV with data. See <a href="#">example</a>.</p>
-			)}
-		</div>
+					{ld.pagination.totalItems > 0 ? (
+						<>
+							<LanguageCheckboxes langs={ld.langs} selectedLangs={ld.selectedLangs} />
+							<Breadcrumb rows={ld.breadcrumbs} />
+							<DivisionsTable langs={ld.selectedLangs} items={ld.items} />
+							{pagination}
+						</>
+					) : (
+						<p>No administrative divisions configured. Please upload CSV with data. See <a href="#">example</a>.</p>
+					)}
+				</div>
+			</section>
+		</>
 	);
 }

@@ -99,13 +99,12 @@ export default function Screen() {
 								/>
 								<FieldErrors errors={errors} field="confirmPassword"></FieldErrors>
 							</Field>
-							<SubmitButton label="Change Password" />
+							<SubmitButton className="mg-button mg-button-primary" label="Change Password" />
 						</Form>
-
 					</div>
+					<Link to="/user/settings">Back to User Settings</Link>
 				</div>
 			</section>
-			<Link to="/user/settings">Back to User Settings</Link>
 		</>
 	);
 }

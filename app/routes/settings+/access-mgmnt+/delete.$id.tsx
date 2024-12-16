@@ -23,5 +23,5 @@ export const loader = authLoaderWithRole("EditUsers", async (loaderArgs) => {
 	await dr
  	.delete(userTable)
  	.where(eq(userTable.id, Number(id)));
-	return redirect(`/users`);
+	return redirect(`/settings/access-mgmnt/`);
 })

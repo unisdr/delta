@@ -76,19 +76,29 @@ export default function Screen() {
 
 	return (
 		<>
-			<p>Disable TOTP</p>
-			<Form errors={errors}>
-				<Field label="Generated Code">
-					<input
-						type="text"
-						name="code"
-						defaultValue={data.code}
-					/>
-					<FieldErrors errors={errors} field="code"></FieldErrors>
-				</Field>
-				<SubmitButton label="Disable TOTP" />
-			</Form>
-			<Link to="/user/settings">Back to User Settings</Link>
+			<div className="dts-page-header">
+				<header className="dts-page-title">
+					<div className="mg-container">
+						<h1 className="dts-heading-1">Disable TOTP</h1>
+					</div>
+				</header>
+			</div>
+			<section>
+				<div className="mg-container">
+					<Form errors={errors}>
+						<Field label="Generated Code">
+							<input
+								type="text"
+								name="code"
+								defaultValue={data.code}
+							/>
+							<FieldErrors errors={errors} field="code"></FieldErrors>
+						</Field>
+						<SubmitButton className="mg-button mg-button-primary" label="Disable TOTP" />
+					</Form>
+					<Link to="/user/settings">Back to User Settings</Link>
+				</div>
+			</section>
 		</>
 	);
 }

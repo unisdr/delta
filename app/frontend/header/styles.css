@@ -3,7 +3,6 @@
 
 .dts-main-header:not(.js-enabled) {
 	display: flex;
-	border: 1px solid #ccc
 }
 
 .dts-main-header:not(.js-enabled) > .logo {
@@ -67,7 +66,6 @@
 
 .dts-main-header {
 	display: flex;
-	border: 1px solid #ccc
 }
 
 .dts-main-header > .logo {

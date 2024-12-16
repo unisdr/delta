@@ -100,8 +100,8 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			isPublic={props.isPublic}
 			path={route}
 			id={item.id}
-			plural="Disaster Events"
-			singular="Disaster Event"
+			plural="Disaster events"
+			singular="Disaster event"
 		>
 			<FieldsView def={fieldsDefView} fields={item} override={{
 				createdAt: (

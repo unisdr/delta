@@ -20,10 +20,10 @@ export const loader = authLoaderPublicOrWithRole("ViewData", async (loaderArgs) 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
 	const {items, pagination} = ld.data;
-
 	return DataScreen({
 		isPublic: ld.isPublic,
-		resourceName: "Disaster Event",
+		plural: "Disaster events",
+		resourceName: "Disaster event",
 		baseRoute: route,
 		columns: ["ID", "Start Date", "End Date", ""],
 		items: items,

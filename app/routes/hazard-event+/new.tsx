@@ -76,5 +76,5 @@ export default function Screen() {
 		fieldsInitial,
 		form: HazardEventForm,
 		edit: false
-	})
+	});
 }

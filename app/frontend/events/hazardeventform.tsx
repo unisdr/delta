@@ -109,8 +109,8 @@ export function HazardEventForm(props: HazardEventFormProps) {
 			path={route}
 			edit={props.edit}
 			id={props.id}
-			plural="Hazardous Events"
-			singular={`${props.edit ? "Edit" : "Add"} Hazardous Event`}
+			plural="Hazardous events"
+			singular={`${props.edit ? "Edit" : "Add"} hazardous event`}
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={fieldsDef}
@@ -149,8 +149,8 @@ export function HazardEventView(props: HazardEventViewProps) {
 			isPublic={props.isPublic}
 			path={route}
 			id={item.id}
-			plural="Hazardous Events"
-			singular="Hazard Event"
+			plural="Hazardous events"
+			singular="Hazard event"
 			extraActions={
 				<>
 					<p>
