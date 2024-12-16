@@ -17,6 +17,14 @@ export const fieldsDef: FormInputDef<DevExample1Fields>[] = [
 	{key: "field2", label: "Field 2", type: "text"},
 	{key: "field3", label: "Field 3", type: "number", required: true},
 	{key: "field4", label: "Field 4", type: "number"},
+	{key: "field5", label: "Field 5", type: "date"},
+	{
+		key: "field6", label: "Field 6", type: "enum", required: true, enumData: [
+			{key: "one", label: "One"},
+			{key: "two", label: "Two"},
+			{key: "three", label: "Three"}
+		]
+	}
 ];
 
 export const fieldsDefView: FormInputDef<DevExample1>[] = [
@@ -31,8 +39,8 @@ export function DevExample1Form(props: DevExample1FormProps) {
 			path={route}
 			edit={props.edit}
 			id={props.id}
-			plural="Dev Examples"
-			singular={(props.edit ? "Edit" : "Add Dev") + "Dev Example"}
+			plural="Dev examples"
+			singular={(props.edit ? "Edit" : "Add") + " dev example"}
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={fieldsDef}
@@ -50,8 +58,8 @@ export function DevExample1View(props: DevExample1ViewProps) {
 		<ViewComponent
 			path={route}
 			id={props.item.id}
-			plural="Dev Examples"
-			singular="Dev Example"
+			plural="Dev examples"
+			singular="Dev example"
 		>
 			<FieldsView def={fieldsDefView} fields={props.item} override={{}} />
 		</ViewComponent>

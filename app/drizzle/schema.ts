@@ -117,7 +117,9 @@ export const devExample1Table = pgTable("dev_example1", {
 	// required
 	field3: integer("field3").notNull(),
 	// optional
-	field4: integer("field4")
+	field4: integer("field4"),
+	field5: timestamp("field5"),
+	field6: text({ enum: ["one", "two", "three"]}).notNull().default("one"),
 });
 
 export type DevExample1 = typeof devExample1Table.$inferSelect;

@@ -12,7 +12,7 @@ export function validate(fields: DevExample1Fields): Errors<DevExample1Fields> {
 	let errors: Errors<DevExample1Fields> = {};
 	errors.fields = {};
 	if (fields.field3 <= 10) {
-		errors.fields.field2 = ["Field3 must be >10"];
+		errors.fields.field3 = ["Field3 must be >10"];
 	}
 	if (fields.field4 !== null && fields.field4 <= 10) {
 		errors.fields.field4 = ["Field4 must be >10"];
