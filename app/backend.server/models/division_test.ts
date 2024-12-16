@@ -27,7 +27,7 @@ describe("divisions", async () => {
 			);
 		})
 
-		it.only("has data", async () => {
+		it("has data", async () => {
 			await dr.execute(sql`TRUNCATE ${divisionTable};`);
 
 			let data = `
@@ -153,8 +153,8 @@ describe("divisions", async () => {
 
 			let res = await divisionBreadcrumb(["en"], idMap.get("4")!.DBID);
 			let expected = [
-				{id: idMap.get("1"), nameLang: "en", name: "en1", parentId: null},
-				{id: idMap.get("4"), nameLang: "en", name: "en1.2", parentId: idMap.get("1")},
+				{id: idMap.get("1")?.DBID, nameLang: "en", name: "en1", parentId: null},
+				{id: idMap.get("4")?.DBID, nameLang: "en", name: "en1.2", parentId: idMap.get("1")?.DBID},
 			]
 			assert.deepStrictEqual(res, expected);
 

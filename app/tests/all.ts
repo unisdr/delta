@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import {initDB, endDB} from '~/db.server';
 import '~/backend.server/models/all_test.ts'
+import '~/frontend/all_test.ts'
 import { before, after } from 'node:test';
 
 function splitInto2(str: string, delimiter: string): [string, string] {
