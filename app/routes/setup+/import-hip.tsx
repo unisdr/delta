@@ -18,9 +18,11 @@ export const loader = authLoaderWithRole("EditData", async () => {
 });
 
 import {dr} from '~/db.server';
+import {formatTimestamp} from "~/util/time";
+import {formStringData} from "~/util/httputil";
 
 interface Hip {
-	type: string
+	//type: string
 	title: string
 	description: string
 	notation: string
@@ -77,48 +79,124 @@ const maxPages = 10
 async function processPage(page: number) {
 	console.log("process hip page", page);
 	if (page > maxPages) {
-		throw "Exceeded max pages, infinite loop?"
+		throw "Exceeded max pages, likely infinite loop"
 	}
 
-	const url = "https://program.unisdr.org/sso-undrr/api/integration/pw/hips?page=" + page;
+	const url = "https://tools.undrr.org/sso-undrr/api/integration/pw/hips?page=" + page;
 	const resp = await fetch(url);
 	const res = await resp.json() as HipApi;
 	const data = res.data;
 	for (const item of data) {
 		await upsertHip(item);
 	}
-	if (!res.last_page){
-		throw "No last page info" 
+	if (!res.last_page) {
+		throw "No last page info"
 	}
 	if (page != res.last_page) {
-		processPage(page+1)
+		processPage(page + 1)
 	} else {
 		console.log("done with hip pages")
 	}
 }
 
+interface Hip {
+	//	type: string
+	title: string
+	description: string
+	notation: string
+	cluster_id: number
+	cluster_name: string
+	type_id: number
+	type_name: string
+}
 
-export const action = authActionWithRole("EditData", async () => {
-	processPage(1);
-	return {ok: true};
+interface HipApi {
+	last_page: number
+	data: Hip[]
+}
+
+
+function hipDevData(): Hip[] {
+	const types: any = [];
+	for (let i = 1; i <= 2; i++) {
+		types.push({id: i, name: `Class ${i}`});
+	}
+	const clusters: any = [];
+	let id = 1;
+	for (let ty of types) {
+		for (let i = 1; i <= 3; i++) {
+			id++;
+			clusters.push({id: id, type: ty, name: `Cluster ${i}`})
+		}
+	}
+
+	const data: Hip[] = [];
+
+	id = 1;
+	for (let clu of clusters) {
+		for (let i = 1; i <= 5; i++) {
+			id++;
+			let type = clu.type;
+			data.push({
+				title: `Title ${id} (${type.name} - ${clu.name})`,
+				description: `Description ${id} (${type.name} - ${clu.name})`,
+				notation: `DEV${id}`,
+				cluster_id: clu.id,
+				cluster_name: clu.name,
+				type_id: type.id,
+				type_name: type.name,
+			});
+		}
+	}
+
+	return data;
+}
+
+export const action = authActionWithRole("EditData", async (args) => {
+	const {request} = args;
+	const formData = formStringData(await request.formData());
+	const started = new Date();
+	try {
+		switch (formData.source) {
+			case "unddr":
+				await processPage(1);
+				break;
+			case "dev":
+				for (let hip of hipDevData()) {
+					await upsertHip(hip);
+				}
+				break;
+			default:
+				throw "Unknown data source"
+		}
+	} catch (err) {
+		return {ok: false, started, error: String(err)}
+	}
+	return {ok: true, started};
 })
 
 export default function Screen() {
-	const actionData = useActionData<typeof action>();
-	let submitted = false;
-	let error = ""
-	if (actionData) {
-		submitted = true
-		//if (!actionData.ok) {
-		//	error = actionData.error || "Server error"
-		//}
-	}
+	const ad = useActionData<typeof action>();
 	return (
 		<form method="post">
-			{submitted && <p>Done</p>}
-			{error ? (
-				<p>{error}</p>
-			) : null}
+			{ad && (
+				<>
+					<p>Requested data from API</p>
+					<p>Started at: {formatTimestamp(ad.started)}</p>
+
+					{ad.ok ?
+						<p>Import success</p> :
+						<p>{ad.error || "Error"}</p>
+					}
+				</>
+			)}
+			<label>
+				Source:
+				<select name="source">
+					<option value="unddr">UNDRR API</option>
+					<option value="dev">Local test data for development</option>
+				</select>
+			</label>
 			<input type="submit" value="Import HIP" />
 		</form>
 	);

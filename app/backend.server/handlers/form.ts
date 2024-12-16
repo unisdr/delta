@@ -1,22 +1,22 @@
 import {LoaderFunctionArgs, ActionFunctionArgs, TypedResponse} from "@remix-run/node";
 
-import {Errors, FormResponse, FormInputDef} from "~/frontend/form"
+import {Errors, FormResponse, FormResponse2, FormInputDef, validateFromMap} from "~/frontend/form"
 
 import {formStringData} from "~/util/httputil";
 import {redirectWithMessage} from "~/util/session";
 
-import {
-	fieldsFromMap,
-} from "~/frontend/form";
 
 import {
 	authActionWithRole,
 	authLoaderWithRole,
+	authLoaderIsPublic,
+	authLoaderPublicOrWithRole
 } from "~/util/auth";
 
 import {
 	getItem2,
 } from "~/backend.server/handlers/view";
+import {configApprovedRecordsArePublic} from "~/util/config";
 
 export type CreateResult<T> =
 	| {ok: true; id: any}
@@ -90,15 +90,16 @@ export type SaveResult<T> =
 	| {ok: false; errors: Errors<T>};
 
 interface FormSaveArgs<T> {
+	// overwrite id=new logic
+	isCreate?: boolean
 	actionArgs: ActionFunctionArgs;
 	fieldsDef: FormInputDef<T>[];
-	fieldsFromMap: (formData: Record<string, string>, def: FormInputDef<T>[]) => T;
 	save: (id: string | null, data: T) => Promise<SaveResult<T>>;
 	redirectTo: (id: string) => string;
 	queryParams?: string[];
 }
 
-export async function formSave<T>(args: FormSaveArgs<T>): Promise<FormResponse<T> | TypedResponse<never>> {
+export async function formSave<T>(args: FormSaveArgs<T>): Promise<FormResponse2<T> | TypedResponse<never>> {
 	const {request, params} = args.actionArgs;
 	const formData = formStringData(await request.formData());
 	let u = new URL(request.url);
@@ -109,16 +110,24 @@ export async function formSave<T>(args: FormSaveArgs<T>): Promise<FormResponse<T
 		}
 	}
 
-	const data = args.fieldsFromMap(formData, args.fieldsDef);
-	const id = params["id"] || null;
-	const isCreate = id === "new";
+	const validateRes = validateFromMap(formData, args.fieldsDef);
+	if (!validateRes.ok) {
+		return {
+			ok: false,
+			data: validateRes.data,
+			errors: validateRes.errors,
+		};
+	}
 
-	const res = await args.save(isCreate ? null : id, data);
+	const id = params["id"] || null;
+	const isCreate = args.isCreate || id === "new";
+
+	const res = await args.save(isCreate ? null : id, validateRes.resOk!);
 
 	if (!res.ok) {
 		return {
 			ok: false,
-			data: data,
+			data: validateRes.data,
 			errors: res.errors,
 		} as FormResponse<T>;
 	}
@@ -199,7 +208,6 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 		return formSave<T>({
 			actionArgs,
 			fieldsDef: args.fieldsDef,
-			fieldsFromMap: fieldsFromMap,
 			save: async (id, data) => {
 				if (!id) {
 					return args.create(data);
@@ -226,6 +234,33 @@ export function createViewLoader<T>(args: CreateViewLoaderArgs<T>) {
 		return {item};
 	});
 }
+
+
+interface CreateViewLoaderPublicApprovedArgs<T extends {approvalStatus: string}> {
+	getById: (id: string) => Promise<T | null | undefined>
+}
+
+export function createViewLoaderPublicApproved<T extends { approvalStatus: string }>(args: CreateViewLoaderPublicApprovedArgs<T>) {
+	if (!configApprovedRecordsArePublic()){
+		return createViewLoader(args);
+	}
+
+	return authLoaderPublicOrWithRole("ViewData", async (loaderArgs) => {
+		const {params} = loaderArgs;
+		const item = await getItem2(params, args.getById);
+		if (!item) {
+			throw new Response("Not Found", {status: 404});
+		}
+		const isPublic = authLoaderIsPublic(loaderArgs)
+		if (isPublic) {
+			if (item.approvalStatus != "approved") {
+				throw new Response("Permission denied, item is private", {status: 404});
+			}
+		}
+		return {item, isPublic};
+	});
+}
+
 
 interface DeleteLoaderArgs {
 	delete: (id: string) => Promise<DeleteResult>,

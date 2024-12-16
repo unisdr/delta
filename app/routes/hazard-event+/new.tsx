@@ -1,6 +1,5 @@
 import {
 	hazardEventCreate,
-	HazardEventFields
 } from "~/backend.server/models/event";
 
 import {
@@ -10,11 +9,10 @@ import {
 
 import {
 	formScreen,
-	fieldsFromMap
 } from "~/frontend/form";
 
 import {
-	formCreate,
+	formSave,
 } from "~/backend.server/handlers/form";
 
 
@@ -27,35 +25,54 @@ import {
 	useLoaderData,
 } from "@remix-run/react";
 
-import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
+import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
+
+import {
+	hazardEventById
+} from "~/backend.server/models/event";
+
 
 export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	let {request} = loaderArgs;
 	let hip = await dataForHazardPicker();
 	let u = new URL(request.url);
-	return {hip: hip, parent: u.searchParams.get("parent") || ""};
+
+	const parentId = u.searchParams.get("parent") || "";
+	if (parentId) {
+		const parent = await hazardEventById(parentId);
+		if (!parent){
+			throw new Response("Parent not found", {status: 404});
+		}
+		return {hip, parentId, parent};
+	}
+	return {hip};
 })
 
 export const action = authActionWithRole("EditData", async (actionArgs) => {
 
-	return formCreate({
-		fieldsDef,
+	return formSave({
+		isCreate: true,
 		actionArgs,
-		queryParams: ["parent"],
-		fieldsFromMap: fieldsFromMap,
-		create: hazardEventCreate,
+		fieldsDef,
+		save: async (id, data) => {
+			if (!id) {
+				return hazardEventCreate(data);
+			} else {
+				throw "not an update screen"
+			}
+		},
 		redirectTo: (id: string) => `/hazard-event/${id}`
+
 	})
 });
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>()
 
-	let fieldsInitial = fieldsFromMap<HazardEventFields>({
-	parent: ld.parent}, fieldsDef)
+	let fieldsInitial = {parent: ld.parentId}
 
 	return formScreen({
-		extraData: {hip: ld.hip},
+		extraData: {hip: ld.hip, parent: ld.parent},
 		fieldsInitial,
 		form: HazardEventForm,
 		edit: false

@@ -17,6 +17,7 @@ import {
 import * as user from "~/backend.server/models/user"
 import {apiAuth} from "~/backend.server/models/api_key"
 import {PermissionId, roleHasPermission} from "~/frontend/user/roles";
+import {configApprovedRecordsArePublic} from "./config";
 
 export async function login(email: string, password: string): Promise<user.LoginResult> {
 	return await user.login(email, password)
@@ -51,6 +52,22 @@ export async function requireUser(request: Request) {
 	}
 	return userSession;
 }
+
+export async function optionalUser(request: Request) {
+	const userSession = await getUserFromSession(request);
+	if (!userSession) {
+		return null;
+	}
+	const {user, session} = userSession
+	if (!user.emailVerified) {
+		throw redirect("/user/verify-email");
+	}
+	if (user.totpEnabled && !session.totpAuthed) {
+		throw redirect("/user/totp-login");
+	}
+	return userSession;
+}
+
 
 export async function requireUserAllowUnverifiedEmail(request: Request) {
 	const userSession = await getUserFromSession(request);
@@ -97,6 +114,26 @@ export function authLoaderWithRole<T extends LoaderFunction>(permission: Permiss
 	}) as T;
 }
 
+export function authLoaderPublicOrWithRole<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
+	if (!configApprovedRecordsArePublic()) {
+		return authLoaderWithRole(permission, fn)
+	}
+
+	return (async (args: LoaderFunctionArgs) => {
+		const userSession = await optionalUser(args.request);
+		if (!userSession) {
+			return fn(args) as T
+		}
+		if (!roleHasPermission(userSession.user.role, permission)) {
+			throw new Response("Forbidden", {status: 403});
+		}
+		return fn({
+			...(args as any),
+			userSession,
+		});
+	}) as T;
+}
+
 export function authLoaderAllowUnverifiedEmail<T extends LoaderFunction>(fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUserAllowUnverifiedEmail(args.request);
@@ -134,6 +171,13 @@ export function authLoaderGetAuth(args: any): UserSession {
 		throw "Missing user session"
 	}
 	return args.userSession
+}
+
+export function authLoaderIsPublic(args: any): boolean {
+	if (!args.userSession || !args.userSession.user) {
+		return true
+	}
+	return false
 }
 
 export function authAction<T extends ActionFunction>(fn: T): T {

@@ -13,10 +13,14 @@ import {
 	FieldsView,
 	ViewComponent
 } from "~/frontend/form";
+import {approvalStatusField} from "../approval";
+import {formatDate} from "~/util/date";
+
 
 export const route = "/disaster-event"
 
 export const fieldsDefCommon = [
+	approvalStatusField,
 	{key: "nationalDisasterId", label: "National Disaster ID", type: "text"},
 	{key: "otherId1", label: "Event ID in other system", type: "text"},
 	{key: "glide", label: "GLIDE Number", type: "text"},
@@ -58,7 +62,9 @@ export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 
 export const fieldsDefView: FormInputDef<DisasterEventViewModel>[] = [
 	//{key: "hazard", label: "", type: "other"},
-	...fieldsDefCommon
+	...fieldsDefCommon,
+	{key: "createdAt", label: "", type: "other"},
+	{key: "updatedAt", label: "", type: "other"},
 ];
 
 interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
@@ -83,6 +89,7 @@ export function DisasterEventForm({edit, fields, errors, id}: DisasterEventFormP
 
 interface DisasterEventViewProps {
 	item: DisasterEventViewModel;
+	isPublic: boolean;
 }
 
 export function DisasterEventView(props: DisasterEventViewProps) {
@@ -90,12 +97,21 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 
 	return (
 		<ViewComponent
+			isPublic={props.isPublic}
 			path={route}
 			id={item.id}
 			plural="Disaster Events"
 			singular="Disaster Event"
 		>
-			<FieldsView def={fieldsDefView} fields={item} override={{}} />
+			<FieldsView def={fieldsDefView} fields={item} override={{
+				createdAt: (
+					<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
+				),
+				updatedAt: (
+					<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
+				),
+
+			}} />
 		</ViewComponent>
 	);
 }

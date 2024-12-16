@@ -1,8 +1,6 @@
 import {useLoaderData, Link} from "@remix-run/react";
-import {disasterEventTable} from "~/drizzle/schema";
-import {dr} from "~/db.server";
-import {createPaginatedLoader} from "~/backend.server/handlers/view";
-import {desc} from "drizzle-orm";
+import {disasterEventsLoader} from "~/backend.server/handlers/events/disasterevent"
+
 import {DataScreen} from "~/frontend/data_screen";
 import {formatDate} from "~/util/date";
 import {ActionLinks} from "~/frontend/form"
@@ -11,30 +9,23 @@ import {
 	route,
 } from "~/frontend/events/disastereventform";
 
-export const loader = createPaginatedLoader(
-	disasterEventTable,
-	async (offsetLimit) => {
-		return dr.query.disasterEventTable.findMany({
-			...offsetLimit,
-			columns: {
-				id: true,
-				startDateUTC: true,
-				endDateUTC: true,
-			},
-			orderBy: [desc(disasterEventTable.startDateUTC)],
-		});
-	},
-	[desc(disasterEventTable.startDateUTC)]
-);
+import {
+	authLoaderPublicOrWithRole,
+} from "~/util/auth";
+
+export const loader = authLoaderPublicOrWithRole("ViewData", async (loaderArgs) => {
+	return disasterEventsLoader({loaderArgs})
+})
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
 	const {items, pagination} = ld.data;
 
 	return DataScreen({
+		isPublic: ld.isPublic,
 		resourceName: "Disaster Event",
 		baseRoute: route,
-		columns: ["ID", "Start Date", "End Date", "Actions"],
+		columns: ["ID", "Start Date", "End Date", ""],
 		items: items,
 		paginationData: pagination,
 		renderRow: (item, route) => (
@@ -45,8 +36,9 @@ export default function Data() {
 				<td>{formatDate(item.startDateUTC)}</td>
 				<td>{formatDate(item.endDateUTC)}</td>
 				<td>
+				{ld.isPublic ? null : 
 					<ActionLinks route={route} id={item.id} />
-
+				}
 				</td>
 			</tr>
 		),

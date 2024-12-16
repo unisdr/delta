@@ -1,6 +1,6 @@
 import {Form as ReactForm} from "@remix-run/react";
 import {useLoaderData} from "@remix-run/react";
-import {Link, Outlet} from "@remix-run/react";
+import {Link} from "@remix-run/react";
 
 import {
 	useActionData,
@@ -12,6 +12,10 @@ import {formatDate} from "~/util/date"
 export type FormResponse<T> =
 	| {ok: true; data: T}
 	| {ok: false; data: T, errors: Errors<T>};
+
+export type FormResponse2<T> =
+	| {ok: true; data: Partial<T>}
+	| {ok: false; data: Partial<T>, errors: Errors<T>};
 
 export interface Errors<T> {
 	form?: string[]
@@ -144,13 +148,13 @@ export function Form<T>({children, errors}: FormProps<T>) {
 export interface UserFormProps<T> {
 	edit: boolean
 	id: any // only valid when edit is true
-	fields: T
+	fields: Partial<T>
 	errors?: Errors<T>
 }
 
 export interface FormScreenOpts<T, D> {
 	extraData: D
-	fieldsInitial: T
+	fieldsInitial: Partial<T>
 	form: React.FC<UserFormProps<T> & D>
 	edit: boolean
 	id?: any
@@ -176,17 +180,26 @@ export function formScreen<T, D>(opts: FormScreenOpts<T, D>) {
 	return opts.form(mergedProps);
 }
 
-export type FormInputType = "text" | "date" | "number" | "bool" | "other"
+export type FormInputType = "text" | "date" | "number" | "bool" | "other" | "enum"
+
+export interface EnumEntry {
+	key: string
+	label: string
+}
 
 export interface FormInputDef<T> {
 	key: keyof T & string
 	label: string
 	type: FormInputType
+	required?: boolean
+	enumData?: readonly EnumEntry[]
 }
 
 export interface FormInputDefSpecific {
 	label: string
 	type: FormInputType
+	required?: boolean
+	enumData?: readonly EnumEntry[]
 }
 
 export function fieldsFromMap<T>(
@@ -198,6 +211,8 @@ export function fieldsFromMap<T>(
 			let k = field.key
 			let vs = data[field.key] || ""
 			switch (field.type) {
+				case "other":
+					return [k, vs]
 				case "number":
 					return [k, Number(vs)]
 				case "text":
@@ -209,16 +224,95 @@ export function fieldsFromMap<T>(
 					return [k, new Date(vs)]
 				case "bool":
 					return [k, Boolean(vs)]
-				case "other":
+				case "enum":
 					return [k, vs]
 			}
 		})
 	) as T;
 }
 
+export interface validateFromMapRes<T> {
+	ok: boolean
+	data: Partial<T>
+	resOk?: T
+	errors: Errors<T>
+}
+
+function fieldRequiredMsg(field: string): string {
+	return `The field "${field}" is required.`
+}
+
+export function validateFromMap<T>(
+	data: {[key: string]: string},
+	fieldsDef: FormInputDef<T>[]
+): validateFromMapRes<T> {
+	const errors: Errors<T> = {};
+	errors.fields = {};
+
+	let partial: [keyof T, any][] = []
+	let full: [keyof T, any][] = []
+
+	for (let field of fieldsDef) {
+		if (field.type == "bool" && field.required) {
+			throw "Code sets bool as required, but bools are always required"
+		}
+		let k = field.key
+		let vs = data[field.key] || ""
+		let fieldValue: any;
+		switch (field.type) {
+			case "other":
+				fieldValue = vs;
+				break;
+			case "number":
+				fieldValue = vs === "" ? null : Number(vs);
+				break;
+			case "text":
+				fieldValue = vs;
+				break;
+			case "date":
+				fieldValue = vs === "" ? null : new Date(vs);
+				break;
+			case "bool":
+				fieldValue = vs === "on" ? true : false;
+				break;
+			case "enum":
+				const enumValid = field.enumData?.some(e => e.key === vs);
+
+				if (!enumValid) {
+					throw new Error("Unknown value for enum");
+				}
+				fieldValue = vs;
+				break;
+			default:
+				throw new Error(`Unknown type ${field.type}`);
+		}
+		if (field.type != "bool" && (vs === "" && field.required)) {
+			errors.fields![k] = [fieldRequiredMsg(field.label)];
+		} else {
+			partial.push([k, fieldValue]);
+			full.push([k, fieldValue]);
+		}
+	}
+
+	const ok = !hasErrors(errors)
+	if (!ok) {
+		return {
+			ok,
+			data: Object.fromEntries(partial) as Partial<T>,
+			errors
+		}
+	}
+	return {
+		ok,
+		data: Object.fromEntries(partial) as Partial<T>,
+		resOk: Object.fromEntries(full) as T,
+		errors
+	}
+}
+
 export interface InputsProps<T> {
 	def: FormInputDef<T>[]
-	fields: T
+	fields: Partial<T>
 	errors?: Errors<T>
 	override?: Record<string, ReactElement>
 }
@@ -233,7 +327,7 @@ export function Inputs<T>(props: InputsProps<T>) {
 			if (props.errors && props.errors.fields) {
 				errors = props.errors.fields[def.key]
 			}
-			return <Input key={def.key} def={def} name={def.key} value={props.fields[def.key]} errors={errors} />
+			return <Input key={def.key} def={def} name={def.key} value={props.fields[def.key]} errors={errors} enumData={def.enumData} />
 		})
 }
 
@@ -242,26 +336,47 @@ export interface InputProps {
 	name: string
 	value: any
 	errors: string[] | undefined
+	enumData?: readonly EnumEntry[]
 }
 
 export function Input(props: InputProps) {
+	let label = props.def.label;
+	if (props.def.required) {
+		label += " *"
+	}
 	switch (props.def.type) {
 		default:
 			throw `Unknown type ${props.def.type}`
+		case "enum":
+			let vs = props.value as string;
+			return <Field label={label}>
+				<select
+					required={props.def.required}
+					name={props.name}
+					defaultValue={vs}
+				>
+					{props.enumData!.map((v) => (
+						<option key={v.key} value={v.key}>{v.label}</option>
+					))}
+				</select>
+				<FieldErrors2 errors={props.errors} />
+			</Field>
 		case "bool":
 			let v = props.value as boolean;
 			if (v) {
-				return <Field label={props.def.label}>
+				return <Field label={label}>
 					<input
+						required={props.def.required}
 						type="checkbox"
 						name={props.name}
-						checked
+						defaultChecked
 					/>
 					<FieldErrors2 errors={props.errors} />
 				</Field>
 			} else {
-				return <Field label={props.def.label}>
+				return <Field label={label}>
 					<input
+						required={props.def.required}
 						type="checkbox"
 						name={props.name}
 					/>
@@ -271,45 +386,29 @@ export function Input(props: InputProps) {
 		case "text":
 		case "date":
 		case "number":
-			let props2 = {
-				name: props.name,
-				label: props.def.label,
-				inputType: props.def.type,
-				defaultValue: "",
-				errors: props.errors,
+			let defaultValue = ""
+			if (props.value !== null && props.value !== undefined) {
+				if (props.def.type == "text") {
+					let v = props.value as string;
+					defaultValue = v
+				} else if (props.def.type == "date") {
+					let v = props.value as Date;
+					defaultValue = formatDate(v)
+				} else if (props.def.type == "number") {
+					let v = props.value as number;
+					defaultValue = String(v)
+				}
 			}
-			if (props.def.type == "text") {
-				let v = props.value as string;
-				props2.defaultValue = v
-			} else if (props.def.type == "date") {
-				let v = props.value as Date | null;
-				props2.defaultValue = formatDate(v)
-			} else if (props.def.type == "number") {
-				let v = props.value as number;
-				props2.defaultValue = String(v)
-			}
-			return InputWithBrowserType(props2)
+			return <Field label={label}>
+				<input
+					required={props.def.required}
+					type={props.def.type}
+					name={props.name}
+					defaultValue={defaultValue}
+				/>
+				<FieldErrors2 errors={props.errors} />
+			</Field>
 	}
-}
-
-export interface InputWithBrowserTypeProps {
-	name: string;
-	label: string;
-	inputType: string;
-	defaultValue: string;
-	errors: string[] | undefined;
-}
-
-export function InputWithBrowserType(props: InputWithBrowserTypeProps) {
-	const {name, label, inputType, defaultValue, errors} = props
-	return <Field label={label}>
-		<input
-			type={inputType}
-			name={name}
-			defaultValue={defaultValue}
-		/>
-		<FieldErrors2 errors={errors} />
-	</Field>
 }
 
 export interface FieldsViewProps<T> {
@@ -334,6 +433,9 @@ export interface FieldViewProps {
 }
 
 export function FieldView(props: FieldViewProps) {
+	if (props.value === null) {
+		return <p>{props.def.label}: -</p>
+	}
 	switch (props.def.type) {
 		default:
 			throw `Unknown type ${props.def.type}`
@@ -345,10 +447,18 @@ export function FieldView(props: FieldViewProps) {
 			return <p>{props.def.label}: {String(n)}</p>
 		case "text":
 			let str = props.value as string;
+			if (!str.trim()) {
+				return <p>{props.def.label}: -</p>
+			}
 			return <p>{props.def.label}: {str}</p>
 		case "date":
-			let date = props.value as Date | null;
+			let date = props.value as Date;
 			return <p>{props.def.label}: {formatDate(date)}</p>
+		case "enum":
+			let enumId = props.value;
+			let enumItem = props.def.enumData!.find((item) => item.key === enumId);
+			return <p>{props.def.label}: {enumItem!.label}</p>
+
 	}
 }
 
@@ -362,7 +472,7 @@ export function FormScreen<T>(props: FormScreenProps<T>) {
 
 	const fieldsInitial = ld.item
 		? {...ld.item}
-		: fieldsFromMap({}, props.fieldsDef);
+		: {};
 
 	return formScreen({
 		extraData: {},
@@ -373,11 +483,11 @@ export function FormScreen<T>(props: FormScreenProps<T>) {
 	});
 }
 
-interface ViewScreenProps {
-	viewComponent: any
+interface ViewScreenProps<T> {
+	viewComponent: React.ComponentType<{ item: T }>;
 }
 
-export function ViewScreen<T>(props: ViewScreenProps) {
+export function ViewScreen<T>(props: ViewScreenProps<T>) {
 	let ViewComponent = props.viewComponent;
 	const ld = useLoaderData<{item: T}>();
 	if (!ld.item) {
@@ -386,14 +496,30 @@ export function ViewScreen<T>(props: ViewScreenProps) {
 	return <ViewComponent item={ld.item} />;
 }
 
+interface ViewScreenPublicApprovedProps<T> {
+	viewComponent: React.ComponentType<{ item: T, isPublic: boolean }>;
+}
+
+export function ViewScreenPublicApproved<T>(props: ViewScreenPublicApprovedProps<T>) {
+	let ViewComponent = props.viewComponent;
+	const ld = useLoaderData<{item: T, isPublic: boolean}>();
+	if (!ld.item) {
+		throw "invalid";
+	}
+	if (ld.isPublic === undefined){
+		throw "loader does not expose isPublic"
+	}
+	return <ViewComponent isPublic={ld.isPublic} item={ld.item} />;
+}
 
 interface ViewComponentProps {
+	isPublic?: boolean;
 	path: string;
 	id: any;
 	plural: string;
 	singular: string;
-	extraActions?: React.ReactNode; 
-	extraInfo?: React.ReactNode; 
+	extraActions?: React.ReactNode;
+	extraInfo?: React.ReactNode;
 	children?: React.ReactNode;
 }
 
@@ -403,14 +529,17 @@ export function ViewComponent(props: ViewComponentProps) {
 			<p>
 				<Link to={props.path}>{props.plural}</Link>
 			</p>
-			<p>
-				<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
-			</p>
-			<p>
-				<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
-			</p>
-			{props.extraActions}
-
+			{!props.isPublic && (
+				<>
+					<p>
+						<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
+					</p>
+					<p>
+						<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
+					</p>
+					{props.extraActions}
+				</>
+			)}
 			<h2>{props.singular}</h2>
 			<p>ID: {String(props.id)}</p>
 			{props.extraInfo}
@@ -418,6 +547,7 @@ export function ViewComponent(props: ViewComponentProps) {
 		</div>
 	);
 }
+
 
 
 interface FormViewProps {

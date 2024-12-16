@@ -13,11 +13,14 @@ import {DevExample1Fields, DevExample1ViewModel} from "~/backend.server/models/d
 export const route = "/examples/dev-example1"
 
 export const fieldsDef: FormInputDef<DevExample1Fields>[] = [
-	{key: "field1", label: "Field 1", type: "text"},
+	{key: "field1", label: "Field 1", type: "text", required: true},
+	{key: "field2", label: "Field 2", type: "text"},
+	{key: "field3", label: "Field 3", type: "number", required: true},
+	{key: "field4", label: "Field 4", type: "number"},
 ];
 
 export const fieldsDefView: FormInputDef<DevExample1>[] = [
-	{key: "field1", label: "Field 1", type: "text"},
+	...fieldsDef
 ];
 
 interface DevExample1FormProps extends UserFormProps<DevExample1Fields> {}

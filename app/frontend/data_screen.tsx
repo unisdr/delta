@@ -1,37 +1,34 @@
 
 import {Pagination} from "~/frontend/pagination/view";
 
-export function DataScreen<T>({
-	resourceName,
-	baseRoute,
-	columns,
-	items,
-	paginationData,
-	renderRow,
-}: {
+interface DataScreenProps<T> {
+	isPublic?: boolean;
 	resourceName: string;
 	baseRoute: string;
 	columns: string[];
 	items: T[];
 	paginationData: any;
 	renderRow: (item: T, baseRoute: string) => React.ReactNode;
-}) {
-	const pagination = Pagination(paginationData);
+}
+
+export function DataScreen<T>(props: DataScreenProps<T>) {
+	const pagination = Pagination(props.paginationData);
 
 	return (
 		<div>
-			<a href={`${baseRoute}/edit/new`}>New {resourceName}</a>
-			{paginationData.totalItems ? (
+			{!props.isPublic &&
+				<a href={`${props.baseRoute}/edit/new`}>New {props.resourceName}</a>}
+			{props.paginationData.totalItems ? (
 				<>
 					<table>
 						<thead>
 							<tr>
-								{columns.map((col, index) => (
+								{props.columns.map((col, index) => (
 									<th key={index}>{col}</th>
 								))}
 							</tr>
 						</thead>
-						<tbody>{items.map((item) => renderRow(item, baseRoute))}</tbody>
+						<tbody>{props.items.map((item) => props.renderRow(item, props.baseRoute))}</tbody>
 					</table>
 					{pagination}
 				</>

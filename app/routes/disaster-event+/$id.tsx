@@ -8,19 +8,19 @@ import {
 } from "~/frontend/events/disastereventform";
 
 import {
-	createViewLoader,
+	createViewLoaderPublicApproved,
 } from "~/backend.server/handlers/form";
 
 import {
-	ViewScreen
+	ViewScreenPublicApproved
 } from "~/frontend/form";
 
-export const loader = createViewLoader({
+export const loader = createViewLoaderPublicApproved({
 	getById: disasterEventById
 });
 
 export default function Screen() {
-	return ViewScreen({
+	return ViewScreenPublicApproved({
 		viewComponent: DisasterEventView
 	})
 }

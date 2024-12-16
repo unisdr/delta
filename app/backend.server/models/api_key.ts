@@ -2,31 +2,27 @@ import {dr} from "~/db.server";
 import {apiKeyTable, ApiKey} from "~/drizzle/schema";
 import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
-import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 import {randomBytes} from 'crypto';
 
-
 export interface ApiKeyFields extends Omit<ApiKey, "id"> {}
 
+/*
 export function validate(fields: ApiKeyFields): Errors<ApiKeyFields> {
 	let errors: Errors<{name: string}> = {};
 	errors.fields = {};
-	if (fields.name.trim() === "") {
-		errors.fields.name = ["Name is required."];
-	}
 	return errors
 }
-
+*/
 function generateSecret(): string {
 	return randomBytes(32).toString("hex");
 }
 
 export async function apiKeyCreate(fields: ApiKeyFields): Promise<CreateResult<ApiKeyFields>> {
-	let errors = validate(fields);
-	if (hasErrors(errors)) {
-		return {ok: false, errors};
-	}
+	//	let errors = validate(fields);
+	//if (hasErrors(errors)) {
+	//return {ok: false, errors};
+	//}
 	const res = await dr.insert(apiKeyTable)
 		.values({
 			createdAt: new Date(),
@@ -41,10 +37,10 @@ export async function apiKeyCreate(fields: ApiKeyFields): Promise<CreateResult<A
 
 export async function apiKeyUpdate(idStr: string, fields: ApiKeyFields): Promise<UpdateResult<ApiKeyFields>> {
 	const id = Number(idStr);
-	let errors = validate(fields);
-	if (hasErrors(errors)) {
-		return {ok: false, errors};
-	}
+	//let errors = validate(fields);
+	//if (hasErrors(errors)) {
+	//return {ok: false, errors};
+	//}
 	await dr.update(apiKeyTable)
 		.set({
 			updatedAt: new Date(),

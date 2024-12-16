@@ -15,35 +15,44 @@ import {
 } from "~/frontend/form";
 
 import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker"
+import {formatDate} from "~/util/date";
+
+import {useEffect, useState} from 'react';
+import {approvalStatusField} from "~/frontend/approval";
+
 
 export const route = "/hazard-event"
 
 export const fieldsDefCommon = [
+	approvalStatusField,
 	{key: "otherId1", label: "Event id in other system", type: "text"},
-	{key: "startDate", label: "Start Date", type: "date"},
-	{key: "endDate", label: "End Date", type: "date"},
+	{key: "startDate", label: "Start Date", type: "date", required: true},
+	{key: "endDate", label: "End Date", type: "date", required: true},
 	{key: "description", label: "Description", type: "text"},
 	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "text"},
 	{key: "duration", label: "Duration", type: "text"},
 	{key: "magnitude", label: "Magnitude", type: "text"},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "text"},
-	{key: "recordOriginator", label: "Record Originator", type: "text"},
+	{key: "recordOriginator", label: "Record Originator", type: "text", required: true},
 	{key: "dataSource", label: "Data Source", type: "text"},
 ] as const;
 
 export const fieldsDef: FormInputDef<HazardEventFields>[] = [
 	{key: "parent", label: "", type: "other"},
-	{key: "hazardId", label: "", type: "other"},
+	{key: "hazardId", label: "Hazard", type: "other", required: true},
 	...fieldsDefCommon
 ];
 
 export const fieldsDefView: FormInputDef<HazardEventViewModel>[] = [
 	{key: "hazard", label: "", type: "other"},
-	...fieldsDefCommon
+	...fieldsDefCommon,
+	{key: "createdAt", label: "", type: "other"},
+	{key: "updatedAt", label: "", type: "other"},
 ];
 
 interface HazardEventFormProps extends UserFormProps<HazardEventFields> {
 	hip: Hip;
+	parent?: HazardEventViewModel;
 }
 
 export function hazardEventLabel(args: {
@@ -57,9 +66,43 @@ export function hazardEventLabel(args: {
 	return hazardName + " " + desc + " " + shortId;
 }
 
+export function hazardEventLongLabel(args: {
+	id?: string;
+	description?: string;
+	hazard: {nameEn: string};
+}) {
+	return <ul>
+		<li>ID: {args.id}</li>
+		<li>Description: {args.description || "-"}</li>
+		<li>Hazard: {args.hazard.nameEn}</li>
+	</ul>
+}
+export function hazardEventLink(args: {
+	id: string;
+	description: string;
+	hazard: {nameEn: string};
+}) {
+	return <Link to={`/hazard-event/${args.id}`}>
+		{hazardEventLabel(args)}
+	</Link>
+}
 
 export function HazardEventForm(props: HazardEventFormProps) {
 	const fields = props.fields;
+
+	const [selected, setSelected] = useState(props.parent);
+
+	useEffect(() => {
+		const handleMessage = (event: any) => {
+			if (event.data?.selected) {
+				setSelected(event.data.selected);
+			}
+		};
+		window.addEventListener('message', handleMessage);
+		return () => {
+			window.removeEventListener('message', handleMessage);
+		};
+	}, []);
 
 	return (
 		<FormView
@@ -71,14 +114,18 @@ export function HazardEventForm(props: HazardEventFormProps) {
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={fieldsDef}
-			infoNodes={
-				fields.parent && <p>Parent: {fields.parent}</p>
-			}
 			override={{
-				parent: <input type="hidden" name="parent" value={fields.parent} />,
+				parent:
+					<Field key="parent" label="Parent">
+						{selected ? hazardEventLink(selected) : "-"}&nbsp;
+						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
+						<input type="hidden" name="parent" value={selected?.id || ""} />
+						<FieldErrors errors={props.errors} field="parent"></FieldErrors>
+					</Field>
+				,
 				hazardId: (
-					<Field key="hazardId" label="Specific Hazard">
-						<HazardPicker name="hazardId" hip={props.hip} defaultValue={fields.hazardId || ""} />
+					<Field key="hazardId" label="Specific Hazard *">
+						<HazardPicker name="hazardId" hip={props.hip} defaultValue={fields.hazardId || ""} required={true} />
 						<FieldErrors errors={props.errors} field="hazardId"></FieldErrors>
 					</Field>
 				),
@@ -87,9 +134,9 @@ export function HazardEventForm(props: HazardEventFormProps) {
 	);
 }
 
-
 interface HazardEventViewProps {
 	item: HazardEventViewModel;
+	isPublic: boolean
 }
 
 export function HazardEventView(props: HazardEventViewProps) {
@@ -99,16 +146,17 @@ export function HazardEventView(props: HazardEventViewProps) {
 
 	return (
 		<ViewComponent
+			isPublic={props.isPublic}
 			path={route}
 			id={item.id}
 			plural="Hazardous Events"
 			singular="Hazard Event"
 			extraActions={
 				<>
-				<p>
-					<Link to={`${route}/new?parent=${item.id}`}>Add Hazardous Event caused by this event</Link>
-				</p>
-			</>
+					<p>
+						<Link to={`${route}/new?parent=${item.id}`}>Add Hazardous Event caused by this event</Link>
+					</p>
+				</>
 			}
 			extraInfo={
 				<>
@@ -117,9 +165,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 						return (
 							<p>
 								Caused By:&nbsp;
-								<Link to={`/hazard-event/${parent.id}`}>
-									{hazardEventLabel(parent)}
-								</Link>
+								{hazardEventLink(parent)}
 							</p>
 						);
 					})()}
@@ -131,9 +177,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 								const childEvent = child.c.he;
 								return (
 									<p key={child.childId}>
-										<Link to={`/hazard-event/${childEvent.id}`}>
-											{hazardEventLabel(childEvent)}
-										</Link>
+										{hazardEventLink(childEvent)}
 									</p>
 								);
 							})}
@@ -153,6 +197,12 @@ export function HazardEventView(props: HazardEventViewProps) {
 							<p>Hazard ID: {item.hazard.id}</p>
 							<p>Hazard Name: {item.hazard.nameEn}</p>
 						</div>
+					),
+					createdAt: (
+						<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
+					),
+					updatedAt: (
+						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 					),
 				}}
 			/>

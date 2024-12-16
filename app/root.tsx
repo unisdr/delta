@@ -12,12 +12,11 @@ import {
 	Meta,
 	Outlet,
 	Scripts,
-	Link,
 	useNavigation,
 	useFetcher
 } from "@remix-run/react";
 
-import { LoaderFunctionArgs, NavLink } from "react-router-dom";
+import { LoaderFunctionArgs } from "react-router-dom";
 
 
 import {
@@ -30,7 +29,7 @@ import {
 
 import { useEffect, useState } from "react";
 
-import { configSiteLogo, configSiteName } from "~/util/config";
+import { configApprovedRecordsArePublic, configSiteLogo, configSiteName } from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
@@ -54,6 +53,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 	const message = getFlashMessage(session);
 
 	return json({
+		hasPublicSite: configApprovedRecordsArePublic(),
 		loggedIn: !!user,
 		flashMessage: message,
 		configSiteName: configSiteName(),
@@ -176,7 +176,7 @@ function SessionMessage({message}: SessionMessageProps) {
 		type = "error"
 	}
 	return (
-		<div className="session-message session-${type}">
+		<div className={`session-message session-${type}`}>
 			<p>{message.text}</p>
 		</div>
 	);
@@ -184,7 +184,7 @@ function SessionMessage({message}: SessionMessageProps) {
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {loggedIn, flashMessage, configSiteName, configSiteLogo} = loaderData
+	const {hasPublicSite, loggedIn, flashMessage, configSiteName, configSiteLogo} = loaderData
 
 	return (
 		<html lang="en">
@@ -204,10 +204,10 @@ export default function Screen() {
 				<InactivityWarning loggedIn={loggedIn} />
 				<SessionMessage message={flashMessage} />
 				<div className="dts-page-container">
-					{ loggedIn && (
+					{ (hasPublicSite || loggedIn) && (
 					<header>
 						<div className="mg-container">
-							<Header siteName={configSiteName} siteLogo={configSiteLogo} />
+							<Header loggedIn={loggedIn} siteName={configSiteName} siteLogo={configSiteLogo} />
 						</div>
 					</header> ) }
 					<main className="dts-main-container">

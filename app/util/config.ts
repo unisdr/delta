@@ -4,22 +4,22 @@
  * depending on the hosting platform: 
  * https://remix.run/docs/en/main/guides/envvars
  */
-import { SSOAzureB2C as interfaceSSOAzureB2C } from "~/util/ssoauzeb2c";
+import {SSOAzureB2C as interfaceSSOAzureB2C} from "~/util/ssoauzeb2c";
 
 /**
  * Get the Website URL.
  */
 export function configSiteURL(): string {
-		const value = process.env.WEBSITE_URL || 'http://localhost:3000';
-		return value;
+	const value = process.env.WEBSITE_URL || 'http://localhost:3000';
+	return value;
 };
 
 /**
  * Get the Website Name.
  */
 export function configSiteName(): string {
-		const value = process.env.WEBSITE_NAME || 'Disaster Losses Tracking System';
-		return value;
+	const value = process.env.WEBSITE_NAME || 'Disaster Losses Tracking System';
+	return value;
 };
 
 /**
@@ -34,30 +34,30 @@ export function configSiteLogo(): string {
 };
 
 export function configSsoAzureB2C(): interfaceSSOAzureB2C {
-		const data:interfaceSSOAzureB2C = {
-			client_id: _configSsoAzureB2ClientID(), 
-			client_secret: _configSsoAzureB2ClientSecret(),
-			login_userflow: _configSsoAzureB2CLoginUserFlow(),
-			login_redirect_url_admin: _configSsoAzureB2CLoginRedirectURLAdmin(),
-			login_redirect_url: _configSsoAzureB2CLoginRedirectURL(),
-			edit_userflow: _configSsoAzureB2CEditUserFlow(),
-			edit_redirect_url: _configSsoAzureB2CEditRedirectURL(),
-			reset_userflow: _configSsoAzureB2CResetUserFlow(),
-			reset_redirect_url: _configSsoAzureB2CEditResetURL(),
-			tenant: _configSsoAzureB2CTenant(),
-		};
+	const data: interfaceSSOAzureB2C = {
+		client_id: _configSsoAzureB2ClientID(),
+		client_secret: _configSsoAzureB2ClientSecret(),
+		login_userflow: _configSsoAzureB2CLoginUserFlow(),
+		login_redirect_url_admin: _configSsoAzureB2CLoginRedirectURLAdmin(),
+		login_redirect_url: _configSsoAzureB2CLoginRedirectURL(),
+		edit_userflow: _configSsoAzureB2CEditUserFlow(),
+		edit_redirect_url: _configSsoAzureB2CEditRedirectURL(),
+		reset_userflow: _configSsoAzureB2CResetUserFlow(),
+		reset_redirect_url: _configSsoAzureB2CEditResetURL(),
+		tenant: _configSsoAzureB2CTenant(),
+	};
 
-		return data;
+	return data;
 };
 
 function _configSsoAzureB2ClientID(): string {
-		const value = process.env.SSO_AZURE_B2C_CLIENT_ID || '';
-		return value;
+	const value = process.env.SSO_AZURE_B2C_CLIENT_ID || '';
+	return value;
 };
 
 function _configSsoAzureB2ClientSecret(): string {
-		const value = process.env.SSO_AZURE_B2C_CLIENT_SECRET || '';
-		return value;
+	const value = process.env.SSO_AZURE_B2C_CLIENT_SECRET || '';
+	return value;
 };
 
 function _configSsoAzureB2CLoginUserFlow(): string {
@@ -71,8 +71,8 @@ function _configSsoAzureB2CLoginRedirectURLAdmin(): string {
 };
 
 function _configSsoAzureB2CLoginRedirectURL(): string {
-		const value = process.env.SSO_AZURE_B2C_USERFLOW_LOGIN_REDIRECT_URL || '';
-		return value;
+	const value = process.env.SSO_AZURE_B2C_USERFLOW_LOGIN_REDIRECT_URL || '';
+	return value;
 };
 
 function _configSsoAzureB2CEditUserFlow(): string {
@@ -96,6 +96,10 @@ function _configSsoAzureB2CEditResetURL(): string {
 };
 
 function _configSsoAzureB2CTenant(): string {
-		const value = process.env.SSO_AZURE_B2C_TENANT || '';
-		return value;
+	const value = process.env.SSO_AZURE_B2C_TENANT || '';
+	return value;
+};
+
+export function configApprovedRecordsArePublic(): boolean {
+	return process.env.APPROVED_RECORDS_ARE_PUBLIC == "true" ? true : false
 };

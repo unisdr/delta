@@ -1,33 +1,21 @@
 import {
-	json,
-} from "@remix-run/node";
-import {
 	useLoaderData,
-	Link,
 } from "@remix-run/react";
 import {
 	authLoader,
-	authLoaderGetAuth
 } from "~/util/auth";
-import {
-	MegaMenu,
-} from "~/frontend/megamenu2/megamenu"
-import {
-	Lvl1Item
-} from "~/frontend/megamenu2/common"
 import {
 	Header,
 } from "~/frontend/header/header"
 
-import {useState, useEffect} from "react";
 
 import {configSiteName} from "~/util/config";
 
 
 export const loader = authLoader(async () => {
-	return json({
+	return {
 		configSiteName: configSiteName(),
-	});
+	};
 });
 
 export default function Screen() {
@@ -48,7 +36,7 @@ export default function Screen() {
 	return (
 		<>
 			<p>Hello!</p>
-			<Header siteLogo="" siteName={configSiteName} />
+			<Header loggedIn={false} siteLogo="" siteName={configSiteName} />
 		</>
 	)
 }

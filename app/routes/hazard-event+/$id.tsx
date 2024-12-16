@@ -3,20 +3,20 @@ import {
 } from "~/frontend/events/hazardeventform";
 
 import {
-	createViewLoader,
+	createViewLoaderPublicApproved,
 } from "~/backend.server/handlers/form";
 
 import {
-	ViewScreen
+	ViewScreenPublicApproved
 } from "~/frontend/form";
 import {hazardEventById} from "~/backend.server/models/event";
 
-export const loader = createViewLoader({
+export const loader = createViewLoaderPublicApproved({
 	getById: hazardEventById
 });
 
 export default function Screen() {
-	return ViewScreen({
+	return ViewScreenPublicApproved({
 		viewComponent: HazardEventView
 	})
 }

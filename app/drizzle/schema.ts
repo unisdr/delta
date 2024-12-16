@@ -9,7 +9,7 @@ import {
 	jsonb,
 	index,
 	AnyPgColumn,
-	check
+	check,
 } from "drizzle-orm/pg-core";
 
 import {
@@ -30,12 +30,21 @@ function zeroStrMap(name: string) {
 	return jsonb(name).$type<Record<string, string>>().default({}).notNull()
 }
 
+/*
 function zeroInteger(name: string) {
 	return integer(name).notNull().default(0)
-}
+}*/
 const createdUpdatedTimestamps = {
 	updatedAt: timestamp("updated_at"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
+}
+
+
+const approvalFields = {
+	// drizzle has broken postgres enum support
+	// using text column instead
+	// https://github.com/drizzle-team/drizzle-orm/issues/3485
+	approvalStatus: text({ enum: ["pending", "approved", "rejected"]}).notNull().default("pending"),
 }
 
 export const sessionTable = pgTable("session", {
@@ -102,7 +111,13 @@ export const apiKeyRelations = relations(apiKeyTable, ({one}) => ({
 
 export const devExample1Table = pgTable("dev_example1", {
 	id: serial("id").primaryKey(),
-	field1: text("field1").notNull().unique(),
+	// for both required and optional text fields setting it to "" makes sense, it's different for numbers where 0 could be a valid entry
+	field1: text("field1").notNull(),
+	field2: text("field2").notNull(),
+	// required
+	field3: integer("field3").notNull(),
+	// optional
+	field4: integer("field4")
 });
 
 export type DevExample1 = typeof devExample1Table.$inferSelect;
@@ -191,6 +206,8 @@ export type EventRelationship = typeof eventRelationshipTable.$inferSelect;
 export type EventRelationshipInsert = typeof eventRelationshipTable.$inferInsert;
 
 export const hazardEventTable = pgTable("hazard_event", {
+	...createdUpdatedTimestamps,
+	...approvalFields,
 	id: uuid("id").primaryKey().references((): AnyPgColumn => eventTable.id),
 	hazardId: text("hazard_id").references((): AnyPgColumn => hipHazardTable.id).notNull(),
 	startDate: timestamp("start_date"),
@@ -226,6 +243,8 @@ export const hazardEventRel = relations(hazardEventTable, ({one}) => ({
 
 
 export const disasterEventTable = pgTable("disaster_event", {
+	...createdUpdatedTimestamps,
+	...approvalFields,
 	id: uuid("id").primaryKey().references((): AnyPgColumn => eventTable.id),
 	// data fields below not used in queries directly
 	// only on form screens
@@ -240,7 +259,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	endDateUTC: timestamp("end_date_utc"),
 	startDateLocal: timestamp("start_date_local"),
 	endDateLocal: timestamp("end_date_local"),
-	durationDays: zeroInteger("duration_days"),
+	durationDays: integer("duration_days"),
 	affectedGeographicDivisions: zeroText("affected_geographic_divisions"),
 	affectedAdministrativeRegions: zeroText("affected_administrative_regions"),
 	disasterDeclaration: zeroBool("disaster_declaration"),
@@ -255,13 +274,13 @@ export const disasterEventTable = pgTable("disaster_event", {
 	reAssementDate: timestamp("re_assessment_date"),
 	dataSource: zeroText("data_source"),
 	originatorRecorderOfInformation: zeroText("originator_recorder_of_information"),
-	effectsTotalLocalCurrency: zeroInteger("effects_total_local_currency"),
-	effectsTotalUsd: zeroInteger("effects_total_usd"),
-	subtotaldamageUsd: zeroInteger("subtotal_damage_usd"),
-	subtotalLossesUsd: zeroInteger("subtotal_losses_usd"),
-	responseCostTotalUsd: zeroInteger("response_cost_total"),
-	humanitarianNeedsTotalUsd: zeroInteger("humanitarian_needs_total"),
-	recoveryNeedsTotalUsd: zeroInteger("recovery_needs_total"),
+	effectsTotalLocalCurrency: integer("effects_total_local_currency"),
+	effectsTotalUsd: integer("effects_total_usd"),
+	subtotaldamageUsd: integer("subtotal_damage_usd"),
+	subtotalLossesUsd: integer("subtotal_losses_usd"),
+	responseCostTotalUsd: integer("response_cost_total"),
+	humanitarianNeedsTotalUsd: integer("humanitarian_needs_total"),
+	recoveryNeedsTotalUsd: integer("recovery_needs_total"),
 });
 
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;

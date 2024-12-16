@@ -11,6 +11,7 @@ export interface HazardPickerProps {
 	defaultValue: string;
 	name: string;
 	hip: Hip;
+	required?: boolean;
 }
 
 export interface Hip {
@@ -46,8 +47,6 @@ export function HazardPicker(props: HazardPickerProps) {
 	useEffect(() => {
 		setIsClient(true);
 	}, []);
-
-	console.log("hazard picker current value", props.defaultValue);
 
 	const classes = sortByName(props.hip.classes);
 	const clusters = sortByName(props.hip.clusters);
@@ -93,6 +92,7 @@ export function HazardPicker(props: HazardPickerProps) {
 		<>
 			<Field label="Hazard Class">
 				<select
+					required={props.required}
 					value={selectedClass || ""}
 					onChange={(e) => {
 						setSelectedClass(Number(e.target.value));
@@ -111,6 +111,7 @@ export function HazardPicker(props: HazardPickerProps) {
 
 			<Field label="Hazard Cluster">
 				<select
+					required={props.required}
 					value={selectedCluster || ""}
 					onChange={(e) => {
 						setSelectedCluster(Number(e.target.value));
@@ -129,6 +130,7 @@ export function HazardPicker(props: HazardPickerProps) {
 
 			<Field label="Specific Hazard">
 				<select
+					required={props.required}
 					name={props.name}
 					value={selectedHazard || ""}
 					onChange={(e) => setSelectedHazard(e.target.value)}

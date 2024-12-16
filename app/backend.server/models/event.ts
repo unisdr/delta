@@ -13,29 +13,21 @@ import {dr} from "~/db.server";
 
 import {
 	eq,
+	sql
 } from "drizzle-orm";
-
-
 
 export interface HazardEventFields extends Omit<Event, 'id'>, Omit<HazardEvent, 'id'> {
 	parent: string
 }
 
-export async function hazardEventCreate(fields: HazardEventFields): Promise<CreateResult<HazardEventFields>> {
+export function validate(_fields: HazardEventFields): Errors<HazardEventFields> {
 	let errors: Errors<HazardEventFields> = {};
 	errors.fields = {};
-	errors.form = [];
-	if (!fields.hazardId) {
-		errors.fields!.hazardId = ["Select a hazard"];
-	}
-	if (!fields.startDate) {
-		errors.fields!.startDate = ["Start date is required"];
+	return errors
+}
 
-	}
-	if (!fields.endDate) {
-		errors.fields!.endDate = ["End date is required"];
-
-	}
+export async function hazardEventCreate(fields: HazardEventFields): Promise<CreateResult<HazardEventFields>> {
+	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
 	}
@@ -59,6 +51,7 @@ export async function hazardEventCreate(fields: HazardEventFields): Promise<Crea
 			.values({
 				...values,
 				id: eventId,
+				createdAt: new Date(),
 			})
 
 		if (fields.parent) {
@@ -74,50 +67,109 @@ export async function hazardEventCreate(fields: HazardEventFields): Promise<Crea
 	return {ok: true, id: eventId}
 }
 
+class ParentPathError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "ParentPathError";
+	}
+}
+
 export async function hazardEventUpdate(id: string, fields: HazardEventFields): Promise<UpdateResult<HazardEventFields>> {
-	let errors: Errors<HazardEventFields> = {};
-	errors.fields = {};
-	errors.form = [];
-	if (!fields.hazardId) {
-		errors.fields!.hazardId = ["Select a hazard"];
-	}
-	if (!fields.startDate) {
-		errors.fields!.startDate = ["Start date is required"];
+	let errors = validate(fields);
 
-	}
-	if (!fields.endDate) {
-		errors.fields!.endDate = ["End date is required"];
-
-	}
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
 	}
 
-	await dr.transaction(async (tx) => {
+	console.log("hazard event update", "parent", fields.parent)
 
-		/*
-		console.log("updating eventTable")
-		await tx
-			.update(eventTable)
-			.set({
-				example: fields.example,
-			})
-			.where(eq(eventTable.id, id))
-*/
-		let values: HazardEventFields = {
-			...fields,
-			startDate: new Date(fields.startDate!),
-			endDate: new Date(fields.endDate!),
+	try {
+
+		await dr.transaction(async (tx) => {
+
+			/*
+			console.log("updating eventTable")
+			await tx
+				.update(eventTable)
+				.set({
+					example: fields.example,
+				})
+				.where(eq(eventTable.id, id))
+	*/
+
+			let values: HazardEventFields = {
+				...fields,
+				startDate: new Date(fields.startDate!),
+				endDate: new Date(fields.endDate!),
+			}
+			await tx
+				.update(hazardEventTable)
+				.set({
+					...values,
+					updatedAt: new Date(),
+				})
+				.where(eq(hazardEventTable.id, id))
+
+			console.log("updating parent relation");
+
+			await tx
+				.delete(eventRelationshipTable)
+				.where(eq(eventRelationshipTable.childId, String(id)));
+
+			console.log("fields.parent", fields.parent)
+			if (fields.parent) {
+
+				await tx
+					.insert(eventRelationshipTable)
+					.values({
+						parentId: fields.parent,
+						childId: id,
+						type: "caused_by"
+					});
+
+				// check for cycles using new value
+				const er = eventRelationshipTable
+
+				const parentPathRows = await tx.execute(sql`
+WITH RECURSIVE pp AS (
+	SELECT
+		er1.parent_id,
+		er1.child_id,
+		ARRAY[er1.child_id] AS path
+	FROM ${er} er1
+	WHERE er1.child_id = ${fields.parent}
+	UNION ALL
+	SELECT
+		er2.parent_id,
+		er2.child_id,
+		pp.path || er2.child_id
+	FROM ${er} er2
+	INNER JOIN pp ON pp.child_id = er2.parent_id
+	WHERE er2.child_id != ALL(pp.path) -- Prevent cycles
+)
+SELECT pp.parent_id FROM pp
+`);
+
+				const parentPath = parentPathRows.rows.map((r) => r.parent_id)
+
+				console.log("parentPath", parentPath, id)
+
+				if (parentPath.includes(id)) {
+					console.log("Parent path includes this event, aborting")
+					throw new ParentPathError("Parent path already includes this event");
+				}
+			}
+
+		})
+	} catch (error) {
+		if (error instanceof ParentPathError) {
+			errors.fields = errors.fields || {};
+			errors.fields!.parent = ["Event relation cycle not allowed. This event or one of it's chilren, is set as the parent."]
+			return {ok: false, errors: errors}
+		} else {
+			throw error;
 		}
-		console.log("setting values", values)
-
-		await tx
-			.update(hazardEventTable)
-			.set({
-				...values
-			})
-			.where(eq(hazardEventTable.id, id))
-	})
+	}
 
 	return {ok: true}
 }

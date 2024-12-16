@@ -10,13 +10,11 @@ import {
 
 import {
 	formScreen,
-	fieldsFromMap
 } from "~/frontend/form";
 
 import {
-	formUpdate
+	formSave,
 } from "~/backend.server/handlers/form";
-
 
 import {
 	authActionWithRole,
@@ -38,22 +36,34 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
 	const item = await getItem2(params, hazardEventById)
 	let hip = await dataForHazardPicker();
+	
+	if (item!.event.ps.length > 0){
+		let parent = item!.event.ps[0].p.he;
+		// get parent of parent as well, to match what we use in new form
+		let parent2 = await hazardEventById(parent.id);
+		return {hip, item, parent: parent2};
+	}
 	return {hip: hip, item: item};
 })
 
 export const action = authActionWithRole("EditData", async (actionArgs) => {
-	return formUpdate({
-		fieldsDef,
+	return formSave({
 		actionArgs,
-		fieldsFromMap: fieldsFromMap,
-		update: hazardEventUpdate,
+		fieldsDef,
+		save: async (id, data) => {
+			if (id) {
+				return hazardEventUpdate(id, data);
+			} else {
+				throw "not an create screen"
+			}
+		},
 		redirectTo: (id: string) => `/hazard-event/${id}`
 	})
 });
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>()
-	if (!ld.item){
+	if (!ld.item) {
 		throw "invalid"
 	}
 	let fieldsInitial = {
@@ -62,7 +72,7 @@ export default function Screen() {
 		parent: ""
 	}
 	return formScreen({
-		extraData: {hip: ld.hip},
+		extraData: {hip: ld.hip, parent: ld.parent},
 		fieldsInitial,
 		form: HazardEventForm,
 		edit: true,

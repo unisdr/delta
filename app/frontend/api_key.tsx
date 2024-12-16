@@ -13,7 +13,7 @@ import {formatDate} from "~/util/date";
 export const route = "/settings/api-key"
 
 export const fieldsDefCommon = [
-	{key: "name", label: "Name", type: "text"},
+	{key: "name", label: "Name", type: "text", required: true},
 ] as const;
 
 export const fieldsDef: FormInputDef<ApiKeyFields>[] = [

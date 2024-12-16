@@ -10,8 +10,7 @@ import {
 } from "~/frontend/api_key";
 
 import {
-	fieldsFromMap,
-	FormScreen
+	FormScreen,
 } from "~/frontend/form";
 
 import {
@@ -34,7 +33,6 @@ export const action = authActionWithRole("EditData", async (actionArgs) => {
 	return formSave({
 		actionArgs,
 		fieldsDef: fieldsDef,
-		fieldsFromMap: fieldsFromMap,
 		save: async (id, data) => {
 			if (!id) {
 				data.managedByUserId = auth.user.id
