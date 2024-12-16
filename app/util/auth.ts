@@ -6,7 +6,6 @@ import {
 	redirect
 } from "@remix-run/node";
 
-
 import {
 	cookieSessionDestroy,
 	getUserFromSession,
@@ -100,7 +99,7 @@ export function authLoader<T extends LoaderFunction>(fn: T): T {
 	}) as T;
 }
 
-export function authLoaderWithRole<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
+export function authLoaderWithPerm<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUser(args.request);
 		if (!roleHasPermission(userSession.user.role, permission)) {
@@ -114,9 +113,9 @@ export function authLoaderWithRole<T extends LoaderFunction>(permission: Permiss
 	}) as T;
 }
 
-export function authLoaderPublicOrWithRole<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
+export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
 	if (!configApprovedRecordsArePublic()) {
-		return authLoaderWithRole(permission, fn)
+		return authLoaderWithPerm(permission, fn)
 	}
 
 	return (async (args: LoaderFunctionArgs) => {
@@ -191,7 +190,7 @@ export function authAction<T extends ActionFunction>(fn: T): T {
 }
 
 
-export function authActionWithRole<T extends ActionFunction>(permission: PermissionId, fn: T): T {
+export function authActionWithPerm<T extends ActionFunction>(permission: PermissionId, fn: T): T {
 	return (async (args: ActionFunctionArgs) => {
 		const userSession = await requireUser(args.request);
 		if (!roleHasPermission(userSession.user.role, permission)) {

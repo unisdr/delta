@@ -3,7 +3,7 @@ import {
 } from "drizzle-orm";
 
 import {OffsetLimit} from "~/frontend/pagination/api.server";
-import {authLoaderWithRole} from "~/util/auth";
+import {authLoaderWithPerm} from "~/util/auth";
 import {dr} from "~/db.server";
 import {executeQueryForPagination3} from "~/frontend/pagination/api.server";
 
@@ -55,7 +55,7 @@ export function createPaginatedLoader<T>(
 	fetchData: (offsetLimit: OffsetLimit) => Promise<T[]>,
 	defaultOrderBy: any[] = [],
 ) {
-	return authLoaderWithRole("ViewData", async (loaderArgs) => {
+	return authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		const {request} = loaderArgs;
 
 		const count = await dr.$count(table);

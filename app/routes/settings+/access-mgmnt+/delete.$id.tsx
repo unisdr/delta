@@ -12,10 +12,10 @@ import {
 } from '~/drizzle/schema';
 
 import {
-	authLoaderWithRole,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
-export const loader = authLoaderWithRole("EditUsers", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });

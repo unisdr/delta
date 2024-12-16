@@ -25,15 +25,15 @@ import {
 import {ValidRoles} from "~/frontend/user/roles";
 
 import {
-	authActionWithRole,
-	authLoaderWithRole,
+	authActionWithPerm,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
 import { redirectWithMessage } from "~/util/session";
 import { NavSettings } from "~/routes/settings/nav";
 
-export const loader = authLoaderWithRole("InviteUsers", async () => {
+export const loader = authLoaderWithPerm("InviteUsers", async () => {
 	return json({
 		data: adminInviteUserFieldsFromMap({})
 	})
@@ -41,7 +41,7 @@ export const loader = authLoaderWithRole("InviteUsers", async () => {
 
 type ActionResponse = FormResponse<AdminInviteUserFields>
 
-export const action = authActionWithRole("InviteUsers", async (actionArgs) => {
+export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const { request } = actionArgs;
 	const formData = formStringData(await request.formData());
 	const data = adminInviteUserFieldsFromMap(formData);

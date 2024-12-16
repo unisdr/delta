@@ -1,5 +1,5 @@
 import {
-	authLoaderWithRole
+	authLoaderWithPerm
 } from "~/util/auth";
 
 import {NavSettings} from "~/routes/settings/nav";
@@ -22,7 +22,7 @@ interface ItemRes {
 	name: Record<string, string>
 }
 
-export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const {request} = loaderArgs;
 
 	const url = new URL(request.url);

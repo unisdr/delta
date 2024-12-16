@@ -1,6 +1,6 @@
 
 import {
-	authLoaderWithRole
+	authLoaderWithPerm
 } from "~/util/auth";
 
 import {Link} from "react-router-dom";
@@ -29,7 +29,7 @@ import DTSMap from "~/frontend/dtsmap/dtsmap";
 
 import {NavSettings} from "~/routes/settings/nav";
 
-export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {id} = loaderArgs.params;
 	if (!id) {
 		throw new Response("Missing item ID", {status: 400});

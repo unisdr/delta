@@ -13,7 +13,7 @@ import {
 
 import {
 	authLoaderGetAuth,
-	authLoaderWithRole
+	authLoaderWithPerm
 } from "~/util/auth";
 
 import {
@@ -27,7 +27,7 @@ import {
 
 import { NavSettings } from "~/routes/settings/nav";
 
-export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const { user } = authLoaderGetAuth(loaderArgs)
 	const timeZones:string[] = getSupportedTimeZone();
 	const currency:string[] = getCurrency();

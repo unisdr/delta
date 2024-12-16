@@ -1,6 +1,6 @@
 import {
-	authActionWithRole,
-	authLoaderWithRole
+	authActionWithPerm,
+	authLoaderWithPerm
 } from "~/util/auth";
 
 import {
@@ -13,7 +13,7 @@ import {
 	hipHazardTable,
 } from '~/drizzle/schema';
 
-export const loader = authLoaderWithRole("EditData", async () => {
+export const loader = authLoaderWithPerm("EditData", async () => {
 	return null;
 });
 
@@ -152,7 +152,7 @@ function hipDevData(): Hip[] {
 	return data;
 }
 
-export const action = authActionWithRole("EditData", async (args) => {
+export const action = authActionWithPerm("EditData", async (args) => {
 	const {request} = args;
 	const formData = formStringData(await request.formData());
 	const started = new Date();

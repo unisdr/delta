@@ -1,6 +1,6 @@
 import {
-	authActionWithRole,
-	authLoaderWithRole
+	authActionWithPerm,
+	authLoaderWithPerm
 } from "~/util/auth";
 
 import type {
@@ -22,11 +22,11 @@ import {
 
 import {NavSettings} from "~/routes/settings/nav";
 
-export const loader = authLoaderWithRole("EditData", async () => {
+export const loader = authLoaderWithPerm("EditData", async () => {
 	return null;
 });
 
-export const action = authActionWithRole("EditData", async ({request}: ActionFunctionArgs) => {
+export const action = authActionWithPerm("EditData", async ({request}: ActionFunctionArgs) => {
 	let fileBytes: Uint8Array|null = null;
 
 	const uploadHandler = unstable_composeUploadHandlers(

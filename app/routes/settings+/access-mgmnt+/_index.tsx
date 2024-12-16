@@ -9,7 +9,7 @@ import {
 
 
 import {
-	authLoaderWithRole,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
 import { Pagination } from "~/frontend/pagination/view"
@@ -19,7 +19,7 @@ import {userTable} from "~/drizzle/schema";
 import { NavSettings } from "~/routes/settings/nav";
 
 
-export const loader = authLoaderWithRole("ViewUsers",async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ViewUsers",async (loaderArgs) => {
 	const { request } = loaderArgs;
 	const url = new URL(request.url);
 	const search = url.searchParams.get("search") || "";

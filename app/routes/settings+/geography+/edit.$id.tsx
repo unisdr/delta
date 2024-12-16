@@ -1,6 +1,6 @@
 import {
-	authActionWithRole,
-	authLoaderWithRole
+	authActionWithPerm,
+	authLoaderWithPerm
 } from "~/util/auth";
 
 import {
@@ -27,7 +27,7 @@ import {DivisionForm} from "~/frontend/division";
 import {formStringData} from "~/util/httputil";
 import {NavSettings} from "~/routes/settings/nav";
 
-export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {id} = loaderArgs.params;
 	if (!id) {
 		throw new Response("Missing item ID", {status: 400});
@@ -52,7 +52,7 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 
 });
 
-export const action = authActionWithRole("EditData", async (actionArgs) => {
+export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const {request, params} = actionArgs;
 
 	const id = Number(params.id);

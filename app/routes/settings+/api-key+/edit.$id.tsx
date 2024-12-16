@@ -21,13 +21,13 @@ import {
 import {
 	route
 } from "~/frontend/api_key";
-import {authActionGetAuth, authActionWithRole} from "~/util/auth";
+import {authActionGetAuth, authActionWithPerm} from "~/util/auth";
 
 export const loader = createLoader({
 	getById: apiKeyById
 });
 
-export const action = authActionWithRole("EditData", async (actionArgs) => {
+export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const auth = authActionGetAuth(actionArgs);
 
 	return formSave({

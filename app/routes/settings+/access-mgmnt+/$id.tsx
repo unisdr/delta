@@ -18,12 +18,12 @@ import {
 
 
 import {
-	authLoaderWithRole,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
 import { NavSettings } from "~/routes/settings/nav";
 
-export const loader = authLoaderWithRole("ViewUsers", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });

@@ -17,8 +17,8 @@ import {
 } from "~/backend.server/handlers/form";
 
 import {
-	authActionWithRole,
-	authLoaderWithRole,
+	authActionWithPerm,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
 import {
@@ -32,7 +32,7 @@ import {
 } from "~/backend.server/handlers/view"
 
 
-export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
 	const item = await getItem2(params, hazardEventById)
 	let hip = await dataForHazardPicker();
@@ -46,7 +46,7 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	return {hip: hip, item: item};
 })
 
-export const action = authActionWithRole("EditData", async (actionArgs) => {
+export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	return formSave({
 		actionArgs,
 		fieldsDef,

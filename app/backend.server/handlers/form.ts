@@ -7,10 +7,10 @@ import {redirectWithMessage} from "~/util/session";
 
 
 import {
-	authActionWithRole,
-	authLoaderWithRole,
+	authActionWithPerm,
+	authLoaderWithPerm,
 	authLoaderIsPublic,
-	authLoaderPublicOrWithRole
+	authLoaderPublicOrWithPerm
 } from "~/util/auth";
 
 import {
@@ -179,7 +179,7 @@ interface CreateLoaderArgs<T> {
 }
 
 export function createLoader<T>(args: CreateLoaderArgs<T>) {
-	return authLoaderWithRole("EditData", async (loaderArgs) => {
+	return authLoaderWithPerm("EditData", async (loaderArgs) => {
 		const {params} = loaderArgs;
 		if (!params.id) {
 			throw "Route does not have $id param";
@@ -204,7 +204,7 @@ interface CreateActionArgs<T> {
 }
 
 export function createAction<T>(args: CreateActionArgs<T>) {
-	return authActionWithRole("EditData", async (actionArgs) => {
+	return authActionWithPerm("EditData", async (actionArgs) => {
 		return formSave<T>({
 			actionArgs,
 			fieldsDef: args.fieldsDef,
@@ -225,7 +225,7 @@ interface CreateViewLoaderArgs<T> {
 }
 
 export function createViewLoader<T>(args: CreateViewLoaderArgs<T>) {
-	return authLoaderWithRole("ViewData", async (loaderArgs) => {
+	return authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		const {params} = loaderArgs;
 		const item = await getItem2(params, args.getById);
 		if (!item) {
@@ -245,7 +245,7 @@ export function createViewLoaderPublicApproved<T extends { approvalStatus: strin
 		return createViewLoader(args);
 	}
 
-	return authLoaderPublicOrWithRole("ViewData", async (loaderArgs) => {
+	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 		const {params} = loaderArgs;
 		const item = await getItem2(params, args.getById);
 		if (!item) {
@@ -268,7 +268,7 @@ interface DeleteLoaderArgs {
 }
 
 export function createDeleteLoader(args: DeleteLoaderArgs) {
-	return authLoaderWithRole("EditData", async (loaderArgs) => {
+	return authLoaderWithPerm("EditData", async (loaderArgs) => {
 		return formDelete({
 			loaderArgs,
 			deleteFn: args.delete,

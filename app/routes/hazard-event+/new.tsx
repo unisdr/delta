@@ -17,8 +17,8 @@ import {
 
 
 import {
-	authActionWithRole,
-	authLoaderWithRole,
+	authActionWithPerm,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
 import {
@@ -32,7 +32,7 @@ import {
 } from "~/backend.server/models/event";
 
 
-export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	let {request} = loaderArgs;
 	let hip = await dataForHazardPicker();
 	let u = new URL(request.url);
@@ -48,7 +48,7 @@ export const loader = authLoaderWithRole("EditData", async (loaderArgs) => {
 	return {hip};
 })
 
-export const action = authActionWithRole("EditData", async (actionArgs) => {
+export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
 	return formSave({
 		isCreate: true,

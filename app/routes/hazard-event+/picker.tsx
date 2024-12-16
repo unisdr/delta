@@ -3,13 +3,13 @@ import {hazardEventsLoader} from "~/backend.server/handlers/events/hazardevent"
 import {ListView} from "~/frontend/events/hazardeventlist"
 
 import {
-	authLoaderWithRole,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
 
 import {Link} from "@remix-run/react";
 
-export const loader = authLoaderWithRole("ViewData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	return hazardEventsLoader({loaderArgs})
 })
 

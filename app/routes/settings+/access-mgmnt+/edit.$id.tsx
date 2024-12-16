@@ -37,15 +37,15 @@ import {
 
 
 import {
-	authLoaderWithRole,
-	authActionWithRole,
+	authLoaderWithPerm,
+	authActionWithPerm,
 } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
 
 import { NavSettings } from "~/routes/settings/nav";
 
-export const loader = authLoaderWithRole("EditUsers", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
@@ -72,7 +72,7 @@ export const loader = authLoaderWithRole("EditUsers", async (loaderArgs) => {
 
 type ActionResponse = FormResponse<AdminUpdateUserFields>
 
-export const action = authActionWithRole("EditUsers", async (actionArgs) => {
+export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 	const { request, params } = actionArgs;
 	const id = Number(params.id);
 	if (!id) {

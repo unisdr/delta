@@ -8,11 +8,11 @@ import {
 } from "@remix-run/react";
 
 import {
-	authLoaderPublicOrWithRole,
+	authLoaderPublicOrWithPerm,
 } from "~/util/auth";
 
 
-export const loader = authLoaderPublicOrWithRole("ViewData", async (loaderArgs) => {
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 	return hazardEventsLoader({loaderArgs})
 })
 

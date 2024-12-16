@@ -13,14 +13,14 @@ import {
 
 import {
 	authLoaderGetAuth,
-	authLoaderWithRole,
+	authLoaderWithPerm,
 } from "~/util/auth";
 
 import {
 	getItem2,
 } from "~/backend.server/handlers/view";
 
-export const loader = authLoaderWithRole("ViewData", async (args) => {
+export const loader = authLoaderWithPerm("ViewData", async (args) => {
 	const {params} = args;
 	const item = await getItem2(params, apiKeyById);
 	if (!item) {
