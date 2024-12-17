@@ -47,24 +47,9 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
 
 export default function Screen() {
-	const formScreen = FormScreen({
+	return FormScreen({
 		fieldsDef: fieldsDef,
 		formComponent: ApiKeyForm,
 	});
-
-	return (<>
-		<div className="dts-page-header">
-			<header className="dts-page-title">
-				<div className="mg-container">
-					<h1 className="dts-heading-1">API Keys</h1>
-				</div>
-			</header>
-		</div>
-		<section>
-			<div className="mg-container">
-				{formScreen}
-			</div>
-		</section>
-	</>);
 }
 

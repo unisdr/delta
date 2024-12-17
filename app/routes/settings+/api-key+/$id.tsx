@@ -34,23 +34,8 @@ export const loader = authLoaderWithPerm("ViewData", async (args) => {
 });
 
 export default function Screen() {
-	const viewScreen = ViewScreen({
+	return ViewScreen({
 		viewComponent: ApiKeyView
 	});
-
-	return (<>
-		<div className="dts-page-header">
-			<header className="dts-page-title">
-				<div className="mg-container">
-					<h1 className="dts-heading-1">API Keys</h1>
-				</div>
-			</header>
-		</div>
-		<section>
-			<div className="mg-container">
-				{viewScreen}
-			</div>
-		</section>
-	</>);
 }
 
