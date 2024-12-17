@@ -1,7 +1,4 @@
 import {
-	json,
-} from "@remix-run/node";
-import {
 	useLoaderData,
 	useActionData,
 	Link,
@@ -14,7 +11,7 @@ import {
 	SubmitButton,
 	FieldErrors
 } from "~/frontend/form";
-import { formStringData } from "~/util/httputil";
+import {formStringData} from "~/util/httputil";
 import {
 	authAction,
 	authActionGetAuth,
@@ -28,10 +25,11 @@ import {
 import {
 	redirectWithMessage,
 } from "~/util/session";
+import {MainContainer} from "~/frontend/container";
 
 export const action = authAction(async (actionArgs) => {
-	const { request } = actionArgs;
-	const { user } = authActionGetAuth(actionArgs);
+	const {request} = actionArgs;
+	const {user} = authActionGetAuth(actionArgs);
 	const formData = formStringData(await request.formData());
 
 	const token = formData.code || "";
@@ -39,21 +37,21 @@ export const action = authAction(async (actionArgs) => {
 	const res = await setTotpEnabled(user.id, token, true);
 
 	let errors: FormErrors<{}> = {}
-	if (!res.ok){
+	if (!res.ok) {
 		errors.form = [res.error];
-		return json({ok: false, errors: errors})
+		return {ok: false, errors: errors}
 	}
 
-	return redirectWithMessage(request, "/", {type:"info", text:"TOTP enabled"})
+	return redirectWithMessage(request, "/", {type: "info", text: "TOTP enabled"})
 });
 
 export const loader = authLoader(async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs)
-	if (user.totpEnabled){
+	const {user} = authLoaderGetAuth(loaderArgs)
+	if (user.totpEnabled) {
 		return redirect("/user/totp-disable")
 	}
 	const res = await generateTotpIfNotSet(user.id)
-	return json(res);
+	return res;
 });
 
 export default function Screen() {
@@ -63,7 +61,7 @@ export default function Screen() {
 	const errors = ad?.errors || {};
 	const data = {code: ""};
 
-	if (!ld.ok){
+	if (!ld.ok) {
 		return (
 			<>
 				<p>TOTP already enabled</p>
@@ -74,34 +72,25 @@ export default function Screen() {
 	const qrCodeUrl = `/api/qrcode?text=` + encodeURIComponent(ld.secretUrl);
 
 	return (
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">Enable TOTP</h1>
-					</div>
-				</header>
-			</div>
-			<section>
-				<div className="mg-container">
-					<p>{ld.secret}</p>
-					<p>{ld.secretUrl}</p>
-					<img src={qrCodeUrl} alt="QR Code" />
-					<Form errors={errors}>
-						<Field label="Generated Code">
-							<input
-								type="text"
-								name="code"
-								defaultValue={data.code}
-							/>
-							<FieldErrors errors={errors} field="code"></FieldErrors>
-						</Field>
-						<SubmitButton className="mg-button mg-button-primary" label="Enable TOTP" />
-					</Form>
-					<Link to="/user/settings">Back to User Settings</Link>
-				</div>
-			</section>
-		</>
+		<MainContainer title="Enable TOTP">
+			<>
+				<p>{ld.secret}</p>
+				<p>{ld.secretUrl}</p>
+				<img src={qrCodeUrl} alt="QR Code" />
+				<Form errors={errors}>
+					<Field label="Generated Code">
+						<input
+							type="text"
+							name="code"
+							defaultValue={data.code}
+						/>
+						<FieldErrors errors={errors} field="code"></FieldErrors>
+					</Field>
+					<SubmitButton className="mg-button mg-button-primary" label="Enable TOTP" />
+				</Form>
+				<Link to="/user/settings">Back to User Settings</Link>
+			</>
+		</MainContainer>
 	);
 }
 

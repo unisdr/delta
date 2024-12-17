@@ -28,6 +28,7 @@ import type {SerializeFrom} from "@remix-run/server-runtime";
 import DTSMap from "~/frontend/dtsmap/dtsmap";
 
 import {NavSettings} from "~/routes/settings/nav";
+import {MainContainer} from "~/frontend/container";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {id} = loaderArgs.params;
@@ -88,17 +89,10 @@ export default function Screen() {
 	}, []);
 
 	return (
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">Geographic levels</h1>
-					</div>
-				</header>
-				<NavSettings />
-			</div>
-			<section>
-				<div className="mg-container">
+		<MainContainer
+			title="Geographic levels"
+			headerExtra={<NavSettings />}
+		>
 					<Common loaderData={loaderData} />
 					{isClient && (
 						loaderData.division.geojson ? (
@@ -107,8 +101,6 @@ export default function Screen() {
 							<p>No geodata for this division</p>
 						)
 					)}
-				</div>
-			</section>
-		</>
+		</MainContainer>
 	);
 }

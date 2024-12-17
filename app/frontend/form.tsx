@@ -8,6 +8,7 @@ import {
 import {ReactElement} from "react";
 
 import {formatDate} from "~/util/date"
+import {MainContainer} from "./container";
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -536,37 +537,28 @@ interface ViewComponentProps {
 
 export function ViewComponent(props: ViewComponentProps) {
 	return (
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">{props.plural}</h1>
-					</div>
-				</header>
-			</div>
-			<section>
-				<div className="mg-container">
-					<p>
-						<Link to={props.path}>{props.plural}</Link>
-					</p>
-					{!props.isPublic && (
-						<>
-							<p>
-								<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
-							</p>
-							<p>
-								<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
-							</p>
-							{props.extraActions}
-						</>
-					)}
-					<h2>{props.singular}</h2>
-					<p>ID: {String(props.id)}</p>
-					{props.extraInfo}
-					{props.children}
-				</div>
-			</section>
-		</>
+		<MainContainer title={props.plural}>
+			<>
+				<p>
+					<Link to={props.path}>{props.plural}</Link>
+				</p>
+				{!props.isPublic && (
+					<>
+						<p>
+							<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
+						</p>
+						<p>
+							<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
+						</p>
+						{props.extraActions}
+					</>
+				)}
+				<h2>{props.singular}</h2>
+				<p>ID: {String(props.id)}</p>
+				{props.extraInfo}
+				{props.children}
+			</>
+		</MainContainer>
 	);
 }
 
@@ -588,18 +580,8 @@ interface FormViewProps {
 export function FormView(props: FormViewProps) {
 	return (
 
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">{props.plural}</h1>
-					</div>
-				</header>
-			</div>
-			<section>
-				<div className="mg-container">
-
-
+		<MainContainer title={props.plural}>
+				<>
 					<p>
 						<Link to={props.path}>{props.plural}</Link>
 					</p>
@@ -615,10 +597,8 @@ export function FormView(props: FormViewProps) {
 						<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
 						<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
 					</Form>
-				</div>
-			</section>
-
-		</>
+				</>
+		</MainContainer>
 	);
 }
 

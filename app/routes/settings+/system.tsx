@@ -1,15 +1,8 @@
-import type { MetaFunction } from '@remix-run/node';
+import type {MetaFunction} from '@remix-run/node';
 
 import {
-	json,
-	redirect
-} from "@remix-run/node";
-
-import { 
-    Outlet,
-    Link,
 	useLoaderData
- } from "@remix-run/react";
+} from "@remix-run/react";
 
 import {
 	authLoaderGetAuth,
@@ -25,20 +18,21 @@ import {
 } from "~/util/currency";
 
 
-import { NavSettings } from "~/routes/settings/nav";
+import {NavSettings} from "~/routes/settings/nav";
+import {MainContainer} from '~/frontend/container';
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs)
-	const timeZones:string[] = getSupportedTimeZone();
-	const currency:string[] = getCurrency();
+	const {user} = authLoaderGetAuth(loaderArgs)
+	const timeZones: string[] = getSupportedTimeZone();
+	const currency: string[] = getCurrency();
 
-	return json({ message: `Hello ${user.email}`, currency:currency, timeZones:timeZones, });
+	return {message: `Hello ${user.email}`, currency: currency, timeZones: timeZones, };
 });
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "System Settings - DTS" },
-		{ name: "description", content: "System settings." },
+		{title: "System Settings - DTS"},
+		{name: "description", content: "System settings."},
 	];
 };
 
@@ -53,17 +47,11 @@ export default function Settings() {
 	};
 
 	return (
-	  <>
-		<div className="dts-page-header">
-			<header className="dts-page-title">
-				<div className="mg-container">
-					<h1 className="dts-heading-1">System settings</h1>
-				</div>
-			</header>
-			<NavSettings />
-		</div>
-		<section>
-			<div className="mg-container">
+		<MainContainer
+			title="System settings"
+			headerExtra={<NavSettings />}
+		>
+			<>
 				<div className="flex">
 					<div className="box" style={box2colStyle}>
 						<div>
@@ -100,15 +88,13 @@ export default function Settings() {
 							<li><strong>Update available:</strong>  00.00.02:</li>
 							<li><strong>System up to date</strong></li>
 						</ul>
-						
+
 
 					</div>
 					<div className="box" style={box2colStyle}>
-
 					</div>
 				</div>
-				</div>
-		</section>
-	  </>
+			</>
+		</MainContainer>
 	);
 }

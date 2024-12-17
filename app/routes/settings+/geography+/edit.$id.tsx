@@ -27,6 +27,8 @@ import {DivisionForm} from "~/frontend/division";
 import {formStringData} from "~/util/httputil";
 import {NavSettings} from "~/routes/settings/nav";
 
+import {MainContainer} from "~/frontend/container";
+
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {id} = loaderArgs.params;
 	if (!id) {
@@ -106,21 +108,14 @@ export default function Screen() {
 	})
 
 	return (
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">Geographic levels</h1>
-					</div>
-				</header>
-				<NavSettings />
-			</div>
-			<section>
-				<div className="mg-container">
-					{changed ? <p>The data was updated.</p> : null}
-					{dataForm}
-				</div>
-			</section>
-		</>
+		<MainContainer
+			title="Geographic levels"
+			headerExtra={<NavSettings />}
+		>
+			<>
+				{changed ? <p>The data was updated.</p> : null}
+				{dataForm}
+			</>
+		</MainContainer>
 	)
 }

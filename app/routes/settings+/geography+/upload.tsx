@@ -22,12 +22,14 @@ import {
 
 import {NavSettings} from "~/routes/settings/nav";
 
+import {MainContainer} from "~/frontend/container";
+
 export const loader = authLoaderWithPerm("EditData", async () => {
 	return null;
 });
 
 export const action = authActionWithPerm("EditData", async ({request}: ActionFunctionArgs) => {
-	let fileBytes: Uint8Array|null = null;
+	let fileBytes: Uint8Array | null = null;
 
 	const uploadHandler = unstable_composeUploadHandlers(
 		async ({name, contentType, data, filename}) => {
@@ -46,7 +48,7 @@ export const action = authActionWithPerm("EditData", async ({request}: ActionFun
 		uploadHandler
 	);
 	try {
-		if (!fileBytes){
+		if (!fileBytes) {
 			throw "File was not set"
 		}
 		let res = await importZip(fileBytes)
@@ -75,34 +77,28 @@ export default function Screen() {
 			imported = actionData.imported
 		}
 	}
+
 	return (
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">Geographic levels</h1>
+		<MainContainer
+			title="Geographic levels"
+			headerExtra={<NavSettings />}
+		>
+			<>
+				<form method="post" encType="multipart/form-data">
+					{submitted && <p>Imported or updated {imported} records</p>}
+					{error ? (
+						<p>{error}</p>
+					) : null}
+					<label>
+						File upload<br />
+						<input name="file" type="file"></input>
+					</label>
+					<input className="mg-button mg-button-primary" type="submit" value="Submit" />
+					<div>
+						<Link to="/settings/geography">Back to List</Link>
 					</div>
-				</header>
-				<NavSettings />
-			</div>
-			<section>
-				<div className="mg-container">
-					<form method="post" encType="multipart/form-data">
-						{submitted && <p>Imported or updated {imported} records</p>}
-						{error ? (
-							<p>{error}</p>
-						) : null}
-						<label>
-							File upload<br />
-							<input name="file" type="file"></input>
-						</label>
-						<input className="mg-button mg-button-primary" type="submit" value="Submit" />
-						<div>
-							<Link to="/settings/geography">Back to List</Link>
-						</div>
-					</form>
-				</div>
-			</section>
-		</>
+				</form>
+			</>
+		</MainContainer>
 	);
 }

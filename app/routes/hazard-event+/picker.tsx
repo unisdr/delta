@@ -9,6 +9,8 @@ import {
 
 import {Link} from "@remix-run/react";
 
+import {MainContainer} from "~/frontend/container"
+
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	return hazardEventsLoader({loaderArgs})
 })
@@ -30,8 +32,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 */
 export default function Data() {
 	return (
-		<div>
-			<h2>Select parent for event</h2>
+		<MainContainer title="Select parent for event">
 			{
 				ListView({
 					isPublic: false,
@@ -56,7 +57,7 @@ export default function Data() {
 					)
 				})
 			}
-		</div >
+		</MainContainer>
 	)
 }
 

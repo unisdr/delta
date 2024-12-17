@@ -1,11 +1,8 @@
 import {
-	json,
-} from "@remix-run/node";
-import {
 	useLoaderData,
 	useActionData,
 	Link,
-		redirect
+	redirect
 } from "@remix-run/react";
 import {
 	Form,
@@ -14,7 +11,7 @@ import {
 	SubmitButton,
 	FieldErrors
 } from "~/frontend/form";
-import { formStringData } from "~/util/httputil";
+import {formStringData} from "~/util/httputil";
 import {
 	authAction,
 	authActionGetAuth,
@@ -28,14 +25,15 @@ import {
 	redirectWithMessage
 } from "~/util/session";
 
+import {MainContainer} from "~/frontend/container";
 
 interface Fields {
 	code: string
 }
 
 export const action = authAction(async (actionArgs) => {
-	const { request } = actionArgs;
-	const { user } = authActionGetAuth(actionArgs);
+	const {request} = actionArgs;
+	const {user} = authActionGetAuth(actionArgs);
 	const formData = formStringData(await request.formData());
 
 	const token = formData.code || "";
@@ -43,20 +41,20 @@ export const action = authAction(async (actionArgs) => {
 	const res = await setTotpEnabled(user.id, token, false);
 
 	let errors: FormErrors<Fields> = {}
-	if (!res.ok){
+	if (!res.ok) {
 		errors.form = [res.error];
-		return json({ok: false, errors: errors})
+		return {ok: false, errors: errors}
 	}
 
-	return redirectWithMessage(request, "/", {type:"info", text:"TOTP disabled"})
+	return redirectWithMessage(request, "/", {type: "info", text: "TOTP disabled"})
 });
 
 export const loader = authLoader(async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs)
-	if (!user.totpEnabled){
+	const {user} = authLoaderGetAuth(loaderArgs)
+	if (!user.totpEnabled) {
 		return redirect("/user/totp-enable")
 	}
-	return json({enabled: user.totpEnabled});
+	return {enabled: user.totpEnabled}
 });
 
 export default function Screen() {
@@ -66,40 +64,30 @@ export default function Screen() {
 	const errors = ad?.errors || {};
 	const data = {code: ""};
 
-	if (!ld.enabled){
+	if (!ld.enabled) {
 		return (
 			<>
 				<p>TOTP already disabled</p>
 			</>
 		)
 	}
-
 	return (
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">Disable TOTP</h1>
-					</div>
-				</header>
-			</div>
-			<section>
-				<div className="mg-container">
-					<Form errors={errors}>
-						<Field label="Generated Code">
-							<input
-								type="text"
-								name="code"
-								defaultValue={data.code}
-							/>
-							<FieldErrors errors={errors} field="code"></FieldErrors>
-						</Field>
-						<SubmitButton className="mg-button mg-button-primary" label="Disable TOTP" />
-					</Form>
-					<Link to="/user/settings">Back to User Settings</Link>
-				</div>
-			</section>
-		</>
+		<MainContainer title="Disable TOTP">
+			<>
+				<Form errors={errors}>
+					<Field label="Generated Code">
+						<input
+							type="text"
+							name="code"
+							defaultValue={data.code}
+						/>
+						<FieldErrors errors={errors} field="code"></FieldErrors>
+					</Field>
+					<SubmitButton className="mg-button mg-button-primary" label="Disable TOTP" />
+				</Form>
+				<Link to="/user/settings">Back to User Settings</Link>
+			</>
+		</MainContainer>
 	);
 }
 

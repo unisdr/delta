@@ -13,6 +13,7 @@ import {Pagination} from "~/frontend/pagination/view"
 import {executeQueryForPagination2} from "~/frontend/pagination/api.server"
 
 import {Breadcrumb} from "~/frontend/division";
+import {MainContainer} from "~/frontend/container";
 
 
 
@@ -141,33 +142,25 @@ export default function Screen() {
 	const pagination = Pagination(ld.pagination)
 
 	return (
-		<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">Geographic levels</h1>
-					</div>
-				</header>
-				<NavSettings />
-			</div>
-			<section>
-				<div className="mg-container">
-						<p>
-						<a href="/settings/geography/upload">Upload CSV</a>
-					</p>
-
-					{ld.pagination.totalItems > 0 ? (
-						<>
-							<LanguageCheckboxes langs={ld.langs} selectedLangs={ld.selectedLangs} />
-							<Breadcrumb rows={ld.breadcrumbs} />
-							<DivisionsTable langs={ld.selectedLangs} items={ld.items} />
-							{pagination}
-						</>
-					) : (
-						<p>No administrative divisions configured. Please upload CSV with data. See <a href="#">example</a>.</p>
-					)}
-				</div>
-			</section>
-		</>
+		<MainContainer
+			title="Geographic levels"
+			headerExtra={<NavSettings />}
+		>
+			<>
+				<p>
+					<a href="/settings/geography/upload">Upload CSV</a>
+				</p>
+				{ld.pagination.totalItems > 0 ? (
+					<>
+						<LanguageCheckboxes langs={ld.langs} selectedLangs={ld.selectedLangs} />
+						<Breadcrumb rows={ld.breadcrumbs} />
+						<DivisionsTable langs={ld.selectedLangs} items={ld.items} />
+						{pagination}
+					</>
+				) : (
+					<p>No administrative divisions configured. Please upload CSV with data. See <a href="#">example</a>.</p>
+				)}
+			</>
+		</MainContainer >
 	);
 }

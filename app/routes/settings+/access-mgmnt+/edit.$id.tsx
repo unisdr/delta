@@ -44,6 +44,7 @@ import {
 import { formStringData } from "~/util/httputil";
 
 import { NavSettings } from "~/routes/settings/nav";
+import {MainContainer} from "~/frontend/container";
 
 export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
@@ -108,17 +109,11 @@ export default function Screen() {
 			errors = actionData.errors;
 		}
 	}
-	return (<>
-		<div className="dts-page-header">
-			<header className="dts-page-title">
-				<div className="mg-container">
-					<h1 className="dts-heading-1">Access management</h1>
-				</div>
-			</header>
-			<NavSettings />
-		</div>
-		<section>
-			<div className="mg-container">
+	return (<MainContainer
+			title="Access management"
+			headerExtra={<NavSettings />}
+		>
+			<>
 				<h2>Edit User</h2>
 				<Form errors={errors}>
 					<Field label="Email *">
@@ -154,7 +149,6 @@ export default function Screen() {
 						<SubmitButton className="mg-button mg-button-primary" label="Edit User" />
 				</Form>
 				<Link to="/settings/access-mgmnt/">Back to Users</Link>
-			</div>
-		</section>
-	</>)
+			</>
+	</MainContainer>)
 }

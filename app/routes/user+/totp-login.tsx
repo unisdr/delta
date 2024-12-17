@@ -1,12 +1,8 @@
 import {
-	ActionFunctionArgs,
-	json,
-	LoaderFunctionArgs,
 	redirect
 } from "@remix-run/node";
 import {
 	useActionData,
-	Link,
 } from "@remix-run/react";
 import {
 	Form,
@@ -16,14 +12,8 @@ import {
 } from "~/frontend/form"
 import { formStringData } from "~/util/httputil";
 import {
-	getUserFromSession,
-	createUserSession,
-} from "~/util/session";
-import {
 	loginTotp,
-	authAction,
 	authActionGetAuth,
-	authLoader,
 	authLoaderGetAuth,
 	authLoaderAllowNoTotp,
 	authActionAllowNoTotp,
@@ -45,7 +35,7 @@ export const action = authActionAllowNoTotp(async (actionArgs) => {
 		let errors: FormErrors<LoginFields> = {
 			form: [res.error],
 		}
-		return json({ errors });
+		return { errors };
 	}
 	return redirect("/");
 });
@@ -58,7 +48,7 @@ export const loader = authLoaderAllowNoTotp(async (loaderArgs) => {
 	if (session.totpAuthed){
 		return redirect("/");
 	}
-	return json(null);
+	return null;
 });
 
 

@@ -1,4 +1,4 @@
-import { dr } from "~/db.server";
+import {dr} from "~/db.server";
 import {
 	eq,
 } from "drizzle-orm";
@@ -12,8 +12,8 @@ import {
 } from "@remix-run/node";
 
 import {
-		useLoaderData,
-		Link
+	useLoaderData,
+	Link
 } from "@remix-run/react";
 
 
@@ -21,18 +21,20 @@ import {
 	authLoaderWithPerm,
 } from "~/util/auth";
 
-import { NavSettings } from "~/routes/settings/nav";
+import {NavSettings} from "~/routes/settings/nav";
+
+import {MainContainer} from "~/frontend/container";
 
 export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
-	const { id } = loaderArgs.params;
+	const {id} = loaderArgs.params;
 	if (!id) {
-		throw new Response("Missing item ID", { status: 400 });
+		throw new Response("Missing item ID", {status: 400});
 	}
 
-		const res = await dr.select().from(userTable).where(eq(userTable.id, Number(id)));
+	const res = await dr.select().from(userTable).where(eq(userTable.id, Number(id)));
 
 	if (!res || res.length === 0) {
-		throw new Response("Item not found", { status: 404 });
+		throw new Response("Item not found", {status: 404});
 	}
 
 	const item = res[0];
@@ -53,30 +55,23 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 
 export default function Data() {
 	const {item} = useLoaderData<typeof loader>();
-	return (<>
-		<div className="dts-page-header">
-			<header className="dts-page-title">
-				<div className="mg-container">
-					<h1 className="dts-heading-1">Access management</h1>
-				</div>
-			</header>
-			<NavSettings />
-		</div>
-		<section>
-			<div className="mg-container">
-				<Link to={`/settings/access-mgmnt/edit/${item.id}`}>Edit</Link>
-				<Link to="/settings/access-mgmnt/">Back to Users</Link>
-				<p>ID: {item.id}</p>
-				<p>Email: {item.email}</p>
-				<p>First Name: {item.firstName}</p>
-				<p>Last Name: {item.lastName}</p>
-				<p>Role: {item.role}</p>
-				<p>Organization: {item.organization}</p>
-				<p>Email Verified: { String(item.emailVerified) }</p>
-				<p>Auth Type: {item.authType}</p>
-			</div>
-		</section>
-	</>);
+	return (<MainContainer
+		title="Access management"
+		headerExtra={<NavSettings />}
+	>
+		<>
+			<Link to={`/settings/access-mgmnt/edit/${item.id}`}>Edit</Link>
+			<Link to="/settings/access-mgmnt/">Back to Users</Link>
+			<p>ID: {item.id}</p>
+			<p>Email: {item.email}</p>
+			<p>First Name: {item.firstName}</p>
+			<p>Last Name: {item.lastName}</p>
+			<p>Role: {item.role}</p>
+			<p>Organization: {item.organization}</p>
+			<p>Email Verified: {String(item.emailVerified)}</p>
+			<p>Auth Type: {item.authType}</p>
+		</>
+	</MainContainer>);
 }
 
 

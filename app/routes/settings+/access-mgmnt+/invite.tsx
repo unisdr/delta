@@ -7,7 +7,7 @@ import {
 	useActionData,
 	Link
 } from "@remix-run/react";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 
 import {
 	adminInviteUser,
@@ -29,32 +29,33 @@ import {
 	authLoaderWithPerm,
 } from "~/util/auth";
 
-import { formStringData } from "~/util/httputil";
-import { redirectWithMessage } from "~/util/session";
-import { NavSettings } from "~/routes/settings/nav";
+import {formStringData} from "~/util/httputil";
+import {redirectWithMessage} from "~/util/session";
+import {NavSettings} from "~/routes/settings/nav";
+import {MainContainer} from "~/frontend/container";
 
 export const loader = authLoaderWithPerm("InviteUsers", async () => {
-	return json({
+	return {
 		data: adminInviteUserFieldsFromMap({})
-	})
+	}
 })
 
 type ActionResponse = FormResponse<AdminInviteUserFields>
 
 export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
-	const { request } = actionArgs;
+	const {request} = actionArgs;
 	const formData = formStringData(await request.formData());
 	const data = adminInviteUserFieldsFromMap(formData);
-	const res = await adminInviteUser( data);
+	const res = await adminInviteUser(data);
 
-	if (!res.ok){
+	if (!res.ok) {
 		return json<ActionResponse>({
 			ok: false,
 			data: data,
 			errors: res.errors
 		})
 	}
-	return redirectWithMessage(request, "/users", {type:"info", text: "New record created"})
+	return redirectWithMessage(request, "/users", {type: "info", text: "New record created"})
 });
 
 export default function Screen() {
@@ -65,7 +66,7 @@ export default function Screen() {
 	const actionData = useActionData<typeof action>();
 	if (actionData) {
 		fields = actionData.data;
-		if (!actionData.ok){
+		if (!actionData.ok) {
 			errors = actionData.errors;
 		}
 	}
@@ -74,71 +75,61 @@ export default function Screen() {
 
 	const roleDesc = ValidRoles.find((role) => role.id === selectedRole)?.desc || "";
 
-	return (<>
-			<div className="dts-page-header">
-				<header className="dts-page-title">
-					<div className="mg-container">
-						<h1 className="dts-heading-1">Access management</h1>
-					</div>
-				</header>
-				<NavSettings />
-			</div>
-			<section>
-				<div className="mg-container">
+	return (<MainContainer
+		title="Access management"
+		headerExtra={<NavSettings />}
+	>
+		<>
+			<h2>Add User</h2>
+			<Form errors={errors}>
+				<Field label="First Name">
+					<input type="text" name="firstName" defaultValue={fields.firstName} />
+					<FieldErrors errors={errors} field="firstName"></FieldErrors>
+				</Field>
+				<Field label="Last Name">
+					<input type="text" name="lastName" defaultValue={fields.lastName} />
+					<FieldErrors errors={errors} field="lastName"></FieldErrors>
+				</Field>
+				<Field label="Email">
+					<input type="email" name="email" defaultValue={fields.email} />
+					<FieldErrors errors={errors} field="email"></FieldErrors>
+				</Field>
+				<Field label="Organization">
+					<input type="text" name="organization" defaultValue={fields.organization} />
+					<FieldErrors errors={errors} field="organization"></FieldErrors>
+				</Field>
+				<Field label="Hydro-met CHE user">
+					<input type="checkbox" name="hydrometCheUser" defaultChecked={fields.hydrometCheUser} />
+					<FieldErrors errors={errors} field="hydrometCheUser"></FieldErrors>
+				</Field>
+				<Field label="Role">
+					<select
+						name="role"
+						value={selectedRole}
+						onChange={(e) => setSelectedRole(e.target.value)}
+					>
+						<option value="" disabled>
+							Select a role
+						</option>
+						{ValidRoles.map((role) => (
+							<option key={role.id} value={role.id}>
+								{role.label}
+							</option>
+						))}
+					</select>
+					<FieldErrors errors={errors} field="role"></FieldErrors>
+				</Field>
 
-					<h2>Add User</h2>
-					<Form errors={errors}>
-						<Field label="First Name">
-							<input type="text" name="firstName" defaultValue={fields.firstName} />
-							<FieldErrors errors={errors} field="firstName"></FieldErrors>
-						</Field>
-						<Field label="Last Name">
-							<input type="text" name="lastName" defaultValue={fields.lastName} />
-							<FieldErrors errors={errors} field="lastName"></FieldErrors>
-						</Field>
-						<Field label="Email">
-							<input type="email" name="email" defaultValue={fields.email} />
-							<FieldErrors errors={errors} field="email"></FieldErrors>
-						</Field>
-						<Field label="Organization">
-							<input type="text" name="organization" defaultValue={fields.organization} />
-							<FieldErrors errors={errors} field="organization"></FieldErrors>
-						</Field>
-						<Field label="Hydro-met CHE user">
-							<input type="checkbox" name="hydrometCheUser" defaultChecked={fields.hydrometCheUser} />
-							<FieldErrors errors={errors} field="hydrometCheUser"></FieldErrors>
-						</Field>
-						<Field label="Role">
-							<select
-								name="role"
-								value={selectedRole}
-								onChange={(e) => setSelectedRole(e.target.value)}
-								>
-								<option value="" disabled>
-								Select a role
-								</option>
-								{ValidRoles.map((role) => (
-								<option key={role.id} value={role.id}>
-									{role.label}
-								</option>
-								))}
-							</select>
-							<FieldErrors errors={errors} field="role"></FieldErrors>
-						</Field>
-
-						<div>
-							<p>You have selected: {selectedRole || "No role selected"}</p>
-							{roleDesc && <p>{roleDesc}</p>}
-						</div>
-
-						<SubmitButton className="mg-button mg-button-primary" label="Add user" />
-					</Form>
-					<Link to="/settings/access-mgmnt">Discard</Link>
-
+				<div>
+					<p>You have selected: {selectedRole || "No role selected"}</p>
+					{roleDesc && <p>{roleDesc}</p>}
 				</div>
-			</section>
 
+				<SubmitButton className="mg-button mg-button-primary" label="Add user" />
+			</Form>
+			<Link to="/settings/access-mgmnt">Discard</Link>
 
-	</>)
+		</>
+	</MainContainer>)
 }
 
