@@ -6,7 +6,6 @@ import { Form, useActionData } from "@remix-run/react";
 import { formStringData } from "~/util/httputil";
 import { createUserSession } from "~/util/session";
 
-// Define the structure for the response to handle errors
 interface ActionData {
   errors?: { [key: string]: string[] };
 }
@@ -17,36 +16,21 @@ import {
 } from "~/backend.server/models/user";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	try {
-  const data = formStringData(await request.formData());
-  console.log('Form data received:', data); // Log received data
-
-  const data2 = setupAdminAccountFieldsFromMap(data);
-  const res = await setupAdminAccount(data2);
-  if (!res.ok) {
-	console.log('Errors in setupAdminAccount:', res.errors); // Log any errors
-    return json({ data, errors: res.errors });
-  }
-
-  console.log('User ID for session:', res.userId); // Log user ID received
-  const headers = await createUserSession(res.userId);
-  console.log('Redirecting to verify-email'); // Log redirection
-  return redirect("/user/verify-email", { headers });
-}catch (error) {
-    console.error('Error during form submission:', error); // Log unexpected errors
+  try {
+    const data = formStringData(await request.formData());
+    const data2 = setupAdminAccountFieldsFromMap(data);
+    const res = await setupAdminAccount(data2);
+    if (!res.ok) {
+      //console.log('Errors in setupAdminAccount:', res.errors);
+      return json({ data, errors: res.errors });
+    }
+    const headers = await createUserSession(res.userId);
+    //console.log('Redirecting to verify-email');
+    return redirect("/user/verify-email", { headers });
+  } catch (error) {
+    console.error('Error during form submission:', error);
     return json({ error: 'Unexpected error occurred.' });
   }
-};
-
-export const loader = async () => {
-  return json(null);
-};
-
-export const meta: MetaFunction = () => {
-  return [
-    { title: "Admin Account Setup - DTS" },
-    { name: "description", content: "Admin setup." },
-  ];
 };
 
 export default function Screen() {
@@ -60,20 +44,30 @@ export default function Screen() {
 
   const actionData = useActionData<ActionData>();
 
+  // Function to check if all form fields are valid
+  const isFormValid = () => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email) && firstname && secondname && password && passwordRepeat && password === passwordRepeat;
+  };
+
+  useEffect(() => {
+    const submitButton = document.querySelector("button[type='submit']") as HTMLButtonElement;
+    if (submitButton) {
+      submitButton.disabled = !isFormValid(); // Initially disable submit if form is not valid
+    }
+  }, [email, firstname, secondname, password, passwordRepeat]); // Re-run when these dependencies change
+
+  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setter(event.target.value);
+  };
+
   const togglePasswordVisibility = () => {
     setPasswordType(passwordType === "password" ? "text" : "password");
   };
 
   const toggleConfirmPasswordVisibility = () => {
-    setPasswordRepeatType(
-      passwordRepeatType === "password" ? "text" : "password"
-    );
+    setPasswordRepeatType(passwordRepeatType === "password" ? "text" : "password");
   };
-
-  const isButtonDisabled =
-    !email || !firstname || !secondname || !password || !passwordRepeat;
-
-  useEffect(() => { console.log('Page has loaded and the DOM is ready'); }, []);
 
   return (
     <div className="dts-page-container">
@@ -254,7 +248,7 @@ export default function Screen() {
               <button
                 type="submit"
                 className="mg-button mg-button-primary"
-                disabled={isButtonDisabled}
+                disabled={!isFormValid()}
               >
                 Set up account
               </button>
