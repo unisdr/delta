@@ -65,6 +65,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 			email: item.email,
 			firstName: item.firstName,
 			lastName: item.lastName,
+			organization: item.organization,
 			role: item.role,
 		},
 	});
@@ -96,7 +97,7 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 });
 
 export default function Screen() {
-	let fields: AdminUpdateUserFields
+	let fields: AdminUpdateUserFields;
 	const loaderData = useLoaderData<typeof loader>();
 	fields = loaderData.data;
 	let errors = {};
@@ -131,6 +132,10 @@ export default function Screen() {
 					<Field label="Last Name">
 						<input type="text" name="lastName" defaultValue={fields.lastName} />
 						<FieldErrors errors={errors} field="lastName"></FieldErrors>
+					</Field>
+					<Field label="Organization">
+						<input type="text" name="organization" defaultValue={fields.organization} />
+						<FieldErrors errors={errors} field="organization"></FieldErrors>
 					</Field>
 					<Field label="Role">
 						<select name="role" defaultValue={fields.role}>

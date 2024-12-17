@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
@@ -72,6 +72,8 @@ export default function Screen() {
 
   const isButtonDisabled =
     !email || !firstname || !secondname || !password || !passwordRepeat;
+
+  useEffect(() => { console.log('Page has loaded and the DOM is ready'); }, []);
 
   return (
     <div className="dts-page-container">

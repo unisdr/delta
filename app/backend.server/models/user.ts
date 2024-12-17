@@ -684,10 +684,11 @@ type AdminUpdateUserResult =
 	| { ok: false; errors: Errors<AdminUpdateUserFields> };
 
 export interface AdminUpdateUserFields {
-	email: string
-	firstName: string
-	lastName: string
-	role: string
+	email: string;
+	firstName: string;
+	lastName: string;
+	organization: string;
+	role: string;
 }
 
 export function adminUpdateUserFieldsFromMap(data: { [key: string]: string }): AdminUpdateUserFields {
@@ -695,6 +696,7 @@ export function adminUpdateUserFieldsFromMap(data: { [key: string]: string }): A
 		"email",
 		"firstName",
 		"lastName",
+		"organization",
 		"role"
 	];
 	 return Object.fromEntries(
@@ -727,6 +729,7 @@ export async function adminUpdateUser(id: number, fields: AdminUpdateUserFields)
 			email: fields.email,
 			firstName: fields.firstName,
 			lastName: fields.lastName,
+			organization: fields.organization,
 			role: fields.role,
 		})
 		.where(eq(userTable.id, id))
