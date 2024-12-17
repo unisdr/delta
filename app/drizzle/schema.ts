@@ -347,3 +347,36 @@ export const hipHazardRel = relations(hipHazardTable, ({one}) => ({
 		references: [hipClusterTable.id],
 	}),
 }));
+
+
+export const resourceRepoTable = pgTable("resource_repo", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	title: text("title").notNull(),
+	summary: text("summary").notNull(),
+	...approvalFields,
+	...createdUpdatedTimestamps,
+});
+
+export type resourceRepo = typeof resourceRepoTable.$inferSelect;
+export type resourceRepoInsert = typeof resourceRepoTable.$inferInsert;
+
+export const resourceRepoRel = relations(resourceRepoTable, ({ many }) => ({
+	attachments: many(rrAttachmentsTable),
+}));
+
+export const rrAttachmentsTable = pgTable("rr_attachments", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	resourceRepoId: uuid("resource_repo_id").references((): AnyPgColumn => resourceRepoTable.id).notNull(),
+	type: text({ enum: ["document", "other"]}).notNull().default("document"),
+	typeOtherDesc: text("type_other_desc"),
+	filename: text("filename"),
+	url: text("url"),
+	...createdUpdatedTimestamps,
+});
+
+export const rrAttachmentsRel = relations(rrAttachmentsTable, ({ one }) => ({
+	attachment: one(resourceRepoTable, {
+		fields: [rrAttachmentsTable.resourceRepoId],
+		references: [resourceRepoTable.id],
+	}),
+}));

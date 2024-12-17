@@ -64,7 +64,7 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
 					id: "group1",
 					lvl3: [
 						{
-							title: "Data example",
+							title: "Events",
 							lvl4: [
 								{name: "Hazardous events", link: "/hazard-event"},
 								{name: "Disaster events", link: "/disaster-event"},
@@ -178,42 +178,29 @@ function navItemsLoggedIn(): Lvl1Item[] {
 			icon: "other/data",
 			lvl2: [
 				{
-					name: "Group 1",
+					name: "Data management",
 					id: "group1",
 					lvl3: [
 						{
-							title: "Data example",
+							title: "Events",
 							lvl4: [
 								{name: "Hazardous events", link: "/hazard-event"},
 								{name: "Disaster events", link: "/disaster-event"},
-								{name: "HIPs import", link: "/setup/import-hip"},
 							],
 						},
 						{
-							title: "Data Sources 1",
+							title: "Disaster records",
 							lvl4: [
-								{name: "Item 1", link: "#"},
-								{name: "Item 2", link: "#"},
-							],
-						},
-					],
-				},
-				{
-					name: "Group 2",
-					id: "group2",
-					lvl3: [
-						{
-							title: "Data Insights 2",
-							lvl4: [
-								{name: "Item 1", link: "#"},
-								{name: "Item 2", link: "#"},
+								{name: "Disaster records", link: "#"},
+								{name: "PDNA resources repository", link: "/resource-repo"},
 							],
 						},
 						{
-							title: "Data Sources 2",
+							title: "Baseline data",
 							lvl4: [
 								{name: "Item 1", link: "#"},
 								{name: "Item 2", link: "#"},
+								{name: "Item 3", link: "#"},
 							],
 						},
 					],
@@ -296,6 +283,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
 								{name: "System settings", link: "/settings/system"},
 								{name: "Geographic levels", link: "/settings/geography"},
 								{name: "Sectors", link: "/settings/sectors"},
+								{name: "HIPs import", link: "/setup/import-hip"},
 								{name: "API Keys", link: "/settings/api-key"},
 							],
 						},
