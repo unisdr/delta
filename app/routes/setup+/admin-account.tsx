@@ -47,7 +47,24 @@ export default function Screen() {
   // Function to check if all form fields are valid
   const isFormValid = () => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email) && firstname && secondname && password && passwordRepeat && password === passwordRepeat;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[@$!%*?&]/.test(password);
+  
+    const hasTwoOfTheFollowing = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length >= 2;
+  
+    return (
+      emailRegex.test(email) &&
+      firstname &&
+      password &&
+      passwordRepeat &&
+      password === passwordRepeat &&
+      hasTwoOfTheFollowing &&
+      password.length >= 12 &&
+      password !== email
+    );
   };
 
   useEffect(() => {
@@ -248,7 +265,7 @@ export default function Screen() {
               <button
                 type="submit"
                 className="mg-button mg-button-primary"
-                disabled={!isFormValid()}
+                //disabled={!isFormValid()}
               >
                 Set up account
               </button>
