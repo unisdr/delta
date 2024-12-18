@@ -4,6 +4,8 @@ import {
 
 import {ResourceRepoFields, ResourceRepoViewModel} from "~/backend.server/models/resource_repo"
 
+import {formatDate} from "~/util/date";
+
 import {
 	Field,
 	FieldErrors,
@@ -23,7 +25,7 @@ export const route = "/resource-repo"
 export const fieldsDefCommon = [
 	approvalStatusField,
 	{key: "title", label: "Title", type: "text", required: true},
-	{key: "summary", label: "Summary", type: "text", required: true},
+	{key: "summary", label: "Summary", type: "textarea", required: true},
 ] as const;
 
 export const fieldsDef: FormInputDef<ResourceRepoFields>[] = [
@@ -72,18 +74,7 @@ export function resourceRepoLink(args: {
 export function ResourceRepoForm(props: ResourceRepoFormProps) {
 	const fields = props.fields;
 
-	const [selected, setSelected] = useState(props.parent);
-
 	useEffect(() => {
-		const handleMessage = (event: any) => {
-			if (event.data?.selected) {
-				setSelected(event.data.selected);
-			}
-		};
-		window.addEventListener('message', handleMessage);
-		return () => {
-			window.removeEventListener('message', handleMessage);
-		};
 	}, []);
 
 	return (
@@ -119,6 +110,14 @@ export function ResourceRepoView(props: ResourceRepoViewProps) {
 			<FieldsView
 				def={fieldsDefView}
 				fields={item}
+				override={{
+					createdAt: (
+						<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
+					),
+					updatedAt: (
+						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
+					),
+				}}
 			/>
 		</ViewComponent>
 	);

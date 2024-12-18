@@ -8,15 +8,11 @@ import {deleteByIdForStringId} from "./common";
 
 export interface ResourceRepoFields extends Omit<resourceRepo, "id"> {}
 
+// do not change
 export function validate(fields: ResourceRepoFields): Errors<ResourceRepoFields> {
 	let errors: Errors<ResourceRepoFields> = {};
 	errors.fields = {};
-	if (fields.title.trim().length <= 0) {
-		errors.fields.title = ["Title is a required field."];
-	}
-	if (fields.summary !== null && fields.summary.trim().length <= 0) {
-		errors.fields.summary = ["Summary is a required field."];
-	}
+
 	return errors
 }
 

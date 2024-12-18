@@ -15,10 +15,6 @@ export const loader = createViewLoaderPublicApproved({
 	getById: resourceRepoById
 });
 
-// export default function Screen() {
-// 	return (<><h1>Hello</h1></>);
-// }
-
 export default function Screen() {
 	return ViewScreenPublicApproved({
 		viewComponent: ResourceRepoView
