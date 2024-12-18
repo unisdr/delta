@@ -1,6 +1,6 @@
 import {dr} from "~/db.server";
 import {resourceRepoTable, rrAttachmentsTable, resourceRepo} from "~/drizzle/schema";
-import {eq} from "drizzle-orm";
+import {eq,sql} from "drizzle-orm";
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, hasErrors} from "~/frontend/form";
@@ -27,6 +27,8 @@ export async function resourceRepoCreate(fields: ResourceRepoFields): Promise<Cr
 		.values({
 			title: fields.title,
 			summary: fields.summary,
+			approvalStatus: fields.approvalStatus,
+			updatedAt: sql`NOW()`,
 		})
 		.returning({id: resourceRepoTable.id});
 
@@ -43,6 +45,8 @@ export async function resourceRepoUpdate(idStr: string, fields: ResourceRepoFiel
 		.set({
 			title: fields.title,
 			summary: fields.summary,
+			approvalStatus: fields.approvalStatus,
+			updatedAt: sql`NOW()`,
 		})
 		.where(eq(resourceRepoTable.id, id));
 

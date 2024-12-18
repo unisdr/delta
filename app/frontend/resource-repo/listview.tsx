@@ -41,6 +41,7 @@ export function ListView(args: ListViewArgs) {
 								<th>Title</th>
 								<th>Summary</th>
 								<th>Attachments</th>
+								<th>Status</th>
 								<th></th>
 							</tr>
 						</thead>
@@ -61,8 +62,9 @@ export function ListView(args: ListViewArgs) {
 									<td>
 										{item.summary.length <= 300 ? item.summary : item.summary.slice(0, 300) + ' ...'}
 									</td>
+									<td></td>
 									<td>
-
+										{item.approvalStatus}
 									</td>
 									<td>
 										{args.actions ? args.actions(item) : (args.isPublic ? null :
