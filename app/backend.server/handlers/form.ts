@@ -240,9 +240,16 @@ interface CreateViewLoaderPublicApprovedArgs<T extends {approvalStatus: string}>
 	getById: (id: string) => Promise<T | null | undefined>
 }
 
-export function createViewLoaderPublicApproved<T extends { approvalStatus: string }>(args: CreateViewLoaderPublicApprovedArgs<T>) {
-	if (!configApprovedRecordsArePublic()){
-		return createViewLoader(args);
+export function createViewLoaderPublicApproved<T extends {approvalStatus: string}>(args: CreateViewLoaderPublicApprovedArgs<T>) {
+	if (!configApprovedRecordsArePublic()) {
+		return authLoaderWithPerm("ViewData", async (loaderArgs) => {
+			const {params} = loaderArgs;
+			const item = await getItem2(params, args.getById);
+			if (!item) {
+				throw new Response("Not Found", {status: 404});
+			}
+			return {item, isPublic: false};
+		});
 	}
 
 	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
