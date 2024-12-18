@@ -1,6 +1,6 @@
 import {dr} from "~/db.server";
 import {resourceRepoTable, rrAttachmentsTable, resourceRepo} from "~/drizzle/schema";
-import {eq} from "drizzle-orm";
+import {eq,sql} from "drizzle-orm";
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, hasErrors} from "~/frontend/form";
@@ -8,15 +8,11 @@ import {deleteByIdForStringId} from "./common";
 
 export interface ResourceRepoFields extends Omit<resourceRepo, "id"> {}
 
+// do not change
 export function validate(fields: ResourceRepoFields): Errors<ResourceRepoFields> {
 	let errors: Errors<ResourceRepoFields> = {};
 	errors.fields = {};
-	if (fields.title.trim().length <= 0) {
-		errors.fields.title = ["Title is a required field."];
-	}
-	if (fields.summary !== null && fields.summary.trim().length <= 0) {
-		errors.fields.summary = ["Summary is a required field."];
-	}
+
 	return errors
 }
 
@@ -31,6 +27,8 @@ export async function resourceRepoCreate(fields: ResourceRepoFields): Promise<Cr
 		.values({
 			title: fields.title,
 			summary: fields.summary,
+			approvalStatus: fields.approvalStatus,
+			updatedAt: sql`NOW()`,
 		})
 		.returning({id: resourceRepoTable.id});
 
@@ -47,6 +45,8 @@ export async function resourceRepoUpdate(idStr: string, fields: ResourceRepoFiel
 		.set({
 			title: fields.title,
 			summary: fields.summary,
+			approvalStatus: fields.approvalStatus,
+			updatedAt: sql`NOW()`,
 		})
 		.where(eq(resourceRepoTable.id, id));
 

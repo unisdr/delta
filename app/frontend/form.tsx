@@ -192,7 +192,7 @@ export function formScreen<T, D>(opts: FormScreenOpts<T, D>) {
 	return opts.form(mergedProps);
 }
 
-export type FormInputType = "text" | "date" | "number" | "bool" | "other" | "enum"
+export type FormInputType = "text" | "textarea" | "date" | "number" | "bool" | "other" | "enum"
 
 export interface EnumEntry {
 	key: string
@@ -228,6 +228,8 @@ export function fieldsFromMap<T>(
 				case "number":
 					return [k, Number(vs)]
 				case "text":
+					return [k, vs]
+				case "textarea":
 					return [k, vs]
 				case "date":
 					if (!vs) {
@@ -279,6 +281,9 @@ export function validateFromMap<T>(
 				fieldValue = vs === "" ? null : Number(vs);
 				break;
 			case "text":
+				fieldValue = vs;
+				break;
+			case "textarea":
 				fieldValue = vs;
 				break;
 			case "date":
@@ -395,6 +400,20 @@ export function Input(props: InputProps) {
 					<FieldErrors2 errors={props.errors} />
 				</Field>
 			}
+		case "textarea":
+			let defaultValueTextArea = "";
+			if (props.value !== null && props.value !== undefined) {
+				let v = props.value as string;
+				defaultValueTextArea = v
+			}
+			return <Field label={label}>
+				<textarea
+					required={props.def.required}
+					name={props.name}
+					defaultValue={defaultValueTextArea}
+				/>
+				<FieldErrors2 errors={props.errors} />
+			</Field>	
 		case "text":
 		case "date":
 		case "number":
@@ -457,6 +476,7 @@ export function FieldView(props: FieldViewProps) {
 		case "number":
 			let n = props.value as number;
 			return <p>{props.def.label}: {String(n)}</p>
+		case "textarea":
 		case "text":
 			let str = props.value as string;
 			if (!str.trim()) {
@@ -595,7 +615,7 @@ export function FormView(props: FormViewProps) {
 					{props.infoNodes}
 					<Form errors={props.errors}>
 						<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
-						<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+						<SubmitButton className="mg-button mg-button-primary" label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
 					</Form>
 				</>
 		</MainContainer>

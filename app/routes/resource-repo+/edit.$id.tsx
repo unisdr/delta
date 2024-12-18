@@ -30,10 +30,6 @@ export const action = createAction({
 	redirectTo: (id) => `${route}/${id}`
 });
 
-// export default function Screen() {
-// 	return (<><h1>Hello</h1></>);
-// }
-
 export default function Screen() {
 	return FormScreen({
 		fieldsDef: fieldsDef,
