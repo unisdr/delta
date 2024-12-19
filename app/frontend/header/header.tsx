@@ -113,8 +113,10 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
 						{
 							title: "Yearly Analysis",
 							lvl4: [
-								{name: "2024 Report", link: "#"},
-								{name: "2023 Report", link: "#"},
+								{name: "Human Direct Effects", link: "/analytics/human-direct-effects"},
+								{name: "Sectors", link: "/analytics/sectors"},
+								{name: "Hazards", link: "/analytics/hazards"},
+								{name: "Disaster Events", link: "/analytics/disaster-events"},
 							],
 						},
 						{
@@ -219,8 +221,10 @@ function navItemsLoggedIn(): Lvl1Item[] {
 						{
 							title: "Yearly Analysis",
 							lvl4: [
-								{name: "2024 Report", link: "#"},
-								{name: "2023 Report", link: "#"},
+								{name: "Human Direct Effects", link: "/analytics/human-direct-effects"},
+								{name: "Sectors", link: "/analytics/sectors"},
+								{name: "Hazards", link: "/analytics/hazards"},
+								{name: "Disaster Events", link: "/analytics/disaster-events"},
 							],
 						},
 						{
