@@ -52,7 +52,8 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 				hazardId: true,
 				startDate: true,
 				endDate: true,
-				description: true
+				description: true,
+				approvalStatus: true,
 			},
 			orderBy: [desc(hazardEventTable.startDate)],
 			with: {

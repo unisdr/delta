@@ -71,30 +71,10 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
 							],
 						},
 						{
-							title: "Data Sources 1",
+							title: "Disaster records",
 							lvl4: [
-								{name: "Item 1", link: "#"},
-								{name: "Item 2", link: "#"},
-							],
-						},
-					],
-				},
-				{
-					name: "Group 2",
-					id: "group2",
-					lvl3: [
-						{
-							title: "Data Insights 2",
-							lvl4: [
-								{name: "Item 1", link: "#"},
-								{name: "Item 2", link: "#"},
-							],
-						},
-						{
-							title: "Data Sources 2",
-							lvl4: [
-								{name: "Item 1", link: "#"},
-								{name: "Item 2", link: "#"},
+								{name: "Disaster records", link: "#"},
+								{name: "PDNA resources repository", link: "/resource-repo"},
 							],
 						},
 					],
@@ -202,7 +182,6 @@ function navItemsLoggedIn(): Lvl1Item[] {
 							lvl4: [
 								{name: "Item 1", link: "#"},
 								{name: "Item 2", link: "#"},
-								{name: "Item 3", link: "#"},
 							],
 						},
 					],
