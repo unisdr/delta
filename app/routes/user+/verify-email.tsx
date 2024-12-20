@@ -110,8 +110,11 @@ export default function Data() {
                                     <div className="dts-form-component__label">
                                         <span className="mg-u-sr-only">OTP code</span>
                                     </div>
-                                    <input type="text" minLength={6} maxLength={6} name="code" placeholder="Enter OTP code*" autoFocus required />
+                                    <input type="text" minLength={6} maxLength={6} name="code" placeholder="Enter OTP code*" autoFocus required  style={errors ? { border: "2px solid red" } : {}}/>
                                 </label>
+                                {errors && errors.fields && errors.fields.code && errors.fields.code.length > 0 && (
+                                  <div style={{ color: "red", marginTop: "8px" }}>{errors.fields.code[0]}</div>
+                                )}
                             </div>
                             <div className="dts-form__additional-content dts-form__additional-content--centered">
                                 <div>Code expires in 30:00</div>
