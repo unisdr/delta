@@ -20,6 +20,13 @@ import {
   setupAdminAccountFieldsFromMap,
 } from "~/backend.server/models/user";
 
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Account Setup - DTS" },
+		{ name: "description", content: "Admin setup." },
+	];
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     const data = formStringData(await request.formData());
