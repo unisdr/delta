@@ -29,7 +29,7 @@ import {
 
 import { useEffect, useState } from "react";
 
-import { configApprovedRecordsArePublic, configSiteLogo, configSiteName } from "~/util/config";
+import { configApprovedRecordsArePublic, configSiteLogo, configSiteName, configFooterURLPrivPolicy, configFooterURLTermsConds} from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
@@ -56,8 +56,10 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		hasPublicSite: configApprovedRecordsArePublic(),
 		loggedIn: !!user,
 		flashMessage: message,
-		configSiteName: configSiteName(),
-		configSiteLogo: configSiteLogo(),
+		confSiteName: configSiteName(),
+		confSiteLogo: configSiteLogo(),
+		confFooterURLPrivPolicy: configFooterURLPrivPolicy(), 
+		confFooterURLTermsConds: configFooterURLTermsConds(),
 	}, {
 	headers: {
 		"Set-Cookie": await commitCookieSession(session),
@@ -184,7 +186,9 @@ function SessionMessage({message}: SessionMessageProps) {
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {hasPublicSite, loggedIn, flashMessage, configSiteName, configSiteLogo} = loaderData
+	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds} = loaderData
+
+	
 
 	return (
 		<html lang="en">
@@ -207,14 +211,14 @@ export default function Screen() {
 					{ (hasPublicSite || loggedIn) && (
 					<header>
 						<div className="mg-container">
-							<Header loggedIn={loggedIn} siteName={configSiteName} siteLogo={configSiteLogo} />
+							<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
 						</div>
 					</header> ) }
 					<main className="dts-main-container">
 						<Outlet />
 					</main>
 					<footer>
-						<Footer siteName={configSiteName} />
+						<Footer siteName={confSiteName} urlPrivacyPolicy={confFooterURLPrivPolicy} urlTermsConditions={confFooterURLTermsConds} />
 					</footer>
 				</div>
 				<Scripts />
