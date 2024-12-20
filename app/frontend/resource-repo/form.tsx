@@ -77,8 +77,7 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 	useEffect(() => {
 	}, []);
 
-	return (
-		<>
+	return (<>
 		<FormView
 			path={route}
 			edit={props.edit}
@@ -89,29 +88,7 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 			fields={props.fields}
 			fieldsDef={fieldsDef}
 		/>
-
-		<div>Add</div>
-		<table border={1}>
-			<thead>
-				<tr>
-					<th>Filename</th>
-					<th>link</th>
-					<th>type</th>
-					<th>action</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>abc.pdf</td>
-					<td>http://joel.com</td>
-					<td>document</td>
-					<td>delete | edit</td>
-				</tr>
-			</tbody>
-			
-		</table>
-		</>
-	);
+	</>);
 }
 
 interface ResourceRepoViewProps {
