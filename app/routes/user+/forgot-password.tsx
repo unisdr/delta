@@ -1,6 +1,7 @@
 import {
 	ActionFunctionArgs,
 	json,
+	MetaFunction,
 	redirect
 } from "@remix-run/node";
 import {
@@ -32,13 +33,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	let errors: FormErrors<FormFields> = {}
 
-	if (!data.email){
+	if (!data.email) {
 		errors = {
-		fields: {
-			email: ["Email is required"],
+			fields: {
+				email: ["Email is required"],
+			}
 		}
-	}
-	return json({ data, errors })
+		return json({ data, errors })
 	}
 
 
@@ -53,6 +54,13 @@ export const loader = async () => {
 	return json(null);
 };
 
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Forgot Password - DTS" },
+		{ name: "description", content: "Forgot Password." },
+	];
+};
+
 export default function Screen() {
 	const actionData = useActionData<typeof action>();
 	const errors = actionData?.errors
@@ -60,20 +68,56 @@ export default function Screen() {
 
 	return (
 		<>
-			<Form errors={errors}>
+			<div className="dts-page-container">
+				<main className="dts-main-container">
+					<div className="mg-container">
+						<Form className="dts-form dts-form--vertical" errors={errors}>
+							<div className="dts-form__header">
+								<a href="/user/login" className="mg-button mg-button--small mg-button-system">
+									Back
+								</a>
+							</div>
+							<div className="dts-form__intro">
+								<h2 className="dts-heading-1" style={{ marginBottom: "5px" }}>Forgot your password?</h2>
+								<p style={{ marginBottom: "2px" }}>Please provide us with the email address associated with your account. We will send an email to help you reset your password.</p>
+							</div>
+							<div className="dts-form__body" style={{ marginBottom: "2px" }}>
+								<p style={{ marginBottom: "2px" }}>*Required information</p>
+								{data?.email ? (
+									<FormMessage>
+										<p>Password reminder sent to {data.email}</p>
+									</FormMessage>
+								) : null}
 
-			{data?.email ? (
-				<FormMessage>
-				<p>Password reminder sent to {data.email}</p>
-				</FormMessage>
-			) : null}
-
-				<Field label="Email">
-					<input type="email" name="email"></input>
-					<FieldErrors errors={errors} field="email"></FieldErrors>
-				</Field>
-				<SubmitButton label="Reset Password"></SubmitButton>
-			</Form>
+								<Field label="">
+									<input type="email" autoComplete="off" name="email" placeholder="Enter email address*"
+										style={{
+											padding: "12px 20px", // Increased padding for larger height
+											fontSize: "16px", // Larger font size
+											width: "100%",
+											border: errors?.fields?.email ? "1px solid red" : "1px solid #ccc", // Ensures border consistency
+											boxSizing: "border-box" // Ensures padding does not affect the width
+										}}></input>
+									{errors?.fields?.email && (
+										<div
+											style={{
+												color: "red",
+												fontSize: "12px",
+												marginTop: "0px",
+												marginBottom: "0px",
+											}}
+										>
+											{errors.fields.email[0]}
+										</div>
+									)}
+								</Field>
+								<p style={{ marginBottom: "2px" }}>&nbsp;</p>
+								<SubmitButton className='mg-button mg-button-primary' label="Reset Password"></SubmitButton>
+							</div>
+						</Form>
+					</div>
+				</main>
+			</div>
 		</>
 	);
 }
