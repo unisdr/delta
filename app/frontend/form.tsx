@@ -109,6 +109,7 @@ export function FieldErrors2({errors}: FieldErrors2Props) {
 interface SubmitButtonProps {
 	label: string;
 	className?: string;
+	disabled?: boolean;
 }
 
 export function SubmitButton({label, className}: SubmitButtonProps) {
