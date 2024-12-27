@@ -1,5 +1,6 @@
 import {
 	json,
+	MetaFunction,
 } from "@remix-run/node";
 
 import {
@@ -35,6 +36,15 @@ import {redirectWithMessage} from "~/util/session";
 import {NavSettings} from "~/routes/settings/nav";
 import {MainContainer} from "~/frontend/container";
 
+import { toast } from "react-toastify"; // Importing toast notification library
+import "react-toastify/dist/ReactToastify.css"; // Toast styles
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Adding New User - DTS" },
+		{ name: "description", content: "Invite User." },
+	];
+};
 
 export const loader = authLoaderWithPerm("InviteUsers", async () => {
 	return {
@@ -54,38 +64,56 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const { request } = actionArgs;
 	const formData = formStringData(await request.formData());
 	const data = adminInviteUserFieldsFromMap(formData);
-
+  
 	const errors: ErrorsType = { fields: {} };
-
+  
+	// Validate required fields
 	if (!data.firstName) {
-		errors.fields.firstName = ["First name is required"];
+	  errors.fields.firstName = ["First name is required"];
 	}
 	if (!data.email) {
-		errors.fields.email = ["Email is required"];
+	  errors.fields.email = ["Email is required"];
 	}
 	if (!data.organization) {
-		errors.fields.organization = ["Organization is required"];
+	  errors.fields.organization = ["Organization is required"];
 	}
-
+  
 	if (Object.keys(errors.fields).length > 0) {
-		return json<ActionResponse>({
-			ok: false,
-			data: data,
-			errors: errors
-		});
+	  return json<ActionResponse>({
+		ok: false,
+		data: data,
+		errors: errors,
+	  });
 	}
-
-	const res = await adminInviteUser(data);
-
-	if (!res.ok) {
+  
+	try {
+	  const res = await adminInviteUser(data);
+  
+	  if (!res.ok) {
 		return json<ActionResponse>({
-			ok: false,
-			data: data,
-			errors: res.errors
+		  ok: false,
+		  data: data,
+		  errors: res.errors,
 		});
+	  }
+  
+	  // Redirect with flash message
+	  return redirectWithMessage(request, "/settings/access-mgmnt/", {
+		type: "info",
+		text: "User has been successfully added!",
+	  });
+	} catch (error) {
+	  console.error("An unexpected error occurred:", error);
+  
+	  return json<ActionResponse>({
+		ok: false,
+		data: data,
+		errors: {
+		  fields: {},
+		},
+	  });
 	}
-	return redirectWithMessage(request, "/settings/access-mgmnt/", { type: "info", text: "New record created" });
-});
+  });
 
   function isErrorResponse(actionData: any): actionData is { errors: ErrorsType } {
 	return actionData?.errors !== undefined;
