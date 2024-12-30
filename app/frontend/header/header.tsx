@@ -126,17 +126,23 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
     {
       name: "About",
       title: "About Us",
-      icon: "undp/calendar",
+      icon: "other/about",
       lvl2: [
         {
-          name: "Project Info",
+          name: "General",
           id: "project_info",
           lvl3: [
             {
-              title: "Project Offices",
+              title: "General",
               lvl4: [
-                { name: "Office 1", link: "#" },
-                { name: "Office 2", link: "#" },
+                { name: "About the system", link: "/about/about-the-system" },
+                {
+                  name: "Technical specifications",
+                  link: "/about/technical-specifications",
+                },
+                { name: "Partners", link: "/about/partners" },
+                { name: "Methodologies", link: "/about/methodologies" },
+                { name: "Support", link: "/about/support" },
               ],
             },
           ],
