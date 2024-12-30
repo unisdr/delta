@@ -684,7 +684,12 @@ type AdminUpdateUserResult =
 	| { ok: false; errors: Errors<AdminUpdateUserFields> };
 
 export interface AdminUpdateUserFields {
+	generatedSystemIdentifier: string;
+	activated: any;
+	dateAdded: any;
+	addedBy: string;
 	email: string;
+	emailVerified: boolean;
 	firstName: string;
 	lastName: string;
 	organization: string;

@@ -8,7 +8,8 @@ import {
 } from "drizzle-orm";
 
 import {
-	userTable
+	userTable,
+	sessionTable
 } from '~/drizzle/schema';
 
 import {
@@ -20,8 +21,15 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
-	await dr
- 	.delete(userTable)
- 	.where(eq(userTable.id, Number(id)));
+	//await dr
+ 	//.delete(userTable)
+ 	//.where(eq(userTable.id, Number(id)));
+
+	// Delete related sessions first
+    await dr.delete(sessionTable).where(eq(sessionTable.userId, Number(id)));
+
+    // Delete the user
+    await dr.delete(userTable).where(eq(userTable.id, Number(id)));
+	
 	return redirect(`/settings/access-mgmnt/`);
 })
