@@ -56,12 +56,19 @@ export default function Settings() {
 	const ld = useLoaderData<typeof loader>();
 	const { items, search } = ld;
 
-	const pagination = Pagination(ld.pagination);
-
 	// State for search and filtered users
 	const [filteredItems, setFilteredItems] = useState<UserRes[]>(items);
 	const [organizationFilter, setOrganizationFilter] = useState("");
 	const [roleFilter, setRoleFilter] = useState("");
+
+	// Dynamically calculate pagination
+	const pagination = Pagination({
+		itemsOnThisPage: filteredItems.length, // Pass the dynamically filtered count
+		totalItems: items.length, // Total items in the dataset
+		page: ld.pagination.page, // Current page
+		pageSize: ld.pagination.pageSize, // Items per page
+		extraParams: ld.pagination.extraParams, // Additional query params
+	});
 
 	// Filter logic
 	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -380,7 +387,7 @@ export default function Settings() {
 						<tr>
 							<th>
 								Email
-	
+
 							</th>
 							<th>
 								First Name
