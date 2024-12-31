@@ -6,6 +6,8 @@ import { userTable } from "~/drizzle/schema";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { useState } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -100,13 +102,44 @@ export default function Settings() {
 	const totalUsers = items.length;
 
 	// Handle different formats for `emailVerified`
-	const activatedUsers = items.filter((item) => {
+	const activatedUsers = filteredItems.filter((item) => {
 		const emailVerified = item.emailVerified?.toString().toLowerCase();
 		return emailVerified === "true";
 	}).length;
 
-	const pendingUsers = totalUsers - activatedUsers;
+	//const pendingUsers = totalUsers - activatedUsers;
+	const pendingUsers = filteredItems.filter(item => !item.emailVerified).length;
 
+	const handleDeleteUser = (userId: number) => {
+		Swal.fire({
+			title: "Are you sure you want to delete this user?",
+			text: "This data cannot be recovered after being deleted.",
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonColor: "#d33", // Red for "Delete user"
+			cancelButtonColor: "#3085d6", // Blue for "Do not delete"
+			confirmButtonText: '<i class="fas fa-trash"></i> Delete user',
+			cancelButtonText: "Do not delete",
+		}).then(async (result) => {
+			if (result.isConfirmed) {
+				try {
+					// Redirect to the delete route
+					await fetch(`/settings/access-mgmnt/delete/${userId}`, {
+						method: "GET",
+					});
+					Swal.fire({
+						title: "Deleted!",
+						text: "The user has been deleted.",
+						icon: "success",
+					}).then(() => {
+						window.location.href = "/settings/access-mgmnt/"; // Redirect to access management page
+					});
+				} catch (error) {
+					Swal.fire("Error", "Something went wrong while deleting the user.", "error");
+				}
+			}
+		});
+	};
 
 
 	return (
@@ -249,7 +282,7 @@ export default function Settings() {
 								color: '#007bff',
 								border: '1px solid #007bff'
 							}}
-							onClick={() => (window.location.href = "/settings/access-mgmnt/tech-spec")}
+							onClick={() => (window.location.href = "/about/technical-specifications")}
 							onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e6f0ff')}
 							onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'white')}
 						>
@@ -332,7 +365,7 @@ export default function Settings() {
 					</span>
 					<span className="user-stats" aria-labelledby="activated-label" style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
 						<span className="status-dot activated" id="activated-label" style={{ height: "10px", width: "10px", borderRadius: "50%", backgroundColor: "#007bff", marginBottom: "0px" }}></span>
-						Account activated: {filteredItems.length}
+						Account activated: {activatedUsers}
 					</span>
 					<span className="user-stats" aria-labelledby="pending-label" style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
 						<span className="status-dot pending" id="pending-label" style={{ height: "10px", width: "10px", borderRadius: "50%", backgroundColor: "#ccc", marginBottom: "0px" }}></span>
@@ -347,7 +380,7 @@ export default function Settings() {
 						<tr>
 							<th>
 								Email
-
+	
 							</th>
 							<th>
 								First Name
@@ -422,7 +455,7 @@ export default function Settings() {
 										</button>
 										<button
 											className="icon-button"
-											onClick={() => (window.location.href = `/settings/access-mgmnt/delete/${item.id}`)}
+											onClick={() => handleDeleteUser(item.id)}
 										>
 											<img src="/assets/icons/trash-alt.svg" alt="Delete" />
 										</button>
@@ -431,7 +464,6 @@ export default function Settings() {
 							</tr>
 						))}
 					</tbody>
-
 				</table>
 
 				{/* Pagination */}
