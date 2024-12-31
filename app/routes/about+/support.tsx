@@ -27,7 +27,20 @@ export default function Support() {
   return (
     <MainContainer title="Support" headerExtra={<NavSettings />}>
       <p className="wip-message">
-        🚧 Work In Progress! This page is under construction.
+        <section>
+          <h2>Support</h2>
+          <p>
+            If you need support, please contact your ICT administrator or
+            programme focal point for assistance.
+            <br></br>
+            <br></br>For technical issues, system access requests, or general
+            inquiries, your ICT administrator will be able to guide you.{" "}
+            <br></br>
+            <br></br>For questions related to content, permissions, or
+            programme-specific details, please reach out to your designated
+            programme focal point.
+          </p>
+        </section>
       </p>
     </MainContainer>
   );
