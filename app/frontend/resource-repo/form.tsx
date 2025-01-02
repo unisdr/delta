@@ -49,7 +49,7 @@ export function resourceRepoLabel(args: {
 }): string {
 	const title = args.title ? " " + args.title.slice(0, 50) : "";
 	const summary = args.summary ? " " + args.summary.slice(0, 50) : "";
-	const shortId = args.id ? " " + args.id.slice(0, 5) : "";
+	const shortId = args.id ? " " + args.id.slice(0, 8) : "";
 	return title + " " + summary + " " + shortId;
 }
 
@@ -77,7 +77,7 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 	useEffect(() => {
 	}, []);
 
-	return (
+	return (<>
 		<FormView
 			path={route}
 			edit={props.edit}
@@ -88,7 +88,7 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 			fields={props.fields}
 			fieldsDef={fieldsDef}
 		/>
-	);
+	</>);
 }
 
 interface ResourceRepoViewProps {

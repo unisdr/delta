@@ -38,4 +38,16 @@ form > label {
 
 .dts-sub-navigation ul li a.active {
 	border-color: #004f91;
-  }
+}
+
+.dts-status--approved {
+	background-color: #026666;
+}
+
+.dts-status--pending {
+	background-color: #F4E496;
+}
+
+.dts-status--rejected {
+	background-color: #990000;
+}

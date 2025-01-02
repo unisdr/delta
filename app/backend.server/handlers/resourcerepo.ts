@@ -47,6 +47,7 @@ export async function resourceRepoLoader(args: resourceRepoLoaderArgs) {
 				id: true,
 				title: true,
 				summary: true,
+				approvalStatus: true,
 			},
 			orderBy: [desc(resourceRepoTable.updatedAt)],
 			where: and(

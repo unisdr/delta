@@ -38,10 +38,15 @@ export function ListView(args: ListViewArgs) {
 						<thead>
 							<tr>
 								<th>ID</th>
+								{ !args.isPublic && (
+									<th>Status</th>
+								)}
 								<th>Title</th>
 								<th>Summary</th>
 								<th>Attachments</th>
-								<th></th>
+								{ !args.isPublic && (
+									<th></th>
+								)}
 							</tr>
 						</thead>
 						<tbody>
@@ -55,15 +60,18 @@ export function ListView(args: ListViewArgs) {
 											{item.id.slice(0, 8)}
 										</Link>
 									</td>
+									{ !args.isPublic && (
+										<td className="dts-table__cell-centered">
+											<span className={`dts-status dts-status--${item.approvalStatus}`}></span>
+										</td>
+									)}
 									<td>
 										{item.title}
 									</td>
 									<td>
 										{item.summary.length <= 300 ? item.summary : item.summary.slice(0, 300) + ' ...'}
 									</td>
-									<td>
-
-									</td>
+									<td></td>
 									<td>
 										{args.actions ? args.actions(item) : (args.isPublic ? null :
 											<ActionLinks route={route} id={item.id} />)

@@ -105,3 +105,21 @@ export function configApprovedRecordsArePublic(): boolean {
 	const value = stringToBoolean( process.env.APPROVED_RECORDS_ARE_PUBLIC || "1" );
 	return value;
 };
+
+/**
+ * Get footer URL for Privacy policy.
+ * @returns string | default value empty string
+ */
+export function configFooterURLPrivPolicy(): string {
+	const value = process.env.FOOTER_URL_PRIVACY_POLICY || "";
+	return value;
+};
+
+/**
+ * Get footer URL for Terms and conditions.
+ * @returns string | default value empty string
+ */
+export function configFooterURLTermsConds(): string {
+	const value = process.env.FOOTER_URL_TERMS_CONDS || "";
+	return value;
+};

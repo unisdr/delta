@@ -50,11 +50,17 @@ export function ListView(args: ListViewArgs) {
 						<thead>
 							<tr>
 								<th>ID</th>
+								{ !args.isPublic && (
+									<th>Status</th>
+								)}
 								<th>Start Date</th>
 								<th>End Date</th>
 								<th>Hazard ID</th>
 								<th>Hazard Name</th>
 								<th>Event Description</th>
+								{ !args.isPublic && (
+									<th></th>
+								)}
 							</tr>
 						</thead>
 						<tbody>
@@ -69,6 +75,11 @@ export function ListView(args: ListViewArgs) {
 										</Link>
 
 									</td>
+									{ !args.isPublic && (
+										<td className="dts-table__cell-centered">
+											<span className={`dts-status dts-status--${item.approvalStatus}`}></span>
+										</td>
+									)}
 									<td>
 										{formatDate(item.startDate)}
 									</td>

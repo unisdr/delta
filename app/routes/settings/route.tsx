@@ -4,12 +4,14 @@ import {
 } from "@remix-run/node";
 
 import { 
-    Outlet
+    Outlet,
+	useLocation
  } from "@remix-run/react";
 
  import {
 	authLoader
 } from "~/util/auth";
+import { NavSettings } from "./nav";
 
 
 
@@ -25,10 +27,17 @@ export const loader = authLoader(async ( request ) => {
 	return json({  });
 });
 
-export default function Settings() {
-	return (
-	  <div>
-		<Outlet />
-	  </div>
-	);
+export default function SettingsLayout() {
+  const location = useLocation();
+
+  // Check if we're on a settings page that is not a sub-page of settings
+  const isSettingsPage = location.pathname.startsWith("/settings") && !location.pathname.startsWith("/settings/");
+
+  return (
+	<div>
+	  {/* Render NavSettings dynamically */}
+	  {isSettingsPage && <NavSettings />}
+	  <Outlet />
+	</div>
+  );
 }

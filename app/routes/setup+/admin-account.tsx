@@ -7,13 +7,25 @@ import { formStringData } from "~/util/httputil";
 import { createUserSession } from "~/util/session";
 
 interface ActionData {
-  errors?: { [key: string]: string[] };
+  errors?: {
+    form?: string[];
+    fields?: {
+      [key: string]: string[];
+    };
+  };
 }
 
 import {
   setupAdminAccount,
   setupAdminAccountFieldsFromMap,
 } from "~/backend.server/models/user";
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Account Setup - DTS" },
+		{ name: "description", content: "Admin setup." },
+	];
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   try {
@@ -117,7 +129,22 @@ export default function Screen() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  style={{
+                    border: actionData?.errors?.fields?.email ? "1px solid red" : "",
+                  }}
                 />
+                {actionData?.errors?.fields?.email && (
+                  <div
+                    style={{
+                      color: "red",
+                      fontSize: "12px",
+                      marginTop: "0px",
+                      marginBottom: "0px",
+                    }}
+                  >
+                    {(actionData.errors.fields as any).email?.[0]}
+                  </div>
+                )}
               </div>
               <div className="dts-form-component" style={{ marginBottom: "10px" }}>
                 <label htmlFor="firstName"></label>
@@ -236,11 +263,6 @@ export default function Screen() {
                   </button>
                 </div>
               </div>
-              {actionData?.errors && (
-                <div className="error-messages">
-                  Check your input: {JSON.stringify(actionData.errors)}
-                </div>
-              )}
             </div>
 
 			  {/* Password Requirements */}

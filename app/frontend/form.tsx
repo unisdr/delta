@@ -149,6 +149,7 @@ export function FieldErrors2({errors}: FieldErrors2Props) {
 interface SubmitButtonProps {
 	label: string;
 	className?: string;
+	disabled?: boolean;
 }
 
 export function SubmitButton({label, className}: SubmitButtonProps) {
@@ -574,7 +575,7 @@ export function FormView(props: FormViewProps) {
 				{props.infoNodes}
 				<Form errors={props.errors}>
 					<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
-					<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+					<SubmitButton className="mg-button mg-button-primary" label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
 				</Form>
 			</>
 		</MainContainer>

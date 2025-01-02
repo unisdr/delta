@@ -18,6 +18,8 @@ import {
 
 import { LoaderFunctionArgs } from "react-router-dom";
 
+import { toast, ToastContainer } from "react-toastify"; // Import ToastContainer for notifications
+import "react-toastify/dist/ReactToastify.css"; // Import styles for Toast
 
 import {
 	getUserFromSession,
@@ -28,7 +30,7 @@ import {
 
 import { useEffect, useState } from "react";
 
-import { configApprovedRecordsArePublic, configSiteLogo, configSiteName } from "~/util/config";
+import { configApprovedRecordsArePublic, configSiteLogo, configSiteName, configFooterURLPrivPolicy, configFooterURLTermsConds} from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
@@ -55,8 +57,10 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		hasPublicSite: configApprovedRecordsArePublic(),
 		loggedIn: !!user,
 		flashMessage: message,
-		configSiteName: configSiteName(),
-		configSiteLogo: configSiteLogo(),
+		confSiteName: configSiteName(),
+		confSiteLogo: configSiteLogo(),
+		confFooterURLPrivPolicy: configFooterURLPrivPolicy(), 
+		confFooterURLTermsConds: configFooterURLTermsConds(),
 	}, {
 	headers: {
 		"Set-Cookie": await sessionCookie().commitSession(session),
@@ -166,24 +170,51 @@ interface SessionMessageProps {
 	message?: FlashMessage
 }
 
-function SessionMessage({message}: SessionMessageProps) {
-	if (!message){
+function SessionMessage({ message }: SessionMessageProps) {
+	if (!message) {
 		return null
 	}
 	let type = "info"
-	if (message.type == "error"){
+	if (message.type == "error") {
 		type = "error"
 	}
-	return (
-		<div className={`session-message session-${type}`}>
-			<p>{message.text}</p>
-		</div>
-	);
+	// Replaced the following code:
+	// return (
+	//	<div className={`session-message session-${type}`}>
+	//		<p>{message.text}</p>
+	//	</div>
+	//);
+
+	// The above was removed to avoid rendering inline messages on the page.
+	// This ensures that only toast notifications are shown for flash messages,
+	// which aligns with the current UI design choice. The inline rendering can
+	// be re-enabled in the future if needed by uncommenting this code.
+
+	return null; // Prevent inline message rendering, focusing only on toast notifications.
 }
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {hasPublicSite, loggedIn, flashMessage, configSiteName, configSiteLogo} = loaderData
+	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds} = loaderData
+
+
+	// Display toast for flash messages
+	useEffect(() => {
+		if (flashMessage) {
+		  if (flashMessage.type === "error") {
+			toast.error(flashMessage.text, {
+			  position: "top-center",
+			  autoClose: 5000,
+			});
+		  } else if (flashMessage.type === "info") {
+			toast.info(flashMessage.text, {
+			  position: "top-center",
+			  autoClose: 5000,
+			});
+		  }
+		}
+	  }, [flashMessage]);
+	
 
 	return (
 		<html lang="en">
@@ -200,20 +231,30 @@ export default function Screen() {
 				<meta charSet="utf-8" />
 			</head>
 			<body>
+				{/* Add ToastContainer to the root for toast notifications */}
+				<ToastContainer
+					position="top-center" // Set position to the center of the page
+					autoClose={5000} // Auto-close after 5 seconds
+					hideProgressBar={false} // Show progress bar
+					newestOnTop={true} // New notifications appear on top
+					closeOnClick={true} // Close notification on click
+					pauseOnHover={true} // Pause timer on hover
+					draggable={false} // Disable dragging
+				/>
 				<InactivityWarning loggedIn={loggedIn} />
 				<SessionMessage message={flashMessage} />
 				<div className="dts-page-container">
 					{ (hasPublicSite || loggedIn) && (
 					<header>
 						<div className="mg-container">
-							<Header loggedIn={loggedIn} siteName={configSiteName} siteLogo={configSiteLogo} />
+							<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
 						</div>
 					</header> ) }
 					<main className="dts-main-container">
 						<Outlet />
 					</main>
 					<footer>
-						<Footer siteName={configSiteName} />
+						<Footer siteName={confSiteName} urlPrivacyPolicy={confFooterURLPrivPolicy} urlTermsConditions={confFooterURLTermsConds} />
 					</footer>
 				</div>
 				<Scripts />

@@ -23,7 +23,7 @@ export function Pagination(props: PaginationProps) {
 	const buildQueryString = (newPage: number) => {
 		const params = new URLSearchParams({page: newPage.toString()});
 		for (const key in extraParams) {
-			extraParams[key].forEach((value) => {
+		   extraParams[key].forEach((value) => {
 				params.append(key, value);
 			});
 		}
