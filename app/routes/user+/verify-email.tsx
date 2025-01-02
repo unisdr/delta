@@ -27,6 +27,10 @@ import {
 
 import { formStringData } from "~/util/httputil";
 
+import {
+	errorToString
+} from "~/frontend/form"
+
 export const meta: MetaFunction = () => {
     return [
       { title: "Account Setup Email Verification - DTS" },
@@ -113,7 +117,7 @@ export default function Data() {
                                     <input type="text" minLength={6} maxLength={6} name="code" placeholder="Enter OTP code*" autoFocus required  style={errors ? { border: "2px solid red" } : {}}/>
                                 </label>
                                 {errors && errors.fields && errors.fields.code && errors.fields.code.length > 0 && (
-                                  <div style={{ color: "red", marginTop: "8px" }}>{errors.fields.code[0]}</div>
+                                  <div style={{ color: "red", marginTop: "8px" }}>{errorToString(errors.fields.code[0])}</div>
                                 )}
                             </div>
                             <div className="dts-form__additional-content dts-form__additional-content--centered">

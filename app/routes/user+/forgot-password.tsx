@@ -13,7 +13,8 @@ import {
 	Errors as FormErrors,
 	SubmitButton,
 	FieldErrors,
-	FormMessage
+	FormMessage,
+	errorToString
 } from "~/frontend/form"
 import { login } from "~/util/auth"
 import { formStringData } from "~/util/httputil";
@@ -107,7 +108,7 @@ export default function Screen() {
 												marginBottom: "0px",
 											}}
 										>
-											{errors.fields.email[0]}
+											{errorToString(errors.fields.email[0])}
 										</div>
 									)}
 								</Field>

@@ -26,6 +26,11 @@ import {
 import {
 	login,
 } from "~/backend.server/models/user"
+import {
+	errorToString
+} from "~/frontend/form"
+
+
 
 
 interface LoginFields {
@@ -168,7 +173,7 @@ export default function Screen() {
 													marginBottom: "0px",
 												}}
 											>
-												{errors.fields.password[0]}
+												{errorToString(errors.fields.password[0])}
 											</div>
 										)}
 									</Field>

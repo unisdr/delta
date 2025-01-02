@@ -24,6 +24,11 @@ export interface FormError {
 	message: string
 	data?: any 
 }
+
+export function errorToString(error: string|FormError): string {
+	return (typeof error === 'string' ? error : error.message)
+}
+
 export function errorsToCodes(errors: (string | FormError)[] | undefined): string[] {
 	if (!errors) {
 		return []
