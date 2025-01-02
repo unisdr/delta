@@ -9,8 +9,10 @@ export const Permissions = [
 	{id: "ViewUsers", role: "admin", label: "View users"},
 	{id: "EditUsers", role: "admin", label: "Edit other user details"},
 	{id: "InviteUsers", role: "admin", label: "Invite users"},
+	{id: "EditAPIKeys", role: "admin", label: "Edit API Keys"},
 	{id: "ViewData", role: "data-viewer", label: "View data"},
 	{id: "EditData", role: "data-collector", label: "Edit data"},
+	{id: "ViewApiDocs", role: "data-viewer", label: "View API Docs"},
 ] as const;
 
 export type PermissionId = typeof Permissions[number]["id"];

@@ -1,3 +1,4 @@
+import {DataMainLinks} from "~/frontend/data_screen"
 
 import {hazardEventsLoader} from "~/backend.server/handlers/events/hazardevent"
 
@@ -22,9 +23,7 @@ export default function Data() {
 	return (
 		<MainContainer title="Hazardous events">
 			<>
-				{!ld.isPublic && (
-					<a href="/hazard-event/new">New</a>
-				)}
+				<DataMainLinks isPublic={ld.isPublic} baseRoute="/hazard-event" resourceName="Hazardous Event" csvExportLinks={true} />
 				<ListView
 					isPublic={ld.isPublic}
 					basePath="/hazard-event"

@@ -18,9 +18,29 @@ export type FormResponse2<T> =
 	| {ok: true; data: Partial<T>}
 	| {ok: false; data: Partial<T>, errors: Errors<T>};
 
+export interface FormError {
+	def?: FormInputDefSpecific
+	code: string
+	message: string
+	data?: any 
+}
+export function errorsToCodes(errors: (string | FormError)[] | undefined): string[] {
+	if (!errors) {
+		return []
+	}
+	return errors.map(error => (typeof error === 'string' ? "unknown_error" : error.code))
+}
+
+export function errorsToStrings(errors: (string | FormError)[] | undefined): string[] {
+	if (!errors) {
+		return []
+	}
+	return errors.map(error => (typeof error === 'string' ? error : error.message))
+}
+
 export interface Errors<T> {
-	form?: string[]
-	fields?: Partial<Record<keyof T, string[]>>
+	form?: (string|FormError)[]
+	fields?: Partial<Record<keyof T, (string | FormError)[]>>
 }
 
 export function initErrorField<T>(errors: Errors<T>, field: keyof T): string[] {
@@ -29,7 +49,27 @@ export function initErrorField<T>(errors: Errors<T>, field: keyof T): string[] {
 	return errors.fields[field] as string[];
 }
 
-export function hasErrors<T>(errors: Errors<T>): boolean {
+export function firstError<T>(errors: Errors<T> | undefined): FormError | string | null {
+	if (!errors){
+		return null
+	}
+	if (errors.form && errors.form.length > 0) {
+		return errors.form[0]
+	}
+	if (errors.fields){
+		for (const field in errors.fields){
+			if (errors.fields[field] && errors.fields[field].length > 0){
+				return errors.fields[field][0]
+			}
+		}
+	}
+	return null
+}
+
+export function hasErrors<T>(errors: Errors<T> | undefined): boolean {
+	if (!errors) {
+		return false
+	}
 	if (errors.form && errors.form.length > 0) {
 		return true;
 	}
@@ -85,7 +125,7 @@ export function FieldErrors<T>({errors, field}: FieldErrorsProps<T>) {
 	if (!fieldErrors || fieldErrors.length == 0) {
 		return null;
 	}
-	return FieldErrors2({errors: fieldErrors})
+	return FieldErrors2({errors: errorsToStrings(fieldErrors)})
 }
 
 interface FieldErrors2Props {
@@ -144,7 +184,7 @@ export function Form<T>({children, errors, className}: FormProps<T>) {
 				<>
 					<h2>Form Errors</h2>
 					<ul className="form-errors">
-						{errors.form.map((error, index) => (
+						{errorsToStrings(errors.form).map((error, index) => (
 							<li key={index}>{error}</li>
 						))}
 					</ul>
@@ -208,6 +248,7 @@ export interface FormInputDef<T> {
 }
 
 export interface FormInputDefSpecific {
+	key: string
 	label: string
 	type: FormInputType
 	required?: boolean
@@ -245,88 +286,6 @@ export function fieldsFromMap<T>(
 	) as T;
 }
 
-export interface validateFromMapRes<T> {
-	ok: boolean
-	data: Partial<T>
-	resOk?: T
-	errors: Errors<T>
-}
-
-function fieldRequiredMsg(field: string): string {
-	return `The field "${field}" is required.`
-}
-
-export function validateFromMap<T>(
-	data: {[key: string]: string},
-	fieldsDef: FormInputDef<T>[]
-): validateFromMapRes<T> {
-	const errors: Errors<T> = {};
-	errors.fields = {};
-
-	let partial: [keyof T, any][] = []
-	let full: [keyof T, any][] = []
-
-	for (let field of fieldsDef) {
-		if (field.type == "bool" && field.required) {
-			throw "Code sets bool as required, but bools are always required"
-		}
-		let k = field.key
-		let vs = data[field.key] || ""
-		let fieldValue: any;
-		switch (field.type) {
-			case "other":
-				fieldValue = vs;
-				break;
-			case "number":
-				fieldValue = vs === "" ? null : Number(vs);
-				break;
-			case "text":
-				fieldValue = vs;
-				break;
-			case "textarea":
-				fieldValue = vs;
-				break;
-			case "date":
-				fieldValue = vs === "" ? null : new Date(vs);
-				break;
-			case "bool":
-				fieldValue = vs === "on" ? true : false;
-				break;
-			case "enum":
-				const enumValid = field.enumData?.some(e => e.key === vs);
-
-				if (!enumValid) {
-					throw new Error("Unknown value for enum");
-				}
-				fieldValue = vs;
-				break;
-			default:
-				throw new Error(`Unknown type ${field.type}`);
-		}
-		if (field.type != "bool" && (vs === "" && field.required)) {
-			errors.fields![k] = [fieldRequiredMsg(field.label)];
-		} else {
-			partial.push([k, fieldValue]);
-			full.push([k, fieldValue]);
-		}
-	}
-
-	const ok = !hasErrors(errors)
-	if (!ok) {
-		return {
-			ok,
-			data: Object.fromEntries(partial) as Partial<T>,
-			errors
-		}
-	}
-	return {
-		ok,
-		data: Object.fromEntries(partial) as Partial<T>,
-		resOk: Object.fromEntries(full) as T,
-		errors
-	}
-}
-
 export interface InputsProps<T> {
 	def: FormInputDef<T>[]
 	fields: Partial<T>
@@ -342,7 +301,7 @@ export function Inputs<T>(props: InputsProps<T>) {
 			}
 			let errors: string[] | undefined;
 			if (props.errors && props.errors.fields) {
-				errors = props.errors.fields[def.key]
+				errors = errorsToStrings(props.errors.fields[def.key])
 			}
 			return <Input key={def.key} def={def} name={def.key} value={props.fields[def.key]} errors={errors} enumData={def.enumData} />
 		})
@@ -413,7 +372,7 @@ export function Input(props: InputProps) {
 					defaultValue={defaultValueTextArea}
 				/>
 				<FieldErrors2 errors={props.errors} />
-			</Field>	
+			</Field>
 		case "text":
 		case "date":
 		case "number":
@@ -601,23 +560,23 @@ export function FormView(props: FormViewProps) {
 	return (
 
 		<MainContainer title={props.plural}>
-				<>
+			<>
+				<p>
+					<Link to={props.path}>{props.plural}</Link>
+				</p>
+				{props.edit && props.id && (
 					<p>
-						<Link to={props.path}>{props.plural}</Link>
+						<Link to={`${props.path}/${String(props.id)}`}>View</Link>
 					</p>
-					{props.edit && props.id && (
-						<p>
-							<Link to={`${props.path}/${String(props.id)}`}>View</Link>
-						</p>
-					)}
-					<h2>{props.singular}</h2>
-					{props.edit && props.id && <p>ID: {String(props.id)}</p>}
-					{props.infoNodes}
-					<Form errors={props.errors}>
-						<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
-						<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
-					</Form>
-				</>
+				)}
+				<h2>{props.singular}</h2>
+				{props.edit && props.id && <p>ID: {String(props.id)}</p>}
+				{props.infoNodes}
+				<Form errors={props.errors}>
+					<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
+					<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+				</Form>
+			</>
 		</MainContainer>
 	);
 }

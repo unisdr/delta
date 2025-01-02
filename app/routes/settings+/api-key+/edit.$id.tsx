@@ -27,18 +27,18 @@ export const loader = createLoader({
 	getById: apiKeyById
 });
 
-export const action = authActionWithPerm("EditData", async (actionArgs) => {
+export const action = authActionWithPerm("EditAPIKeys", async (actionArgs) => {
 	const auth = authActionGetAuth(actionArgs);
 
 	return formSave({
 		actionArgs,
 		fieldsDef: fieldsDef,
-		save: async (id, data) => {
+		save: async (tx, id, data) => {
 			if (!id) {
 				data.managedByUserId = auth.user.id
-				return apiKeyCreate(data);
+				return apiKeyCreate(tx, data);
 			} else {
-				return apiKeyUpdate(id, data);
+				return apiKeyUpdate(tx, id, data);
 			}
 		},
 		redirectTo: (id) => `${route}/${id}`

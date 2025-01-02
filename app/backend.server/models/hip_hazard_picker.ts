@@ -1,6 +1,7 @@
 import {dr} from "~/db.server";
 import {hipClassTable, hipClusterTable, hipHazardTable} from "~/drizzle/schema";
 
+
 export interface Class {
 	id: number;
 	name: string;

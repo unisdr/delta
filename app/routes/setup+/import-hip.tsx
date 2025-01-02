@@ -115,7 +115,6 @@ interface HipApi {
 	data: Hip[]
 }
 
-
 function hipDevData(): Hip[] {
 	const types: any = [];
 	for (let i = 1; i <= 2; i++) {
@@ -132,7 +131,7 @@ function hipDevData(): Hip[] {
 
 	const data: Hip[] = [];
 
-	id = 1;
+	id = 0;
 	for (let clu of clusters) {
 		for (let i = 1; i <= 5; i++) {
 			id++;

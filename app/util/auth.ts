@@ -165,6 +165,19 @@ export function authLoaderApi<T extends LoaderFunction>(fn: T): T {
 	}) as T;
 }
 
+
+export function authLoaderApiDocs<T extends LoaderFunction>(fn: T): T {
+	return (async (args: LoaderFunctionArgs) => {
+		const authToken = args.request.headers.get("X-Auth")
+		if (authToken) {
+			await apiAuth(args.request)
+			return fn(args)
+		}
+		return authLoaderWithPerm("ViewApiDocs", fn)(args)
+	}) as T
+}
+
+
 export function authLoaderGetAuth(args: any): UserSession {
 	if (!args.userSession || !args.userSession.user) {
 		throw "Missing user session"

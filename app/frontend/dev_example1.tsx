@@ -27,8 +27,13 @@ export const fieldsDef: FormInputDef<DevExample1Fields>[] = [
 	}
 ];
 
-export const fieldsDefView: FormInputDef<DevExample1>[] = [
-	...fieldsDef
+export const fieldsDefApi: FormInputDef<DevExample1Fields>[] = [
+	...fieldsDef,
+	{key: "apiImportId", label: "", type: "other"},
+];
+
+export const fieldsDefView: FormInputDef<DevExample1Fields>[] = [
+	...fieldsDef,
 ];
 
 interface DevExample1FormProps extends UserFormProps<DevExample1Fields> {}

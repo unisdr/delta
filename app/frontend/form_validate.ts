@@ -1,0 +1,245 @@
+import {
+	FormInputDef,
+	Errors,
+	FormError,
+	hasErrors,
+	FormInputDefSpecific
+} from "./form"
+
+
+function fieldRequiredError(def: FormInputDefSpecific): FormError {
+	return {def, code: "required", message: `The field "${def.label}" is required.`}
+}
+
+function unknownEnumValueError(def: FormInputDefSpecific, value: string, valid: string[]): FormError {
+	return {
+		def,
+		code: "unknown_enum_value",
+		message: `The field "${def.label}" contains an unknown enum value "${value}". Valid values are: ${valid.join(", ")}.`
+	}
+}
+
+function invalidTypeError(def: FormInputDefSpecific, expectedType: string): FormError {
+	return {def, code: "invalid_type", message: `The field "${def.label}" must be of type ${expectedType}.`}
+}
+
+function invalidDateFormatError(def: FormInputDefSpecific): FormError {
+	return {def, code: "invalid_date_format", message: `The field "${def.label}" must be a valid RFC3339 date string.`}
+}
+
+function unknownFieldError(key: string): FormError {
+	return {data: key, code: "unknown_field", message: `The field "${key}" is not recognized.`}
+}
+
+function validateShared<T>(
+	data: any,
+	fieldsDef: FormInputDef<T>[],
+	allowPartial: boolean,
+	checkUnknownFields: boolean,
+	parseValue: (field: FormInputDef<T>, value: any) => any
+): validateRes<T> {
+	const errors: Errors<T> = {}
+	errors.fields = {}
+
+	let partial: [keyof T, any][] = []
+	let full: [keyof T, any][] = []
+
+	if (checkUnknownFields) {
+		for (const key in data) {
+			if (!fieldsDef.some(field => field.key === key)) {
+				errors.form = errors.form || []
+				errors.form.push(unknownFieldError(key))
+			}
+		}
+	}
+
+	for (const fieldDef of fieldsDef) {
+		const key = fieldDef.key
+		const value = data[key]
+		let fieldValue: any
+		if (value === undefined) {
+			if (fieldDef.required) {
+				if (allowPartial) {
+					continue
+				} else {
+					errors.fields![key] = [fieldRequiredError(fieldDef)]
+					continue
+				}
+			} else {
+				continue
+			}
+		}
+		try {
+			fieldValue = parseValue(fieldDef, value)
+			if (fieldValue === undefined) {
+				fieldValue = null
+			}
+		} catch (error: any) {
+			if (error.code) {
+				errors.fields![key] = [error as FormError]
+				continue
+			} else {
+				throw error
+			}
+		}
+		if (!allowPartial && fieldDef.required && fieldValue === null) {
+			errors.fields![key] = [fieldRequiredError(fieldDef)]
+		} else {
+			if (fieldValue !== null) {
+				partial.push([key, fieldValue])
+				full.push([key, fieldValue])
+			}
+		}
+	}
+
+	const ok = !hasErrors(errors)
+	if (!ok) {
+		return {
+			ok,
+			data: Object.fromEntries(partial) as Partial<T>,
+			errors,
+		};
+	}
+
+	return {
+		ok,
+		data: Object.fromEntries(partial) as Partial<T>,
+		resOk: Object.fromEntries(full) as T,
+		errors,
+	};
+}
+
+
+export function validateFromJsonFull<T>(
+	data: Partial<Record<keyof T, any>>,
+	fieldsDef: FormInputDef<T>[],
+	checkUnknownFields: boolean,
+): validateFullRes<T> {
+	return validateFromJson(data, fieldsDef, false, checkUnknownFields) as validateFullRes<T>
+}
+
+export function validateFromMapFull<T>(
+	data: {[key: string]: string},
+	fieldsDef: FormInputDef<T>[],
+	checkUnknownFields: boolean,
+): validateFullRes<T> {
+	return validateFromMap(data, fieldsDef, false, checkUnknownFields) as validateFullRes<T>
+}
+
+export interface validateFullRes<T> {
+	ok: boolean
+	data: Partial<T>
+	resOk?: T
+	errors: Errors<T>
+}
+
+export interface validateRes<T> {
+	ok: boolean
+	data: Partial<T>
+	resOk?: Partial<T>
+	errors: Errors<T>
+}
+
+export function validateFromJson<T>(
+	data: Partial<Record<keyof T, any>>,
+	fieldsDef: FormInputDef<T>[],
+	allowPartial: boolean,
+	checkUnknownFields: boolean
+): validateRes<T> {
+	return validateShared(data, fieldsDef, allowPartial, checkUnknownFields, (field, value) => {
+		switch (field.type) {
+			case "number":
+				if (typeof value != "number" && value !== undefined && value !== null) {
+					throw invalidTypeError(field, "number")
+				}
+				return value ?? null
+			case "text":
+			case "textarea":
+				if (typeof value != "string" && value !== undefined && value !== null) {
+					throw invalidTypeError(field, "string")
+				}
+				return value || ""
+			case "date":
+				if (value !== undefined && value !== null) {
+					const parsedDate = new Date(value)
+					if (isNaN(parsedDate.getTime())) {
+						throw invalidDateFormatError(field)
+					}
+					return parsedDate
+				}
+				return null
+			case "bool":
+				if (typeof value !== "boolean" && value !== undefined && value !== null) {
+					throw invalidTypeError(field, "boolean")
+				}
+				return value ?? false
+			case "enum":
+				if (!field.enumData?.some(e => e.key === value)) {
+					throw unknownEnumValueError(field, value, field.enumData?.map(e => e.key) || [])
+				}
+				return value
+			default:
+				return value
+		}
+	});
+}
+
+export function validateFromMap<T>(
+	data: {[key: string]: string},
+	fieldsDef: FormInputDef<T>[],
+	allowPartial: boolean,
+	checkUnknownFields: boolean
+): validateRes<T> {
+	return validateShared(data, fieldsDef, allowPartial, checkUnknownFields, (field, value) => {
+		let vs = ""
+		if (value !== undefined && value !== null) {
+			if (typeof value != "string") {
+				throw "validateFromMap received value that is not string, undefined or null"
+			} else {
+				vs = value
+			}
+		}
+		if (vs.trim() == "") {
+			return null
+		}
+		let parsedValue: any;
+		switch (field.type) {
+			case "number":
+				parsedValue = vs === "" ? null : Number(value);
+				if (isNaN(parsedValue)) {
+					throw invalidTypeError(field, "number");
+				}
+				return parsedValue;
+			case "text":
+			case "textarea":
+				return vs;
+			case "date":
+				parsedValue = vs === "" ? null : new Date(value);
+				if (isNaN(parsedValue.getTime())) {
+					throw invalidDateFormatError(field);
+				}
+				return parsedValue;
+			case "bool":
+				switch (vs.toLowerCase()) {
+					// on for form submits, true for csv imports
+					case "on":
+					case "true":
+						return true
+					case "":
+					case "off":
+					case "false":
+						return false
+					default:
+						throw invalidTypeError(field, "bool")
+				}
+			case "enum":
+				if (!field.enumData?.some(e => e.key === vs)) {
+					throw unknownEnumValueError(field, vs, field.enumData?.map(e => e.key) || []);
+				}
+				return vs;
+			default:
+				return vs;
+		}
+	});
+}
+

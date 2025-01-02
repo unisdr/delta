@@ -3,7 +3,10 @@ import {
 } from "drizzle-orm";
 
 import {OffsetLimit} from "~/frontend/pagination/api.server";
-import {authLoaderWithPerm} from "~/util/auth";
+import {
+	authLoaderWithPerm,
+	authLoaderApi
+} from "~/util/auth";
 import {dr} from "~/db.server";
 import {executeQueryForPagination3} from "~/frontend/pagination/api.server";
 
@@ -69,3 +72,23 @@ export function createPaginatedLoader<T>(
 		return {data: res};
 	});
 }
+
+export function createApiListLoader<T>(
+	table: any,
+	fetchData: (offsetLimit: OffsetLimit) => Promise<T[]>,
+	defaultOrderBy: any[] = [],
+) {
+	return authLoaderApi(async (loaderArgs) => {
+		const {request} = loaderArgs;
+		const count = await dr.$count(table);
+
+		const dataFetcher = async (offsetLimit: OffsetLimit) => {
+			return await fetchData(offsetLimit);
+		};
+
+		const res = await executeQueryForPagination3(request, count, dataFetcher, defaultOrderBy);
+
+		return Response.json({data: res});
+	});
+}
+

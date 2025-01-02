@@ -1,8 +1,10 @@
 import {
 	createCookieSessionStorage,
-	Session
+	Session,
+	SessionStorage,
+	SessionData
 } from "@remix-run/node";
-import { dr } from "~/db.server";
+import {dr} from "~/db.server";
 import {
 	sessionTable,
 	userTable
@@ -14,31 +16,39 @@ import {
 
 import {
 	InferSelectModel,
-	eq } from "drizzle-orm";
+	eq
+} from "drizzle-orm";
 
-if (!process.env.SESSION_SECRET){
-	throw "provide SESSION_SECRET in .env"
+
+export let _sessionCookie: SessionStorage<SessionData, SessionData> | null = null;
+
+export function initCookieStorage() {
+	// we also store session activity time in the database, so this can be much longer
+	const cookieSessionExpiration = 60 * 60 * 24 * 7 * 1000 // 1 week
+	if (!process.env.SESSION_SECRET) {
+		throw "no SESSION_SECRET in .env"
+	}
+	_sessionCookie = createCookieSessionStorage({
+		cookie: {
+			// Using __ in front of a name is a common pattern
+			name: "__session",
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production", // Only send cookie over HTTPS in production
+			// lax allows cookie on get request originating from other sites, so users would still be logged in
+			sameSite: "lax",
+			path: "/",
+			secrets: [process.env.SESSION_SECRET],
+			maxAge: cookieSessionExpiration,
+		},
+	});
 }
 
-// we also store session activity time in the database, so this can be much longer
-const cookieSessionExpiration = 60 * 60 * 24 * 7 * 1000 // 1 week
-
-export const sessionCookie = createCookieSessionStorage({
-	cookie: {
-		// Using __ in front of a name is a common pattern
-		name: "__session",
-		httpOnly: true, 
-		secure: process.env.NODE_ENV === "production", // Only send cookie over HTTPS in production
-		// lax allows cookie on get request originating from other sites, so users would still be logged in
-		sameSite: "lax",
-		path: "/",
-		secrets: [process.env.SESSION_SECRET],
-		maxAge: cookieSessionExpiration,
-	},
-});
-
-export const getCookieSession = sessionCookie.getSession;
-export const commitCookieSession = sessionCookie.commitSession;
+export function sessionCookie(): SessionStorage<SessionData, SessionData> {
+	if (!_sessionCookie) {
+		throw "initCookieStorage was not called"
+	}
+	return _sessionCookie
+}
 
 export async function createUserSession(userId: number) {
 	const sessionRow: typeof sessionTable.$inferInsert = {
@@ -49,28 +59,28 @@ export async function createUserSession(userId: number) {
 	const res = await dr.insert(sessionTable).values(sessionRow).returning();
 	const sessionId = res[0].id;
 
-	const session = await sessionCookie.getSession();
+	const session = await sessionCookie().getSession();
 	session.set("sessionId", sessionId);
-	const setCookie = await sessionCookie.commitSession(session)
+	const setCookie = await sessionCookie().commitSession(session)
 	return {
 		"Set-Cookie": setCookie,
 	};
 }
 
-export async function sessionMarkTotpAuthed(sessionId: string){
+export async function sessionMarkTotpAuthed(sessionId: string) {
 	if (!sessionId) {
 		return
 	}
 
 	await dr.update(sessionTable)
-		.set({ totpAuthed: true })
+		.set({totpAuthed: true})
 		.where(eq(sessionTable.id, sessionId));
 }
 
 export async function cookieSessionDestroy(request: Request) {
-	const session = await sessionCookie.getSession(request.headers.get("Cookie"));
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 	return {
-		"Set-Cookie": await sessionCookie.destroySession(session),
+		"Set-Cookie": await sessionCookie().destroySession(session),
 	};
 }
 
@@ -83,7 +93,7 @@ export interface UserSession {
 }
 
 export async function getUserFromSession(request: Request): Promise<UserSession | undefined> {
-	const session = await sessionCookie.getSession(request.headers.get("Cookie"));
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 	const sessionId = session.get("sessionId");
 
 	if (!sessionId) return;
@@ -99,19 +109,19 @@ export async function getUserFromSession(request: Request): Promise<UserSession 
 		},
 	});
 
-	if (!sessionData){
+	if (!sessionData) {
 		return;
 	}
 
 	const now = new Date();
 	const minutesSinceLastActivity = (now.getTime() - sessionData?.lastActiveAt.getTime()) / (1000 * 60);
 
-	if (minutesSinceLastActivity > sessionActivityTimeoutMinutes){
+	if (minutesSinceLastActivity > sessionActivityTimeoutMinutes) {
 		return;
 	}
 
 	await dr.update(sessionTable)
-		.set({ lastActiveAt: now })
+		.set({lastActiveAt: now})
 		.where(eq(sessionTable.id, sessionId));
 
 	return {
@@ -135,12 +145,12 @@ export interface FlashMessage {
 
 export function getFlashMessage(session: Session): FlashMessage | undefined {
 	const text = session.get("flashMessageText")
-	if (!text){
+	if (!text) {
 		return
 	}
 	const typeStr = session.get("flashMessageType")
 	let type: FlashMessageType = "info"
-	if (typeStr == "error"){
+	if (typeStr == "error") {
 		type = "error"
 	}
 	return {
@@ -149,12 +159,12 @@ export function getFlashMessage(session: Session): FlashMessage | undefined {
 	}
 }
 
-export async function redirectWithMessage(request: Request, url: string, message: FlashMessage){
-	const session = await getCookieSession(request.headers.get("Cookie"));
+export async function redirectWithMessage(request: Request, url: string, message: FlashMessage) {
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 	flashMessage(session, message)
 	return redirect(url, {
-    headers: {
-      "Set-Cookie": await commitCookieSession(session),
-    },
-  });
+		headers: {
+			"Set-Cookie": await sessionCookie().commitSession(session),
+		},
+	});
 }

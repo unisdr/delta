@@ -11,6 +11,7 @@ interface DataScreenProps<T> {
 	items: T[];
 	paginationData: any;
 	renderRow: (item: T, baseRoute: string) => React.ReactNode;
+	csvExportLinks?: boolean;
 }
 
 export function DataScreen<T>(props: DataScreenProps<T>) {
@@ -19,8 +20,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 	return (
 		<MainContainer title={props.plural}>
 			<>
-				{!props.isPublic &&
-					<a href={`${props.baseRoute}/edit/new`}>New {props.resourceName}</a>}
+				<DataMainLinks isPublic={props.isPublic} baseRoute={props.baseRoute} resourceName={props.resourceName} csvExportLinks={props.csvExportLinks} />
 				{props.paginationData.totalItems ? (
 					<>
 						<table className="dts-table">
@@ -43,3 +43,26 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 	);
 }
 
+
+interface DataMainLinksProps {
+	isPublic?: boolean;
+	baseRoute: string;
+	resourceName: string;
+	csvExportLinks?: boolean;
+}
+
+export function DataMainLinks(props: DataMainLinksProps) {
+	if (props.isPublic) return null;
+
+	return (
+		<ul>
+			<li><a href={`${props.baseRoute}/edit/new`}>New {props.resourceName}</a></li>
+			{props.csvExportLinks && (
+				<>
+					<li><a href={`${props.baseRoute}/csv-export`}>CSV Export</a></li>
+					<li><a href={`${props.baseRoute}/csv-import`}>CSV Import</a></li>
+				</>
+			)}
+		</ul>
+	);
+}

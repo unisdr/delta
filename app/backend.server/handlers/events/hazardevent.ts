@@ -10,7 +10,6 @@ import {dr} from "~/db.server";
 
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
 
-
 import {and, eq, desc} from 'drizzle-orm';
 
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";

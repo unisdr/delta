@@ -1,56 +1,50 @@
-import {dr} from "~/db.server";
-import {devExample1Table, DevExample1} from "~/drizzle/schema";
+import {dr, Tx} from "~/db.server";
+import {devExample1Table, DevExample1Insert} from "~/drizzle/schema";
 import {eq} from "drizzle-orm";
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForNumberId} from "./common";
 
-export interface DevExample1Fields extends Omit<DevExample1, "id"> {}
 
-export function validate(fields: DevExample1Fields): Errors<DevExample1Fields> {
+export interface DevExample1Fields extends Omit<DevExample1Insert, "id"> {}
+
+export function validate(fields: Partial<DevExample1Fields>): Errors<DevExample1Fields> {
 	let errors: Errors<DevExample1Fields> = {};
 	errors.fields = {};
-	if (fields.field3 <= 10) {
+	if (fields.field3 !== undefined && fields.field3 <= 10) {
 		errors.fields.field3 = ["Field3 must be >10"];
 	}
-	if (fields.field4 !== null && fields.field4 <= 10) {
+	if (typeof fields.field4 == "number"  && fields.field4 <= 10) {
 		errors.fields.field4 = ["Field4 must be >10"];
 	}
 	return errors
 }
 
-
-export async function devExample1Create(fields: DevExample1Fields): Promise<CreateResult<DevExample1Fields>> {
+export async function devExample1Create(tx: Tx, fields: DevExample1Fields): Promise<CreateResult<DevExample1Fields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors};
 	}
 
-	const res = await dr.insert(devExample1Table)
+	const res = await tx.insert(devExample1Table)
 		.values({
-			field1: fields.field1,
-			field2: fields.field2,
-			field3: fields.field3,
-			field4: fields.field4,
+			...fields
 		})
 		.returning({id: devExample1Table.id});
 
 	return {ok: true, id: res[0].id};
 }
 
-export async function devExample1Update(idStr: string, fields: DevExample1Fields): Promise<UpdateResult<DevExample1Fields>> {
+export async function devExample1Update(tx: Tx, idStr: string, fields: Partial<DevExample1Fields>): Promise<UpdateResult<DevExample1Fields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors};
 	}
 	let id = Number(idStr);
-	await dr.update(devExample1Table)
+	await tx.update(devExample1Table)
 		.set({
-			field1: fields.field1,
-			field2: fields.field2,
-			field3: fields.field3,
-			field4: fields.field4,
+			...fields
 		})
 		.where(eq(devExample1Table.id, id));
 
@@ -60,6 +54,18 @@ export async function devExample1Update(idStr: string, fields: DevExample1Fields
 export type DevExample1ViewModel = Exclude<Awaited<ReturnType<typeof devExample1ById>>,
 	undefined
 >;
+
+export async function devExample1IdByImportId(tx: Tx, importId: string) {
+	const res = await tx.select({
+		id: devExample1Table.id
+	}).from(devExample1Table).where(eq(
+		devExample1Table.apiImportId, importId
+	))
+	if (res.length == 0) {
+		return null
+	}
+	return String(res[0].id)
+}
 
 export async function devExample1ById(idStr: string) {
 	let id = Number(idStr);

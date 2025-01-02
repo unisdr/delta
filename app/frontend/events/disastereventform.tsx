@@ -60,6 +60,11 @@ export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 	...fieldsDefCommon
 ];
 
+export const fieldsDefApi: FormInputDef<DisasterEventFields>[] = [
+	...fieldsDefCommon,
+	{key: "apiImportId", label: "", type: "other"},
+];
+
 export const fieldsDefView: FormInputDef<DisasterEventViewModel>[] = [
 	//{key: "hazard", label: "", type: "other"},
 	...fieldsDefCommon,

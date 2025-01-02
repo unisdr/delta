@@ -54,9 +54,9 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		isCreate: true,
 		actionArgs,
 		fieldsDef,
-		save: async (id, data) => {
+		save: async (tx, id, data) => {
 			if (!id) {
-				return hazardEventCreate(data);
+				return hazardEventCreate(tx, data);
 			} else {
 				throw "not an update screen"
 			}

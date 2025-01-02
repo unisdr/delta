@@ -1,4 +1,4 @@
-import {dr} from "~/db.server";
+import {dr, Tx} from "~/db.server";
 import {apiKeyTable, ApiKey} from "~/drizzle/schema";
 import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
@@ -18,12 +18,12 @@ function generateSecret(): string {
 	return randomBytes(32).toString("hex");
 }
 
-export async function apiKeyCreate(fields: ApiKeyFields): Promise<CreateResult<ApiKeyFields>> {
+export async function apiKeyCreate(tx: Tx, fields: ApiKeyFields): Promise<CreateResult<ApiKeyFields>> {
 	//	let errors = validate(fields);
 	//if (hasErrors(errors)) {
 	//return {ok: false, errors};
 	//}
-	const res = await dr.insert(apiKeyTable)
+	const res = await tx.insert(apiKeyTable)
 		.values({
 			createdAt: new Date(),
 			name: fields.name,
@@ -35,13 +35,13 @@ export async function apiKeyCreate(fields: ApiKeyFields): Promise<CreateResult<A
 	return {ok: true, id: res[0].id};
 }
 
-export async function apiKeyUpdate(idStr: string, fields: ApiKeyFields): Promise<UpdateResult<ApiKeyFields>> {
+export async function apiKeyUpdate(tx: Tx, idStr: string, fields: ApiKeyFields): Promise<UpdateResult<ApiKeyFields>> {
 	const id = Number(idStr);
 	//let errors = validate(fields);
 	//if (hasErrors(errors)) {
 	//return {ok: false, errors};
 	//}
-	await dr.update(apiKeyTable)
+	await tx.update(apiKeyTable)
 		.set({
 			updatedAt: new Date(),
 			name: fields.name,
@@ -70,7 +70,7 @@ export async function apiKeyDelete(idStr: string): Promise<DeleteResult> {
 	return {ok: true};
 }
 
-export async function apiAuth(request: Request): Promise<ApiKey | null> {
+export async function apiAuth(request: Request): Promise<ApiKey> {
 	const authToken = request.headers.get("X-Auth");
 
 	if (!authToken) {

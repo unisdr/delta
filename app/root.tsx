@@ -21,8 +21,7 @@ import { LoaderFunctionArgs } from "react-router-dom";
 
 import {
 	getUserFromSession,
-	getCookieSession,
-	commitCookieSession,
+	sessionCookie,
 	getFlashMessage,
 	FlashMessage
 } from "~/util/session";
@@ -48,7 +47,7 @@ export const links: LinksFunction = () => [
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request)
 
-	const session = await getCookieSession(request.headers.get("Cookie"));
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 
 	const message = getFlashMessage(session);
 
@@ -60,7 +59,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		configSiteLogo: configSiteLogo(),
 	}, {
 	headers: {
-		"Set-Cookie": await commitCookieSession(session),
+		"Set-Cookie": await sessionCookie().commitSession(session),
 	}
 	});
 };

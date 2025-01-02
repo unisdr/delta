@@ -43,6 +43,7 @@ export default function Data() {
 		columns: ["ID", "Field 1", "Actions"],
 		items: items,
 		paginationData: pagination,
+		csvExportLinks: true,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>

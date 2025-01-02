@@ -44,7 +44,14 @@ const approvalFields = {
 	// drizzle has broken postgres enum support
 	// using text column instead
 	// https://github.com/drizzle-team/drizzle-orm/issues/3485
-	approvalStatus: text({ enum: ["pending", "approved", "rejected"]}).notNull().default("pending"),
+	approvalStatus: text({enum: ["pending", "approved", "rejected"]}).notNull().default("pending"),
+}
+
+// need function wrapper to avoid unique relation drizzle error
+function apiImportIdField() {
+	return {
+		apiImportId: text("api_import_id").unique(),
+	}
 }
 
 export const sessionTable = pgTable("session", {
@@ -110,6 +117,7 @@ export const apiKeyRelations = relations(apiKeyTable, ({one}) => ({
 }));
 
 export const devExample1Table = pgTable("dev_example1", {
+	...apiImportIdField(),
 	id: serial("id").primaryKey(),
 	// for both required and optional text fields setting it to "" makes sense, it's different for numbers where 0 could be a valid entry
 	field1: text("field1").notNull(),
@@ -119,7 +127,7 @@ export const devExample1Table = pgTable("dev_example1", {
 	// optional
 	field4: integer("field4"),
 	field5: timestamp("field5"),
-	field6: text({ enum: ["one", "two", "three"]}).notNull().default("one"),
+	field6: text({enum: ["one", "two", "three"]}).notNull().default("one"),
 });
 
 export type DevExample1 = typeof devExample1Table.$inferSelect;
@@ -210,6 +218,7 @@ export type EventRelationshipInsert = typeof eventRelationshipTable.$inferInsert
 export const hazardEventTable = pgTable("hazard_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
+	...apiImportIdField(),
 	id: uuid("id").primaryKey().references((): AnyPgColumn => eventTable.id),
 	hazardId: text("hazard_id").references((): AnyPgColumn => hipHazardTable.id).notNull(),
 	startDate: timestamp("start_date"),
@@ -228,6 +237,10 @@ export const hazardEventTable = pgTable("hazard_event", {
 	dataSource: zeroText("data_source"),
 });
 
+export const hazardEventTableConstraits = {
+	apiImportId: "hazard_event_apiImportId_unique",
+	hazardId: "hazard_event_hazard_id_hip_hazard_id_fk"
+}
 
 export type HazardEvent = typeof hazardEventTable.$inferSelect;
 export type HazardEventInsert = typeof hazardEventTable.$inferInsert;
@@ -247,6 +260,7 @@ export const hazardEventRel = relations(hazardEventTable, ({one}) => ({
 export const disasterEventTable = pgTable("disaster_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
+	...apiImportIdField(),
 	id: uuid("id").primaryKey().references((): AnyPgColumn => eventTable.id),
 	// data fields below not used in queries directly
 	// only on form screens
@@ -360,21 +374,21 @@ export const resourceRepoTable = pgTable("resource_repo", {
 export type resourceRepo = typeof resourceRepoTable.$inferSelect;
 export type resourceRepoInsert = typeof resourceRepoTable.$inferInsert;
 
-export const resourceRepoRel = relations(resourceRepoTable, ({ many }) => ({
+export const resourceRepoRel = relations(resourceRepoTable, ({many}) => ({
 	attachments: many(rrAttachmentsTable),
 }));
 
 export const rrAttachmentsTable = pgTable("rr_attachments", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	resourceRepoId: uuid("resource_repo_id").references((): AnyPgColumn => resourceRepoTable.id).notNull(),
-	type: text({ enum: ["document", "other"]}).notNull().default("document"),
+	type: text({enum: ["document", "other"]}).notNull().default("document"),
 	typeOtherDesc: text("type_other_desc"),
 	filename: text("filename"),
 	url: text("url"),
 	...createdUpdatedTimestamps,
 });
 
-export const rrAttachmentsRel = relations(rrAttachmentsTable, ({ one }) => ({
+export const rrAttachmentsRel = relations(rrAttachmentsTable, ({one}) => ({
 	attachment: one(resourceRepoTable, {
 		fields: [rrAttachmentsTable.resourceRepoId],
 		references: [resourceRepoTable.id],
