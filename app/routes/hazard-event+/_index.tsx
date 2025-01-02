@@ -23,7 +23,7 @@ export default function Data() {
 	return (
 		<MainContainer title="Hazardous events">
 			<>
-				<DataMainLinks isPublic={ld.isPublic} baseRoute="/hazard-event" resourceName="Hazardous Event" csvExportLinks={true} />
+				<DataMainLinks relLinkToNew="/new" isPublic={ld.isPublic} baseRoute="/hazard-event" resourceName="Hazardous Event" csvExportLinks={true} />
 				{!ld.isPublic && (
 					<>
 						<div className="dts-legend">

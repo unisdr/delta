@@ -45,6 +45,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 
 
 interface DataMainLinksProps {
+	relLinkToNew?: string
 	isPublic?: boolean;
 	baseRoute: string;
 	resourceName: string;
@@ -56,7 +57,7 @@ export function DataMainLinks(props: DataMainLinksProps) {
 
 	return (
 		<ul>
-			<li><a href={`${props.baseRoute}/edit/new`}>New {props.resourceName}</a></li>
+			<li><a href={props.baseRoute + (props.relLinkToNew ? props.relLinkToNew : "/edit/new")}>New {props.resourceName}</a></li>
 			{props.csvExportLinks && (
 				<>
 					<li><a href={`${props.baseRoute}/csv-export`}>CSV Export</a></li>
