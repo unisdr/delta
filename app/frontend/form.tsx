@@ -10,6 +10,8 @@ import {ReactElement} from "react";
 import {formatDate} from "~/util/date"
 import {MainContainer} from "./container";
 
+import {capitalizeFirstLetter} from "~/util/string"
+
 export type FormResponse<T> =
 	| {ok: true; data: T}
 	| {ok: false; data: T, errors: Errors<T>};
@@ -157,22 +159,14 @@ interface SubmitButtonProps {
 	disabled?: boolean;
 }
 
-export function SubmitButton({label, className}: SubmitButtonProps) {
-	if (className?.length === 0) {
-		return (
-			<div className="form-buttons">
-				<button>{label}</button>
-			</div>
-		)
-	}
-	else {
-		return (
-			<div className="form-buttons">
-				<button className={className}>{label}</button>
-			</div>
-		)
-	}
+export function SubmitButton({ label, className = "mg-button mg-button-primary" }: SubmitButtonProps) {
+	return (
+		<div className="form-buttons">
+			<button className={className}>{label}</button>
+		</div>
+	);
 }
+
 
 interface FormProps<T> {
 	children: React.ReactNode;
@@ -563,24 +557,25 @@ interface FormViewProps {
 }
 
 export function FormView(props: FormViewProps) {
+	const pluralCap = capitalizeFirstLetter(props.plural)
 	return (
 
-		<MainContainer title={props.plural}>
+		<MainContainer title={pluralCap}>
 			<>
 				<p>
-					<Link to={props.path}>{props.plural}</Link>
+					<Link to={props.path}>{pluralCap}</Link>
 				</p>
 				{props.edit && props.id && (
 					<p>
 						<Link to={`${props.path}/${String(props.id)}`}>View</Link>
 					</p>
 				)}
-				<h2>{props.singular}</h2>
+				<h2>{props.edit ? "Edit" : "Add"} {props.singular}</h2>
 				{props.edit && props.id && <p>ID: {String(props.id)}</p>}
 				{props.infoNodes}
 				<Form errors={props.errors}>
 					<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
-					<SubmitButton className="mg-button mg-button-primary" label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+					<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
 				</Form>
 			</>
 		</MainContainer>

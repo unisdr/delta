@@ -1,6 +1,7 @@
 import {
 	disasterEventById,
 	disasterEventCreate,
+	DisasterEventFields,
 	disasterEventUpdate,
 } from "~/backend.server/models/event";
 
@@ -15,13 +16,16 @@ import {
 } from "~/backend.server/handlers/form";
 
 import {
-	FormScreen
+	formScreen
 } from "~/frontend/form";
 
 import {
 	route,
 } from "~/frontend/events/disastereventform";
-import {MainContainer} from "~/frontend/container";
+
+import {
+	useLoaderData,
+} from "@remix-run/react";
 
 export const loader = createLoader({
 	getById: disasterEventById
@@ -35,14 +39,19 @@ export const action = createAction({
 });
 
 export default function Screen() {
-	const formScreen = FormScreen({
-		fieldsDef: fieldsDef,
-		formComponent: DisasterEventForm,
-	})
+	let ld = useLoaderData<typeof loader>()
+	if (!ld.item) {
+		throw "invalid"
+	}
+	let fieldsInitial: DisasterEventFields = {
+		...ld.item,
+	}
+	return formScreen({
+		extraData: {hazardEvent: ld.item.hazardEvent},
+		fieldsInitial: fieldsInitial, 
+		form: DisasterEventForm,
+		edit: true,
+		id: ld.item.id
+	});
 
-	return (
-		<MainContainer title="Disaster events">
-			{formScreen}
-		</MainContainer>
-	);
 }

@@ -2,20 +2,23 @@ import {
 	Link
 } from "@remix-run/react";
 
-import {DisasterEventFields, DisasterEventViewModel} from "~/backend.server/models/event"
+import {useEffect, useState} from 'react';
+
+import {DisasterEventFields, DisasterEventViewModel, HazardEventBasicInfoViewModel} from "~/backend.server/models/event"
+
+import {hazardEventLink} from "~/frontend/events/hazardeventform"
 
 import {
-	Form,
-	SubmitButton,
 	UserFormProps,
 	FormInputDef,
-	Inputs,
 	FieldsView,
-	ViewComponent
+	ViewComponent,
+	FormView,
+	FieldErrors,
+	Field
 } from "~/frontend/form";
 import {approvalStatusField} from "../approval";
 import {formatDate} from "~/util/date";
-
 
 export const route = "/disaster-event"
 
@@ -42,7 +45,7 @@ export const fieldsDefCommon = [
 	{key: "preliminaryAssessmentDate", label: "Preliminary Assessment Date", type: "date"},
 	{key: "responseOperations", label: "Response Operations", type: "text"},
 	{key: "postDisasterAssementDate", label: "Post-Disaster Assessment Date", type: "date"},
-	{key: "reAssementDate", label: "Re-Assessment Date", type: "date"},
+	{key: "reAssessmentDate", label: "Re-Assessment Date", type: "date"},
 	{key: "dataSource", label: "Data Source", type: "text"},
 	{key: "originatorRecorderOfInformation", label: "Originator/Recorder", type: "text"},
 	{key: "effectsTotalLocalCurrency", label: "Effects Total (Local Currency)", type: "number"},
@@ -55,8 +58,7 @@ export const fieldsDefCommon = [
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
-	//{key: "parent", label: "", type: "other"},
-	//{key: "hazardId", label: "", type: "other"},
+	{key: "hazardEventId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
 
@@ -66,30 +68,52 @@ export const fieldsDefApi: FormInputDef<DisasterEventFields>[] = [
 ];
 
 export const fieldsDefView: FormInputDef<DisasterEventViewModel>[] = [
-	//{key: "hazard", label: "", type: "other"},
+	{key: "hazardEventId", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},
 	{key: "updatedAt", label: "", type: "other"},
 ];
 
 interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
+	hazardEvent?: HazardEventBasicInfoViewModel
 }
 
-export function DisasterEventForm({edit, fields, errors, id}: DisasterEventFormProps) {
-	return (<>
-		<p><Link to="/disaster-event">Events</Link></p>
-		{edit &&
-			(<p><Link to={"/disaster-event/" + id}>View</Link></p>)}
+export function DisasterEventForm(props: DisasterEventFormProps) {
+	const [selectedHazardEvent, setSelectedHazardEvent] = useState(props.hazardEvent);
 
-		<h2>{edit ? "Edit" : "Add"} Disaster Event</h2>
-		<Form errors={errors}>
-			{edit && <p>ID: {id}</p>}
-			<Inputs def={fieldsDef} fields={fields} errors={errors} override={{
+	useEffect(() => {
+		const handleMessage = (event: any) => {
+			if (event.data?.selected) {
+				setSelectedHazardEvent(event.data.selected);
+			}
+		};
+		window.addEventListener('message', handleMessage);
+		return () => {
+			window.removeEventListener('message', handleMessage);
+		};
+	}, []);
+
+	return (
+		<FormView
+			path={route}
+			edit={props.edit}
+			id={props.id}
+			plural="disaster events"
+			singular="disaster event"
+			errors={props.errors}
+			fields={props.fields}
+			fieldsDef={fieldsDef}
+			override={{
+				hazardEventId:
+					<Field key="hazardEventId" label="Hazard Event">
+						{selectedHazardEvent ? hazardEventLink(selectedHazardEvent) : "-"}&nbsp;
+						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
+						<input type="hidden" name="hazardEventId" value={selectedHazardEvent?.id || ""} />
+						<FieldErrors errors={props.errors} field="hazardEventId"></FieldErrors>
+					</Field>
+				,
 			}} />
-
-			<SubmitButton label={edit ? "Update Event" : "Create Event"} />
-		</Form>
-	</>)
+	)
 }
 
 interface DisasterEventViewProps {
@@ -109,6 +133,9 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			singular="Disaster event"
 		>
 			<FieldsView def={fieldsDefView} fields={item} override={{
+				hazardEventId: (
+					<p>Hazardous Event: {hazardEventLink(item.hazardEvent)}</p>
+				),
 				createdAt: (
 					<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
 				),

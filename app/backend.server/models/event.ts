@@ -179,6 +179,19 @@ SELECT pp.parent_id FROM pp
 	return {ok: true}
 }
 
+export const hazardBasicInfoJoin = {
+	hazard: {
+		with: {
+			cluster: {
+				with: {
+					class: true
+				}
+			}
+		}
+	}
+} as const
+
+
 export async function hazardEventIdByImportId(tx: Tx, importId: string) {
 	const res = await tx.select({
 		id: hazardEventTable.id
@@ -191,21 +204,10 @@ export async function hazardEventIdByImportId(tx: Tx, importId: string) {
 	return res[0].id
 }
 
+
 export type HazardEventViewModel = Exclude<Awaited<ReturnType<typeof hazardEventById>>,
 	undefined
 >;
-
-const hazardBasicInfoJoin = {
-	hazard: {
-		with: {
-			cluster: {
-				with: {
-					class: true
-				}
-			}
-		}
-	}
-} as const
 
 const hazardParentJoin = {
 	event: {
@@ -254,6 +256,24 @@ export async function hazardEventById(id: any) {
 	return res
 }
 
+export type HazardEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof hazardEventBasicInfoById>>,
+	undefined
+>;
+
+export async function hazardEventBasicInfoById(id: any) {
+	if (typeof id !== "string") {
+		throw new Error("Invalid ID: must be a string");
+	}
+	const res = await dr.query.hazardEventTable.findFirst({
+		where: eq(hazardEventTable.id, id),
+		with: {
+			...hazardBasicInfoJoin,
+		}
+	});
+	return res
+}
+
+
 export async function hazardEventDelete(id: string): Promise<DeleteResult> {
 	try {
 		await dr.transaction(async (tx) => {
@@ -285,7 +305,7 @@ export async function hazardEventDelete(id: string): Promise<DeleteResult> {
 
 
 export interface DisasterEventFields extends Omit<EventInsert, 'id'>, Omit<DisasterEventInsert, 'id'> {
-	//parent: string
+	//hazardEvent: string
 }
 
 export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): Promise<CreateResult<DisasterEventFields>> {
@@ -329,7 +349,7 @@ if (fields.parent) {
 	return {ok: true, id: eventId}
 }
 
-export async function disasterEventUpdate(tx: Tx, id: string, fields: DisasterEventFields): Promise<UpdateResult<DisasterEventFields>> {
+export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<DisasterEventFields>): Promise<UpdateResult<DisasterEventFields>> {
 	let errors: Errors<DisasterEventFields> = {};
 	errors.fields = {};
 	errors.form = [];
@@ -347,14 +367,11 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: DisasterEv
 		})
 		.where(eq(eventTable.id, id))
 */
-	let values: DisasterEventFields = {
-		...fields,
-	}
 
 	await tx
 		.update(disasterEventTable)
 		.set({
-			...values
+			...fields
 		})
 		.where(eq(disasterEventTable.id, id))
 
@@ -384,6 +401,9 @@ export async function disasterEventById(id: any) {
 	const res = await dr.query.disasterEventTable.findFirst({
 		where: eq(disasterEventTable.id, id),
 		with: {
+			hazardEvent: {
+				with: hazardBasicInfoJoin
+			},
 			event: {
 				with: {
 					ps: true,

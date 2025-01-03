@@ -10,6 +10,8 @@ import {dr} from "~/db.server";
 
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
 
+import {hazardBasicInfoJoin} from "~/backend.server/models/event"
+
 
 import {and, eq, desc} from 'drizzle-orm';
 
@@ -47,6 +49,11 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 				id: true,
 				startDateUTC: true,
 				endDateUTC: true,
+			},
+			with: {
+				hazardEvent: {
+					with: hazardBasicInfoJoin
+				},
 			},
 			orderBy: [desc(disasterEventTable.startDateUTC)],
 			where: and(

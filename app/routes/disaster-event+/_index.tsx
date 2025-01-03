@@ -13,6 +13,8 @@ import {
 	authLoaderPublicOrWithPerm,
 } from "~/util/auth";
 
+import {hazardEventLink} from "~/frontend/events/hazardeventform"
+
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 	return disasterEventsLoader({loaderArgs})
 })
@@ -25,7 +27,7 @@ export default function Data() {
 		plural: "Disaster events",
 		resourceName: "Disaster event",
 		baseRoute: route,
-		columns: ["ID", "Start Date", "End Date", ""],
+		columns: ["ID", "Hazardous Event", "Start Date", "End Date", ""],
 		items: items,
 		paginationData: pagination,
 		csvExportLinks:true,
@@ -34,6 +36,7 @@ export default function Data() {
 				<td>
 					<Link to={`${route}/${item.id}`}>{item.id.slice(0, 5)}</Link>
 				</td>
+				<td>{hazardEventLink(item.hazardEvent)}</td>
 				<td>{formatDate(item.startDateUTC)}</td>
 				<td>{formatDate(item.endDateUTC)}</td>
 				<td>

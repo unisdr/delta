@@ -262,6 +262,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	...approvalFields,
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().references((): AnyPgColumn => eventTable.id),
+	hazardEventId: uuid("hazard_event_id").references((): AnyPgColumn => hazardEventTable.id).notNull(),
 	// data fields below not used in queries directly
 	// only on form screens
 	// should be easier to change if needed
@@ -287,7 +288,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	preliminaryAssessmentDate: timestamp("preliminary_assesment_date"),
 	responseOperations: zeroText("response_oprations"),
 	postDisasterAssementDate: timestamp("post_disaster_assessment_date"),
-	reAssementDate: timestamp("re_assessment_date"),
+	reAssessmentDate: timestamp("re_assessment_date"),
 	dataSource: zeroText("data_source"),
 	originatorRecorderOfInformation: zeroText("originator_recorder_of_information"),
 	effectsTotalLocalCurrency: integer("effects_total_local_currency"),
@@ -306,6 +307,10 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 	event: one(eventTable, {
 		fields: [disasterEventTable.id],
 		references: [eventTable.id],
+	}),
+	hazardEvent: one(hazardEventTable, {
+		fields: [disasterEventTable.hazardEventId],
+		references: [hazardEventTable.id],
 	}),
 }));
 
