@@ -40,18 +40,15 @@ export const action = createAction({
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>()
-	if (!ld.item) {
-		throw "invalid"
-	}
-	let fieldsInitial: DisasterEventFields = {
+	let fieldsInitial: Partial<DisasterEventFields> = ld.item ? {
 		...ld.item,
-	}
+	} : {};
 	return formScreen({
-		extraData: {hazardEvent: ld.item.hazardEvent},
+		extraData: {hazardEvent: ld.item?.hazardEvent},
 		fieldsInitial: fieldsInitial, 
 		form: DisasterEventForm,
-		edit: true,
-		id: ld.item.id
+		edit: !!ld.item,
+		id: ld.item?.id
 	});
 
 }
