@@ -32,7 +32,6 @@ export default function Settings() {
 		.table-styled th {
 		  background-color: #f4f4f4;
 		  font-weight: bold;
-		  position: relative;
 		}
 
 		.filter-icon {
