@@ -303,6 +303,10 @@ export const disasterEventTable = pgTable("disaster_event", {
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
 export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
 
+export const disasterEventTableConstraits = {
+	hazardEventId: "disaster_event_hazard_event_id_hazard_event_id_fk"
+}
+
 export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 	event: one(eventTable, {
 		fields: [disasterEventTable.id],

@@ -8,7 +8,7 @@ import {
 	Errors,
 	hasErrors,
 } from "~/frontend/form";
-import {eventTable, EventInsert, hazardEventTable, HazardEventInsert, eventRelationshipTable, DisasterEventInsert, disasterEventTable, hazardEventTableConstraits} from "~/drizzle/schema";
+import {eventTable, EventInsert, hazardEventTable, HazardEventInsert, eventRelationshipTable, DisasterEventInsert, disasterEventTable, hazardEventTableConstraits, disasterEventTableConstraits} from "~/drizzle/schema";
 import {checkConstraintError} from "./common";
 
 import {dr, Tx} from "~/db.server";
@@ -17,6 +17,7 @@ import {
 	eq,
 	sql
 } from "drizzle-orm";
+import {isValidUUID} from "~/util/id";
 
 export interface HazardEventFields extends Omit<EventInsert, 'id'>, Omit<HazardEventInsert, 'id'>, ObjectWithImportId {
 	parent: string
@@ -303,7 +304,6 @@ export async function hazardEventDelete(id: string): Promise<DeleteResult> {
 	return {ok: true}
 }
 
-
 export interface DisasterEventFields extends Omit<EventInsert, 'id'>, Omit<DisasterEventInsert, 'id'> {
 	//hazardEvent: string
 }
@@ -312,9 +312,15 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	let errors: Errors<DisasterEventFields> = {};
 	errors.fields = {};
 	errors.form = [];
+	if (!fields.hazardEventId) {
+		errors.fields.hazardEventId = ["Select hazardous event"]
+	} else if (!isValidUUID(fields.hazardEventId)) {
+		errors.fields.hazardEventId = ["Hazardous event invalid id format"]
+	}
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
 	}
+
 
 	let eventId = "";
 
@@ -329,12 +335,20 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	let values: DisasterEventFields = {
 		...fields,
 	}
-	await tx
-		.insert(disasterEventTable)
-		.values({
-			...values,
-			id: eventId,
-		})
+	try {
+		await tx
+			.insert(disasterEventTable)
+			.values({
+				...values,
+				id: eventId,
+			})
+	} catch (error: any) {
+		let res = checkConstraintError(error, disasterEventTableConstraits)
+		if (res) {
+			return res
+		}
+		throw error
+	}
 
 	/*
 if (fields.parent) {
@@ -357,7 +371,6 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 		return {ok: false, errors: errors}
 	}
 
-
 	/*
 	console.log("updating eventTable")
 	await tx
@@ -368,12 +381,20 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 		.where(eq(eventTable.id, id))
 */
 
-	await tx
-		.update(disasterEventTable)
-		.set({
-			...fields
-		})
-		.where(eq(disasterEventTable.id, id))
+	try {
+		await tx
+			.update(disasterEventTable)
+			.set({
+				...fields
+			})
+			.where(eq(disasterEventTable.id, id))
+	} catch (error: any) {
+		let res = checkConstraintError(error, disasterEventTableConstraits)
+		if (res) {
+			return res
+		}
+		throw error
+	}
 
 	return {ok: true}
 }
