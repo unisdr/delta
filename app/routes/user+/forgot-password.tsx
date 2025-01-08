@@ -21,6 +21,7 @@ import { formStringData } from "~/util/httputil";
 import {
 	resetPasswordSilentIfNotFound
 } from "~/backend.server/models/user";
+import { sessionCookie, redirectWithMessage } from "~/util/session";
 
 interface FormFields {
 	email: string
@@ -48,7 +49,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	await resetPasswordSilentIfNotFound(data.email);
 
 
-	return json({ data, errors });
+	// Redirect with flash message using redirectWithMessage
+	return redirectWithMessage(request, "/user/login", {
+		type: "info",
+		text: "An email has been sent to your registered email address with instructions to help you recover your password."
+	});
 };
 
 export const loader = async () => {
@@ -96,6 +101,7 @@ export default function Screen() {
 											padding: "12px 20px", // Increased padding for larger height
 											fontSize: "16px", // Larger font size
 											width: "100%",
+											borderRadius: "4px",
 											border: errors?.fields?.email ? "1px solid red" : "1px solid #ccc", // Ensures border consistency
 											boxSizing: "border-box" // Ensures padding does not affect the width
 										}}></input>
