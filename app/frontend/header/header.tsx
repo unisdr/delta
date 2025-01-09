@@ -53,11 +53,11 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
   return [
     {
       name: "Data",
-      title: "Data by country",
+      title: "Data management",
       icon: "undp/calendar",
       lvl2: [
         {
-          name: "Group 1",
+          name: "Events and records",
           id: "group1",
           lvl3: [
             {
@@ -68,10 +68,16 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
               ],
             },
             {
-              title: "Disaster records",
+              title: "Records",
               lvl4: [
-                { name: "Disaster records", link: "#" },
+                { name: "Disaster records (todo)", link: "#" },
                 { name: "PDNA resources repository", link: "/resource-repo" },
+              ],
+            },
+            {
+              title: "Baseline data",
+              lvl4: [
+                { name: "Baseline data (todo)", link: "#" },
               ],
             },
           ],
@@ -80,15 +86,15 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
     },
     {
       name: "Analysis",
-      title: "In-depth Analysis",
+      title: "Analysis",
       icon: "undp/calendar",
       lvl2: [
         {
-          name: "Trends",
+          name: "Analysis",
           id: "trends",
           lvl3: [
             {
-              title: "Yearly Analysis",
+              title: "Analysis",
               lvl4: [
                 {
                   name: "Human Direct Effects",
@@ -97,26 +103,6 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
                 { name: "Sectors", link: "/analytics/sectors" },
                 { name: "Hazards", link: "/analytics/hazards" },
                 { name: "Disaster Events", link: "/analytics/disaster-events" },
-              ],
-            },
-            {
-              title: "Latest data",
-              lvl4: [
-                { name: "News", link: "#" },
-                { name: "Feedback", link: "#" },
-              ],
-            },
-          ],
-        },
-        {
-          name: "Sources and process",
-          id: "sources_and_process",
-          lvl3: [
-            {
-              title: "Sources",
-              lvl4: [
-                { name: "2024 Report", link: "#" },
-                { name: "2023 Report", link: "#" },
               ],
             },
           ],
@@ -162,11 +148,11 @@ function navItemsLoggedIn(): Lvl1Item[] {
   return [
     {
       name: "Data",
-      title: "Data by country",
+      title: "Data management",
       icon: "other/data",
       lvl2: [
         {
-          name: "Data management",
+          name: "Events and records",
           id: "group1",
           lvl3: [
             {
@@ -177,17 +163,16 @@ function navItemsLoggedIn(): Lvl1Item[] {
               ],
             },
             {
-              title: "Disaster records",
+              title: "Records",
               lvl4: [
-                { name: "Disaster records", link: "#" },
+                { name: "Disaster records (todo)", link: "#" },
                 { name: "PDNA resources repository", link: "/resource-repo" },
               ],
             },
             {
               title: "Baseline data",
               lvl4: [
-                { name: "Item 1", link: "#" },
-                { name: "Item 2", link: "#" },
+                { name: "Baseline data (todo)", link: "#" },
               ],
             },
           ],
@@ -196,15 +181,15 @@ function navItemsLoggedIn(): Lvl1Item[] {
     },
     {
       name: "Analysis",
-      title: "In-depth Analysis",
+      title: "Analysis",
       icon: "other/analysis",
       lvl2: [
         {
-          name: "Trends",
+          name: "Analysis",
           id: "trends",
           lvl3: [
             {
-              title: "Yearly Analysis",
+              title: "Analysis",
               lvl4: [
                 {
                   name: "Human Direct Effects",
@@ -213,26 +198,6 @@ function navItemsLoggedIn(): Lvl1Item[] {
                 { name: "Sectors", link: "/analytics/sectors" },
                 { name: "Hazards", link: "/analytics/hazards" },
                 { name: "Disaster Events", link: "/analytics/disaster-events" },
-              ],
-            },
-            {
-              title: "Latest data",
-              lvl4: [
-                { name: "News", link: "#" },
-                { name: "Feedback", link: "#" },
-              ],
-            },
-          ],
-        },
-        {
-          name: "Sources and process",
-          id: "sources_and_process",
-          lvl3: [
-            {
-              title: "Sources",
-              lvl4: [
-                { name: "2024 Report", link: "#" },
-                { name: "2023 Report", link: "#" },
               ],
             },
           ],
