@@ -3383,7 +3383,7 @@ csv-parse@^5.5.6:
 
 csv-stringify@^6.5.2:
   version "6.5.2"
-  resolved "https://registry.npmjs.org/csv-stringify/-/csv-stringify-6.5.2.tgz#b51d61cd949906d5b5b790463f3055d95915193e"
+  resolved "https://registry.yarnpkg.com/csv-stringify/-/csv-stringify-6.5.2.tgz#b51d61cd949906d5b5b790463f3055d95915193e"
   integrity sha512-RFPahj0sXcmUyjrObAK+DOWtMvMIFV328n4qZJhgX3x2RqkQgOTU2mCUmiFR0CzM6AzChlRSUErjiJeEt8BaQA==
 
 d3-array@1:

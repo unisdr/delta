@@ -180,12 +180,33 @@ export default function Screen() {
 								</div>
 							</div>
 							<Link to="/user/forgot-password">Forgot password</Link>
-							<div className="dts-dialog__form-actions">
-								<SubmitButton className='mg-button mg-button-primary' label="Login"></SubmitButton>
+							<div className="dts-dialog__form-actions"
+								style={{
+									display: "flex", // Switch to horizontal layout
+									flexDirection: "column", // Stack vertically for small screens
+									alignItems: "center", // Center-align the buttons
+									gap: "0.8rem", // Maintain consistent spacing
+									marginTop: "2rem", // Keep default top margin
+								}}
+
+							>
+								<SubmitButton className='mg-button mg-button-primary' label="Login"
+									style={{
+										width: "100%", // Full width on small screens
+										padding: "10px 20px", // Ensure consistent padding
+										marginBottom: "10px",
+									}}
+
+								></SubmitButton>
 							</div>
-							<p style={{ marginBottom: "2px" }}>&nbsp;</p>
 							<div>
-								<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/callback?action=login">Login using Azure B2C SSO</Link>
+								<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/callback?action=login"
+									style={{
+										width: "100%", // Full width on small screens
+										padding: "10px 20px", // Ensure consistent padding
+										marginTop: "5px",
+									}}
+								>Login using Azure B2C SSO</Link>
 							</div>
 						</Form>
 					</div>

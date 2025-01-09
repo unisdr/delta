@@ -157,12 +157,17 @@ interface SubmitButtonProps {
 	label: string;
 	className?: string;
 	disabled?: boolean;
+	style?: React.CSSProperties; // Allow inline styles
 }
 
-export function SubmitButton({ label, className = "mg-button mg-button-primary" }: SubmitButtonProps) {
+export function SubmitButton({ 
+	label, className = "mg-button mg-button-primary",
+	style = {}, // Default to an empty style object
+	disabled = false,
+}: SubmitButtonProps) {
 	return (
-		<div className="form-buttons">
-			<button className={className}>{label}</button>
+		<div className="form-buttons" style={{ width: '100%', display: 'flex', }}>
+			<button className={className} style={style}>{label}</button>
 		</div>
 	);
 }
