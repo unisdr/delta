@@ -23,6 +23,9 @@ import {
 } from "~/backend.server/models/user";
 import { sessionCookie, redirectWithMessage } from "~/util/session";
 
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 interface FormFields {
 	email: string
 }
@@ -52,7 +55,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	// Redirect with flash message using redirectWithMessage
 	return redirectWithMessage(request, "/user/login", {
 		type: "info",
-		text: "An email has been sent to your registered email address with instructions to help you recover your password."
+		text: "if the provided email address exist in the system, an email will be sent with instructions to help you recover your password. Please check your inbox and follow the provided steps to regain access to your account."
 	});
 };
 
@@ -98,7 +101,7 @@ export default function Screen() {
 								<Field label="">
 									<input type="email" autoComplete="off" name="email" placeholder="Enter email address*"
 										style={{
-											padding: "12px 20px", // Increased padding for larger height
+											padding: "10px 20px", // Increased padding for larger height
 											fontSize: "16px", // Larger font size
 											width: "100%",
 											borderRadius: "4px",
@@ -118,8 +121,13 @@ export default function Screen() {
 										</div>
 									)}
 								</Field>
-								<p style={{ marginBottom: "2px" }}>&nbsp;</p>
-								<SubmitButton className='mg-button mg-button-primary' label="Reset Password"></SubmitButton>
+								<SubmitButton className='mg-button mg-button-primary' label="Reset Password"
+									style={{
+										width: "100%",
+										marginTop: "20px",
+									}}
+
+								></SubmitButton>
 							</div>
 						</Form>
 					</div>
