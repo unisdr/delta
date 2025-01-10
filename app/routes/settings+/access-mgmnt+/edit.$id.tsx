@@ -362,6 +362,7 @@ export default function Screen() {
 								type="text"
 								name="organization"
 								defaultValue={fields.organization}
+								required
 								style={{
 									width: "100%",
 									padding: "10px",
