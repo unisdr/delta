@@ -133,7 +133,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 		>
 			<FieldsView def={fieldsDefView} fields={item} override={{
 				hazardEventId: (
-					<p>Hazardous Event: {hazardEventLink(item.hazardEvent)}</p>
+					<p key="hazardEventId">Hazardous Event: {hazardEventLink(item.hazardEvent)}</p>
 				),
 				createdAt: (
 					<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
