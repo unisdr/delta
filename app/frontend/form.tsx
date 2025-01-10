@@ -166,9 +166,13 @@ export function SubmitButton({
 	disabled = false,
 }: SubmitButtonProps) {
 	return (
-		<div className="form-buttons" style={{ width: '100%', display: 'flex', }}>
-			<button className={className} style={style}>{label}</button>
-		</div>
+			<button className={className} 
+			style={{
+				...style, // Use passed styles
+				flex: "none", // Prevent stretching within flex containers
+			  }}
+			>
+				{label}</button>
 	);
 }
 
