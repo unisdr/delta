@@ -185,11 +185,18 @@ export default function Settings() {
 		  background-color: #0056b3;
 		}
 
+
+		.table-container {
+			overflow-x: auto; /* Enables horizontal scrolling for wide tables */
+			margin-top: 20px; /* Adds spacing above the table */
+		}
+
 		.table-styled {
 		  width: 100%;
 		  border-collapse: collapse;
 		  margin-top: 20px;
 		  font-size: 14px;
+		  overflow-x: auto;
 		}
 
 		.table-styled th,
@@ -256,6 +263,7 @@ export default function Settings() {
 				border-radius: 50%;
 				display: inline-block;
 				margin-right: 5px;
+				position: relative; /* Ensure relative positioning for tooltip */
 			}
 
 			.status-dot.activated {
@@ -271,6 +279,52 @@ export default function Settings() {
 				gap: 10px;
 				align-items: center;
 			}
+
+			/* Tooltip styles */
+.status-dot {
+    position: relative; /* Required for positioning tooltip elements relative to the dot */
+}
+
+.status-dot:hover .tooltip-text,
+.status-dot:hover .tooltip-pointer {
+    visibility: visible; /* Show both the tooltip text and pointer on hover */
+}
+
+.tooltip-text {
+    visibility: hidden;
+    position: absolute;
+    background-color: black;
+    color: white;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px 10px;
+    white-space: nowrap;
+    top: -45px; /* Position tooltip above the dot */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.tooltip-pointer {
+    visibility: hidden;
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid black; /* Matches the tooltip background */
+    top: -10px; /* Adjusts the pointer to sit above the dot */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+
+    /* Responsive Table */
+    .table-container {
+        overflow-x: auto;
+    }
+			
 	  `}</style>
 
 			<div className="access-management-container">
@@ -365,29 +419,105 @@ export default function Settings() {
 				</form>
 
 				{/* User Stats */}
-
-				<div className="user-stats-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0px", fontSize: "14px" }}>
-					<span className="user-stats" style={{ marginBottom: "10px" }}>
+				<div
+					className="user-stats-container"
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "flex-start",
+						marginBottom: "5px",
+						fontSize: "14px",
+					}}
+				>
+					{/* Total User Count */}
+					<div className="user-stats" style={{ marginBottom: "10px" }}>
 						<strong>{filteredItems.length} of {totalUsers} Users</strong>
-					</span>
-					<span className="user-stats" aria-labelledby="activated-label" style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
-						<span className="status-dot activated" id="activated-label" style={{ height: "10px", width: "10px", borderRadius: "50%", backgroundColor: "#007bff", marginBottom: "0px" }}></span>
-						Account activated: {activatedUsers}
-					</span>
-					<span className="user-stats" aria-labelledby="pending-label" style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
-						<span className="status-dot pending" id="pending-label" style={{ height: "10px", width: "10px", borderRadius: "50%", backgroundColor: "#ccc", marginBottom: "0px" }}></span>
-						Account activation pending: {pendingUsers}
-					</span>
+					</div>
+
+					{/* Status Legend */}
+					<div
+						className="status-legend"
+						style={{
+							display: "flex",
+							alignItems: "center", // Ensures proper vertical alignment
+							gap: "10px",
+						}}
+					>
+						{/* "Status legend" in bold */}
+						<div
+							style={{
+								fontWeight: "bold",
+								marginRight: "10px", // Creates spacing after "Status legend"
+							}}
+						>
+							Status legend:
+						</div>
+
+						{/* Status Items */}
+						<div
+							style={{
+								display: "flex",
+								alignItems: "center", // Ensures vertical alignment for all items
+								gap: "20px",
+							}}
+						>
+							{/* Account Activated */}
+							<div
+								className="status-item"
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: "5px", // Space between dot and text
+									lineHeight: "1.2", // Ensures text aligns well with the dot
+								}}
+							>
+								<div
+									className="status-dot activated"
+									style={{
+										height: "10px",
+										width: "10px",
+										borderRadius: "50%",
+										backgroundColor: "#007bff",
+									}}
+								></div>
+								Account activated: {activatedUsers}
+							</div>
+
+							{/* Account Activation Pending */}
+							<div
+								className="status-item"
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: "5px", // Space between dot and text
+									lineHeight: "1.2", // Ensures text aligns well with the dot
+								}}
+							>
+								<div
+									className="status-dot pending"
+									style={{
+										height: "10px",
+										width: "10px",
+										borderRadius: "50%",
+										backgroundColor: "#ccc",
+									}}
+								></div>
+								Account activation pending: {pendingUsers}
+							</div>
+						</div>
+					</div>
 				</div>
 
 
+
 				{/* Users Table */}
+				<div className="table-container">
 				<table className="table-styled" style={{ marginTop: '0px' }}>
 					<thead>
 						<tr>
+							<th>Status</th>
 							<th>
 								Email
-
 							</th>
 							<th>
 								First Name
@@ -419,6 +549,31 @@ export default function Settings() {
 					<tbody>
 						{filteredItems.map((item, index) => (
 							<tr key={index}>
+								<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+									<span
+										className={`status-dot ${item.emailVerified ? 'activated' : 'pending'}`}
+										style={{
+											// Inline styles to ensure consistent dot appearance
+											height: '10px',
+											width: '10px',
+											borderRadius: '50%',
+											display: 'inline-block',
+											position: 'relative',
+										}}
+									>
+										{/* Tooltip message */}
+										<span
+											className="tooltip-text"
+										>
+											{/* Tooltip text dynamically changes based on status */}
+											{item.emailVerified ? 'Activated' : 'Pending'}
+										</span>
+										{/* Tooltip pointer */}
+										<span className="tooltip-pointer"></span>
+									</span>
+								</td>
+
+
 								<td>
 									<Link to={`/settings/access-mgmnt/${item.id}`} className="link">
 										{item.email}
@@ -472,6 +627,7 @@ export default function Settings() {
 						))}
 					</tbody>
 				</table>
+				</div>
 
 				{/* Pagination */}
 				{pagination}

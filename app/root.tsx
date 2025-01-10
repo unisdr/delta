@@ -42,8 +42,8 @@ import {
 } from "~/frontend/footer/footer"
 
 export const links: LinksFunction = () => [
-	{rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/css/style-dts.css'},
-	{rel: "stylesheet", href: allStylesHref},
+	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css' },
+	{ rel: "stylesheet", href: allStylesHref },
 ];
 
 export const loader = async ({request}: LoaderFunctionArgs) => {

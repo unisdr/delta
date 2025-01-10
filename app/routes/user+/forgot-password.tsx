@@ -21,6 +21,10 @@ import { formStringData } from "~/util/httputil";
 import {
 	resetPasswordSilentIfNotFound
 } from "~/backend.server/models/user";
+import { sessionCookie, redirectWithMessage } from "~/util/session";
+
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface FormFields {
 	email: string
@@ -48,7 +52,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	await resetPasswordSilentIfNotFound(data.email);
 
 
-	return json({ data, errors });
+	// Redirect with flash message using redirectWithMessage
+	return redirectWithMessage(request, "/user/login", {
+		type: "info",
+		text: "if the provided email address exist in the system, an email will be sent with instructions to help you recover your password. Please check your inbox and follow the provided steps to regain access to your account."
+	});
 };
 
 export const loader = async () => {
@@ -93,9 +101,10 @@ export default function Screen() {
 								<Field label="">
 									<input type="email" autoComplete="off" name="email" placeholder="Enter email address*"
 										style={{
-											padding: "12px 20px", // Increased padding for larger height
+											padding: "10px 20px", // Increased padding for larger height
 											fontSize: "16px", // Larger font size
 											width: "100%",
+											borderRadius: "4px",
 											border: errors?.fields?.email ? "1px solid red" : "1px solid #ccc", // Ensures border consistency
 											boxSizing: "border-box" // Ensures padding does not affect the width
 										}}></input>
@@ -112,8 +121,13 @@ export default function Screen() {
 										</div>
 									)}
 								</Field>
-								<p style={{ marginBottom: "2px" }}>&nbsp;</p>
-								<SubmitButton className='mg-button mg-button-primary' label="Reset Password"></SubmitButton>
+								<SubmitButton className='mg-button mg-button-primary' label="Reset Password"
+									style={{
+										width: "100%",
+										marginTop: "20px",
+									}}
+
+								></SubmitButton>
 							</div>
 						</Form>
 					</div>

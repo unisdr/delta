@@ -1,16 +1,17 @@
 import React from "react";
 import type { MetaFunction } from "@remix-run/node";
 
-import { authLoader, authLoaderGetAuth } from "~/util/auth";
+import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-// Loader for authentication and user data
-export const loader = authLoader(async (loaderArgs) => {
-  const { user } = authLoaderGetAuth(loaderArgs);
-
-  return { message: `Hello ${user.email}` };
+// Loader with public access or specific permission check for "ViewData"
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
+  // Currently, this returns the loaderArgs as is.
+  // This will be replaced with actual data fetching logic for the Sectors Analysis page.
+  return { loaderArgs };
 });
+
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {

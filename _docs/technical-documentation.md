@@ -1,0 +1,116 @@
+# Version History
+
+| Version | Date (YYYY-MM-DD) | Author        | Description                                       |
+| ------- | ----------------- | ------------- | ------------------------------------------------- |
+| 1.0     | 2025-01-08        | Haroon Nasher | Initial draft of the DTS technical documentation. |
+
+---
+
+## Minimum System Requirements and Deployment Guidelines
+
+These are the minimum system requirements and deployment guidelines for installing DTS on a server. If your device does not meet these requirements, you may need to upgrade your hardware or consider purchasing a new server.
+
+### 1. System Requirements
+
+#### a. Hardware Requirements:
+
+1. Processor: Minimum 4-core CPU
+2. RAM: 8GB RAM
+3. Storage: 100GB storage or larger storage device
+
+#### b. Operating Systems:
+
+Supported platforms: Windows, Linux
+
+#### c. Browser Compatibility:
+
+Modern web browsers like Chrome, Firefox, or Edge
+
+---
+
+### 2. Deployment
+
+The system is packaged as Docker containers, making it portable and straightforward to deploy on any infrastructure that supports Docker.
+
+---
+
+### 3. Installation Types
+
+DTS offers two deployment options:
+
+- **Country Instance:** Hosted and managed by the country’s local infrastructure.
+- **UNDRR Instance:** Hosted on the UN Cloud System, providing a centralized, secure, and globally accessible solution.
+
+---
+
+### 4. Installing DTS as Country Instance
+
+1. Clone the repository
+2. Install the dependencies
+3. Configure the environment
+4. Database setup
+5. Build and Deploy
+
+---
+
+### 5. Installing DTS as UNDRR Instance
+
+(To be added.)
+
+---
+
+### 6. Open-Source Technology Stack & Reference
+
+#### a. Backend Technologies:
+
+1. Programming Language: [Node.js](https://nodejs.org/en)
+2. Framework: [Remix](https://remix.run/)
+3. Database: [PostgreSQL](https://www.postgresql.org/) for relational data management with [PostGIS](https://postgis.net/)
+
+#### b. Frontend Technologies:
+
+1. Framework/library: [React](https://react.dev/)
+2. Styling tools
+
+#### c. APIs and Integrations:
+
+1. RESTful API, SFM
+
+#### d. Containerization:
+
+1. [Docker](https://www.docker.com/)
+
+#### e. Icons:
+
+1. Icons coming from Mangrove
+2. Icons coming from PreventionWeb site
+3. Icons coming from fontawesome site
+4. Icons coming from [react-icons](https://react-icons.github.io/react-icons/)
+
+---
+
+### 7. System Architecture
+
+#### a. Application Architecture:
+
+(To be added.)
+
+#### b. Data Flow:
+
+(To be added.)
+
+#### c. Security Features:
+
+1. Authentication methods (e.g., OAuth2, JWT)
+
+---
+
+---
+
+### 8. Support and Documentation
+
+The support and maintenance will be provided in-house for the **UNDRR instance** and for the shared code base available for all countries.  
+For country-specific needs, a self-help website will be set up with:
+
+- Code sharing
+- Comprehensive user manuals
