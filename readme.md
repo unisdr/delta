@@ -55,3 +55,4 @@ yarn run test
 
 * Setup the admin account: http://localhost:3000/setup/admin-account-welcome
 * Import HIPs taxonomy: http://localhost:3000/setup/import-hip
+

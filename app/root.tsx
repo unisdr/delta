@@ -18,8 +18,6 @@ import {
 
 import { LoaderFunctionArgs } from "react-router-dom";
 
-import { toast, ToastContainer } from "react-toastify"; // Import ToastContainer for notifications
-import "react-toastify/dist/ReactToastify.css"; // Import styles for Toast
 
 import {
 	getUserFromSession,
@@ -231,16 +229,6 @@ export default function Screen() {
 				<meta charSet="utf-8" />
 			</head>
 			<body>
-				{/* Add ToastContainer to the root for toast notifications */}
-				<ToastContainer
-					position="top-center" // Set position to the center of the page
-					autoClose={5000} // Auto-close after 5 seconds
-					hideProgressBar={false} // Show progress bar
-					newestOnTop={true} // New notifications appear on top
-					closeOnClick={true} // Close notification on click
-					pauseOnHover={true} // Pause timer on hover
-					draggable={false} // Disable dragging
-				/>
 				<InactivityWarning loggedIn={loggedIn} />
 				<SessionMessage message={flashMessage} />
 				<div className="dts-page-container">

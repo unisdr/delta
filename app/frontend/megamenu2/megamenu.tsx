@@ -1,5 +1,3 @@
-import "./styles.css";
-
 import { useEffect, useState } from "react";
 import {MegaMenuProps, Lvl1Item, Lvl2Item, Lvl3Item, Lvl4Item} from "./common"
 import { MobileMenu } from "./mobilemenu"

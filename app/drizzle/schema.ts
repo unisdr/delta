@@ -320,52 +320,56 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 
 // Common disaggregation data (dsg) for human effects on disaster records
 export const humanDsgTable = pgTable("human_dsg", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
+	id: uuid("id").primaryKey().defaultRandom(),
+	recordId: text("record_id").notNull(),
 	sex: text("sex", {enum: ["m", "f"]}),
-	age: integer("age"),
-	disability: boolean("disability"),
+	age: text("age", {enum: ["0-20", "21-40", "41-60", "60-81", ">80"]}),
+	disability: text("disability", {enum: ["dis_group1", "dis_group2", "dis_group3"]}),
+	globalPovertyLine: text("global_poverty_line", {enum: ["below", "above"]}),
+	nationalPovertyLine: text("national_poverty_line", {enum: ["below", "above"]}),
 	custom: jsonb("custom").$type<Record<string, any>>(),
 });
 export type HumanDsg = typeof humanDsgTable.$inferSelect;
 export type HumanDsgInsert = typeof humanDsgTable.$inferInsert;
 
-export const deathTable = pgTable("death", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
+export const deathsTable = pgTable("deaths", {
+	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	deaths: integer("deaths").notNull(),
+	deaths: integer("deaths"),
 });
-export type Death = typeof deathTable.$inferSelect;
-export type DeathInsert = typeof deathTable.$inferInsert;
 
-export const injuredTable = pgTable("injured", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
-	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	injured: integer("injured").notNull(),
-});
-export type Injured = typeof injuredTable.$inferSelect;
-export type InjuredInsert = typeof injuredTable.$inferInsert;
+export type Deaths = typeof deathsTable.$inferSelect;
+export type DeathsInsert = typeof deathsTable.$inferInsert;
 
-export const affectedSendaiTable = pgTable("affected_sendai", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
+export const injuriesTable = pgTable("injuries", {
+	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	direct: integer("direct"), // As per Sendai Target definitions
-	indirect: integer("indirect"), // Old DesInventar variable
+	injuries: integer("injuries"),
 });
-export type AffectedSendai = typeof affectedSendaiTable.$inferSelect;
-export type AffectedSendaiInsert = typeof affectedSendaiTable.$inferInsert;
 
-export const affectedPDNATable = pgTable("affected_pdna", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
+export type Injuries = typeof injuriesTable.$inferSelect;
+export type InjuriesInsert = typeof injuriesTable.$inferInsert;
+
+export const missingTable = pgTable("missing", {
+	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	primarily: integer("primarily"), // Primarily affected (e.g., died, injured, or severely impacted)
-	secondary: integer("secondary"), // Secondary affected (e.g., sustained losses in income or livelihoods)
-	tertiary: integer("tertiary"), // Tertiary affected (e.g., higher cost of services outside affected areas)
+	missing: integer("missing"),
 });
-export type AffectedPDNA = typeof affectedPDNATable.$inferSelect;
-export type AffectedPDNAInsert = typeof affectedPDNATable.$inferInsert;
+
+export type Missing = typeof missingTable.$inferSelect;
+export type MissingInsert = typeof missingTable.$inferInsert;
+
+export const affectedTable = pgTable("affected", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
+	direct: integer("direct"),
+	indirect: integer("indirect"), 
+});
+export type Affected = typeof affectedTable.$inferSelect;
+export type AffectedInsert = typeof affectedTable.$inferInsert;
 
 export const displacedTable = pgTable("displaced", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
+	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
 	shortTerm: integer("short_term"), // First 10 days
 	mediumShort: integer("medium_short"), // Days 10-30
@@ -377,7 +381,7 @@ export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
 
 export const displacementStocksTable = pgTable("displacement_stocks", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
+	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
 	preemptive: integer("preemptive"), // Assisted pre-emptive displacement
 	reactive: integer("reactive"), // Assisted reactive displacement
@@ -385,16 +389,6 @@ export const displacementStocksTable = pgTable("displacement_stocks", {
 export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
 export type DisplacementStocksInsert = typeof displacementStocksTable.$inferInsert;
 
-export const displacementFlowsTable = pgTable("displacement_flows", {
-	id: uuid("id").primaryKey().references((): AnyPgColumn => disasterEventTable.id),
-	fromLocation: text("from_location").notNull(), // Origin of displacement
-	toLocation: text("to_location").notNull(), // Destination of displacement
-	startDate: timestamp("start_date").notNull(), // Start date of the flow
-	endDate: timestamp("end_date").notNull(), // End date of the flow
-	displaced: integer("displaced").notNull(), // Number of individuals displaced
-});
-export type DisplacementFlows = typeof displacementFlowsTable.$inferSelect;
-export type DisplacementFlowsInsert = typeof displacementFlowsTable.$inferInsert;
 
 
 // Hazard Information Profiles (HIPs)
