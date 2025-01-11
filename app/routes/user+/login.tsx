@@ -2,6 +2,7 @@ import type { MetaFunction } from '@remix-run/node';
 
 import {
 	ActionFunctionArgs,
+	json,
 	LoaderFunctionArgs,
 	redirect
 } from "@remix-run/node";
@@ -52,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				password: ["Email or password do not match"],
 			}
 		}
-		return { data, errors };
+		return json({ data, errors }, { status: 400 }); // Return as a valid Remix response
 	}
 
 
@@ -94,7 +95,7 @@ export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
 
-	const errors = actionData?.errors
+	const errors = actionData?.errors || {};
 	const data = actionData?.data
 
 	const [email, setEmail] = useState(data?.email || "");
@@ -108,6 +109,8 @@ export default function Screen() {
 	const togglePasswordVisibility = () => {
 		setPasswordVisible(!passwordVisible);
 	};
+
+	//console.log("Errors object:", errors); // Debugging
 
 	return (
 		<>
@@ -125,11 +128,21 @@ export default function Screen() {
 								<div className="dts-form-component" style={{ marginBottom: "10px" }}>
 									<Field label="">
 										<span className="mg-u-sr-only">Email address*</span>
-										<input type="email" autoComplete="off" name="email" placeholder="Enter email address*" defaultValue={data?.email} required className='{errors?.fields?.email?"input-error":""}'
+										<input
+											type="email"
+											autoComplete="off"
+											name="email"
+											placeholder="Enter email address*"
+											defaultValue={data?.email}
+											required
+											className={
+												errors?.fields?.email && errors.fields.email.length > 0 // Check if email errors exist
+													? "input-error"
+													: "input-normal"
+											}
 											style={{
-												paddingRight: "2.5rem",
-												width: "100%",
-												border: errors?.fields?.email ? "1px solid red" : "",
+												paddingRight: "2.5rem", // Static style
+												width: "100%", // Static style
 											}}
 										></input>
 
@@ -145,11 +158,22 @@ export default function Screen() {
 											//zIndex: 1,
 										}}
 										>
-											<input type={passwordVisible ? "text" : "password"} autoComplete="off" name="password" placeholder="Enter password*" defaultValue={data?.password} required className='{errors?.fields?.password?"input-error":""}'
+											<input
+												type={passwordVisible ? "text" : "password"}
+												autoComplete="off"
+												name="password"
+												placeholder="Enter password*"
+												defaultValue={data?.password}
+												required
+												className={
+													errors?.fields?.password && errors.fields.password.length > 0 // Check if password errors exist
+														? "input-error"
+														: "input-normal"
+												}
 												style={{
 													paddingRight: "2.5rem",
 													width: "100%",
-													border: errors?.fields?.email ? "1px solid red" : "",
+
 												}}
 											></input>
 											<img
