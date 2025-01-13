@@ -1,15 +1,17 @@
 import type { MetaFunction } from "@remix-run/node";
 
-import { authLoader, authLoaderGetAuth } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-// Loader for authentication and user data
-export const loader = authLoader(async (loaderArgs) => {
-  const { user } = authLoaderGetAuth(loaderArgs);
+import {resourceRepoLoader} from "~/backend.server/handlers/resourcerepo";
+import {
+	authLoaderPublicOrWithPerm,
+} from "~/util/auth";
 
-  return { message: `Hello ${user.email}` };
-});
+
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
+  return resourceRepoLoader({loaderArgs})
+})
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
