@@ -20,7 +20,8 @@ import {
 	createUserSession
 } from "~/util/session";
 import { 
-	configSsoAzureB2C 
+	configSsoAzureB2C,
+	configAuthSupportedAzureSSOB2C
 } from "~/util/config";
 import { 
 	SSOAzureB2C as interfaceSSOAzureB2C, 
@@ -39,9 +40,11 @@ import {
 	loginAzureB2C,
 	registerAzureB2C,
 } from "~/backend.server/models/user";
+import { MainContainer } from "~/frontend/container";
 
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
+	const confAuthSupportedAzureSSOB2C:boolean = configAuthSupportedAzureSSOB2C();
 	const urlSSOCode2Token = `${ baseURL() }/token?p=${ jsonAzureB2C.login_userflow }`;
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("inviteCode") || "";
@@ -113,12 +116,21 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 				}
 			}
 			else if ('error' in result && 'error_description' in result) {
-				return json({ errors: result.error_description, inviteCode: '', inviteCodeValidation: { ok: false, error: '' } }, { status: 500 });
+				return json({ 
+					errors: result.error_description, 
+					inviteCode: '', inviteCodeValidation: { ok: false, error: '' },
+					confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
+				}, { status: 500 });
 			}
 
 			let retLogin = await registerAzureB2C(data['email'], data['firstName'], data['lastName']);
 			if (!retLogin.ok) {
-				return json({ errors:retLogin.error, inviteCode: '', inviteCodeValidation: { ok: false, error: '' } });
+				return json({ 
+					errors:retLogin.error, 
+					inviteCode: '', 
+					inviteCodeValidation: { ok: false, error: '' },
+					confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
+				});
 			}
 
 			const headers = await createUserSession(retLogin.userId);
@@ -126,7 +138,12 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		}
 		catch (error) { 
 			console.error('Error:', error); 
-			return json({ errors:error, inviteCode: '', inviteCodeValidation: { ok: false, error: '' } });
+			return json({ 
+				errors:error, 
+				inviteCode: '', 
+				inviteCodeValidation: { ok: false, error: '' },
+				confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
+			});
 		}
 	
 	}
@@ -138,6 +155,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		inviteCodeValidation: res,
 		code: queryStringCode,
 		state: state,
+		confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
 	});
 };
 
@@ -171,35 +189,44 @@ export default function Screen() {
 	}
 
 	return (
+		<MainContainer title="Accept invite">
 		<>
-			<h2>Accept invite</h2>
 			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.</p>
 			<p>* Required information</p>
-			<Form errors={errors}>
-				<input name="inviteCode" type="hidden" defaultValue={inviteCode}></input>
-				<Field label="First name *">
-					<input type="text" name="firstName" defaultValue={data?.firstName}></input>
-					<FieldErrors errors={errors} field="firstName"></FieldErrors>
-				</Field>
-				<Field label="Last name">
-					<input type="text" name="lastName" defaultValue={data?.lastName}></input>
-					<FieldErrors errors={errors} field="lastName"></FieldErrors>
-				</Field>
-				<Field label="Password *">
-					<input type="password" name="password" defaultValue={data?.password}></input>
-					<FieldErrors errors={errors} field="password"></FieldErrors>
-				</Field>
-				<Field label="Repeat password *">
-					<input type="password" name="passwordRepeat" defaultValue={data?.passwordRepeat}></input>
-					<FieldErrors errors={errors} field="passwordRepeat"></FieldErrors>
-				</Field>
-				<SubmitButton label="Setup account"></SubmitButton>
+			<Form className="dts-form dts-form--vertical" errors={errors}>
+				<div className="dts-form-component">
+					<input name="inviteCode" type="hidden" defaultValue={inviteCode}></input>
+					<Field label="First name *">
+						<input type="text" name="firstName" defaultValue={data?.firstName}></input>
+						<FieldErrors errors={errors} field="firstName"></FieldErrors>
+					</Field>
+					<Field label="Last name">
+						<input type="text" name="lastName" defaultValue={data?.lastName}></input>
+						<FieldErrors errors={errors} field="lastName"></FieldErrors>
+					</Field>
+					<Field label="Password *">
+						<input type="password" name="password" defaultValue={data?.password}></input>
+						<FieldErrors errors={errors} field="password"></FieldErrors>
+					</Field>
+					<Field label="Repeat password *">
+						<input type="password" name="passwordRepeat" defaultValue={data?.passwordRepeat}></input>
+						<FieldErrors errors={errors} field="passwordRepeat"></FieldErrors>
+					</Field>
+					<SubmitButton label="Setup account"></SubmitButton>
+				</div>
 			</Form>
 			<p>&nbsp;</p>
 			<div>
-				<Link to={ `/user/accept-invite?inviteCode=${inviteCode}&sso=sso_azure_b2c&action=sso_azure_b2c` }>Complete the registration by logging-in using Azure B2C SSO</Link>
+				
+				{
+					loaderData.confAuthSupportedAzureSSOB2C ? 
+						<Link to={ `/user/accept-invite?inviteCode=${inviteCode}&sso=sso_azure_b2c&action=sso_azure_b2c` }>
+							Complete the registration by logging-in using Azure B2C SSO</Link>
+					: ''
+				}
 			</div>
 		</>
+		</MainContainer>
 	);
 }
 

@@ -104,9 +104,6 @@ export default function Screen() {
 	const [password, setPassword] = useState(data?.password || "");
 	const [passwordVisible, setPasswordVisible] = useState(false);
 
-
-	console.log ( loaderData.confAuthSupportedAzureSSOB2C );
-
 	const togglePasswordVisibility = () => {
 		setPasswordVisible(!passwordVisible);
 	};
