@@ -51,3 +51,11 @@ form > label {
 .dts-status--rejected {
 	background-color: #990000;
 }
+
+.input-error {
+	border: 2px solid red !important; /* Error border with higher specificity */
+}
+
+.input-normal {
+	border: 1px solid #ccc; /* Default border to ensure visibility change */
+}

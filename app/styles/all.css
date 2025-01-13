@@ -3,4 +3,5 @@
 @import "~/frontend/megamenu2/styles.css";
 @import "~/frontend/header/styles.css";
 @import "~/frontend/dtsmap/styles.css";
+@import "../../node_modules/react-toastify/dist/ReactToastify.css";
 

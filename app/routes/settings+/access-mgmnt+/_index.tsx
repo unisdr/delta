@@ -185,6 +185,12 @@ export default function Settings() {
 		  background-color: #0056b3;
 		}
 
+
+		.table-container {
+			overflow-x: auto; /* Enables horizontal scrolling for wide tables */
+			margin-top: 20px; /* Adds spacing above the table */
+		}
+
 		.table-styled {
 		  width: 100%;
 		  border-collapse: collapse;
@@ -505,6 +511,7 @@ export default function Settings() {
 
 
 				{/* Users Table */}
+				<div className="table-container">
 				<table className="table-styled" style={{ marginTop: '0px' }}>
 					<thead>
 						<tr>
@@ -620,6 +627,7 @@ export default function Settings() {
 						))}
 					</tbody>
 				</table>
+				</div>
 
 				{/* Pagination */}
 				{pagination}

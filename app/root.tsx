@@ -16,21 +16,19 @@ import {
 	useFetcher
 } from "@remix-run/react";
 
-import { LoaderFunctionArgs } from "react-router-dom";
+import {LoaderFunctionArgs} from "react-router-dom";
 
-import { toast, ToastContainer } from "react-toastify"; // Import ToastContainer for notifications
-import "react-toastify/dist/ReactToastify.css"; // Import styles for Toast
+import {toast, ToastContainer} from "react-toastify/unstyled"; // Import ToastContainer for notifications
 
 import {
 	getUserFromSession,
 	sessionCookie,
 	getFlashMessage,
-	FlashMessage
 } from "~/util/session";
 
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 
-import { configApprovedRecordsArePublic, configSiteLogo, configSiteName, configFooterURLPrivPolicy, configFooterURLTermsConds} from "~/util/config";
+import {configApprovedRecordsArePublic, configSiteLogo, configSiteName, configFooterURLPrivPolicy, configFooterURLTermsConds} from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
@@ -42,11 +40,11 @@ import {
 } from "~/frontend/footer/footer"
 
 export const links: LinksFunction = () => [
-	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css' },
-	{ rel: "stylesheet", href: allStylesHref },
+	{rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css'},
+	{rel: "stylesheet", href: allStylesHref},
 ];
 
-export const loader = async ({request}:LoaderFunctionArgs) => {
+export const loader = async ({request}: LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request)
 
 	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
@@ -59,12 +57,12 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		flashMessage: message,
 		confSiteName: configSiteName(),
 		confSiteLogo: configSiteLogo(),
-		confFooterURLPrivPolicy: configFooterURLPrivPolicy(), 
+		confFooterURLPrivPolicy: configFooterURLPrivPolicy(),
 		confFooterURLTermsConds: configFooterURLTermsConds(),
 	}, {
-	headers: {
-		"Set-Cookie": await sessionCookie().commitSession(session),
-	}
+		headers: {
+			"Set-Cookie": await sessionCookie().commitSession(session),
+		}
 	});
 };
 
@@ -102,7 +100,7 @@ function Nav(props: NavProps) {
 interface InactivityWarningProps {
 	loggedIn: boolean
 }
-function InactivityWarning(props: InactivityWarningProps){
+function InactivityWarning(props: InactivityWarningProps) {
 	const sessionActivityTimeoutMinutes = 40;
 	const sessionActivityWarningBeforeTimeoutMinutes = 10;
 
@@ -136,7 +134,7 @@ function InactivityWarning(props: InactivityWarningProps){
 
 	const fetcher = useFetcher();
 
-	if (!props.loggedIn){
+	if (!props.loggedIn) {
 		return null;
 	}
 	const handleRefreshSession = () => {
@@ -145,83 +143,59 @@ function InactivityWarning(props: InactivityWarningProps){
 	};
 
 	return (
-	<>
-		{showWarning ? (
-			<div style={{ background: "red", position: "fixed", top: 0, width: "100%" }}>
-				{expiresInMinutes > 0.1 ? (
-					<>
-						<p>
-							Login session expires in {Math.round(expiresInMinutes)} minutes due to inactivity.
-						</p>
-						<button onClick={handleRefreshSession}>
-							Refresh session
-						</button>
-					</>
-				) : (
-					<p>Session expired</p>
-				)}
-			</div>
-		) : null}
-	</>
+		<>
+			{showWarning ? (
+				<div style={{background: "red", position: "fixed", top: 0, width: "100%"}}>
+					{expiresInMinutes > 0.1 ? (
+						<>
+							<p>
+								Login session expires in {Math.round(expiresInMinutes)} minutes due to inactivity.
+							</p>
+							<button onClick={handleRefreshSession}>
+								Refresh session
+							</button>
+						</>
+					) : (
+						<p>Session expired</p>
+					)}
+				</div>
+			) : null}
+		</>
 	);
-}
-
-interface SessionMessageProps {
-	message?: FlashMessage
-}
-
-function SessionMessage({ message }: SessionMessageProps) {
-	if (!message) {
-		return null
-	}
-	let type = "info"
-	if (message.type == "error") {
-		type = "error"
-	}
-	// Replaced the following code:
-	// return (
-	//	<div className={`session-message session-${type}`}>
-	//		<p>{message.text}</p>
-	//	</div>
-	//);
-
-	// The above was removed to avoid rendering inline messages on the page.
-	// This ensures that only toast notifications are shown for flash messages,
-	// which aligns with the current UI design choice. The inline rendering can
-	// be re-enabled in the future if needed by uncommenting this code.
-
-	return null; // Prevent inline message rendering, focusing only on toast notifications.
 }
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
 	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds} = loaderData
 
-
 	// Display toast for flash messages
 	useEffect(() => {
 		if (flashMessage) {
-		  if (flashMessage.type === "error") {
-			toast.error(flashMessage.text, {
-			  position: "top-center",
-			  autoClose: 5000,
-			});
-		  } else if (flashMessage.type === "info") {
-			toast.info(flashMessage.text, {
-			  position: "top-center",
-			  autoClose: 5000,
-			});
-		  }
+			if (flashMessage.type === "error") {
+				toast.error(flashMessage.text, {
+					position: "top-center",
+					autoClose: 5000,
+				});
+			} else if (flashMessage.type === "info") {
+				toast.info(flashMessage.text, {
+					position: "top-center",
+					autoClose: 5000,
+				});
+			} else {
+				toast.info(flashMessage.text, {
+					position: "top-center",
+					autoClose: 5000,
+				});
+			}
 		}
-	  }, [flashMessage]);
-	
+	}, [flashMessage]);
 
 	return (
 		<html lang="en">
 			<head>
 				<link
 					rel="icon"
-					type="image/x-icon" 
+					type="image/x-icon"
 					href="/favicon.ico"
 				/>
 				<Meta />
@@ -231,7 +205,8 @@ export default function Screen() {
 				<meta charSet="utf-8" />
 			</head>
 			<body>
-				{/* Add ToastContainer to the root for toast notifications */}
+
+				{/* Add ToastContainer to the root for toast notifications  */}
 				<ToastContainer
 					position="top-center" // Set position to the center of the page
 					autoClose={5000} // Auto-close after 5 seconds
@@ -242,14 +217,13 @@ export default function Screen() {
 					draggable={false} // Disable dragging
 				/>
 				<InactivityWarning loggedIn={loggedIn} />
-				<SessionMessage message={flashMessage} />
 				<div className="dts-page-container">
-					{ (hasPublicSite || loggedIn) && (
-					<header>
-						<div className="mg-container">
-							<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
-						</div>
-					</header> ) }
+					{(hasPublicSite || loggedIn) && (
+						<header>
+							<div className="mg-container">
+								<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
+							</div>
+						</header>)}
 					<main className="dts-main-container">
 						<Outlet />
 					</main>
