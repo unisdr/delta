@@ -147,7 +147,9 @@ export function FieldErrors2({errors}: FieldErrors2Props) {
 	return (
 		<ul className="form-field-errors">
 			{errors.map((error, index) => (
-				<li key={index}>{error}</li>
+				<li style={{ color: "red" }} key={index}>
+					{error}
+			  	</li>
 			))}
 		</ul>
 	);
