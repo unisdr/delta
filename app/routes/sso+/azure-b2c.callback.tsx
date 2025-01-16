@@ -38,9 +38,36 @@ interface interfaceQueryStringState {
     inviteCode: string;
 };
 
-async function _code2Token(paramCode:string) {
+interface interfaceAzureB2CData {
+    email: string;
+    firstName: string;
+    lastName: string;
+};
+
+export type typeAzureB2CData = {
+    okay: true;
+    email: string;
+    firstName: string;
+    lastName: string;
+    errors: '';
+} | {
+    okay: false;
+    email: string;
+    firstName: string;
+    lastName: string;
+    errors: string;
+};
+
+async function _code2Token(paramCode:string):Promise<typeAzureB2CData> {
     const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
     const urlSSOCode2Token = `${ baseURL() }/token?p=${ jsonAzureB2C.login_userflow }`;
+    let token:object = {};
+	let token_idp:object = {};
+    let data:interfaceAzureB2CData = {
+        email: '',
+        firstName: '',
+        lastName: '',
+    };
 
     try {
         // WORKING
@@ -58,11 +85,61 @@ async function _code2Token(paramCode:string) {
         });
         const result = await response.json();
 
-        return result;
+        if ("id_token" in result) {
+            token=decodeToken( result.id_token );
+            // console.log(token);
+            if ("idp_access_token" in token) {
+                // console.log( token.idp_access_token );
+                token_idp=decodeToken( String(token.idp_access_token) );
+                // console.log( token_idp );
+                if ('family_name' in token_idp) {
+                    data.lastName = String(token_idp.family_name);
+                }
+                if ('given_name' in token_idp) {
+                    data.firstName = String(token_idp.given_name);
+                }
+                if ('unique_name' in token_idp) {
+                    data.email = String(token_idp.unique_name);
+                }
+            }
+            else {
+                if ('family_name' in token) {
+                    data.lastName = String(token.family_name);
+                }
+                if ('given_name' in token) {
+                    data.firstName = String(token.given_name);
+                }
+                if ('emails' in token) {
+                    data.email = String(token.emails);
+                }
+            }
+        }
+        else if ('error' in result && 'error_description' in result) {
+            return ({ 
+                okay: false, 
+                email: data.email,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                errors: String(result.error_description) 
+            });
+        }
+
+        return ({
+            okay: true,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            errors: '',
+        });
     }
     catch (error) { 
-        console.error('Error:', error); 
-        return json({ errors:error });
+        return ({ 
+            okay: false, 
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            errors: String(error) 
+        });
     }
 }
 
@@ -105,118 +182,78 @@ export const loader:LoaderFunction = async ( { request } ) => {
             console.error("An error occurred:", error);
         }
 
+        // User opted to use Azure B2C SSO.
         if (jsonQueryStringState.action == 'sso_azure_b2c-register') {
-            const result = await _code2Token(queryStringCode);
+            const data2 = await _code2Token(queryStringCode);
 
-            console.log(jsonQueryStringState);
-            console.log(result);
-            if ('error' in result && 'error_description' in result) {
-				return json({ errors: result.error_description }, { status: 500 });
-			}
-
-            if ("id_token" in result) {
-				token=decodeToken( result.id_token );
-				console.log(token);
-				if ("idp_access_token" in token) {
-					console.log( token.idp_access_token );
-					token_idp=decodeToken( String(token.idp_access_token) );
-					console.log( token_idp );
-					if ('family_name' in token_idp) {
-						data['lastName'] = String(token_idp.family_name);
-					}
-					if ('given_name' in token_idp) {
-						data['firstName'] = String(token_idp.given_name);
-					}
-					if ('unique_name' in token_idp) {
-						data['email'] = String(token_idp.unique_name);
-					}
-				}
-				else {
-					if ('family_name' in token) {
-						data['lastName'] = String(token.family_name);
-					}
-					if ('given_name' in token) {
-						data['firstName'] = String(token.given_name);
-					}
-					if ('emails' in token) {
-						data['email'] = String(token.emails);
-					}
-				}
-			}
-
-            let retLogin = await registerAzureB2C(data['email'], data['firstName'], data['lastName']);
-            if (!retLogin.ok) {
-                return json({ 
-                    errors:retLogin.error, 
-                    inviteCode: '', 
-                    inviteCodeValidation: { ok: false, error: '' },
-                    confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
-                });
+            if (data2.okay) {
+                let retLogin = await registerAzureB2C(data2.email, data2.firstName, data2.lastName);
+                if (!retLogin.ok) {
+                    return json({ 
+                        errors:retLogin.error, 
+                        inviteCode: '', 
+                        inviteCodeValidation: { ok: false, error: '' },
+                        confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
+                    });
+                }
+    
+                const headers = await createUserSession(retLogin.userId);
+                return redirect("/", { headers });
             }
-
-            const headers = await createUserSession(retLogin.userId);
-            return redirect("/", { headers });
-
         }
     }
 	else if (queryStringState == 'azure_sso_b2c-login' && queryStringCode) {
         
 		try {
-			const result = await _code2Token(queryStringCode);
-
-			// console.log( result );
-			if ("id_token" in result) {
-				token=decodeToken( result.id_token );
-				// console.log(token);
-				if ("idp_access_token" in token) {
-					// console.log( token.idp_access_token );
-					token_idp=decodeToken( String(token.idp_access_token) );
-					// console.log( token_idp );
-					if ('family_name' in token_idp) {
-						data['lastName'] = String(token_idp.family_name);
-					}
-					if ('given_name' in token_idp) {
-						data['firstName'] = String(token_idp.given_name);
-					}
-					if ('unique_name' in token_idp) {
-						data['email'] = String(token_idp.unique_name);
-					}
-				}
-				else {
-					if ('family_name' in token) {
-						data['lastName'] = String(token.family_name);
-					}
-					if ('given_name' in token) {
-						data['firstName'] = String(token.given_name);
-					}
-					if ('emails' in token) {
-						data['email'] = String(token.emails);
-					}
-				}
-			}
-			else if ('error' in result && 'error_description' in result) {
-				return json({ errors: result.error_description }, { status: 500 });
-			}
-
-			let retLogin = await loginAzureB2C(data['email'], data['firstName'], data['lastName']);
-			if (!retLogin.ok) {
-				return json({ errors:retLogin.error });
-			}
-
-			if (retLogin.userId == 0) {
-                console.error('Error:', 'System error.'); 
-			    return json({ errors: 'System error.' });               
-			}
-			else {
-				const headers = await createUserSession(retLogin.userId);
-				return redirect("/", { headers });
-			}
+			const data2 = await _code2Token(queryStringCode);
+            
+            if (data2.okay) {
+                let retLogin = await loginAzureB2C(data2.email, data2.firstName, data2.lastName);
+            
+                if (!retLogin.ok) {
+                    return json({ errors:retLogin.error });
+                }
+    
+                if (retLogin.userId == 0) {
+                    console.error('Error:', 'System error.'); 
+                    return json({ errors: 'System error.' });               
+                }
+                else {
+                    const headers = await createUserSession(retLogin.userId);
+                    return redirect("/", { headers });
+                }
+            }
 		}
 		catch (error) { 
 			console.error('Error:', error); 
 			return json({ errors:error });
 		}
 	}
+    else if (queryStringState == 'azure_sso_b2c-admin-setup' && queryStringCode) {
+        const data2 = await _code2Token(queryStringCode);
+
+        if (data2.okay) {
+            data['email'] = data2.email;
+            data['password'] = '';
+            data['firstName'] = data2.firstName;
+            data['lastName'] = data2.lastName;
+
+            try {
+                const data3 = setupAdminAccountFieldsFromMap(data) 
+                const res = await setupAdminAccountSSOAzureB2C(data3);
+                if (!res.ok){
+                    console.error( res.errors );
+                    return json({ data, errors: res.errors });
+                }
+                const headers = await createUserSession(res.userId);
+                return redirect("/user/verify-email", { headers });
+            }
+            catch (error) { 
+                console.error('Error:', error); 
+                return json({ errors:error });
+            }
+        }
+    }
 
 	return json({ errors:'' });
 };

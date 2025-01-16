@@ -14,7 +14,7 @@ export const loader = async () => {
 	const allowedAzureSSOB2C:boolean = configAuthSupportedAzureSSOB2C();
 
 	if (allowedAzureSSOB2C) {
-		return loginGetCode('');
+		return loginGetCode('azure_sso_b2c-admin-setup');
 	}
 	else {
 		throw new Error("Azure SSO B2C not allowed in the system.");
