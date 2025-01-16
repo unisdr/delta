@@ -3,15 +3,25 @@ import type { MetaFunction } from "@remix-run/node";
 import { authLoader, authLoaderGetAuth } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import {resourceRepoLoader} from "~/backend.server/handlers/resourcerepo";
-import {
-	authLoaderPublicOrWithPerm,
-} from "~/util/auth";
+import { resourceRepoLoader } from "~/backend.server/handlers/resourcerepo";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { loadMarkdownContent } from "~/util/loadMarkdownContent";
+import { useLoaderData } from "@remix-run/react";
+import PreventionWebLandingPageWidget from "~/components/PreventionWebLandingPageWidget";
 
+export const loader = authLoaderPublicOrWithPerm(
+  "ViewData",
+  async (loaderArgs) => {
+    const resourceRepoData = await resourceRepoLoader({ loaderArgs });
 
-export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-  return resourceRepoLoader({loaderArgs})
-})
+    // load .md file and its append file if exist
+    const { fullContent, appendContent } = await loadMarkdownContent(
+      "technical-specifications"
+    );
+
+    return Response.json({ resourceRepoData, fullContent, appendContent });
+  }
+);
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -26,53 +36,37 @@ export const meta: MetaFunction = ({ data }) => {
 
 // React component for Technical Specifications page
 export default function TechnicalSpecifications() {
+  const { fullContent, appendContent }: any = useLoaderData();
   return (
     <MainContainer
       title="Technical Specifications"
       headerExtra={<NavSettings />}
     >
-      <p className="wip-message">
+      <div className="wip-message">
         <div>
           <section>
-            <h2>Data</h2>
-            <p>
-              The Data section of the DLDT prototype provides functionality for
-              capturing and managing disaster-related information. Users can
-              enter and store data related to the effects of various hazards,
-              such as damages, losses, and disruptions. The data can be
-              categorized based on sectors, regions, assets, and other relevant
-              parameters. This section allows users to create and manage
-              records, associate effects with specific events, and track the
-              cascading impact of disasters.
-            </p>
-          </section>
-          <section>
-            <h2>Analysis</h2>
-            <p>
-              The Analysis section of the DLDT prototype offers basic
-              visualization and analysis capabilities. Users can generate charts
-              and maps to explore the collected data and gain insights into the
-              relationships between different variables. The prototype allows
-              for the creation of custom charts and maps, empowering users to
-              visualize trends and patterns based on their specific analysis
-              needs.
-            </p>
-          </section>
-          <section>
-            <h2>Settings</h2>
-            <p>
-              The Settings section of the DLDT prototype provides options for
-              configuring instance-specific settings and customization. Users
-              with administrative privileges can manage map geometries, define
-              region boundaries, set up translations, and manage user access and
-              permissions. This section also includes options for configuring
-              main menu items, instance-specific configurations, and other
-              settings to tailor the DLDT prototype to specific user
-              requirements.
-            </p>
+            {fullContent ? (
+              <div
+                className="markdown-content"
+                dangerouslySetInnerHTML={{ __html: fullContent }}
+              />
+            ) : (
+              <>
+                <PreventionWebLandingPageWidget
+                  pageId="16"
+                  activeDomain="www.undrr.org"
+                />
+                {appendContent && (
+                  <div
+                    className="markdown-append-content"
+                    dangerouslySetInnerHTML={{ __html: appendContent }}
+                  />
+                )}
+              </>
+            )}
           </section>
         </div>
-      </p>
+      </div>
     </MainContainer>
   );
 }

@@ -3,15 +3,28 @@ import type { MetaFunction } from "@remix-run/node";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-import {resourceRepoLoader} from "~/backend.server/handlers/resourcerepo";
-import {
-	authLoaderPublicOrWithPerm,
-} from "~/util/auth";
+import { resourceRepoLoader } from "~/backend.server/handlers/resourcerepo";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import PreventionWebLandingPageWidget from "~/components/PreventionWebLandingPageWidget";
+import path from "path";
+import fs from "fs/promises";
+import { marked } from "marked";
+import { useLoaderData } from "@remix-run/react";
+import { loadMarkdownContent } from "~/util/loadMarkdownContent";
 
+export const loader = authLoaderPublicOrWithPerm(
+  "ViewData",
+  async (loaderArgs) => {
+    const resourceRepoData = await resourceRepoLoader({ loaderArgs });
 
-export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-  return resourceRepoLoader({loaderArgs})
-})
+    // load .md file and its append file if exist
+    const { fullContent, appendContent } = await loadMarkdownContent(
+      "partners"
+    );
+
+    return Response.json({ resourceRepoData, fullContent, appendContent });
+  }
+);
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -26,27 +39,33 @@ export const meta: MetaFunction = ({ data }) => {
 
 // React component for Partners page
 export default function Partners() {
+  const { fullContent, appendContent }: any = useLoaderData();
   return (
     <MainContainer title="Partners" headerExtra={<NavSettings />}>
-      <p className="wip-message">
+      <div className="wip-message">
         <section>
           <h2>Partners</h2>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit.
-            Consequuntur, assumenda animi fugit itaque libero minima maxime,
-            cupiditate non, a eligendi veniam esse excepturi. Ratione vero
-            voluptas omnis illo impedit soluta autem facilis enim asperiores
-            corporis quo, cum voluptates expedita distinctio, nobis natus magni
-            quas dolor praesentium pariatur perspiciatis. Repudiandae accusamus
-            laboriosam perspiciatis repellendus tempora rerum unde facere sequi
-            laudantium nostrum, quod nulla mollitia obcaecati optio asperiores.
-            Nobis mollitia vitae nemo nam optio ex aut! Dicta saepe tempora,
-            corporis magni doloremque eveniet itaque deserunt voluptatem quae
-            ipsum architecto quaerat, sed sunt iusto temporibus. Nihil animi in
-            consectetur ratione? Optio, eius omnis?
-          </p>
+          {fullContent ? (
+            <div
+              className="markdown-content"
+              dangerouslySetInnerHTML={{ __html: fullContent }}
+            />
+          ) : (
+            <>
+              <PreventionWebLandingPageWidget
+                pageId="16"
+                activeDomain="www.undrr.org"
+              />
+              {appendContent && (
+                <div
+                  className="markdown-append-content"
+                  dangerouslySetInnerHTML={{ __html: appendContent }}
+                />
+              )}
+            </>
+          )}
         </section>
-      </p>
+      </div>
     </MainContainer>
   );
 }

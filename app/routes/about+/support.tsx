@@ -3,15 +3,25 @@ import type { MetaFunction } from "@remix-run/node";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-import {resourceRepoLoader} from "~/backend.server/handlers/resourcerepo";
-import {
-	authLoaderPublicOrWithPerm,
-} from "~/util/auth";
+import { resourceRepoLoader } from "~/backend.server/handlers/resourcerepo";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { loadMarkdownContent } from "~/util/loadMarkdownContent";
+import { useLoaderData } from "@remix-run/react";
+import PreventionWebLandingPageWidget from "~/components/PreventionWebLandingPageWidget";
 
+export const loader = authLoaderPublicOrWithPerm(
+  "ViewData",
+  async (loaderArgs) => {
+    const resourceRepoData = await resourceRepoLoader({ loaderArgs });
 
-export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-  return resourceRepoLoader({loaderArgs})
-})
+    // load .md file and its append file if exist
+    const { fullContent, appendContent } = await loadMarkdownContent(
+      "support"
+    );
+
+    return Response.json({ resourceRepoData, fullContent, appendContent });
+  }
+);
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -26,24 +36,33 @@ export const meta: MetaFunction = ({ data }) => {
 
 // React component for Support page
 export default function Support() {
+  const { fullContent, appendContent }: any = useLoaderData();
   return (
     <MainContainer title="Support" headerExtra={<NavSettings />}>
-      <p className="wip-message">
+      <div className="wip-message">
         <section>
           <h2>Support</h2>
-          <p>
-            If you need support, please contact your ICT administrator or
-            programme focal point for assistance.
-            <br></br>
-            <br></br>For technical issues, system access requests, or general
-            inquiries, your ICT administrator will be able to guide you.{" "}
-            <br></br>
-            <br></br>For questions related to content, permissions, or
-            programme-specific details, please reach out to your designated
-            programme focal point.
-          </p>
+          {fullContent ? (
+            <div
+              className="markdown-content"
+              dangerouslySetInnerHTML={{ __html: fullContent }}
+            />
+          ) : (
+            <>
+              <PreventionWebLandingPageWidget
+                pageId="16"
+                activeDomain="www.undrr.org"
+              />
+              {appendContent && (
+                <div
+                  className="markdown-append-content"
+                  dangerouslySetInnerHTML={{ __html: appendContent }}
+                />
+              )}
+            </>
+          )}
         </section>
-      </p>
+      </div>
     </MainContainer>
   );
 }

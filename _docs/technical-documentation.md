@@ -8,38 +8,40 @@
 
 ## Minimum System Requirements and Deployment Guidelines
 
-These are the minimum system requirements and deployment guidelines for installing DTS on a server. If your device does not meet these requirements, you may need to upgrade your hardware or consider purchasing a new server.
+    These are the minimum system requirements and deployment guidelines for installing DTS on a server. If your device does not meet these requirements, you may need to upgrade your hardware or consider purchasing a new server.
 
 ### 1. System Requirements
 
 #### a. Hardware Requirements:
 
-1. Processor: Minimum 4-core CPU
-2. RAM: 8GB RAM
-3. Storage: 100GB storage or larger storage device
+  1. Processor: Minimum 4-core CPU
+  2. RAM: 8GB RAM
+  3. Storage: 100GB storage or larger storage device
 
 #### b. Operating Systems:
 
-Supported platforms: Windows, Linux
+    Supported platforms: Windows, Linux
 
 #### c. Browser Compatibility:
 
-Modern web browsers like Chrome, Firefox, or Edge
+    Modern web browsers like Chrome, Firefox, or Edge
 
 ---
 
 ### 2. Deployment
 
-The system is packaged as Docker containers, making it portable and straightforward to deploy on any infrastructure that supports Docker.
+    DTS system can be of two types:
+    1. Packaged as Docker containers, making it portable and straightforward to deploy on any infrastructure that supports Docker.
+    2. Zipped file, which can be unzipped on your own server of selection.
 
 ---
 
 ### 3. Installation Types
 
-DTS offers two deployment options:
+    DTS offers two deployment options:
 
-- **Country Instance:** Hosted and managed by the country’s local infrastructure.
-- **UNDRR Instance:** Hosted on the UN Cloud System, providing a centralized, secure, and globally accessible solution.
+- **Docker container:** Packaged as Docker containers, making it portable and straightforward to deploy on any infrastructure that supports Docker.
+- **Zipped file:** Hosted and managed by the country’s local infrastructure.
 
 ---
 
@@ -109,8 +111,10 @@ DTS offers two deployment options:
 
 ### 8. Support and Documentation
 
-The support and maintenance will be provided in-house for the **UNDRR instance** and for the shared code base available for all countries.  
-For country-specific needs, a self-help website will be set up with:
+    The support and maintenance will be provided in-house for the **UNDRR instance** and for the shared code base available for all countries.  
+    For country-specific needs, a self-help website will be set up with:
 
 - Code sharing
 - Comprehensive user manuals
+
+### 9. FAQ

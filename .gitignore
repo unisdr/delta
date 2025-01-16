@@ -3,4 +3,5 @@ node_modules
 .env
 build
 app/data
+information-pages-override
 

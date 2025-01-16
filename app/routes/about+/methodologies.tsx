@@ -1,18 +1,27 @@
 import type { MetaFunction } from "@remix-run/node";
 
-import { authLoader, authLoaderGetAuth } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-import {resourceRepoLoader} from "~/backend.server/handlers/resourcerepo";
-import {
-	authLoaderPublicOrWithPerm,
-} from "~/util/auth";
+import { resourceRepoLoader } from "~/backend.server/handlers/resourcerepo";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { loadMarkdownContent } from "~/util/loadMarkdownContent";
+import { useLoaderData } from "@remix-run/react";
+import PreventionWebLandingPageWidget from "~/components/PreventionWebLandingPageWidget";
 
+export const loader = authLoaderPublicOrWithPerm(
+  "ViewData",
+  async (loaderArgs) => {
+    const resourceRepoData = await resourceRepoLoader({ loaderArgs });
 
-export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-  return resourceRepoLoader({loaderArgs})
-})
+    // load .md file and its append file if exist
+    const { fullContent, appendContent } = await loadMarkdownContent(
+      "methodologies"
+    );
+
+    return Response.json({ resourceRepoData, fullContent, appendContent });
+  }
+);
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -27,27 +36,33 @@ export const meta: MetaFunction = ({ data }) => {
 
 // React component for About the System page
 export default function Methodologies() {
+  const { fullContent, appendContent }: any = useLoaderData();
   return (
     <MainContainer title="Methodologies" headerExtra={<NavSettings />}>
-      <p className="wip-message">
+      <div className="wip-message">
         <section>
           <h2>Methodologies</h2>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis
-            minima numquam hic doloremque praesentium vero magni amet id, fugiat
-            similique nostrum cum at veritatis qui earum doloribus harum, labore
-            dicta consequatur repudiandae aperiam. Molestias corporis eligendi
-            optio error, dicta corrupti at a omnis numquam! Numquam amet facilis
-            hic, voluptatem, consectetur adipisci sapiente laudantium
-            exercitationem explicabo tenetur quasi eligendi harum commodi, ad
-            soluta dicta ea illum dolorum distinctio debitis velit! Itaque
-            temporibus, beatae laboriosam iure in velit necessitatibus iste amet
-            ad. Fugiat assumenda ea ad enim voluptate consectetur asperiores
-            quos debitis sed placeat amet, minima ut recusandae, vel officia.
-            Architecto, explicabo.
-          </p>
+          {fullContent ? (
+            <div
+              className="markdown-content"
+              dangerouslySetInnerHTML={{ __html: fullContent }}
+            />
+          ) : (
+            <>
+              <PreventionWebLandingPageWidget
+                pageId="16"
+                activeDomain="www.undrr.org"
+              />
+              {appendContent && (
+                <div
+                  className="markdown-append-content"
+                  dangerouslySetInnerHTML={{ __html: appendContent }}
+                />
+              )}
+            </>
+          )}
         </section>
-      </p>
+      </div>
     </MainContainer>
   );
 }

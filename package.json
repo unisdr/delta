@@ -38,6 +38,7 @@
     "jszip": "^3.10.1",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
+    "marked": "^15.0.6",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.16",
     "ol": "^10.2.1",
