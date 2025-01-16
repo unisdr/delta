@@ -106,6 +106,9 @@ const DisasterSummary: React.FC = () => {
 
   return (
     <section className="dts-page-section">
+    
+      {/* Ensure full width */}
+      
       <div className="mg-container">
         <h2 className="dts-heading-2">Disaster Impacts Across Sectors</h2>
         <p>These summaries represent disaster impact on all sectors combined.</p>
@@ -231,6 +234,8 @@ const DisasterSummary: React.FC = () => {
           </div>
         </div>
       </div>
+   
+       
     </section>
   );
 };
