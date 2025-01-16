@@ -224,7 +224,7 @@ export default function Screen() {
 							<div>
 									{
 										loaderData.confAuthSupportedAzureSSOB2C ? 
-											<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/callback?action=login"
+											<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/login"
 												style={{
 													width: "100%", // Full width on small screens
 													padding: "10px 20px", // Ensure consistent padding

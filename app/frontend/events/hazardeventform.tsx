@@ -28,7 +28,7 @@ export const fieldsDefCommon = [
 	{key: "otherId1", label: "Event id in other system", type: "text"},
 	{key: "startDate", label: "Start Date", type: "date", required: true},
 	{key: "endDate", label: "End Date", type: "date", required: true},
-	{key: "description", label: "Description", type: "text"},
+	{key: "description", label: "Description", type: "textarea"},
 	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "text"},
 	{key: "duration", label: "Duration", type: "text"},
 	{key: "magnitude", label: "Magnitude", type: "text"},
