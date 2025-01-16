@@ -43,29 +43,28 @@ export default function TechnicalSpecifications() {
       headerExtra={<NavSettings />}
     >
       <div className="wip-message">
-        <div>
-          <section>
-            {fullContent ? (
-              <div
-                className="markdown-content"
-                dangerouslySetInnerHTML={{ __html: fullContent }}
+        <section>
+          <h2>Technical Specifications</h2>
+          {fullContent ? (
+            <div
+              className="markdown-content"
+              dangerouslySetInnerHTML={{ __html: fullContent }}
+            />
+          ) : (
+            <>
+              <PreventionWebLandingPageWidget
+                pageId="16"
+                activeDomain="www.undrr.org"
               />
-            ) : (
-              <>
-                <PreventionWebLandingPageWidget
-                  pageId="16"
-                  activeDomain="www.undrr.org"
+              {appendContent && (
+                <div
+                  className="markdown-append-content"
+                  dangerouslySetInnerHTML={{ __html: appendContent }}
                 />
-                {appendContent && (
-                  <div
-                    className="markdown-append-content"
-                    dangerouslySetInnerHTML={{ __html: appendContent }}
-                  />
-                )}
-              </>
-            )}
-          </section>
-        </div>
+              )}
+            </>
+          )}
+        </section>
       </div>
     </MainContainer>
   );
