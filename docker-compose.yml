@@ -1,0 +1,33 @@
+
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:2024@db:5432/dts_development
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:17
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=2024
+      - POSTGRES_DB=dts_development
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  db-data:
+    driver: local

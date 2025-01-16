@@ -5,8 +5,9 @@ import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/uti
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-import  { useState, } from "react";
+import { useState, } from "react";
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
+import DisasterSummary from "~/frontend/analytics/sectors/sections/DisasterSummary";
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
@@ -38,10 +39,12 @@ export default function SectorsAnalysis() {
     disasterEventId: string | null;
     dateRange: string | null;
   }) => {
-    setFilters(filters);
+    console.log("Filters applied:", filters);
+    setFilters(filters);// Update the state with the applied filters
   };
 
   const handleClearFilters = () => {
+    console.log("Filters cleared");
     setFilters(null);
   };
 
@@ -53,18 +56,29 @@ export default function SectorsAnalysis() {
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       {/* Filters Component */}
       <Filters onApplyFilters={handleApplyFilters} onAdvancedSearch={handleAdvancedSearch} onClearFilters={handleClearFilters} />
+
+      {/* Disaster Summary Section */}
+      <DisasterSummary />
+
       {/* Placeholder for Under Construction */}
-      <div className="construction-message">
-        <p className="wip-message">
-          🚧 Work in Progress! This page is under construction.
+      {/* Work In Progress Message */}
+      <div className="construction-message" style={{ marginTop: "2rem", padding: "1.6rem", backgroundColor: "#f9f9f9", borderRadius: "8px", border: "1px solid #ddd" }}>
+        <h3 style={{ fontSize: "1.8rem", marginBottom: "1rem", fontWeight: "600", color: "#333" }}>
+          🚧 Work In Progress
+        </h3>
+        <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
+          The remaining sections of this dashboard, including:
         </p>
-        {filters ? (
-          <div>
-            <p>Filters have been applied, but data visualizations are not yet ready.</p>
-          </div>
-        ) : (
-          <p>Apply filters to see data visualizations (once this page is complete).</p>
-        )}
+        <ul style={{ marginTop: "1rem", marginBottom: "1rem", paddingLeft: "1.5rem", fontSize: "1.4rem", lineHeight: "1.6", color: "#555" }}>
+          <li>Damage Inventory</li>
+          <li>Impact by Sector</li>
+          <li>Impact on Sectors by Location</li>
+          <li>Largest Impacts</li>
+          <li>Most Damaging Events</li>
+        </ul>
+        <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
+          are still under construction. Please stay tuned for future updates!
+        </p>
       </div>
     </MainContainer>
   );
