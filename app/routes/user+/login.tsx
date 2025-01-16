@@ -30,6 +30,7 @@ import {
 import {
 	errorToString
 } from "~/frontend/form"
+import {configAuthSupportedAzureSSOB2C} from "~/util/config"
 
 
 
@@ -74,7 +75,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (user) {
 		return redirect(redirectTo);
 	}
-	return { redirectTo: redirectTo };
+	return { redirectTo: redirectTo, confAuthSupportedAzureSSOB2C:configAuthSupportedAzureSSOB2C() };
 };
 
 export function getSafeRedirectTo(redirectTo: string | null, defaultPath: string = "/"): string {
@@ -102,9 +103,6 @@ export default function Screen() {
 
 	const [password, setPassword] = useState(data?.password || "");
 	const [passwordVisible, setPasswordVisible] = useState(false);
-
-
-
 
 	const togglePasswordVisibility = () => {
 		setPasswordVisible(!passwordVisible);
@@ -224,13 +222,17 @@ export default function Screen() {
 								></SubmitButton>
 							</div>
 							<div>
-								<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/callback?action=login"
-									style={{
-										width: "100%", // Full width on small screens
-										padding: "10px 20px", // Ensure consistent padding
-										marginTop: "5px",
-									}}
-								>Login using Azure B2C SSO</Link>
+									{
+										loaderData.confAuthSupportedAzureSSOB2C ? 
+											<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/callback?action=login"
+												style={{
+													width: "100%", // Full width on small screens
+													padding: "10px 20px", // Ensure consistent padding
+													marginTop: "5px",
+												}}
+											>Login using Azure B2C SSO</Link>
+										 : ''
+									}
 							</div>
 						</Form>
 					</div>

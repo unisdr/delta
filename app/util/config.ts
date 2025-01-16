@@ -123,3 +123,61 @@ export function configFooterURLTermsConds(): string {
 	const value = process.env.FOOTER_URL_TERMS_CONDS || "";
 	return value;
 };
+
+
+/**
+ * Get configuration for supported autentication.
+ * @returns array string[] | default value ['form']
+ */
+function _configAuthSupported(): string[] {
+	const authAllowedArray = [ 'form', 'sso_azure_b2c' ];
+	let value = process.env.AUTHENTICATION_SUPPORTED || "form";
+	let valueArray = [];
+	let returnArray:string[] = [];
+	
+	// remove spaces
+	value = value.replace(/\s+/g, '');
+	valueArray = value.split(",");
+
+	valueArray.forEach(function(item, index) { 
+		if ((authAllowedArray.indexOf(item) !== -1) == false) {
+			console.log('Authentication configuration (.env): ' + item + ' is invalid.'); 
+		}
+		else {
+			returnArray.push(item);
+		}
+	});
+
+	// if all configs are wrong, default to form.
+	if (returnArray.length == 0) {
+		returnArray.push('form');
+	}
+
+	return returnArray;
+};
+
+/**
+ * Check form authentication is supported.
+ * @returns boolean | default is false.
+ */
+export function configAuthSupportedForm(): boolean {
+	let value = false;
+	const authArraySupported = _configAuthSupported();
+
+	value = authArraySupported.indexOf('form') !== -1;
+
+	return value;
+}
+
+/**
+ * Check azue_sso_b2c authentication is supported.
+ * @returns boolean | default is false.
+ */
+export function configAuthSupportedAzureSSOB2C(): boolean {
+	let value = false;
+	const authArraySupported = _configAuthSupported();
+
+	value = authArraySupported.indexOf('sso_azure_b2c') !== -1;
+
+	return value;
+}

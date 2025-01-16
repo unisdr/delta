@@ -7,6 +7,7 @@ import {
 import { Link } from "react-router-dom";
 import { useLoaderData } from "@remix-run/react";
 import { configSiteName } from "~/util/config";
+import {configAuthSupportedAzureSSOB2C} from "~/util/config"
 
 export const action = async () => {
 	return json(null);
@@ -16,6 +17,7 @@ export const loader = async () => {
 	console.log("NODE_ENV", process.env.NODE_ENV)
 	return ({
 		configSiteName: configSiteName(),
+		confAuthSupportedAzureSSOB2C:configAuthSupportedAzureSSOB2C()
 	});
 };
 
@@ -43,7 +45,17 @@ export default function Screen() {
 					</div>
 					<div className="dts-form__actions">
 						<Link to="/setup/admin-account" className="mg-button mg-button-primary">Set up account</Link>
-						<Link to="/setup/admin-account-sso" className="mg-button mg-button-outline">Set up account using SSO</Link>
+						{
+							loaderData.confAuthSupportedAzureSSOB2C ? 
+								<Link className='mg-button mg-button-outline' to="/setup/admin-account-sso"
+									style={{
+										width: "100%", // Full width on small screens
+										padding: "10px 20px", // Ensure consistent padding
+										marginTop: "5px",
+									}}
+								>Set up account using SSO</Link>
+								: ''
+						}
 					</div>
 				</form>
 			</div>
