@@ -26,9 +26,9 @@ export function startWebSocketServer(port: number) {
           dr.select({ count: sql`COUNT(*)` }).from(eventTable),
           dr.select({ damage: sql`SUM(effects_total_usd)` }).from(disasterEventTable),
           dr.select({ losses: sql`SUM(subtotal_losses_usd)` }).from(disasterEventTable),
-          dr.select({ recovery: sql`SUM(recovery_needs_total_usd)` }).from(disasterEventTable),
+          dr.select({ recovery: sql`SUM(recovery_needs_total)` }).from(disasterEventTable),
           dr.execute(
-            sql`SELECT EXTRACT(YEAR FROM start_date_utc) as year, COUNT(*) as count FROM ${eventTable} GROUP BY year`
+            sql`SELECT EXTRACT(YEAR FROM start_date_utc) as year, COUNT(*) as count FROM ${disasterEventTable} GROUP BY year`
           ),
           dr.execute(
             sql`SELECT EXTRACT(YEAR FROM start_date_utc) as year, SUM(effects_total_usd) as value FROM ${disasterEventTable} GROUP BY year`
@@ -37,7 +37,7 @@ export function startWebSocketServer(port: number) {
             sql`SELECT EXTRACT(YEAR FROM start_date_utc) as year, SUM(subtotal_losses_usd) as value FROM ${disasterEventTable} GROUP BY year`
           ),
           dr.execute(
-            sql`SELECT EXTRACT(YEAR FROM start_date_utc) as year, SUM(recovery_needs_total_usd) as value FROM ${disasterEventTable} GROUP BY year`
+            sql`SELECT EXTRACT(YEAR FROM start_date_utc) as year, SUM(recovery_needs_total) as value FROM ${disasterEventTable} GROUP BY year`
           ),
         ]);
 
