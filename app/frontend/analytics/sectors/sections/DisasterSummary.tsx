@@ -8,6 +8,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  computePosition,
+  flip,
+  shift,
+  offset,
+  arrow,
+} from "@floating-ui/dom"; 
+
 
 interface DisasterSummaryData {
     events: number;
@@ -49,6 +57,85 @@ const DisasterSummary: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.dts-tooltip__button');
+  
+    buttons.forEach((button) => {
+      const tooltip = button.nextElementSibling as HTMLElement | null;
+      const arrowElement = tooltip?.querySelector<HTMLElement>(".dts-tooltip__arrow");
+  
+      if (!tooltip || !arrowElement) {
+        console.error('Tooltip or arrow element not found for button', button);
+        return; // Gracefully handle missing tooltip or arrow elements
+      }
+  
+      const updateTooltipPosition = async () => {
+        try {
+          const result = await computePosition(button, tooltip, {
+            placement: "top",
+            middleware: [
+              offset(6),
+              flip(),
+              shift({ padding: 5 }),
+              arrow({ element: arrowElement }),
+            ],
+          });
+  
+          Object.assign(tooltip.style, {
+            left: `${result.x}px`,
+            top: `${result.y}px`,
+            display: "block",
+          });
+  
+          const { x: arrowX, y: arrowY } = result.middlewareData.arrow!;
+          const staticSide = {
+            top: "bottom",
+            right: "left",
+            bottom: "top",
+            left: "right",
+          }[result.placement.split("-")[0]] as keyof CSSStyleDeclaration;
+  
+          Object.assign(arrowElement.style, {
+            left: arrowX !== null ? `${arrowX}px` : "",
+            top: arrowY !== null ? `${arrowY}px` : "",
+            [staticSide]: "-4px",
+          });
+        } catch (error) {
+          console.error("Tooltip position update failed:", error);
+        }
+      };
+  
+      const showTooltip = () => {
+        console.log('Showing tooltip', tooltip.id);
+        tooltip.style.display = "block";
+        updateTooltipPosition();
+      };
+  
+      const hideTooltip = () => {
+        console.log('Hiding tooltip', tooltip.id);
+        tooltip.style.display = "none";
+      };
+  
+      const eventListeners: [string, EventListenerOrEventListenerObject][] = [
+        ["pointerenter", showTooltip],
+        ["pointerleave", hideTooltip],
+        ["focus", showTooltip],
+        ["blur", hideTooltip],
+      ];
+  
+      eventListeners.forEach(([event, listener]) => {
+        button.addEventListener(event, listener);
+      });
+  
+      return () => {
+        eventListeners.forEach(([event, listener]) => {
+          button.removeEventListener(event, listener);
+        });
+      };
+    });
+  }, []);
+  
+
   const renderEmptyState = () => (
     <div
     className="dts-placeholder"
@@ -62,7 +149,7 @@ const DisasterSummary: React.FC = () => {
   >
     {/* Display the icon */}
     <img
-      src="/assets/icons/inbox_Empty_icon.svg"
+      src="/assets/icons/empty-inbox.svg"
       alt="No data available"
       style={{
         width: "96px", // Increased size for better visibility
@@ -108,7 +195,6 @@ const DisasterSummary: React.FC = () => {
     <section className="dts-page-section">
     
       {/* Ensure full width */}
-      
       <div className="mg-container">
         <h2 className="dts-heading-2">Disaster Impacts Across Sectors</h2>
         <p>These summaries represent disaster impact on all sectors combined.</p>
@@ -125,7 +211,7 @@ const DisasterSummary: React.FC = () => {
       className="dts-tooltip__button"
       aria-labelledby="elementId01"
       aria-describedby="tooltip01"
-      style={{ marginLeft: "8px" }} // Space between title and button
+      //style={{ marginLeft: "8px" }} // Space between title and button
     >
       <img
         src="/assets/icons/information_outline.svg"
@@ -134,11 +220,12 @@ const DisasterSummary: React.FC = () => {
       />
     </button>
     {/* Tooltip content */}
-    <div id="tooltip01" role="tooltip" className="dts-tooltip-content">
+    <div id="tooltip01" role="tooltip">
       <span>
         Lorem ipsum is placeholder text commonly used in the graphic, print, and
         publishing industries for previewing layouts and visual mockups.
       </span>
+      <div className="dts-tooltip__arrow"></div>
     </div>
   </h3>
 
@@ -149,7 +236,26 @@ const DisasterSummary: React.FC = () => {
 
           {/* Events Over Time Line Chart */}
           <div className="dts-data-box mg-grid__col--span-2">
-            <h3 className="dts-body-label">Events over time</h3>
+            <h3 className="dts-body-label">
+              <span id="elementId02">Events over time</span>
+              <button
+                type="button"
+                className="dts-tooltip__button"
+                aria-labelledby="elementId02"
+                aria-describedby="tooltip02"
+              //style={{ marginLeft: "8px" }} // Space between title and button
+              >
+                <img
+                  src="/assets/icons/information_outline.svg"
+                  alt="Info icon"
+                  style={{ width: "16px", height: "16px" }}
+                />
+              </button>
+              <div id="tooltip02" role="tooltip">
+                <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
+                <div className="dts-tooltip__arrow"></div>
+              </div>
+            </h3>
             {data.eventsOverTime && data.eventsOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={data.eventsOverTime}>
@@ -170,7 +276,26 @@ const DisasterSummary: React.FC = () => {
         <div className="mg-grid mg-grid__col-3">
           {/* Damage */}
           <div className="dts-data-box">
-            <h3 className="dts-body-label">Damage [currency] (in thousands)</h3>
+          <h3 className="dts-body-label">
+            <span id="elementId03">Damage [currency] (in thousands)</span>
+            <button
+                type="button"
+                className="dts-tooltip__button"
+                aria-labelledby="elementId03"
+                aria-describedby="tooltip03"
+              //style={{ marginLeft: "8px" }} // Space between title and button
+              >
+                <img
+                  src="/assets/icons/information_outline.svg"
+                  alt="Info icon"
+                  style={{ width: "16px", height: "16px" }}
+                />
+              </button>
+              <div id="tooltip03" role="tooltip">
+                <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
+                <div className="dts-tooltip__arrow"></div>
+              </div>
+            </h3>
             <div className="dts-indicator dts-indicator--target-box-d">
               <span>${(data.damage / 1000).toLocaleString()}k</span>
             </div>
@@ -191,7 +316,26 @@ const DisasterSummary: React.FC = () => {
 
           {/* Losses */}
           <div className="dts-data-box">
-            <h3 className="dts-body-label">Losses [currency]</h3>
+          <h3 className="dts-body-label">
+            <span id="elementId04">Losses in [currency]</span>
+            <button
+                type="button"
+                className="dts-tooltip__button"
+                aria-labelledby="elementId04"
+                aria-describedby="tooltip04"
+              //style={{ marginLeft: "8px" }} // Space between title and button
+              >
+                <img
+                  src="/assets/icons/information_outline.svg"
+                  alt="Info icon"
+                  style={{ width: "16px", height: "16px" }}
+                />
+              </button>
+            <div id="tooltip04" role="tooltip">
+            <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
+            <div className="dts-tooltip__arrow"></div>
+            </div>
+            </h3>
             <div className="dts-indicator dts-indicator--target-box-c">
               <span>${data.losses.toLocaleString()}</span>
             </div>
@@ -212,9 +356,26 @@ const DisasterSummary: React.FC = () => {
 
           {/* Recovery */}
           <div className="dts-data-box">
-            <h3 className="dts-body-label">
-              Recovery [currency] (in thousands)
-            </h3>
+          <h3 className="dts-body-label">
+          <span id="elementId05">Recovery [currency] (in thousands)</span>
+          <button
+                type="button"
+                className="dts-tooltip__button"
+                aria-labelledby="elementId05"
+                aria-describedby="tooltip05"
+              //style={{ marginLeft: "8px" }} // Space between title and button
+              >
+                <img
+                  src="/assets/icons/information_outline.svg"
+                  alt="Info icon"
+                  style={{ width: "16px", height: "16px" }}
+                />
+              </button>
+          <div id="tooltip05" role="tooltip">
+          <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
+          <div className="dts-tooltip__arrow"></div>
+          </div>
+          </h3>
             <div className="dts-indicator dts-indicator--target-box-f">
               <span>${(data.recovery / 1000).toLocaleString()}k</span>
             </div>
@@ -234,8 +395,6 @@ const DisasterSummary: React.FC = () => {
           </div>
         </div>
       </div>
-   
-       
     </section>
   );
 };
