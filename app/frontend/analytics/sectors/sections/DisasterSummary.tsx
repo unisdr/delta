@@ -31,30 +31,31 @@ interface DisasterSummaryData {
 const DisasterSummary: React.FC = () => {
   const [data, setData] = useState<DisasterSummaryData | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch data on component mount
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080");
-
-    ws.onopen = () => console.log("Connected to WebSocket");
-    ws.onmessage = (event) => {
+    const fetchData = async () => {
+      setLoading(true); // Start loading indicator
       try {
-        const parsedData: DisasterSummaryData = JSON.parse(event.data);
-        setData(parsedData);
-        setError(null); // Clear any previous errors if data is successfully received
-      } catch (err) {
-        console.error("Error parsing WebSocket data:", err);
-        setError("Failed to parse data. Check WebSocket message format.");
+        // Fetch data from the REST API
+        const response = await fetch("/api/analytics/disaster-summary");
+        if (!response.ok) {
+          throw new Error("Failed to fetch disaster summary data");
+        }
+  
+        const result = await response.json();
+        setData(result); // Set the fetched data
+        setError(null);  // Clear any existing error
+      } catch (error) {
+        console.error("Error fetching disaster summary data:", error);
+        setError("Unable to load data. Please try again.");
+      } finally {
+        setLoading(false); // Stop loading indicator
       }
     };
-
-    ws.onerror = (event) => {
-      console.error("WebSocket error:", event);
-      setError("WebSocket encountered an error. Checking connection.");
-    };
-
-    return () => {
-      ws.close();
-    };
+  
+    fetchData(); // Invoke the function on component mount
   }, []);
 
   useEffect(() => {
@@ -180,12 +181,12 @@ const DisasterSummary: React.FC = () => {
     );
   }
 
-  if (!data) {
+  if (loading || !data) {
     return (
       <section className="dts-page-section">
         <div className="mg-container">
           <h2 className="dts-heading-2">Disaster Impacts Across Sectors</h2>
-          <p className="dts-alert dts-alert--info">Waiting for data...</p>
+          <p className="dts-alert dts-alert--info">{loading ? "Loading data..." : "Waiting for data..."}</p>
         </div>
       </section>
     );
