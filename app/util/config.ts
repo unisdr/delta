@@ -30,7 +30,7 @@ export function configSiteLogo(): string {
 	// const value = process.env.WEBSITE_LOGO || '';
 
 	//Temporary not to break the layout
-	const value = process.env.WEBSITE_LOGO || 'https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg';
+	const value = process.env.WEBSITE_LOGO || 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/images/dldt-logo-mark.svg';
 	return value;
 };
 

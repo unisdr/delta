@@ -5,6 +5,7 @@ import {ListView} from "~/frontend/resource-repo/listview";
 
 import {
 	useLoaderData,
+	MetaFunction,
 } from "@remix-run/react";
 
 import {
@@ -15,6 +16,13 @@ import {
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 	return resourceRepoLoader({loaderArgs})
 })
+
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "PDNA Resources Repository - DTS" },
+		{ name: "description", content: "PDNA Resources Repository." },
+	];
+};
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();

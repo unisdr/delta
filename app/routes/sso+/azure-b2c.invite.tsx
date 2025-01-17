@@ -38,7 +38,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 export default function SsoAzureB2cCallback() {
     const loaderData = useLoaderData<typeof loader>();
 
-    if (loaderData.errors) {
+    if (loaderData?.errors) {
         return <>
             <div>
                 <h1>Error: received server error response</h1>
