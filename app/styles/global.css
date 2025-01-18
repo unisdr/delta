@@ -72,3 +72,14 @@ form > label {
 	width: 100%; 
 	overflow-x: hidden; 
   }
+
+  .dts-tablist__button.active {
+	color: #333333;
+	font-weight: bold; /* Makes the active tab text bold */
+	background-color: white; /* Active tab background */
+  }
+  
+  .dts-tablist__button.inactive {
+	opacity: 0.6; /* Lower opacity for inactive tabs */
+  }
+

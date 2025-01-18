@@ -44,7 +44,7 @@ const DamageInventory: React.FC = () => {
       ) : error ? (
         <p className="dts-alert dts-alert--error">{error}</p>
       ) : data.length === 0 ? (
-        <p>No data available</p>
+        <p style={{color: "#888"}}>No data available</p>
       ) : (
         <table className="dts-table" style={{ marginTop: "1rem" }}>
           <thead>
