@@ -29,7 +29,7 @@ interface TableColumn {
 interface DialogField {
   id: string;
   caption: string;
-  type: "input" | "select" | "file" | "option" | "textarea" | "nmapper";
+  type: "input" | "select" | "file" | "option" | "textarea" | "mapper";
   required?: boolean;
   options?: string[];
   placeholder?: string;
