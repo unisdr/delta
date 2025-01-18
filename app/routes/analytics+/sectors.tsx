@@ -9,6 +9,7 @@ import { useState, } from "react";
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import DisasterSummary from "~/frontend/analytics/sectors/sections/DisasterSummary";
 import DamageInventory from "~/frontend/analytics/sectors/sections/DamageInventory";
+import ImpactBySector from "~/frontend/analytics/sectors/sections/ImpactBySector";
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
@@ -63,6 +64,9 @@ export default function SectorsAnalysis() {
 
       {/* Damage Inventory Section */}
       <DamageInventory />
+
+      {/* Impact by Sector Section */}
+      <ImpactBySector />
 
       {/* Placeholder for Under Construction */}
       {/* Work In Progress Message */}
