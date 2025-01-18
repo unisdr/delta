@@ -8,6 +8,7 @@ import { MainContainer } from "~/frontend/container";
 import { useState, } from "react";
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import DisasterSummary from "~/frontend/analytics/sectors/sections/DisasterSummary";
+import DamageInventory from "~/frontend/analytics/sectors/sections/DamageInventory";
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
@@ -60,6 +61,9 @@ export default function SectorsAnalysis() {
       {/* Disaster Summary Section */}
       <DisasterSummary />
 
+      {/* Damage Inventory Section */}
+      <DamageInventory />
+
       {/* Placeholder for Under Construction */}
       {/* Work In Progress Message */}
       <div className="construction-message" style={{ marginTop: "2rem", padding: "1.6rem", backgroundColor: "#f9f9f9", borderRadius: "8px", border: "1px solid #ddd" }}>
@@ -70,7 +74,6 @@ export default function SectorsAnalysis() {
           The remaining sections of this dashboard, including:
         </p>
         <ul style={{ marginTop: "1rem", marginBottom: "1rem", paddingLeft: "1.5rem", fontSize: "1.4rem", lineHeight: "1.6", color: "#555" }}>
-          <li>Damage Inventory</li>
           <li>Impact by Sector</li>
           <li>Impact on Sectors by Location</li>
           <li>Largest Impacts</li>
