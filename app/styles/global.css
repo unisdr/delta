@@ -59,3 +59,16 @@ form > label {
 .input-normal {
 	border: 1px solid #ccc; /* Default border to ensure visibility change */
 }
+
+/* Scope styles specifically to the sectors.tsx page */
+.sectors-page .dts-page-section {
+	padding: 0; 
+	margin-top: 4rem; 
+  }
+  
+  .sectors-page .mg-container {
+	padding: 0; 
+	max-width: 100%; 
+	width: 100%; 
+	overflow-x: hidden; 
+  }

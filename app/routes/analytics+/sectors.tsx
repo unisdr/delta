@@ -56,6 +56,7 @@ export default function SectorsAnalysis() {
 
   return (
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
+      <div className="sectors-page">
       {/* Filters Component */}
       <Filters onApplyFilters={handleApplyFilters} onAdvancedSearch={handleAdvancedSearch} onClearFilters={handleClearFilters} />
 
@@ -78,7 +79,6 @@ export default function SectorsAnalysis() {
           The remaining sections of this dashboard, including:
         </p>
         <ul style={{ marginTop: "1rem", marginBottom: "1rem", paddingLeft: "1.5rem", fontSize: "1.4rem", lineHeight: "1.6", color: "#555" }}>
-          <li>Impact by Sector</li>
           <li>Impact on Sectors by Location</li>
           <li>Largest Impacts</li>
           <li>Most Damaging Events</li>
@@ -86,6 +86,7 @@ export default function SectorsAnalysis() {
         <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
           are still under construction. Please stay tuned for future updates!
         </p>
+      </div>
       </div>
     </MainContainer>
   );
