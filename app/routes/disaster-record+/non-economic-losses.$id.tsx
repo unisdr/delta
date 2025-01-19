@@ -330,7 +330,7 @@ export default function Screen() {
 								</div>
 								<select name="subtype" onChange={handleSelectOnChangeSubCategories}>
 								<option value="">Select a sub type</option>
-								{actionData?.subcategories.map(item => (
+								{Array.isArray(actionData?.subcategories) && actionData.subcategories.map(item => (
 									<option key={item.id} value={item.id}>{item.name}</option>
 								))}
 								</select>
