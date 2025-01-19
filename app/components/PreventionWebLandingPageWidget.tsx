@@ -33,7 +33,8 @@ export default function PreventionWebLandingPageWidget({
   useEffect(() => {
     // Dynamically load the script when the component mounts
     const script = document.createElement("script");
-    script.src = `https://publish.preventionweb.net/widget.js?rand=${pageId}`;
+    script.id = pageId;
+    script.src = `https://publish.preventionweb.net/widget.js?rand='${pageId}'`;
     script.type = "text/javascript";
     script.integrity =
       "sha512-b6PolUa59uPjYAU+abyKpXNBPC7xOFXsyYG9T8uhnof3hsxc0GDbDPwx5d54Fu+TOxrSt55/tdS9DXWWB/jMcg==";

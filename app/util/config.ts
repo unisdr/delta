@@ -24,6 +24,14 @@ export function configSiteName(): string {
 };
 
 /**
+ * Get the Country Name.
+ */
+export function configCountryName(): string {
+	const value = process.env.COUNTRY_NAME || '';
+	return value;
+};
+
+/**
  * Get the Website Logo Image URL.
  */
 export function configSiteLogo(): string {
