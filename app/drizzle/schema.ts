@@ -10,6 +10,7 @@ import {
 	index,
 	AnyPgColumn,
 	check,
+	uniqueIndex 
 } from "drizzle-orm/pg-core";
 
 import {
@@ -481,3 +482,16 @@ export const rrAttachmentsRel = relations(rrAttachmentsTable, ({one}) => ({
 		references: [resourceRepoTable.id],
 	}),
 }));
+
+export type disasterRecords = typeof disasterRecordsTable.$inferSelect;
+export type disasterRecordsInsert = typeof disasterRecordsTable.$inferInsert;
+
+export const disasterRecordsTable = pgTable("disaster_records", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	disasterEventId: uuid("disaster_event_id").references((): AnyPgColumn => disasterEventTable.id).notNull(),
+	...approvalFields,
+	...createdUpdatedTimestamps,
+}, (table) => ({
+	disasterEventIdUniqueIndex: uniqueIndex('disasterEventIdUniqueIndex').on(table.disasterEventId),
+}));
+
