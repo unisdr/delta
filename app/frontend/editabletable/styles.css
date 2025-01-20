@@ -1,0 +1,59 @@
+table.dts-editable-table {
+	table-layout: fixed;
+	border-collapse: collapse;
+	width: auto;
+}
+
+.dts-editable-table > thead > tr > th.asc::after {
+	content: " \2191"; /* Unicode for upward arrow */
+}
+
+.dts-editable-table > thead > tr > th.desc::after {
+	content: " \2193"; /* Unicode for downward arrow */
+}
+
+
+.dts-editable-table > tbody > tr > td 
+{
+	overflow: hidden;
+	padding: 5px 2px;
+	height: auto;
+	border: 0;
+}
+
+.dts-editable-table > tbody > tr {
+	border-bottom: 1px solid #F2F2F2;
+}
+.dts-editable-table > tbody > tr > td.dts-init {
+}
+.dts-editable-table > tbody > tr > td.dts-update {
+	background: #DFF0D8;
+}
+.dts-editable-table > tbody > tr > td.dts-new {
+	background: #DFF0D8;
+}
+
+.dts-editable-table > tbody > tr > td > input,
+.dts-editable-table > tbody > tr > td > select {
+	width: 100%;
+}
+/* both top bar above table and right col in table */
+.dts-table-actions {
+	display: flex;
+	gap: 5px;
+	align-items: center;
+	justify-content: start;
+}
+.dts-table-actions-main {
+	margin: 20px 0;
+}
+.dts-table-actions-main > button {
+	margin-right: 20px;
+}
+.dts-table-actions > button {
+	color: #00AFAE;
+}
+.dts-table-actions > button > img {
+	width: 16px;
+  height: 16px;
+}
