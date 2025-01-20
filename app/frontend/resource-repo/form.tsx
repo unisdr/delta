@@ -95,7 +95,6 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 						<ContentRepeater
 						id="attachments"
 						dnd_order={true}
-						debug={true}
 						save_path_temp="/uploads/temp"
 						file_viewer_temp_url="/resource-repo/file-temp-viewer"
 						file_viewer_url="/resource-repo/file-viewer"
