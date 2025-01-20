@@ -342,14 +342,14 @@ export const deathsTable = pgTable("deaths", {
 export type Deaths = typeof deathsTable.$inferSelect;
 export type DeathsInsert = typeof deathsTable.$inferInsert;
 
-export const injuriesTable = pgTable("injuries", {
+export const injuredTable = pgTable("injured", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	injuries: integer("injuries"),
+	injured: integer("injured"),
 });
 
-export type Injuries = typeof injuriesTable.$inferSelect;
-export type InjuriesInsert = typeof injuriesTable.$inferInsert;
+export type Injured = typeof injuredTable.$inferSelect;
+export type InjuredInsert = typeof injuredTable.$inferInsert;
 
 export const missingTable = pgTable("missing", {
 	id: uuid("id").primaryKey().defaultRandom(),

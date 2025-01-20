@@ -23,7 +23,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	let tbl: HumanEffectsTable
 	if (!tblStr) {
 		tbl = "Deaths"
-	} else if (tblStr == "Deaths" || tblStr == "Injuries" || tblStr == "Missing" || tblStr == "Affected" || tblStr == "Displaced" || tblStr == "DisplacementStocks") {
+	} else if (tblStr == "Deaths" || tblStr == "Injured" || tblStr == "Missing" || tblStr == "Affected" || tblStr == "Displaced" || tblStr == "DisplacementStocks") {
 		tbl = tblStr
 	} else {
 		throw new Error("unknown table: " + tblStr)
@@ -93,7 +93,7 @@ export default function Screen() {
 	})
 
 	return (
-		<MainContainer title="Human Effects TODO">
+		<MainContainer title="Human Direct Effects">
 			<p>{data.tbl}</p>
 			<fetcher.Form method="get" action=".">
 				<select

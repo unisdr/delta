@@ -1,6 +1,6 @@
 import {Def} from "~/frontend/editabletable/defs"
 
-export type HumanEffectsTable = "Deaths" | "Injuries" | "Missing" | "Affected" | "Displaced" | "DisplacementStocks"
+export type HumanEffectsTable = "Deaths" | "Injured" | "Missing" | "Affected" | "Displaced" | "DisplacementStocks"
 
 export interface HumanEffectTableDef {
 	id: HumanEffectsTable
@@ -9,7 +9,7 @@ export interface HumanEffectTableDef {
 
 export const HumanEffectTablesDefs: HumanEffectTableDef[] = [
 	{id: "Deaths", label: "Deaths"},
-	{id: "Injuries", label: "Injuries"},
+	{id: "Injured", label: "Injured"},
 	{id: "Missing", label: "Missing"},
 	{id: "Affected", label: "Affected"},
 	{id: "Displaced", label: "Displaced"},
@@ -46,12 +46,12 @@ function sharedDefs(): Def[] {
 			uiName: "Disability",
 			jsName: "disability",
 			dbName: "disability",
-			uiColWidth: 100,
+			uiColWidth: 120,
 			type: "enum",
 			data: [
+				{key: "dis_none", label: "No disabilities"},
 				{key: "dis_group1", label: "Dis. group 1"},
 				{key: "dis_group2", label: "Dis. group 2"},
-				{key: "dis_group3", label: "Dis. group 3"},
 			]
 		},
 		{
@@ -94,11 +94,11 @@ export function defsForTable(tbl: HumanEffectsTable): Def[] {
 				type: "number",
 			})
 			break
-		case "Injuries":
+		case "Injured":
 			res.push({
-				uiName: "Injuries",
-				jsName: "injuries",
-				dbName: "injuries",
+				uiName: "Injured",
+				jsName: "injured",
+				dbName: "injured",
 				type: "number",
 			})
 			break

@@ -17,7 +17,7 @@ export const loader = authLoaderWithPerm("ViewData", async (actionArgs) => {
 	let url = new URL(request.url)
 	let tblStr = url.searchParams.get("tbl")
 	let tbl: HumanEffectsTable
-	if (tblStr === "Deaths" || tblStr === "Injuries" || tblStr === "Missing" || tblStr === "Affected" || tblStr === "Displaced" || tblStr === "DisplacementStocks") {
+	if (tblStr === "Deaths" || tblStr === "Injured" || tblStr === "Missing" || tblStr === "Affected" || tblStr === "Displaced" || tblStr === "DisplacementStocks") {
 		tbl = tblStr
 	} else {
 		throw new Error("unknown table")

@@ -7,7 +7,7 @@ import {
 	deleteRows,
 	get,
 } from './human_effects'
-import {injuriesTable, humanDsgTable} from '~/drizzle/schema'
+import {injuredTable, humanDsgTable} from '~/drizzle/schema'
 
 import {Def} from "~/frontend/editabletable/defs"
 
@@ -16,7 +16,7 @@ import {
 } from "drizzle-orm"
 
 async function truncateData() {
-	await dr.execute(sql`TRUNCATE ${humanDsgTable}, ${injuriesTable} CASCADE`)
+	await dr.execute(sql`TRUNCATE ${humanDsgTable}, ${injuredTable} CASCADE`)
 }
 
 let defs1: Def[] = [
@@ -46,12 +46,12 @@ describe("human_effects", async () => {
 	it("create basic", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [["m", 1], ["f", 2]], false)
+			let res = await create(dr, "Injured", "rid1", defs, [["m", 1], ["f", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injuries", "rid1", defs)
+			let res = await get(dr, "Injured", "rid1", defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -77,12 +77,12 @@ describe("human_effects", async () => {
 			}
 		]
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [["above", 1], ["below", 2]], false)
+			let res = await create(dr, "Injured", "rid1", defs, [["above", 1], ["below", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injuries", "rid1", defs)
+			let res = await get(dr, "Injured", "rid1", defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["above", 1], ["below", 2]])
@@ -91,7 +91,7 @@ describe("human_effects", async () => {
 	it("type mismatch", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [[1, 1], [1, 2]], false)
+			let res = await create(dr, "Injured", "rid1", defs, [[1, 1], [1, 2]], false)
 			console.log(res)
 			assert(!res.ok)
 			assert.equal(res.error.code, "invalid_value")
@@ -100,12 +100,12 @@ describe("human_effects", async () => {
 	it("non string data (for json)", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [["m", 1], ["f", 2]], false)
+			let res = await create(dr, "Injured", "rid1", defs, [["m", 1], ["f", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injuries", "rid1", defs)
+			let res = await get(dr, "Injured", "rid1", defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -114,12 +114,12 @@ describe("human_effects", async () => {
 	it("string data (for csv)", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", "rid1", defs, [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injuries", "rid1", defs)
+			let res = await get(dr, "Injured", "rid1", defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -129,18 +129,18 @@ describe("human_effects", async () => {
 		let defs = defs1
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", "rid1", defs, [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
 		}
 		{
-			let res = await update(dr, "Injuries", defs, ids, [["m", "3"], ["f", "4"]], true)
+			let res = await update(dr, "Injured", defs, ids, [["m", "3"], ["f", "4"]], true)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injuries", "rid1", defs)
+			let res = await get(dr, "Injured", "rid1", defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 4], ["m", 3]])
@@ -150,12 +150,12 @@ describe("human_effects", async () => {
 		let defs = defs1
 		let ids = []
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", "rid1", defs, [["m", "1"], ["f", "2"]], true)
 			assert(res.ok)
 			ids = res.ids
 		}
 		{
-			let res = await update(dr, "Injuries", defs, ids, [
+			let res = await update(dr, "Injured", defs, ids, [
 				[undefined, "3"],
 				[null, "4"],
 			], true)
@@ -163,7 +163,7 @@ describe("human_effects", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injuries", "rid1", defs)
+			let res = await get(dr, "Injured", "rid1", defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [[null, 4], ["m", 3]])
@@ -174,18 +174,18 @@ describe("human_effects", async () => {
 		let defs = defs1
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injuries", "rid1", defs, [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", "rid1", defs, [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
 		}
 		{
-			let res = await deleteRows(dr, "Injuries", ids)
+			let res = await deleteRows(dr, "Injured", ids)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injuries", "rid1", defs)
+			let res = await get(dr, "Injured", "rid1", defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [])

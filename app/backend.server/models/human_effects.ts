@@ -5,7 +5,7 @@ import {
 } from "drizzle-orm"
 
 import {insertRow, updateRow, deleteRow} from "~/util/db"
-import {injuriesTable, humanDsgTable, deathsTable, missingTable, affectedTable, displacedTable, displacementStocksTable} from "~/drizzle/schema"
+import {injuredTable, humanDsgTable, deathsTable, missingTable, affectedTable, displacedTable, displacementStocksTable} from "~/drizzle/schema"
 
 import {Def, DefEnum} from "~/frontend/editabletable/defs"
 
@@ -36,8 +36,8 @@ function tableFromType(t: HumanEffectsTable): any {
 			throw "invalid type"
 		case "Deaths":
 			return deathsTable
-		case "Injuries":
-			return injuriesTable
+		case "Injured":
+			return injuredTable
 		case "Missing":
 			return missingTable
 		case "Affected":
