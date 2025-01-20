@@ -182,16 +182,16 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   const openDialog = (item: any = null, dialogRef: any = null) => {
     const initialFormData = item
       ? { ...item }
-      : dialog_fields.reduce((acc, field) => {
-          if (field.type === "select" && field.options?.length) {
-            acc[field.id] = field.options[0];
-          } else if (field.type === "option" && field.options?.length) {
-            acc[field.id] = field.options[0];
-          } else if (field.type === "input" || field.type === "textarea") {
-            acc[field.id] = "";
-          }
-          return acc;
-        }, {});
+      : dialog_fields.reduce<Record<string, any>>((acc, field) => {
+        if (field.type === "select" && field.options?.length) {
+          acc[field.id] = field.options[0];
+        } else if (field.type === "option" && field.options?.length) {
+          acc[field.id] = field.options[0];
+        } else if (field.type === "input" || field.type === "textarea") {
+          acc[field.id] = "";
+        }
+        return acc;
+      }, {});
 
     Object.values(fileInputRefs.current).forEach((ref) => {
       if (ref.current) {

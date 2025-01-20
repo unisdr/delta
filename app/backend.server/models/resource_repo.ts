@@ -6,6 +6,8 @@ import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handler
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeaterUploadFile";
+
 export interface ResourceRepoFields extends Omit<resourceRepo, "id"> {}
 
 // do not change
@@ -16,6 +18,22 @@ export function validate(_fields: ResourceRepoFields): Errors<ResourceRepoFields
 	return errors
 }
 
+async function processAndSaveAttachments(tx, resourceId, attachmentsData) {
+	if (!attachmentsData) return;
+  
+	const save_path = `/uploads/resource-repo/${resourceId}`;
+	const save_path_temp = `/uploads/temp`;
+  
+	// Process the attachments data
+	const processedAttachments = ContentRepeaterUploadFile.save(attachmentsData, save_path_temp, save_path);
+  
+	// Update the `attachments` field in the database
+	await tx.update(resourceRepoTable)
+	  .set({
+		attachments: processedAttachments || "[]", // Ensure it defaults to an empty array if undefined
+	  })
+	  .where(eq(resourceRepoTable.id, resourceId));
+}
 
 export async function resourceRepoCreate(tx: Tx, fields: ResourceRepoFields): Promise<CreateResult<ResourceRepoFields>> {
 	let errors = validate(fields);
@@ -27,10 +45,16 @@ export async function resourceRepoCreate(tx: Tx, fields: ResourceRepoFields): Pr
 		.values({
 			title: fields.title,
 			summary: fields.summary,
+			attachments: fields.attachments,
 			approvalStatus: fields.approvalStatus,
 			updatedAt: sql`NOW()`,
 		})
 		.returning({id: resourceRepoTable.id});
+
+	if (res.length > 0) {
+		const resourceId = res[0].id;
+		await processAndSaveAttachments(tx, resourceId, fields.attachments);
+	}
 
 	return {ok: true, id: res[0].id};
 }
@@ -45,10 +69,13 @@ export async function resourceRepoUpdate(tx: Tx, idStr: string, fields: Resource
 		.set({
 			title: fields.title,
 			summary: fields.summary,
+			attachments: fields.attachments,
 			approvalStatus: fields.approvalStatus,
 			updatedAt: sql`NOW()`,
 		})
 		.where(eq(resourceRepoTable.id, id));
+
+	await processAndSaveAttachments(tx, idStr, fields.attachments);
 
 	return {ok: true};
 }
