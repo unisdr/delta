@@ -486,7 +486,5 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	disasterEventId: uuid("disaster_event_id").references((): AnyPgColumn => disasterEventTable.id).notNull(),
 	...approvalFields,
 	...createdUpdatedTimestamps,
-}, (table) => ({
-	disasterEventIdUniqueIndex: uniqueIndex('disasterEventIdUniqueIndex').on(table.disasterEventId),
-}));
+});
 
