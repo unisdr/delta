@@ -1,0 +1,50 @@
+[
+    {
+        "uuid": "6623c52a-e07f-3aeb-8cc4-43ff76d701d7",
+        "type_id": 1037,
+        "type_name": "Biological",
+        "changed": 1686127157
+    },
+    {
+        "uuid": "12eb7119-6587-337b-81a0-0560956312d8",
+        "type_id": 1038,
+        "type_name": "Chemical",
+        "changed": 1686127157
+    },
+    {
+        "uuid": "900c1275-9ecc-3a97-9972-0923a80b3d79",
+        "type_id": 1039,
+        "type_name": "Environmental",
+        "changed": 1686127157
+    },
+    {
+        "uuid": "a178874e-a722-3beb-a0e1-0e5673416251",
+        "type_id": 1040,
+        "type_name": "Extraterrestrial",
+        "changed": 1686127157
+    },
+    {
+        "uuid": "423b411a-fd65-354f-857a-def7c4f4f393",
+        "type_id": 1041,
+        "type_name": "Geohazards",
+        "changed": 1686127157
+    },
+    {
+        "uuid": "c8f62c46-c219-3cf2-858b-9bf123d90cf5",
+        "type_id": 1042,
+        "type_name": "Meteorological and Hydrological",
+        "changed": 1686127157
+    },
+    {
+        "uuid": "5cfb7b4b-bff2-3ac0-91a1-0266bc5b7170",
+        "type_id": 1043,
+        "type_name": "Societal",
+        "changed": 1686127157
+    },
+    {
+        "uuid": "18de1ed2-3db4-3921-9a09-e94f896b7569",
+        "type_id": 1044,
+        "type_name": "Technological",
+        "changed": 1686127157
+    }
+]
