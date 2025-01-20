@@ -449,6 +449,7 @@ export const resourceRepoTable = pgTable("resource_repo", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	title: text("title").notNull(),
 	summary: text("summary").notNull(),
+	attachments: text("attachments").notNull(),
 	...approvalFields,
 	...createdUpdatedTimestamps,
 });
