@@ -26,6 +26,12 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 	const res = await tx.insert(disasterRecordsTable)
 		.values({
 			disasterEventId: fields.disasterEventId,
+			locationDesc: fields.locationDesc,
+			startDate: fields.startDate,
+			endDate: fields.endDate,
+			localWarnInst: fields.localWarnInst,
+			assessmentModes: fields.assessmentModes,
+			originatorRecorderInst: fields.originatorRecorderInst,
 			approvalStatus: fields.approvalStatus,
 			updatedAt: sql`NOW()`,
 		})
@@ -43,6 +49,12 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Disas
 	await tx.update(disasterRecordsTable)
 		.set({
 			disasterEventId: fields.disasterEventId,
+			locationDesc: fields.locationDesc,
+			startDate: fields.startDate,
+			endDate: fields.endDate,
+			localWarnInst: fields.localWarnInst,
+			assessmentModes: fields.assessmentModes,
+			originatorRecorderInst: fields.originatorRecorderInst,
 			approvalStatus: fields.approvalStatus,
 			updatedAt: sql`NOW()`,
 		})

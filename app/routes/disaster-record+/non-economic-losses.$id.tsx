@@ -346,7 +346,7 @@ export default function Screen() {
 							<div className="dts-form-component__label">
 							<span>* Description</span>
 							</div>
-							<textarea rows={5} maxLength={500} placeholder="Describe the effect of the non-economic losses to the selected criteria." style={{width:"100%", height:"500px"}}></textarea>	
+							<textarea rows={5} maxLength={500} placeholder="Describe the effect of the non-economic losses to the selected criteria." style={{width:"100%", height:"400px"}}></textarea>	
 						</label>
 					</div>
 				}

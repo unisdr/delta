@@ -26,6 +26,12 @@ export const route = "/disaster-record"
 export const fieldsDefCommon = [
 	approvalStatusField,
 	{key: "disasterEventId", label: "Disaster Event", type: "text", required: true},
+	{key: "locationDesc", label: "Location Description", type: "text"},
+	{key: "startDate", label: "Start Data (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
+	{key: "endDate", label: "End Data (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
+	{key: "localWarnInst", label: "Local warning and local instructions ( recommended actions)", type: "text"},
+	{key: "assessmentModes", label: "Assessments modes", type: "text"},
+	{key: "originatorRecorderInst", label: "Originator/ recorder institution", type: "text", required: true},
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [

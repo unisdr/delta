@@ -20,6 +20,7 @@ export const loader = authLoaderWithPerm("EditData", async () => {
 import {dr} from '~/db.server';
 import {formatTimestamp} from "~/util/time";
 import {formStringData} from "~/util/httputil";
+import hipsDataJson from "~/data/hips/hips.json"
 
 interface Hip {
 	//type: string
@@ -82,9 +83,10 @@ async function processPage(page: number) {
 		throw "Exceeded max pages, likely infinite loop"
 	}
 
-	const url = "https://tools.undrr.org/sso-undrr/api/integration/pw/hips?page=" + page;
-	const resp = await fetch(url);
-	const res = await resp.json() as HipApi;
+	// const url = "https://tools.undrr.org/sso-undrr/api/integration/pw/hips?page=" + page;
+	// const resp = await fetch(url);
+	// const res = await resp.json() as HipApi;
+	const res = hipsDataJson;
 	const data = res.data;
 	for (const item of data) {
 		await upsertHip(item);
