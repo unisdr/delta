@@ -262,7 +262,6 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       if (getHeight !== undefined) {
         const mapContainer = document.getElementById(`${dialogMapRef.current.getAttribute('id')}_container`); //dialogMapRef.current?.querySelector('.mapper-holder .leaflet-container');
         if (mapContainer) {
-          alert('ole!');
           if (debug) console.log('Map container:', getHeight)
           mapContainer.style.height = `${getHeight}px`;
         }
