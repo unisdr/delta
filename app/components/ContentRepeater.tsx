@@ -258,10 +258,11 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     if (!mapRef.current && L) {
       if (debug) console.log(`${id}_mapper_modeSelect`);
 
-      const getHeight = dialogMapRef.current?.querySelector('.dts-form__body')?.offsetHeight;
+      const getHeight = document.querySelector('.dts-dialog__content')?.offsetHeight - document.querySelector('.dts-dialog__header')?.offsetHeight - document.querySelector('.mapper-menu')?.offsetHeight;
       if (getHeight !== undefined) {
         const mapContainer = document.getElementById(`${dialogMapRef.current.getAttribute('id')}_container`); //dialogMapRef.current?.querySelector('.mapper-holder .leaflet-container');
         if (mapContainer) {
+          alert('ole!');
           if (debug) console.log('Map container:', getHeight)
           mapContainer.style.height = `${getHeight}px`;
         }
