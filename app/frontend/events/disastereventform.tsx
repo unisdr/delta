@@ -8,6 +8,8 @@ import {DisasterEventFields, DisasterEventViewModel, HazardEventBasicInfoViewMod
 
 import {hazardEventLink} from "~/frontend/events/hazardeventform"
 
+import { ContentRepeater } from "~/components/ContentRepeater";
+
 import {
 	UserFormProps,
 	FormInputDef,
@@ -55,6 +57,7 @@ export const fieldsDefCommon = [
 	{key: "responseCostTotalUsd", label: "Response Cost (Total)", type: "number"},
 	{key: "humanitarianNeedsTotalUsd", label: "Humanitarian Needs (Total, USD)", type: "number"},
 	{key: "recoveryNeedsTotalUsd", label: "Recovery Needs (Total, USD)", type: "number"},
+	{key: "attachments", label: "Attachments", type: "other"},
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
@@ -111,6 +114,92 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						<FieldErrors errors={props.errors} field="hazardEventId"></FieldErrors>
 					</Field>
 				,
+				attachments: props.edit ? (
+					<Field key="attachments" label="Attachments">
+						<ContentRepeater
+						id="attachments"
+						dnd_order={true}
+						save_path_temp="/uploads/temp"
+						file_viewer_temp_url="/resource-repo/file-temp-viewer"
+						file_viewer_url="/resource-repo/file-viewer"
+						table_columns={[
+							{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
+							{ type: "dialog_field", dialog_field_id: "tags", caption: "Tags" },
+							{
+							type: "custom",
+							caption: "File/URL",
+							render: (item) => {
+								// Get the file name or fallback to URL
+								const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
+							
+								// Truncate long file names while preserving the file extension
+								const maxLength = 30; // Adjust to fit your design
+								let truncatedFileName = fullFileName;
+							
+								if (fullFileName && fullFileName.length > maxLength) {
+								const extension = fullFileName.includes('.')
+									? fullFileName.substring(fullFileName.lastIndexOf('.'))
+									: '';
+								const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
+								truncatedFileName = `${baseName}...${extension}`;
+								}
+							
+								return truncatedFileName || "N/A"; // Return the truncated name or fallback to "N/A"
+							},
+							},                        
+							{ type: "action", caption: "Action" },
+						]}
+						dialog_fields={[
+							{ id: "title", caption: "Title", type: "input" },
+							{ id: "tags", caption: "Tags", type: "input" },
+							{
+							id: "file_option",
+							caption: "Option",
+							type: "option",
+							options: ["File", "Link"],
+							onChange: (e) => {
+								const value = e.target.value;
+								const fileField = document.getElementById("attachments_file");
+								const urlField = document.getElementById("attachments_url");
+
+								if (fileField && urlField) {
+								const fileDiv = fileField.closest(".dts-form-component");
+								const urlDiv = urlField.closest(".dts-form-component");
+
+								if (value === "File") {
+									fileDiv?.style.setProperty("display", "block");
+									urlDiv?.style.setProperty("display", "none");
+								} else if (value === "Link") {
+									fileDiv?.style.setProperty("display", "none");
+									urlDiv?.style.setProperty("display", "block");
+								}
+								}
+							},
+							},
+							{ id: "file", caption: "File Upload", type: "file"  }, 
+							{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
+						]}
+						data={(() => {
+							try {
+							return JSON.parse(props.fields.attachments) || [];
+							} catch {
+							return []; // Default to an empty array if parsing fails
+							}
+						})()}
+						onChange={(items) => {
+							try {
+							const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+							console.log("Updated Items:", parsedItems);
+							// Save or process `parsedItems` here, e.g., updating state or making an API call
+							} catch {
+							console.error("Failed to process items.");
+							}
+						}}
+						/>
+					</Field>
+				) : (
+					<Field key="attachments" label=""></Field>
+				)
 			}} />
 	)
 }
@@ -142,7 +231,14 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 					<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 				),
 
-			}} />
+			}}
+			otherRenderView={{
+				attachments: (
+					<>
+					</>
+				),
+			}} 
+			/>
 		</ViewComponent>
 	);
 }

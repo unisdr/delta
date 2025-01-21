@@ -299,6 +299,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	responseCostTotalUsd: integer("response_cost_total"),
 	humanitarianNeedsTotalUsd: integer("humanitarian_needs_total"),
 	recoveryNeedsTotalUsd: integer("recovery_needs_total"),
+	attachments: zeroText("attachments"),
 });
 
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
