@@ -20,7 +20,7 @@ export const loader = authLoaderWithPerm("EditData", async () => {
 import {dr} from '~/db.server';
 import {formatTimestamp} from "~/util/time";
 import {formStringData} from "~/util/httputil";
-import hipsDataJson from "~/data/hips/hips.json"
+import hipsDataJson from "~/hips/hips.json"
 
 interface Hip {
 	//type: string
