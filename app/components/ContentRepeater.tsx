@@ -113,6 +113,18 @@ const loadLeaflet = (() => {
             margin-left: -5px !important; /* Half of width */
             margin-top: -20px !important; /* Height for bottom alignment */
           }
+
+          .content-repeater-mapper {
+            position: fixed;
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0;
+            border: none;
+            background-color: white;
+            z-index: 9999;
+            max-width: none !important;
+            max-height: none !important;
+          }
         `;
         document.head.appendChild(style);
       };
@@ -1234,18 +1246,7 @@ const processInitialData = (data) => {
       <dialog
         id={`${id}_mapper`}
         ref={dialogMapRef}
-        className="dts-dialog"
-        style={{
-          position: "fixed",
-          width: "100vw !important",
-          height: "100vh !important",
-          margin: 0,
-          border: "none",
-          backgroundColor: "white",
-          zIndex: 9999,
-          maxWidth: "none !important",
-          maxHeight: "none !important",
-        }}
+        className="dts-dialog content-repeater-mapper"
       >
         <div className="dts-dialog__content" style={{overflowY: "hidden"}}>
           <div className="dts-dialog__header" style={{justifyContent: "space-between"}}>
