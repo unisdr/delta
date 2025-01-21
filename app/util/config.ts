@@ -20,7 +20,7 @@ export function configSiteURL(): string {
  */
 export function configSiteName(): string {
 	const value = process.env.WEBSITE_NAME || 'Disaster Losses Tracking System';
-	return value;
+	return value + ' - DTS';
 };
 
 /**
