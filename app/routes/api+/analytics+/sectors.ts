@@ -1,9 +1,10 @@
 import { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { dr } from "~/db.server";
-import { userTable } from "~/drizzle/schema";
+import { sectorTable } from "~/drizzle/schema";
 
 export const loader: LoaderFunction = async () => {
-  const sectors = await dr.select().from(userTable).orderBy(userTable.firstName);
+  // Fetch all sectors from the database
+  const sectors = await dr.select().from(sectorTable).orderBy(sectorTable.name);
   return json(sectors);
 };

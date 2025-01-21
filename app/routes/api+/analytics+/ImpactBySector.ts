@@ -1,7 +1,7 @@
 import { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { dr } from "~/db.server";
-import { disasterEventTable } from "~/drizzle/schema";
+import { disasterEventTable, sectorTable, sectorEventRelationTable } from "~/drizzle/schema";
 import { sql } from "drizzle-orm";
 
 export const loader: LoaderFunction = async () => {
@@ -9,19 +9,25 @@ export const loader: LoaderFunction = async () => {
     // Fetch aggregated impact data by sector
     const [damage, loss, recovery] = await Promise.all([
       dr.execute(
-        sql`SELECT sector_name AS category, SUM(damage_percentage) AS value, '#8884d8' AS color
+        sql`SELECT ${sectorTable.name} AS category, SUM(${disasterEventTable.subtotaldamageUsd}) AS value, '#8884d8' AS color
             FROM ${disasterEventTable}
-            GROUP BY sector_name`
+            JOIN ${sectorEventRelationTable} ON ${disasterEventTable.id} = ${sectorEventRelationTable.disasterEventId}
+            JOIN ${sectorTable} ON ${sectorEventRelationTable.sectorId} = ${sectorTable.id}
+            GROUP BY ${sectorTable.name}`
       ),
       dr.execute(
-        sql`SELECT sector_name AS category, SUM(loss_percentage) AS value, '#8dd1e1' AS color
+        sql`SELECT ${sectorTable.name} AS category, SUM(${disasterEventTable.subtotalLossesUsd}) AS value, '#8dd1e1' AS color
             FROM ${disasterEventTable}
-            GROUP BY sector_name`
+            JOIN ${sectorEventRelationTable} ON ${disasterEventTable.id} = ${sectorEventRelationTable.disasterEventId}
+            JOIN ${sectorTable} ON ${sectorEventRelationTable.sectorId} = ${sectorTable.id}
+            GROUP BY ${sectorTable.name}`
       ),
       dr.execute(
-        sql`SELECT sector_name AS category, SUM(recovery_percentage) AS value, '#a4de6c' AS color
+        sql`SELECT ${sectorTable.name} AS category, SUM(${disasterEventTable.recoveryNeedsTotalUsd}) AS value, '#a4de6c' AS color
             FROM ${disasterEventTable}
-            GROUP BY sector_name`
+            JOIN ${sectorEventRelationTable} ON ${disasterEventTable.id} = ${sectorEventRelationTable.disasterEventId}
+            JOIN ${sectorTable} ON ${sectorEventRelationTable.sectorId} = ${sectorTable.id}
+            GROUP BY ${sectorTable.name}`
       ),
     ]);
 

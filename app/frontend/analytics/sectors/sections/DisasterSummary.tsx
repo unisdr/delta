@@ -7,6 +7,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Area,
+  AreaChart
 } from "recharts";
 import {
   computePosition,
@@ -274,13 +276,19 @@ const DisasterSummary: React.FC = () => {
             </h3>
             {data.eventsOverTime && data.eventsOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={data.eventsOverTime}>
+                <AreaChart data={data.eventsOverTime}>
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="year" />
                   <YAxis />
+                  <CartesianGrid strokeDasharray="3 3" />
                   <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="#8884d8" />
-                  <CartesianGrid stroke="#ccc" />
-                </LineChart>
+                  <Area type="monotone" dataKey="count" stroke="#8884d8" fillOpacity={1} fill="url(#colorCount)" />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               renderEmptyState()
@@ -317,13 +325,19 @@ const DisasterSummary: React.FC = () => {
             </div>
             {data.damageOverTime && data.damageOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={data.damageOverTime}>
+                <AreaChart data={data.damageOverTime}>
+                  <defs>
+                    <linearGradient id="colorDamage" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#17a2b8" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#17a2b8" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="value" stroke="#ff7300" />
-                  <CartesianGrid stroke="#ccc" />
-                </LineChart>
+                  <YAxis tickFormatter={tick => `${(tick / 1000).toLocaleString()}k`} />
+                  <Tooltip formatter={(value) => (typeof value === 'number' ? `${(value / 1000).toLocaleString()}k` : value)} />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Area type="monotone" dataKey="value" stroke="#17a2b8" fillOpacity={1} fill="url(#colorDamage)" />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               renderEmptyState()
@@ -357,13 +371,22 @@ const DisasterSummary: React.FC = () => {
             </div>
             {data.lossesOverTime && data.lossesOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={data.lossesOverTime}>
+                <AreaChart data={data.lossesOverTime}>
+                  <defs>
+                    <linearGradient id="colorLosses" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ff7300" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#ff7300" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="value" stroke="#387908" />
-                  <CartesianGrid stroke="#ccc" />
-                </LineChart>
+                  <YAxis
+                    tickFormatter={(tick) => (typeof tick === 'number' ? `${(tick / 1000).toLocaleString()}k` : tick)}
+                    domain={[0, 'dataMax + 80000']} // Adds a buffer above the max data value for better visualization
+                  />
+                  <Tooltip formatter={(value) => (typeof value === 'number' ? `${(value / 1000).toLocaleString()}k` : value)} />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Area type="monotone" dataKey="value" stroke="#ff7300" fillOpacity={1} fill="url(#colorLosses)" />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               renderEmptyState()
@@ -397,13 +420,19 @@ const DisasterSummary: React.FC = () => {
             </div>
             {data.recoveryOverTime && data.recoveryOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={data.recoveryOverTime}>
+                <AreaChart data={data.recoveryOverTime}>
+                  <defs>
+                    <linearGradient id="colorRecovery" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#007bff" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#007bff" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="value" stroke="#84d88a" />
-                  <CartesianGrid stroke="#ccc" />
-                </LineChart>
+                  <YAxis tickFormatter={tick => `${(tick / 1000).toLocaleString()}k`} />
+                  <Tooltip formatter={(value) => (typeof value === 'number' ? `${(value / 1000).toLocaleString()}k` : value)} />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Area type="monotone" dataKey="value" stroke="#007bff" fillOpacity={1} fill="url(#colorRecovery)" />
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               renderEmptyState()

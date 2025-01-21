@@ -11,6 +11,7 @@ import DisasterSummary from "~/frontend/analytics/sectors/sections/DisasterSumma
 import DamageInventory from "~/frontend/analytics/sectors/sections/DamageInventory";
 import ImpactBySector from "~/frontend/analytics/sectors/sections/ImpactBySector";
 import ImpactOnSectorsByLocation from "~/frontend/analytics/sectors/sections/ImpactOnSectorsByLocation";
+import DamagingEvents from "~/frontend/analytics/sectors/sections/DamagingEvents";
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
@@ -71,7 +72,10 @@ export default function SectorsAnalysis() {
       <ImpactBySector />
 
       {/* Impact on Sectors by Location Section */}
-      <ImpactOnSectorsByLocation />
+      {/*<ImpactOnSectorsByLocation />*/}
+
+      {/* Damaging Events Section */}
+      <DamagingEvents />
       
 
       {/* Placeholder for Under Construction */}
@@ -84,8 +88,7 @@ export default function SectorsAnalysis() {
           The remaining sections of this dashboard, including:
         </p>
         <ul style={{ marginTop: "1rem", marginBottom: "1rem", paddingLeft: "1.5rem", fontSize: "1.4rem", lineHeight: "1.6", color: "#555" }}>
-          <li>Largest Impacts</li>
-          <li>Most Damaging Events</li>
+          <li>Impact on Sectors by Location</li>
         </ul>
         <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
           are still under construction. Please stay tuned for future updates!

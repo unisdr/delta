@@ -603,3 +603,67 @@ export const nonecoLossesTable = pgTable(
     ]; 
   }
 );
+
+/** 
+ * `sectorTable` is a taxonomy table that categorizes different sectors 
+ * affected by disaster events (e.g., agriculture, health, infrastructure, etc.)
+ */
+export const sectorTable = pgTable(
+	"sector",
+	{
+	  id: serial("id").primaryKey(), // Unique sector ID
+	  name: zeroText("name"), // Name of the sector (e.g., "Agriculture", "Health")
+	  parentId: integer("parent_id").references((): AnyPgColumn => sectorTable.id), // Optional reference to parent sector for hierarchy
+	  description: text("description"), // Optional description for the sector
+	  type: text({ enum: ["Infrastructure", "Productive", "Social", "Other"] }) // High-level category
+		.notNull()
+		.default("Other"),
+	},
+	(table) => [
+	  check("name_not_empty", sql`${table.name} <> ''`), // Ensure name is not empty
+	  check("type_valid", sql`${table.type} IN ('Infrastructure', 'Productive', 'Social', 'Other')`),
+	]
+  );
+  
+  /** `SectorEventRelation` table links `sector` to `disaster_event` */
+  export const sectorEventRelationTable = pgTable("sector_event_relation", {
+	id: serial("id").primaryKey(), // Unique ID for the relation
+	sectorId: integer("sector_id")
+	  .notNull()
+	  .references((): AnyPgColumn => sectorTable.id), // Links to sector
+	disasterEventId: uuid("disaster_event_id")
+	  .notNull()
+	  .references((): AnyPgColumn => disasterEventTable.id), // Links to disaster event
+  });
+  
+  export const sectorRel = relations(sectorTable, ({ one, many }) => ({
+	// A self-referencing relationship for hierarchical sectors
+	parentSector: one(sectorTable, {
+	  fields: [sectorTable.parentId], // `fields` is valid here for one-to-one relationships
+	  references: [sectorTable.id],  // `references` points to the primary key
+	}),
+  
+	// Linking to `sectorEventRelationTable`
+	relatedDisasterEvents: many(sectorEventRelationTable, { relationName: "sector_event_relation" }), // Use only `relationName` for many()
+  }));
+  
+  export const sectorEventRel = relations(sectorEventRelationTable, ({ one }) => ({
+	// Linking each `sector_event_relation` to a sector
+	sector: one(sectorTable, {
+	  fields: [sectorEventRelationTable.sectorId], // `fields` specifies the foreign key
+	  references: [sectorTable.id], // `references` points to the primary key of the referenced table
+	}),
+  
+	// Linking each `sector_event_relation` to a disaster event
+	disasterEvent: one(disasterEventTable, {
+	  fields: [sectorEventRelationTable.disasterEventId], // `fields` specifies the foreign key
+	  references: [disasterEventTable.id], // `references` points to the primary key of the referenced table
+	}),
+  }));
+  
+  // Types for TypeScript
+  export type Sector = typeof sectorTable.$inferSelect;
+  export type SectorInsert = typeof sectorTable.$inferInsert;
+  export type SectorEventRelation = typeof sectorEventRelationTable.$inferSelect;
+  export type SectorEventRelationInsert = typeof sectorEventRelationTable.$inferInsert;
+  
