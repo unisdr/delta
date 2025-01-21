@@ -230,7 +230,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };
 
   const dialogMapRef = useRef<HTMLDialogElement>(null);
-  const mapRef = useRef(null);
+  const mapRef = useRef<any>(null);
   const state = useRef({
     mode: "moveMap",
     polygon: null,
@@ -241,7 +241,9 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     wasPolygonized: false,
   });
   const initializeMap = (initialData) => {
-    if (!mapRef.current && window.L) {
+    const L = (window as any).L || null;
+
+    if (!mapRef.current && L) {
       if (debug) console.log(`${id}_mapper_modeSelect`);
 
       const getHeight = dialogMapRef.current?.querySelector('.dts-form__body')?.offsetHeight;
@@ -260,20 +262,6 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
       }).addTo(mapRef.current);
-  
-      // let isDragging = false;
-  
-      // // Handle dragging states
-      // mapRef.current.on("mousedown", () => {
-      //   isDragging = true;
-      //   mapRef.current.getContainer().style.cursor = "grabbing";
-      // });
-  
-      // mapRef.current.on("mouseup", () => {
-      //   isDragging = false;
-      //   mapRef.current.getContainer().style.cursor =
-      //     state.current.mode === "moveMap" ? "grab" : "crosshair";
-      // });
   
       // Handle map click events
       mapRef.current.on("click", (e) => {
@@ -325,6 +313,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   const normalizeLongitude = (lng) => ((lng + 180) % 360 + 360) % 360 - 180;
 
   const handlePolygonMode = (latLng) => {
+    const L = (window as any).L || null;
+
     state.current.mode = "autoPolygon";
   
     state.current.points.push([latLng.lat, latLng.lng]);
@@ -362,6 +352,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };  
   
   const handleLineMode = (latLng) => {
+    const L = (window as any).L || null;
+
     state.current.mode = "drawLines";
   
     const newPoint = [latLng.lat, latLng.lng];
@@ -414,6 +406,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };
   
   const handleRectangleMode = () => {
+    const L = (window as any).L || null;
+
     if (!L.Draw || !L.Draw.Rectangle) {
       console.error("Leaflet.draw is not loaded or Rectangle is undefined.");
       return;
@@ -465,6 +459,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };
   
   const handleCircleMode = () => {
+    const L = (window as any).L || null;
+
     if (!L.Draw || !L.Draw.Circle) {
       console.error("Leaflet.draw is not loaded or Circle is undefined.");
       return;
@@ -514,6 +510,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };
 
   const handleMarkerMode = (latLng) => {
+    const L = (window as any).L || null;
+
     state.current.mode = "placeMarker";
   
     // Ensure state.current.marker is an array
@@ -566,6 +564,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   
 // Process initial data for drawing shapes
 const processInitialData = (data) => {
+  const L = (window as any).L || null;
+
   if (data.mode) {
     const { mode, coordinates, center, radius } = data;
 
@@ -703,7 +703,7 @@ const processInitialData = (data) => {
     if (debug) console.log('Unload: ', (`${id}_mapper_container`));
     setIsDialogMapOpen(false);
     dialogMapRef.current?.close();
-    //L.map(`${id}_mapper_container`).remove();
+
     document.getElementById(`${id}_mapper_container`)?.remove();
 
     if (mapRef.current) {
@@ -751,6 +751,8 @@ const processInitialData = (data) => {
     return 0 < lambda && lambda < 1 && 0 < gamma && gamma < 1;
   };
   const resetDrawing = () => {
+    const L = (window as any).L || null;
+
     if (state.current.polygon) {
       mapRef.current.removeLayer(state.current.polygon);
     }
