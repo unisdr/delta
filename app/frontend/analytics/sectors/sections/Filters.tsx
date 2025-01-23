@@ -7,15 +7,11 @@ import "react-date-range/dist/theme/default.css"; // Theme styles
 // Interfaces for filter data
 interface Sector {
   id: number;
-  name: string;
-  type: string;
-  parent_id: number | null;
-}
-
-interface Subsector {
-  id: number;
-  name: string;
-  parent_id: number | null;
+  sectorname: string;
+  parentId: number | null;
+  subsector: string;
+  description: string | null;
+  subsectors?: Sector[];
 }
 
 interface DisasterEvent {
@@ -40,7 +36,7 @@ const Filters: React.FC<FiltersProps> = ({
   onClearFilters,
 }) => {
   const [sectors, setSectors] = useState<Sector[]>([]);
-  const [subSectors, setSubSectors] = useState<Subsector[]>([]);
+  const [subSectors, setSubSectors] = useState<Sector[]>([]);
   const [disasterEvents, setDisasterEvents] = useState<DisasterEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,9 +67,8 @@ const Filters: React.FC<FiltersProps> = ({
           fetch("/api/analytics/disaster-events").then((res) => res.json()),
         ]);
 
-        console.log("Fetched sectors:", sectorsData); // Log fetched data here
-        setSectors(sectorsData);
-        setDisasterEvents(disasterEventsData);
+        setSectors(sectorsData.sectors); // Updated to match API response structure
+        setDisasterEvents(disasterEventsData.disasterEvents); // Updated to match API response structure
       } catch (error) {
         console.error("Error fetching filter data:", error);
       } finally {
@@ -84,26 +79,21 @@ const Filters: React.FC<FiltersProps> = ({
     fetchFilters();
   }, []);
 
-  // Handle filter change for dropdowns
+  // Updated handleFilterChange function
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
-  
+
     if (field === "sectorId") {
-      const selectedSector = sectors.find((sector) => sector.id.toString() === value);
-      if (selectedSector) {
-        const filteredSubSectors = sectors.filter(
-          (sector) => sector.parent_id === selectedSector.id
-        );
-        setSubSectors(filteredSubSectors);
-      } else {
-        setSubSectors([]);
-      }
-  
-      // Reset sub-sector selection if sector changes
+      const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
+      console.log("Selected Sector:", selectedSector); // Debugging log to inspect selected sector
+
+      // Use the subsectors field returned from the API
+      setSubSectors(selectedSector?.subsectors || []);
+
+      // Reset the sub-sector selection when sector changes
       setFilters((prev) => ({ ...prev, subSectorId: "" }));
     }
   };
-  
 
   // Handle autocomplete search for disaster events
   const handleAutocomplete = async (query: string) => {
@@ -115,9 +105,9 @@ const Filters: React.FC<FiltersProps> = ({
     try {
       setLoading(true);
       const searchResults = await fetch(
-        `/api/disaster-events?query=${encodeURIComponent(query)}`
+        `/api/analytics/disaster-events?query=${encodeURIComponent(query)}`
       ).then((res) => res.json());
-      setAutocompleteResults(searchResults);
+      setAutocompleteResults(searchResults.disasterEvents); // Updated to match API response structure
     } catch (error) {
       console.error("Error fetching autocomplete results:", error);
     } finally {
@@ -139,41 +129,57 @@ const Filters: React.FC<FiltersProps> = ({
     });
   };
 
- // Handle date range selection
- const handleDateRangeChange = (ranges: { [key: string]: DateRange }) => {
-   const selectedRange = ranges["selection"];
-   setFilters((prev) => ({
-     ...prev,
-     dateRange: `${format(selectedRange.startDate, "MM/dd/yyyy")} - ${format(
-       selectedRange.endDate,
-       "MM/dd/yyyy"
-     )}`,
-   }));
-   setDatePickerVisible(false); // Hide the date picker after selection
- };
+  // Handle date range selection
+  const handleDateRangeChange = (ranges: { [key: string]: DateRange }) => {
+    const selectedRange = ranges["selection"];
+    setDateRange([selectedRange]);
+    setFilters((prev) => ({
+      ...prev,
+      dateRange: `${format(selectedRange.startDate, "MM/dd/yyyy")} - ${format(
+        selectedRange.endDate,
+        "MM/dd/yyyy"
+      )}`,
+    }));
+    setDatePickerVisible(false); // Hide the date picker after selection
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setFilters({ sectorId: "", subSectorId: "", disasterEventId: "", dateRange: "" });
+    setSubSectors([]);
+    setDateRange([
+      {
+        startDate: new Date(),
+        endDate: addDays(new Date(), 7),
+        key: "selection",
+      },
+    ]);
+    onClearFilters();
+  };
 
   return (
     <div className="mg-grid mg-grid__col-3">
       {/* Sector dropdown */}
       <div className="dts-form-component">
-      <label htmlFor="sector-select">Sector</label>
-  <select
-    id="sector-select"
-    className="filter-select"
-    value={filters.sectorId}
-    onChange={(e) => handleFilterChange("sectorId", e.target.value)}
-  >
-    <option value="" disabled>
-      {loading ? "Loading sectors..." : sectors.length > 0 ? "Select Sector Type" : "No data"}
-    </option>
-    {sectors
-      .filter((sector) => sector.parent_id === null) // Filter only top-level sectors
-      .map((sector) => (
-        <option key={sector.id} value={sector.id}>
-          {sector.name} {/* Display the name instead of type */}
-        </option>
-      ))}
-  </select>
+        <label htmlFor="sector-select">Sector *</label>
+        <select
+          id="sector-select"
+          className="filter-select"
+          value={filters.sectorId}
+          required
+          onChange={(e) => handleFilterChange("sectorId", e.target.value)}
+        >
+          <option value="" disabled>
+            {loading ? "Loading sectors..." : "Select Sector Type"}
+          </option>
+          {sectors
+            .filter((sector) => sector.parentId === null) // Only top-level sectors
+            .map((sector) => (
+              <option key={sector.id} value={sector.id}>
+                {sector.sectorname}
+              </option>
+            ))}
+        </select>
       </div>
 
       {/* Sub Sector dropdown */}
@@ -187,15 +193,11 @@ const Filters: React.FC<FiltersProps> = ({
           disabled={!filters.sectorId}
         >
           <option value="" disabled>
-            {loading
-              ? "Loading sub-sectors..."
-              : subSectors.length > 0
-              ? "Select Sub Sector"
-              : "No data"}
+            {filters.sectorId ? "Select Sub Sector" : "Select Sector First"}
           </option>
           {subSectors.map((subSector) => (
             <option key={subSector.id} value={subSector.id}>
-              {subSector.name}
+              {subSector.subsector} {/* Correctly displaying the "subsector" field */}
             </option>
           ))}
         </select>
@@ -203,12 +205,12 @@ const Filters: React.FC<FiltersProps> = ({
 
       {/* Disaster event search input */}
       <div className="dts-form-component">
-        <label htmlFor="event-search">Disaster event</label>
+        <label htmlFor="event-search">Disaster Event</label>
         <input
           id="event-search"
           type="text"
           className="filter-search"
-          placeholder={loading ? "Loading events..." : "Search events..."}
+          placeholder="Search events..."
           value={filters.disasterEventId}
           onChange={(e) => {
             handleFilterChange("disasterEventId", e.target.value);
@@ -233,8 +235,8 @@ const Filters: React.FC<FiltersProps> = ({
       </div>
 
       {/* Date range picker */}
-      <div className="dts-form-component" style={{ position: "relative" }}>
-        <label htmlFor="date-range">Date range</label>
+      <div className="dts-form-component">
+        <label htmlFor="date-range">Date Range</label>
         <input
           id="date-range"
           type="text"
@@ -245,51 +247,28 @@ const Filters: React.FC<FiltersProps> = ({
           onClick={() => setDatePickerVisible((prev) => !prev)}
         />
         {isDatePickerVisible && (
-          <div
-          style={{
-            position: "absolute",
-            top: "100%", // Position below the input
-            left: 0, // Align to the left of the input
-            zIndex: 1000, // Ensure it appears above other content
-          }}
-        >
           <DateRangePicker
             ranges={dateRange}
             onChange={handleDateRangeChange}
-            showSelectionPreview={false}
-            moveRangeOnFirstSelection={false}
-            editableDateInputs={false}
-            rangeColors={["#007bff"]}
-            staticRanges={[]} // Removes extra options like "Today", "Yesterday"
-            inputRanges={[]} // Removes predefined input ranges
+            staticRanges={[]} // Removes predefined ranges
+            inputRanges={[]} // Removes quick input ranges
           />
-        </div>
         )}
       </div>
 
       {/* Action buttons */}
-      <div
-        className="mg-grid mg-grid__col-3 dts-form__actions"
+      <div className="mg-grid mg-grid__col-3 dts-form__actions"
         style={{
-          gridColumn: "1 / -1",
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "1rem",
+          gridColumn: "1 / -1", // Span all columns
+          display: "flex",      // Flex display for alignment
+          justifyContent: "flex-end", // Align buttons to the right
+          gap: "1rem",          // Add spacing between buttons
         }}
       >
         <button
           className="mg-button mg-button--small mg-button-outline"
           type="button"
-          onClick={() => {
-            setFilters({ sectorId: "", subSectorId: "", disasterEventId: "", dateRange: "" });
-            setDateRange([
-              {
-                startDate: new Date(),
-                endDate: addDays(new Date(), 7),
-                key: "selection",
-              },
-            ]);
-          }}
+          onClick={handleClearFilters}
         >
           Clear
         </button>
