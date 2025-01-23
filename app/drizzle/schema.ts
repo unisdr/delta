@@ -495,3 +495,14 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	...createdUpdatedTimestamps,
 });
 
+// Table to log all audit actions across the system
+export const auditLogs = pgTable("audit_logs", {
+		id: uuid("id").primaryKey().defaultRandom(),
+		tableName: text("table_name").notNull(),
+		recordId: text("record_id").notNull(),
+		userId: text("user_id").notNull(),
+		action: text("action").notNull(), // INSERT, UPDATE, DELETE
+		oldValues: jsonb("old_values"),
+		newValues: jsonb("new_values"),
+		timestamp: timestamp("timestamp", {withTimezone:true}).defaultNow().notNull(),
+});
