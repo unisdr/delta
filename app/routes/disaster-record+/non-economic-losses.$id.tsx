@@ -27,7 +27,8 @@ import {
 
 import {
 	createLoader,
-	createAction
+	createAction,
+	CreateActionArgs,
 } from "~/backend.server/handlers/form";
 
 import { 
@@ -42,7 +43,7 @@ import {
 } from "@remix-run/react";
 
 import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
-import { useState, useEffect, useRef, RefObject } from 'react';
+import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -99,6 +100,9 @@ interface PropsAction {
 	factors?:Factor;
 	form?:PropsForm;
 	showForm: boolean;
+	frmType: string;
+	frmSubType: string;
+	frmFactor: string;
 }
 
 
@@ -233,11 +237,28 @@ export const loader = async () => {
 // 	redirectTo: (id) => `${route}/edit/${id}`
 // });
 
+// export function createAction<T>(args: CreateActionArgs<T>) {
+// 	return authActionWithPerm("EditData", async (actionArgs) => {
+// 		return formSave<T>({
+// 			actionArgs,
+// 			fieldsDef: args.fieldsDef,
+// 			save: async (tx, id, data) => {
+// 				if (!id) {
+// 					return args.create(tx, data);
+// 				} else {
+// 					return args.update(tx, id, data);
+// 				}
+// 			},
+// 			redirectTo: args.redirectTo,
+// 		});
+// 	});
+// }
+
 export const action: ActionFunction = async ({ request }) => {
 	const formData = await request.formData(); 
-	let frmType = formData.get("type"); 
-	let frmSubtype = formData.get("subtype") || ''; 
-	let frmFactor = formData.get("factor") || ''; 
+	let frmType = formData.get("type") || formData.get("frmType") || ''; 
+	let frmSubtype = formData.get("subtype") || formData.get("frmSubtype") || ''; 
+	let frmFactor = formData.get("factor") || formData.get("frmFactor") || ''; 
 	let this_showForm:boolean = false;
 	
 	
@@ -262,6 +283,9 @@ export const action: ActionFunction = async ({ request }) => {
 		factors: factorData,
 		// form: formData2,
 		showForm: this_showForm,
+		frmType: frmType,
+		frmSubtype: frmSubtype,
+		frmFactor: frmFactor,
 	// categories:categories, 
 	// subcategories:subcategories,
 	}; 
@@ -270,11 +294,15 @@ export const action: ActionFunction = async ({ request }) => {
 export default function Screen() {
 	const loaderData = useLoaderData<PropsLoader>();
 	const actionData = useActionData<PropsAction>();
+	const navigate = useNavigate();
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
 	const formRef = useRef<HTMLFormElement>(null);
 	const formRefHidden: RefObject<HTMLInputElement> = useRef(null);
+	const formRefHiddenType: RefObject<HTMLInputElement> = useRef(null);
+	const formRefHiddenSubType: RefObject<HTMLInputElement> = useRef(null);
+	const formRefHiddenFactor: RefObject<HTMLInputElement> = useRef(null);
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
 
 	const locationUrlPath = useLocation();
@@ -301,6 +329,10 @@ export default function Screen() {
 			console.log(formRefHidden.current.value = e.target.name);
 		}
 
+		if (formRefHiddenSubType.current) {
+			formRefHiddenSubType.current.value = e.target.value;
+		}
+
 		// if (e.target.value == '' && formRefSubmit.current) {
 		// 	formRefSubmit.current.style.display = 'none';
 		// }
@@ -319,12 +351,32 @@ export default function Screen() {
 			console.log(formRefHidden.current.value = e.target.name);
 		}
 
-		// // working
-		// if (formRefSubmit.current) {
-		// 	formRefSubmit.current.click();
-		// }
-		
-		
+		if (formRefHiddenType.current) {
+			formRefHiddenType.current.value = e.target.value;
+		}
+	};
+
+	const handleSelectOnChangeFactor = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		if (formRefHiddenFactor.current) {
+			formRefHiddenFactor.current.value = e.target.value;
+		}
+	};
+
+	
+	const handleResetHiddenValues = (e: MouseEvent<HTMLAnchorElement>) => {
+	  e.preventDefault(); // prevent the default link behavior
+
+	  if (formRefHiddenType.current) {
+		formRefHiddenType.current.value = '';
+		}
+		// clear the value
+		if (formRefHiddenSubType.current) {
+			formRefHiddenSubType.current.value = '';
+		}
+		if (formRefHiddenFactor.current) {
+			formRefHiddenFactor.current.value = '';
+		}
+		navigate(locationUrlPath); // navigate to the desired path
 	};
 
 	const handleAutoSubmit = () => { 
@@ -342,6 +394,15 @@ export default function Screen() {
 		// if (formRefSubmit.current) {
 		// 	formRefSubmit.current.style.display = 'none';
 		// }
+		if (formRefHiddenType.current) {
+			formRefHiddenType.current.value = '';
+		}
+		if (formRefHiddenSubType.current) {
+			formRefHiddenSubType.current.value = '';
+		}
+		if (formRefHiddenFactor.current) {
+			formRefHiddenFactor.current.value = '';
+		}
 	}, []);
 
   return (
@@ -357,18 +418,23 @@ export default function Screen() {
 		
 			<Form className="dts-form" ref={formRef} name="frmFilter" id="frmFilter" method="post" onSubmit={(event) => submit(event.currentTarget)}>
 				<input ref={formRefHidden} type="hidden" name="action" defaultValue="" />
+				<input ref={formRefHiddenType} type="text" name="frmType" value={ actionData?.frmType } />
+				<input ref={formRefHiddenSubType} type="text" name="frmSubtype" defaultValue={ actionData?.frmSubType } />
+				<input ref={formRefHiddenFactor} type="text" name="frmFactor" defaultValue={ actionData?.frmFactor } />
 				<div className="mg-grid mg-grid__col-4">
 					<div className="dts-form-component">
 					<label>
 						<div className="dts-form-component__label">
 						<span><abbr title="mandatory">*</abbr>Type</span>
 						</div>
+						
 						<select disabled={actionData?.showForm ? true : false} name="type" required onChange={handleSelectOnChangeCategories}>
 							<option value="">Select an option</option>
 							{loaderData.categories.map(item => (
 								<option key={item.id} value={item.id}>{item.name}</option>
 							))}
 						</select>
+						
 					</label>
 					</div>
 					{actionData?.subcategories &&
@@ -392,7 +458,7 @@ export default function Screen() {
 								<div className="dts-form-component__label">
 								<span><abbr title="mandatory">*</abbr>Factor</span>
 								</div>
-								<select disabled={actionData?.showForm ? true : false} name="factor" onChange={handleSelectOnChangeSubCategories}>
+								<select disabled={actionData?.showForm ? true : false} name="factor" onChange={handleSelectOnChangeFactor}>
 									<option value="">Select an option</option>
 									{Array.isArray(actionData?.factors) && actionData.factors.map(item => (
 										<option key={item.id} value={item.id}>{item.name}</option>
@@ -403,10 +469,10 @@ export default function Screen() {
 					}
 					<div className="dts-form-component" style={actionData?.showForm ? {display:'none'}: {display:'block'}}>
 						<label>
-							<button name="submit_filter" className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
+							<button name="submit_btn" value={'filter'} className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
 								Select
 							</button>
-							<Link className="mg-button mg-button-secondary" to={ locationUrlPath }>Clear</Link>
+							<Link onClick={handleResetHiddenValues} className="mg-button mg-button-secondary" to={ locationUrlPath } replace>Clear</Link>
 						</label>
 					</div>
 				</div>
@@ -419,7 +485,9 @@ export default function Screen() {
 								<div className="dts-form-component__label">
 								<span>* Description</span>
 								</div>
-								<textarea required rows={5} maxLength={500} placeholder="Describe the effect of the non-economic losses to the selected criteria." style={{width:"100%", height:"300px"}}></textarea>	
+								<textarea name="description" required rows={5} maxLength={3000} 
+									placeholder="Describe the effect of the non-economic losses to the selected criteria." 
+									style={{width:"100%", height:"200px"}}></textarea>
 							</label>
 						</div>
 						<div className="dts-form__actions">
@@ -427,9 +495,9 @@ export default function Screen() {
 								<div className="dts-form-component__label">
 									<span>&nbsp;</span>
 								</div>
-								<Link className="mg-button mg-button-secondary" to={ locationUrlPath }>Clear</Link>
+								<Link onClick={handleResetHiddenValues} className="mg-button mg-button-secondary" to={ locationUrlPath }>Clear</Link>
 								&nbsp;
-								<button ref={formRefSubmit} className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
+								<button name="submit_btn" value={'form'} ref={formRefSubmit}  className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
 									Save Changes
 								</button>
 							</label>

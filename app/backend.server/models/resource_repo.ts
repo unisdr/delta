@@ -18,7 +18,7 @@ export function validate(_fields: ResourceRepoFields): Errors<ResourceRepoFields
 	return errors
 }
 
-async function processAndSaveAttachments(tx, resourceId, attachmentsData) {
+async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: string) {
 	if (!attachmentsData) return;
   
 	const save_path = `/uploads/resource-repo/${resourceId}`;
