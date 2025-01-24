@@ -34,22 +34,24 @@ export default function SectorsAnalysis() {
 
   const [filters, setFilters] = useState<{
     sectorId: string | null;
+    subSectorId: string | null;
     disasterEventId: string | null;
     dateRange: string | null;
   } | null>(null);
 
   const handleApplyFilters = (filters: {
     sectorId: string | null;
+    subSectorId: string | null;
     disasterEventId: string | null;
     dateRange: string | null;
   }) => {
-    console.log("Filters applied:", filters);
-    setFilters(filters);// Update the state with the applied filters
+    console.log("Filters applied:", filters); // Log filters to the terminal
+    setFilters(filters); // Update the state with the applied filters
   };
 
   const handleClearFilters = () => {
-    console.log("Filters cleared");
-    setFilters(null);
+    console.log("Filters cleared"); // Log the clearing action
+    setFilters(null); // Reset the filters to null
   };
 
   const handleAdvancedSearch = () => {
@@ -60,10 +62,42 @@ export default function SectorsAnalysis() {
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       <div className="sectors-page">
       {/* Filters Component */}
-      <Filters onApplyFilters={handleApplyFilters} onAdvancedSearch={handleAdvancedSearch} onClearFilters={handleClearFilters} />
+      <Filters
+          onApplyFilters={handleApplyFilters}
+          onAdvancedSearch={handleAdvancedSearch}
+          onClearFilters={handleClearFilters}
+        />
+
+        {/* Debugging Section */}
+        {filters ? (
+          <div
+            style={{
+              marginTop: "1rem",
+              padding: "1rem",
+              border: "1px solid #ddd",
+              borderRadius: "8px",
+              backgroundColor: "#f9f9f9",
+            }}
+          >
+            <strong style={{ color: "#004f91" }}>Filters Applied:</strong>
+            <pre style={{ margin: "0.5rem 0", color: "#333" }}>
+              {JSON.stringify(filters, null, 2)}
+            </pre>
+          </div>
+        ) : (
+          <div
+            style={{
+              marginTop: "1rem",
+              fontSize: "14px",
+              color: "#999",
+            }}
+          >
+            <em>No filters applied yet.</em>
+          </div>
+        )}
 
       {/* Disaster Summary Section */}
-      <DisasterSummary />
+      <DisasterSummary filters={filters}/>
 
       {/* Damage Inventory Section */}
       <DamageInventory />

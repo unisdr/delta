@@ -19,6 +19,17 @@ import {
 } from "@floating-ui/dom";
 
 
+// Define props for the filters
+interface DisasterSummaryProps {
+  filters: {
+    sectorId: string | null;
+    subSectorId: string | null;
+    disasterEventId: string | null;
+    dateRange: string | null;
+  } | null;
+}
+
+
 interface DisasterSummaryData {
   events: number;
   eventsOverTime: { year: number; count: number }[]; // For Events over time
@@ -121,7 +132,7 @@ const useTooltip = () => {
 
 
 
-const DisasterSummary: React.FC = () => {
+const DisasterSummary: React.FC<DisasterSummaryProps> = ({ filters }) => {
   const [data, setData] = useState<DisasterSummaryData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,8 +144,17 @@ const DisasterSummary: React.FC = () => {
     const fetchData = async () => {
       setLoading(true); // Start loading indicator
       try {
+        // Construct query params based on filters
+        const queryParams = new URLSearchParams();
+
+        if (filters?.sectorId) queryParams.append("sectorId", filters.sectorId);
+        if (filters?.subSectorId) queryParams.append("subSectorId", filters.subSectorId);
+        if (filters?.disasterEventId)
+          queryParams.append("disasterEventId", filters.disasterEventId);
+        if (filters?.dateRange) queryParams.append("dateRange", filters.dateRange);
+
         // Fetch data from the REST API
-        const response = await fetch("/api/analytics/disaster-summary");
+        const response = await fetch(`/api/analytics/disaster-summary?${queryParams.toString()}`);
         if (!response.ok) {
           throw new Error("Failed to fetch disaster summary data");
         }
@@ -151,39 +171,45 @@ const DisasterSummary: React.FC = () => {
     };
 
     fetchData(); // Invoke the function on component mount
-  }, []);
+  }, [filters]); // Refetch data whenever filters change
 
+
+  // const renderEmptyState = () => (
+  //   <div
+  //     className="dts-placeholder"
+  //     style={{
+  //       display: "flex",
+  //       flexDirection: "column",
+  //       alignItems: "center",
+  //       justifyContent: "center",
+  //       padding: "1rem",
+  //     }}
+  //   >
+  //     {/* Display the icon */}
+  //     <img
+  //       src="/assets/icons/empty-inbox.svg"
+  //       alt="No data available"
+  //       style={{
+  //         width: "96px", // Increased size for better visibility
+  //         height: "96px",
+  //         marginBottom: "1rem", // Space between icon and text
+  //       }}
+  //     />
+  //     {/* Display the "No data available" text */}
+  //     <span
+  //       style={{
+  //         fontSize: "1.4rem", // Slightly larger font for readability
+  //         color: "#888", // Softer color for a user-friendly design
+  //       }}
+  //     >
+  //       No data available
+  //     </span>
+  //   </div>
+  // );
 
   const renderEmptyState = () => (
-    <div
-      className="dts-placeholder"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1rem",
-      }}
-    >
-      {/* Display the icon */}
-      <img
-        src="/assets/icons/empty-inbox.svg"
-        alt="No data available"
-        style={{
-          width: "96px", // Increased size for better visibility
-          height: "96px",
-          marginBottom: "1rem", // Space between icon and text
-        }}
-      />
-      {/* Display the "No data available" text */}
-      <span
-        style={{
-          fontSize: "1.4rem", // Slightly larger font for readability
-          color: "#888", // Softer color for a user-friendly design
-        }}
-      >
-        No data available
-      </span>
+    <div className="dts-placeholder" style={{ textAlign: "center", padding: "1rem" }}>
+      <p>No data available for the selected filters.</p>
     </div>
   );
 

@@ -39,6 +39,9 @@ import {
 	Footer,
 } from "~/frontend/footer/footer"
 
+import { QueryClient, QueryClientProvider } from 'react-query';
+
+
 export const links: LinksFunction = () => [
 	{rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css'},
 	{rel: "stylesheet", href: allStylesHref},
@@ -164,6 +167,10 @@ function InactivityWarning(props: InactivityWarningProps) {
 	);
 }
 
+// Create a new QueryClient instance
+const queryClient = new QueryClient();
+
+
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
 	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds} = loaderData
@@ -191,6 +198,7 @@ export default function Screen() {
 	}, [flashMessage]);
 
 	return (
+		<QueryClientProvider client={queryClient}>
 		<html lang="en">
 			<head>
 				<link
@@ -233,6 +241,7 @@ export default function Screen() {
 				<Scripts />
 			</body>
 		</html>
+	  </QueryClientProvider>	
 	);
 }
 

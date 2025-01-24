@@ -4,10 +4,6 @@ import { dr } from "~/db.server";
 import { disasterEventTable } from "~/drizzle/schema";
 import { sql } from "drizzle-orm";
 
-/**
- * Fetch disaster summary data based on filters.
- * Filters: disasterEventId, dateRange
- */
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
 
@@ -18,31 +14,55 @@ export const loader: LoaderFunction = async ({ request }) => {
   try {
     // Build filters dynamically
     const filters: any[] = [];
+
+    // Validate and handle `disasterEventId`
     if (disasterEventId) {
-      filters.push(sql`${disasterEventTable.id} = ${disasterEventId}`);
-    }
-    if (dateRange) {
-      const [startDate, endDate] = dateRange.split(",");
-      filters.push(sql`${disasterEventTable.startDateUTC} BETWEEN ${startDate} AND ${endDate}`);
+      // Check if `disasterEventId` is a valid UUID
+      if (!disasterEventId.match(/^[0-9a-fA-F-]{36}$/)) {
+        // Look up the UUID by name
+        const result = await dr.execute(
+          sql`SELECT id FROM ${disasterEventTable} WHERE name_national = ${disasterEventId}`
+        );
+
+        if (result.rows.length === 0) {
+          throw new Error(`Disaster event not found for name: ${disasterEventId}`);
+        }
+
+        filters.push(sql`${disasterEventTable.id} = ${result.rows[0].id}`);
+      } else {
+        // Add the UUID directly
+        filters.push(sql`${disasterEventTable.id} = ${disasterEventId}`);
+      }
     }
 
-    // Base query (with optional WHERE clause)
+    // Validate and handle `dateRange`
+    if (dateRange) {
+      const [startDate, endDate] = dateRange.split(" - ");
+      if (startDate && endDate) {
+        filters.push(sql`${disasterEventTable.startDateUTC} BETWEEN ${startDate} AND ${endDate}`);
+      }
+    }
+
+    // Add other filters (e.g., sectorId, subSectorId) dynamically if needed
+
+    // Construct the WHERE clause dynamically
     const whereClause = filters.length > 0 ? sql`WHERE ${sql.join(filters, " AND ")}` : sql``;
 
     // Fetch data in parallel
-    const [events, damage, losses, recovery, eventsOverTime, damageOverTime, lossesOverTime, recoveryOverTime] = await Promise.all([
-      dr.execute(
-        sql`SELECT COUNT(*) AS count FROM ${disasterEventTable} ${whereClause}`
-      ),
-      dr.execute(
-        sql`SELECT SUM(effects_total_usd) AS damage FROM ${disasterEventTable} ${whereClause}`
-      ),
-      dr.execute(
-        sql`SELECT SUM(subtotal_losses_usd) AS losses FROM ${disasterEventTable} ${whereClause}`
-      ),
-      dr.execute(
-        sql`SELECT SUM(recovery_needs_total) AS recovery FROM ${disasterEventTable} ${whereClause}`
-      ),
+    const [
+      events,
+      damage,
+      losses,
+      recovery,
+      eventsOverTime,
+      damageOverTime,
+      lossesOverTime,
+      recoveryOverTime,
+    ] = await Promise.all([
+      dr.execute(sql`SELECT COUNT(*) AS count FROM ${disasterEventTable} ${whereClause}`),
+      dr.execute(sql`SELECT SUM(effects_total_usd) AS damage FROM ${disasterEventTable} ${whereClause}`),
+      dr.execute(sql`SELECT SUM(subtotal_losses_usd) AS losses FROM ${disasterEventTable} ${whereClause}`),
+      dr.execute(sql`SELECT SUM(recovery_needs_total) AS recovery FROM ${disasterEventTable} ${whereClause}`),
       dr.execute(
         sql`SELECT EXTRACT(YEAR FROM start_date_utc) AS year, COUNT(*) AS count
              FROM ${disasterEventTable}
@@ -86,6 +106,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
   } catch (error) {
     console.error("Error fetching disaster summary data:", error);
-    throw new Response("Failed to fetch disaster summary data", { status: 500 });
+    return new Response("Failed to fetch disaster summary data", { status: 500 });
   }
 };

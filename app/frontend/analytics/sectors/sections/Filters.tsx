@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "react-query";
 import { DateRange, DateRangePicker } from "react-date-range";
 import { format, addDays } from "date-fns";
 import "react-date-range/dist/styles.css"; // Main styles
@@ -35,10 +36,7 @@ const Filters: React.FC<FiltersProps> = ({
   onAdvancedSearch,
   onClearFilters,
 }) => {
-  const [sectors, setSectors] = useState<Sector[]>([]);
-  const [subSectors, setSubSectors] = useState<Sector[]>([]);
-  const [disasterEvents, setDisasterEvents] = useState<DisasterEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const [filters, setFilters] = useState({
     sectorId: "",
@@ -47,87 +45,66 @@ const Filters: React.FC<FiltersProps> = ({
     dateRange: "",
   });
 
-  const [autocompleteResults, setAutocompleteResults] = useState<DisasterEvent[]>([]);
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(),
-      endDate: addDays(new Date(), 7),
-      key: "selection",
+  
+  const [subSectors, setSubSectors] = useState<Sector[]>([]); // For filtered subsectors
+  const [dateRange, setDateRange] = useState<DateRange[] | null>(null); // Initialize as null
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false); // Toggle visibility of calendar
+
+  // React Query for fetching sectors
+  const { data: sectorsData, isLoading: sectorsLoading } = useQuery("sectors", async () => {
+    const response = await fetch("/api/analytics/sectors");
+    if (!response.ok) throw new Error("Failed to fetch sectors");
+    return response.json();
+  });
+
+  // React Query for fetching disaster events
+  const { data: disasterEventsData, isLoading: eventsLoading } = useQuery(
+    ["disasterEvents", filters.disasterEventId],
+    async () => {
+      const response = await fetch(
+        `/api/analytics/disaster-events?query=${encodeURIComponent(filters.disasterEventId)}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch disaster events");
+      return response.json();
     },
-  ]);
-  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+    {
+      enabled: !!filters.disasterEventId, // Only fetch if disasterEventId is non-empty
+    }
+  );
 
-  // Fetch sectors and disaster events on mount
-  useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        setLoading(true);
-        const [sectorsData, disasterEventsData] = await Promise.all([
-          fetch("/api/analytics/sectors").then((res) => res.json()),
-          fetch("/api/analytics/disaster-events").then((res) => res.json()),
-        ]);
+  // Extract sectors and disaster events
+  const sectors: Sector[] = sectorsData?.sectors || [];
+  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
 
-        setSectors(sectorsData.sectors); // Updated to match API response structure
-        setDisasterEvents(disasterEventsData.disasterEvents); // Updated to match API response structure
-      } catch (error) {
-        console.error("Error fetching filter data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFilters();
-  }, []);
-
-  // Updated handleFilterChange function
-  const handleFilterChange = (field: string, value: string) => {
+  // Handle filter changes
+  const handleFilterChange = (field: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
 
     if (field === "sectorId") {
       const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
-      console.log("Selected Sector:", selectedSector); // Debugging log to inspect selected sector
-
-      // Use the subsectors field returned from the API
-      setSubSectors(selectedSector?.subsectors || []);
-
-      // Reset the sub-sector selection when sector changes
-      setFilters((prev) => ({ ...prev, subSectorId: "" }));
+      setSubSectors(selectedSector?.subsectors || []); // Update subsectors dropdown
+      setFilters((prev) => ({ ...prev, subSectorId: "" })); // Reset subsector
     }
   };
 
-  // Handle autocomplete search for disaster events
-  const handleAutocomplete = async (query: string) => {
-    if (query.trim() === "") {
-      setAutocompleteResults([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const searchResults = await fetch(
-        `/api/analytics/disaster-events?query=${encodeURIComponent(query)}`
-      ).then((res) => res.json());
-      setAutocompleteResults(searchResults.disasterEvents); // Updated to match API response structure
-    } catch (error) {
-      console.error("Error fetching autocomplete results:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Apply filters, including formatted date range
+  // Apply filters and include the date range conditionally
   const handleApplyFilters = () => {
-    const startDate = format(dateRange[0].startDate, "MM/dd/yyyy");
-    const endDate = format(dateRange[0].endDate, "MM/dd/yyyy");
-    const dateRangeString = `${startDate} - ${endDate}`;
+    const formattedDateRange =
+      dateRange && dateRange[0]?.startDate && dateRange[0]?.endDate
+        ? `${format(dateRange[0].startDate, "MM/dd/yyyy")} - ${format(
+            dateRange[0].endDate,
+            "MM/dd/yyyy"
+          )}`
+        : null;
 
     onApplyFilters({
       sectorId: filters.sectorId || null,
       subSectorId: filters.subSectorId || null,
       disasterEventId: filters.disasterEventId || null,
-      dateRange: dateRangeString,
+      dateRange: formattedDateRange, // Pass null if no date range is selected
     });
   };
+
 
   // Handle date range selection
   const handleDateRangeChange = (ranges: { [key: string]: DateRange }) => {
@@ -135,26 +112,23 @@ const Filters: React.FC<FiltersProps> = ({
     setDateRange([selectedRange]);
     setFilters((prev) => ({
       ...prev,
-      dateRange: `${format(selectedRange.startDate, "MM/dd/yyyy")} - ${format(
-        selectedRange.endDate,
-        "MM/dd/yyyy"
-      )}`,
+      dateRange: selectedRange.startDate && selectedRange.endDate
+        ? `${format(selectedRange.startDate, "MM/dd/yyyy")} - ${format(
+            selectedRange.endDate,
+            "MM/dd/yyyy"
+          )}`
+        : "",
     }));
-    setDatePickerVisible(false); // Hide the date picker after selection
+    setDatePickerVisible(false); // Close the calendar after selection
   };
+
 
   // Clear all filters
   const handleClearFilters = () => {
     setFilters({ sectorId: "", subSectorId: "", disasterEventId: "", dateRange: "" });
-    setSubSectors([]);
-    setDateRange([
-      {
-        startDate: new Date(),
-        endDate: addDays(new Date(), 7),
-        key: "selection",
-      },
-    ]);
-    onClearFilters();
+    setSubSectors([]); // Clear sub-sector options
+    setDateRange(null); // Reset the date range to null
+    onClearFilters(); // Call parent clear handler
   };
 
   return (
@@ -170,10 +144,10 @@ const Filters: React.FC<FiltersProps> = ({
           onChange={(e) => handleFilterChange("sectorId", e.target.value)}
         >
           <option value="" disabled>
-            {loading ? "Loading sectors..." : "Select Sector Type"}
+            {sectorsLoading ? "Loading sectors..." : "Select Sector Type"}
           </option>
           {sectors
-            .filter((sector) => sector.parentId === null) // Only top-level sectors
+            .filter((sector) => sector.parentId === null) // Filter top-level sectors
             .map((sector) => (
               <option key={sector.id} value={sector.id}>
                 {sector.sectorname}
@@ -197,7 +171,7 @@ const Filters: React.FC<FiltersProps> = ({
           </option>
           {subSectors.map((subSector) => (
             <option key={subSector.id} value={subSector.id}>
-              {subSector.subsector} {/* Correctly displaying the "subsector" field */}
+              {subSector.subsector}
             </option>
           ))}
         </select>
@@ -206,55 +180,76 @@ const Filters: React.FC<FiltersProps> = ({
       {/* Disaster event search input */}
       <div className="dts-form-component">
         <label htmlFor="event-search">Disaster Event</label>
-        <input
-          id="event-search"
-          type="text"
-          className="filter-search"
-          placeholder="Search events..."
-          value={filters.disasterEventId}
-          onChange={(e) => {
-            handleFilterChange("disasterEventId", e.target.value);
-            handleAutocomplete(e.target.value);
-          }}
-        />
-        {autocompleteResults.length > 0 && (
-          <ul className="autocomplete-list">
-            {autocompleteResults.map((event) => (
-              <li
-                key={event.id}
-                onClick={() => {
-                  setFilters((prev) => ({ ...prev, disasterEventId: event.name }));
-                  setAutocompleteResults([]);
-                }}
-              >
-                {event.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        <div style={{ position: "relative" }}>
+          <input
+            id="event-search"
+            type="text"
+            className="filter-search"
+            placeholder="Search events..."
+            value={filters.disasterEventId}
+            onChange={(e) => handleFilterChange("disasterEventId", e.target.value)}
+          />
+          {eventsLoading ? (
+            <div style={{ marginTop: "0.5rem", color: "#004f91" }}>Loading...</div>
+          ) : (
+            filters.disasterEventId.trim() !== "" && ( // Show dropdown only if input is not empty
+              <ul className="autocomplete-list">
+                {disasterEvents.length > 0 ? (
+                  disasterEvents.map((event) => (
+                    <li
+                      key={event.id}
+                      onClick={() => {
+                        setFilters((prev) => ({
+                          ...prev,
+                          disasterEventId: event.name, // Update input with the selected event
+                        }));
+                        queryClient.invalidateQueries("disasterEvents"); // Hide dropdown
+                      }}
+                    >
+                      {event.name}
+                    </li>
+                  ))
+                ) : (
+                  <li className="no-results">No matching events found</li> // Show only when no results
+                )}
+              </ul>
+            )
+          )}
+        </div>
       </div>
 
       {/* Date range picker */}
-      <div className="dts-form-component">
+      <div className="dts-form-component" style={{ position: "relative" }}>
         <label htmlFor="date-range">Date Range</label>
         <input
           id="date-range"
           type="text"
           className="filter-date"
-          value={filters.dateRange}
+          value={filters.dateRange || ""}
           placeholder="Select a date range"
           readOnly
-          onClick={() => setDatePickerVisible((prev) => !prev)}
+          onClick={() => setDatePickerVisible(!isDatePickerVisible)}
         />
         {isDatePickerVisible && (
-          <DateRangePicker
-            ranges={dateRange}
-            onChange={handleDateRangeChange}
-            staticRanges={[]} // Removes predefined ranges
-            inputRanges={[]} // Removes quick input ranges
-          />
+          <div style={{ position: "absolute", zIndex: 10 }}>
+            <DateRangePicker
+              ranges={
+                dateRange || [
+                  {
+                    startDate: new Date(), // Provide a default value if null
+                    endDate: new Date(),   // Provide a default value if null
+                    key: "selection",
+                  },
+                ]
+              }
+              onChange={handleDateRangeChange}
+              staticRanges={[]} // Removes predefined ranges
+              inputRanges={[]} // Removes quick input ranges
+            />
+          </div>
         )}
       </div>
+      
 
       {/* Action buttons */}
       <div className="mg-grid mg-grid__col-3 dts-form__actions"

@@ -118,3 +118,63 @@ form > label {
   .event-card .recharts-wrapper {
 	margin-top: 1rem;
   }
+/*  */
+
+/* Disaster Event Search Input */
+.filter-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none; /* Removes the default browser focus style */
+  box-shadow: none; /* Removes any shadow on focus */
+}
+
+.filter-search:focus {
+  border-color: #004f91; /* Focus state with primary blue */
+  box-shadow: 0 0 5px rgba(0, 79, 145, 0.25); /* Subtle shadow */
+}
+
+/* Dropdown list container */
+.autocomplete-list {
+  position: absolute;
+  top: calc(100% + 0.4rem); /* Position directly below the input */
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #fff; /* White dropdown background */
+  border: 1px solid #cccccc; /* Neutral border */
+  border-radius: 6px;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* Individual list items */
+.autocomplete-list li {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333; /* Neutral text */
+}
+
+.autocomplete-list li:hover {
+  background-color: #e6f0fa; /* Light blue for hover */
+  color: #004f91; /* Primary blue on hover */
+}
+
+/* "No results" placeholder */
+.autocomplete-list .no-results {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #999; /* Subtle gray for no results */
+  text-align: center;
+  background-color: transparent; /* No background */
+  border: none; /* No border */
+  box-shadow: none; /* Ensure no shadow */
+}

@@ -604,66 +604,42 @@ export const nonecoLossesTable = pgTable(
   }
 );
 
-/** 
- * `sectorTable` is a taxonomy table that categorizes different sectors 
- * affected by disaster events (e.g., agriculture, health, infrastructure, etc.)
- */
-export const sectorTable = pgTable(
-	"sector",
-	{
-	  id: serial("id").primaryKey(), // Unique sector ID
-	  name: zeroText("name"), // Name of the sector (e.g., "Agriculture", "Health")
-	  parentId: integer("parent_id").references((): AnyPgColumn => sectorTable.id), // Optional reference to parent sector for hierarchy
-	  description: text("description"), // Optional description for the sector
-	  type: text({ enum: ["Infrastructure", "Productive", "Social", "Other"] }) // High-level category
-		.notNull()
-		.default("Other"),
-	},
-	(table) => [
-	  check("name_not_empty", sql`${table.name} <> ''`), // Ensure name is not empty
-	  check("type_valid", sql`${table.type} IN ('Infrastructure', 'Productive', 'Social', 'Other')`),
-	]
-  );
-  
-  /** `SectorEventRelation` table links `sector` to `disaster_event` */
-  export const sectorEventRelationTable = pgTable("sector_event_relation", {
-	id: serial("id").primaryKey(), // Unique ID for the relation
-	sectorId: integer("sector_id")
-	  .notNull()
-	  .references((): AnyPgColumn => sectorTable.id), // Links to sector
-	disasterEventId: uuid("disaster_event_id")
-	  .notNull()
-	  .references((): AnyPgColumn => disasterEventTable.id), // Links to disaster event
-  });
-  
-  export const sectorRel = relations(sectorTable, ({ one, many }) => ({
-	// A self-referencing relationship for hierarchical sectors
+/*define sector Table*/
+// Explicitly define the type for `sectorTable`
+export const sectorTable = pgTable("sector", {
+	id: serial("id").primaryKey(), // Unique sector ID
+	parentId: integer("parent_id").references((): AnyPgColumn => sectorTable.id), // Reference to parent sector
+	sectorname: text("sectorname").notNull(), // High-level category
+	subsector: text("subsector").notNull(), // Name of the subsector
+	description: text("description"), // Optional description
+  },
+  (table) => [
+	// Constraint: subsector cannot be empty
+	check("subsector_not_empty", sql`${table.subsector} <> ''`),
+	
+	// Constraint: Valid sector names
+	check(
+	  "sectorname_valid",
+	  sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
+	),
+  ]);
+
+ // Define relationships for `sectorTable`
+export const sectorRel = relations(sectorTable, ({ one, many }) => ({
+	// Self-referencing relationship for hierarchical sectors
 	parentSector: one(sectorTable, {
-	  fields: [sectorTable.parentId], // `fields` is valid here for one-to-one relationships
-	  references: [sectorTable.id],  // `references` points to the primary key
+	  fields: [sectorTable.parentId],
+	  references: [sectorTable.id],
 	}),
   
-	// Linking to `sectorEventRelationTable`
-	relatedDisasterEvents: many(sectorEventRelationTable, { relationName: "sector_event_relation" }), // Use only `relationName` for many()
-  }));
-  
-  export const sectorEventRel = relations(sectorEventRelationTable, ({ one }) => ({
-	// Linking each `sector_event_relation` to a sector
-	sector: one(sectorTable, {
-	  fields: [sectorEventRelationTable.sectorId], // `fields` specifies the foreign key
-	  references: [sectorTable.id], // `references` points to the primary key of the referenced table
+	// Optional relationships to other entities if needed
+	hazardEvents: many(hazardEventTable, {
+	  relationName: "sector_hazard_events",
 	}),
-  
-	// Linking each `sector_event_relation` to a disaster event
-	disasterEvent: one(disasterEventTable, {
-	  fields: [sectorEventRelationTable.disasterEventId], // `fields` specifies the foreign key
-	  references: [disasterEventTable.id], // `references` points to the primary key of the referenced table
+	disasterEvents: many(disasterEventTable, {
+	  relationName: "sector_disaster_events",
+	}),
+	humanDsgs: many(humanDsgTable, {
+	  relationName: "sector_human_dsgs",
 	}),
   }));
-  
-  // Types for TypeScript
-  export type Sector = typeof sectorTable.$inferSelect;
-  export type SectorInsert = typeof sectorTable.$inferInsert;
-  export type SectorEventRelation = typeof sectorEventRelationTable.$inferSelect;
-  export type SectorEventRelationInsert = typeof sectorEventRelationTable.$inferInsert;
-  
