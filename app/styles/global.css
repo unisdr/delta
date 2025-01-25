@@ -118,38 +118,37 @@ form > label {
   .event-card .recharts-wrapper {
 	margin-top: 1rem;
   }
-/*  */
 
 /* Disaster Event Search Input */
 .filter-search {
   width: 100%;
   box-sizing: border-box;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd; /* Neutral border */
   border-radius: 4px;
   font-size: 14px;
-  outline: none; /* Removes the default browser focus style */
-  box-shadow: none; /* Removes any shadow on focus */
+  outline: none; /* Remove default browser focus style */
+  box-shadow: none; /* No shadow by default */
 }
 
 .filter-search:focus {
-  border-color: #004f91; /* Focus state with primary blue */
-  box-shadow: 0 0 5px rgba(0, 79, 145, 0.25); /* Subtle shadow */
+  border-color: #004f91; /* UNDRR Blue for focus */
+  box-shadow: 0 0 5px rgba(0, 79, 145, 0.25); /* Subtle shadow for focus */
 }
 
 /* Dropdown list container */
 .autocomplete-list {
   position: absolute;
-  top: calc(100% + 0.4rem); /* Position directly below the input */
+  top: calc(100% + 0.4rem); /* Position below the input */
   left: 0;
   width: 100%;
   max-height: 200px;
   overflow-y: auto;
   background-color: #fff; /* White dropdown background */
-  border: 1px solid #cccccc; /* Neutral border */
+  border: none; /* No border around the dropdown */
   border-radius: 6px;
   z-index: 10;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  box-shadow: none; /* Remove shadow entirely */
   padding: 0;
   margin: 0;
   list-style: none;
@@ -164,17 +163,41 @@ form > label {
 }
 
 .autocomplete-list li:hover {
-  background-color: #e6f0fa; /* Light blue for hover */
-  color: #004f91; /* Primary blue on hover */
+  background-color: #e6f0fa; /* Light blue for hover (aligned with UNDRR Blue) */
+  color: #004f91; /* UNDRR Blue for hover text */
 }
 
-/* "No results" placeholder */
+/* "No matching events found" placeholder */
 .autocomplete-list .no-results {
+  display: block; /* Ensure it behaves as a block-level element */
   padding: 8px 12px;
   font-size: 14px;
-  color: #999; /* Subtle gray for no results */
-  text-align: center;
+  color: #6c757d; /* Subtle gray for no results */
+  text-align: left;
   background-color: transparent; /* No background */
   border: none; /* No border */
-  box-shadow: none; /* Ensure no shadow */
+  box-shadow: none; /* No shadow */
+  cursor: default; /* Indicate non-interactivity */
 }
+
+/* Remove hover/active styles for "No matching events found" */
+.autocomplete-list .no-results:hover,
+.autocomplete-list .no-results:focus {
+  background-color: transparent; /* No background on hover */
+  color: #6c757d; /* Keep subtle gray */
+}
+
+/* Scrollbar styles for dropdown (optional) */
+.autocomplete-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.autocomplete-list::-webkit-scrollbar-thumb {
+  background-color: #ccc; /* Neutral gray for scrollbar */
+  border-radius: 4px;
+}
+
+.autocomplete-list::-webkit-scrollbar-thumb:hover {
+  background-color: #999; /* Darker gray on hover */
+}
+

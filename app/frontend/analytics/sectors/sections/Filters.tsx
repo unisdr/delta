@@ -192,7 +192,7 @@ const Filters: React.FC<FiltersProps> = ({
           {eventsLoading ? (
             <div style={{ marginTop: "0.5rem", color: "#004f91" }}>Loading...</div>
           ) : (
-            filters.disasterEventId.trim() !== "" && ( // Show dropdown only if input is not empty
+            filters.disasterEventId.trim() !== "" && !disasterEvents.some(event => event.name === filters.disasterEventId) && ( // Show dropdown only if input is not empty and no event is selected
               <ul className="autocomplete-list">
                 {disasterEvents.length > 0 ? (
                   disasterEvents.map((event) => (
