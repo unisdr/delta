@@ -4,6 +4,7 @@ import { DateRange, DateRangePicker } from "react-date-range";
 import { format, addDays } from "date-fns";
 import "react-date-range/dist/styles.css"; // Main styles
 import "react-date-range/dist/theme/default.css"; // Theme styles
+import Swal from "sweetalert2";
 
 // Interfaces for filter data
 interface Sector {
@@ -89,6 +90,16 @@ const Filters: React.FC<FiltersProps> = ({
 
   // Apply filters and include the date range conditionally
   const handleApplyFilters = () => {
+    if (!filters.sectorId) {
+      Swal.fire({
+        icon: 'warning',
+        // title: 'Missing Sector',
+        text: 'Please select a sector first.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
     const formattedDateRange =
       dateRange && dateRange[0]?.startDate && dateRange[0]?.endDate
         ? `${format(dateRange[0].startDate, "MM/dd/yyyy")} - ${format(
