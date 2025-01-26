@@ -19,12 +19,13 @@ import {
   setupAdminAccount,
   setupAdminAccountFieldsFromMap,
 } from "~/backend.server/models/user";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export const meta: MetaFunction = () => {
-	return [
-		{ title: "Account Setup - DTS" },
-		{ name: "description", content: "Admin setup." },
-	];
+  return [
+    { title: "Account Setup - DTS" },
+    { name: "description", content: "Admin setup." },
+  ];
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -64,9 +65,9 @@ export default function Screen() {
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /\d/.test(password);
     const hasSpecialChar = /[@$!%*?&]/.test(password);
-  
+
     const hasTwoOfTheFollowing = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length >= 2;
-  
+
     return (
       emailRegex.test(email) &&
       firstname &&
@@ -182,9 +183,9 @@ export default function Screen() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{
-						width: "100%",
-						paddingRight: "40px",
-					  }}
+                      width: "100%",
+                      paddingRight: "40px",
+                    }}
                   />
                   <button
                     type="button"
@@ -201,18 +202,9 @@ export default function Screen() {
                       cursor: "pointer",
                     }}
                   >
-                    <img
-                      src={
-                        passwordType === "password"
-                          ? "/assets/icons/eye-show-password.svg"
-                          : "/assets/icons/eye-hide-password.svg"
-                      }
-                      alt={
-                        passwordType === "password"
-                          ? "Show password"
-                          : "Hide password"
-                      }
-                    />
+                    {passwordType === "password" ?
+                      <FaEyeSlash style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} /> :
+                      <FaEye style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} />}
                   </button>
                 </div>
               </div>
@@ -228,66 +220,57 @@ export default function Screen() {
                     required
                     value={passwordRepeat}
                     onChange={(e) => setPasswordRepeat(e.target.value)}
-					style={{
-						width: "100%",
-						paddingRight: "40px",
-					  }}
+                    style={{
+                      width: "100%",
+                      paddingRight: "40px",
+                    }}
                   />
                   <button
                     type="button"
                     onClick={toggleConfirmPasswordVisibility}
                     aria-label="Toggle confirm password visibility"
                     className="password-toggle"
-					style={{
-						position: "absolute",
-						right: "10px",
-						top: "50%",
-						transform: "translateY(-50%)",
-						background: "none",
-						border: "none",
-						cursor: "pointer",
-					  }}
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
                   >
-                    <img
-                      src={
-                        passwordRepeatType === "password"
-                          ? "/assets/icons/eye-show-password.svg"
-                          : "/assets/icons/eye-hide-password.svg"
-                      }
-                      alt={
-                        passwordRepeatType === "password"
-                          ? "Show password"
-                          : "Hide password"
-                      }
-                    />
+                    {passwordRepeatType === "password" ?
+                      <FaEyeSlash style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} /> :
+                      <FaEye style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} />}
                   </button>
                 </div>
               </div>
             </div>
 
-			  {/* Password Requirements */}
-		  <div className="dts-form-component__hint" style={{fontSize: "14px" }}>
-			<ul>
-			  <li>At least 12 characters long</li>
-			  <li>
-				Must include two of the following:
-				<ul>
-				  <li>Uppercase letters</li>
-				  <li>Lowercase letters</li>
-				  <li>Numbers</li>
-				  <li>Special characters</li>
-				</ul>
-			  </li>
-			  <li>Cannot be the same as the username</li>
-			  <li>Should not be a simple or commonly used password</li>
-			</ul>
-		  </div>
+            {/* Password Requirements */}
+            <div className="dts-form-component__hint" style={{ fontSize: "14px" }}>
+              <ul>
+                <li>At least 12 characters long</li>
+                <li>
+                  Must include two of the following:
+                  <ul>
+                    <li>Uppercase letters</li>
+                    <li>Lowercase letters</li>
+                    <li>Numbers</li>
+                    <li>Special characters</li>
+                  </ul>
+                </li>
+                <li>Cannot be the same as the username</li>
+                <li>Should not be a simple or commonly used password</li>
+              </ul>
+            </div>
 
             <div className="dts-form__actions">
               <button
                 type="submit"
                 className="mg-button mg-button-primary"
-                //disabled={!isFormValid()}
+              //disabled={!isFormValid()}
               >
                 Set up account
               </button>

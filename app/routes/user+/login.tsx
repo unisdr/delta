@@ -30,7 +30,8 @@ import {
 import {
 	errorToString
 } from "~/frontend/form"
-import {configAuthSupportedAzureSSOB2C} from "~/util/config"
+import { configAuthSupportedAzureSSOB2C } from "~/util/config"
+import { FaEyeSlash, FaEye } from 'react-icons/fa';
 
 
 
@@ -75,7 +76,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (user) {
 		return redirect(redirectTo);
 	}
-	return { redirectTo: redirectTo, confAuthSupportedAzureSSOB2C:configAuthSupportedAzureSSOB2C() };
+	return { redirectTo: redirectTo, confAuthSupportedAzureSSOB2C: configAuthSupportedAzureSSOB2C() };
 };
 
 export function getSafeRedirectTo(redirectTo: string | null, defaultPath: string = "/"): string {
@@ -103,6 +104,13 @@ export default function Screen() {
 
 	const [password, setPassword] = useState(data?.password || "");
 	const [passwordVisible, setPasswordVisible] = useState(false);
+
+	// Ensure password visibility is initialized on the client to avoid mismatch
+	const [isClient, setIsClient] = useState(false);
+
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
 
 	const togglePasswordVisibility = () => {
 		setPasswordVisible(!passwordVisible);
@@ -149,12 +157,12 @@ export default function Screen() {
 								<div className="dts-form-component">
 									<Field label="">
 										<span className="mg-u-sr-only">Password*</span>
-										<div className='password-wrapper' style={{
-											//position: 'relative',
-											display: 'flex',
-											alignItems: 'center',
-											//zIndex: 1,
-										}}
+										<div
+											className="password-wrapper"
+											style={{
+												display: 'flex',
+												alignItems: 'center',
+											}}
 										>
 											<input
 												type={passwordVisible ? "text" : "password"}
@@ -171,20 +179,36 @@ export default function Screen() {
 												style={{
 													paddingRight: "2.5rem",
 													width: "100%",
-
-												}}
-											></input>
-											<img
-												src={passwordVisible ? "/assets/icons/eye-hide-password.svg" : "/assets/icons/eye-show-password.svg"}
-												alt={passwordVisible ? "Hide password" : "Show password"}
-												onClick={togglePasswordVisibility}
-												className="toggle-password-visibility"
-												style={{
-													right: '0.75rem',
-													marginLeft: "-2.5rem", // Adjusts icon position relative to input
-													cursor: 'pointer',
 												}}
 											/>
+											{/* Password Visibility Toggle Icon */}
+
+											{/* {passwordVisible ?  */}
+											{isClient && (
+												passwordVisible ? (
+													<FaEye
+														onClick={togglePasswordVisibility}
+														className="dts-form-component__pwd-toggle:focus-visible"
+														style={{
+															right: '0.75rem',
+															marginLeft: "-3rem",
+															transform: 'translateY(10%)',
+															cursor: 'pointer',
+														}}
+													/>
+												) : (
+													<FaEyeSlash
+														onClick={togglePasswordVisibility}
+														className="dts-form-component__pwd-toggle:focus-visible"
+														style={{
+															right: '0.75rem',
+															marginLeft: "-3rem",
+															transform: 'translateY(10%)',
+															cursor: 'pointer',
+														}}
+													/>
+												)
+											)}
 										</div>
 										{errors?.fields?.password && (
 											<div
@@ -222,17 +246,17 @@ export default function Screen() {
 								></SubmitButton>
 							</div>
 							<div>
-									{
-										loaderData.confAuthSupportedAzureSSOB2C ? 
-											<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/login"
-												style={{
-													width: "100%", // Full width on small screens
-													padding: "10px 20px", // Ensure consistent padding
-													marginTop: "5px",
-												}}
-											>Login using Azure B2C SSO</Link>
-										 : ''
-									}
+								{
+									loaderData.confAuthSupportedAzureSSOB2C ?
+										<Link className='mg-button mg-button-outline' to="/sso/azure-b2c/login"
+											style={{
+												width: "100%", // Full width on small screens
+												padding: "10px 20px", // Ensure consistent padding
+												marginTop: "5px",
+											}}
+										>Login using Azure B2C SSO</Link>
+										: ''
+								}
 							</div>
 						</Form>
 					</div>
