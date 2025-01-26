@@ -5,9 +5,10 @@ import { executeQueryForPagination } from "~/frontend/pagination/api.server";
 import { userTable } from "~/drizzle/schema";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
+import { FaEye, FaTrashAlt, FaUserEdit } from "react-icons/fa";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -52,9 +53,18 @@ interface UserRes {
 	authType: string;
 }
 
+
 export default function Settings() {
 	const ld = useLoaderData<typeof loader>();
 	const { items, search } = ld;
+
+	const [isClient, setIsClient] = useState(false);
+
+	// Ensure client-specific rendering only occurs after the component mounts
+	useEffect(() => {
+		setIsClient(true);
+		setFilteredItems(items); // Ensure data is consistent
+	}, [items]);
 
 	// State for search and filtered users
 	const [filteredItems, setFilteredItems] = useState<UserRes[]>(items);
@@ -117,31 +127,39 @@ export default function Settings() {
 	//const pendingUsers = totalUsers - activatedUsers;
 	const pendingUsers = filteredItems.filter(item => !item.emailVerified).length;
 
+	// Handle user deletion
 	const handleDeleteUser = (userId: number) => {
 		Swal.fire({
 			title: "Are you sure you want to delete this user?",
 			text: "This data cannot be recovered after being deleted.",
 			icon: "warning",
 			showCancelButton: true,
-			confirmButtonColor: "#d33", // Red for "Delete user"
-			cancelButtonColor: "#3085d6", // Blue for "Do not delete"
+			confirmButtonColor: "#d33",
+			cancelButtonColor: "#3085d6",
 			confirmButtonText: '<i class="fas fa-trash"></i> Delete user',
 			cancelButtonText: "Do not delete",
+			showClass: { popup: "swal2-show" },
+			hideClass: { popup: "swal2-hide" },
 		}).then(async (result) => {
 			if (result.isConfirmed) {
 				try {
-					// Redirect to the delete route
-					await fetch(`/settings/access-mgmnt/delete/${userId}`, {
+					const response = await fetch(`/settings/access-mgmnt/delete/${userId}`, {
 						method: "GET",
 					});
+
+					if (!response.ok) {
+						throw new Error(`Failed to delete user. Status: ${response.status}`);
+					}
+
 					Swal.fire({
 						title: "Deleted!",
 						text: "The user has been deleted.",
 						icon: "success",
 					}).then(() => {
-						window.location.href = "/settings/access-mgmnt/"; // Redirect to access management page
+						window.location.href = "/settings/access-mgmnt/";
 					});
 				} catch (error) {
+					console.error("Error deleting user:", error);
 					Swal.fire("Error", "Something went wrong while deleting the user.", "error");
 				}
 			}
@@ -511,124 +529,141 @@ export default function Settings() {
 
 
 				{/* Users Table */}
-				<div className="table-container">
-				<table className="table-styled" style={{ marginTop: '0px' }}>
-					<thead>
-						<tr>
-							<th>Status</th>
-							<th>
-								Email
-							</th>
-							<th>
-								First Name
-								{/* <span className="filter-icon">⬍</span> */}
-							</th>
-							<th>
-								Last Name
-								{/* <span className="filter-icon">⬍</span> */}
-							</th>
-							<th>
-								Role
-								{/* <span className="filter-icon">⬍</span> */}
-							</th>
-							<th>
-								Organization
-								{/* <span className="filter-icon">⬍</span> */}
-							</th>
-							<th>
-								Email Verified
-								{/* <span className="filter-icon">⬍</span> */}
-							</th>
-							<th>
-								Auth
-								{/* <span className="filter-icon">⬍</span> */}
-							</th>
-							<th>Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{filteredItems.map((item, index) => (
-							<tr key={index}>
-								<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-									<span
-										className={`status-dot ${item.emailVerified ? 'activated' : 'pending'}`}
-										style={{
-											// Inline styles to ensure consistent dot appearance
-											height: '10px',
-											width: '10px',
-											borderRadius: '50%',
-											display: 'inline-block',
-											position: 'relative',
-										}}
-									>
-										{/* Tooltip message */}
-										<span
-											className="tooltip-text"
-										>
-											{/* Tooltip text dynamically changes based on status */}
-											{item.emailVerified ? 'Activated' : 'Pending'}
-										</span>
-										{/* Tooltip pointer */}
-										<span className="tooltip-pointer"></span>
-									</span>
-								</td>
+				{isClient && (
+					<div className="table-container">
+						<table className="table-styled" style={{ marginTop: '0px' }}>
+							<thead>
+								<tr>
+									<th>Status</th>
+									<th>
+										Email
+									</th>
+									<th>
+										First Name
+										{/* <span className="filter-icon">⬍</span> */}
+									</th>
+									<th>
+										Last Name
+										{/* <span className="filter-icon">⬍</span> */}
+									</th>
+									<th>
+										Role
+										{/* <span className="filter-icon">⬍</span> */}
+									</th>
+									<th>
+										Organization
+										{/* <span className="filter-icon">⬍</span> */}
+									</th>
+									<th>
+										Email Verified
+										{/* <span className="filter-icon">⬍</span> */}
+									</th>
+									<th>
+										Auth
+										{/* <span className="filter-icon">⬍</span> */}
+									</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{filteredItems.map((item, index) => (
+									<tr key={index}>
+										<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+											<span
+												className={`status-dot ${item.emailVerified ? 'activated' : 'pending'}`}
+												style={{
+													// Inline styles to ensure consistent dot appearance
+													height: '10px',
+													width: '10px',
+													borderRadius: '50%',
+													display: 'inline-block',
+													position: 'relative',
+												}}
+											>
+												{/* Tooltip message */}
+												<span
+													className="tooltip-text"
+												>
+													{/* Tooltip text dynamically changes based on status */}
+													{item.emailVerified ? 'Activated' : 'Pending'}
+												</span>
+												{/* Tooltip pointer */}
+												<span className="tooltip-pointer"></span>
+											</span>
+										</td>
 
 
-								<td>
-									<Link to={`/settings/access-mgmnt/${item.id}`} className="link">
-										{item.email}
-									</Link>
-								</td>
-								<td>{item.firstName}</td>
-								<td>{item.lastName}</td>
-								{/* Updated Role Column with Badge */}
-								<td>
-									<span
-										style={{
-											display: 'inline-block',
-											padding: '5px 10px',
-											backgroundColor: '#fff3cd', // Light yellow
-											border: '1px solid #ffeeba', // Slightly darker yellow
-											borderRadius: '4px',
-											color: '#856404', // Darker yellow text
-											fontSize: '12px',
-											fontWeight: 'bold',
-										}}
-									>
-										{item.role.charAt(0).toUpperCase() + item.role.slice(1)} {/* Capitalizes the first letter */}
-									</span>
-								</td>
-								<td>{item.organization}</td>
-								<td>{item.emailVerified.toString()}</td>
-								<td>{item.authType}</td>
-								<td>
-									<div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-										<button
-											className="icon-button"
-											onClick={() => (window.location.href = `/settings/access-mgmnt/${item.id}`)}
-										>
-											<img src="/assets/icons/eye-show-password.svg" alt="View" />
-										</button>
-										<button
-											className="icon-button"
-											onClick={() => (window.location.href = `/settings/access-mgmnt/edit/${item.id}`)}
-										>
-											<img src="/assets/icons/edit.svg" alt="Edit" />
-										</button>
-										<button
-											className="icon-button"
-											onClick={() => handleDeleteUser(item.id)}
-										>
-											<img src="/assets/icons/trash-alt.svg" alt="Delete" />
-										</button>
-									</div>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-				</div>
+										<td>
+											<Link to={`/settings/access-mgmnt/${item.id}`} className="link">
+												{item.email}
+											</Link>
+										</td>
+										<td>{item.firstName}</td>
+										<td>{item.lastName}</td>
+										{/* Updated Role Column with Badge */}
+										<td>
+											<span
+												style={{
+													display: 'inline-block',
+													padding: '5px 10px',
+													backgroundColor: '#fff3cd', // Light yellow
+													border: '1px solid #ffeeba', // Slightly darker yellow
+													borderRadius: '4px',
+													color: '#856404', // Darker yellow text
+													fontSize: '12px',
+													fontWeight: 'bold',
+												}}
+											>
+												{item.role.charAt(0).toUpperCase() + item.role.slice(1)} {/* Capitalizes the first letter */}
+											</span>
+										</td>
+										<td>{item.organization}</td>
+										<td>{item.emailVerified.toString()}</td>
+										<td>{item.authType}</td>
+										<td>
+											<div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+												<button
+													className="icon-button"
+													onClick={() => (window.location.href = `/settings/access-mgmnt/${item.id}`)}
+												>
 
+													<FaEye
+														style={{
+															fontSize: '1.25rem', // Adjust the size of the icon if needed
+															cursor: 'pointer',
+														}}
+													/>
+												</button>
+												<button
+													className="icon-button"
+													onClick={() => (window.location.href = `/settings/access-mgmnt/edit/${item.id}`)}
+												>
+													<FaUserEdit
+														style={{
+															fontSize: '1.25rem', // Adjust the size of the icon if needed
+															cursor: 'pointer',
+														}}
+													/>
+												</button>
+												<button
+													className="icon-button"
+													onClick={() => handleDeleteUser(item.id)}
+												>
+													<FaTrashAlt
+														style={{
+															fontSize: '1.25rem', // Adjust the size of the icon if needed
+															cursor: 'pointer',
+														}}
+													/>
+												</button>
+											</div>
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				)}
 				{/* Pagination */}
 				{pagination}
 			</div>
