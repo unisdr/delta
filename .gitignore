@@ -4,4 +4,4 @@ node_modules
 build
 app/data
 information-pages-override
-
+public/uploads

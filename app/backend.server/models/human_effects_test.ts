@@ -31,9 +31,9 @@ let defs1: Def[] = [
 			{key: "f", label: "Female"}]
 	},
 	{
-		uiName: "Injuries",
-		jsName: "injuries",
-		dbName: "injuries",
+		uiName: "Injured",
+		jsName: "injured",
+		dbName: "injured",
 		type: "number"
 	}
 ]
@@ -70,9 +70,9 @@ describe("human_effects", async () => {
 					{key: "below", label: "Below"}]
 			},
 			{
-				uiName: "Injuries",
-				jsName: "injuries",
-				dbName: "injuries",
+				uiName: "Injured",
+				jsName: "injured",
+				dbName: "injured",
 				type: "number"
 			}
 		]

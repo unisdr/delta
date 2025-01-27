@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { initTokenField, renderTokenField } from "./controls/tokenfield";
+import { renderMapper, renderMapperDialog } from "./controls/mapper";
 
 //Mapper
 const glbMapperJS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
@@ -29,7 +31,7 @@ interface TableColumn {
 interface DialogField {
   id: string;
   caption: string;
-  type: "input" | "select" | "file" | "option" | "textarea" | "mapper";
+  type: "input" | "select" | "file" | "option" | "textarea" | "mapper" | "tokenfield";
   required?: boolean;
   options?: string[];
   placeholder?: string;
@@ -165,20 +167,37 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   const [formData, setFormData] = useState<any>({});
   const [currentDialogFields, setDialogFields] = useState<DialogField[]>(dialog_fields);
   const fileInputRefs = useRef<{ [key: string]: React.RefObject<HTMLInputElement> }>({});
+  const tokenfieldRefs = useRef<{ [key: string]: React.RefObject<HTMLInputElement> }>({});
   const dragIndex = useRef<number | null>(null);
 
   useEffect(() => {
     setDialogFields(dialog_fields);
   }, [dialog_fields]);
 
+  // useEffect(() => {
+  //   const refs: { [key: string]: React.RefObject<HTMLInputElement> } = {};
+  //   dialog_fields.forEach((field) => {
+  //     if (field.type === "file") {
+  //       refs[field.id] = React.createRef<HTMLInputElement>();
+  //     }
+  //   });
+  //   fileInputRefs.current = refs;
+  // }, [dialog_fields]);
+
   useEffect(() => {
-    const refs: { [key: string]: React.RefObject<HTMLInputElement> } = {};
+    const fileRefs: { [key: string]: React.RefObject<HTMLInputElement> } = {};
+    const tokenfieldRefsLocal: { [key: string]: React.RefObject<HTMLInputElement> } = {};
+  
     dialog_fields.forEach((field) => {
       if (field.type === "file") {
-        refs[field.id] = React.createRef<HTMLInputElement>();
+        fileRefs[field.id] = React.createRef<HTMLInputElement>();
+      } else if (field.type === "tokenfield") {
+        tokenfieldRefsLocal[field.id] = React.createRef<HTMLInputElement>();
       }
     });
-    fileInputRefs.current = refs;
+
+    fileInputRefs.current = fileRefs;
+    tokenfieldRefs.current = tokenfieldRefsLocal;
   }, [dialog_fields]);
 
   useEffect(() => {
@@ -215,9 +234,23 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       ...field,
       domElement: document.getElementById(`${id}_${field.id}`), // Attach DOM element
     }));
+    
+    dialog_fields.forEach((field) => {
+      const element = document.getElementById(`${id}_${field.id}`);
+      if (field.type === "tokenfield" && element) {
+        // Initialize tokenfield on the element
+        initTokenField(
+          initialFormData[field.id] || "[]", // Pass current value or an empty array
+          element as HTMLInputElement,
+          field?.dataSource || [],
+          field,
+          handleFieldChange
+        );
+      }
+    });
 
     dialog_fields.forEach((field) => {
-      if ((field.type === "select" || field.type === "option") && field.onChange) {
+      if ((field.type === "tokenfield" || field.type === "select" || field.type === "option") && field.onChange) {
         const initialValue = initialFormData[field.id];
         field.onChange(
           { target: { value: initialValue } },
@@ -237,6 +270,24 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };
 
   const closeDialog = () => {
+    // Reset form data, including tokenfield values
+    setFormData({}); // Clears all field values
+    setEditingItem(null); // Clear editing state
+
+    // Clear tokenfields
+    Object.values(tokenfieldRefs.current).forEach((ref) => {
+        if (ref.current) {
+            // Clear the hidden textarea value
+            ref.current.value = "";
+
+            // Clear the UI tokens (assumes tokens are wrapped in a container)
+            const tokenContainer = ref.current.parentElement?.querySelector(".custom-tokenfield-tokens");
+            if (tokenContainer) {
+                tokenContainer.innerHTML = ""; // Remove all tokens
+            }
+        }
+    });
+
     setIsDialogOpen(false);
     dialogRef.current?.close();
   };
@@ -258,7 +309,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     if (!mapRef.current && L) {
       if (debug) console.log(`${id}_mapper_modeSelect`);
 
-      const getHeight = document.querySelector('.dts-dialog__content')?.offsetHeight - document.querySelector('.dts-dialog__header')?.offsetHeight - document.querySelector('.mapper-menu')?.offsetHeight;
+      const getHeight = document.querySelector(`#${dialogMapRef.current.getAttribute('id')} .dts-dialog__content`)?.offsetHeight - document.querySelector(`#${dialogMapRef.current.getAttribute('id')} .dts-dialog__header`)?.offsetHeight - document.querySelector(`#${dialogMapRef.current.getAttribute('id')} .mapper-menu`)?.offsetHeight;
       if (getHeight !== undefined) {
         const mapContainer = document.getElementById(`${dialogMapRef.current.getAttribute('id')}_container`); //dialogMapRef.current?.querySelector('.mapper-holder .leaflet-container');
         if (mapContainer) {
@@ -574,142 +625,142 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     if (mapRef?.current) mapRef.current.dragging.enable();
   };
   
-// Process initial data for drawing shapes
-const processInitialData = (data) => {
-  const L = (window as any).L || null;
+  // Process initial data for drawing shapes
+  const processInitialData = (data) => {
+    const L = (window as any).L || null;
 
-  if (data.mode) {
-    const { mode, coordinates, center, radius } = data;
+    if (data.mode) {
+      const { mode, coordinates, center, radius } = data;
 
-    if (mode === "polygon" && Array.isArray(coordinates)) {
-      // Process polygon data
-      state.current.points = coordinates;
-      state.current.polygon = L.polygon(coordinates, { color: glbColors.polygon }).addTo(mapRef.current);
-      state.current.polygon.editing.enable(); // Enable editing
-      mapRef.current.fitBounds(state.current.polygon.getBounds());
+      if (mode === "polygon" && Array.isArray(coordinates)) {
+        // Process polygon data
+        state.current.points = coordinates;
+        state.current.polygon = L.polygon(coordinates, { color: glbColors.polygon }).addTo(mapRef.current);
+        state.current.polygon.editing.enable(); // Enable editing
+        mapRef.current.fitBounds(state.current.polygon.getBounds());
 
-      // Update state on edit
-      state.current.polygon.on("edit", () => {
-        state.current.points = state.current.polygon
-          .getLatLngs()[0]
-          .map((latLng) => [latLng.lat, latLng.lng]);
-        if (debug) console.log("Polygon updated points:", state.current.points);
-      });
+        // Update state on edit
+        state.current.polygon.on("edit", () => {
+          state.current.points = state.current.polygon
+            .getLatLngs()[0]
+            .map((latLng) => [latLng.lat, latLng.lng]);
+          if (debug) console.log("Polygon updated points:", state.current.points);
+        });
 
-      dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'autoPolygon');
-    } else if (mode === "lines" && Array.isArray(coordinates)) {
-      // Process line data
-      state.current.points = coordinates;
-      state.current.polyline = L.polyline(coordinates, { color: glbColors.line }).addTo(mapRef.current);
-      state.current.polyline.editing.enable(); // Enable editing
-      mapRef.current.fitBounds(state.current.polyline.getBounds());
+        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'autoPolygon');
+      } else if (mode === "lines" && Array.isArray(coordinates)) {
+        // Process line data
+        state.current.points = coordinates;
+        state.current.polyline = L.polyline(coordinates, { color: glbColors.line }).addTo(mapRef.current);
+        state.current.polyline.editing.enable(); // Enable editing
+        mapRef.current.fitBounds(state.current.polyline.getBounds());
 
-      // Update state on edit
-      state.current.polyline.on("edit", () => {
-        state.current.points = state.current.polyline
-          .getLatLngs()
-          .map((latLng) => [latLng.lat, latLng.lng]);
-        if (debug) console.log("Polyline updated points:", state.current.points);
-      });
-      dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawLines');
-    } else if (mode === "rectangle" && Array.isArray(coordinates)) {
-      // Process rectangle data
-      const bounds = L.latLngBounds(
-        L.latLng(coordinates[0][0], coordinates[0][1]),
-        L.latLng(coordinates[1][0], coordinates[1][1])
-      );
-      state.current.rectangle = L.rectangle(bounds, { color: glbColors.rectangle }).addTo(mapRef.current);
-      state.current.rectangle.editing.enable(); // Enable editing
-      mapRef.current.fitBounds(bounds);
+        // Update state on edit
+        state.current.polyline.on("edit", () => {
+          state.current.points = state.current.polyline
+            .getLatLngs()
+            .map((latLng) => [latLng.lat, latLng.lng]);
+          if (debug) console.log("Polyline updated points:", state.current.points);
+        });
+        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawLines');
+      } else if (mode === "rectangle" && Array.isArray(coordinates)) {
+        // Process rectangle data
+        const bounds = L.latLngBounds(
+          L.latLng(coordinates[0][0], coordinates[0][1]),
+          L.latLng(coordinates[1][0], coordinates[1][1])
+        );
+        state.current.rectangle = L.rectangle(bounds, { color: glbColors.rectangle }).addTo(mapRef.current);
+        state.current.rectangle.editing.enable(); // Enable editing
+        mapRef.current.fitBounds(bounds);
 
-      // Initialize points
-      state.current.points = [
-        [bounds.getNorthWest().lat, bounds.getNorthWest().lng],
-        [bounds.getSouthEast().lat, bounds.getSouthEast().lng],
-      ];
-
-      // Update state on edit
-      state.current.rectangle.on("edit", () => {
-        const updatedBounds = state.current.rectangle.getBounds();
+        // Initialize points
         state.current.points = [
-          [updatedBounds.getNorthWest().lat, updatedBounds.getNorthWest().lng],
-          [updatedBounds.getSouthEast().lat, updatedBounds.getSouthEast().lng],
+          [bounds.getNorthWest().lat, bounds.getNorthWest().lng],
+          [bounds.getSouthEast().lat, bounds.getSouthEast().lng],
         ];
-        if (debug) console.log("Rectangle updated bounds:", state.current.points);
-      });
-      dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawRectangle');
-    } else if (mode === "circle" && Array.isArray(center) && typeof radius === "number") {
-      // Process circle data
-      const circleCenter = L.latLng(center[0], center[1]);
-      state.current.circle = L.circle(circleCenter, {
-        color: "purple",
-        radius: radius,
-      }).addTo(mapRef.current);
-      state.current.circle.editing.enable(); // Enable editing
-      mapRef.current.fitBounds(state.current.circle.getBounds());
 
-      // Initialize points
-      state.current.points = [{ lat: center[0], lng: center[1] }, radius];
+        // Update state on edit
+        state.current.rectangle.on("edit", () => {
+          const updatedBounds = state.current.rectangle.getBounds();
+          state.current.points = [
+            [updatedBounds.getNorthWest().lat, updatedBounds.getNorthWest().lng],
+            [updatedBounds.getSouthEast().lat, updatedBounds.getSouthEast().lng],
+          ];
+          if (debug) console.log("Rectangle updated bounds:", state.current.points);
+        });
+        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawRectangle');
+      } else if (mode === "circle" && Array.isArray(center) && typeof radius === "number") {
+        // Process circle data
+        const circleCenter = L.latLng(center[0], center[1]);
+        state.current.circle = L.circle(circleCenter, {
+          color: "purple",
+          radius: radius,
+        }).addTo(mapRef.current);
+        state.current.circle.editing.enable(); // Enable editing
+        mapRef.current.fitBounds(state.current.circle.getBounds());
 
-      // Update state on edit
-      state.current.circle.on("edit", () => {
-        const updatedCenter = state.current.circle.getLatLng();
-        const updatedRadius = state.current.circle.getRadius();
-        state.current.points = [{ lat: updatedCenter.lat, lng: updatedCenter.lng }, updatedRadius];
-        if (debug) console.log("Circle updated data:", state.current.points);
-      });
-      dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawCircle');
-    } else if (mode === "markers" && Array.isArray(coordinates)) {
-      // Process marker data
-      state.current.points = [];
-      state.current.marker = [];
-      
-      // Create bounds object to fit all markers
-      const markerBounds = L.latLngBounds();
+        // Initialize points
+        state.current.points = [{ lat: center[0], lng: center[1] }, radius];
 
-      coordinates.forEach(([lat, lng]) => {
-        const customIcon = L.icon({
-          iconUrl: glbMarkerIcon.iconUrl,
-          iconSize: glbMarkerIcon.iconSize,
-          iconAnchor: glbMarkerIcon.iconAnchor,
-          popupAnchor: glbMarkerIcon.popupAnchor,
-          shadowUrl: glbMarkerIcon.shadowUrl,
-          className: glbMarkerIcon.className,
+        // Update state on edit
+        state.current.circle.on("edit", () => {
+          const updatedCenter = state.current.circle.getLatLng();
+          const updatedRadius = state.current.circle.getRadius();
+          state.current.points = [{ lat: updatedCenter.lat, lng: updatedCenter.lng }, updatedRadius];
+          if (debug) console.log("Circle updated data:", state.current.points);
+        });
+        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawCircle');
+      } else if (mode === "markers" && Array.isArray(coordinates)) {
+        // Process marker data
+        state.current.points = [];
+        state.current.marker = [];
+        
+        // Create bounds object to fit all markers
+        const markerBounds = L.latLngBounds();
+
+        coordinates.forEach(([lat, lng]) => {
+          const customIcon = L.icon({
+            iconUrl: glbMarkerIcon.iconUrl,
+            iconSize: glbMarkerIcon.iconSize,
+            iconAnchor: glbMarkerIcon.iconAnchor,
+            popupAnchor: glbMarkerIcon.popupAnchor,
+            shadowUrl: glbMarkerIcon.shadowUrl,
+            className: glbMarkerIcon.className,
+          });
+
+          const marker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(mapRef.current);
+
+          state.current.marker.push(marker);
+          state.current.points.push([lat, lng]);
+
+          // Extend the bounds to include this marker
+          markerBounds.extend([lat, lng]);
+
+          // Add dragend event to update state
+          marker.on("dragend", (event) => {
+            const updatedLatLng = event.target.getLatLng();
+            const markerIndex = state.current.marker.indexOf(marker);
+            if (markerIndex !== -1) {
+              state.current.points[markerIndex] = [updatedLatLng.lat, normalizeLongitude(updatedLatLng.lng)];
+            }
+            if (debug) console.log("Marker updated:", state.current.points);
+          });
         });
 
-        const marker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(mapRef.current);
+        // Fit map view to marker bounds
+        if (markerBounds.isValid()) {
+          mapRef.current.fitBounds(markerBounds);
+        }
 
-        state.current.marker.push(marker);
-        state.current.points.push([lat, lng]);
-
-        // Extend the bounds to include this marker
-        markerBounds.extend([lat, lng]);
-
-        // Add dragend event to update state
-        marker.on("dragend", (event) => {
-          const updatedLatLng = event.target.getLatLng();
-          const markerIndex = state.current.marker.indexOf(marker);
-          if (markerIndex !== -1) {
-            state.current.points[markerIndex] = [updatedLatLng.lat, normalizeLongitude(updatedLatLng.lng)];
-          }
-          if (debug) console.log("Marker updated:", state.current.points);
-        });
-      });
-
-      // Fit map view to marker bounds
-      if (markerBounds.isValid()) {
-        mapRef.current.fitBounds(markerBounds);
+        if (debug) console.log("Markers initialized:", state.current.points);
+        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'placeMarker');
+      } else {
+        console.warn("Unsupported or invalid mode in initialData:", mode);
       }
-
-      if (debug) console.log("Markers initialized:", state.current.points);
-      dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'placeMarker');
     } else {
-      console.warn("Unsupported or invalid mode in initialData:", mode);
+      console.warn("Invalid initialData format. Expected object with 'mode' and related data.");
     }
-  } else {
-    console.warn("Invalid initialData format. Expected object with 'mode' and related data.");
-  }
-};
+  };
  
   const closeMapDialog = () => {
     if (debug) console.log('Unload: ', (`${id}_mapper_container`));
@@ -991,7 +1042,6 @@ const processInitialData = (data) => {
     newTab.document.close();
   };
   
-  
   const handleSave = () => {
     // Find missing required fields
     const missingFields = dialog_fields
@@ -1030,6 +1080,7 @@ const processInitialData = (data) => {
         [newId]: { id: newId, ...formData },
       }));
     }
+
     onChange(Object.values(items));
     closeDialog();
   };
@@ -1243,353 +1294,23 @@ const processInitialData = (data) => {
         )}
       </ul>
 
-      <dialog
-        id={`${id}_mapper`}
-        ref={dialogMapRef}
-        className="dts-dialog content-repeater-mapper"
-      >
-        <div className="dts-dialog__content" style={{overflowY: "hidden"}}>
-          <div className="dts-dialog__header" style={{justifyContent: "space-between"}}>
-            <h2 className="dts-heading-2" style={{marginBottom: "0px"}}>Mapper</h2>
-            <a type="button" aria-label="Close dialog" onClick={closeMapDialog} style={{ color: "#000" }}>
-              <svg aria-hidden="true" focusable="false" role="img">
-                <use href={`${base_path}/assets/icons/close.svg#close`}></use>
-              </svg>
-            </a>
-          </div>
-          <div>
-            <div className="dts-form__body">
-              <div className="mapper-menu" style={{display: "flex", justifyContent: "space-between", padding: "10px", background: "#777"}}>
-                <input type="text" id={`${id}_mapper_search`} style={{flex: 1, marginRight: "10px"}} 
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const query = document.getElementById(`${id}_mapper_search`).value;
-                    if (!query) {
-                        alert("Please enter a location to search.");
-                        return;
-                    }
-
-                    fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json`)
-                    .then(response => response.json())
-                    .then(data => {
-                      if (data.length > 0) {
-                        const { lat, lon, boundingbox } = data[0];
-                  
-                        if (boundingbox) {
-                          // Use the bounding box to fit the map to the area
-                          const [latMin, latMax, lonMin, lonMax] = boundingbox.map(Number);
-                          const bounds = [
-                            [latMin, lonMin], // Southwest corner
-                            [latMax, lonMax], // Northeast corner
-                          ];
-                  
-                          mapRef.current.fitBounds(bounds, { padding: [50, 50] }); // Adjust padding as needed
-                          if (debug) console.log(`Moved to bounds: ${JSON.stringify(bounds)}`);
-                        } else {
-                          // If no bounding box, fall back to a default zoom level and center on the lat/lon
-                          mapRef.current.setView([lat, lon], 14);
-                          if (debug) console.log(`Moved to location: ${query} (${lat}, ${lon})`);
-                        }
-                      } else {
-                        alert("Location not found. Try a different query.");
-                      }
-                    })
-                    .catch(err => {
-                      console.error("Error fetching location:", err);
-                      alert("An error occurred while searching. Please try again.");
-                    });                  
-
-                    if (debug) console.log(dialogMapRef.current.querySelector(`#${id}_mapper_container`));
-                  }
-                }}
-                placeholder="Type location and enter" />
-                <select
-                  id={`${id}_mapper_modeSelect`}
-                  style={{ width: "20%", marginRight: "10px" }}
-                  onChange={(e) => {
-                    const newMode = e.target.value;
-                    const newModeText = e.target.options[e.target.selectedIndex].text; // Get the text of the selected option
-                    const lastMode = e.target.getAttribute("last_mode") || "moveMap"; // Default last_mode to "moveMap" initially
-                    const lastModeText = [...e.target.options].find(
-                      (option) => option.value === lastMode
-                    )?.text || lastMode; // Get the text of the last_mode option
-                  
-                    // Check if there are points in the drawing
-                    const hasDrawing = state.current.points.length > 0;
-                  
-                    // Ensure confirmation is prompted only for valid transitions
-                    if (hasDrawing && newMode !== "moveMap" && lastMode !== "moveMap" && lastMode !== newMode) {
-                      const confirmMessage = `Switching from "${lastModeText}" to "${newModeText}" will clear the current drawing. Do you want to proceed?`;
-                      if (!window.confirm(confirmMessage)) {
-                        e.target.value = lastMode; // Revert to the previous mode
-                        return;
-                      }
-                  
-                      resetDrawing(); // Reset the map only if confirmed
-                    }
-                  
-                    // Ensure no lingering CREATED event listeners
-                    if (mapRef?.current) {
-                      mapRef.current.off(L.Draw.Event.CREATED);
-                    }
-                  
-                    // Disable and cleanup any active drawing tools
-                    if (state.current.rectangleHandle) {
-                      state.current.rectangleHandle.disable();
-                      state.current.rectangleHandle = null;
-                    }
-                    if (state.current.circleHandle) {
-                      state.current.circleHandle.disable();
-                      state.current.circleHandle = null;
-                    }
-                  
-                    // Clear lingering drawing interactions
-                    if (mapRef?.current?.dragging) {
-                      mapRef.current.dragging.enable(); // Re-enable dragging to ensure no leftover drag states
-                    }
-                  
-                    // Update the last_mode attribute only if newMode is not "moveMap"
-                    if (newMode !== "moveMap") {
-                      e.target.setAttribute("last_mode", newMode);
-                    }
-                  
-                    // Update the state with the new mode
-                    state.current.mode = newMode;
-                  
-                    // Update map interaction behavior and cursor style dynamically
-                    if (mapRef?.current) {
-                      const container = mapRef.current.getContainer();
-                  
-                      // Handle behavior for different modes
-                      if (newMode === "moveMap") {
-                        enableDragging(); // Enable dragging when in "moveMap" mode
-                        container.style.cursor = ""; // Reset to default cursor (grab hand for Leaflet)
-                      } else if (newMode === "drawRectangle") {
-                        disableDragging();
-                        handleRectangleMode(); // Initialize Rectangle drawing mode
-                        container.style.cursor = "crosshair"; // Set crosshair cursor for drawing mode
-                      } else if (newMode === "drawCircle") {
-                        disableDragging();
-                        handleCircleMode(); // Initialize Circle drawing mode
-                        container.style.cursor = "crosshair"; // Set crosshair cursor for drawing mode
-                      } else {
-                        enableDragging(); // Allow dragging for "autoPolygon" and "drawLines"
-                        container.style.cursor = "crosshair"; // Default crosshair cursor for drawing
-                      }
-                    }
-                  
-                    if (debug) console.log("Mode changed to:", state.current.mode);
-                  }}
-                                    
-                >
-                  <option value="moveMap">Move Map</option>
-                  <option value="autoPolygon">Polygon</option>
-                  <option value="drawLines">Line(s)</option>
-                  <option value="drawRectangle">Rectangle</option>
-                  <option value="drawCircle">Circle</option>
-                  <option value="placeMarker">Marker(s)</option>
-                </select>
-              <div id={`${id}_mapper_buttons`} style={{display: "flex", gap: "10px"}}>
-                  <button type="button" id={`${id}_mapper_clearCoords`} 
-                  className="mg-button mg-button--small mg-button-system" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
-                  onClick={(e) => {
-                    resetDrawing();
-                  
-                    // Reinitialize the drawing mode if rectangle or circle is active
-                    if (state.current.mode === "drawRectangle") {
-                      handleRectangleMode();
-                    } else if (state.current.mode === "drawCircle") {
-                      handleCircleMode();
-                    }
-                  }}
-                  >Clear</button>
-                  <button type="button" id={`${id}_mapper_undoAction`} 
-                  className="mg-button mg-button--small mg-button-system" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
-                  onClick={(e) => {
-                    const mapperModeSelect = document.getElementById(`${id}_mapper_modeSelect`);
-                    const currentMode = mapperModeSelect.getAttribute('last_mode') || "moveMap"; // Fallback to "moveMap" if undefined
-                  
-                    if (state.current.points.length > 0 || state.current.rectangle || state.current.circle) {
-                      if (currentMode === "autoPolygon") {
-                        if (state.current.polygon) mapRef.current.removeLayer(state.current.polygon);
-                        if (state.current.points.length > 0) {
-                          state.current.points.pop();
-                          if (state.current.points.length > 0) {
-                            state.current.polygon = L.polygon(state.current.points, { color: 'red' }).addTo(mapRef.current);
-                          }
-                        }
-                      } else if (currentMode === "drawLines") {
-                        if (state.current.polyline) mapRef.current.removeLayer(state.current.polyline);
-                        if (state.current.points.length > 0) {
-                          state.current.points.pop();
-                          if (state.current.points.length > 0) {
-                            state.current.polyline = L.polyline(state.current.points, { color: 'blue' }).addTo(mapRef.current);
-                          }
-                        }
-                      } else if (currentMode === "drawRectangle") {
-                        if (state.current.rectangle) {
-                          mapRef.current.removeLayer(state.current.rectangle);
-                          state.current.rectangle = null;
-                          state.current.points = []; // Reset points
-
-                          disableDragging();
-                          handleRectangleMode();
-
-                          if (debug) console.log("Rectangle undone!");
-                        }
-                      } else if (currentMode === "drawCircle") {
-                        if (state.current.circle) {
-                          mapRef.current.removeLayer(state.current.circle);
-                          state.current.circle = null;
-                          state.current.points = []; // Reset points
-
-                          disableDragging();
-                          handleCircleMode();
-
-                          if (debug) console.log("Circle undone!");
-                        }
-                      } else if (currentMode === "placeMarker") {
-                        if (state.current.points.length > 0) {
-                          // Remove the last marker from the map
-                          const lastMarker = state.current.marker.pop(); // Remove the last marker
-                          if (lastMarker) {
-                            mapRef.current.removeLayer(lastMarker); // Remove the marker from the map
-                          }
-                      
-                          // Remove the corresponding coordinates from points
-                          state.current.points.pop();
-                      
-                          if (debug) console.log("Marker undone, remaining points:", state.current.points);
-                        } else {
-                          if (debug) console.log("No markers to undo!");
-                        }
-                      }
-                    } else {
-                      if (debug) console.log("No actions to undo!");
-                    }
-                  }}                  
-                  >Undo</button>
-                  <button type="button" id={`${id}_mapper_getCoords`} 
-                  className="mg-button mg-button--small mg-button-primary" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
-                  onClick={(e) => {
-                    const field = dialogMapRef.current?.mapperField;
-                  
-                    if (!field) {
-                      console.error("Field is not set on dialogMapRef.");
-                      return;
-                    }
-                  
-                    if (debug) console.log("Field passed to dialog:", field);
-                  
-                    const targetElement = field.domElement;
-                  
-                    let updatedValue = "";
-                  
-                    const normalizeLongitude = (lng) =>
-                      ((lng + 180) % 360 + 360) % 360 - 180; // Normalize to [-180, 180]
-                  
-                    if (state.current.polygon) {
-                      // Convert polygon LatLng objects to plain arrays and normalize
-                      const polygonCoordinates = state.current.polygon
-                        .getLatLngs()[0] // Leaflet polygons are arrays of arrays
-                        .map((latLng) => [latLng.lat, normalizeLongitude(latLng.lng)]);
-                  
-                      if (debug)
-                        console.log(
-                          "Polygon Coordinates (Normalized):",
-                          JSON.stringify(polygonCoordinates)
-                        );
-                  
-                      updatedValue = JSON.stringify({
-                        mode: "polygon",
-                        coordinates: polygonCoordinates,
-                      }); // Save as JSON object
-                    } else if (state.current.polyline) {
-                      // Convert polyline LatLng objects to plain arrays and normalize
-                      const lineCoordinates = state.current.polyline
-                        .getLatLngs()
-                        .map((latLng) => [latLng.lat, normalizeLongitude(latLng.lng)]);
-                  
-                      if (debug)
-                        console.log(
-                          "Line Coordinates (Normalized):",
-                          JSON.stringify(lineCoordinates)
-                        );
-                  
-                      updatedValue = JSON.stringify({
-                        mode: "lines",
-                        coordinates: lineCoordinates,
-                      }); // Save as JSON object
-                    } else if (state.current.circle) {
-                      // Get circle data
-                      const center = state.current.circle.getLatLng();
-                      const radius = state.current.circle.getRadius();
-                  
-                      const circleData = {
-                        mode: "circle",
-                        center: [center.lat, normalizeLongitude(center.lng)],
-                        radius: radius,
-                      };
-                  
-                      if (debug) console.log("Circle Data:", JSON.stringify(circleData));
-                  
-                      updatedValue = JSON.stringify(circleData); // Save as JSON object
-                    } else if (state.current.rectangle) {
-                      // Get rectangle data
-                      const bounds = state.current.rectangle.getBounds();
-                  
-                      const rectangleData = {
-                        mode: "rectangle",
-                        coordinates: [
-                          [ bounds.getNorthWest().lat, normalizeLongitude(bounds.getNorthWest().lng) ],
-                          [ bounds.getSouthEast().lat, normalizeLongitude(bounds.getSouthEast().lng) ],
-                        ],
-                      };
-                  
-                      if (debug) console.log("Rectangle Data:", JSON.stringify(rectangleData));
-                  
-                      updatedValue = JSON.stringify(rectangleData); // Save as JSON object
-                    } else if (state.current.marker && Array.isArray(state.current.marker)) {
-                      // Get marker data as an array of coordinates
-                      const markerCoordinates = state.current.marker.map((marker) => [
-                        marker.getLatLng().lat,
-                        normalizeLongitude(marker.getLatLng().lng),
-                      ]);
-                  
-                      const markerData = {
-                        mode: "markers",
-                        coordinates: markerCoordinates,
-                      };
-                  
-                      if (debug)
-                        console.log("Marker Data:", JSON.stringify(markerData));
-                  
-                      updatedValue = JSON.stringify(markerData); // Save as JSON object
-                    } else {
-                      if (debug) console.log("No shape created yet.");
-                    }
-                  
-                    // Update the textarea value
-                    targetElement.value = updatedValue;
-                  
-                    // Trigger the field's onChange handler
-                    handleFieldChange(field, updatedValue);
-                  
-                    closeMapDialog();
-                  }}                       
-                  >Save Coordinates</button>
-              </div>
-              </div>
-              <div className="mapper-holder">
-                <div id={`${id}_mapper_container`} 
-                style={{ flex: 1, width: "100%", height: "500px" }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </dialog>
+      {
+          renderMapperDialog(
+            id,
+            dialogMapRef,
+            mapRef,
+            base_path,
+            closeMapDialog,
+            state,
+            resetDrawing,
+            enableDragging,
+            disableDragging,
+            handleRectangleMode,
+            handleCircleMode,
+            handleFieldChange,
+            debug
+          )
+      }
 
       <dialog ref={dialogRef} className="dts-dialog" {...(isDialogOpen ? { open: true } : {})}>
         <div className="dts-dialog__content">
@@ -1620,6 +1341,11 @@ const processInitialData = (data) => {
                       <div className="dts-form-component__label">
                         <span>{field.caption}</span>
                       </div>
+                      {
+                        field.type == "tokenfield" && (
+                          renderTokenField(field, fieldId, value, tokenfieldRefs, handleFieldChange)
+                        )
+                      }
                       {field.type === "input" && (
                         <>
                         <input

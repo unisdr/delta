@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import ContentRepeaterFileValidator from "./ContentRepeaterFileValidator";
+import ContentRepeaterFileValidator from "./FileValidator";
 
 export async function handleFileRequest(
   request: Request,

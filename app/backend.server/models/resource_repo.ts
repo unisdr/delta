@@ -6,7 +6,7 @@ import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handler
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 
-import { ContentRepeaterUploadFile } from "~/components/ContentRepeaterUploadFile";
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
 export interface ResourceRepoFields extends Omit<resourceRepo, "id"> {}
 
@@ -18,7 +18,7 @@ export function validate(_fields: ResourceRepoFields): Errors<ResourceRepoFields
 	return errors
 }
 
-async function processAndSaveAttachments(tx, resourceId, attachmentsData) {
+async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: string) {
 	if (!attachmentsData) return;
   
 	const save_path = `/uploads/resource-repo/${resourceId}`;
