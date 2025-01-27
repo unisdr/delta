@@ -250,10 +250,44 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			}}
 			otherRenderView={{
 				attachments: (
-					<>
-					</>
+				  <>
+					<table style={{ border: '1px solid gray', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+					<thead>
+						<tr style={{ backgroundColor: '#f2f2f2' }}>
+							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Title</th>
+							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Tags</th>
+							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>File/URL</th>
+						</tr>
+					</thead>
+					  <tbody>
+						{JSON.parse(item.attachments).map((attachment) => {
+						  const tags = attachment.tag
+							? JSON.parse(attachment.tag).map((tag) => tag.name).join(", ")
+							: "N/A";
+						  const fileOrUrl =
+							attachment.file_option === "File" && attachment.file
+							  ? (
+								<a href={`/resource-repo/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
+								  {attachment.file.name.split("/").pop()}
+								</a>
+							  )
+							  : attachment.file_option === "Link"
+							  ? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
+							  : "N/A";
+			  
+						  return (
+							<tr key={attachment.id} style={{ borderBottom: '1px solid gray' }}>
+								<td style={{ border: '1px solid gray', padding: '8px' }}>{attachment.title || "N/A"}</td>
+								<td style={{ border: '1px solid gray', padding: '8px' }}>{tags}</td>
+								<td style={{ border: '1px solid gray', padding: '8px' }}>{fileOrUrl}</td>
+							</tr>
+						  );
+						})}
+					  </tbody>
+					</table>
+				  </>
 				),
-			}} 
+			  }}			  
 			/>
 		</ViewComponent>
 	);
