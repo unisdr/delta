@@ -125,7 +125,22 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						api_upload_url="/resource-repo/file-pre-upload"
 						table_columns={[
 							{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
-							{ type: "dialog_field", dialog_field_id: "tags", caption: "Tags" },
+							{ 
+								type: "custom", caption: "Tags",
+								render: (item) => {
+									try {
+										const tags = JSON.parse(item.tag); // Parse the JSON string
+										if (Array.isArray(tags) && tags.length > 0) {
+											// Map the names and join them with commas
+											return tags.map(tag => tag.name).join(", ");
+										}
+										return "N/A"; // If no tags exist
+									} catch (error) {
+										console.error("Failed to parse tags:", error);
+										return "N/A"; // Return "N/A" if parsing fails
+									}
+								} 
+							},
 							{
 							type: "custom",
 							caption: "File/URL",
