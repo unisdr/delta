@@ -251,6 +251,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			otherRenderView={{
 				attachments: (
 				  <>
+					{item.attachments && item.attachments !== "[]" ? (
 					<table style={{ border: '1px solid gray', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
 					<thead>
 						<tr style={{ backgroundColor: '#f2f2f2' }}>
@@ -285,6 +286,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 						})}
 					  </tbody>
 					</table>
+					) : (<></>)}
 				  </>
 				),
 			  }}			  
