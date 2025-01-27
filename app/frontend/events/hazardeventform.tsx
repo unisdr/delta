@@ -150,7 +150,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 						]}
 						data={(() => {
 							try {
-							  return JSON.parse(fields.spatialFootprint) || [];
+							  return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
 							} catch {
 							  return []; // Default to an empty array if parsing fails
 							}

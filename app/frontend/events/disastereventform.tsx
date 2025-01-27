@@ -197,9 +197,9 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						]}
 						data={(() => {
 							try {
-							return JSON.parse(props.fields.attachments) || [];
+								return props && props.fields.attachments ? JSON.parse(props.fields.attachments) : [];
 							} catch {
-							return []; // Default to an empty array if parsing fails
+								return []; // Default to an empty array if parsing fails
 							}
 						})()}
 						onChange={(items) => {
