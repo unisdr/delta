@@ -12,7 +12,7 @@ interface Item {
 const debug = false;
 
 class ContentRepeaterUploadFile {
-  static delete(itemsData: string, publicPath: string = process.env.PUBLIC_PATH || "/data/public"): string {
+  static delete(itemsData: string, publicPath: string = process.env.PUBLIC_DIRECTORY_PATH || "/data/public"): string {
     let items: Item[];
 
     try {
@@ -83,7 +83,7 @@ class ContentRepeaterUploadFile {
     itemsData: string,
     tempPath: string,
     destinationPath: string,
-    publicPath: string = process.env.PUBLIC_PATH || "/data/public"
+    publicPath: string = process.env.PUBLIC_DIRECTORY_PATH || "/data/public"
   ): string {
     let items: Item[];
   

@@ -1,7 +1,7 @@
 export const initTokenField = (
   initialValue: string | undefined, // Existing tokenfield data
   input: HTMLInputElement, // Hidden input element
-  dataset: { id: number; name: string }[], // Dataset for dropdown suggestions
+  dataSource: { id: number; name: string }[], // dataSource for dropdown suggestions
   field: any, // Associated field metadata
   handleFieldChange: any
 ) => {
@@ -174,44 +174,95 @@ export const initTokenField = (
     });
   };
 
-  const handleInput = () => {
+  let fetchedData: { id: number; name: string }[] | null = null; // Cache for AJAX data
+  let isLoading = false; // Loading state
+  
+  const handleInput = async () => {
     const query = editableInput.value.trim().toLowerCase();
     dropdown.innerHTML = '';
+    
     if (!query) {
       dropdown.style.display = 'none';
       return;
     }
-
-    const filtered = dataset.filter((item) => item.name.toLowerCase().startsWith(query));
-    if (filtered.length === 0) {
+  
+    let suggestions = [];
+    
+    // Show loading indicator
+    if (typeof dataSource === 'string' && !fetchedData && !isLoading) {
+      isLoading = true; // Set loading state
+      const loadingMessage = document.createElement('div');
+      loadingMessage.textContent = 'Loading data...';
+      Object.assign(loadingMessage.style, {
+        color: 'gray',
+        padding: '8px',
+      });
+      dropdown.appendChild(loadingMessage);
+      dropdown.style.display = 'block'; // Show dropdown with loading message
+  
+      try {
+        const response = await fetch(dataSource);
+        if (response.ok) {
+          fetchedData = await response.json(); // Assumes response is an array of { id, name }
+        } else {
+          console.error(`Failed to fetch dataSource: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('Error fetching dataSource:', error);
+      } finally {
+        isLoading = false; // Reset loading state
+      }
+    }
+  
+    // Filter the data (either fetched or provided locally)
+    if (fetchedData) {
+      suggestions = fetchedData.filter((item) =>
+        item.name.toLowerCase().startsWith(query) // Matches starting with query
+      );
+    } else {
+      suggestions = dataSource.filter((item) =>
+        item.name.toLowerCase().startsWith(query) // Matches starting with query
+      );
+    }
+  
+    dropdown.innerHTML = ''; // Clear loading message or previous results
+  
+    // Render dropdown items
+    if (suggestions.length === 0) {
       const noResults = document.createElement('div');
       noResults.textContent = 'No results match';
-      noResults.style.color = 'gray';
-      noResults.style.padding = '8px';
+      Object.assign(noResults.style, {
+        color: 'gray',
+        padding: '8px',
+      });
       dropdown.appendChild(noResults);
     } else {
-      filtered.forEach((item, index) => {
+      suggestions.forEach((item) => {
         const option = document.createElement('div');
         option.classList.add('custom-tokenfield-dropdown-item');
         option.textContent = item.name;
-        option.style.padding = '8px';
-        option.style.cursor = 'pointer';
-        option.onclick = () => addToken(item);
+        Object.assign(option.style, {
+          padding: '8px',
+          cursor: 'pointer',
+        });
+        option.onclick = () => addToken(item); // Add token on click
         dropdown.appendChild(option);
       });
     }
-
+  
     dropdown.style.display = 'block';
     highlightedIndex = -1;
-  };
+  };  
 
   editableInput.addEventListener('keydown', (e) => {
     const options = Array.from(dropdown.querySelectorAll('.custom-tokenfield-dropdown-item'));
-
+  
     if (e.key === 'Enter') {
       e.preventDefault();
       if (highlightedIndex >= 0 && options[highlightedIndex]) {
-        const selectedItem = dataset.find((item) => item.name === options[highlightedIndex].textContent);
+        const selectedItem = fetchedData
+          ? fetchedData.find((item) => item.name === options[highlightedIndex].textContent)
+          : dataSource.find((item) => item.name === options[highlightedIndex].textContent);
         if (selectedItem) addToken(selectedItem);
       }
     } else if (e.key === 'ArrowDown') {
@@ -223,7 +274,7 @@ export const initTokenField = (
       highlightedIndex = (highlightedIndex - 1 + options.length) % options.length;
       updateDropdownHighlight();
     }
-  });
+  });  
 
   editableInput.addEventListener('input', handleInput);
 
