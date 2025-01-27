@@ -1,0 +1,244 @@
+/* Base Styles */
+.filters-container {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 20px auto;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .filters-container h2 {
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    color: #333;
+    text-align: center;
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+    color: #555;
+    flex: 1 1 calc(50% - 15px); /* Each field takes half the width with spacing */
+    min-width: 200px;
+  }
+  
+  input,
+  select {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 5px;
+  }
+  
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0px 0px 4px rgba(0, 123, 255, 0.4);
+  }
+  
+  button {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .apply-button {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .clear-button {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  button:hover {
+    opacity: 0.9;
+  }
+  
+  .autocomplete-suggestions {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 120px;
+    overflow-y: auto;
+    z-index: 10;
+  }
+  
+  .autocomplete-suggestions li {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .autocomplete-suggestions li:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Button Group */
+  .button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  /* Media Queries for Responsiveness */
+  @media screen and (max-width: 768px) {
+    .filters-container {
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px auto;
+    }
+  
+    h2 {
+      font-size: 1.25rem;
+    }
+  
+    label {
+      flex: 1 1 100%; /* Full-width fields on smaller screens */
+      min-width: 100%;
+    }
+  
+    .filter-group {
+      gap: 10px;
+    }
+  
+    button {
+      font-size: 0.85rem;
+      padding: 8px 12px;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+    .filters-container {
+      padding: 10px;
+      border-radius: 5px;
+    }
+  
+    h2 {
+      font-size: 1.1rem;
+    }
+  
+    input,
+    select {
+      font-size: 0.85rem;
+      padding: 6px 8px;
+    }
+  
+    button {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+    }
+  }
+
+  .impact-on-sector {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .impact-on-sector h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .impact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    color: #555;
+  }
+  
+  .card .value {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #a00000;
+  }
+  
+  .chart {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  
+  .chart h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    color: #555;
+  }
+
+
+  .impact-on-sector {
+    margin-top: 2rem;
+  }
+  
+  .impact-on-sector__heading {
+    font-size: 2.4rem;
+    margin-bottom: 2rem;
+    color: #181823;
+  }
+  
+  .impact-on-sector__cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  
+  .impact-on-sector__card {
+    background-color: #f2f2f2;
+    border-radius: 8px;
+    padding: 1.6rem;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .impact-on-sector__card-title {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 1rem;
+  }
+  
+  .impact-on-sector__card-value {
+    font-size: 2.4rem;
+    font-weight: bold;
+    color: #004f91;
+    margin-bottom: 1.6rem;
+  }
+  
+  
+  

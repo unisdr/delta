@@ -24,8 +24,13 @@ interface DisasterSummaryProps {
   filters: {
     sectorId: string | null;
     subSectorId: string | null;
+    hazardTypeId: string | null;
+    hazardClusterId: string | null;
+    specificHazardId: string | null;
+    geographicLevelId: string | null;
+    fromDate: string | null;
+    toDate: string | null;
     disasterEventId: string | null;
-    dateRange: string | null;
   } | null;
 }
 
@@ -151,7 +156,8 @@ const DisasterSummary: React.FC<DisasterSummaryProps> = ({ filters }) => {
         if (filters?.subSectorId) queryParams.append("subSectorId", filters.subSectorId);
         if (filters?.disasterEventId)
           queryParams.append("disasterEventId", filters.disasterEventId);
-        if (filters?.dateRange) queryParams.append("dateRange", filters.dateRange);
+        if (filters?.fromDate) queryParams.append("fromDate", filters.fromDate);
+        if (filters?.toDate) queryParams.append("toDate", filters.toDate);
 
         // Fetch data from the REST API
         const response = await fetch(`/api/analytics/disaster-summary?${queryParams.toString()}`);

@@ -21,12 +21,22 @@ interface DisasterEvent {
   name: string;
 }
 
+interface Hazard {
+  id: string;
+  name: string;
+}
+
 interface FiltersProps {
   onApplyFilters: (filters: {
     sectorId: string | null;
     subSectorId: string | null;
+    hazardTypeId: string | null;
+    hazardClusterId: string | null;
+    specificHazardId: string | null;
+    geographicLevelId: string | null;
+    fromDate: string | null;
+    toDate: string | null;
     disasterEventId: string | null;
-    dateRange: string | null;
   }) => void;
   onAdvancedSearch: () => void;
   onClearFilters: () => void;
@@ -42,15 +52,21 @@ const Filters: React.FC<FiltersProps> = ({
   const [filters, setFilters] = useState({
     sectorId: "",
     subSectorId: "",
+    hazardTypeId: "",
+    hazardClusterId: "",
+    specificHazardId: "",
+    geographicLevelId: "",
+    fromDate: "",
+    toDate: "",
     disasterEventId: "",
-    dateRange: "",
   });
 
-  
+
   const [subSectors, setSubSectors] = useState<Sector[]>([]); // For filtered subsectors
   const [dateRange, setDateRange] = useState<DateRange[] | null>(null); // Initialize as null
   const [isDatePickerVisible, setDatePickerVisible] = useState(false); // Toggle visibility of calendar
 
+  // Fetch data from the REST API
   // React Query for fetching sectors
   const { data: sectorsData, isLoading: sectorsLoading } = useQuery("sectors", async () => {
     const response = await fetch("/api/analytics/sectors");
@@ -73,8 +89,48 @@ const Filters: React.FC<FiltersProps> = ({
     }
   );
 
-  // Extract sectors and disaster events
+  // React Query for fetching hazard types
+  const { data: hazardTypesData } = useQuery(
+    ["hazardTypes", filters.hazardTypeId],
+    async () => {
+      const response = await fetch(`/api/analytics/hazard-types`);
+      return response.json();
+    }
+  );
+
+  // React Query for fetching hazard clusters
+  const { data: hazardClustersData } = useQuery(
+    ["hazardClusters", filters.hazardClusterId],
+    async () => {
+      const response = await fetch(`/api/analytics/hazard-clusters`);
+      return response.json();
+    }
+  );
+
+  // React Query for fetching specific hazards
+  const { data: specificHazardsData } = useQuery(
+    ["specificHazards", filters.specificHazardId],
+    async () => {
+      const response = await fetch(`/api/analytics/specific-hazards`);
+      return response.json();
+    }
+  );
+
+  // React Query for fetching geographic levels
+  const { data: geographicLevelsData } = useQuery(
+    ["geographicLevels", filters.geographicLevelId],
+    async () => {
+      const response = await fetch(`/api/analytics/geographic-levels`);
+      return response.json();
+    }
+  );
+
+  // Extract data from the fetched data
   const sectors: Sector[] = sectorsData?.sectors || [];
+  const hazardTypes: Hazard[] = hazardTypesData || [];
+  const hazardClusters: Hazard[] = hazardClustersData || [];
+  const specificHazards: Hazard[] = specificHazardsData || [];
+  const geographicLevels: Hazard[] = geographicLevelsData || [];
   const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
 
   // Handle filter changes
@@ -100,52 +156,83 @@ const Filters: React.FC<FiltersProps> = ({
       return;
     }
 
-    const formattedDateRange =
-      dateRange && dateRange[0]?.startDate && dateRange[0]?.endDate
-        ? `${format(dateRange[0].startDate, "MM/dd/yyyy")} - ${format(
-            dateRange[0].endDate,
-            "MM/dd/yyyy"
-          )}`
-        : null;
 
     onApplyFilters({
       sectorId: filters.sectorId || null,
       subSectorId: filters.subSectorId || null,
+      hazardTypeId: filters.hazardTypeId || null,
+      hazardClusterId: filters.hazardClusterId || null,
+      specificHazardId: filters.specificHazardId || null,
+      geographicLevelId: filters.geographicLevelId || null,
+      fromDate: filters.fromDate || null,
+      toDate: filters.toDate || null,
       disasterEventId: filters.disasterEventId || null,
-      dateRange: formattedDateRange, // Pass null if no date range is selected
     });
-  };
-
-
-  // Handle date range selection
-  const handleDateRangeChange = (ranges: { [key: string]: DateRange }) => {
-    const selectedRange = ranges["selection"];
-    setDateRange([selectedRange]);
-    setFilters((prev) => ({
-      ...prev,
-      dateRange: selectedRange.startDate && selectedRange.endDate
-        ? `${format(selectedRange.startDate, "MM/dd/yyyy")} - ${format(
-            selectedRange.endDate,
-            "MM/dd/yyyy"
-          )}`
-        : "",
-    }));
-    setDatePickerVisible(false); // Close the calendar after selection
   };
 
 
   // Clear all filters
   const handleClearFilters = () => {
-    setFilters({ sectorId: "", subSectorId: "", disasterEventId: "", dateRange: "" });
+    setFilters({
+      sectorId: "",
+      subSectorId: "",
+      hazardTypeId: "",
+      hazardClusterId: "",
+      specificHazardId: "",
+      geographicLevelId: "",
+      fromDate: "",
+      toDate: "",
+      disasterEventId: ""
+    });
     setSubSectors([]); // Clear sub-sector options
-    setDateRange(null); // Reset the date range to null
     onClearFilters(); // Call parent clear handler
   };
 
+  // Render autocomplete list
+  const renderAutocomplete = (
+    items: any[],
+    field: keyof typeof filters,
+    loading: boolean,
+    placeholder: string
+  ) => (
+    <div className="dts-form-component">
+      <label>{placeholder}</label>
+      <div style={{ position: "relative" }}>
+        <input
+          type="text"
+          className="filter-search"
+          placeholder={`Search ${placeholder.toLowerCase()}...`}
+          value={filters[field]}
+          onChange={(e) => handleFilterChange(field, e.target.value)}
+        />
+        {loading && <p>Loading...</p>}
+        {!loading && filters[field].trim() !== "" && (
+          <ul className="autocomplete-list">
+            {items.length > 0 ? (
+              items.map((item) => (
+                <li
+                  key={item.id}
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, [field]: item.name }));
+                    queryClient.invalidateQueries(field);
+                  }}
+                >
+                  {item.name}
+                </li>
+              ))
+            ) : (
+              <li className="no-results">No matching {placeholder.toLowerCase()} found</li>
+            )}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="mg-grid mg-grid__col-3">
-      {/* Sector dropdown */}
-      <div className="dts-form-component">
+    <div className="mg-grid mg-grid__col-6">
+      {/* Row 1: Sector and Sub Sector */}
+      <div className="dts-form-component mg-grid__col--span-3">
         <label htmlFor="sector-select">Sector *</label>
         <select
           id="sector-select"
@@ -158,7 +245,7 @@ const Filters: React.FC<FiltersProps> = ({
             {sectorsLoading ? "Loading sectors..." : "Select Sector Type"}
           </option>
           {sectors
-            .filter((sector) => sector.parentId === null) // Filter top-level sectors
+            .filter((sector) => sector.parentId === null)
             .map((sector) => (
               <option key={sector.id} value={sector.id}>
                 {sector.sectorname}
@@ -167,8 +254,7 @@ const Filters: React.FC<FiltersProps> = ({
         </select>
       </div>
 
-      {/* Sub Sector dropdown */}
-      <div className="dts-form-component">
+      <div className="dts-form-component mg-grid__col--span-3">
         <label htmlFor="sub-sector-select">Sub Sector</label>
         <select
           id="sub-sector-select"
@@ -188,8 +274,46 @@ const Filters: React.FC<FiltersProps> = ({
         </select>
       </div>
 
-      {/* Disaster event search input */}
-      <div className="dts-form-component">
+      {/* Row 2: Hazard Type, Hazard Cluster, and Specific Hazard */}
+      <div className="dts-form-component mg-grid__col--span-2">
+        {renderAutocomplete(hazardTypes, "hazardTypeId", false, "Hazard Type")}
+      </div>
+
+      <div className="dts-form-component mg-grid__col--span-2">
+        {renderAutocomplete(hazardClusters, "hazardClusterId", false, "Hazard Cluster")}
+      </div>
+
+      <div className="dts-form-component mg-grid__col--span-2">
+        {renderAutocomplete(specificHazards, "specificHazardId", false, "Specific Hazard")}
+      </div>
+
+      {/* Row 3: Geographic Level, From, and To */}
+      <div className="dts-form-component mg-grid__col--span-2">
+        {renderAutocomplete(geographicLevels, "geographicLevelId", false, "Geographic Level")}
+      </div>
+
+      <div className="dts-form-component mg-grid__col--span-2">
+        <label>From</label>
+        <input
+          type="date"
+          className="filter-date"
+          value={filters.fromDate}
+          onChange={(e) => handleFilterChange("fromDate", e.target.value)}
+        />
+      </div>
+
+      <div className="dts-form-component mg-grid__col--span-2">
+        <label>To</label>
+        <input
+          type="date"
+          className="filter-date"
+          value={filters.toDate}
+          onChange={(e) => handleFilterChange("toDate", e.target.value)}
+        />
+      </div>
+
+      {/* Row 4: Disaster Event and Action Buttons */}
+      <div className="dts-form-component mg-grid__col--span-4">
         <label htmlFor="event-search">Disaster Event</label>
         <div style={{ position: "relative" }}>
           <input
@@ -203,7 +327,8 @@ const Filters: React.FC<FiltersProps> = ({
           {eventsLoading ? (
             <div style={{ marginTop: "0.5rem", color: "#004f91" }}>Loading...</div>
           ) : (
-            filters.disasterEventId.trim() !== "" && !disasterEvents.some(event => event.name === filters.disasterEventId) && ( // Show dropdown only if input is not empty and no event is selected
+            filters.disasterEventId.trim() !== "" &&
+            !disasterEvents.some((event) => event.name === filters.disasterEventId) && (
               <ul className="autocomplete-list">
                 {disasterEvents.length > 0 ? (
                   disasterEvents.map((event) => (
@@ -212,16 +337,16 @@ const Filters: React.FC<FiltersProps> = ({
                       onClick={() => {
                         setFilters((prev) => ({
                           ...prev,
-                          disasterEventId: event.name, // Update input with the selected event
+                          disasterEventId: event.name,
                         }));
-                        queryClient.invalidateQueries("disasterEvents"); // Hide dropdown
+                        queryClient.invalidateQueries("disasterEvents");
                       }}
                     >
                       {event.name}
                     </li>
                   ))
                 ) : (
-                  <li className="no-results">No matching events found</li> // Show only when no results
+                  <li className="no-results">No matching events found</li>
                 )}
               </ul>
             )
@@ -229,38 +354,6 @@ const Filters: React.FC<FiltersProps> = ({
         </div>
       </div>
 
-      {/* Date range picker */}
-      <div className="dts-form-component" style={{ position: "relative" }}>
-        <label htmlFor="date-range">Date Range</label>
-        <input
-          id="date-range"
-          type="text"
-          className="filter-date"
-          value={filters.dateRange || ""}
-          placeholder="Select a date range"
-          readOnly
-          onClick={() => setDatePickerVisible(!isDatePickerVisible)}
-        />
-        {isDatePickerVisible && (
-          <div style={{ position: "absolute", zIndex: 10 }}>
-            <DateRangePicker
-              ranges={
-                dateRange || [
-                  {
-                    startDate: new Date(), // Provide a default value if null
-                    endDate: new Date(),   // Provide a default value if null
-                    key: "selection",
-                  },
-                ]
-              }
-              onChange={handleDateRangeChange}
-              staticRanges={[]} // Removes predefined ranges
-              inputRanges={[]} // Removes quick input ranges
-            />
-          </div>
-        )}
-      </div>
-      
 
       {/* Action buttons */}
       <div className="mg-grid mg-grid__col-3 dts-form__actions"

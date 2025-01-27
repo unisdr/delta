@@ -35,15 +35,26 @@ export default function SectorsAnalysis() {
   const [filters, setFilters] = useState<{
     sectorId: string | null;
     subSectorId: string | null;
+    hazardTypeId: string | null;
+    hazardClusterId: string | null;
+    specificHazardId: string | null;
+    geographicLevelId: string | null;
+    fromDate: string | null;
+    toDate: string | null;
     disasterEventId: string | null;
-    dateRange: string | null;
+
   } | null>(null);
 
   const handleApplyFilters = (filters: {
     sectorId: string | null;
     subSectorId: string | null;
+    hazardTypeId: string | null;
+    hazardClusterId: string | null;
+    specificHazardId: string | null;
+    geographicLevelId: string | null;
+    fromDate: string | null;
+    toDate: string | null;
     disasterEventId: string | null;
-    dateRange: string | null;
   }) => {
     console.log("Filters applied:", filters); // Log filters to the terminal
     setFilters(filters); // Update the state with the applied filters
@@ -97,7 +108,7 @@ export default function SectorsAnalysis() {
         )}
 
       {/* Disaster Summary Section */}
-      <DisasterSummary filters={filters}/>
+      <DisasterSummary filters={filters} />
 
       {/* Damage Inventory Section */}
       <DamageInventory />
