@@ -1,5 +1,5 @@
 import { loader } from "@remix-run/node";
-import { handleFileRequest } from "~/components/ContentRepeaterFileViewer";
+import { handleFileRequest } from "~/components/ContentRepeater/FileViewer";
 
 export const loader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);

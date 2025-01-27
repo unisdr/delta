@@ -122,6 +122,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						save_path_temp="/uploads/temp"
 						file_viewer_temp_url="/resource-repo/file-temp-viewer"
 						file_viewer_url="/resource-repo/file-viewer"
+						api_upload_url="/resource-repo/file-pre-upload"
 						table_columns={[
 							{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
 							{ type: "dialog_field", dialog_field_id: "tags", caption: "Tags" },
@@ -151,7 +152,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						]}
 						dialog_fields={[
 							{ id: "title", caption: "Title", type: "input" },
-							{ id: "tags", caption: "Tags", type: "input" },
+							{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
 							{
 							id: "file_option",
 							caption: "Option",

@@ -4,7 +4,7 @@ import {
   } from "@remix-run/node";
   import fs from "fs";
   import path from "path";
-  import ContentRepeaterFileValidator from "../components/ContentRepeaterFileValidator";
+  import ContentRepeaterFileValidator from "./FileValidator";
   
   export default class ContentRepeaterPreUploadFile {
     static async loader() {

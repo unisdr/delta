@@ -6,7 +6,7 @@ import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handler
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 
-import { ContentRepeaterUploadFile } from "~/components/ContentRepeaterUploadFile";
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
 export interface ResourceRepoFields extends Omit<resourceRepo, "id"> {}
 
