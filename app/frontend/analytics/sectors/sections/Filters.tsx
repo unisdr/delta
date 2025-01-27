@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { DateRange, DateRangePicker } from "react-date-range";
 import { format, addDays } from "date-fns";
-import "react-date-range/dist/styles.css"; // Main styles
-import "react-date-range/dist/theme/default.css"; // Theme styles
 import Swal from "sweetalert2";
 
 // Interfaces for filter data
@@ -49,6 +47,7 @@ const Filters: React.FC<FiltersProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
+  const [isMounted, setIsMounted] = useState(false); // Ensure hydration consistency
   const [filters, setFilters] = useState({
     sectorId: "",
     subSectorId: "",
@@ -62,9 +61,24 @@ const Filters: React.FC<FiltersProps> = ({
   });
 
 
+
+  // Ensure the component is mounted before running client-side code
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [subSectors, setSubSectors] = useState<Sector[]>([]); // For filtered subsectors
   const [dateRange, setDateRange] = useState<DateRange[] | null>(null); // Initialize as null
   const [isDatePickerVisible, setDatePickerVisible] = useState(false); // Toggle visibility of calendar
+
+  const [dropdownVisibility, setDropdownVisibility] = useState<{
+    [key: string]: boolean;
+  }>({
+    hazardTypeId: false,
+    hazardClusterId: false,
+    specificHazardId: false,
+    geographicLevelId: false,
+  });
 
   // Fetch data from the REST API
   // React Query for fetching sectors
@@ -127,11 +141,22 @@ const Filters: React.FC<FiltersProps> = ({
 
   // Extract data from the fetched data
   const sectors: Sector[] = sectorsData?.sectors || [];
-  const hazardTypes: Hazard[] = hazardTypesData || [];
-  const hazardClusters: Hazard[] = hazardClustersData || [];
-  const specificHazards: Hazard[] = specificHazardsData || [];
-  const geographicLevels: Hazard[] = geographicLevelsData || [];
+  const hazardTypes: Hazard[] = hazardTypesData?.hazardTypes || [];
+  const hazardClusters: Hazard[] = hazardClustersData?.clusters || [];
+  const specificHazards: Hazard[] = specificHazardsData?.hazards || [];
+  const geographicLevels: Hazard[] =
+    geographicLevelsData?.levels.map((level: { id: number; name: { en: string } }) => ({
+      id: level.id,
+      name: level.name.en,
+    })) || [];
+
   const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
+
+  // Debug to ensure correct data mapping
+  // console.log("Hazard Types:", hazardTypes);
+  // console.log("Hazard Clusters:", hazardClusters);
+  // console.log("Specific Hazards:", specificHazards);
+  // console.log("Geographic Levels:", geographicLevels);
 
   // Handle filter changes
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
@@ -142,6 +167,10 @@ const Filters: React.FC<FiltersProps> = ({
       setSubSectors(selectedSector?.subsectors || []); // Update subsectors dropdown
       setFilters((prev) => ({ ...prev, subSectorId: "" })); // Reset subsector
     }
+  };
+
+  const toggleDropdown = (field: keyof typeof filters, visible: boolean) => {
+    setDropdownVisibility((prev) => ({ ...prev, [field]: visible }));
   };
 
   // Apply filters and include the date range conditionally
@@ -190,44 +219,60 @@ const Filters: React.FC<FiltersProps> = ({
 
   // Render autocomplete list
   const renderAutocomplete = (
-    items: any[],
+    items: Array<{ id: string | number; name: string }>,
     field: keyof typeof filters,
     loading: boolean,
     placeholder: string
-  ) => (
-    <div className="dts-form-component">
-      <label>{placeholder}</label>
-      <div style={{ position: "relative" }}>
-        <input
-          type="text"
-          className="filter-search"
-          placeholder={`Search ${placeholder.toLowerCase()}...`}
-          value={filters[field]}
-          onChange={(e) => handleFilterChange(field, e.target.value)}
-        />
-        {loading && <p>Loading...</p>}
-        {!loading && filters[field].trim() !== "" && (
-          <ul className="autocomplete-list">
-            {items.length > 0 ? (
-              items.map((item) => (
-                <li
-                  key={item.id}
-                  onClick={() => {
-                    setFilters((prev) => ({ ...prev, [field]: item.name }));
-                    queryClient.invalidateQueries(field);
-                  }}
-                >
-                  {item.name}
-                </li>
-              ))
-            ) : (
-              <li className="no-results">No matching {placeholder.toLowerCase()} found</li>
-            )}
-          </ul>
-        )}
+  ) => {
+    const filteredItems = items.filter((item) =>
+      item.name.toLowerCase().includes(filters[field].toLowerCase())
+    );
+
+    return (
+      <div className="dts-form-component">
+        <label>{placeholder}</label>
+        <div style={{ position: "relative" }}>
+          <input
+            type="text"
+            className="filter-search"
+            placeholder={`Search ${placeholder.toLowerCase()}...`}
+            value={filters[field]}
+            onChange={(e) => {
+              handleFilterChange(field, e.target.value);
+              toggleDropdown(field, true);
+            }}
+            onFocus={() => toggleDropdown(field, true)}
+            onBlur={() => toggleDropdown(field, false)}
+          />
+          {loading && <p>Loading...</p>}
+          {!loading && dropdownVisibility[field] && (
+            <ul className="autocomplete-list">
+              {filteredItems.length > 0 ? (
+                filteredItems.map((item) => (
+                  <li
+                    key={item.id}
+                    onMouseDown={() => {
+                      setFilters((prev) => ({ ...prev, [field]: item.name }));
+                      queryClient.invalidateQueries([field]);
+                      toggleDropdown(field, false);
+                    }}
+                  >
+                    {item.name}
+                  </li>
+                ))
+              ) : (
+                <li className="no-results">No matching {placeholder.toLowerCase()} found</li>
+              )}
+            </ul>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  if (!isMounted) {
+    return null; // Avoid rendering until the client has mounted
+  }
 
   return (
     <div className="mg-grid mg-grid__col-6">

@@ -72,8 +72,8 @@ export default function SectorsAnalysis() {
   return (
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       <div className="sectors-page">
-      {/* Filters Component */}
-      <Filters
+        {/* Filters Component */}
+        <Filters
           onApplyFilters={handleApplyFilters}
           onAdvancedSearch={handleAdvancedSearch}
           onClearFilters={handleClearFilters}
@@ -107,38 +107,43 @@ export default function SectorsAnalysis() {
           </div>
         )}
 
-      {/* Disaster Summary Section */}
-      <DisasterSummary filters={filters} />
+        {/* Disaster Summary Section */}
+        {/* <DisasterSummary filters={filters} /> */}
 
-      {/* Damage Inventory Section */}
-      <DamageInventory />
+        {/* Damage Inventory Section */}
+        {/* <DamageInventory /> */}
 
-      {/* Impact by Sector Section */}
-      <ImpactBySector />
+        {/* Impact by Sector Section */}
+        {/* <ImpactBySector /> */}
 
-      {/* Impact on Sectors by Location Section */}
-      {/*<ImpactOnSectorsByLocation />*/}
+        {/* Impact on Sectors by Location Section */}
+        {/*<ImpactOnSectorsByLocation />*/}
 
-      {/* Damaging Events Section */}
-      <DamagingEvents />
-      
+        {/* Damaging Events Section */}
+        {/* <DamagingEvents /> */}
 
-      {/* Placeholder for Under Construction */}
-      {/* Work In Progress Message */}
-      <div className="construction-message" style={{ marginTop: "2rem", padding: "1.6rem", backgroundColor: "#f9f9f9", borderRadius: "8px", border: "1px solid #ddd" }}>
-        <h3 style={{ fontSize: "1.8rem", marginBottom: "1rem", fontWeight: "600", color: "#333" }}>
-          🚧 Work In Progress
-        </h3>
-        <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-          The remaining sections of this dashboard, including:
-        </p>
-        <ul style={{ marginTop: "1rem", marginBottom: "1rem", paddingLeft: "1.5rem", fontSize: "1.4rem", lineHeight: "1.6", color: "#555" }}>
-          <li>Impact on Sectors by Location</li>
-        </ul>
-        <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-          are still under construction. Please stay tuned for future updates!
-        </p>
-      </div>
+
+        {/* Placeholder for Under Construction */}
+        {/* Work In Progress Message */}
+        <div className="construction-message" style={{ marginTop: "2rem", padding: "1.6rem", backgroundColor: "#f9f9f9", borderRadius: "8px", border: "1px solid #ddd" }}>
+          <h3 style={{ fontSize: "1.8rem", marginBottom: "1rem", fontWeight: "600", color: "#333" }}>
+            🚧 Work In Progress
+          </h3>
+          <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
+            The remaining sections of this dashboard, including:
+          </p>
+          <ul style={{ marginTop: "1rem", marginBottom: "1rem", paddingLeft: "1.5rem", fontSize: "1.4rem", lineHeight: "1.6", color: "#555" }}>
+
+            <li>Damage Inventory</li>
+            <li>Impact by Sector</li>
+            <li>Impact on Sectors by Location</li>
+            <li>Damaging Events</li>
+
+          </ul>
+          <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
+            are still under construction. Please stay tuned for future updates!
+          </p>
+        </div>
       </div>
     </MainContainer>
   );
