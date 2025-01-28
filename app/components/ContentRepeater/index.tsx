@@ -1672,7 +1672,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
             </div>
             <div className="dts-form__actions">
               <a type="submit" className="mg-button mg-button-primary" onClick={handleSave}>
-                Save
+                Apply
               </a>
               <a type="button" className="mg-button mg-button-outline" onClick={closeDialog}>
                 Cancel
