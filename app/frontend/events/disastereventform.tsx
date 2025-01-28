@@ -129,6 +129,10 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 								type: "custom", caption: "Tags",
 								render: (item) => {
 									try {
+										if (!item.tag) {
+											return "N/A"; // Return "N/A" if no tags exist
+										}
+										
 										const tags = JSON.parse(item.tag); // Parse the JSON string
 										if (Array.isArray(tags) && tags.length > 0) {
 											// Map the names and join them with commas
