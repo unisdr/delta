@@ -128,7 +128,7 @@ export const initTokenField = (
   
     if (updateInput) updateHiddenInput();
   
-    // Render only the new token
+    // Render the new token
     const token = document.createElement('div');
     token.classList.add('custom-token');
     Object.assign(token.style, {
@@ -163,8 +163,11 @@ export const initTokenField = (
     tokenContainer.insertBefore(token, editableInput);
     editableInput.value = ''; // Clear the input
     dropdown.style.display = 'none';
-  };    
-
+  
+    // Re-enable drag-and-drop for all tokens, including the new one
+    enableDragAndDrop();
+  };
+   
   // Dropdown highlight management
   let highlightedIndex = -1;
   const updateDropdownHighlight = () => {
@@ -238,14 +241,22 @@ export const initTokenField = (
       dropdown.appendChild(noResults);
     } else {
       suggestions.forEach((item) => {
+        const isSelected = selectedItems.some((selected) => selected.id === item.id); // Check if the item is selected
         const option = document.createElement('div');
         option.classList.add('custom-tokenfield-dropdown-item');
         option.textContent = item.name;
         Object.assign(option.style, {
           padding: '8px',
-          cursor: 'pointer',
+          cursor: isSelected ? 'not-allowed' : 'pointer', // Prevent clicking on already selected items
+          color: isSelected ? 'gray' : 'black', // Gray font for already selected items
+          textDecoration: isSelected ? 'line-through' : 'none', // Optional: Strikethrough for visual distinction
         });
-        option.onclick = () => addToken(item); // Add token on click
+      
+        // Add token only if not already selected
+        if (!isSelected) {
+          option.onclick = () => addToken(item);
+        }
+      
         dropdown.appendChild(option);
       });
     }
@@ -269,16 +280,82 @@ export const initTokenField = (
       e.preventDefault();
       highlightedIndex = (highlightedIndex + 1) % options.length;
       updateDropdownHighlight();
+  
+      // Scroll into view
+      if (options[highlightedIndex]) {
+        options[highlightedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       highlightedIndex = (highlightedIndex - 1 + options.length) % options.length;
       updateDropdownHighlight();
+  
+      // Scroll into view
+      if (options[highlightedIndex]) {
+        options[highlightedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
     }
-  });  
-
+  });
+   
   editableInput.addEventListener('input', handleInput);
 
+  // Add this function inside your initTokenField
+  const enableDragAndDrop = () => {
+    let draggedIndex = null;
+
+    // Add drag-related attributes and event listeners to each token
+    const updateTokensForDrag = () => {
+      const tokens = tokenContainer.querySelectorAll('.custom-token');
+      tokens.forEach((token, index) => {
+        token.setAttribute('draggable', true);
+
+        token.addEventListener('dragstart', (e) => {
+          draggedIndex = index;
+          token.style.opacity = '0.5'; // Visual cue for dragging
+        });
+
+        token.addEventListener('dragend', (e) => {
+          token.style.opacity = '1'; // Reset visual cue
+        });
+
+        token.addEventListener('dragover', (e) => {
+          e.preventDefault(); // Necessary to allow dropping
+        });
+
+        token.addEventListener('drop', (e) => {
+          e.preventDefault();
+
+          if (draggedIndex === null) return;
+
+          // Determine drop target index
+          const targetIndex = Array.from(tokens).indexOf(token);
+
+          if (targetIndex !== -1 && draggedIndex !== targetIndex) {
+            // Reorder selectedItems array
+            const [draggedItem] = selectedItems.splice(draggedIndex, 1);
+            selectedItems.splice(targetIndex, 0, draggedItem);
+
+            // Update the hidden input and re-render tokens
+            updateHiddenInput();
+            renderTokens();
+
+            // Update drag attributes for new order
+            updateTokensForDrag();
+          }
+
+          draggedIndex = null;
+        });
+      });
+    };
+
+    // Call this function after rendering tokens
+    updateTokensForDrag();
+  };
+
+  // Call enableDragAndDrop after renderTokens is defined
   renderTokens(); // Initialize with existing tokens
+  enableDragAndDrop(); // Enable DnD
+
 };
 
 export const renderTokenField = (
