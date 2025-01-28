@@ -10,7 +10,9 @@ import {
 	index,
 	AnyPgColumn,
 	check,
-	uniqueIndex 
+	uniqueIndex,
+	unique,
+	foreignKey
 } from "drizzle-orm/pg-core";
 
 import {
@@ -506,3 +508,25 @@ export const auditLogs = pgTable("audit_logs", {
 		newValues: jsonb("new_values"),
 		timestamp: timestamp("timestamp", {withTimezone:true}).defaultNow().notNull(),
 });
+
+// Table for generic classification categories
+export const categoriesTable = pgTable("categories", {
+	id: serial("id").primaryKey(), // Unique identifier for each category
+	name: text("name").notNull(), 	// Title or description of the category
+	parentId: integer("parent_id").references((): AnyPgColumn => categoriesTable.id), // Foreign key referencing another category's ID; null if it's a root category
+	...createdUpdatedTimestamps,
+});
+
+export type nonecoLosses = typeof nonecoLossesTable.$inferSelect;
+export type nonecoLossesInsert = typeof nonecoLossesTable.$inferInsert;
+
+// Table for Non-economic losses
+export const nonecoLossesTable = pgTable("noneco_losses", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	disasterRecordId: uuid("disaster_record_id").references((): AnyPgColumn => disasterRecordsTable.id).notNull(),
+	categortyId: integer("category_id").references((): AnyPgColumn => categoriesTable.id).notNull(),
+	description: text("description").notNull(),
+	...createdUpdatedTimestamps,
+}, (table) => [{
+	unq: unique('custom_nameIdx').on(table.disasterRecordId, table.categortyId),
+}]);

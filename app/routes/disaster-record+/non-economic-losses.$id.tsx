@@ -1,3 +1,6 @@
+import {dr} from "~/db.server";
+import {authLoaderWithPerm} from "~/util/auth";
+
 import { MainContainer } from "~/frontend/container";
 import type { MetaFunction } from "@remix-run/node";
 
@@ -220,14 +223,13 @@ const arrayFactor:Factor[] = [
 ];
 
 
-
-export const loader = async () => { 
+export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// const filteredArray = arraySubType.filter(subCategory => subCategory.id === 20);
 
 	// console.log(filteredArray);
 
 	return { ok:'loader', categories: arrayCat, subcategories: [], factors: [] };
-};
+});
 
 // export const action = createAction({
 // 	fieldsDef,
