@@ -81,8 +81,8 @@ interface ContentRepeaterProps {
   dialog_fields?: DialogField[];
   data?: any[];
   onChange: (items: any[]) => void;
-  save_path_temp: string;
-  api_upload_url: string;
+  save_path_temp?: string;
+  api_upload_url?: string;
   debug?: boolean;
   file_viewer_temp_url?: string;
   file_viewer_url?: string;
