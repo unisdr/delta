@@ -1,9 +1,8 @@
-import { InferInsertModel } from "drizzle-orm";
+import { eq, InferInsertModel } from "drizzle-orm";
 import { dr } from "~/db.server";
-import { auditLogs } from "~/drizzle/schema";
+import { auditLogsTable, userTable } from "~/drizzle/schema";
 
-type AuditLogInsert = InferInsertModel<typeof auditLogs>;
-
+type AuditLogInsert = InferInsertModel<typeof auditLogsTable>;
 
 export async function logAudit({
   tableName,
@@ -15,13 +14,13 @@ export async function logAudit({
 }: {
   tableName: string;
   recordId: string;
-  userId: string;
-  action: "INSERT" | "UPDATE" | "DELETE";
+  userId: number;
+  action: string;
   oldValues?: Record<string, any>;
   newValues?: Record<string, any>;
 }): Promise<{ record: AuditLogInsert }> {
   const insertedRecord = await dr
-    .insert(auditLogs)
+    .insert(auditLogsTable)
     .values({
       tableName,
       recordId,
@@ -32,5 +31,5 @@ export async function logAudit({
     })
     .returning();
 
-    return { record: insertedRecord[0] }; 
+  return { record: insertedRecord[0] };
 }

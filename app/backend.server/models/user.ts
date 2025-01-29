@@ -16,6 +16,9 @@ import { randomBytes } from "crypto";
 import * as OTPAuth from "otpauth";
 import { configSiteName, configSiteURL } from "~/util/config";
 import { checkPasswordComplexity, PasswordErrorType } from "./user/password";
+import { logAudit } from "./auditLogs";
+import { sessionCookie } from "~/util/session";
+import { number } from "prop-types";
 
 // rounds=10: ~10 hashes/sec
 // this measurements is from another implementation
@@ -243,7 +246,7 @@ export async function resetPassword(
     .where(eq(userTable.email, email));
 
   // send password reset confirmation email.
-  const userLoginURL= `${configSiteURL}/user/login`
+  const userLoginURL = `${configSiteURL}/user/login`;
   const subject = "Password change";
   const text = `
               Your password has been successfully changed. If you did not request this change, please contact your admin.
@@ -821,7 +824,8 @@ export function adminUpdateUserFieldsFromMap(data: {
 
 export async function adminUpdateUser(
   id: number,
-  fields: AdminUpdateUserFields
+  fields: AdminUpdateUserFields,
+  userId: number
 ): Promise<AdminUpdateUserResult> {
   let errors: Errors<AdminUpdateUserFields> = {};
   errors.form = [];
@@ -840,8 +844,11 @@ export async function adminUpdateUser(
     return { ok: false, errors };
   }
 
+  const oldRecord =  await dr.select().from(userTable).where(eq(userTable.id, id));
+
+  let res = null;
   try {
-    const res = await dr
+    res = await dr
       .update(userTable)
       .set({
         email: fields.email,
@@ -851,7 +858,8 @@ export async function adminUpdateUser(
         role: fields.role,
       })
       .where(eq(userTable.id, id))
-      .returning({ id: userTable.id });
+      .returning();
+      // .returning({ id: userTable.id });
 
     if (res.length == 0) {
       errors.form.push("User was not found using provided ID.");
@@ -864,6 +872,15 @@ export async function adminUpdateUser(
     }
     throw e;
   }
+
+  logAudit({
+    tableName: "user",
+    recordId: oldRecord[0].id+"",
+    userId: userId,
+    action: "Update user data",
+    oldValues: oldRecord[0],
+    newValues: res[0],
+  });
 
   // sendEmailVerification(user);
 

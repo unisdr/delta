@@ -48,7 +48,7 @@ import { formStringData } from "~/util/httputil";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-import { redirectWithMessage } from "~/util/session";
+import { redirectWithMessage, sessionCookie } from "~/util/session";
 import { toast } from "react-toastify"; // Importing toast notification library
 import "react-toastify/dist/ReactToastify.css"; // Toast styles
 
@@ -156,7 +156,8 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 	}
 
 	// Perform the update
-	const res = await adminUpdateUser(id, updatedData);
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+	const res = await adminUpdateUser(id, updatedData, session.get("userId"));
 
 	// Handle errors
 	if (!res.ok) {

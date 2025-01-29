@@ -61,6 +61,7 @@ export async function createUserSession(userId: number) {
 
 	const session = await sessionCookie().getSession();
 	session.set("sessionId", sessionId);
+	session.set("userId", userId);
 	const setCookie = await sessionCookie().commitSession(session)
 	return {
 		"Set-Cookie": setCookie,
