@@ -1,3 +1,30 @@
+declare namespace L {
+  export const map: any;
+  export const tileLayer: any;
+  export const Polygon: any;
+  export const polyline: any;
+  export const Polyline: any;
+  export const circle: any;
+  export const Circle: any;
+  export const rectangle: any;
+  export const Rectangle: any;
+  export const latLng: any;
+  export const LatLng: any;
+  export const Draw: any;
+  export const LeafletEvent: any;
+  export const LeafletMouseEvent: any;
+  export const DrawEvents: any;
+  export const marker: any;
+  export const Marker: any;
+  export const icon: any;
+  export const latLngBounds: any;
+}
+
+const setIsDialogMapOpen: any = () => {};
+const dialogMapRef: any = { current: { showModal: () => {}, mapperField: null } };
+const initializeMap: any = () => {};
+const base_path: string = "";
+
 export const renderMapperDialog = (
     id: string,
     dialogMapRef: any,
@@ -35,12 +62,15 @@ export const renderMapperDialog = (
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    const query = document.getElementById(`${id}_mapper_search`).value;
-                    if (!query) {
+                    const mapperSearch = document.getElementById(`${id}_mapper_search`) as HTMLInputElement;
+                    let query = "";
+                    if (mapperSearch) {
+                      query = mapperSearch.value;
+                      if (!query) {
                         alert("Please enter a location to search.");
                         return;
+                      }
                     }
-
                     fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json`)
                     .then(response => response.json())
                     .then(data => {
@@ -178,8 +208,10 @@ export const renderMapperDialog = (
                   <button type="button" id={`${id}_mapper_undoAction`} 
                   className="mg-button mg-button--small mg-button-system" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
                   onClick={(e) => {
+                    const L = (window as any).L || null;
+
                     const mapperModeSelect = document.getElementById(`${id}_mapper_modeSelect`);
-                    const currentMode = mapperModeSelect.getAttribute('last_mode') || "moveMap"; // Fallback to "moveMap" if undefined
+                    const currentMode = mapperModeSelect?.getAttribute('last_mode') || "moveMap"; // Fallback to "moveMap" if undefined
                   
                     if (state.current.points.length > 0 || state.current.rectangle || state.current.circle) {
                       if (currentMode === "autoPolygon") {
@@ -257,14 +289,14 @@ export const renderMapperDialog = (
                   
                     let updatedValue = "";
                   
-                    const normalizeLongitude = (lng) =>
+                    const normalizeLongitude = (lng: number) =>
                       ((lng + 180) % 360 + 360) % 360 - 180; // Normalize to [-180, 180]
                   
                     if (state.current.polygon) {
                       // Convert polygon LatLng objects to plain arrays and normalize
                       const polygonCoordinates = state.current.polygon
                         .getLatLngs()[0] // Leaflet polygons are arrays of arrays
-                        .map((latLng) => [latLng.lat, normalizeLongitude(latLng.lng)]);
+                        .map((latLng: any) => [latLng.lat, normalizeLongitude(latLng.lng)]);
                   
                       if (debug)
                         console.log(
@@ -280,7 +312,7 @@ export const renderMapperDialog = (
                       // Convert polyline LatLng objects to plain arrays and normalize
                       const lineCoordinates = state.current.polyline
                         .getLatLngs()
-                        .map((latLng) => [latLng.lat, normalizeLongitude(latLng.lng)]);
+                        .map((latLng: any) => [latLng.lat, normalizeLongitude(latLng.lng)]);
                   
                       if (debug)
                         console.log(
@@ -323,7 +355,7 @@ export const renderMapperDialog = (
                       updatedValue = JSON.stringify(rectangleData); // Save as JSON object
                     } else if (state.current.marker && Array.isArray(state.current.marker)) {
                       // Get marker data as an array of coordinates
-                      const markerCoordinates = state.current.marker.map((marker) => [
+                      const markerCoordinates = state.current.marker.map((marker: any) => [
                         marker.getLatLng().lat,
                         normalizeLongitude(marker.getLatLng().lng),
                       ]);
