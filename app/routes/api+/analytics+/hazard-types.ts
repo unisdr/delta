@@ -1,23 +1,20 @@
+// app/routes/api+/analytics+/hazard-types.ts
 import { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { dr } from "~/db.server";
-import { hipClassTable } from "~/drizzle/schema";
+import { getHazardTypes } from "~/backend.server/handlers/analytics/hazard-types";
 
 /**
- * Fetch hazard types from the database.
+ * Loader to fetch hazard types via the handler.
  */
 export const loader: LoaderFunction = async () => {
   try {
-    const hazardTypes = await dr
-      .select({
-        id: hipClassTable.id,
-        name: hipClassTable.nameEn,
-      })
-      .from(hipClassTable);
+    // Fetch hazard types using the handler
+    const hazardTypes = await getHazardTypes();
 
+    // Return hazard types as a JSON response
     return json({ hazardTypes });
   } catch (error) {
-    console.error("Error fetching hazard types:", error);
-    throw new Response("Failed to fetch hazard types", { status: 500 });
+    console.error("[HazardTypesLoader] Error:", error);
+    return new Response("Failed to fetch hazard types.", { status: 500 });
   }
 };

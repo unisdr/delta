@@ -201,3 +201,104 @@ form > label {
   background-color: #999; /* Darker gray on hover */
 }
 
+/* ======================================================
+     Label Styling
+   ======================================================== */
+  
+.dts-form-component__label {
+  font-size: 14px;
+  /* Consistent font size */
+  color: var(--neutral-gray-dark);
+  /* Neutral text color */
+  margin-bottom: 4px;
+  /* Space between label and input */
+  display: block;
+  /* Ensure proper alignment */
+}
+
+/* ======================================================
+   Organization Branding Colors (Defined for Future Use)
+   ====================================================== */
+
+/* UNDRR Blue - Corporate blue */
+:root {
+  --undrr-blue-primary: #004f91; /* Main blue for focus/active states */
+  --undrr-blue-light: #e6f0fa; /* Light blue for hover/backgrounds */
+  --undrr-blue-lighter: #f0f4f8; /* Very light blue for highlights */
+  --undrr-blue-dark: #003569; /* Darker blue for emphasis */
+}
+
+/* Neutral Shades */
+:root {
+  --neutral-gray-dark: #181823; /* For text */
+  --neutral-gray-medium: #6c757d; /* For muted text */
+  --neutral-gray-light: #ddd; /* For borders */
+  --neutral-gray-lighter: #f8f9fa; /* For backgrounds */
+}
+
+/* Scrollbar Colors */
+:root {
+  --scrollbar-thumb: #ccc; /* Neutral gray for scrollbar */
+  --scrollbar-thumb-hover: #999; /* Darker gray on hover */
+}
+  
+
+/* ======================================================
+     SweetAlert Styles
+   ======================================================== */
+    
+/* Popup styling aligned with UNDRR Blue */
+.swal2-custom-popup {
+  border: 2px solid #005EB8; /* UNDRR Primary Blue */
+  border-radius: 12px;
+  padding: 20px;
+  font-family: 'Roboto', 'Noto Sans SC', 'Noto Sans Arabic', sans-serif;
+  background-color: #E6EEF9; /* Light Blue for better readability */
+  color: #004F91; /* Dark Blue for text contrast */
+  font-size: 1.6rem; /* Increase base font size */
+  line-height: 1.8rem; /* Better spacing for readability */
+  text-align: center; /* Center align text for better UX */
+}
+
+/* Button styling aligned with UNDRR Teal */
+.swal2-custom-button {
+  background-color: #008675 !important; /* UNDRR Teal */
+  color: #FFFFFF !important; /* White text */
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 12px 24px; /* Larger padding for better usability */
+  border: none; /* Clean design */
+  transition: background-color 0.3s ease;
+}
+
+.swal2-custom-button:hover {
+  background-color: #006F62 !important; /* Darker teal for hover state */
+}
+
+/* Toast styling aligned with Neutral shades */
+.custom-toast {
+  background-color: #F7F8F9; /* Light neutral shade */
+  color: #333333; /* Dark neutral text */
+  border: 1px solid #D1D1D1; /* Subtle border for clarity */
+  font-family: 'Arial', sans-serif;
+  font-size: 1.2rem;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ======================================================
+     Search icon
+   ======================================================== */
+   .search-icon {
+    position: absolute;
+    right: 10px; /* Align to the right end of the input */
+    top: 50%; /* Center vertically */
+    transform: translateY(-50%); /* Adjust for perfect centering */
+    color: #aaa; /* Light grey color for the icon */
+    font-size: 1.5rem; /* Icon size */
+    pointer-events: none; /* Prevent clicks on the icon */
+  }
+  

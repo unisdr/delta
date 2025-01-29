@@ -16,9 +16,9 @@ import {
 	useFetcher
 } from "@remix-run/react";
 
-import {LoaderFunctionArgs} from "react-router-dom";
+import { LoaderFunctionArgs } from "react-router-dom";
 
-import {toast, ToastContainer} from "react-toastify/unstyled"; // Import ToastContainer for notifications
+import { toast, ToastContainer } from "react-toastify/unstyled"; // Import ToastContainer for notifications
 
 import {
 	getUserFromSession,
@@ -26,9 +26,9 @@ import {
 	getFlashMessage,
 } from "~/util/session";
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 
-import {configApprovedRecordsArePublic, configSiteLogo, configSiteName, configFooterURLPrivPolicy, configFooterURLTermsConds} from "~/util/config";
+import { configApprovedRecordsArePublic, configSiteLogo, configSiteName, configFooterURLPrivPolicy, configFooterURLTermsConds } from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
@@ -43,11 +43,11 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 
 
 export const links: LinksFunction = () => [
-	{rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css'},
-	{rel: "stylesheet", href: allStylesHref},
+	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css' },
+	{ rel: "stylesheet", href: allStylesHref },
 ];
 
-export const loader = async ({request}: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request)
 
 	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
@@ -148,7 +148,7 @@ function InactivityWarning(props: InactivityWarningProps) {
 	return (
 		<>
 			{showWarning ? (
-				<div style={{background: "red", position: "fixed", top: 0, width: "100%"}}>
+				<div style={{ background: "red", position: "fixed", top: 0, width: "100%" }}>
 					{expiresInMinutes > 0.1 ? (
 						<>
 							<p>
@@ -173,7 +173,7 @@ const queryClient = new QueryClient();
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds} = loaderData
+	const { hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds } = loaderData
 
 	// Display toast for flash messages
 	useEffect(() => {
@@ -199,49 +199,51 @@ export default function Screen() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-		<html lang="en">
-			<head>
-				<link
-					rel="icon"
-					type="image/x-icon"
-					href="/favicon.ico"
-				/>
-				<Meta />
-				<Links />
-				{/* Add literal meta tags */}
-				<meta name="viewport" content="width=device-width,initial-scale=1" />
-				<meta charSet="utf-8" />
-			</head>
-			<body>
-				{/* Add ToastContainer to the root for toast notifications  */}
-				<ToastContainer
-					position="top-center" // Set position to the center of the page
-					autoClose={5000} // Auto-close after 5 seconds
-					hideProgressBar={false} // Show progress bar
-					newestOnTop={true} // New notifications appear on top
-					closeOnClick={true} // Close notification on click
-					pauseOnHover={true} // Pause timer on hover
-					draggable={false} // Disable dragging
-				/>
-				<InactivityWarning loggedIn={loggedIn} />
-				<div className="dts-page-container">
-					{(hasPublicSite || loggedIn) && (
-						<header>
-							<div className="mg-container">
-								<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
-							</div>
-						</header>)}
-					<main className="dts-main-container">
-						<Outlet />
-					</main>
-					<footer>
-						<Footer siteName={confSiteName} urlPrivacyPolicy={confFooterURLPrivPolicy} urlTermsConditions={confFooterURLTermsConds} />
-					</footer>
-				</div>
-				<Scripts />
-			</body>
-		</html>
-	  </QueryClientProvider>	
+			<html lang="en">
+				<head>
+					<link
+						rel="icon"
+						type="image/x-icon"
+						href="/favicon.ico"
+					/>
+					<Meta />
+					<Links />
+					{/* Add literal meta tags */}
+					<meta name="viewport" content="width=device-width,initial-scale=1" />
+					<meta charSet="utf-8" />
+				</head>
+				<body>
+
+					{/* Add ToastContainer to the root for toast notifications  */}
+					<ToastContainer
+						position="top-center" // Set position to the center of the page
+						autoClose={5000} // Auto-close after 5 seconds
+						hideProgressBar={false} // Show progress bar
+						newestOnTop={true} // New notifications appear on top
+						closeOnClick={true} // Close notification on click
+						pauseOnHover={true} // Pause timer on hover
+						draggable={false} // Disable dragging
+						toastClassName="custom-toast" // Apply custom styles
+					/>
+					<InactivityWarning loggedIn={loggedIn} />
+					<div className="dts-page-container">
+						{(hasPublicSite || loggedIn) && (
+							<header>
+								<div className="mg-container">
+									<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
+								</div>
+							</header>)}
+						<main className="dts-main-container">
+							<Outlet />
+						</main>
+						<footer>
+							<Footer siteName={confSiteName} urlPrivacyPolicy={confFooterURLPrivPolicy} urlTermsConditions={confFooterURLTermsConds} />
+						</footer>
+					</div>
+					<Scripts />
+				</body>
+			</html>
+		</QueryClientProvider>
 	);
 }
 

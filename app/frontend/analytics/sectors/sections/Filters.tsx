@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "react-query";
-import { DateRange, DateRangePicker } from "react-date-range";
-import { format, addDays } from "date-fns";
 import Swal from "sweetalert2";
+import { AiOutlineSearch } from "react-icons/ai"; // Import the Search Icon from react-icons
 
 // Interfaces for filter data
 interface Sector {
@@ -68,8 +67,6 @@ const Filters: React.FC<FiltersProps> = ({
   }, []);
 
   const [subSectors, setSubSectors] = useState<Sector[]>([]); // For filtered subsectors
-  const [dateRange, setDateRange] = useState<DateRange[] | null>(null); // Initialize as null
-  const [isDatePickerVisible, setDatePickerVisible] = useState(false); // Toggle visibility of calendar
 
   const [dropdownVisibility, setDropdownVisibility] = useState<{
     [key: string]: boolean;
@@ -99,6 +96,7 @@ const Filters: React.FC<FiltersProps> = ({
       return response.json();
     },
     {
+      initialData: { disasterEvents: { rows: [] } }, // Ensure consistent initial state
       enabled: !!filters.disasterEventId, // Only fetch if disasterEventId is non-empty
     }
   );
@@ -116,19 +114,39 @@ const Filters: React.FC<FiltersProps> = ({
   const { data: hazardClustersData } = useQuery(
     ["hazardClusters", filters.hazardClusterId],
     async () => {
-      const response = await fetch(`/api/analytics/hazard-clusters`);
+      const response = await fetch(`/api/analytics/hazard-clusters?hazardTypeId=${filters.hazardTypeId}`);
       return response.json();
+    },
+    {
+      enabled: !!filters.hazardTypeId, // Only run this query if hazardTypeId is set
+    }
+  );
+  // console.log("Selected Hazard Cluster ID:", filters.hazardClusterId);
+
+  // React Query for fetching specific hazards
+  const [searchQuery, setSearchQuery] = useState(""); // Add searchQuery state
+
+  const { data: specificHazardsData } = useQuery(
+    ["specificHazards", filters.hazardClusterId, searchQuery], // Include searchQuery
+    async () => {
+      if (!filters.hazardClusterId) {
+        return { hazards: [] }; // Return empty results if hazardClusterId is invalid
+      }
+      const response = await fetch(
+        `/api/analytics/specific-hazards?clusterId=${filters.hazardClusterId}&searchQuery=${searchQuery}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch specific hazards");
+      return response.json();
+    },
+    {
+      enabled: !!filters.hazardClusterId, // Only run the query if hazardClusterId is set
     }
   );
 
-  // React Query for fetching specific hazards
-  const { data: specificHazardsData } = useQuery(
-    ["specificHazards", filters.specificHazardId],
-    async () => {
-      const response = await fetch(`/api/analytics/specific-hazards`);
-      return response.json();
-    }
-  );
+
+
+  // console.log("Selected Hazard Cluster ID:", filters.hazardClusterId);
+  // console.log("Specific Hazards Data:", specificHazardsData);
 
   // React Query for fetching geographic levels
   const { data: geographicLevelsData } = useQuery(
@@ -150,7 +168,9 @@ const Filters: React.FC<FiltersProps> = ({
       name: level.name.en,
     })) || [];
 
-  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
+  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [
+    // Provide placeholder/default data if needed
+  ];
 
   // Debug to ensure correct data mapping
   // console.log("Hazard Types:", hazardTypes);
@@ -160,14 +180,29 @@ const Filters: React.FC<FiltersProps> = ({
 
   // Handle filter changes
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
-    setFilters((prev) => ({ ...prev, [field]: value }));
+    setFilters((prev) => {
+      const updatedFilters = { ...prev, [field]: value };
 
-    if (field === "sectorId") {
-      const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
-      setSubSectors(selectedSector?.subsectors || []); // Update subsectors dropdown
-      setFilters((prev) => ({ ...prev, subSectorId: "" })); // Reset subsector
-    }
+      // Reset dependent fields for sectors
+      if (field === "sectorId") {
+        const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
+        setSubSectors(selectedSector?.subsectors || []); // Update subsectors dropdown
+        updatedFilters.subSectorId = ""; // Reset sub-sector
+      }
+
+      // Reset dependent fields for hazard filtering
+      if (field === "hazardTypeId") {
+        updatedFilters.hazardClusterId = ""; // Reset Hazard Cluster
+        updatedFilters.specificHazardId = ""; // Reset Specific Hazard
+      } else if (field === "hazardClusterId") {
+        updatedFilters.specificHazardId = ""; // Reset Specific Hazard
+      }
+
+      return updatedFilters;
+    });
+    console.log(`Filter updated: ${field} = ${value}`);
   };
+
 
   const toggleDropdown = (field: keyof typeof filters, visible: boolean) => {
     setDropdownVisibility((prev) => ({ ...prev, [field]: visible }));
@@ -180,7 +215,12 @@ const Filters: React.FC<FiltersProps> = ({
         icon: 'warning',
         // title: 'Missing Sector',
         text: 'Please select a sector first.',
-        confirmButtonText: 'OK'
+        confirmButtonText: 'OK',
+        buttonsStyling: false, // Disable default button styling
+        customClass: {
+          popup: 'swal2-custom-popup', // Apply the custom popup styles
+          confirmButton: 'swal2-custom-button', // Apply the custom button styles
+        },
       });
       return;
     }
@@ -213,9 +253,24 @@ const Filters: React.FC<FiltersProps> = ({
       toDate: "",
       disasterEventId: ""
     });
+    setDisplayValues({
+      hazardTypeId: "",
+      hazardClusterId: "",
+      specificHazardId: "",
+      geographicLevelId: "",
+    });
     setSubSectors([]); // Clear sub-sector options
     onClearFilters(); // Call parent clear handler
   };
+
+  const [displayValues, setDisplayValues] = useState<{
+    [key: string]: string;
+  }>({
+    hazardTypeId: "",
+    hazardClusterId: "",
+    specificHazardId: "",
+    geographicLevelId: "",
+  });
 
   // Render autocomplete list
   const renderAutocomplete = (
@@ -224,26 +279,35 @@ const Filters: React.FC<FiltersProps> = ({
     loading: boolean,
     placeholder: string
   ) => {
-    const filteredItems = items.filter((item) =>
-      item.name.toLowerCase().includes(filters[field].toLowerCase())
+    const filteredItems = items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(displayValues[field].toLowerCase()) || // Match by name
+        item.id.toString().toLowerCase().includes(displayValues[field].toLowerCase()) // Match by ID
     );
 
     return (
       <div className="dts-form-component">
-        <label>{placeholder}</label>
+        <label htmlFor={`${field}-input`}>{placeholder}</label>
+        <span>{placeholder}</span>
         <div style={{ position: "relative" }}>
           <input
+            id={`${field}-input`}
             type="text"
             className="filter-search"
             placeholder={`Search ${placeholder.toLowerCase()}...`}
-            value={filters[field]}
+            value={displayValues[field]} // Use displayValues from state
             onChange={(e) => {
-              handleFilterChange(field, e.target.value);
+              setDisplayValues((prev) => ({
+                ...prev,
+                [field]: e.target.value,
+              }));
+              setSearchQuery(e.target.value); // Update the search query
               toggleDropdown(field, true);
             }}
             onFocus={() => toggleDropdown(field, true)}
             onBlur={() => toggleDropdown(field, false)}
           />
+          <AiOutlineSearch className="search-icon" />
           {loading && <p>Loading...</p>}
           {!loading && dropdownVisibility[field] && (
             <ul className="autocomplete-list">
@@ -252,16 +316,24 @@ const Filters: React.FC<FiltersProps> = ({
                   <li
                     key={item.id}
                     onMouseDown={() => {
-                      setFilters((prev) => ({ ...prev, [field]: item.name }));
-                      queryClient.invalidateQueries([field]);
+                      setFilters((prev) => ({
+                        ...prev,
+                        [field]: item.id, // Save the ID for API calls
+                      }));
+                      setDisplayValues((prev) => ({
+                        ...prev,
+                        [field]: item.name, // Display the name in the input
+                      }));
                       toggleDropdown(field, false);
                     }}
                   >
-                    {item.name}
+                    {item.name} {/* Only display the name */}
                   </li>
                 ))
               ) : (
-                <li className="no-results">No matching {placeholder.toLowerCase()} found</li>
+                <li className="no-results">
+                  No matching {placeholder.toLowerCase()} found
+                </li>
               )}
             </ul>
           )}
@@ -270,17 +342,26 @@ const Filters: React.FC<FiltersProps> = ({
     );
   };
 
+
+
+
+  // Render skeleton/loading state during server-side rendering
   if (!isMounted) {
-    return null; // Avoid rendering until the client has mounted
+    return (
+      <div className="mg-grid mg-grid__col-6">
+        <p>Loading filters...</p>
+      </div>
+    );
   }
 
   return (
     <div className="mg-grid mg-grid__col-6">
       {/* Row 1: Sector and Sub Sector */}
       <div className="dts-form-component mg-grid__col--span-3">
-        <label htmlFor="sector-select">Sector *</label>
+        <label htmlFor="sector-select" className="dts-form-component__label">Sector *</label>
         <select
           id="sector-select"
+          name="sector"// Optional, but improves accessibility
           className="filter-select"
           value={filters.sectorId}
           required
@@ -303,6 +384,7 @@ const Filters: React.FC<FiltersProps> = ({
         <label htmlFor="sub-sector-select">Sub Sector</label>
         <select
           id="sub-sector-select"
+          name="sub-sector"
           className="filter-select"
           value={filters.subSectorId}
           onChange={(e) => handleFilterChange("subSectorId", e.target.value)}
@@ -338,8 +420,9 @@ const Filters: React.FC<FiltersProps> = ({
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">
-        <label>From</label>
+        <label htmlFor="from-date">From</label>
         <input
+          id="from-date"
           type="date"
           className="filter-date"
           value={filters.fromDate}
@@ -348,8 +431,9 @@ const Filters: React.FC<FiltersProps> = ({
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">
-        <label>To</label>
+        <label htmlFor="to-date">To</label>
         <input
+          id="to-date"
           type="date"
           className="filter-date"
           value={filters.toDate}
@@ -359,14 +443,16 @@ const Filters: React.FC<FiltersProps> = ({
 
       {/* Row 4: Disaster Event and Action Buttons */}
       <div className="dts-form-component mg-grid__col--span-4">
-        <label htmlFor="event-search">Disaster Event</label>
+        <label htmlFor="event-search" className="dts-form-component__label">Disaster Event</label>
         <div style={{ position: "relative" }}>
+          <AiOutlineSearch className="search-icon" />
           <input
             id="event-search"
+            aria-label="Search for disaster events"
             type="text"
             className="filter-search"
             placeholder="Search events..."
-            value={filters.disasterEventId}
+            value={filters.disasterEventId || ""} // Ensure consistent initial value
             onChange={(e) => handleFilterChange("disasterEventId", e.target.value)}
           />
           {eventsLoading ? (
@@ -422,13 +508,6 @@ const Filters: React.FC<FiltersProps> = ({
           onClick={handleApplyFilters}
         >
           Apply filters
-        </button>
-        <button
-          className="mg-button mg-button--small mg-button-ghost"
-          type="button"
-          onClick={onAdvancedSearch}
-        >
-          Advanced search
         </button>
       </div>
     </div>

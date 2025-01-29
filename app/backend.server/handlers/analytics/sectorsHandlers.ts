@@ -1,4 +1,4 @@
-// app/backend.server/handlers/analytics/sectorsHandlers.ts
+
 import {
   fetchAllSectors,
   Sector,

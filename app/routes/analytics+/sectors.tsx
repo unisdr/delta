@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
 
 import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
@@ -31,6 +31,8 @@ export const meta: MetaFunction = ({ data }) => {
 
 // React component for Sectors Analysis page
 export default function SectorsAnalysis() {
+
+  const [isMounted, setIsMounted] = useState(false);
 
   const [filters, setFilters] = useState<{
     sectorId: string | null;
@@ -69,6 +71,27 @@ export default function SectorsAnalysis() {
     console.log("Open advanced search modal or navigate to advanced search page");
   };
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    // Render a loader or nothing until the client mounts
+    return (
+      <div
+        style={{
+          marginTop: "2rem",
+          textAlign: "center",
+          color: "#555",
+          fontSize: "1.6rem",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+
   return (
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       <div className="sectors-page">
@@ -79,71 +102,78 @@ export default function SectorsAnalysis() {
           onClearFilters={handleClearFilters}
         />
 
-        {/* Debugging Section */}
-        {filters ? (
+        {/* Conditional rendering: Display this message until filters are applied */}
+        {!filters && (
           <div
             style={{
-              marginTop: "1rem",
-              padding: "1rem",
-              border: "1px solid #ddd",
+              marginTop: "2rem",
+              textAlign: "center",
+              padding: "2rem",
               borderRadius: "8px",
               backgroundColor: "#f9f9f9",
+              color: "#333",
+              fontSize: "1.6rem",
+              lineHeight: "1.8rem",
             }}
           >
-            <strong style={{ color: "#004f91" }}>Filters Applied:</strong>
-            <pre style={{ margin: "0.5rem 0", color: "#333" }}>
-              {JSON.stringify(filters, null, 2)}
-            </pre>
-          </div>
-        ) : (
-          <div
-            style={{
-              marginTop: "1rem",
-              fontSize: "14px",
-              color: "#999",
-            }}
-          >
-            <em>No filters applied yet.</em>
+            <h3 style={{ color: "#004f91", fontSize: "2rem", marginBottom: "1rem" }}>
+              Welcome to the Sectors Dashboard! 🌟
+            </h3>
+            <p>Please select and apply filters above to view the analysis.</p>
           </div>
         )}
 
-        {/* Disaster Summary Section */}
-        {/* <DisasterSummary filters={filters} /> */}
+        {/* Placeholder for dashboard sections: Hide unless filters are applied */}
+        {filters && (
+          <div style={{ marginTop: "2rem" }}>
+            <p style={{ fontSize: "1.4rem", color: "#555" }}>Dashboard content will be displayed here based on the selected filters.</p>
 
-        {/* Damage Inventory Section */}
-        {/* <DamageInventory /> */}
-
-        {/* Impact by Sector Section */}
-        {/* <ImpactBySector /> */}
-
-        {/* Impact on Sectors by Location Section */}
-        {/*<ImpactOnSectorsByLocation />*/}
-
-        {/* Damaging Events Section */}
-        {/* <DamagingEvents /> */}
-
-
-        {/* Placeholder for Under Construction */}
-        {/* Work In Progress Message */}
-        <div className="construction-message" style={{ marginTop: "2rem", padding: "1.6rem", backgroundColor: "#f9f9f9", borderRadius: "8px", border: "1px solid #ddd" }}>
-          <h3 style={{ fontSize: "1.8rem", marginBottom: "1rem", fontWeight: "600", color: "#333" }}>
-            🚧 Work In Progress
-          </h3>
-          <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-            The remaining sections of this dashboard, including:
-          </p>
-          <ul style={{ marginTop: "1rem", marginBottom: "1rem", paddingLeft: "1.5rem", fontSize: "1.4rem", lineHeight: "1.6", color: "#555" }}>
-
-            <li>Damage Inventory</li>
-            <li>Impact by Sector</li>
-            <li>Impact on Sectors by Location</li>
-            <li>Damaging Events</li>
-
-          </ul>
-          <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-            are still under construction. Please stay tuned for future updates!
-          </p>
-        </div>
+            {/* Work In Progress Message */}
+            <div
+              className="construction-message"
+              style={{
+                marginTop: "2rem",
+                padding: "1.6rem",
+                backgroundColor: "#f9f9f9",
+                borderRadius: "8px",
+                border: "1px solid #ddd",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "1.8rem",
+                  marginBottom: "1rem",
+                  fontWeight: "600",
+                  color: "#333",
+                }}
+              >
+                🚧 Work In Progress
+              </h3>
+              <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
+                The remaining sections of this dashboard, including:
+              </p>
+              <ul
+                style={{
+                  marginTop: "1rem",
+                  marginBottom: "1rem",
+                  paddingLeft: "1.5rem",
+                  fontSize: "1.4rem",
+                  lineHeight: "1.6",
+                  color: "#555",
+                }}
+              >
+                <li>Disaster Summary</li>
+                <li>Damage Inventory</li>
+                <li>Impact by Sector</li>
+                <li>Impact on Sectors by Location</li>
+                <li>Damaging Events</li>
+              </ul>
+              <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
+                are still under construction. Please stay tuned for future updates!
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </MainContainer>
   );
