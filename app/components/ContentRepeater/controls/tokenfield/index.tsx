@@ -359,7 +359,7 @@ export const initTokenField = (
 };
 
 export const renderTokenField = (
-  field: string,
+  field: any,
   fieldId: string,
   value: string | "", // Existing tokenfield data
   tokenfieldRefs: any, // Associated field metadata
