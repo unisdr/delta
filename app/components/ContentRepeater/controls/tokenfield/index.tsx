@@ -171,7 +171,7 @@ export const initTokenField = (
   // Dropdown highlight management
   let highlightedIndex = -1;
   const updateDropdownHighlight = () => {
-    const options = Array.from(dropdown.querySelectorAll('.custom-tokenfield-dropdown-item'));
+    const options = Array.from(dropdown.querySelectorAll('.custom-tokenfield-dropdown-item')) as HTMLElement[];
     options.forEach((option, index) => {
       Object.assign(option.style, { background: index === highlightedIndex ? '#ddd' : 'white' });
     });
@@ -301,13 +301,13 @@ export const initTokenField = (
 
   // Add this function inside your initTokenField
   const enableDragAndDrop = () => {
-    let draggedIndex = null;
+    let draggedIndex: number | null = null;
 
     // Add drag-related attributes and event listeners to each token
     const updateTokensForDrag = () => {
-      const tokens = tokenContainer.querySelectorAll('.custom-token');
+      const tokens = tokenContainer.querySelectorAll('.custom-token') as NodeListOf<HTMLElement>;
       tokens.forEach((token, index) => {
-        token.setAttribute('draggable', true);
+        token.setAttribute('draggable', "true");
 
         token.addEventListener('dragstart', (e) => {
           draggedIndex = index;
@@ -359,7 +359,7 @@ export const initTokenField = (
 };
 
 export const renderTokenField = (
-  field: string,
+  field: any,
   fieldId: string,
   value: string | "", // Existing tokenfield data
   tokenfieldRefs: any, // Associated field metadata

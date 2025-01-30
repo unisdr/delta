@@ -6,6 +6,7 @@ interface Item {
   file?: {
     name: string;
     content_type: string;
+    view?: string;
   };
 }
 

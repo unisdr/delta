@@ -1,7 +1,29 @@
 import React, { useState, useRef, useEffect } from "react";
 import { initTokenField, renderTokenField } from "./controls/tokenfield";
 import { renderMapper, renderMapperDialog } from "./controls/mapper";
-import L from 'leaflet';
+// Import Leaflet Core
+
+declare namespace L {
+  export const map: any;
+  export const tileLayer: any;
+  export const Polygon: any;
+  export const polyline: any;
+  export const Polyline: any;
+  export const circle: any;
+  export const Circle: any;
+  export const rectangle: any;
+  export const Rectangle: any;
+  export const latLng: any;
+  export const LatLng: any;
+  export const Draw: any;
+  export const LeafletEvent: any;
+  export const LeafletMouseEvent: any;
+  export const DrawEvents: any;
+  export const marker: any;
+  export const Marker: any;
+  export const icon: any;
+  export const latLngBounds: any;
+}
 
 //Mapper
 const glbMapperJS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
@@ -43,11 +65,11 @@ interface DialogField {
   dataSource?: string | { id: number; name: string }[];
   download?: boolean;
   onChange?: (
-    e: React.ChangeEvent<any>,
-    formData: any,
-    setFormData: React.Dispatch<React.SetStateAction<any>>,
-    currentDialogFields: DialogField[],
-    setDialogFields: React.Dispatch<React.SetStateAction<DialogField[]>>
+    e: React.ChangeEvent<any> | { target: { value: any } },
+    formData?: any | null,
+    setFormData?: React.Dispatch<React.SetStateAction<any>> | null,
+    currentDialogFields?: DialogField[] | null,
+    setDialogFields?: React.Dispatch<React.SetStateAction<DialogField[]>> | null
   ) => void;
 }
 
@@ -59,8 +81,8 @@ interface ContentRepeaterProps {
   dialog_fields?: DialogField[];
   data?: any[];
   onChange: (items: any[]) => void;
-  save_path_temp: string;
-  api_upload_url: string;
+  save_path_temp?: string;
+  api_upload_url?: string;
   debug?: boolean;
   file_viewer_temp_url?: string;
   file_viewer_url?: string;
@@ -176,6 +198,23 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   const dragIndex = useRef<number | null>(null);
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const activeDialog = document.querySelector("dialog[open]") as HTMLDialogElement | null;
+  
+      if (activeDialog && event.key === "Enter") {
+        const isTextInput = ["TEXTAREA", "INPUT"].includes((event.target as HTMLElement).tagName);
+  
+        if (isTextInput) {
+          event.preventDefault();
+        }
+      }
+    };
+  
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     setDialogFields(dialog_fields);
   }, [dialog_fields]);
 
@@ -240,31 +279,34 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       domElement: document.getElementById(`${id}_${field.id}`), // Attach DOM element
     }));
     
-    dialog_fields.forEach((field) => {
+    dialog_fields.forEach((field: DialogField) => {
       const element = document.getElementById(`${id}_${field.id}`);
       if (field.type === "tokenfield" && element) {
         // Initialize tokenfield on the element
         initTokenField(
           initialFormData[field.id] || "[]", // Pass current value or an empty array
           element as HTMLInputElement,
-          field?.dataSource || [],
+          Array.isArray(field?.dataSource) ? field.dataSource : [],
           field,
           handleFieldChange
         );
       }
     });
 
-    dialog_fields.forEach((field) => {
+    dialog_fields.forEach((field: DialogField) => {
       if ((field.type === "tokenfield" || field.type === "select" || field.type === "option") && field.onChange) {
         const initialValue = initialFormData[field.id];
         field.onChange(
           { target: { value: initialValue } },
-          dialogFieldsWithDOM // Pass updated dialog fields with DOM references
+          dialogFieldsWithDOM, // Pass updated dialog fields with DOM references
+          null,
+          null,
+          null
         );
       }
     });
 
-    const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error");
+    const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error") as HTMLElement;
     if (errorDiv) {
       errorDiv.style.display = "none";
     }
@@ -303,11 +345,11 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   const mapRef = useRef<any>(null);
   const state = useRef<{
     mode: string;
-    polygon: L.Polygon | null;
-    polyline: L.Polyline | null;
-    circle: L.Circle | null;
-    rectangle: L.Rectangle | null;
-    points: L.LatLng[];
+    polygon: any | null;
+    polyline: any | null;
+    circle: any | null;
+    rectangle: any | null;
+    points: any[];
     wasPolygonized: boolean;
     circleHandle: {
       disable: () => {},
@@ -317,8 +359,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       disable: () => {},
       enable: () => {}, // Placeholder enable method
     } | null,
-    marker: L.Marker[]; // Add marker as an array of Leaflet markers
-    startMarker: L.Marker | null; // Add startMarker as a single Leaflet marker
+    marker: any[]; // Add marker as an array of Leaflet markers
+    startMarker: any | null; // Add startMarker as a single Leaflet marker
   }>({
     mode: "moveMap",
     polygon: null,
@@ -332,7 +374,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     marker: [], // Initialize as an empty array
     startMarker: null, // Initialize as null
   });    
-  const initializeMap = (initialData) => {
+  type InitialDataType = object | null;
+  const initializeMap = (initialData: InitialDataType) => {
     const L = (window as any).L || null;
 
     if (!mapRef.current && L) {
@@ -360,7 +403,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
         }
       }
 
-      document.getElementById(`${id}_mapper_search`).value = '';
+      const mapperSearch = document.getElementById(`${id}_mapper_search`) as HTMLInputElement;
+      if (mapperSearch) mapperSearch.value = '';
   
       // Initialize the map
       mapRef.current = L.map(`${id}_mapper_container`, { dragging: true }).setView([43.833, 87.616], 2); // Urumqi center
@@ -369,7 +413,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       }).addTo(mapRef.current);
   
       // Handle map click events
-      mapRef.current.on("click", (e) => {
+      mapRef.current.on("click", (e: any) => {
         const latLng = e.latlng;
   
         switch (state.current.mode) {
@@ -400,7 +444,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
         try {
           processInitialData(initialData);
         } catch (error) {
-          console.error("Error processing initialData:", error.message);
+          console.error("Error processing initialData:", (error as any)?.message || "Unknown error");
         }
       }
   
@@ -408,7 +452,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       document.querySelector('.leaflet-control-attribution.leaflet-control a')?.remove();
   
       // Reset the mode select dropdown
-      document.getElementById(`${id}_mapper_modeSelect`).selectedIndex = 0;
+      const modeSelect = document.getElementById(`${id}_mapper_modeSelect`) as HTMLSelectElement;
+      if (modeSelect) modeSelect.selectedIndex = 0;
   
       if (debug) console.log("Map initialized");
     }
@@ -419,7 +464,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
 
   type LatLng = { lat: number; lng: number };
 
-  const handlePolygonMode = (latLng: L.LatLng) => {
+  const handlePolygonMode = (latLng: any) => {
     const L = (window as any).L || null;
 
     state.current.mode = "autoPolygon";
@@ -458,7 +503,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     if (debug) console.log("Polygon Points:", state.current.points);
   };  
   
-  const handleLineMode = (latLng: L.LatLng) => {
+  const handleLineMode = (latLng: any) => {
     const L = (window as any).L || null;
 
     state.current.mode = "drawLines";
@@ -526,12 +571,12 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       shapeOptions: { color: glbColors.rectangle },
     });
   
-    state.current.rectangleHandle.enable();
+    if (state.current.rectangleHandle) state.current.rectangleHandle.enable();
   
     // Ensure no lingering CREATED event listeners
     mapRef.current.off(L.Draw.Event.CREATED);
   
-    const onRectangleCreated = (event: L.DrawEvents.Created) => {
+    const onRectangleCreated = (event: any) => {
       const layer = event.layer;
   
       // Add the rectangle to the map
@@ -584,7 +629,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     // Ensure no lingering CREATED event listeners
     mapRef.current.off(L.Draw.Event.CREATED);
   
-    const onCircleCreated = (event: L.DrawEvents.Created) => {
+    const onCircleCreated = (event: any) => {
       const layer = event.layer;
   
       // Add the circle to the map
@@ -616,7 +661,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     mapRef.current.on(L.Draw.Event.CREATED, onCircleCreated);
   };
 
-  const handleMarkerMode = (latLng) => {
+  const handleMarkerMode = (latLng: any) => {
     const L = (window as any).L || null;
 
     state.current.mode = "placeMarker";
@@ -644,7 +689,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     state.current.marker.push(newMarker);
   
     // Add dragend event
-    newMarker.on("dragend", (event: L.LeafletEvent) => {
+    newMarker.on("dragend", (event: any) => {
       const updatedLatLng = event.target.getLatLng();
       const markerIndex = state.current.marker.indexOf(newMarker);
       if (markerIndex !== -1) {
@@ -670,7 +715,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };
   
   // Process initial data for drawing shapes
-  const processInitialData = (data) => {
+  const processInitialData = (data: any) => {
     const L = (window as any).L || null;
 
     if (data.mode) {
@@ -687,12 +732,14 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
         state.current.polygon.on("edit", () => {
           state.current.points = state.current.polygon
             .getLatLngs()[0]
-            .map((latLng) => [latLng.lat, latLng.lng]);
+            .map((latLng: any) => [latLng.lat, latLng.lng]);
           if (debug) console.log("Polygon updated points:", state.current.points);
         });
 
-        if (dialogMapRef.current?.querySelector('select')) 
-          dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'autoPolygon');
+        const selectElement = dialogMapRef.current?.querySelector('select');
+        if (selectElement) {
+          selectElement.setAttribute('last_mode', 'autoPolygon');
+        }
       } else if (mode === "lines" && Array.isArray(coordinates)) {
         // Process line data
         state.current.points = coordinates;
@@ -704,7 +751,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
         state.current.polyline.on("edit", () => {
           state.current.points = state.current.polyline
             .getLatLngs()
-            .map((latLng) => [latLng.lat, latLng.lng]);
+            .map((latLng: any) => [latLng.lat, latLng.lng]);
           if (debug) console.log("Polyline updated points:", state.current.points);
         });
         const selectElement = dialogMapRef.current?.querySelector('select');
@@ -736,7 +783,10 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
           ];
           if (debug) console.log("Rectangle updated bounds:", state.current.points);
         });
-        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawRectangle');
+        const selectElement = dialogMapRef.current?.querySelector('select');
+        if (selectElement) {
+          selectElement.setAttribute('last_mode', 'drawRectangle');
+        }
       } else if (mode === "circle" && Array.isArray(center) && typeof radius === "number") {
         // Process circle data
         const circleCenter = L.latLng(center[0], center[1]);
@@ -757,7 +807,10 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
           state.current.points = [{ lat: updatedCenter.lat, lng: updatedCenter.lng }, updatedRadius];
           if (debug) console.log("Circle updated data:", state.current.points);
         });
-        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'drawCircle');
+        const selectElement = dialogMapRef.current?.querySelector('select');
+        if (selectElement) {
+          selectElement.setAttribute('last_mode', 'drawCircle');
+        }
       } else if (mode === "markers" && Array.isArray(coordinates)) {
         // Process marker data
         state.current.points = [];
@@ -785,7 +838,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
           markerBounds.extend([lat, lng]);
 
           // Add dragend event to update state
-          marker.on("dragend", (event) => {
+          marker.on("dragend", (event: any) => {
             const updatedLatLng = event.target.getLatLng();
             const markerIndex = state.current.marker.indexOf(marker);
             if (markerIndex !== -1) {
@@ -801,7 +854,11 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
         }
 
         if (debug) console.log("Markers initialized:", state.current.points);
-        dialogMapRef.current?.querySelector('select').setAttribute('last_mode', 'placeMarker');
+
+        const selectElement = dialogMapRef.current?.querySelector('select');
+        if (selectElement) {
+          selectElement.setAttribute('last_mode', 'placeMarker');
+        }
       } else {
         console.warn("Unsupported or invalid mode in initialData:", mode);
       }
@@ -846,7 +903,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       console.error(`Container not found for selector: ${id}_mapper .dts-form__body`);
     }
   }
-  const isConnectedToStart = (newPoint, startPoint) => {
+  const isConnectedToStart = (newPoint: any, startPoint: any) => {
     const distance = mapRef.current.distance(newPoint, startPoint); // Use Leaflet's distance method
     return distance < 10; // Close if within 10 meters
   };
@@ -1101,7 +1158,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       });
 
     // Access the error message container
-    const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error");
+    const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error") as HTMLElement;
 
     if (missingFields.length > 0) {
       // Construct the error message
@@ -1118,13 +1175,13 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     }
 
     if (editingItem) {
-      setItems((prevItems) => ({
+      setItems((prevItems: Record<string, any>) => ({
         ...prevItems,
         [editingItem.id]: { ...prevItems[editingItem.id], ...formData },
       }));
     } else {
       const newId = Date.now().toString();
-      setItems((prevItems) => ({
+      setItems((prevItems: Record<string, any>) => ({
         ...prevItems,
         [newId]: { id: newId, ...formData },
       }));
@@ -1162,7 +1219,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   };  
 
   const handleDelete = (itemId: string) => {
-    setItems((prevItems) => {
+    setItems((prevItems: Record<string, any>) => {
       const updatedItems = { ...prevItems };
       delete updatedItems[itemId];
       return updatedItems;
@@ -1172,7 +1229,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
 
   const handleFieldChange = (field: DialogField, value: any) => {
     if (debug) console.log(`handleFieldChange triggered!`, field);
-    setFormData((prev) => ({ ...prev, [field.id]: value }));
+    setFormData((prev: Record<string, any>) => ({ ...prev, [field.id]: value }));
     if (field.onChange) {
       field.onChange(
         { target: { value } },
@@ -1316,7 +1373,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
               style={{ width: "fit-content" }}
               onClick={(e) => {
                 e.preventDefault();
-                handlePreviewMap(glbColors);
+                handlePreviewMap();
                 //console.log("JSON Data:", Object.values(items));
                 //console.log(JSON.stringify(Object.values(items)));
               }}
@@ -1458,8 +1515,11 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                 }}
                                 onClick={() => {
                                   setIsDialogMapOpen(true);
-                                  dialogMapRef.current?.showModal();
-                                  dialogMapRef.current.mapperField = field;
+                                  if (dialogMapRef.current) {
+                                    const dialogElement = dialogMapRef.current as HTMLDialogElement & { mapperField?: any };
+                                    dialogElement.showModal();
+                                    dialogElement.mapperField = field;
+                                  }
                                   initializeMap(value ? JSON.parse(value) : null);
                                 }}
                               >
@@ -1659,7 +1719,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                 // Client-side validation for file types
                                 if (allowedExtensions && !allowedExtensions.includes(extension || "")) {
                                   //alert(`Invalid file type. Allowed types: ${allowedExtensions.join(", ")}`);
-                                  const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error");
+                                  const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error") as HTMLElement;
                                   if (errorDiv) {
                                     errorDiv.style.display = "block";
                                     errorDiv.textContent = `Invalid file type`;
@@ -1668,9 +1728,11 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                 }
 
                                 try {
-                                  document.getElementById(`file-link-loading-${field.id}`).style.display = 'block';
-                                  if (document.getElementById(`file-link-${field.id}`))
-                                    document.getElementById(`file-link-${field.id}`).style.display = 'none';
+                                  const fileLinkLoading = document.getElementById(`file-link-loading-${field.id}`);
+                                  if (fileLinkLoading) fileLinkLoading.style.display = 'block';
+
+                                  const fileLinkElement = document.getElementById(`file-link-${field.id}`) as HTMLElement;
+                                  if (fileLinkElement) fileLinkElement.style.display = 'none';
 
                                   const previousHrefElement = document.getElementById(`file-link-${field.id}`);
                                   const previousHref = previousHrefElement?.getAttribute("href") || null;
@@ -1685,8 +1747,8 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                     if (element) {
                                       element.style.display = 'none';
                                     }
-                                    if (document.getElementById(`file-link-${field.id}`))
-                                      document.getElementById(`file-link-${field.id}`).style.display = 'block';
+                                    const fileLinkElement = document.getElementById(`file-link-${field.id}`) as HTMLElement;
+                                    if (fileLinkElement) fileLinkElement.style.display = 'block';
                                   }
                                 } catch (error) {
                                   // Enhanced error handling and user notification
@@ -1697,13 +1759,14 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                     error instanceof Error ? error.message : "An unknown error occurred during the file upload.";
                                   //alert(`Error: ${errorMessage}`);
 
-                                  const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error");
+                                  const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error") as HTMLElement;
                                   if (errorDiv) {
-                                    errorDiv.style.display = "block";
+                                    const errorDivStyle = errorDiv.style;
+                                    if (errorDivStyle) errorDiv.style.display = "block";
                                     errorDiv.textContent = `${errorMessage}`;
                                   }
 
-                                  const dtsAlert = document.querySelector('.dts-alert.dts-alert--error');
+                                  const dtsAlert = document.querySelector('.dts-alert.dts-alert--error') as HTMLElement;
                                   if (dtsAlert) dtsAlert.style.display = 'block';
 
                                   // Optionally toggle UI elements back
@@ -1711,7 +1774,10 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                   const fileLinkElement = document.getElementById(`file-link-${field.id}`);
                                   if (fileLinkElement) fileLinkElement.style.display = "block";
 
-                                  document.getElementById(`${id}_file`)!.value = '';
+                                  const fileInput = document.getElementById(`${id}_file`) as HTMLInputElement;
+                                  if (fileInput) {
+                                    fileInput.value = '';
+                                  }
                                 }
                               }
                             }}

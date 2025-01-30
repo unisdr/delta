@@ -138,32 +138,32 @@ export function HazardEventForm(props: HazardEventFormProps) {
 				spatialFootprint: (
 					<Field key="spatialFootprint" label="Spatial Footprint">
 						<ContentRepeater
-						id="spatialFootprint"
-						mapper_preview={true}
-						table_columns={[
-							{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "50%" },                        
-							{ type: "action", caption: "Action", width: "50%" },
-						]}
-						dialog_fields={[
-							{ id: "title", caption: "Title", type: "input", required: true },
-							{ id: "map_coords", caption: "Map Coords", type: "mapper", placeholder: "", required: true }
-						]}
-						data={(() => {
-							try {
-							  return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
-							} catch {
-							  return []; // Default to an empty array if parsing fails
-							}
-						  })()}
-						onChange={(items) => {
-							try {
-							const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
-							console.log("Updated Items:", parsedItems);
-							// Save or process `parsedItems` here, e.g., updating state or making an API call
-							} catch {
-							console.error("Failed to process items.");
-							}
-						}}
+							id="spatialFootprint"
+							mapper_preview={true}
+							table_columns={[
+								{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "50%" },                        
+								{ type: "action", caption: "Action", width: "50%" },
+							]}
+							dialog_fields={[
+								{ id: "title", caption: "Title", type: "input", required: true },
+								{ id: "map_coords", caption: "Map Coords", type: "mapper", placeholder: "", required: true }
+							]}
+							data={(() => {
+								try {
+								return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
+								} catch {
+								return []; // Default to an empty array if parsing fails
+								}
+							})()}
+							onChange={(items: any) => {
+								try {
+									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+									console.log("Updated Items:", parsedItems);
+									// Save or process `parsedItems` here, e.g., updating state or making an API call
+								} catch {
+									console.error("Failed to process items.");
+								}
+							}}
 						/>
 					</Field>
 				),

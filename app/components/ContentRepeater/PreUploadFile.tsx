@@ -22,9 +22,10 @@ import {
         );
       }
   
-      const uploadHandler = unstable_createMemoryUploadHandler({
-        maxFileSize: ContentRepeaterFileValidator.maxFileSize, // Max file size in bytes
-      });
+      const uploadHandler = unstable_createMemoryUploadHandler({});
+      // const uploadHandler = unstable_createMemoryUploadHandler({
+      //   maxFileSize: ContentRepeaterFileValidator.maxFileSize, // Max file size in bytes
+      // });
   
       try {
         const formData = await unstable_parseMultipartFormData(request, uploadHandler);

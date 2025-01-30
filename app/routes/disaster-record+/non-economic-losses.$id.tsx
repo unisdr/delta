@@ -1,15 +1,23 @@
-import {dr} from "~/db.server";
-import {authLoaderWithPerm} from "~/util/auth";
+import {dr, Tx} from "~/db.server";
+import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
 
 import { MainContainer } from "~/frontend/container";
 import type { MetaFunction } from "@remix-run/node";
 
 import { useLocation } from 'react-router-dom';
 import {
-	disasterRecordsCreate,
-	disasterRecordsUpdate,
-	disasterRecordsById,
-} from "~/backend.server/models/disaster_record";
+	NonecoLossesFields,
+	nonecoLossesCreate,
+	nonecoLossesUpdate,
+	nonecoLossesById,
+	PropRecord,
+	upsertRecord,
+
+} from "~/backend.server/models/noneco_losses";
+
+import {
+	nonecoLossesTable,
+} from '~/drizzle/schema';
 
 // import {
 // 	fieldsDef,
@@ -255,28 +263,51 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 // 	});
 // }
 
-export const action: ActionFunction = async ({ request }) => {
-	const formData = await request.formData(); 
+
+
+export const action = authActionWithPerm("EditData", async (actionArgs) => {
+// export const action: ActionFunction = async ({ request }) => {
+	const {params} = actionArgs;
+	const req = actionArgs.request;
+	const formData = await req.formData(); 
 	let frmType = formData.get("type") || formData.get("frmType") || ''; 
 	let frmSubtype = formData.get("subtype") || formData.get("frmSubtype") || ''; 
 	let frmFactor = formData.get("factor") || formData.get("frmFactor") || ''; 
+	let frmDescription = formData.get("description") || ''; 
 	let this_showForm:boolean = false;
-	
-	
-	console.log( formData );
+	let intCatetoryID:number = 0;
 
-	// const filteredArray:SubCategory[] = arraySubType.filter(subCategory => subCategory.id === Number(frmType));
 	const { data: subCategoryData } = arraySubType.find(subCategory => subCategory.id === Number(frmType)) || {}; 
 	const { data: factorData }  = arrayFactor.find(factors => factors.id === Number(frmSubtype)) || {}; 
 
 	if ( frmType == '6' &&  frmSubtype !== '' &&  frmFactor !== '') {
 		this_showForm = true;
+		intCatetoryID = typeof frmFactor === "string" ? parseInt(frmFactor) : 0;
 	}
-	else if (frmType != '6' &&  frmSubtype !== '') {
+	else if (frmType != '6' && frmSubtype !== '') {
 		this_showForm = true;
+		intCatetoryID = typeof frmSubtype === "string" ? parseInt(frmSubtype) : 0;
 	}
 	
-	console.log(factorData);
+	if (this_showForm && frmDescription.toString() !== '' && intCatetoryID > 0) {
+
+		const formRecord:PropRecord = { 
+			// id: '70bc07e0-a671-4dbc-8ac8-0c21bc62a878',
+			categortyId: intCatetoryID,
+			disasterRecordId: String(params.id),
+			description: String(frmDescription),
+		};
+	
+		try {
+			await upsertRecord(formRecord).catch(console.error);
+		} catch (e) {
+			console.log(e);
+			throw e;
+		}
+
+		
+	}
+
 
 	return {
 		ok: 'action', 
@@ -290,7 +321,7 @@ export const action: ActionFunction = async ({ request }) => {
 	// categories:categories, 
 	// subcategories:subcategories,
 	}; 
-};
+});
 
 export default function Screen() {
 	const loaderData = useLoaderData<PropsLoader>();
