@@ -559,9 +559,7 @@ export const auditLogsTable = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   tableName: text("table_name").notNull(),
   recordId: text("record_id").notNull(),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => userTable.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => userTable.id,{onDelete: "cascade"}),
   action: text("action").notNull(), // INSERT, UPDATE, DELETE
   oldValues: jsonb("old_values"),
   newValues: jsonb("new_values"),
