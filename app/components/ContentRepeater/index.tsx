@@ -198,6 +198,23 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   const dragIndex = useRef<number | null>(null);
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const activeDialog = document.querySelector("dialog[open]") as HTMLDialogElement | null;
+  
+      if (activeDialog && event.key === "Enter") {
+        const isTextInput = ["TEXTAREA", "INPUT"].includes((event.target as HTMLElement).tagName);
+  
+        if (isTextInput) {
+          event.preventDefault();
+        }
+      }
+    };
+  
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     setDialogFields(dialog_fields);
   }, [dialog_fields]);
 
