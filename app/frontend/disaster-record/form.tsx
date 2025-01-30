@@ -92,37 +92,6 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 			fields={props.fields}
 			fieldsDef={fieldsDef}
 		/>
-		{props.edit &&
-			<>
-				<p>&nbsp;</p>
-				<section>
-					<div className="mg-container">
-						<div>
-							<h3 className="dts-heading-3">Human Direct Effects</h3>
-						</div>
-						<div>
-							<h3 className="dts-heading-3">Sectors</h3>
-						</div>
-						<div>
-							<h3 className="dts-heading-3">Non-economic Losses</h3>
-							<Link to={`${route}/non-economic-losses/${props.id}`} replace>Add</Link>
-							<table className="dts-table">
-								<thead>
-									<tr>
-										<th>A</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td>a</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</section>
-			</>
-		}
 	</>);
 }
 

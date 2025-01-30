@@ -275,7 +275,7 @@ export default function Screen() {
 				<input ref={formRefHiddenType} type="text" name="frmType" value={ actionData?.frmType } />
 				<input ref={formRefHiddenSubType} type="text" name="frmSubtype" defaultValue={ actionData?.frmSubType } />
 				<input ref={formRefHiddenFactor} type="text" name="frmFactor" defaultValue={ actionData?.frmFactor } />
-				<div className="mg-grid mg-grid__col-4">
+				<div className="mg-grid mg-grid__col-auto">
 					<div className="dts-form-component">
 					<label>
 						<div className="dts-form-component__label">
@@ -323,6 +323,9 @@ export default function Screen() {
 					}
 					<div className="dts-form-component" style={actionData?.showForm ? {display:'none'}: {display:'block'}}>
 						<label>
+							<div className="dts-form-component__label">
+								<span>&nbsp;</span>
+							</div>
 							<button name="submit_btn" value={'filter'} className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
 								Select
 							</button>

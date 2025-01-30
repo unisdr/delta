@@ -597,12 +597,9 @@ export const nonecoLossesTable = pgTable(
     description: text("description").notNull(),
     ...createdUpdatedTimestamps,
   },
-  (table) => [
-    {
-      unq: unique("custom_nameIdx").on(
-        table.disasterRecordId,
-        table.categortyId
-      ),
-    },
-  ]
+  (table) => {
+    return [
+      unique("custom_nameIdx").on(table.disasterRecordId, table.categortyId),
+    ]; 
+  }
 );
