@@ -218,7 +218,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						/>
 					</Field>
 				) : (
-					<Field key="attachments" label=""></Field>
+					<Field key="attachments" label=""><></></Field>
 				)
 			}} />
 	)

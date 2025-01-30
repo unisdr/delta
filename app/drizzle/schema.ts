@@ -568,6 +568,8 @@ export const auditLogsTable = pgTable("audit_logs", {
     .notNull(),
 });
 
+export type categoriesType = typeof categoriesTable.$inferSelect;
+
 // Table for generic classification categories
 export const categoriesTable = pgTable("categories", {
   id: serial("id").primaryKey(), // Unique identifier for each category
