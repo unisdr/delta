@@ -353,7 +353,7 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	}
 
 	if (res.length > 0) {
-		await processAndSaveAttachments(tx, eventId, fields.attachments);
+		await processAndSaveAttachments(tx, eventId, fields.attachments || "");
 	}
 
 	/*
@@ -395,7 +395,7 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 			})
 			.where(eq(disasterEventTable.id, id))
 
-		await processAndSaveAttachments(tx, id, fields.attachments);	
+		await processAndSaveAttachments(tx, id, fields.attachments || "");	
 	} catch (error: any) {
 		let res = checkConstraintError(error, disasterEventTableConstraits)
 		if (res) {

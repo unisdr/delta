@@ -134,10 +134,10 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 							options: ["Document", "Media", "Other"],
 							onChange: (e) => {
 								const value = e.target.value;
-								const otherField = document.getElementById("attachments_other"); // Assuming ID is "attachments_other"
+								const otherField = document.getElementById("attachments_other") as HTMLInputElement;
 
 								if (otherField) {
-								const parentDiv = otherField.closest(".dts-form-component"); // Closest parent with the specific class
+								const parentDiv = otherField.closest(".dts-form-component") as HTMLDivElement;
 								if (value === "Other") {
 									parentDiv?.style.setProperty("display", "block");
 								} else {
@@ -154,12 +154,12 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 							options: ["File", "Link"],
 							onChange: (e) => {
 								const value = e.target.value;
-								const fileField = document.getElementById("attachments_file");
-								const urlField = document.getElementById("attachments_url");
+								const fileField = document.getElementById("attachments_file") as HTMLInputElement;
+								const urlField = document.getElementById("attachments_url") as HTMLInputElement;
 
 								if (fileField && urlField) {
-								const fileDiv = fileField.closest(".dts-form-component");
-								const urlDiv = urlField.closest(".dts-form-component");
+								const fileDiv = fileField.closest(".dts-form-component") as HTMLDivElement;
+								const urlDiv = urlField.closest(".dts-form-component") as HTMLDivElement;
 
 								if (value === "File") {
 									fileDiv?.style.setProperty("display", "block");
@@ -177,7 +177,7 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 						]}
 						data={(() => {
 							try {
-							return JSON.parse(fields.attachments) || [];
+							return JSON.parse(fields.attachments || "[]");
 							} catch {
 							return []; // Default to an empty array if parsing fails
 							}
@@ -240,8 +240,8 @@ export function ResourceRepoView(props: ResourceRepoViewProps) {
 								</thead>
 								<tbody>
 									{(() => {
-										const dataAttachments = JSON.parse(item.attachments); // Parse the attachments JSON string
-										return dataAttachments.map((attachment) => (
+										const dataAttachments = JSON.parse(item.attachments || "[]"); // Parse the attachments JSON string
+										return dataAttachments.map((attachment: any) => (
 											<tr key={attachment.id}>
 												<td style={{ border: '1px solid #F2F2F2', padding: '5px' }}>{attachment.title}</td>
 												<td style={{ border: '1px solid #F2F2F2', padding: '5px' }}>{attachment.type}</td>
