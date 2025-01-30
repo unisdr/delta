@@ -45,6 +45,7 @@ const Filters: React.FC<FiltersProps> = ({
   onClearFilters,
 }) => {
   const queryClient = useQueryClient();
+  const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
   const [isMounted, setIsMounted] = useState(false); // Ensure hydration consistency
   const [filters, setFilters] = useState({
@@ -111,7 +112,7 @@ const Filters: React.FC<FiltersProps> = ({
   );
 
   // React Query for fetching hazard clusters
-  const { data: hazardClustersData } = useQuery(
+  const { data: hazardClustersData, isFetching: isFetchingClusters } = useQuery(
     ["hazardClusters", filters.hazardClusterId],
     async () => {
       const response = await fetch(`/api/analytics/hazard-clusters?hazardTypeId=${filters.hazardTypeId}`);
@@ -157,6 +158,29 @@ const Filters: React.FC<FiltersProps> = ({
     }
   );
 
+  // Function to handle specific hazard selection
+  const handleSpecificHazardSelection = async (specificHazardId: string) => {
+    try {
+      const response = await fetch(`/api/analytics/related-hazard-data?specificHazardId=${specificHazardId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch related hazard data");
+      }
+
+      const { hazardClusterId, hazardTypeId } = await response.json();
+
+      // Convert IDs to strings before updating the filters
+      setFilters((prev) => ({
+        ...prev,
+        hazardClusterId: hazardClusterId.toString(),
+        hazardTypeId: hazardTypeId.toString(),
+      }));
+    } catch (error) {
+      console.error("Error fetching related hazard data:", error);
+    }
+  };
+
+
+
   // Extract data from the fetched data
   const sectors: Sector[] = sectorsData?.sectors || [];
   const hazardTypes: Hazard[] = hazardTypesData?.hazardTypes || [];
@@ -194,8 +218,24 @@ const Filters: React.FC<FiltersProps> = ({
       if (field === "hazardTypeId") {
         updatedFilters.hazardClusterId = ""; // Reset Hazard Cluster
         updatedFilters.specificHazardId = ""; // Reset Specific Hazard
+
+        setDisplayValues((prev) => ({
+          ...prev,
+          hazardClusterId: "",
+          specificHazardId: "",
+        })); // Reset display values
       } else if (field === "hazardClusterId") {
         updatedFilters.specificHazardId = ""; // Reset Specific Hazard
+
+        setDisplayValues((prev) => ({
+          ...prev,
+          specificHazardId: "",
+        })); // Reset display value
+      }
+
+      // Trigger back-propagation when specificHazardId is updated
+      if (field === "specificHazardId") {
+        handleSpecificHazardSelection(value);
       }
 
       return updatedFilters;
@@ -301,14 +341,24 @@ const Filters: React.FC<FiltersProps> = ({
                 ...prev,
                 [field]: e.target.value,
               }));
-              setSearchQuery(e.target.value); // Update the search query
+
+              if (searchTimeout) {
+                clearTimeout(searchTimeout); // Clear the previous timeout
+              }
+
+              const newTimeout = window.setTimeout(() => {
+                setSearchQuery(e.target.value);
+              }, 300); // Debounce: Wait 300ms before updating search
+
+              setSearchTimeout(newTimeout); // Save the timeout ID
+
               toggleDropdown(field, true);
             }}
             onFocus={() => toggleDropdown(field, true)}
             onBlur={() => toggleDropdown(field, false)}
           />
           <AiOutlineSearch className="search-icon" />
-          {loading && <p>Loading...</p>}
+          {loading && <p style={{ color: "blue", fontStyle: "italic" }}>Loading {placeholder.toLowerCase()}...</p>}
           {!loading && dropdownVisibility[field] && (
             <ul className="autocomplete-list">
               {filteredItems.length > 0 ? (
@@ -320,6 +370,10 @@ const Filters: React.FC<FiltersProps> = ({
                         ...prev,
                         [field]: item.id, // Save the ID for API calls
                       }));
+                      // Trigger the back-propagation for Specific Hazard
+                      if (field === "specificHazardId") {
+                        handleSpecificHazardSelection(item.id.toString());
+                      }
                       setDisplayValues((prev) => ({
                         ...prev,
                         [field]: item.name, // Display the name in the input
@@ -358,7 +412,7 @@ const Filters: React.FC<FiltersProps> = ({
     <div className="mg-grid mg-grid__col-6">
       {/* Row 1: Sector and Sub Sector */}
       <div className="dts-form-component mg-grid__col--span-3">
-        <label htmlFor="sector-select" className="dts-form-component__label">Sector *</label>
+        <label htmlFor="sector-select" >Sector *</label>
         <select
           id="sector-select"
           name="sector"// Optional, but improves accessibility
@@ -407,7 +461,7 @@ const Filters: React.FC<FiltersProps> = ({
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">
-        {renderAutocomplete(hazardClusters, "hazardClusterId", false, "Hazard Cluster")}
+        {renderAutocomplete(hazardClusters, "hazardClusterId", isFetchingClusters, "Hazard Cluster")}
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">
@@ -443,7 +497,7 @@ const Filters: React.FC<FiltersProps> = ({
 
       {/* Row 4: Disaster Event and Action Buttons */}
       <div className="dts-form-component mg-grid__col--span-4">
-        <label htmlFor="event-search" className="dts-form-component__label">Disaster Event</label>
+        <label htmlFor="event-search" >Disaster Event</label>
         <div style={{ position: "relative" }}>
           <AiOutlineSearch className="search-icon" />
           <input
