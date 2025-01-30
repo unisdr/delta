@@ -179,12 +179,12 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							options: ["File", "Link"],
 							onChange: (e) => {
 								const value = e.target.value;
-								const fileField = document.getElementById("attachments_file");
-								const urlField = document.getElementById("attachments_url");
+								const fileField = document.getElementById("attachments_file") as HTMLInputElement;
+								const urlField = document.getElementById("attachments_url") as HTMLInputElement;
 
 								if (fileField && urlField) {
-								const fileDiv = fileField.closest(".dts-form-component");
-								const urlDiv = urlField.closest(".dts-form-component");
+								const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
+								const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
 
 								if (value === "File") {
 									fileDiv?.style.setProperty("display", "block");
@@ -265,9 +265,9 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 						</tr>
 					</thead>
 					  <tbody>
-						{JSON.parse(item.attachments).map((attachment) => {
+						{JSON.parse(item.attachments).map((attachment: any) => {
 						  const tags = attachment.tag
-							? JSON.parse(attachment.tag).map((tag) => tag.name).join(", ")
+							? JSON.parse(attachment.tag).map((tag: any) => tag.name).join(", ")
 							: "N/A";
 						  const fileOrUrl =
 							attachment.file_option === "File" && attachment.file
