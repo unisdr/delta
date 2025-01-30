@@ -117,104 +117,104 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 				attachments: props.edit ? (
 					<Field key="attachments" label="Attachments">
 						<ContentRepeater
-						id="attachments"
-						dnd_order={true}
-						save_path_temp="/uploads/temp"
-						file_viewer_temp_url="/resource-repo/file-temp-viewer"
-						file_viewer_url="/resource-repo/file-viewer"
-						api_upload_url="/resource-repo/file-pre-upload"
-						table_columns={[
-							{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
-							{ 
-								type: "custom", caption: "Tags",
+							id="attachments"
+							dnd_order={true}
+							save_path_temp="/uploads/temp"
+							file_viewer_temp_url="/resource-repo/file-temp-viewer"
+							file_viewer_url="/resource-repo/file-viewer"
+							api_upload_url="/resource-repo/file-pre-upload"
+							table_columns={[
+								{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
+								{ 
+									type: "custom", caption: "Tags",
+									render: (item) => {
+										try {
+											if (!item.tag) {
+												return "N/A"; // Return "N/A" if no tags exist
+											}
+											
+											const tags = JSON.parse(item.tag); // Parse the JSON string
+											if (Array.isArray(tags) && tags.length > 0) {
+												// Map the names and join them with commas
+												return tags.map(tag => tag.name).join(", ");
+											}
+											return "N/A"; // If no tags exist
+										} catch (error) {
+											console.error("Failed to parse tags:", error);
+											return "N/A"; // Return "N/A" if parsing fails
+										}
+									} 
+								},
+								{
+								type: "custom",
+								caption: "File/URL",
 								render: (item) => {
-									try {
-										if (!item.tag) {
-											return "N/A"; // Return "N/A" if no tags exist
-										}
-										
-										const tags = JSON.parse(item.tag); // Parse the JSON string
-										if (Array.isArray(tags) && tags.length > 0) {
-											// Map the names and join them with commas
-											return tags.map(tag => tag.name).join(", ");
-										}
-										return "N/A"; // If no tags exist
-									} catch (error) {
-										console.error("Failed to parse tags:", error);
-										return "N/A"; // Return "N/A" if parsing fails
+									// Get the file name or fallback to URL
+									const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
+								
+									// Truncate long file names while preserving the file extension
+									const maxLength = 30; // Adjust to fit your design
+									let truncatedFileName = fullFileName;
+								
+									if (fullFileName && fullFileName.length > maxLength) {
+										const extension = fullFileName.includes('.')
+											? fullFileName.substring(fullFileName.lastIndexOf('.'))
+											: '';
+										const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
+										truncatedFileName = `${baseName}...${extension}`;
 									}
-								} 
-							},
-							{
-							type: "custom",
-							caption: "File/URL",
-							render: (item) => {
-								// Get the file name or fallback to URL
-								const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-							
-								// Truncate long file names while preserving the file extension
-								const maxLength = 30; // Adjust to fit your design
-								let truncatedFileName = fullFileName;
-							
-								if (fullFileName && fullFileName.length > maxLength) {
-								const extension = fullFileName.includes('.')
-									? fullFileName.substring(fullFileName.lastIndexOf('.'))
-									: '';
-								const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
-								truncatedFileName = `${baseName}...${extension}`;
-								}
-							
-								return truncatedFileName || "N/A"; // Return the truncated name or fallback to "N/A"
-							},
-							},                        
-							{ type: "action", caption: "Action" },
-						]}
-						dialog_fields={[
-							{ id: "title", caption: "Title", type: "input" },
-							{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
-							{
-							id: "file_option",
-							caption: "Option",
-							type: "option",
-							options: ["File", "Link"],
-							onChange: (e) => {
-								const value = e.target.value;
-								const fileField = document.getElementById("attachments_file") as HTMLInputElement;
-								const urlField = document.getElementById("attachments_url") as HTMLInputElement;
+								
+									return truncatedFileName || "N/A"; // Return the truncated name or fallback to "N/A"
+								},
+								},                        
+								{ type: "action", caption: "Action" },
+							]}
+							dialog_fields={[
+								{ id: "title", caption: "Title", type: "input" },
+								{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
+								{
+								id: "file_option",
+								caption: "Option",
+								type: "option",
+								options: ["File", "Link"],
+								onChange: (e) => {
+									const value = e.target.value;
+									const fileField = document.getElementById("attachments_file") as HTMLInputElement;
+									const urlField = document.getElementById("attachments_url") as HTMLInputElement;
 
-								if (fileField && urlField) {
-								const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
-								const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
+									if (fileField && urlField) {
+										const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
+										const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
 
-								if (value === "File") {
-									fileDiv?.style.setProperty("display", "block");
-									urlDiv?.style.setProperty("display", "none");
-								} else if (value === "Link") {
-									fileDiv?.style.setProperty("display", "none");
-									urlDiv?.style.setProperty("display", "block");
+										if (value === "File") {
+											fileDiv?.style.setProperty("display", "block");
+											urlDiv?.style.setProperty("display", "none");
+										} else if (value === "Link") {
+											fileDiv?.style.setProperty("display", "none");
+											urlDiv?.style.setProperty("display", "block");
+										}
+									}
+								},
+								},
+								{ id: "file", caption: "File Upload", type: "file"  }, 
+								{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
+							]}
+							data={(() => {
+								try {
+									return props && props.fields.attachments ? JSON.parse(props.fields.attachments) : [];
+								} catch {
+									return []; // Default to an empty array if parsing fails
 								}
+							})()}
+							onChange={(items: any) => {
+								try {
+									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+									console.log("Updated Items:", parsedItems);
+									// Save or process `parsedItems` here, e.g., updating state or making an API call
+								} catch {
+									console.error("Failed to process items.");
 								}
-							},
-							},
-							{ id: "file", caption: "File Upload", type: "file"  }, 
-							{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
-						]}
-						data={(() => {
-							try {
-								return props && props.fields.attachments ? JSON.parse(props.fields.attachments) : [];
-							} catch {
-								return []; // Default to an empty array if parsing fails
-							}
-						})()}
-						onChange={(items) => {
-							try {
-							const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
-							console.log("Updated Items:", parsedItems);
-							// Save or process `parsedItems` here, e.g., updating state or making an API call
-							} catch {
-							console.error("Failed to process items.");
-							}
-						}}
+							}}
 						/>
 					</Field>
 				) : (
