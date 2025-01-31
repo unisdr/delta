@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Styled Tree View Example</title>
+<style>
+  ul {
+    list-style-type: none;
+  }
+  ul li {
+    margin-bottom: 5px;
+  }
+  ul ul {
+    margin-left: 8px;
+  }
+  ul li::before {
+    content: "├── ";
+  }
+  ul li:last-child::before {
+    content: "└── ";
+  }
+  .collapsed {
+    display: none;
+  }
+  .expanded {
+    display: block;
+  }
+  /* ul ul li::before {
+    content: "├── ";
+  }
+  ul ul ul li::before {
+    content: "├── ";
+  }
+  ul ul li:last-child::before {
+    content: "└── ";
+  } */
+</style>
+</head>
+<body>
+
+<h2>Styled Tree View Example</h2>
+
+<div>
+  <button id="btnExpandAll" onclick="expandAll()" disabled="disabled">Expand all</button>
+  <button id="btnColapseAll" onclick="collapseAll()">Collapse all</button>
+</div>
+
+<ul>
+  <li><button onclick="toggleList(this, 'sublist1')">▼</button> Item 1
+    <ul class="expanded" id="sublist1">
+      <li>
+        <button onclick="toggleList(this, 'sublist11')">▼</button> Subitem 1.1
+        <ul class="expanded" id="sublist11">
+          <li>Sub-subitem 1.1.1</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>
+            <button onclick="toggleList(this, 'sublist112')">▼</button> Sub-subitem 1.1.2
+            <ul class="expanded" id="sublist112">
+                <li>Subitem 1.1.2.1</li>
+                <li>Subitem 1.1.2.1</li>
+                <li>Subitem 1.1.2.1</li>
+                <li>Subitem 1.1.2.1</li>
+                <li>Subitem 1.1.2.1</li>
+            </ul>
+          </li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+          <li>Sub-subitem 1.1.2</li>
+        </ul>
+      </li>
+      <li>Subitem 1.2</li>
+    </ul>
+  </li>
+  <li>
+    <button onclick="toggleList(this, 'sublist2')">▼</button> Item 2
+    <ul class="expanded" id="sublist2">
+      <li>Subitem 2.1</li>
+      <li>Subitem 2.2</li>
+    </ul>
+  </li>
+</ul>
+
+<script>
+  function toggleList(self, id) {
+    var list = document.getElementById(id);
+    if (list.classList.contains("collapsed")) {
+      self.innerHTML='▼';
+      list.classList.remove("collapsed");
+      list.classList.add("expanded");
+    } else {
+      // console.log(self.innerHTML);
+      self.innerHTML='►';
+      list.classList.remove("expanded");
+      list.classList.add("collapsed");
+    }
+  }
+
+  function expandAll() {
+    var btnCollapse = document.getElementById('btnColapseAll');
+    var btnExpand = document.getElementById('btnExpandAll');
+    const elements = document.querySelectorAll('[id*="sublist"]');
+
+    btnExpand.setAttribute('disabled', '');
+    btnCollapse.removeAttribute('disabled');
+
+    // Apply CSS to each selected element
+    elements.forEach(element => {
+      element.parentNode.children[0].innerHTML='▼';
+      element.classList.remove("collapsed");
+      element.classList.add("expanded");
+      // element.style.color = 'red'; // Change the text color to red
+      // element.style.fontWeight = 'bold'; // Make the text bold
+    });
+  }
+
+  function collapseAll() {  
+    var btnCollapse = document.getElementById('btnColapseAll');
+    var btnExpand = document.getElementById('btnExpandAll');
+    const elements = document.querySelectorAll('[id*="sublist"]');
+
+    btnCollapse.setAttribute('disabled', '');
+    btnExpand.removeAttribute('disabled');
+
+    // Apply CSS to each selected element
+    elements.forEach(element => {
+      element.parentNode.children[0].innerHTML='►';
+      element.classList.remove("expanded");
+      element.classList.add("collapsed");
+      // element.style.color = 'red'; // Change the text color to red
+      // element.style.fontWeight = 'bold'; // Make the text bold
+    });
+  }
+
+
+  
+</script>
+
+</body>
+</html>
