@@ -1,22 +1,11 @@
 import { dr } from "~/db.server";
-import {
-	InferSelectModel,
-	eq,
-	and
-} from "drizzle-orm";
+import { InferSelectModel, eq, and } from "drizzle-orm";
 
-import {
-	userTable,
-	User,
-} from '~/drizzle/schema';
+import { userTable, User } from "~/drizzle/schema";
 
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
-import {
-	Errors,
-	hasErrors,
-	initErrorField,
-} from "~/frontend/form"
+import { Errors, hasErrors, initErrorField } from "~/frontend/form";
 
 import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
@@ -25,13 +14,16 @@ import { errorIsNotUnique } from "~/util/db";
 import { randomBytes } from "crypto";
 
 import * as OTPAuth from "otpauth";
-import { configSiteURL } from "~/util/config";
+import { configSiteName, configSiteURL } from "~/util/config";
 import { checkPasswordComplexity, PasswordErrorType } from "./user/password";
+import { logAudit } from "./auditLogs";
+import { sessionCookie } from "~/util/session";
+import { number } from "prop-types";
 
 // rounds=10: ~10 hashes/sec
 // this measurements is from another implementation
 // https://github.com/kelektiv/node.bcrypt.js#readme
-const bcryptRounds = 10
+const bcryptRounds = 10;
 
 function passwordHash(password: string): string {
   return bcrypt.hashSync(password, bcryptRounds);
@@ -182,7 +174,6 @@ export async function resetPasswordSilentIfNotFound(email: string) {
   const resetToken = randomBytes(32).toString("hex");
 
   const expiresAt = addHours(new Date(), 1);
-
   await dr
     .update(userTable)
     .set({
@@ -195,11 +186,28 @@ export async function resetPasswordSilentIfNotFound(email: string) {
     email
   )}`;
 
-  const subject = "Password Reset Request";
-  const text = `You requested a password reset. Click the link to reset your password: ${resetURL}`;
-  const html = `<p>You requested a password reset. Click the link below to reset your password:</p>
-<a href="${resetURL}">${resetURL}</a>
-<p>This link will expire in 1 hour.</p>`;
+  const subject = "Reset password request";
+  const text = `
+              A request to reset your password has been made. If you did not make this request, simply ignore this email.
+              Copy and paste the following link into your browser URL to reset your password:${resetURL} 
+              This link will expire in 1 hour.
+            `;
+  const html = `
+              <p>
+                A request to reset your password has been made. If you did not make this request, simply ignore this email.
+              </p>
+              <p>
+                Click the link below to reset your password:
+                <a href="${resetURL}" 
+                   style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+                  background-color: #007BFF; text-decoration: none; border-radius: 5px;">
+                  Reset password
+                </a>
+              </p>
+              <p>
+                This link will expire in 1 hour.
+              </p>
+              `;
 
   await sendEmail(user.email, subject, text, html);
 }
@@ -237,6 +245,28 @@ export async function resetPassword(
     })
     .where(eq(userTable.email, email));
 
+  // send password reset confirmation email.
+  const userLoginURL = `${configSiteURL}/user/login`;
+  const subject = "Password change";
+  const text = `
+              Your password has been successfully changed. If you did not request this change, please contact your admin.
+              Copy and paste the following link into your browser URL to login to DTS:${userLoginURL} 
+            `;
+  const html = `
+              <p>
+                Your password has been successfully changed. If you did not request this change, please contact your admin.
+              </p>
+              <p>
+                Click the link below to login to DTS:
+                <a href="${userLoginURL}" 
+                   style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+                  background-color: #007BFF; text-decoration: none; border-radius: 5px;">
+                  Login
+                </a>
+              </p>
+              `;
+
+  await sendEmail(user.email, subject, text, html);
   return { ok: true };
 }
 
@@ -475,9 +505,20 @@ export async function sendEmailVerification(
     })
     .where(eq(userTable.id, user.id));
 
-  const subject = "Verify Your Email";
-  const text = `Your verification code is ${verificationCode}. It expires in 24 hours.`;
-  const html = `<p>Your verification code is <strong>${verificationCode}</strong>. It expires in 24 hours.</p>`;
+  const subject = "Verify your account";
+  const html = `<p>
+                  To continue setting up your DTS account, please verify that this is your email address.
+                </p>
+
+                <br/><br/> 
+                <p>
+                  Please use the following code to activate and finalise the setup of your account. The code will expire in 30 minutes:
+                </p>
+                <br/>
+                <strong>${verificationCode}</strong>`;
+  const text = `To continue setting up your DTS account, please verify that this is your email address.
+                Please use the following code to activate and finalise the setup of your account. The code will expire in 30 minutes:
+                ${verificationCode}`;
 
   await sendEmail(user.email, subject, text, html);
 }
@@ -572,7 +613,7 @@ export async function changePassword(
     return { ok: false, errors };
   }
 
-const user = res[0];
+  const user = res[0];
 
   if (newPassword) {
     const res = checkPasswordComplexity(newPassword);
@@ -783,7 +824,8 @@ export function adminUpdateUserFieldsFromMap(data: {
 
 export async function adminUpdateUser(
   id: number,
-  fields: AdminUpdateUserFields
+  fields: AdminUpdateUserFields,
+  userId: number
 ): Promise<AdminUpdateUserResult> {
   let errors: Errors<AdminUpdateUserFields> = {};
   errors.form = [];
@@ -802,8 +844,11 @@ export async function adminUpdateUser(
     return { ok: false, errors };
   }
 
+  const oldRecord =  await dr.select().from(userTable).where(eq(userTable.id, id));
+
+  let res = null;
   try {
-    const res = await dr
+    res = await dr
       .update(userTable)
       .set({
         email: fields.email,
@@ -813,7 +858,8 @@ export async function adminUpdateUser(
         role: fields.role,
       })
       .where(eq(userTable.id, id))
-      .returning({ id: userTable.id });
+      .returning();
+      // .returning({ id: userTable.id });
 
     if (res.length == 0) {
       errors.form.push("User was not found using provided ID.");
@@ -826,6 +872,15 @@ export async function adminUpdateUser(
     }
     throw e;
   }
+
+  logAudit({
+    tableName: "user",
+    recordId: oldRecord[0].id+"",
+    userId: userId,
+    action: "Update user data",
+    oldValues: oldRecord[0],
+    newValues: res[0],
+  });
 
   // sendEmailVerification(user);
 
@@ -929,11 +984,24 @@ export async function sendInvite(user: User) {
 
   const inviteURL =
     configSiteURL() + "/user/accept-invite?inviteCode=" + inviteCode;
+  const subject = `Invitation to join DTS ${configSiteName()}`;
+  const html = `<p>You have been invited to join the DTS ${configSiteName()} system as 
+                   a ${user.role} user.
+                </p>
+                <p>Click on the link below to create your account.</p>
+                <p>
+                  <a href="${inviteURL}" 
+                    style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+                    background-color: #007BFF; text-decoration: none; border-radius: 5px;">
+                    Set up account
+                  </a>
+                </p>
+                <p><a href="${inviteURL}">${inviteURL}</a></p>`;
 
-  const subject = "Invite";
-  const text = `${inviteURL}`;
-  const html = `<p><a href="${inviteURL}">${inviteURL}</a></p>`;
-
+  const text = `You have been invited to join the DTS ${configSiteName()} system as 
+                a ${user.role} user. 
+                Copy and paste the following link into your browser url to create your account:
+                ${inviteURL}`;
   await sendEmail(user.email, subject, text, html);
 }
 

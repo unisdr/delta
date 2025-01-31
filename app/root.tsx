@@ -205,7 +205,6 @@ export default function Screen() {
 				<meta charSet="utf-8" />
 			</head>
 			<body>
-
 				{/* Add ToastContainer to the root for toast notifications  */}
 				<ToastContainer
 					position="top-center" // Set position to the center of the page

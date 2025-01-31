@@ -70,8 +70,8 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
             {
               title: "Records",
               lvl4: [
-                { name: "Disaster records (todo)", link: "#" },
-                { name: "PDNA resources repository", link: "/resource-repo" },
+                { name: "Disaster records", link: "/disaster-record" },
+                // { name: "PDNA resources repository", link: "/resource-repo" },
               ],
             },
             {
@@ -165,8 +165,8 @@ function navItemsLoggedIn(): Lvl1Item[] {
             {
               title: "Records",
               lvl4: [
-                { name: "Disaster records (todo)", link: "#" },
-                { name: "PDNA resources repository", link: "/resource-repo" },
+                { name: "Disaster records", link: "/disaster-record" },
+                // { name: "PDNA resources repository", link: "/resource-repo" },
               ],
             },
             {

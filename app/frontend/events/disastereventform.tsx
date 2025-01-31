@@ -8,6 +8,8 @@ import {DisasterEventFields, DisasterEventViewModel, HazardEventBasicInfoViewMod
 
 import {hazardEventLink} from "~/frontend/events/hazardeventform"
 
+import { ContentRepeater } from "~/components/ContentRepeater";
+
 import {
 	UserFormProps,
 	FormInputDef,
@@ -55,6 +57,7 @@ export const fieldsDefCommon = [
 	{key: "responseCostTotalUsd", label: "Response Cost (Total)", type: "number"},
 	{key: "humanitarianNeedsTotalUsd", label: "Humanitarian Needs (Total, USD)", type: "number"},
 	{key: "recoveryNeedsTotalUsd", label: "Recovery Needs (Total, USD)", type: "number"},
+	{key: "attachments", label: "Attachments", type: "other"},
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
@@ -111,6 +114,112 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						<FieldErrors errors={props.errors} field="hazardEventId"></FieldErrors>
 					</Field>
 				,
+				attachments: props.edit ? (
+					<Field key="attachments" label="Attachments">
+						<ContentRepeater
+							id="attachments"
+							dnd_order={true}
+							save_path_temp="/uploads/temp"
+							file_viewer_temp_url="/resource-repo/file-temp-viewer"
+							file_viewer_url="/resource-repo/file-viewer"
+							api_upload_url="/resource-repo/file-pre-upload"
+							table_columns={[
+								{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
+								{ 
+									type: "custom", caption: "Tags",
+									render: (item) => {
+										try {
+											if (!item.tag) {
+												return "N/A"; // Return "N/A" if no tags exist
+											}
+											
+											const tags = JSON.parse(item.tag); // Parse the JSON string
+											if (Array.isArray(tags) && tags.length > 0) {
+												// Map the names and join them with commas
+												return tags.map(tag => tag.name).join(", ");
+											}
+											return "N/A"; // If no tags exist
+										} catch (error) {
+											console.error("Failed to parse tags:", error);
+											return "N/A"; // Return "N/A" if parsing fails
+										}
+									} 
+								},
+								{
+								type: "custom",
+								caption: "File/URL",
+								render: (item) => {
+									// Get the file name or fallback to URL
+									const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
+								
+									// Truncate long file names while preserving the file extension
+									const maxLength = 30; // Adjust to fit your design
+									let truncatedFileName = fullFileName;
+								
+									if (fullFileName && fullFileName.length > maxLength) {
+										const extension = fullFileName.includes('.')
+											? fullFileName.substring(fullFileName.lastIndexOf('.'))
+											: '';
+										const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
+										truncatedFileName = `${baseName}...${extension}`;
+									}
+								
+									return truncatedFileName || "N/A"; // Return the truncated name or fallback to "N/A"
+								},
+								},                        
+								{ type: "action", caption: "Action" },
+							]}
+							dialog_fields={[
+								{ id: "title", caption: "Title", type: "input" },
+								{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
+								{
+								id: "file_option",
+								caption: "Option",
+								type: "option",
+								options: ["File", "Link"],
+								onChange: (e) => {
+									const value = e.target.value;
+									const fileField = document.getElementById("attachments_file") as HTMLInputElement;
+									const urlField = document.getElementById("attachments_url") as HTMLInputElement;
+
+									if (fileField && urlField) {
+										const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
+										const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
+
+										if (value === "File") {
+											fileDiv?.style.setProperty("display", "block");
+											urlDiv?.style.setProperty("display", "none");
+										} else if (value === "Link") {
+											fileDiv?.style.setProperty("display", "none");
+											urlDiv?.style.setProperty("display", "block");
+										}
+									}
+								},
+								},
+								{ id: "file", caption: "File Upload", type: "file"  }, 
+								{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
+							]}
+							data={(() => {
+								try {
+									return props && props.fields.attachments ? JSON.parse(props.fields.attachments) : [];
+								} catch {
+									return []; // Default to an empty array if parsing fails
+								}
+							})()}
+							onChange={(items: any) => {
+								try {
+									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+									console.log("Updated Items:", parsedItems);
+									// Save or process `parsedItems` here, e.g., updating state or making an API call
+								} catch {
+									console.error("Failed to process items.");
+								}
+							}}
+						/>
+					</Field>
+				) : (
+					<Field key="attachments" label=""><></></Field>
+				)
 			}} />
 	)
 }
@@ -142,7 +251,50 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 					<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 				),
 
-			}} />
+			}}
+			otherRenderView={{
+				attachments: (
+				  <>
+					{item.attachments && item.attachments !== "[]" ? (
+					<table style={{ border: '1px solid gray', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+					<thead>
+						<tr style={{ backgroundColor: '#f2f2f2' }}>
+							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Title</th>
+							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Tags</th>
+							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>File/URL</th>
+						</tr>
+					</thead>
+					  <tbody>
+						{JSON.parse(item.attachments).map((attachment: any) => {
+						  const tags = attachment.tag
+							? JSON.parse(attachment.tag).map((tag: any) => tag.name).join(", ")
+							: "N/A";
+						  const fileOrUrl =
+							attachment.file_option === "File" && attachment.file
+							  ? (
+								<a href={`/resource-repo/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
+								  {attachment.file.name.split("/").pop()}
+								</a>
+							  )
+							  : attachment.file_option === "Link"
+							  ? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
+							  : "N/A";
+			  
+						  return (
+							<tr key={attachment.id} style={{ borderBottom: '1px solid gray' }}>
+								<td style={{ border: '1px solid gray', padding: '8px' }}>{attachment.title || "N/A"}</td>
+								<td style={{ border: '1px solid gray', padding: '8px' }}>{tags}</td>
+								<td style={{ border: '1px solid gray', padding: '8px' }}>{fileOrUrl}</td>
+							</tr>
+						  );
+						})}
+					  </tbody>
+					</table>
+					) : (<></>)}
+				  </>
+				),
+			  }}			  
+			/>
 		</ViewComponent>
 	);
 }

@@ -19,6 +19,8 @@ import {
 } from "drizzle-orm";
 import {isValidUUID} from "~/util/id";
 
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
+
 export interface HazardEventFields extends Omit<EventInsert, 'id'>, Omit<HazardEventInsert, 'id'>, ObjectWithImportId {
 	parent: string
 }
@@ -350,6 +352,10 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 		throw error
 	}
 
+	if (res.length > 0) {
+		await processAndSaveAttachments(tx, eventId, fields.attachments || "");
+	}
+
 	/*
 if (fields.parent) {
 	await tx
@@ -388,6 +394,8 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 				...fields
 			})
 			.where(eq(disasterEventTable.id, id))
+
+		await processAndSaveAttachments(tx, id, fields.attachments || "");	
 	} catch (error: any) {
 		let res = checkConstraintError(error, disasterEventTableConstraits)
 		if (res) {
@@ -453,4 +461,21 @@ export async function disasterEventDelete(id: string): Promise<DeleteResult> {
 			.where(eq(eventTable.id, id));
 	})
 	return {ok: true}
+}
+
+async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: string) {
+	if (!attachmentsData) return;
+  
+	const save_path = `/uploads/resource-repo/${resourceId}`;
+	const save_path_temp = `/uploads/temp`;
+  
+	// Process the attachments data
+	const processedAttachments = ContentRepeaterUploadFile.save(attachmentsData, save_path_temp, save_path);
+  
+	// Update the `attachments` field in the database
+	await tx.update(disasterEventTable)
+	  .set({
+		attachments: processedAttachments || "[]", // Ensure it defaults to an empty array if undefined
+	  })
+	  .where(eq(disasterEventTable.id, resourceId));
 }

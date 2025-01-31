@@ -20,6 +20,14 @@ export function configSiteURL(): string {
  */
 export function configSiteName(): string {
 	const value = process.env.WEBSITE_NAME || 'Disaster Losses Tracking System';
+	return value + ' - DTS';
+};
+
+/**
+ * Get the Country Name.
+ */
+export function configCountryName(): string {
+	const value = process.env.COUNTRY_NAME || '';
 	return value;
 };
 

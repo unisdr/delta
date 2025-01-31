@@ -20,6 +20,7 @@ import {formatDate} from "~/util/date";
 import {useEffect, useState} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
+import { ContentRepeater } from "~/components/ContentRepeater";
 
 export const route = "/hazard-event"
 
@@ -32,7 +33,7 @@ export const fieldsDefCommon = [
 	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "text"},
 	{key: "duration", label: "Duration", type: "text"},
 	{key: "magnitude", label: "Magnitude", type: "text"},
-	{key: "spatialFootprint", label: "Spatial Footprint", type: "text"},
+	{key: "spatialFootprint", label: "Spatial Footprint", type: "other"},
 	{key: "recordOriginator", label: "Record Originator", type: "text", required: true},
 	{key: "dataSource", label: "Data Source", type: "text"},
 ] as const;
@@ -134,6 +135,38 @@ export function HazardEventForm(props: HazardEventFormProps) {
 						<FieldErrors errors={props.errors} field="hazardId"></FieldErrors>
 					</Field>
 				),
+				spatialFootprint: (
+					<Field key="spatialFootprint" label="Spatial Footprint">
+						<ContentRepeater
+							id="spatialFootprint"
+							mapper_preview={true}
+							table_columns={[
+								{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "50%" },                        
+								{ type: "action", caption: "Action", width: "50%" },
+							]}
+							dialog_fields={[
+								{ id: "title", caption: "Title", type: "input", required: true },
+								{ id: "map_coords", caption: "Map Coords", type: "mapper", placeholder: "", required: true }
+							]}
+							data={(() => {
+								try {
+								return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
+								} catch {
+								return []; // Default to an empty array if parsing fails
+								}
+							})()}
+							onChange={(items: any) => {
+								try {
+									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+									console.log("Updated Items:", parsedItems);
+									// Save or process `parsedItems` here, e.g., updating state or making an API call
+								} catch {
+									console.error("Failed to process items.");
+								}
+							}}
+						/>
+					</Field>
+				),
 			}}
 		/>
 	);
@@ -210,6 +243,101 @@ export function HazardEventView(props: HazardEventViewProps) {
 						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 					),
 				}}
+				otherRenderView={{
+					spatialFootprint: (
+					  <div>
+						<p>Spatial Footprint:</p>
+						{(() => {
+						  try {
+							const footprints = JSON.parse(item.spatialFootprint); // Parse the JSON string
+							return (
+							  <ul>
+								{footprints.map((footprint: any, index: number) => (
+								  <li key={footprint.id || index}>
+									Title: {footprint.title} <br />
+									Shape: {(() => {
+									  try {
+										const coords = JSON.parse(footprint.map_coords);
+										const shape = coords.mode;
+										switch (shape) {
+										  case "circle":
+											return (
+											  <>
+												Circle <br />
+												Center: {coords.center.join(", ")} <br />
+												Radius: {coords.radius} meters
+											  </>
+											);
+										  case "lines":
+											return (
+											  <>
+												Lines <br />
+												Coordinates:{" "}
+												{coords.coordinates.map((line: number[], i: number) => (
+												  <span key={i}>
+													[{line.join(", ")}]
+													{i < coords.coordinates.length - 1 ? ", " : ""}
+												  </span>
+												))}
+											  </>
+											);
+										  case "polygon":
+											return (
+											  <>
+												Polygon <br />
+												Coordinates:{" "}
+												{coords.coordinates.map((point: number[], i: number) => (
+												  <span key={i}>
+													[{point.join(", ")}]
+													{i < coords.coordinates.length - 1 ? ", " : ""}
+												  </span>
+												))}
+											  </>
+											);
+										  case "rectangle":
+											return (
+											  <>
+												Rectangle <br />
+												Coordinates:{" "}
+												{coords.coordinates.map((corner: number[], i: number) => (
+												  <span key={i}>
+													[{corner.join(", ")}]
+													{i < coords.coordinates.length - 1 ? ", " : ""}
+												  </span>
+												))}
+											  </>
+											);
+										  case "markers":
+											return (
+											  <>
+												Markers <br />
+												Coordinates:{" "}
+												{coords.coordinates.map((marker: number[], i: number) => (
+												  <span key={i}>
+													[{marker.join(", ")}]
+													{i < coords.coordinates.length - 1 ? ", " : ""}
+												  </span>
+												))}
+											  </>
+											);
+										  default:
+											return "Unknown Shape";
+										}
+									  } catch {
+										return "Invalid map_coords format.";
+									  }
+									})()}
+								  </li>
+								))}
+							  </ul>
+							);
+						  } catch {
+							return <p>Invalid JSON format in spatialFootprint.</p>;
+						  }
+						})()}
+					  </div>
+					),
+				}}											  
 			/>
 		</ViewComponent>
 	);
