@@ -50,8 +50,8 @@ export default function Methodologies() {
           ) : (
             <>
               <PreventionWebLandingPageWidget
-                pageId="16"
-                activeDomain="www.undrr.org"
+                pageId="92282"
+                activeDomain="www.preventionweb.net"
               />
               {appendContent && (
                 <div

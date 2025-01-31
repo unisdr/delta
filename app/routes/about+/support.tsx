@@ -50,8 +50,8 @@ export default function Support() {
           ) : (
             <>
               <PreventionWebLandingPageWidget
-                pageId="16"
-                activeDomain="www.undrr.org"
+                pageId="92283"
+                activeDomain="www.preventionweb.net"
               />
               {appendContent && (
                 <div

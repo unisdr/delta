@@ -49,8 +49,8 @@ export default function AboutTheSystem() {
           ) : (
             <>
               <PreventionWebLandingPageWidget
-                pageId="16"
-                activeDomain="www.undrr.org"
+                pageId="92272"
+                activeDomain="www.preventionweb.net"
               />
               {appendContent && (
                 <div
