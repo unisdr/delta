@@ -162,11 +162,11 @@ export default function SectorsAnalysis() {
                   color: "#555",
                 }}
               >
-                <li>Disaster Summary</li>
-                <li>Damage Inventory</li>
-                <li>Impact by Sector</li>
-                <li>Impact on Sectors by Location</li>
-                <li>Damaging Events</li>
+                <li>Impact on sectors</li>
+                <li>Impact in sectors by hazard type</li>
+                <li>Impact on sectors by Location</li>
+                <li>Effect details in sectors</li>
+                <li>The most damaging events for sectors </li>
               </ul>
               <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
                 are still under construction. Please stay tuned for future updates!
