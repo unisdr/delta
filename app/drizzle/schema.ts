@@ -568,6 +568,8 @@ export const auditLogsTable = pgTable("audit_logs", {
     .notNull(),
 });
 
+export type categoriesType = typeof categoriesTable.$inferSelect;
+
 // Table for generic classification categories
 export const categoriesTable = pgTable("categories", {
   id: serial("id").primaryKey(), // Unique identifier for each category
@@ -595,12 +597,53 @@ export const nonecoLossesTable = pgTable(
     description: text("description").notNull(),
     ...createdUpdatedTimestamps,
   },
-  (table) => [
-    {
-      unq: unique("custom_nameIdx").on(
-        table.disasterRecordId,
-        table.categortyId
-      ),
-    },
-  ]
+  (table) => {
+    return [
+      unique("custom_nameIdx").on(table.disasterRecordId, table.categortyId),
+    ]; 
+  }
 );
+
+// examples:
+// id: 39,
+// parent_id: 19,
+// sectorname": Agriculture,
+// subsector: Crops
+// description: The cultivation and harvesting of plants for food, fiber, and other products.
+export const sectorTable = pgTable("sector", {
+	id: serial("id").primaryKey(), // Unique sector ID
+	parentId: integer("parent_id").references((): AnyPgColumn => sectorTable.id), // Reference to parent sector
+	sectorname: text("sectorname").notNull(), // High-level category
+	subsector: text("subsector").notNull(), // Name of the subsector
+	description: text("description"), // Optional description
+  },
+  (table) => [
+	// Constraint: subsector cannot be empty
+	check("subsector_not_empty", sql`${table.subsector} <> ''`),
+	
+	// Constraint: Valid sector names
+	check(
+	  "sectorname_valid",
+	  sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
+	),
+  ]);
+
+ // Define relationships for `sectorTable`
+export const sectorRel = relations(sectorTable, ({ one, many }) => ({
+	// Self-referencing relationship for hierarchical sectors
+	parentSector: one(sectorTable, {
+	  fields: [sectorTable.parentId],
+	  references: [sectorTable.id],
+	}),
+  
+	// Optional relationships to other entities if needed
+	hazardEvents: many(hazardEventTable, {
+	  relationName: "sector_hazard_events",
+	}),
+	disasterEvents: many(disasterEventTable, {
+	  relationName: "sector_disaster_events",
+	}),
+	humanDsgs: many(humanDsgTable, {
+	  relationName: "sector_human_dsgs",
+	}),
+  }));
