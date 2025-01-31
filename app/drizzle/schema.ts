@@ -604,8 +604,13 @@ export const nonecoLossesTable = pgTable(
   }
 );
 
-/*define sector Table*/
-// Explicitly define the type for `sectorTable`
+
+// examples:
+// id: 39,
+// parent_id: 19,
+// sectorname": Agriculture,
+// subsector: Crops
+// description: The cultivation and harvesting of plants for food, fiber, and other products.
 export const sectorTable = pgTable("sector", {
 	id: serial("id").primaryKey(), // Unique sector ID
 	parentId: integer("parent_id").references((): AnyPgColumn => sectorTable.id), // Reference to parent sector
