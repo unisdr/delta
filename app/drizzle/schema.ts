@@ -242,6 +242,11 @@ export const hazardEventTable = pgTable("hazard_event", {
   hazardId: text("hazard_id")
     .references((): AnyPgColumn => hipHazardTable.id)
     .notNull(),
+
+  sectorId: integer("sector_id") // New column
+    .references((): AnyPgColumn => sectorTable.id)
+    .notNull(),
+
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   // data fields below not used in queries directly
@@ -261,6 +266,7 @@ export const hazardEventTable = pgTable("hazard_event", {
 export const hazardEventTableConstraits = {
   apiImportId: "hazard_event_apiImportId_unique",
   hazardId: "hazard_event_hazard_id_hip_hazard_id_fk",
+  sectorId: "hazard_event_sector_id_fk", // New constraint
 };
 
 export type HazardEvent = typeof hazardEventTable.$inferSelect;
@@ -274,6 +280,12 @@ export const hazardEventRel = relations(hazardEventTable, ({ one, many }) => ({
   hazard: one(hipHazardTable, {
     fields: [hazardEventTable.hazardId],
     references: [hipHazardTable.id],
+  }),
+
+  // Directly linking hazard_event to sector
+  sector: one(sectorTable, {
+    fields: [hazardEventTable.sectorId],
+    references: [sectorTable.id],
   }),
 
   // Linking hazard_event to sector through the intermediate table
@@ -292,6 +304,11 @@ export const disasterEventTable = pgTable("disaster_event", {
   hazardEventId: uuid("hazard_event_id")
     .references((): AnyPgColumn => hazardEventTable.id)
     .notNull(),
+
+  sectorId: integer("sector_id") // New column
+    .references((): AnyPgColumn => sectorTable.id)
+    .notNull(),
+
   // data fields below not used in queries directly
   // only on form screens
   // should be easier to change if needed
@@ -337,6 +354,7 @@ export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
 
 export const disasterEventTableConstraits = {
   hazardEventId: "disaster_event_hazard_event_id_hazard_event_id_fk",
+  sectorId: "disaster_event_sector_id_fk", // New constraint
 };
 
 export const disasterEventRel = relations(
@@ -349,6 +367,12 @@ export const disasterEventRel = relations(
     hazardEvent: one(hazardEventTable, {
       fields: [disasterEventTable.hazardEventId],
       references: [hazardEventTable.id],
+    }),
+
+    // Directly linking disaster_event to sector
+    sector: one(sectorTable, {
+      fields: [disasterEventTable.sectorId],
+      references: [sectorTable.id],
     }),
 
     // Linking disaster_event to sector through the intermediate table
@@ -563,9 +587,33 @@ export const disasterRecordsTable = pgTable("disaster_records", {
   originatorRecorderInst: text("originator_recorder_inst")
     .notNull()
     .default(""),
+  sectorId: integer("sector_id") // New Column
+    .references((): AnyPgColumn => sectorTable.id),
   ...approvalFields,
   ...createdUpdatedTimestamps,
 });
+
+export const disasterRecordsRel = relations(
+  disasterRecordsTable,
+  ({ one, many }) => ({
+    //Relationship: Links each disaster record to a disaster event
+    disasterEvent: one(disasterEventTable, {
+      fields: [disasterRecordsTable.disasterEventId],
+      references: [disasterEventTable.id],
+    }),
+
+    //Relationship: Links disaster record to a sector (optional)
+    sector: one(sectorTable, {
+      fields: [disasterRecordsTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    //Relationship: Links to the sector-disaster records relation table
+    relatedSectors: many(sectorDisasterRecordsRelationTable, {
+      relationName: "sector_disaster_records_relation",
+    }),
+  })
+);
 
 // Table to log all audit actions across the system
 export const auditLogsTable = pgTable("audit_logs", {
