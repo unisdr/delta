@@ -46,3 +46,18 @@ export async function getCategories(categoryParent_id: number | null): Promise<{
 }
 
 
+export async function upsertRecord(record: CategoryType): Promise<void> {
+	// Perform the upsert operation
+	await dr
+		.insert(categoriesTable)
+		.values(record)
+		.onConflictDoUpdate({
+			target: categoriesTable.id,
+			set: { 
+				id: record.id,
+				name: record.name,
+				parentId: record.parentId,
+				updatedAt: sql`NOW()`,
+			},
+		});
+}

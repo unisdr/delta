@@ -247,6 +247,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
                 { name: "Geographic levels", link: "/settings/geography" },
                 { name: "Sectors", link: "/settings/sectors" },
                 { name: "HIPs import", link: "/setup/import-hip" },
+                { name: "Categories import", link: "/setup/import-categories" },
                 { name: "API Keys", link: "/settings/api-key" },
               ],
             },
