@@ -266,7 +266,7 @@ export const hazardEventTableConstraits = {
 export type HazardEvent = typeof hazardEventTable.$inferSelect;
 export type HazardEventInsert = typeof hazardEventTable.$inferInsert;
 
-export const hazardEventRel = relations(hazardEventTable, ({ one }) => ({
+export const hazardEventRel = relations(hazardEventTable, ({ one, many }) => ({
   event: one(eventTable, {
     fields: [hazardEventTable.id],
     references: [eventTable.id],
@@ -274,6 +274,11 @@ export const hazardEventRel = relations(hazardEventTable, ({ one }) => ({
   hazard: one(hipHazardTable, {
     fields: [hazardEventTable.hazardId],
     references: [hipHazardTable.id],
+  }),
+
+  // Linking hazard_event to sector through the intermediate table
+  relatedSectors: many(sectorHazardRelationTable, {
+    relationName: "sector_hazard_relation",
   }),
 }));
 
@@ -334,16 +339,24 @@ export const disasterEventTableConstraits = {
   hazardEventId: "disaster_event_hazard_event_id_hazard_event_id_fk",
 };
 
-export const disasterEventRel = relations(disasterEventTable, ({ one }) => ({
-  event: one(eventTable, {
-    fields: [disasterEventTable.id],
-    references: [eventTable.id],
-  }),
-  hazardEvent: one(hazardEventTable, {
-    fields: [disasterEventTable.hazardEventId],
-    references: [hazardEventTable.id],
-  }),
-}));
+export const disasterEventRel = relations(
+  disasterEventTable,
+  ({ one, many }) => ({
+    event: one(eventTable, {
+      fields: [disasterEventTable.id],
+      references: [eventTable.id],
+    }),
+    hazardEvent: one(hazardEventTable, {
+      fields: [disasterEventTable.hazardEventId],
+      references: [hazardEventTable.id],
+    }),
+
+    // Linking disaster_event to sector through the intermediate table
+    relatedSectors: many(sectorEventRelationTable, {
+      relationName: "sector_event_relation",
+    }),
+  })
+);
 
 // Common disaggregation data (dsg) for human effects on disaster records
 export const humanDsgTable = pgTable("human_dsg", {
@@ -559,7 +572,9 @@ export const auditLogsTable = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   tableName: text("table_name").notNull(),
   recordId: text("record_id").notNull(),
-  userId: integer("user_id").notNull().references(() => userTable.id,{onDelete: "cascade"}),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }),
   action: text("action").notNull(), // INSERT, UPDATE, DELETE
   oldValues: jsonb("old_values"),
   newValues: jsonb("new_values"),
@@ -600,10 +615,9 @@ export const nonecoLossesTable = pgTable(
   (table) => {
     return [
       unique("custom_nameIdx").on(table.disasterRecordId, table.categortyId),
-    ]; 
+    ];
   }
 );
-
 
 // examples:
 // id: 39,
@@ -611,40 +625,161 @@ export const nonecoLossesTable = pgTable(
 // sectorname": Agriculture,
 // subsector: Crops
 // description: The cultivation and harvesting of plants for food, fiber, and other products.
-export const sectorTable = pgTable("sector", {
-	id: serial("id").primaryKey(), // Unique sector ID
-	parentId: integer("parent_id").references((): AnyPgColumn => sectorTable.id), // Reference to parent sector
-	sectorname: text("sectorname").notNull(), // High-level category
-	subsector: text("subsector").notNull(), // Name of the subsector
-	description: text("description"), // Optional description
+export const sectorTable = pgTable(
+  "sector",
+  {
+    id: serial("id").primaryKey(), // Unique sector ID
+    parentId: integer("parent_id").references(
+      (): AnyPgColumn => sectorTable.id
+    ), // Optional reference to parent sector for hierarchy
+    sectorname: text("sectorname").notNull(), // High-level category
+    subsector: text("subsector").notNull(), // Name of the subsector (e.g., "Agriculture", "Health")
+    description: text("description"), // Optional description for the sector
   },
   (table) => [
-	// Constraint: subsector cannot be empty
-	check("subsector_not_empty", sql`${table.subsector} <> ''`),
-	
-	// Constraint: Valid sector names
-	check(
-	  "sectorname_valid",
-	  sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
-	),
-  ]);
+    // Ensure `subsector` is not empty
+    check("subsector_not_empty", sql`${table.subsector} <> ''`),
+    // (Optional) Add predefined sector names for validation
+    check(
+      "sectorname_valid",
+      sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
+    ),
+  ]
+);
 
- // Define relationships for `sectorTable`
+/** [SectorEventRelation] table links `sector` to `disaster_event` */
+export const sectorEventRelationTable = pgTable("sector_event_relation", {
+  id: serial("id").primaryKey(), // Unique ID for the relation
+  sectorId: integer("sector_id")
+    .notNull()
+    .references((): AnyPgColumn => sectorTable.id), // Links to sector
+  disasterEventId: uuid("disaster_event_id")
+    .notNull()
+    .references((): AnyPgColumn => disasterEventTable.id), // Links to disaster event
+});
+
+/** [SectorHazardRelation] table links `sector` to `hazard_event` */
+export const sectorHazardRelationTable = pgTable("sector_hazard_relation", {
+  id: serial("id").primaryKey(), // Unique ID for the relation
+  sectorId: integer("sector_id")
+    .notNull()
+    .references((): AnyPgColumn => sectorTable.id), // Links to sector
+  hazardEventId: uuid("hazard_event_id")
+    .notNull()
+    .references((): AnyPgColumn => hazardEventTable.id), // Links to hazard event
+});
+
+/** [SectorDisasterRecordsRelation] table links `sector` to `disaster_records` */
+export const sectorDisasterRecordsRelationTable = pgTable(
+  "sector_disaster_records_relation",
+  {
+    id: serial("id").primaryKey(), // Unique ID for the relation
+    sectorId: integer("sector_id")
+      .notNull()
+      .references((): AnyPgColumn => sectorTable.id), // Links to sector
+    disasterRecordId: uuid("disaster_record_id")
+      .notNull()
+      .references((): AnyPgColumn => disasterRecordsTable.id), // Links to disaster record
+  }
+);
+
+/** Relationships for `sectorTable` */
 export const sectorRel = relations(sectorTable, ({ one, many }) => ({
-	// Self-referencing relationship for hierarchical sectors
-	parentSector: one(sectorTable, {
-	  fields: [sectorTable.parentId],
-	  references: [sectorTable.id],
-	}),
-  
-	// Optional relationships to other entities if needed
-	hazardEvents: many(hazardEventTable, {
-	  relationName: "sector_hazard_events",
-	}),
-	disasterEvents: many(disasterEventTable, {
-	  relationName: "sector_disaster_events",
-	}),
-	humanDsgs: many(humanDsgTable, {
-	  relationName: "sector_human_dsgs",
-	}),
-  }));
+  // A self-referencing relationship for hierarchical sectors
+  parentSector: one(sectorTable, {
+    fields: [sectorTable.parentId],
+    references: [sectorTable.id],
+  }),
+
+  // Linking `sector` to `sector_event_relation`
+  relatedDisasterEvents: many(sectorEventRelationTable, {
+    relationName: "sector_event_relation",
+  }),
+
+  // Linking `sector` to `sector_hazard_relation`
+  relatedHazardEvents: many(sectorHazardRelationTable, {
+    relationName: "sector_hazard_relation",
+  }),
+
+  // Linking `sector` to `sector_disaster_records_relation`
+  relatedDisasterRecords: many(sectorDisasterRecordsRelationTable, {
+    relationName: "sector_disaster_records_relation",
+  }),
+
+  // Linking `sector` to `humanDsgTable` (if relevant)
+  relatedHumanDsgs: many(humanDsgTable, {
+    relationName: "sector_human_dsgs",
+  }),
+}));
+
+/** Relationships for `sectorEventRelationTable` */
+export const sectorEventRel = relations(
+  sectorEventRelationTable,
+  ({ one }) => ({
+    // Linking each `sector_event_relation` to a sector
+    sector: one(sectorTable, {
+      fields: [sectorEventRelationTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    // Linking each `sector_event_relation` to a disaster event
+    disasterEvent: one(disasterEventTable, {
+      fields: [sectorEventRelationTable.disasterEventId],
+      references: [disasterEventTable.id],
+    }),
+  })
+);
+
+/** Relationships for `sectorHazardRelationTable` */
+export const sectorHazardRel = relations(
+  sectorHazardRelationTable,
+  ({ one }) => ({
+    // Linking each `sector_hazard_relation` to a sector
+    sector: one(sectorTable, {
+      fields: [sectorHazardRelationTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    // Linking each `sector_hazard_relation` to a hazard event
+    hazardEvent: one(hazardEventTable, {
+      fields: [sectorHazardRelationTable.hazardEventId],
+      references: [hazardEventTable.id],
+    }),
+  })
+);
+
+/** Relationships for `sectorDisasterRecordsRelationTable` */
+export const sectorDisasterRecordsRel = relations(
+  sectorDisasterRecordsRelationTable,
+  ({ one }) => ({
+    // Linking each `sector_disaster_records_relation` to a sector
+    sector: one(sectorTable, {
+      fields: [sectorDisasterRecordsRelationTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    // Linking each `sector_disaster_records_relation` to a disaster record
+    disasterRecord: one(disasterRecordsTable, {
+      fields: [sectorDisasterRecordsRelationTable.disasterRecordId],
+      references: [disasterRecordsTable.id],
+    }),
+  })
+);
+
+// Types for TypeScript
+export type Sector = typeof sectorTable.$inferSelect;
+export type SectorInsert = typeof sectorTable.$inferInsert;
+
+export type SectorEventRelation = typeof sectorEventRelationTable.$inferSelect;
+export type SectorEventRelationInsert =
+  typeof sectorEventRelationTable.$inferInsert;
+
+export type SectorHazardRelation =
+  typeof sectorHazardRelationTable.$inferSelect;
+export type SectorHazardRelationInsert =
+  typeof sectorHazardRelationTable.$inferInsert;
+
+export type SectorDisasterRecordsRelation =
+  typeof sectorDisasterRecordsRelationTable.$inferSelect;
+export type SectorDisasterRecordsRelationInsert =
+  typeof sectorDisasterRecordsRelationTable.$inferInsert;
