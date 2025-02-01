@@ -13,6 +13,8 @@ import ImpactBySector from "~/frontend/analytics/sectors/sections/ImpactBySector
 import ImpactOnSectorsByLocation from "~/frontend/analytics/sectors/sections/ImpactOnSectorsByLocation";
 import DamagingEvents from "~/frontend/analytics/sectors/sections/DamagingEvents";
 
+import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector";
+
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
   // Currently, this returns the loaderArgs as is.
@@ -127,6 +129,13 @@ export default function SectorsAnalysis() {
         {filters && (
           <div style={{ marginTop: "2rem" }}>
             <p style={{ fontSize: "1.4rem", color: "#555" }}>Dashboard content will be displayed here based on the selected filters.</p>
+
+            {/* Dashboard Sections */}
+            {/* <DisasterSummary filters={filters} /> */}
+            <ImpactOnSector sectorId={filters.sectorId} filters={filters} />
+
+
+
 
             {/* Work In Progress Message */}
             <div

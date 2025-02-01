@@ -505,7 +505,7 @@ const Filters: React.FC<FiltersProps> = ({
             aria-label="Search for disaster events"
             type="text"
             className="filter-search"
-            placeholder="Search events..."
+            placeholder="All disaster events"
             value={filters.disasterEventId || ""} // Ensure consistent initial value
             onChange={(e) => handleFilterChange("disasterEventId", e.target.value)}
           />
