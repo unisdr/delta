@@ -1,6 +1,6 @@
 import {dr, Tx} from "~/db.server";
-import {nonecoLossesTable, nonecoLosses} from "~/drizzle/schema";
-import {eq,sql} from "drizzle-orm";
+import {nonecoLossesTable, nonecoLosses, categoriesTable} from "~/drizzle/schema";
+import {eq,sql,aliasedTable} from "drizzle-orm";
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, hasErrors} from "~/frontend/form";
@@ -76,6 +76,61 @@ export type PropRecord = {
 	description: string;
 	updatedAt?: Date;
 };
+
+export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {
+	let id = idStr;
+
+	// return await dr.query.disasterRecordsTable.findMany({
+	// 	...offsetLimit,
+	// 	columns: {
+	// 		id: true,
+	// 		disasterEventId: true,
+	// 		approvalStatus: true,
+	// 	},
+	// 	orderBy: [desc(disasterRecordsTable.updatedAt)],
+	// 	where: and(
+	// 		filters.approvalStatus ? eq(disasterRecordsTable.approvalStatus, filters.approvalStatus) : undefined,
+	// 	),
+	// })
+
+
+	// return await dr.query.nonecoLossesTable.findMany({
+	// 	columns: {
+	// 		id: true,
+	// 		categortyId: true,
+	// 		description: true,
+	// 	},
+	// 	where: eq(nonecoLossesTable.disasterRecordId, id),
+	// 	.leftJoin(cities, eq(cities.countryId, countries.id)),
+
+	// 	select: {
+	// 		nonecoLossesTable: true,
+	// 		otherTable: true
+	// 	}
+	// });
+
+	const catTable = aliasedTable(categoriesTable, "catTable");
+	const catTableParent1 = aliasedTable(categoriesTable, "catTableParent1");
+	const catTableParent2 = aliasedTable(categoriesTable, "catTableParent2");
+
+
+	return await dr.select({
+			noneccoId: nonecoLossesTable.id,
+			noneccoDesc: nonecoLossesTable.description,
+			noneccoCatId: nonecoLossesTable.categortyId,
+			catName: catTable.name,
+			catNameParent1: catTableParent1.name,
+			catNameParent2: catTableParent2.name,
+		}).from(nonecoLossesTable)
+		.leftJoin(catTable, eq(catTable.id, nonecoLossesTable.categortyId))
+		.leftJoin(catTableParent1, eq(catTableParent1.id, catTable.parentId))
+		.leftJoin(catTableParent2, eq(catTableParent2.id, catTableParent1.parentId))
+		.where(eq(nonecoLossesTable.disasterRecordId, id))
+	.execute();
+}
+
+
+		
 
 export async function upsertRecord(record: PropRecord): Promise<void> {
 	// Perform the upsert operation

@@ -1,3 +1,4 @@
+import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
 import {
 	disasterRecordsCreate,
 	disasterRecordsUpdate,
@@ -17,6 +18,7 @@ import {
 } from "~/frontend/disaster-record/form";
 
 import { DisasterRecordsViewModel } from "~/backend.server/models/disaster_record";
+import { nonecoLossesFilderBydisasterRecordsId, PropRecord as nonecoLossesProps } from "~/backend.server/models/noneco_losses";
 
 
 
@@ -31,8 +33,27 @@ import {
 import { getTableName } from "drizzle-orm";
 import { disasterRecordsTable } from "~/drizzle/schema";
 
-export const loader = createLoader({
-	getById: disasterRecordsById
+export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
+	// console.log("actionArgs", actionArgs.params);
+	// return {item: null};
+
+	const {params} = actionArgs;
+	if (!params.id) {
+		throw "Route does not have $id param";
+	}
+	if (params.id === "new") {
+		return {item: null};
+	}
+	const item = await disasterRecordsById(params.id);
+	if (!item) {
+		throw new Response("Not Found", {status: 404});
+	}
+
+	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
+	
+	console.log("recordsNonecoLosses", dbNonecoLosses);
+
+	return {item, recordsNonecoLosses: dbNonecoLosses};
 });
 
 export const action = createAction({
@@ -45,8 +66,8 @@ export const action = createAction({
 });
 
 export default function Screen() {
-	const ld = useLoaderData<{item: DisasterRecordsViewModel | null}>();
-	console.log(ld.item);
+	const ld = useLoaderData<{item: DisasterRecordsViewModel | null, recordsNonecoLosses: nonecoLossesProps}>();
+	console.log(ld);
 
 	return (
 		<>
@@ -104,6 +125,34 @@ export default function Screen() {
 									</div>
 									<div className="mg-grid mg-grid__col-1">
 										<div className="dts-form-component">
+											<table>
+												<thead>
+													<tr>
+														<th>ID</th>
+														<th>Description</th>
+														<th>Parent Category</th>
+														<th>Area</th>
+														<th>Actions</th>
+													</tr>
+												</thead>
+												<tbody>
+													{ld.recordsNonecoLosses && Array.isArray(ld.recordsNonecoLosses) && ld.recordsNonecoLosses.map((item, index) => (
+														<tr key={ index }>
+															<td>{ item.noneccoId.slice(0, 8) }</td>
+															<td>{ item.noneccoDesc.slice(0, 300) }</td>
+															<td>
+																{ item.catNameParent2 ? item.catNameParent2 + ': ' + item.catNameParent1 : item.catNameParent1 }
+															</td>
+															<td>{ item.catName }</td>
+															<td>
+																{ ld.item && ld.item.id && (
+																	<Link to={`${route}/non-economic-losses/${ld.item.id}/?id=${item.noneccoId}`}>Edit</Link>
+																)}
+															</td>
+														</tr>
+													))}
+												</tbody>
+											</table>
 										</div>
 									</div>
 								</div>
