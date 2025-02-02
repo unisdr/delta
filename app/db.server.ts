@@ -16,7 +16,6 @@ export function initDB() {
 	if (!process.env.DATABASE_URL){
 		throw "DATABASE_URL missing"
 	}
-
 	dr = drizzle(process.env.DATABASE_URL!, {
 		logger: false,
 		schema

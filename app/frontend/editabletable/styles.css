@@ -1,3 +1,4 @@
+
 table.dts-editable-table {
 	table-layout: fixed;
 	border-collapse: collapse;
@@ -12,6 +13,30 @@ table.dts-editable-table {
 	content: " \2193"; /* Unicode for downward arrow */
 }
 
+/*
+.dts-editable-table > tbody.group 
+{
+	border: 0px solid #ccc;
+}
+
+.dts-editable-table > tbody.group:nth-child(odd) {
+	background-color: #f9f9f9;
+}
+
+.dts-editable-table > tbody.group:nth-child(even) {
+	background-color: #e9e9e9;
+}
+*/
+.dts-editable-table > tbody > tr.spacing-row 
+{
+	border: 0;
+}
+.dts-editable-table > tbody > tr.spacing-row > td 
+{
+	padding: 8px 2px;
+	background: #fff;
+}
+
 
 .dts-editable-table > tbody > tr > td 
 {
@@ -19,18 +44,30 @@ table.dts-editable-table {
 	padding: 5px 2px;
 	height: auto;
 	border: 0;
+	vertical-align: baseline;
 }
 
 .dts-editable-table > tbody > tr {
 	border-bottom: 1px solid #F2F2F2;
 }
+.dts-editable-table > tbody > tr.dts-error,
+.dts-editable-table-legend > ul > .dts-error {
+	background: #FF6666;
+}
+.dts-editable-table > tbody > tr.dts-error > td > button {
+	color: #000;
+}
+
 .dts-editable-table > tbody > tr > td.dts-init {
 }
-.dts-editable-table > tbody > tr > td.dts-update {
+.dts-editable-table > tbody > tr > td.dts-update,
+.dts-editable-table > tbody > tr > td.dts-new,
+.dts-editable-table-legend > ul > .dts-new-or-update {
 	background: #DFF0D8;
 }
-.dts-editable-table > tbody > tr > td.dts-new {
-	background: #DFF0D8;
+.dts-editable-table > tbody > tr > td.dts-warning,
+.dts-editable-table-legend > ul >.dts-warning {
+	background: #FFFFE0;
 }
 
 .dts-editable-table > tbody > tr > td > input,
@@ -57,3 +94,24 @@ table.dts-editable-table {
 	width: 16px;
   height: 16px;
 }
+
+.dts-editable-table-legend {
+	margin: 10px 0;
+}
+
+.dts-editable-table-legend > span {
+	font-weight: bold;
+	margin-right: 20px
+}
+.dts-editable-table-legend > ul {
+	display: inline-block;
+	margin: 0;
+	padding: 0;
+}
+
+.dts-editable-table-legend > ul > li {
+	margin: 0;
+	display: inline-block;
+	padding: 4px;
+}
+

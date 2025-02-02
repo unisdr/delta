@@ -1,4 +1,5 @@
-export type DefType = "enum" | "number"
+export type DataFormat = "enum" | "number" | "date"
+export type DataRole = "dimension" | "metric"
 
 export interface DefBase {
 	uiName: string
@@ -6,19 +7,25 @@ export interface DefBase {
 	jsName: string
 	dbName: string
 	shared?: boolean
-	type: DefType
+	format: DataFormat
+	role: DataRole
+	custom?: boolean
 }
 
 export interface DefNumber extends DefBase {
-	type: "number"
+	format: "number"
+}
+
+export interface DefDate extends DefBase {
+	format: "date"
 }
 
 export interface DefEnum extends DefBase {
-	type: "enum"
+	format: "enum"
 	data: EnumEntry[]
 }
 
-export type Def = DefNumber | DefEnum
+export type Def = DefNumber | DefDate | DefEnum
 
 export interface EnumEntry {
 	key: string
