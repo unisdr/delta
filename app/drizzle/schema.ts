@@ -587,8 +587,10 @@ export const disasterRecordsTable = pgTable("disaster_records", {
   originatorRecorderInst: text("originator_recorder_inst")
     .notNull()
     .default(""),
-  sectorId: integer("sector_id") // New Column
+  sectorId: integer("sector_id") // Link to the sector involved
     .references((): AnyPgColumn => sectorTable.id),
+  sectorName: text("sector_name"), // Direct name of the sector involved
+  subSector: text("sub_sector"), // Sub-sector detail
   ...approvalFields,
   ...createdUpdatedTimestamps,
 });
@@ -607,8 +609,8 @@ export const disasterRecordsRel = relations(
       fields: [disasterRecordsTable.sectorId],
       references: [sectorTable.id],
     }),
-
-    //Relationship: Links to the sector-disaster records relation table
+    // Relationship: Enhances query efficiency by directly incorporating sector names
+    // without the need for joining tables during retrieval
     relatedSectors: many(sectorDisasterRecordsRelationTable, {
       relationName: "sector_disaster_records_relation",
     }),
@@ -679,18 +681,24 @@ export const sectorTable = pgTable(
     id: serial("id").primaryKey(), // Unique sector ID
     parentId: integer("parent_id").references(
       (): AnyPgColumn => sectorTable.id
-    ), // Optional reference to parent sector for hierarchy
-    sectorname: text("sectorname").notNull(), // High-level category
-    subsector: text("subsector").notNull(), // Name of the subsector (e.g., "Agriculture", "Health")
-    description: text("description"), // Optional description for the sector
+    ), // Links to a parent sector for hierarchical structuring
+    sectorname: text("sectorname").notNull(), // High-level category | // Descriptive name of the sector
+    subsector: text("subsector").notNull(), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
+    description: text("description"), // Optional description for the sector | Additional details about the sector
+    pdnaGrouping: text("pdna_grouping").notNull(), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
   },
   (table) => [
-    // Ensure `subsector` is not empty
+    // Constraint to ensure the sub-sector is not left empty
     check("subsector_not_empty", sql`${table.subsector} <> ''`),
-    // (Optional) Add predefined sector names for validation
+    // Validate that the sector name matches predefined valid names
     check(
       "sectorname_valid",
       sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
+    ),
+    // Ensure the PDNA grouping is one of the specified categories
+    check(
+      "pdna_grouping_valid",
+      sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
     ),
   ]
 );
