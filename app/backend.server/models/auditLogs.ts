@@ -16,8 +16,8 @@ export async function logAudit({
   recordId: string;
   userId: number;
   action: string;
-  oldValues?: Record<string, any>;
-  newValues?: Record<string, any>;
+  oldValues?: any;//Record<string, any>;
+  newValues?: any;//Record<string, any>;
 }): Promise<{ record: AuditLogInsert }> {
   const insertedRecord = await dr
     .insert(auditLogsTable)

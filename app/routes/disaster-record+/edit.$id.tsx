@@ -2,6 +2,7 @@ import {
 	disasterRecordsCreate,
 	disasterRecordsUpdate,
 	disasterRecordsById,
+	disasterRecordsByIdTx,
 } from "~/backend.server/models/disaster_record";
 
 import {
@@ -27,6 +28,8 @@ import {
 	createLoader,
 	createAction
 } from "~/backend.server/handlers/form";
+import { getTableName } from "drizzle-orm";
+import { disasterRecordsTable } from "~/drizzle/schema";
 
 export const loader = createLoader({
 	getById: disasterRecordsById
@@ -36,7 +39,9 @@ export const action = createAction({
 	fieldsDef,
 	create: disasterRecordsCreate,
 	update: disasterRecordsUpdate,
-	redirectTo: (id) => `${route}/${id}`
+	redirectTo: (id) => `${route}/${id}`,
+	getById: disasterRecordsByIdTx,
+	tableName: getTableName(disasterRecordsTable)
 });
 
 export default function Screen() {

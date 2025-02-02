@@ -1,14 +1,16 @@
+import { getTableName } from "drizzle-orm";
+import { createDeleteLoader } from "~/backend.server/handlers/form";
 import {
-	createDeleteLoader,
-} from "~/backend.server/handlers/form";
-import {disasterRecordsDeleteById} from '~/backend.server/models/disaster_record';
+  disasterRecordsById,
+  disasterRecordsDeleteById,
+} from "~/backend.server/models/disaster_record";
+import { disasterRecordsTable } from "~/drizzle/schema";
 
-import {
-	route
-} from "~/frontend/disaster-record/form";
+import { route } from "~/frontend/disaster-record/form";
 
 export const loader = createDeleteLoader({
-	baseRoute: route,
-	delete: disasterRecordsDeleteById
+  baseRoute: route,
+  delete: disasterRecordsDeleteById,
+  tableName: getTableName(disasterRecordsTable),
+  getById: disasterRecordsById,
 });
-

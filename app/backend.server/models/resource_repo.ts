@@ -85,10 +85,18 @@ export type ResourceRepoViewModel = Exclude<Awaited<ReturnType<typeof resourceRe
 >;
 
 export async function resourceRepoById(idStr: string) {
+	return resourceRepoByIdTx(dr, idStr);
+}
+
+export async function resourceRepoByIdTx(tx: Tx, idStr: string): Promise<ResourceRepoFields>{
 	let id = idStr;
-	return await dr.query.resourceRepoTable.findFirst({
+	let res= await tx.query.resourceRepoTable.findFirst({
 		where: eq(resourceRepoTable.id, id),
 	});
+	if(!res){
+		throw new Error("No resourceRepo found");
+	}
+	return res;
 }
 
 

@@ -68,10 +68,18 @@ export async function devExample1IdByImportId(tx: Tx, importId: string) {
 }
 
 export async function devExample1ById(idStr: string) {
+	return devExample1ByIdTx(dr, idStr);
+}
+
+export async function devExample1ByIdTx(tx: Tx, idStr: string): Promise<DevExample1Fields>{
 	let id = Number(idStr);
-	return await dr.query.devExample1Table.findFirst({
+	let res= await tx.query.devExample1Table.findFirst({
 		where: eq(devExample1Table.id, id),
 	});
+	if(!res){
+		throw new Error("Id is invalid");
+	}
+	return res;
 }
 
 

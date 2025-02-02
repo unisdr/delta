@@ -13,6 +13,7 @@ import { NavSettings } from "~/routes/settings/nav";
 
 import { MainContainer } from "~/frontend/container";
 import { useState } from "react";
+import { Pagination } from "~/frontend/pagination/view";
 
 export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
   const { id } = loaderArgs.params;
