@@ -13,6 +13,7 @@ export const Permissions = [
 	{id: "ViewData", role: "data-viewer", label: "View data"},
 	{id: "EditData", role: "data-collector", label: "Edit data"},
 	{id: "ViewApiDocs", role: "data-viewer", label: "View API Docs"},
+	{id: "EditHumanEffectsCustomDsg", role: "admin", label: "Edit custom disaggregations for human effects"},
 ] as const;
 
 export type PermissionId = typeof Permissions[number]["id"];

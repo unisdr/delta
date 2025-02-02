@@ -10,13 +10,18 @@ import {
 	index,
 	AnyPgColumn,
 	check,
-	uniqueIndex 
 } from "drizzle-orm/pg-core";
 
 import {
 	sql,
 	relations,
 } from "drizzle-orm";
+
+import {
+	HumanEffectsHidden,
+	HumanEffectsCustomConfig
+} from "~/frontend/human_effects/defs";
+import {bool} from "prop-types";
 
 function zeroTimestamp(name: string) {
 	return timestamp(name).notNull().default(sql`'2000-01-01T00:00:00.000Z'`)
@@ -334,6 +339,33 @@ export const humanDsgTable = pgTable("human_dsg", {
 export type HumanDsg = typeof humanDsgTable.$inferSelect;
 export type HumanDsgInsert = typeof humanDsgTable.$inferInsert;
 
+export const humanDsgConfigTable = pgTable("human_dsg_config", {
+	hidden: jsonb("hidden").$type<HumanEffectsHidden>(),
+	custom: jsonb("custom").$type<HumanEffectsCustomConfig>(),
+});
+export type HumanDsgConfig = typeof humanDsgConfigTable.$inferSelect;
+export type HumanDsgConfigInsert = typeof humanDsgConfigTable.$inferInsert;
+
+export const humanCategoryPresenceTable = pgTable("human_category_presence", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	recordId: text("record_id").notNull(),
+	deaths: boolean("deaths"),
+	injured: boolean("injured"),
+	missing: boolean("missing"),
+	affectedDirect: boolean("affected_direct"),
+	affectedIndirect: boolean("affected_indirect"),
+	displacedShort: boolean("displaced_short"),
+	displacedMediumShort: boolean("displaced_medium_short"),
+	displacedMediumLong: boolean("displaced_medium_long"),
+	displacedLong: boolean("displaced_long"),
+	displacedPermanent: boolean("displaced_permanent"),
+	displacedPreemptive: boolean("displaced_preemptive"),
+	displacedReactive: boolean("displaced_reactive"),
+})
+
+export type HumanCategoryPresence = typeof humanDsgConfigTable.$inferSelect;
+export type HumanCategoryPresenceInsert = typeof humanDsgConfigTable.$inferInsert;
+
 export const deathsTable = pgTable("deaths", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
@@ -355,6 +387,7 @@ export type InjuredInsert = typeof injuredTable.$inferInsert;
 export const missingTable = pgTable("missing", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
+	asOf: timestamp("as_of"),
 	missing: integer("missing"),
 });
 
@@ -365,7 +398,7 @@ export const affectedTable = pgTable("affected", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
 	direct: integer("direct"),
-	indirect: integer("indirect"), 
+	indirect: integer("indirect"),
 });
 export type Affected = typeof affectedTable.$inferSelect;
 export type AffectedInsert = typeof affectedTable.$inferInsert;
@@ -373,10 +406,10 @@ export type AffectedInsert = typeof affectedTable.$inferInsert;
 export const displacedTable = pgTable("displaced", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	shortTerm: integer("short_term"), // First 10 days
+	short: integer("short"), // First 10 days
 	mediumShort: integer("medium_short"), // Days 10-30
 	mediumLong: integer("medium_long"), // Days 30-90
-	longTerm: integer("long_term"), // More than 90 days
+	long: integer("long"), // More than 90 days
 	permanent: integer("permanent"), // Permanently relocated
 });
 export type Displaced = typeof displacedTable.$inferSelect;
@@ -390,8 +423,6 @@ export const displacementStocksTable = pgTable("displacement_stocks", {
 });
 export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
 export type DisplacementStocksInsert = typeof displacementStocksTable.$inferInsert;
-
-
 
 // Hazard Information Profiles (HIPs)
 // https://www.preventionweb.net/publication/hazard-information-profiles-hips

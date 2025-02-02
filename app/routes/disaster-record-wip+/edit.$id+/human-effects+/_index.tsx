@@ -1,0 +1,82 @@
+import {authLoaderWithPerm} from "~/util/auth";
+import {MainContainer} from "~/frontend/container";
+import {Table} from "~/frontend/editabletable/view";
+import {Link, useLoaderData} from "@remix-run/react";
+import {HumanEffectsTableFromString, HumanEffectTablesDefs} from "~/frontend/human_effects/defs";
+import {useFetcher} from "@remix-run/react"
+import {loadData} from "~/backend.server/handlers/human_effects"
+import {
+	categoryPresenceSet,
+	defsForTable
+} from '~/backend.server/models/human_effects'
+
+export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
+	const {params, request} = actionArgs
+	let recordId = params.id
+	let url = new URL(request.url)
+	let tblStr = url.searchParams.get("tbl") || ""
+	return loadData(recordId, tblStr)
+});
+
+export const action = authLoaderWithPerm("EditData", async (actionArgs) => {
+	let {params, request} = actionArgs
+	let recordId = params.id
+	if (!recordId) {
+		throw new Error("no record id")
+	}
+	let formData = await request.formData()
+	let tblIdStr = String(formData.get("tblId"))
+	let tblId = HumanEffectsTableFromString(tblIdStr)
+
+	let data: Record<string, boolean> = {}
+	for (let [k, v] of formData.entries()) {
+		if (k == "tblId") {
+			continue
+		}
+		if (v == "1") {
+			data[k] = true
+		} else if (v == "0") {
+			data[k] = false
+		}
+	}
+	let defs = await defsForTable(tblId)
+	await categoryPresenceSet(recordId, tblId, defs, data)
+	return null
+})
+
+export default function Screen() {
+	const ld = useLoaderData<typeof loader>()
+	const fetcher = useFetcher<typeof loader>()
+	const data = fetcher.data || ld
+
+	return (
+		<MainContainer title="Human Direct Effects">
+			<p>{data.tbl.label}</p>
+			<fetcher.Form method="get" action=".">
+				<select
+					name="tbl"
+					value={data.tblId}
+					onChange={e => fetcher.submit(e.target.form)}
+				>
+					{HumanEffectTablesDefs.map(def => (
+						<option key={def.id} value={def.id}>
+							{def.label}
+						</option>
+					))}
+				</select>
+			</fetcher.Form>
+			<Table
+				recordId={data.recordId}
+				table={data.tblId}
+				initialIds={data.ids}
+				initialData={data.data}
+				defs={data.defs}
+				categoryPresence={data.categoryPresence}
+			/>
+			<Link to="/settings/human-effects-dsg">Configure Disaggregations</Link>
+		</MainContainer>
+	);
+}
+
+
+
