@@ -690,11 +690,11 @@ export const sectorTable = pgTable(
   (table) => [
     // Constraint to ensure the sub-sector is not left empty
     check("subsector_not_empty", sql`${table.subsector} <> ''`),
-    // Validate that the sector name matches predefined valid names
-    check(
-      "sectorname_valid",
-      sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
-    ),
+    // // Validate that the sector name matches predefined valid names
+    // check(
+    //   "sectorname_valid",
+    //   sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
+    // ),
     // Ensure the PDNA grouping is one of the specified categories
     check(
       "pdna_grouping_valid",
