@@ -3,11 +3,12 @@ import React, { useState } from "react";
 interface Props {
   name: string;
   placeholder: string;
-  defaultValue: string;
+  defaultValue?: string;
   errors?: Record<string, any>;
+  style?: Record<string, any>;
 }
 
-const PasswordInput = ({ name, placeholder, defaultValue, errors }: Props) => {
+const PasswordInput = ({ name, placeholder, defaultValue, errors,style }: Props) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -30,9 +31,8 @@ const PasswordInput = ({ name, placeholder, defaultValue, errors }: Props) => {
           placeholder={placeholder}
           defaultValue={defaultValue}
           className='{errors?.fields?.password?"input-error":""}'
-          style={{
+          style={{...style,
             paddingRight: "1rem",
-            width: "50%",
             height: "40px",
             border: errors?.fields?.currentPassword ? "1px solid red" : "",
           }}
