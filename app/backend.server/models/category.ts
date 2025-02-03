@@ -1,7 +1,7 @@
-import { SQL, asc, eq, sql, ne, isNull } from 'drizzle-orm';
+import { asc, eq, sql, isNull } from 'drizzle-orm';
 
 import {
-	categoriesTable, categoriesType
+	categoriesTable
 } from '~/drizzle/schema';
 
 import {dr} from '~/db.server';

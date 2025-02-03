@@ -4,7 +4,6 @@ import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {deleteByIdForStringId} from "./common";
 import {randomBytes} from 'crypto';
-import {devExample1ByIdTx} from "./dev_example1";
 
 export interface ApiKeyFields extends Omit<ApiKey, "id"> {}
 

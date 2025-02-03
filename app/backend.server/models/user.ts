@@ -17,8 +17,6 @@ import * as OTPAuth from "otpauth";
 import { configSiteName, configSiteURL } from "~/util/config";
 import { checkPasswordComplexity, PasswordErrorType } from "./user/password";
 import { logAudit } from "./auditLogs";
-import { sessionCookie } from "~/util/session";
-import { number } from "prop-types";
 
 // rounds=10: ~10 hashes/sec
 // this measurements is from another implementation
