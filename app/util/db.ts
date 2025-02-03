@@ -67,6 +67,48 @@ export async function updateRow(
 	}
 }
 
+export async function updateRowMergeJson(
+	tx: Tx,
+	tbl: any,
+	cols: string[],
+	vals: any[],
+	id: any,
+	jsonbIndexes: Set<number>
+): Promise<void> {
+	if (!id) {
+		throw new Error("Update requires a valid id")
+	}
+
+	const assignments = cols
+		.map((col, i) => {
+			if (vals[i] !== undefined) {
+				return sql`${sql.raw(col)} = 
+					${jsonbIndexes.has(i) ? sql`${sql.raw(col)} || ${vals[i]}::jsonb` : vals[i]}`
+			}
+			return undefined
+		})
+		.filter(a => a !== undefined) as SQLChunk[]
+
+	if (!assignments.length) {
+		return
+	}
+
+	const query = sql`
+		UPDATE ${tbl}
+		SET ${sql.join(assignments, sql`, `)}
+		WHERE id = ${id}
+		RETURNING id
+	`
+
+	const res = await tx.execute(query)
+	if (res.rows.length === 0) {
+		throw new Error(`No record found with id: ${id}`)
+	}
+}
+
+
+
+
 
 export async function deleteRow(tx: Tx, tbl: any, id: any): Promise<void> {
 	if (!id) {
