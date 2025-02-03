@@ -5,19 +5,19 @@ import {
   serial,
   check,
   unique,
-	integer,
-	boolean,
-	uuid,
-	jsonb,
-	index,
-	AnyPgColumn
+  integer,
+  boolean,
+  uuid,
+  jsonb,
+  index,
+  AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 import { sql, relations } from "drizzle-orm";
 
 import {
-	HumanEffectsHidden,
-	HumanEffectsCustomConfig
+  HumanEffectsHidden,
+  HumanEffectsCustomConfig,
 } from "~/frontend/human_effects/defs";
 
 function zeroTimestamp(name: string) {
@@ -245,6 +245,10 @@ export const hazardEventTable = pgTable("hazard_event", {
   hazardId: text("hazard_id")
     .references((): AnyPgColumn => hipHazardTable.id)
     .notNull(),
+
+  sectorId: integer("sector_id") // New column
+    .references((): AnyPgColumn => sectorTable.id)
+    .notNull(),
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   // data fields below not used in queries directly
@@ -264,12 +268,13 @@ export const hazardEventTable = pgTable("hazard_event", {
 export const hazardEventTableConstraits = {
   apiImportId: "hazard_event_apiImportId_unique",
   hazardId: "hazard_event_hazard_id_hip_hazard_id_fk",
+  sectorId: "hazard_event_sector_id_fk", // New constraint
 };
 
 export type HazardEvent = typeof hazardEventTable.$inferSelect;
 export type HazardEventInsert = typeof hazardEventTable.$inferInsert;
 
-export const hazardEventRel = relations(hazardEventTable, ({ one }) => ({
+export const hazardEventRel = relations(hazardEventTable, ({ one, many }) => ({
   event: one(eventTable, {
     fields: [hazardEventTable.id],
     references: [eventTable.id],
@@ -277,6 +282,15 @@ export const hazardEventRel = relations(hazardEventTable, ({ one }) => ({
   hazard: one(hipHazardTable, {
     fields: [hazardEventTable.hazardId],
     references: [hipHazardTable.id],
+  }),
+  // Directly linking hazard_event to sector
+  sector: one(sectorTable, {
+    fields: [hazardEventTable.sectorId],
+    references: [sectorTable.id],
+  }),
+  // Linking hazard_event to sector through the intermediate table
+  relatedSectors: many(sectorHazardRelationTable, {
+    relationName: "sector_hazard_relation",
   }),
 }));
 
@@ -289,6 +303,9 @@ export const disasterEventTable = pgTable("disaster_event", {
     .references((): AnyPgColumn => eventTable.id),
   hazardEventId: uuid("hazard_event_id")
     .references((): AnyPgColumn => hazardEventTable.id)
+    .notNull(),
+  sectorId: integer("sector_id") // New column
+    .references((): AnyPgColumn => sectorTable.id)
     .notNull(),
   // data fields below not used in queries directly
   // only on form screens
@@ -335,18 +352,33 @@ export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
 
 export const disasterEventTableConstraits = {
   hazardEventId: "disaster_event_hazard_event_id_hazard_event_id_fk",
+  sectorId: "disaster_event_sector_id_fk", // New constraint
 };
 
-export const disasterEventRel = relations(disasterEventTable, ({ one }) => ({
-  event: one(eventTable, {
-    fields: [disasterEventTable.id],
-    references: [eventTable.id],
-  }),
-  hazardEvent: one(hazardEventTable, {
-    fields: [disasterEventTable.hazardEventId],
-    references: [hazardEventTable.id],
-  }),
-}));
+export const disasterEventRel = relations(
+  disasterEventTable,
+  ({ one, many }) => ({
+    event: one(eventTable, {
+      fields: [disasterEventTable.id],
+      references: [eventTable.id],
+    }),
+    hazardEvent: one(hazardEventTable, {
+      fields: [disasterEventTable.hazardEventId],
+      references: [hazardEventTable.id],
+    }),
+
+    // Directly linking disaster_event to sector
+    sector: one(sectorTable, {
+      fields: [disasterEventTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    // Linking disaster_event to sector through the intermediate table
+    relatedSectors: many(sectorEventRelationTable, {
+      relationName: "sector_event_relation",
+    }),
+  })
+);
 
 // Common disaggregation data (dsg) for human effects on disaster records
 export const humanDsgTable = pgTable("human_dsg", {
@@ -367,31 +399,32 @@ export type HumanDsg = typeof humanDsgTable.$inferSelect;
 export type HumanDsgInsert = typeof humanDsgTable.$inferInsert;
 
 export const humanDsgConfigTable = pgTable("human_dsg_config", {
-	hidden: jsonb("hidden").$type<HumanEffectsHidden>(),
-	custom: jsonb("custom").$type<HumanEffectsCustomConfig>(),
+  hidden: jsonb("hidden").$type<HumanEffectsHidden>(),
+  custom: jsonb("custom").$type<HumanEffectsCustomConfig>(),
 });
 export type HumanDsgConfig = typeof humanDsgConfigTable.$inferSelect;
 export type HumanDsgConfigInsert = typeof humanDsgConfigTable.$inferInsert;
 
 export const humanCategoryPresenceTable = pgTable("human_category_presence", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	recordId: text("record_id").notNull(),
-	deaths: boolean("deaths"),
-	injured: boolean("injured"),
-	missing: boolean("missing"),
-	affectedDirect: boolean("affected_direct"),
-	affectedIndirect: boolean("affected_indirect"),
-	displacedShort: boolean("displaced_short"),
-	displacedMediumShort: boolean("displaced_medium_short"),
-	displacedMediumLong: boolean("displaced_medium_long"),
-	displacedLong: boolean("displaced_long"),
-	displacedPermanent: boolean("displaced_permanent"),
-	displacedPreemptive: boolean("displaced_preemptive"),
-	displacedReactive: boolean("displaced_reactive"),
-})
+  id: uuid("id").primaryKey().defaultRandom(),
+  recordId: text("record_id").notNull(),
+  deaths: boolean("deaths"),
+  injured: boolean("injured"),
+  missing: boolean("missing"),
+  affectedDirect: boolean("affected_direct"),
+  affectedIndirect: boolean("affected_indirect"),
+  displacedShort: boolean("displaced_short"),
+  displacedMediumShort: boolean("displaced_medium_short"),
+  displacedMediumLong: boolean("displaced_medium_long"),
+  displacedLong: boolean("displaced_long"),
+  displacedPermanent: boolean("displaced_permanent"),
+  displacedPreemptive: boolean("displaced_preemptive"),
+  displacedReactive: boolean("displaced_reactive"),
+});
 
 export type HumanCategoryPresence = typeof humanDsgConfigTable.$inferSelect;
-export type HumanCategoryPresenceInsert = typeof humanDsgConfigTable.$inferInsert;
+export type HumanCategoryPresenceInsert =
+  typeof humanDsgConfigTable.$inferInsert;
 
 export const deathsTable = pgTable("deaths", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -416,32 +449,38 @@ export type Injured = typeof injuredTable.$inferSelect;
 export type InjuredInsert = typeof injuredTable.$inferInsert;
 
 export const missingTable = pgTable("missing", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	asOf: timestamp("as_of"),
-	missing: integer("missing"),
+  id: uuid("id").primaryKey().defaultRandom(),
+  dsgId: uuid("dsg_id")
+    .references((): AnyPgColumn => humanDsgTable.id)
+    .notNull(),
+  asOf: timestamp("as_of"),
+  missing: integer("missing"),
 });
 
 export type Missing = typeof missingTable.$inferSelect;
 export type MissingInsert = typeof missingTable.$inferInsert;
 
 export const affectedTable = pgTable("affected", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	direct: integer("direct"),
-	indirect: integer("indirect"),
+  id: uuid("id").primaryKey().defaultRandom(),
+  dsgId: uuid("dsg_id")
+    .references((): AnyPgColumn => humanDsgTable.id)
+    .notNull(),
+  direct: integer("direct"),
+  indirect: integer("indirect"),
 });
 export type Affected = typeof affectedTable.$inferSelect;
 export type AffectedInsert = typeof affectedTable.$inferInsert;
 
 export const displacedTable = pgTable("displaced", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	dsgId: uuid("dsg_id").references((): AnyPgColumn => humanDsgTable.id).notNull(),
-	short: integer("short"), // First 10 days
-	mediumShort: integer("medium_short"), // Days 10-30
-	mediumLong: integer("medium_long"), // Days 30-90
-	long: integer("long"), // More than 90 days
-	permanent: integer("permanent"), // Permanently relocated
+  id: uuid("id").primaryKey().defaultRandom(),
+  dsgId: uuid("dsg_id")
+    .references((): AnyPgColumn => humanDsgTable.id)
+    .notNull(),
+  short: integer("short"), // First 10 days
+  mediumShort: integer("medium_short"), // Days 10-30
+  mediumLong: integer("medium_long"), // Days 30-90
+  long: integer("long"), // More than 90 days
+  permanent: integer("permanent"), // Permanently relocated
 });
 export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
@@ -455,7 +494,8 @@ export const displacementStocksTable = pgTable("displacement_stocks", {
   reactive: integer("reactive"), // Assisted reactive displacement
 });
 export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
-export type DisplacementStocksInsert = typeof displacementStocksTable.$inferInsert;
+export type DisplacementStocksInsert =
+  typeof displacementStocksTable.$inferInsert;
 
 // Hazard Information Profiles (HIPs)
 // https://www.preventionweb.net/publication/hazard-information-profiles-hips
@@ -574,16 +614,44 @@ export const disasterRecordsTable = pgTable("disaster_records", {
   originatorRecorderInst: text("originator_recorder_inst")
     .notNull()
     .default(""),
+  sectorId: integer("sector_id") // Link to the sector involved
+    .references((): AnyPgColumn => sectorTable.id),
+  sectorName: text("sector_name"), // Direct name of the sector involved
+  subSector: text("sub_sector"), // Sub-sector detail
   ...approvalFields,
   ...createdUpdatedTimestamps,
 });
+
+export const disasterRecordsRel = relations(
+  disasterRecordsTable,
+  ({ one, many }) => ({
+    //Relationship: Links each disaster record to a disaster event
+    disasterEvent: one(disasterEventTable, {
+      fields: [disasterRecordsTable.disasterEventId],
+      references: [disasterEventTable.id],
+    }),
+
+    //Relationship: Links disaster record to a sector (optional)
+    sector: one(sectorTable, {
+      fields: [disasterRecordsTable.sectorId],
+      references: [sectorTable.id],
+    }),
+    // Relationship: Enhances query efficiency by directly incorporating sector names
+    // without the need for joining tables during retrieval
+    relatedSectors: many(sectorDisasterRecordsRelationTable, {
+      relationName: "sector_disaster_records_relation",
+    }),
+  })
+);
 
 // Table to log all audit actions across the system
 export const auditLogsTable = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   tableName: text("table_name").notNull(),
   recordId: text("record_id").notNull(),
-  userId: integer("user_id").notNull().references(() => userTable.id,{onDelete: "cascade"}),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }),
   action: text("action").notNull(), // INSERT, UPDATE, DELETE
   oldValues: jsonb("old_values"),
   newValues: jsonb("new_values"),
@@ -624,7 +692,7 @@ export const nonecoLossesTable = pgTable(
   (table) => {
     return [
       unique("custom_nameIdx").on(table.disasterRecordId, table.categortyId),
-    ]; 
+    ];
   }
 );
 
@@ -634,40 +702,162 @@ export const nonecoLossesTable = pgTable(
 // sectorname": Agriculture,
 // subsector: Crops
 // description: The cultivation and harvesting of plants for food, fiber, and other products.
-export const sectorTable = pgTable("sector", {
-	id: serial("id").primaryKey(), // Unique sector ID
-	parentId: integer("parent_id").references((): AnyPgColumn => sectorTable.id), // Reference to parent sector
-	sectorname: text("sectorname").notNull(), // High-level category
-	subsector: text("subsector").notNull(), // Name of the subsector
-	description: text("description"), // Optional description
+export const sectorTable = pgTable(
+  "sector",
+  {
+    id: serial("id").primaryKey(), // Unique sector ID
+    parentId: integer("parent_id").references(
+      (): AnyPgColumn => sectorTable.id
+    ), // Reference to parent sector
+    sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
+    subsector: text("subsector").notNull(), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
+    description: text("description"), // Optional description for the sector | Additional details about the sector
+    pdnaGrouping: text("pdna_grouping").notNull(), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
   },
   (table) => [
-	// Constraint: subsector cannot be empty
-	check("subsector_not_empty", sql`${table.subsector} <> ''`),
-	
-	// Constraint: Valid sector names
-	check(
-	  "sectorname_valid",
-	  sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
-	),
-  ]);
+    // Constraint: subsector cannot be empty
+    check("subsector_not_empty", sql`${table.subsector} <> ''`),
+    // Ensure the PDNA grouping is one of the specified categories
+    check(
+      "pdna_grouping_valid",
+      sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
+    ),
+  ]
+);
 
- // Define relationships for `sectorTable`
+/** [SectorEventRelation] table links `sector` to `disaster_event` */
+export const sectorEventRelationTable = pgTable("sector_event_relation", {
+  id: serial("id").primaryKey(), // Unique ID for the relation
+  sectorId: integer("sector_id")
+    .notNull()
+    .references((): AnyPgColumn => sectorTable.id), // Links to sector
+  disasterEventId: uuid("disaster_event_id")
+    .notNull()
+    .references((): AnyPgColumn => disasterEventTable.id), // Links to disaster event
+});
+
+/** [SectorHazardRelation] table links `sector` to `hazard_event` */
+export const sectorHazardRelationTable = pgTable("sector_hazard_relation", {
+  id: serial("id").primaryKey(), // Unique ID for the relation
+  sectorId: integer("sector_id")
+    .notNull()
+    .references((): AnyPgColumn => sectorTable.id), // Links to sector
+  hazardEventId: uuid("hazard_event_id")
+    .notNull()
+    .references((): AnyPgColumn => hazardEventTable.id), // Links to hazard event
+});
+
+/** [SectorDisasterRecordsRelation] table links `sector` to `disaster_records` */
+export const sectorDisasterRecordsRelationTable = pgTable(
+  "sector_disaster_records_relation",
+  {
+    id: serial("id").primaryKey(), // Unique ID for the relation
+    sectorId: integer("sector_id")
+      .notNull()
+      .references((): AnyPgColumn => sectorTable.id), // Links to sector
+    disasterRecordId: uuid("disaster_record_id")
+      .notNull()
+      .references((): AnyPgColumn => disasterRecordsTable.id), // Links to disaster record
+  }
+);
+
+/** Relationships for `sectorTable` */
 export const sectorRel = relations(sectorTable, ({ one, many }) => ({
-	// Self-referencing relationship for hierarchical sectors
-	parentSector: one(sectorTable, {
-	  fields: [sectorTable.parentId],
-	  references: [sectorTable.id],
-	}),
-  
-	// Optional relationships to other entities if needed
-	hazardEvents: many(hazardEventTable, {
-	  relationName: "sector_hazard_events",
-	}),
-	disasterEvents: many(disasterEventTable, {
-	  relationName: "sector_disaster_events",
-	}),
-	humanDsgs: many(humanDsgTable, {
-	  relationName: "sector_human_dsgs",
-	}),
-  }));
+  // A self-referencing relationship for hierarchical sectors
+  parentSector: one(sectorTable, {
+    fields: [sectorTable.parentId],
+    references: [sectorTable.id],
+  }),
+
+  // Linking `sector` to `sector_event_relation`
+  relatedDisasterEvents: many(sectorEventRelationTable, {
+    relationName: "sector_event_relation",
+  }),
+
+  // Linking `sector` to `sector_hazard_relation`
+  relatedHazardEvents: many(sectorHazardRelationTable, {
+    relationName: "sector_hazard_relation",
+  }),
+
+  // Linking `sector` to `sector_disaster_records_relation`
+  relatedDisasterRecords: many(sectorDisasterRecordsRelationTable, {
+    relationName: "sector_disaster_records_relation",
+  }),
+
+  // Linking `sector` to `humanDsgTable` (if relevant)
+  relatedHumanDsgs: many(humanDsgTable, {
+    relationName: "sector_human_dsgs",
+  }),
+}));
+
+/** Relationships for `sectorEventRelationTable` */
+export const sectorEventRel = relations(
+  sectorEventRelationTable,
+  ({ one }) => ({
+    // Linking each `sector_event_relation` to a sector
+    sector: one(sectorTable, {
+      fields: [sectorEventRelationTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    // Linking each `sector_event_relation` to a disaster event
+    disasterEvent: one(disasterEventTable, {
+      fields: [sectorEventRelationTable.disasterEventId],
+      references: [disasterEventTable.id],
+    }),
+  })
+);
+
+/** Relationships for `sectorHazardRelationTable` */
+export const sectorHazardRel = relations(
+  sectorHazardRelationTable,
+  ({ one }) => ({
+    // Linking each `sector_hazard_relation` to a sector
+    sector: one(sectorTable, {
+      fields: [sectorHazardRelationTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    // Linking each `sector_hazard_relation` to a hazard event
+    hazardEvent: one(hazardEventTable, {
+      fields: [sectorHazardRelationTable.hazardEventId],
+      references: [hazardEventTable.id],
+    }),
+  })
+);
+
+/** Relationships for `sectorDisasterRecordsRelationTable` */
+export const sectorDisasterRecordsRel = relations(
+  sectorDisasterRecordsRelationTable,
+  ({ one }) => ({
+    // Linking each `sector_disaster_records_relation` to a sector
+    sector: one(sectorTable, {
+      fields: [sectorDisasterRecordsRelationTable.sectorId],
+      references: [sectorTable.id],
+    }),
+
+    // Linking each `sector_disaster_records_relation` to a disaster record
+    disasterRecord: one(disasterRecordsTable, {
+      fields: [sectorDisasterRecordsRelationTable.disasterRecordId],
+      references: [disasterRecordsTable.id],
+    }),
+  })
+);
+
+// Types for TypeScript
+export type Sector = typeof sectorTable.$inferSelect;
+export type SectorInsert = typeof sectorTable.$inferInsert;
+
+export type SectorEventRelation = typeof sectorEventRelationTable.$inferSelect;
+export type SectorEventRelationInsert =
+  typeof sectorEventRelationTable.$inferInsert;
+
+export type SectorHazardRelation =
+  typeof sectorHazardRelationTable.$inferSelect;
+export type SectorHazardRelationInsert =
+  typeof sectorHazardRelationTable.$inferInsert;
+
+export type SectorDisasterRecordsRelation =
+  typeof sectorDisasterRecordsRelationTable.$inferSelect;
+export type SectorDisasterRecordsRelationInsert =
+  typeof sectorDisasterRecordsRelationTable.$inferInsert;
