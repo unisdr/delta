@@ -88,7 +88,7 @@ export async function resourceRepoById(idStr: string) {
 	return resourceRepoByIdTx(dr, idStr);
 }
 
-export async function resourceRepoByIdTx(tx: Tx, idStr: string): Promise<ResourceRepoFields>{
+export async function resourceRepoByIdTx(tx: Tx, idStr: string) {
 	let id = idStr;
 	let res= await tx.query.resourceRepoTable.findFirst({
 		where: eq(resourceRepoTable.id, id),

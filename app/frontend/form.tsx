@@ -165,7 +165,6 @@ interface SubmitButtonProps {
 export function SubmitButton({ 
 	label, className = "mg-button mg-button-primary",
 	style = {}, // Default to an empty style object
-	disabled = false,
 }: SubmitButtonProps) {
 	return (
 			<button className={className} 

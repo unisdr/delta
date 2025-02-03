@@ -4,6 +4,7 @@ import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {deleteByIdForStringId} from "./common";
 import {randomBytes} from 'crypto';
+import {devExample1ByIdTx} from "./dev_example1";
 
 export interface ApiKeyFields extends Omit<ApiKey, "id"> {}
 
@@ -56,14 +57,19 @@ export type ApiKeyViewModel = Exclude<Awaited<ReturnType<typeof apiKeyById>>,
 >;
 
 export async function apiKeyById(idStr: string) {
+	return apiKeyByIdTx(dr, idStr)
+}
+
+export async function apiKeyByIdTx(tx: Tx, idStr: string) {
 	const id = Number(idStr);
-	return await dr.query.apiKeyTable.findFirst({
+	return await tx.query.apiKeyTable.findFirst({
 		where: eq(apiKeyTable.id, id),
 		with: {
 			managedByUser: true
 		}
 	});
 }
+
 
 export async function apiKeyDelete(idStr: string): Promise<DeleteResult> {
 	await deleteByIdForStringId(idStr, apiKeyTable);
