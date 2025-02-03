@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { it } from 'node:test';
 
 import assert from 'node:assert';
 import {dr} from '~/db.server';
