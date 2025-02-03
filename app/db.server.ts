@@ -48,7 +48,7 @@ export function endDB() {
   pool.end();
 }
 
-// Ensure initDB is called before any database operation
+// Calls the initialization at the start of the module to ensure database connectivity
 initDB();
 
 // Automatically links a sector to a disaster event when a new disaster event is inserted.
@@ -59,26 +59,33 @@ async function insertDisasterEventWithRelations(values: {
   [key: string]: any;
 }) {
   try {
+    const { sectorId, ...restValues } = values;
+
+    // Ensure sectorId is defined or handle it accordingly
+    if (sectorId === undefined) {
+      throw new Error("sectorId is required");
+    }
+
     // Insert the disaster event and get the returned ID
     const result = await dr
       .insert(disasterEventTable)
-      .values(values)
+      .values({ ...restValues, sectorId })
       .returning({ id: disasterEventTable.id });
     const disasterEventId = result[0].id;
 
-    if (values.sectorId && disasterEventId) {
+    if (disasterEventId) {
       // Insert the relation in sectorEventRelationTable
       await dr.insert(sectorEventRelationTable).values({
-        sectorId: values.sectorId,
+        sectorId,
         disasterEventId,
       });
       console.log(
-        `Auto-linked Sector ${values.sectorId} to Disaster Event ${disasterEventId}`
+        `Auto-linked Sector ${sectorId} to Disaster Event ${disasterEventId}`
       );
     }
   } catch (error) {
     console.error(
-      "Error inserting disaster event and auto-linking sector:",
+      `Error inserting disaster event with id ${values.id} and auto-linking sectorId ${values.sectorId}:`,
       error
     );
   }
@@ -92,26 +99,33 @@ async function insertHazardEventWithRelations(values: {
   [key: string]: any;
 }) {
   try {
+    const { sectorId, ...restValues } = values;
+
+    // Ensure sectorId is defined or handle it accordingly
+    if (sectorId === undefined) {
+      throw new Error("sectorId is required");
+    }
+
     // Insert the hazard event and get the returned ID
     const result = await dr
       .insert(hazardEventTable)
-      .values(values)
+      .values({ ...restValues, sectorId })
       .returning({ id: hazardEventTable.id });
     const hazardEventId = result[0].id;
 
-    if (values.sectorId && hazardEventId) {
+    if (hazardEventId) {
       // Insert the relation in sectorHazardRelationTable
       await dr.insert(sectorHazardRelationTable).values({
-        sectorId: values.sectorId,
+        sectorId,
         hazardEventId,
       });
       console.log(
-        `Auto-linked Sector ${values.sectorId} to Hazard Event ${hazardEventId}`
+        `Auto-linked Sector ${sectorId} to Hazard Event ${hazardEventId}`
       );
     }
   } catch (error) {
     console.error(
-      "Error inserting hazard event and auto-linking sector:",
+      `Error inserting hazard event with id ${values.id} and auto-linking sectorId ${values.sectorId}:`,
       error
     );
   }
