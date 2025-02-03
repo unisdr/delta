@@ -274,6 +274,11 @@ export const renderMapperDialog = (
                   }}                  
                   >Undo</button>
                   <button type="button" id={`${id}_mapper_getCoords`} 
+                    className="mg-button mg-button--small mg-button-system" 
+                    style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
+
+                  >Convert to GeoJSON</button>
+                  <button type="button" id={`${id}_mapper_getCoords`} 
                   className="mg-button mg-button--small mg-button-primary" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
                   onClick={(e) => {
                     const field = dialogMapRef.current?.mapperField;
@@ -298,11 +303,13 @@ export const renderMapperDialog = (
                         .getLatLngs()[0] // Leaflet polygons are arrays of arrays
                         .map((latLng: any) => [latLng.lat, normalizeLongitude(latLng.lng)]);
                   
-                      if (debug)
+                      if (debug) {
                         console.log(
                           "Polygon Coordinates (Normalized):",
                           JSON.stringify(polygonCoordinates)
                         );
+                        console.log("Polygon GeoJSON:", JSON.stringify(state.current.polygon.toGeoJSON(), null, 2));
+                      }
                   
                       updatedValue = JSON.stringify({
                         mode: "polygon",
@@ -314,11 +321,13 @@ export const renderMapperDialog = (
                         .getLatLngs()
                         .map((latLng: any) => [latLng.lat, normalizeLongitude(latLng.lng)]);
                   
-                      if (debug)
+                      if (debug) {
                         console.log(
                           "Line Coordinates (Normalized):",
                           JSON.stringify(lineCoordinates)
                         );
+                        console.log("Polyline GeoJSON:", JSON.stringify(state.current.polyline.toGeoJSON(), null, 2));
+                      }
                   
                       updatedValue = JSON.stringify({
                         mode: "lines",
@@ -334,8 +343,37 @@ export const renderMapperDialog = (
                         center: [center.lat, normalizeLongitude(center.lng)],
                         radius: radius,
                       };
+
+                      function generateCirclePolygon(center, radius, points = 64) {
+                          const coordinates = [];
+                          for (let i = 0; i < points; i++) {
+                              const angle = (i / points) * (2 * Math.PI);
+                              const dx = radius * Math.cos(angle);
+                              const dy = radius * Math.sin(angle);
+
+                              // Convert meters to degrees (approximate conversion)
+                              const deltaLat = dy / 111320;
+                              const deltaLon = dx / (111320 * Math.cos(center.lat * (Math.PI / 180)));
+
+                              coordinates.push([center.lng + deltaLon, center.lat + deltaLat]);
+                          }
+                          coordinates.push(coordinates[0]); // Close the polygon
+
+                          return {
+                              type: "Feature",
+                              geometry: {
+                                  type: "Polygon",
+                                  coordinates: [coordinates]
+                              },
+                              properties: {}
+                          };
+                      }
                   
-                      if (debug) console.log("Circle Data:", JSON.stringify(circleData));
+                      if (debug) { 
+                        console.log("Circle Data:", JSON.stringify(circleData));
+                        const circleGeoJSON = generateCirclePolygon(center, radius);
+                        console.log("Circle GeoJSON (Polygon):", JSON.stringify(circleGeoJSON, null, 2));
+                      }
                   
                       updatedValue = JSON.stringify(circleData); // Save as JSON object
                     } else if (state.current.rectangle) {
@@ -350,7 +388,10 @@ export const renderMapperDialog = (
                         ],
                       };
                   
-                      if (debug) console.log("Rectangle Data:", JSON.stringify(rectangleData));
+                      if (debug) { 
+                        console.log("Rectangle Data:", JSON.stringify(rectangleData));
+                        console.log("Rectangle GeoJSON:", JSON.stringify(state.current.rectangle.toGeoJSON(), null, 2));
+                      }
                   
                       updatedValue = JSON.stringify(rectangleData); // Save as JSON object
                     } else if (state.current.marker && Array.isArray(state.current.marker)) {
@@ -364,9 +405,50 @@ export const renderMapperDialog = (
                         mode: "markers",
                         coordinates: markerCoordinates,
                       };
-                  
-                      if (debug)
+
+                      type GeoJSONFeatureCollection = {
+                          type: "FeatureCollection";
+                          features: GeoJSONFeature[];
+                      };
+
+                      type GeoJSONFeature = {
+                          type: "Feature";
+                          properties: Record<string, any>;
+                          geometry: {
+                              type: "Point";
+                              coordinates: [number, number]; // [longitude, latitude]
+                          };
+                      };
+
+                      /**
+                       * Converts an array of Leaflet markers to a valid GeoJSON FeatureCollection.
+                       * @param markers - An array of Leaflet Marker objects.
+                       * @returns A valid GeoJSON FeatureCollection.
+                       */
+                      function convertMarkersToGeoJSON(markers: any[]): GeoJSONFeatureCollection {
+                          const features: GeoJSONFeature[] = markers.map((marker) => {
+                              const { lat, lng } = marker.getLatLng();
+                              return {
+                                  type: "Feature",
+                                  properties: {}, // Add custom properties if needed
+                                  geometry: {
+                                      type: "Point",
+                                      coordinates: [lng, lat], // GeoJSON uses [longitude, latitude]
+                                  },
+                              };
+                          });
+
+                          return {
+                              type: "FeatureCollection",
+                              features,
+                          };
+                      }
+
+                      if (debug) {
                         console.log("Marker Data:", JSON.stringify(markerData));
+                        const markerGeoJSON = convertMarkersToGeoJSON(state.current.marker);
+                        console.log("Marker GeoJSON:", JSON.stringify(markerGeoJSON, null, 2));
+                      }
                   
                       updatedValue = JSON.stringify(markerData); // Save as JSON object
                     } else {
