@@ -68,10 +68,18 @@ export type DisasterRecordsViewModel = Exclude<Awaited<ReturnType<typeof disaste
 >;
 
 export async function disasterRecordsById(idStr: string) {
+	return disasterRecordsByIdTx(dr, idStr);
+}
+
+export async function disasterRecordsByIdTx(tx: Tx, idStr: string): Promise<DisasterRecordsFields> {
 	let id = idStr;
-	return await dr.query.disasterRecordsTable.findFirst({
+	let res= await tx.query.disasterRecordsTable.findFirst({
 		where: eq(disasterRecordsTable.id, id),
 	});
+	if(!res){
+		throw new Error("Id is invalid");
+	}
+	return res;
 }
 
 

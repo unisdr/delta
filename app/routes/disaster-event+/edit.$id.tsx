@@ -1,5 +1,7 @@
+import { getTableName } from "drizzle-orm";
 import {
 	disasterEventById,
+	disasterEventByIdTx,
 	disasterEventCreate,
 	DisasterEventFields,
 	disasterEventUpdate,
@@ -26,6 +28,7 @@ import {
 import {
 	useLoaderData,
 } from "@remix-run/react";
+import { disasterEventTable } from "~/drizzle/schema";
 
 export const loader = createLoader({
 	getById: disasterEventById
@@ -35,7 +38,10 @@ export const action = createAction({
 	fieldsDef,
 	create: disasterEventCreate,
 	update: disasterEventUpdate,
-	redirectTo: (id) => route + "/" + id
+	redirectTo: (id) => route + "/" + id,
+	getById: disasterEventByIdTx ,
+	tableName:  getTableName(disasterEventTable),
+	
 });
 
 export default function Screen() {

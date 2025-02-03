@@ -1,7 +1,9 @@
+import { getTableName } from "drizzle-orm";
 import {
 	createDeleteLoader,
 } from "~/backend.server/handlers/form";
-import {resourceRepoDeleteById} from '~/backend.server/models/resource_repo';
+import {resourceRepoById, resourceRepoDeleteById} from '~/backend.server/models/resource_repo';
+import { resourceRepoTable } from "~/drizzle/schema";
 
 import {
 	route
@@ -9,6 +11,8 @@ import {
 
 export const loader = createDeleteLoader({
 	baseRoute: route,
-	delete: resourceRepoDeleteById
+	delete: resourceRepoDeleteById,
+	tableName: getTableName(resourceRepoTable),
+	getById: resourceRepoById
 });
 

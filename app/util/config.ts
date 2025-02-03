@@ -6,6 +6,9 @@
  */
 import {SSOAzureB2C as interfaceSSOAzureB2C} from "~/util/ssoauzeb2c";
 import { stringToBoolean } from "~/util/string";
+import { checkValidCurrency } from '~/util/currency';
+import fs from 'fs/promises';
+import path from 'path';
 
 /**
  * Get the Website URL.
@@ -189,3 +192,70 @@ export function configAuthSupportedAzureSSOB2C(): boolean {
 
 	return value;
 }
+
+
+/**
+ * Get systems currency configuration.
+ * @returns string[] | default value empty string[]
+ */
+export function configCurrencies(): string[] {
+	let value = process.env.CURRENCY_CODES || "";
+	let valueArray = [];
+	let returnArray:string[] = [];
+	
+	// remove spaces
+	value = value.replace(/\s+/g, '');
+	valueArray = value.split(",");
+
+	valueArray.forEach(function(item, index) { 
+		if (checkValidCurrency(item)) {
+			returnArray.push(item.toUpperCase());
+		}
+	});
+
+	return returnArray;
+};
+
+/**
+ * Retrieves the application's version from the package.json file.
+ * 
+ * This function reads the package.json file located in the current working directory,
+ * parses its content, and extracts the version number specified in it.
+ * 
+ * @returns {Promise<string>} A promise that resolves to the version string of the application.
+ * 
+ * @example
+ * 
+ * const appVersion = await configApplicationVersion().then(version => {
+ *   return version;
+ * }).catch(error => {
+ *   console.error('Error:', error);
+ * });
+ */
+export async function configApplicationVersion(): Promise<string> {
+	let returnValue:string = '';
+
+	const currentDirectory = process.cwd;
+  	const packageJsonPath = path.resolve(currentDirectory(), 'package.json');
+	let fileString:string = '';
+	let packageJson:any = {};
+
+	// console.log( currentDirectory(), packageJsonPath );
+
+	// Read the file
+	try {
+		fileString = await fs.readFile(packageJsonPath, 'utf8');
+
+		packageJson = JSON.parse(fileString);
+
+		// Get the version number
+		returnValue = packageJson.version;
+	} catch (error) {
+		console.error('Error reading file:', error);
+		throw new Response('File not found', { status: 404 });
+	}
+
+	return returnValue;
+};
+
+

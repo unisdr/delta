@@ -13,7 +13,8 @@
     "start2": "remix-serve ./build/server/index.js",
     "startprod": "cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc",
-    "dbsync": "yarn run drizzle-kit push"
+    "dbsync": "yarn run drizzle-kit push",
+    "dbmigrate": "yarn drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",

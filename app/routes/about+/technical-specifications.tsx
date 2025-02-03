@@ -53,8 +53,8 @@ export default function TechnicalSpecifications() {
           ) : (
             <>
               <PreventionWebLandingPageWidget
-                pageId="16"
-                activeDomain="www.undrr.org"
+                pageId="92279"
+                activeDomain="www.preventionweb.net"
               />
               {appendContent && (
                 <div

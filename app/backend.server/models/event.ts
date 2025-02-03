@@ -424,10 +424,14 @@ export async function disasterEventIdByImportId(tx: Tx, importId: string) {
 }
 
 export async function disasterEventById(id: any) {
+	return disasterEventByIdTx(dr, id);
+}
+
+export async function disasterEventByIdTx(tx: Tx, id: any) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
-	const res = await dr.query.disasterEventTable.findFirst({
+	const res = await tx.query.disasterEventTable.findFirst({
 		where: eq(disasterEventTable.id, id),
 		with: {
 			hazardEvent: {
@@ -441,6 +445,10 @@ export async function disasterEventById(id: any) {
 			},
 		}
 	});
+
+	if(!res){
+		throw new Error("Id is invalid");
+	}
 	return res
 }
 

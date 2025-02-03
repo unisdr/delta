@@ -2,6 +2,7 @@ import {
 	resourceRepoCreate,
 	resourceRepoUpdate,
 	resourceRepoById,
+	resourceRepoByIdTx,
 } from "~/backend.server/models/resource_repo";
 
 import {
@@ -18,6 +19,8 @@ import {
 	createLoader,
 	createAction
 } from "~/backend.server/handlers/form";
+import { getTableName } from "drizzle-orm";
+import { resourceRepoTable } from "~/drizzle/schema";
 
 export const loader = createLoader({
 	getById: resourceRepoById
@@ -27,7 +30,9 @@ export const action = createAction({
 	fieldsDef,
 	create: resourceRepoCreate,
 	update: resourceRepoUpdate,
-	redirectTo: (id) => `${route}/${id}`
+	redirectTo: (id) => `${route}/${id}`,
+	getById: resourceRepoByIdTx,
+	tableName: getTableName(resourceRepoTable)
 });
 
 export default function Screen() {

@@ -47,12 +47,28 @@
 
 ### 4. Installing DTS as Country Instance
 
-1. Clone the repository
-2. Install the dependencies
-3. Configure the environment
-4. Database setup
-5. Build and Deploy
-
+1. Clone the repo with the command 'git clone git@github.com:unisdr/dts-deployment-unog.git'. The folder name for this repository must be "dts-deployment-unog".
+```bash
+git clone git@github.com:unisdr/dts-deployment-unog.git
+```
+2. Build the container images by running 'docker-compose build'.
+```bash
+docker-compose build
+```
+3. Build the production code artifact by running './build.sh'.
+```bash
+./build.sh
+```
+4. Create the environment variables from file example.env to .env.
+```bash
+cp ./example.env ./.env
+```
+5. Update the database by running './db-update.sh'.
+```bash
+./db-update.sh
+```
+## Application runs on port 3004
+* http://localhost:3004
 ---
 
 ### 5. Installing DTS as UNDRR Instance

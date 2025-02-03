@@ -53,8 +53,8 @@ export default function Partners() {
           ) : (
             <>
               <PreventionWebLandingPageWidget
-                pageId="16"
-                activeDomain="www.undrr.org"
+                pageId="92280"
+                activeDomain="www.preventionweb.net"
               />
               {appendContent && (
                 <div

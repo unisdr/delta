@@ -1,21 +1,24 @@
 import {
   pgTable,
-  integer,
   text,
-  boolean,
   timestamp,
-  uuid,
   serial,
+  check,
+  unique,
+  integer,
+  boolean,
+  uuid,
   jsonb,
   index,
   AnyPgColumn,
-  check,
-  uniqueIndex,
-  unique,
-  foreignKey,
 } from "drizzle-orm/pg-core";
 
 import { sql, relations } from "drizzle-orm";
+
+import {
+  HumanEffectsHidden,
+  HumanEffectsCustomConfig,
+} from "~/frontend/human_effects/defs";
 
 function zeroTimestamp(name: string) {
   return timestamp(name)
@@ -246,7 +249,6 @@ export const hazardEventTable = pgTable("hazard_event", {
   sectorId: integer("sector_id") // New column
     .references((): AnyPgColumn => sectorTable.id)
     .notNull(),
-
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   // data fields below not used in queries directly
@@ -281,13 +283,11 @@ export const hazardEventRel = relations(hazardEventTable, ({ one, many }) => ({
     fields: [hazardEventTable.hazardId],
     references: [hipHazardTable.id],
   }),
-
   // Directly linking hazard_event to sector
   sector: one(sectorTable, {
     fields: [hazardEventTable.sectorId],
     references: [sectorTable.id],
   }),
-
   // Linking hazard_event to sector through the intermediate table
   relatedSectors: many(sectorHazardRelationTable, {
     relationName: "sector_hazard_relation",
@@ -304,11 +304,9 @@ export const disasterEventTable = pgTable("disaster_event", {
   hazardEventId: uuid("hazard_event_id")
     .references((): AnyPgColumn => hazardEventTable.id)
     .notNull(),
-
   sectorId: integer("sector_id") // New column
     .references((): AnyPgColumn => sectorTable.id)
     .notNull(),
-
   // data fields below not used in queries directly
   // only on form screens
   // should be easier to change if needed
@@ -400,6 +398,34 @@ export const humanDsgTable = pgTable("human_dsg", {
 export type HumanDsg = typeof humanDsgTable.$inferSelect;
 export type HumanDsgInsert = typeof humanDsgTable.$inferInsert;
 
+export const humanDsgConfigTable = pgTable("human_dsg_config", {
+  hidden: jsonb("hidden").$type<HumanEffectsHidden>(),
+  custom: jsonb("custom").$type<HumanEffectsCustomConfig>(),
+});
+export type HumanDsgConfig = typeof humanDsgConfigTable.$inferSelect;
+export type HumanDsgConfigInsert = typeof humanDsgConfigTable.$inferInsert;
+
+export const humanCategoryPresenceTable = pgTable("human_category_presence", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  recordId: text("record_id").notNull(),
+  deaths: boolean("deaths"),
+  injured: boolean("injured"),
+  missing: boolean("missing"),
+  affectedDirect: boolean("affected_direct"),
+  affectedIndirect: boolean("affected_indirect"),
+  displacedShort: boolean("displaced_short"),
+  displacedMediumShort: boolean("displaced_medium_short"),
+  displacedMediumLong: boolean("displaced_medium_long"),
+  displacedLong: boolean("displaced_long"),
+  displacedPermanent: boolean("displaced_permanent"),
+  displacedPreemptive: boolean("displaced_preemptive"),
+  displacedReactive: boolean("displaced_reactive"),
+});
+
+export type HumanCategoryPresence = typeof humanDsgConfigTable.$inferSelect;
+export type HumanCategoryPresenceInsert =
+  typeof humanDsgConfigTable.$inferInsert;
+
 export const deathsTable = pgTable("deaths", {
   id: uuid("id").primaryKey().defaultRandom(),
   dsgId: uuid("dsg_id")
@@ -427,6 +453,7 @@ export const missingTable = pgTable("missing", {
   dsgId: uuid("dsg_id")
     .references((): AnyPgColumn => humanDsgTable.id)
     .notNull(),
+  asOf: timestamp("as_of"),
   missing: integer("missing"),
 });
 
@@ -449,10 +476,10 @@ export const displacedTable = pgTable("displaced", {
   dsgId: uuid("dsg_id")
     .references((): AnyPgColumn => humanDsgTable.id)
     .notNull(),
-  shortTerm: integer("short_term"), // First 10 days
+  short: integer("short"), // First 10 days
   mediumShort: integer("medium_short"), // Days 10-30
   mediumLong: integer("medium_long"), // Days 30-90
-  longTerm: integer("long_term"), // More than 90 days
+  long: integer("long"), // More than 90 days
   permanent: integer("permanent"), // Permanently relocated
 });
 export type Displaced = typeof displacedTable.$inferSelect;
@@ -681,20 +708,15 @@ export const sectorTable = pgTable(
     id: serial("id").primaryKey(), // Unique sector ID
     parentId: integer("parent_id").references(
       (): AnyPgColumn => sectorTable.id
-    ), // Links to a parent sector for hierarchical structuring
-    sectorname: text("sectorname").notNull(), // High-level category | // Descriptive name of the sector
+    ), // Reference to parent sector
+    sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
     subsector: text("subsector").notNull(), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
     description: text("description"), // Optional description for the sector | Additional details about the sector
     pdnaGrouping: text("pdna_grouping").notNull(), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
   },
   (table) => [
-    // Constraint to ensure the sub-sector is not left empty
+    // Constraint: subsector cannot be empty
     check("subsector_not_empty", sql`${table.subsector} <> ''`),
-    // // Validate that the sector name matches predefined valid names
-    // check(
-    //   "sectorname_valid",
-    //   sql`${table.sectorname} IN ('Agriculture', 'Transportation', 'Tourism', 'Commerce', 'Energy', 'Housing', 'Mining and quarrying', 'Manufacturing', 'Construction', 'Education', 'Health')`
-    // ),
     // Ensure the PDNA grouping is one of the specified categories
     check(
       "pdna_grouping_valid",
