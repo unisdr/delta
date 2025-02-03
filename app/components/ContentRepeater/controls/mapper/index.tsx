@@ -274,11 +274,6 @@ export const renderMapperDialog = (
                   }}                  
                   >Undo</button>
                   <button type="button" id={`${id}_mapper_getCoords`} 
-                    className="mg-button mg-button--small mg-button-system" 
-                    style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
-
-                  >Convert to GeoJSON</button>
-                  <button type="button" id={`${id}_mapper_getCoords`} 
                   className="mg-button mg-button--small mg-button-primary" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
                   onClick={(e) => {
                     const field = dialogMapRef.current?.mapperField;
@@ -291,6 +286,15 @@ export const renderMapperDialog = (
                     if (debug) console.log("Field passed to dialog:", field);
                   
                     const targetElement = field.domElement;
+
+                    const saveGeoJSON = (geoJSON: string) => {
+                      if (field?.mapperGeoJSONField) {
+                        const geoJSONField = document.getElementById(`${id}_${field?.mapperGeoJSONField}`) as HTMLInputElement;
+                        geoJSONField.value = geoJSON;
+                        const setField = { id: field?.mapperGeoJSONField, value: geoJSON };
+                        handleFieldChange(setField, geoJSON);
+                      }
+                    };
                   
                     let updatedValue = "";
                   
@@ -315,6 +319,8 @@ export const renderMapperDialog = (
                         mode: "polygon",
                         coordinates: polygonCoordinates,
                       }); // Save as JSON object
+
+                      saveGeoJSON(JSON.stringify(state.current.polygon.toGeoJSON(), null, 2));
                     } else if (state.current.polyline) {
                       // Convert polyline LatLng objects to plain arrays and normalize
                       const lineCoordinates = state.current.polyline
@@ -333,6 +339,8 @@ export const renderMapperDialog = (
                         mode: "lines",
                         coordinates: lineCoordinates,
                       }); // Save as JSON object
+
+                      saveGeoJSON(JSON.stringify(state.current.polyline.toGeoJSON(), null, 2));
                     } else if (state.current.circle) {
                       // Get circle data
                       const center = state.current.circle.getLatLng();
@@ -344,7 +352,7 @@ export const renderMapperDialog = (
                         radius: radius,
                       };
 
-                      function generateCirclePolygon(center, radius, points = 64) {
+                      function generateCirclePolygon(center: any, radius: any, points = 64) {
                           const coordinates = [];
                           for (let i = 0; i < points; i++) {
                               const angle = (i / points) * (2 * Math.PI);
@@ -376,6 +384,8 @@ export const renderMapperDialog = (
                       }
                   
                       updatedValue = JSON.stringify(circleData); // Save as JSON object
+
+                      saveGeoJSON(JSON.stringify(generateCirclePolygon(center, radius), null, 2));
                     } else if (state.current.rectangle) {
                       // Get rectangle data
                       const bounds = state.current.rectangle.getBounds();
@@ -394,6 +404,8 @@ export const renderMapperDialog = (
                       }
                   
                       updatedValue = JSON.stringify(rectangleData); // Save as JSON object
+
+                      saveGeoJSON(JSON.stringify(state.current.rectangle.toGeoJSON(), null, 2));
                     } else if (state.current.marker && Array.isArray(state.current.marker)) {
                       // Get marker data as an array of coordinates
                       const markerCoordinates = state.current.marker.map((marker: any) => [
@@ -451,6 +463,8 @@ export const renderMapperDialog = (
                       }
                   
                       updatedValue = JSON.stringify(markerData); // Save as JSON object
+
+                      saveGeoJSON(JSON.stringify(convertMarkersToGeoJSON(state.current.marker), null, 2));
                     } else {
                       if (debug) console.log("No shape created yet.");
                     }
