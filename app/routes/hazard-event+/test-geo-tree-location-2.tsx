@@ -89,7 +89,6 @@ export default function TreeViewPage() {
             </div>
             <section>
                 <div className="mg-container">
-                    <div ref={targetObject} style={{display: 'block', padding: '1rem', border: '1px solid #ccc', marginBottom: '1rem', fontWeight: 'bold'}}>&nbsp;</div>
                     <TreeView 
                         treeData={treeData} 
                         caption="Select Geographic level" 
@@ -97,7 +96,15 @@ export default function TreeViewPage() {
                         targetObject={targetObject} 
                         onApply={
                             (dialogRef: any, selectedItems: any) => {
-                                if (targetObject.current) targetObject.current.textContent = selectedItems.names;
+                                if (targetObject.current) { 
+                                    targetObject.current.querySelector('span').textContent = selectedItems.names;
+
+                                    selectedItems.data.map((item: any) => {
+                                        if (item.id == selectedItems.selectedId) {
+                                            targetObject.current.querySelector('pre').textContent = `GEO JSON:\n${item.geojson}`;
+                                        }
+                                    });
+                                }
                                 console.log('selectedItems', selectedItems);
                             }
                         }
@@ -117,6 +124,31 @@ export default function TreeViewPage() {
                             `
                         }
                     />
+                    <div ref={targetObject} style={{display: 'block', padding: '1rem', border: '1px solid #ccc', marginBottom: '1rem', fontWeight: 'bold', marginTop: '1rem'}}> 
+                        Demo placeholder:<br/>
+                        <span
+                            style={{
+                                display: "block",
+                                padding: "10px",
+                                borderRadius: "5px",
+                                background: "#f4f4f4",
+                                marginBottom: "10px",
+                            }}
+                        ></span>
+                        <pre
+                            style={{
+                                whiteSpace: "pre-wrap",
+                                wordWrap: "break-word",
+                                overflowWrap: "break-word",
+                                background: "#f4f4f4",
+                                padding: "10px",
+                                borderRadius: "5px",
+                                fontWeight: "normal",
+                                fontSize: "0.8em",
+                            }}
+                        >
+                        </pre>
+                    </div>
                 </div>
             </section>
         </>

@@ -136,6 +136,14 @@ const injectStyles = (appendCss?: string) => {
             .tree-checkbox {
                 margin-right: 0.5rem;
             }
+            .tree-button-select {
+                display: inline-block;
+                background-color: buttonface;
+                padding: 4px 8px 1px 8px;
+                border: 1px solid #000;
+                border-radius: 5px;
+                white-space: nowrap;
+            }
             ${appendCss}
         `
     ];
@@ -392,6 +400,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
                                 {/* Render hidden textareas */}
                                 {Object.entries(enrichedNode.hiddenData || {}).map(([field, value]) => (
                                     <textarea
+                                        data-id={enrichedNode.id}
                                         key={`${enrichedNode.id}-${field}`}
                                         name={field}
                                         defaultValue={typeof value === "object" ? JSON.stringify(value) : value}
@@ -496,7 +505,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
                     </div>
                 </div>
             </dialog>
-            <button onClick={treeViewOpen}>{caption}</button>
+            <button className="tree-button-select" onClick={treeViewOpen}>{caption}</button>
         </>
     );
 };
