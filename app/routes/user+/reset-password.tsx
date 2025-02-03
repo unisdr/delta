@@ -1,96 +1,145 @@
+import { MainContainer } from "~/frontend/container";
 import {
-	json,
-	redirect,
-	LoaderFunctionArgs,
-	ActionFunctionArgs
+  json,
+  redirect,
+  LoaderFunctionArgs,
+  ActionFunctionArgs,
 } from "@remix-run/node";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import {
-	useActionData,
-	useLoaderData
-} from "@remix-run/react";
-import {
-	Form,
-	Field,
-	Errors as FormErrors,
-	SubmitButton,
-	FieldErrors,
-	FormMessage
-} from "~/frontend/form"
+  Form,
+  Field,
+  Errors as FormErrors,
+  SubmitButton,
+  FieldErrors,
+  FormMessage,
+} from "~/frontend/form";
 
-import {
-	resetPassword,
-} from "~/backend.server/models/user";
+import { resetPassword } from "~/backend.server/models/user";
 
 import { formStringData } from "~/util/httputil";
+import PasswordInput from "~/components/PasswordInput";
 
-function getData(request: Request){
-	const url = new URL(request.url);
-	const token = url.searchParams.get("token") || "";
-	const email = url.searchParams.get("email") || "";
-	return { token, email }
+function getData(request: Request) {
+  const url = new URL(request.url);
+  const token = url.searchParams.get("token") || "";
+  const email = url.searchParams.get("email") || "";
+  return { token, email };
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const {token, email} = getData(request)
-	if (!token || !email) {
-		return json({error: "Invalid password reset link"})
-	}
-	return json(null);
+  const { token, email } = getData(request);
+  if (!token || !email) {
+    return json({ error: "Invalid password reset link" });
+  }
+  return json(null);
 };
 
 interface FormData {
-	password: string
+  newPassword: string;
+  confirmPassword: string;
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const {token, email} = getData(request)
-	const formData = formStringData(await request.formData());
-	const data: FormData = {
-		password: formData.password || "",
-	}
+  const { token, email } = getData(request);
+  const formData = formStringData(await request.formData());
+  const data: FormData = {
+    newPassword: formData.newPassword || "",
+    confirmPassword: formData.confirmPassword || "",
+  };
 
-	let errors: FormErrors<FormData> = {}
-	let res = await resetPassword(email, token, data.password);
-	if (!res.ok){
-		errors.fields = {password: [res.error || "Server error"]}
-	}
-	return json({errors})
-	
-	
-}
+  let errors: FormErrors<FormData> = {};
+  let res = await resetPassword(
+    email,
+    token,
+    data.newPassword,
+    data.confirmPassword
+  );
+  if (!res.ok) {
+    return { ok: false, data, errors: res.errors };
+  }
+//   return json({ errors });
+  return redirect("/user/login");
+};
 
 export default function Screen() {
-	const loaderData = useLoaderData<typeof loader>();
-	if (loaderData?.error){
-		return (
-			<>
-				<p>{loaderData.error}</p>
-			</>
-		)
-	}
+  const loaderData = useLoaderData<typeof loader>();
+  if (loaderData?.error) {
+    return (
+      <>
+        <p>{loaderData.error}</p>
+      </>
+    );
+  }
 
-	const actionData = useActionData<typeof action>();
-	const errors = actionData?.errors
+  const actionData = useActionData<typeof action>();
+  const errors = actionData?.errors;
 
-	return (
-		<>
-			<Form errors={errors}>
+  return (
+    <MainContainer title="">
+      <>
+        <div className="dts-form dts-form--vertical">
+          <h2>Reset your password</h2>
+          <h3>
+            Please enter current and new password in the input field below.
+          </h3>
+          <h4>* Required information</h4>
+          <Form className="dts-form dts-form--vertical" errors={errors}>
+            {false ? (
+              <FormMessage>
+                <p>Password reminder sent to xxxx</p>
+              </FormMessage>
+            ) : null}
+            <input name="email" type="hidden" defaultValue="data.email"></input>
+            <input name="token" type="hidden" defaultValue="data.token"></input>
+            <div className="dts-form-component">
+              <Field label="">
+                <PasswordInput
+                  placeholder="New password*"
+                  name="newPassword"
+                  errors={errors}
+                  style={{ width: "100%" }}
+                />
+                <FieldErrors errors={errors} field="newPassword"></FieldErrors>
+              </Field>
+              <Field label="">
+                <PasswordInput
+                  placeholder="Confirm password*"
+                  name="confirmPassword"
+                  errors={errors}
+                  style={{ width: "100%" }}
+                />
+                <FieldErrors
+                  errors={errors}
+                  field="confirmPassword"
+                ></FieldErrors>
+              </Field>
+              <div>
+                <ul>
+                  <li>At least 12 characters long</li>
+                  <li>Must include two of the following:</li>
+                  <ul>
+                    <li>Uppercase letters</li>
+                    <li>Lowercase letters</li>
+                    <li>Numbers letters</li>
+                    <li>Special characters</li>
+                  </ul>
+                  <li>Cannot be the same as the username</li>
+                  <li>Should not be a simple or commonly used password</li>
+                </ul>
+              </div>
 
-			{false ? (
-				<FormMessage>
-				<p>Password reminder sent to xxxx</p>
-				</FormMessage>
-			) : null}
-
-				<input name="email" type="hidden" defaultValue="data.email"></input>
-				<input name="token" type="hidden" defaultValue="data.token"></input>
-
-				<Field label="New Password">
-					<input type="password" name="password"></input>
-					<FieldErrors errors={errors} field="password"></FieldErrors>
-				</Field>
-				<SubmitButton label="Set Password"></SubmitButton>
-			</Form>
-		</>
-	);
+              <SubmitButton
+                label="Reset password"
+                style={{
+                  paddingRight: "1rem",
+                  width: "100%",
+                }}
+              ></SubmitButton>
+            </div>
+          </Form>
+        </div>
+      </>
+    </MainContainer>
+  );
 }

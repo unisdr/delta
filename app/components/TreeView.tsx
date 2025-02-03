@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 
-const injectStyles = () => {
+const injectStyles = (appendCss?: string) => {
     const styleLayout = [
         `
             p.tree {
@@ -37,6 +37,8 @@ const injectStyles = () => {
                 margin-bottom: 0;
                 
                 border-left: thin solid #000;
+
+                color: #000;
             }
 
             ul.tree li:last-child {
@@ -98,14 +100,17 @@ const injectStyles = () => {
                 font-size: x-small;
                 text-transform: uppercase;
                 font-weight: bold;
+                margin-left: 0.5rem;
             }
             ul.tree li div {
                 position: relative;
                 display: inline-block;
+                color: #000;
             }
             ul.tree li div:hover .btn-face.select {
                 display: inline-block;
             }
+
             .tree-dialog {
                 width: 50vw !important;
                 max-width: none !important;
@@ -131,85 +136,20 @@ const injectStyles = () => {
             .tree-checkbox {
                 margin-right: 0.5rem;
             }
-        `,
+            ${appendCss}
         `
-            p.tree {
-                margin-top: 2rem !important;
-                margin-left: 0rem !important;
-            }
-
-            ul.tree {
-                margin-left: 0rem !important;
-            }
-
-            p.tree,
-            ul.tree,
-            ul.tree ul {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-            }
-            ul.tree ul {
-                margin-left: 1.0em;
-            }
-            .tree-intro,
-            ul.tree li {
-                position: relative;
-                margin-left: 0;
-                padding-left: 3em;
-                margin-top: 0;
-                margin-bottom: 0;
-                border-left: thin solid #000;
-            }
-            ul.tree.no-root-lines > li {
-                border-left: none !important;
-            }
-            ul.tree li:last-child {
-                border-left: none;
-            }
-            ul.tree li::before {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 2.5em; /* width of horizontal line */
-                height: 0.5em; /* vertical position of line */
-                vertical-align: top;
-                content: "├── ";
-                font-family: "Songti SC", monospace;
-                display: inline-block;
-            }
-            ul.tree li:last-child::before {
-                content: "└── ";
-            }
-            ul.tree li button {
-                display: inline-block;
-                border: none;
-                background: none;
-                cursor: pointer;
-                margin-right: 5px;
-                font-size: 14px;
-                font-size: x-small;
-            }
-            ul.tree li button.btn-face {
-                background-color: buttonface;
-                padding: 4px 8px 1px 8px;
-                border: 1px solid #000;
-                border-radius: 5px;
-            }
-            .tree-btn {
-                display: inline-block;
-                background-color: buttonface;
-                padding: 4px 8px 1px 8px;
-                border: 1px solid #000;
-                border-radius: 5px;
-            }
-        `,
     ];
 
-    const style = document.createElement("style");
-    style.type = "text/css";
-    style.innerHTML = styleLayout[0]; // Change index to switch between styles`;
-    document.head.appendChild(style);
+    const styleId = "TreeView";
+
+    // Check if the style is already in the document
+    if (!document.getElementById(styleId)) {
+        const style = document.createElement("style");
+        style.type = "text/css";
+        style.id = styleId; // Assign a unique ID
+        style.innerHTML = styleLayout[0]; // Change index to switch between styles
+        document.head.appendChild(style);
+    }
 };
 
 interface TreeViewProps {
@@ -219,10 +159,12 @@ interface TreeViewProps {
     targetObject?: any | null;
     base_path?: string;
     onApply?: (dialogRef: any, selectedItem: { [key: string]: any }) => void;
+    onRenderItemName?: (node: any) => any;
     multiSelect?: boolean;
+    appendCss?: string;
 }
 
-export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, multiSelect = false }) => {
+export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "" }) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -233,7 +175,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     useEffect(() => {
-        injectStyles(); // Inject CSS when component mounts
+        injectStyles(appendCss); // Inject CSS when component mounts
     }, []);
 
     // Update button states based on `expandedNodes`
@@ -361,80 +303,35 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
         dialogRef.current.querySelector(".tree-footer span").setAttribute("data-ids", dataIds);
         dialogRef.current.querySelector(".tree-hidden-data").value = JSON.stringify(arrHiddenData);
     };
-
-    const handleCheckboxChange = (id: number, parentId: number | null) => {
-        //console.log("treeData", treeData);
-        /*setSelectedItems((prev) => {
-            //console.log("Selected Items", prev);
-
-            const newState = { ...prev };
-            
-            if (newState[id]) {
-                console.log("Unselecting", id);
-                // If already selected, unselect it
-                delete newState[id];
-            } else {
-                console.log("Selecting", id);
-                // If selecting, ensure only siblings under the same parent are selected                
-                Object.keys(newState).forEach((key) => {
-                    if (treeData.some(node => node.id === parseInt(key) && node.parentId === parentId)) {
-                        console.log("Unselecting sibling", key);
-                        delete newState[key]; // Unselect siblings
-
-                        // Match the key to treeData and unselect all children use iteration
-                        const node = treeData.find(node => node.id === parseInt(key));
-                        if (node) {
-                            const allNodes = getAllNodes(node);
-                            allNodes.forEach((node) => {
-                                delete newState[node.id];
-                            });
-                        }
-
-                    } else {
-                        console.log("Not a sibling", parseInt(key), parentId);
-
-                        // const getKeyRoot = (id: number) => {
-                        //     const node = treeData.find(node => node.id === id);
-                        //     if (node && node.parentId) {
-                        //         return getKeyRoot(node.parentId);
-                        //     }
-                        //     return id;
-                        // }
-
-                        // console.log("Root", getKeyRoot(id));
-
-                        const isUnderParent = (id: number, parentId: number) => {
-                            const node = treeData.find(node => node.id === id);
-                            if (node) {
-                                if (node.parentId === parentId) {
-                                    return true;
-                                } else {
-                                    return isUnderParent(node.parentId, parentId);
-                                }
-                            }
-                            return false;
-                        }
-
-                        // Match the key to treeData and unselect all children use iteration except main node
-                        const node = treeData.find(node => node.id === parseInt(key));
-                        if (node) {
-                            const allNodes = getAllNodes(node);
-                            allNodes.forEach((node) => {
-                                if (node.id !== id && node.id !== parentId) {
-                                    if (!isUnderParent(node.id, parentId || 0)) {
-                                        delete newState[node.id];
-                                    }
-                                }
-                            });
-                        }
-                    }
-                });
-                newState[id] = true;
-            }
-            
-            return newState;
-        });*/
-    };    
+    
+    const handleCheckboxChange = (e: any) => {
+        const checkbox = e.target;
+        const isChecked = checkbox.checked;
+        const listItem = checkbox.closest("li"); // Get the <li> container
+        const dataIds = listItem.getAttribute("data-ids")?.split(",") || [];
+        const dataId = listItem.getAttribute("data-id");
+    
+        // Auto-check parents up to the root when an item is checked
+        if (isChecked) {
+            dataIds.forEach((ancestorId) => {
+                const ancestorCheckbox = document.querySelector(`li[data-id="${ancestorId}"] > .tree-checkbox`);
+                if (ancestorCheckbox) {
+                    ancestorCheckbox.checked = true;
+                }
+            });
+        }
+    
+        // Auto-uncheck all children when an item is unchecked
+        if (!isChecked) {
+            listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox) => {
+                childCheckbox.checked = false;
+            });
+        }
+    };
+   
+    const renderItemName = (node: any, parentIds: any) => {
+        return onRenderItemName ? onRenderItemName(node) : {};
+    };
 
     // Render tree recursively
     const renderTree = (nodes: any[], parentIds = "") => (
@@ -452,13 +349,17 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
                                 {multiSelect && (
                                     <input 
                                         className="tree-checkbox"
-                                        type="checkbox" 
-                                        checked={selectedItems[enrichedNode.id] || false} 
-                                        onChange={() => handleCheckboxChange(enrichedNode.id, enrichedNode.parentId)} 
+                                        type="checkbox"  
+                                        onChange={(e) => handleCheckboxChange(e)}
                                     />
                                 )}
 
-                                <div><span>{enrichedNode.name}</span> <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button></div>
+                                <div {...renderItemName(enrichedNode, parentIds)}>
+                                    <span>{enrichedNode.name}</span>
+                                    {!multiSelect && (
+                                        <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
+                                    )}
+                                </div>
                                 {/* Render hidden textareas */}
                                 {Object.entries(enrichedNode.hiddenData || {}).map(([field, value]) => (
                                     <textarea
@@ -477,13 +378,17 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
                                 {multiSelect && (
                                     <input 
                                         className="tree-checkbox"
-                                        type="checkbox" 
-                                        checked={selectedItems[enrichedNode.id] || false} 
-                                        onChange={() => handleCheckboxChange(enrichedNode.id, enrichedNode.parentId)} 
+                                        type="checkbox"  
+                                        onChange={(e) => handleCheckboxChange(e)}
                                     />
                                 )}
 
-                                <div><span>{enrichedNode.name}</span> <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button></div>
+                                <div {...renderItemName(enrichedNode, parentIds)}>
+                                    <span>{enrichedNode.name}</span> 
+                                    {!multiSelect && (
+                                        <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
+                                    )}
+                                </div>
                                 {/* Render hidden textareas */}
                                 {Object.entries(enrichedNode.hiddenData || {}).map(([field, value]) => (
                                     <textarea

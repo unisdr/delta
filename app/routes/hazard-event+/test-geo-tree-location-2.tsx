@@ -2,6 +2,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
+import { eq, not, and, isNotNull, sql } from "drizzle-orm";
 import { useEffect, useState, useRef } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 
@@ -11,7 +12,13 @@ export const loader = async () => {
     //const rawData = await dr.select().from(divisionTable); // Can replace `divisionTable` with any table
 
     const rawData = [
-        await dr.select().from(divisionTable),
+        await dr.select().from(divisionTable)
+        /*.where(
+            and(
+                not(sql`${divisionTable.geojson}::text = '""'`) // ✅ Exclude empty JSON strings
+            )
+        )*/
+        ,
         [
             { id: 1, parentId: null, name: { en: "Parent A" } },
             { id: 2, parentId: 1, name: { en: "Child A.1" } },
@@ -93,6 +100,21 @@ export default function TreeViewPage() {
                                 if (targetObject.current) targetObject.current.textContent = selectedItems.names;
                                 console.log('selectedItems', selectedItems);
                             }
+                        }
+                        onRenderItemName={
+                            (item: any) => {
+                                return (typeof(item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
+                            }
+                        }
+                        appendCss={
+                            `
+                                ul.tree li div[disable="true"] {
+                                    color: #ccc;
+                                }
+                                ul.tree li div[disable="true"] .btn-face.select {
+                                    display: none;
+                                }
+                            `
                         }
                     />
                 </div>

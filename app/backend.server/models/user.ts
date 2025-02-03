@@ -17,8 +17,6 @@ import * as OTPAuth from "otpauth";
 import { configSiteName, configSiteURL } from "~/util/config";
 import { checkPasswordComplexity, PasswordErrorType } from "./user/password";
 import { logAudit } from "./auditLogs";
-import { sessionCookie } from "~/util/session";
-import { number } from "prop-types";
 
 // rounds=10: ~10 hashes/sec
 // this measurements is from another implementation
@@ -211,31 +209,87 @@ export async function resetPasswordSilentIfNotFound(email: string) {
 
   await sendEmail(user.email, subject, text, html);
 }
+
+export interface ResetPasswordFields {
+  newPassword: string;
+  confirmPassword: string;
+}
+
+type ResetPasswordResult =
+  | { ok: true }
+  | { ok: false; errors: Errors<ResetPasswordFields> };
+
 export async function resetPassword(
   email: string,
   token: string,
-  newPassword: string
-) {
+  newPassword: string,
+  confirmPassword: string
+): Promise<ResetPasswordResult> {
+  let errors: Errors<ResetPasswordFields> = {};
+  errors.form = [];
+  errors.fields = {};
+
   const res = await dr
     .select()
     .from(userTable)
     .where(eq(userTable.email, email));
 
   if (!res || res.length === 0) {
-    return { ok: false, error: "User not found" };
+    errors.fields.newPassword = ["User not found"];
+    return { ok: false, errors };
   }
 
   const user = res[0];
   if (user.resetPasswordToken !== token) {
-    return { ok: false, error: "Invalid or expired token" };
+    errors.fields.newPassword = ["Invalid or expired token"];
+    return { ok: false, errors };
   }
   const now = new Date();
   if (user.resetPasswordExpiresAt && user.resetPasswordExpiresAt < now) {
-    return { ok: false, error: "Token has expired" };
+    errors.fields.newPassword = ["Token has expired"];
+    return { ok: false, errors };
   }
   if (!newPassword) {
-    return { ok: false, error: "Empty password" };
+    errors.fields.newPassword = ["Password is required"];
+    return { ok: false, errors };
   }
+  if (!confirmPassword) {
+    errors.fields.confirmPassword = ["Confirm password is required"];
+    return { ok: false, errors };
+  }
+
+  if (newPassword) {
+    const res = checkPasswordComplexity(newPassword);
+    if (res.error && res.error === PasswordErrorType.TooShort) {
+      errors.fields.newPassword = ["Minimum password length is 12"];
+      return { ok: false, errors };
+    }
+
+    if (
+      res.error &&
+      res.error === PasswordErrorType.InsufficientCharacterClasses
+    ) {
+      errors.fields.newPassword = [
+        "Must include two of the followings: uppercase, lowercase , numbers letters, special characters",
+      ];
+      return {
+        ok: false,
+        errors,
+      };
+    }
+
+    if (newPassword === user.email) {
+      errors.fields.newPassword = [
+        "Password cannot be as email. Please choose a different password.",
+      ];
+      return { ok: false, errors };
+    }
+  }
+  if (newPassword !== confirmPassword) {
+    errors.fields.confirmPassword = ["New passwords do not match."];
+    return { ok: false, errors };
+  }
+
   const hashedPassword = passwordHash(newPassword);
   await dr
     .update(userTable)
@@ -844,7 +898,10 @@ export async function adminUpdateUser(
     return { ok: false, errors };
   }
 
-  const oldRecord =  await dr.select().from(userTable).where(eq(userTable.id, id));
+  const oldRecord = await dr
+    .select()
+    .from(userTable)
+    .where(eq(userTable.id, id));
 
   let res = null;
   try {
@@ -859,7 +916,7 @@ export async function adminUpdateUser(
       })
       .where(eq(userTable.id, id))
       .returning();
-      // .returning({ id: userTable.id });
+    // .returning({ id: userTable.id });
 
     if (res.length == 0) {
       errors.form.push("User was not found using provided ID.");
@@ -875,7 +932,7 @@ export async function adminUpdateUser(
 
   logAudit({
     tableName: "user",
-    recordId: oldRecord[0].id+"",
+    recordId: oldRecord[0].id + "",
     userId: userId,
     action: "Update user data",
     oldValues: oldRecord[0],

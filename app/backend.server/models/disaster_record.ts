@@ -71,7 +71,7 @@ export async function disasterRecordsById(idStr: string) {
 	return disasterRecordsByIdTx(dr, idStr);
 }
 
-export async function disasterRecordsByIdTx(tx: Tx, idStr: string): Promise<DisasterRecordsFields> {
+export async function disasterRecordsByIdTx(tx: Tx, idStr: string) {
 	let id = idStr;
 	let res= await tx.query.disasterRecordsTable.findFirst({
 		where: eq(disasterRecordsTable.id, id),

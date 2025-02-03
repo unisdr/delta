@@ -7,8 +7,6 @@ import {DisasterRecordsFields, DisasterRecordsViewModel} from "~/backend.server/
 import {formatDate} from "~/util/date";
 
 import {
-	Field,
-	FieldErrors,
 	UserFormProps,
 	FormInputDef,
 	FieldsView,
@@ -16,10 +14,9 @@ import {
 	ViewComponent
 } from "~/frontend/form";
 
-import {useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
-import {MainContainer} from "~/frontend/container";
 
 export const route = "/disaster-record"
 
@@ -70,7 +67,6 @@ export function disasterRecordsLink(args: {
 }
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
-	const fields = props.fields;
 
 	useEffect(() => {
 	}, []);

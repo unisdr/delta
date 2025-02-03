@@ -71,7 +71,7 @@ export async function devExample1ById(idStr: string) {
 	return devExample1ByIdTx(dr, idStr);
 }
 
-export async function devExample1ByIdTx(tx: Tx, idStr: string): Promise<DevExample1Fields>{
+export async function devExample1ByIdTx(tx: Tx, idStr: string) {
 	let id = Number(idStr);
 	let res= await tx.query.devExample1Table.findFirst({
 		where: eq(devExample1Table.id, id),

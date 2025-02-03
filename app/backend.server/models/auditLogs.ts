@@ -1,6 +1,6 @@
-import { eq, InferInsertModel } from "drizzle-orm";
+import { InferInsertModel } from "drizzle-orm";
 import { dr } from "~/db.server";
-import { auditLogsTable, userTable } from "~/drizzle/schema";
+import { auditLogsTable } from "~/drizzle/schema";
 
 type AuditLogInsert = InferInsertModel<typeof auditLogsTable>;
 
