@@ -62,9 +62,7 @@ export const action = createAction({
 	update: disasterRecordsUpdate,
 	redirectTo: (id) => `${route}/${id}`,
 	getById: disasterRecordsByIdTx,
-	tableName: getTableName(disasterRecordsTable),
-	action: (isCreate) =>
-		isCreate ? "Create disaster record" : "Update disaster record",
+	tableName: getTableName(disasterRecordsTable)
 });
 
 export default function Screen() {

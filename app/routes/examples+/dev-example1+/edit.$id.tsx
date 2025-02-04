@@ -32,9 +32,7 @@ export const action = createAction({
 	update: devExample1Update,
 	getById: devExample1ByIdTx,
 	redirectTo: (id) => `${route}/${id}`,
-	tableName: getTableName(devExample1Table),
-	action: (isCreate) =>
-		isCreate ? "Create dev-example1" : "Update dev-example1",
+	tableName: getTableName(devExample1Table)
 });
 
 export default function Screen() {

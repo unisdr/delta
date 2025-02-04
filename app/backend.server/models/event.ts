@@ -69,7 +69,7 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, reque
 			logAudit({
 				tableName: getTableName(hazardEventTable),
 				recordId: newHazardEventRecord[0].id,
-				action: "Create hazardous event",
+				action: "create hazard event",
 				newValues: JSON.stringify(newHazardEventRecord[0]),
 				oldValues: null,
 				userId: userId,
@@ -137,7 +137,7 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 		logAudit({
 			tableName: getTableName(hazardEventTable),
 			recordId: res[0].id,
-			action: "Update hazardous event",
+			action: "update hazard event",
 			newValues: res[0],
 			oldValues: oldRecord[0],
 			userId: userId,

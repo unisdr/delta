@@ -48,6 +48,8 @@ export default function AuditLogHistory({ auditLogs }: AuditLogHistoryProps) {
 					</thead>
 					<tbody>
 						{auditLogs.map((auditLogs) => {
+							const date = new Date(auditLogs.timestamp).toLocaleDateString();
+							const time = new Date(auditLogs.timestamp).toLocaleTimeString();
 							return (
 								<tr key={auditLogs.id}>
 									<td>{auditLogs.action}</td>
