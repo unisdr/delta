@@ -5,12 +5,9 @@ import {
 import {
 	disruptionCreate,
 	disruptionUpdate,
-	disruptionIdByImportId
+	disruptionIdByImportId,
+	fieldsDefApi
 } from "~/backend.server/models/disruption"
-
-import {
-	fieldsDefApi,
-} from "~/frontend/disruption"
 
 import {
 	createAction,

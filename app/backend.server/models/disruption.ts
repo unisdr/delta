@@ -3,27 +3,56 @@ import {disruptionTable, DisruptionInsert} from "~/drizzle/schema"
 import {eq} from "drizzle-orm"
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form"
-import {Errors, hasErrors} from "~/frontend/form"
-import {deleteByIdForNumberId, deleteByIdForStringId} from "./common"
+import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
+import {deleteByIdForStringId} from "./common"
+import {configCurrencies} from "~/util/config"
 
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
+
+export const fieldsDef: FormInputDef<DisruptionFields>[] =
+	[
+		{key: "durationDays", label: "Duration (Days)", type: "number"},
+		{key: "durationHours", label: "Duration (Hours)", type: "number"},
+		{key: "usersAffected", label: "Users Affected", type: "number"},
+		{key: "comment", label: "Comment", type: "text"},
+		{key: "responseOperation", label: "Response Operation", type: "text"},
+		{key: "responseCost", label: "Response Cost", type: "number"},
+		{
+			key: "responseCurrency",
+			label: "Response Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => {return {key: c, label: c}})
+		}
+	]
+
+
+export const fieldsDefApi: FormInputDef<DisruptionFields>[] =
+	[
+		...fieldsDef,
+		{key: "apiImportId", label: "", type: "other"}
+	]
+
+
+export const fieldsDefView: FormInputDef<DisruptionFields>[] =
+	[
+		...fieldsDef,
+	]
+
 
 export function validate(fields: Partial<DisruptionFields>): Errors<DisruptionFields> {
 	let errors: Errors<DisruptionFields> = {};
 	errors.fields = {};
 
-	if (fields.durationDays !== undefined && fields.durationDays < 0) {
-		errors.fields.durationDays = ["Duration (days) must be >= 0"]
+	let check = (k: keyof DisruptionFields, msg: string) => {
+		if (fields[k] != null && (fields[k] as number) < 0) {
+			errors.fields![k] = [msg]
+		}
 	}
-	if (fields.durationHours !== undefined && fields.durationHours < 0) {
-		errors.fields.durationHours = ["Duration (hours) must be >= 0"]
-	}
-	if (fields.usersAffected !== undefined && fields.usersAffected < 0) {
-		errors.fields.usersAffected = ["Users affected must be >= 0"]
-	}
-	if (fields.responseCost !== undefined && fields.responseCost < 0) {
-		errors.fields.responseCost = ["Response cost must be >= 0"]
-	}
+
+	check("durationDays", "Duration (days) must be >= 0")
+	check("durationHours", "Duration (hours) must be >= 0")
+	check("usersAffected", "Users affected must be >= 0")
+	check("responseCost", "Response cost must be >= 0")
 
 	return errors
 }
@@ -89,4 +118,5 @@ export async function disruptionDeleteById(id: string): Promise<DeleteResult> {
 	await deleteByIdForStringId(id, disruptionTable)
 	return {ok: true}
 }
+
 

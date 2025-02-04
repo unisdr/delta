@@ -24,10 +24,10 @@ export interface FormError {
 	def?: FormInputDefSpecific
 	code: string
 	message: string
-	data?: any 
+	data?: any
 }
 
-export function errorToString(error: string|FormError): string {
+export function errorToString(error: string | FormError): string {
 	return (typeof error === 'string' ? error : error.message)
 }
 
@@ -46,7 +46,7 @@ export function errorsToStrings(errors: (string | FormError)[] | undefined): str
 }
 
 export interface Errors<T> {
-	form?: (string|FormError)[]
+	form?: (string | FormError)[]
 	fields?: Partial<Record<keyof T, (string | FormError)[]>>
 }
 
@@ -57,15 +57,15 @@ export function initErrorField<T>(errors: Errors<T>, field: keyof T): string[] {
 }
 
 export function firstError<T>(errors: Errors<T> | undefined): FormError | string | null {
-	if (!errors){
+	if (!errors) {
 		return null
 	}
 	if (errors.form && errors.form.length > 0) {
 		return errors.form[0]
 	}
-	if (errors.fields){
-		for (const field in errors.fields){
-			if (errors.fields[field] && errors.fields[field].length > 0){
+	if (errors.fields) {
+		for (const field in errors.fields) {
+			if (errors.fields[field] && errors.fields[field].length > 0) {
 				return errors.fields[field][0]
 			}
 		}
@@ -147,9 +147,9 @@ export function FieldErrors2({errors}: FieldErrors2Props) {
 	return (
 		<ul className="form-field-errors">
 			{errors.map((error, index) => (
-				<li style={{ color: "red" }} key={index}>
+				<li style={{color: "red"}} key={index}>
 					{error}
-			  	</li>
+				</li>
 			))}
 		</ul>
 	);
@@ -162,18 +162,18 @@ interface SubmitButtonProps {
 	style?: React.CSSProperties; // Allow inline styles
 }
 
-export function SubmitButton({ 
+export function SubmitButton({
 	label, className = "mg-button mg-button-primary",
 	style = {}, // Default to an empty style object
 }: SubmitButtonProps) {
 	return (
-			<button className={className} 
+		<button className={className}
 			style={{
 				...style, // Use passed styles
 				flex: "none", // Prevent stretching within flex containers
-			  }}
-			>
-				{label}</button>
+			}}
+		>
+			{label}</button>
 	);
 }
 
@@ -242,7 +242,8 @@ export function formScreen<T, D>(opts: FormScreenOpts<T, D>) {
 	return opts.form(mergedProps);
 }
 
-export type FormInputType = "text" | "textarea" | "date" | "number" | "bool" | "other" | "enum"
+// enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
+export type FormInputType = "text" | "textarea" | "date" | "number" | "bool" | "other" | "enum" | "enum-flex"
 
 export interface EnumEntry {
 	key: string
@@ -291,6 +292,8 @@ export function fieldsFromMap<T>(
 					return [k, Boolean(vs)]
 				case "enum":
 					return [k, vs]
+				case "enum-flex":
+					return [k, vs]
 			}
 		})
 	) as T;
@@ -334,19 +337,42 @@ export function Input(props: InputProps) {
 		default:
 			throw `Unknown type ${props.def.type}`
 		case "enum":
-			let vs = props.value as string;
-			return <Field label={label}>
-				<select
-					required={props.def.required}
-					name={props.name}
-					defaultValue={vs}
-				>
-					{props.enumData!.map((v) => (
-						<option key={v.key} value={v.key}>{v.label}</option>
-					))}
-				</select>
-				<FieldErrors2 errors={props.errors} />
-			</Field>
+			{
+				let vs = props.value as string;
+				return <Field label={label}>
+					<select
+						required={props.def.required}
+						name={props.name}
+						defaultValue={vs}
+					>
+						{props.enumData!.map((v) => (
+							<option key={v.key} value={v.key}>{v.label}</option>
+						))}
+					</select>
+					<FieldErrors2 errors={props.errors} />
+				</Field>
+			}
+		case "enum-flex":
+			{
+				let vs = props.value as string;
+				let contains = props.enumData!.some(e => e.key == vs)
+
+				return <Field label={label}>
+					<select
+						required={props.def.required}
+						name={props.name}
+						defaultValue={vs}
+					>
+						{!contains && vs &&
+							<option key={vs} value={vs}>{vs}</option>
+						}
+						{props.enumData!.map((v) => (
+							<option key={v.key} value={v.key}>{v.label}</option>
+						))}
+					</select>
+					<FieldErrors2 errors={props.errors} />
+				</Field>
+			}
 		case "bool":
 			let v = props.value as boolean;
 			if (v) {
@@ -460,9 +486,15 @@ export function FieldView(props: FieldViewProps) {
 			let date = props.value as Date;
 			return <p>{props.def.label}: {formatDate(date)}</p>
 		case "enum":
-			let enumId = props.value;
-			let enumItem = props.def.enumData!.find((item) => item.key === enumId);
-			return <p>{props.def.label}: {enumItem!.label}</p>
+		case "enum-flex":
+			{
+				let enumId = props.value;
+				let enumItem = props.def.enumData!.find((item) => item.key === enumId);
+				if (!enumItem) {
+					return <p>{props.def.label}: {enumId}</p>
+				}
+				return <p>{props.def.label}: {enumItem.label}</p>
+			}
 	}
 }
 

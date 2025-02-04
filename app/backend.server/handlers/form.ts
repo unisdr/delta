@@ -635,7 +635,7 @@ interface CreateActionArgs<T> {
 	getById: (tx: Tx, id: string) => Promise<T>;
 	redirectTo: (id: string) => string;
 	tableName: string;
-	action: (isCreate: boolean)=> string;
+	action?: (isCreate: boolean)=> string;
 }
 
 export function createAction<T>(args: CreateActionArgs<T>) {
