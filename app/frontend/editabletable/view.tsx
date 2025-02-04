@@ -88,7 +88,7 @@ function TableClient(props: TableProps) {
 
 	let [tableErrors, setTableErrors] = useState<tableError[]>([])
 
-	const [categoryPresence, setCategoryPresence] = useState(props.categoryPresence)
+	let [categoryPresence, setCategoryPresence] = useState(props.categoryPresence)
 
 	useEffect(() => {
 		setCategoryPresence(props.categoryPresence)
@@ -655,7 +655,6 @@ function TableCategoryPresence(props: TableCategoryPresenceProps) {
 		fetcher.submit(e.target.form)
 	}
 
-
 	return (
 		<fetcher.Form method="post">
 			<input type="hidden" name="tblId" value={props.tblId} />
@@ -672,8 +671,8 @@ function TableCategoryPresence(props: TableCategoryPresenceProps) {
 								onChange={e => handleChange(e, d.jsName)}
 							>
 								<option value="">Not Specified</option>
-								<option value="1">Present</option>
-								<option value="0">Absent</option>
+								<option value="1">Yes</option>
+								<option value="0">No</option>
 							</select>
 						</label>
 					</p>
