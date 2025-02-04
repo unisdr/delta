@@ -11,7 +11,7 @@ import {HumanEffectsTable} from "~/frontend/human_effects/defs"
 import React from 'react'
 import {toStandardDate} from "~/util/date"
 import {eqArr} from "~/util/array"
-import {useFetcher} from "@remix-run/react"
+import {Link, useFetcher} from "@remix-run/react"
 
 interface TableProps {
 	recordId: string
@@ -244,6 +244,8 @@ function TableClient(props: TableProps) {
 
 	let hasDate = props.defs.some(d => d.format == "date")
 
+	let categoryPresenceAtLeastOneYes = Object.values(categoryPresence).some(v => v)
+
 	return (
 		<div className="table-container">
 			<TableCategoryPresence
@@ -251,31 +253,36 @@ function TableClient(props: TableProps) {
 				defs={childProps.defs}
 				data={categoryPresence}
 			/>
-			<h3>Numeric data</h3>
-			<TableActions
-				onSave={handleSave}
-				onRevert={handleRevert}
-				onClear={handleClear}
-				addRowStart={addRowStart}
-				reSort={reSort}
-				csvExportUrl="./human-effects/csv-export"
-				csvImportUrl={"./human-effects/csv-import?table="+props.table}
-			/>
-			<TableContent
-				tableErrors={tableErrors}
-				sort={sort}
-				totals={childProps.data.getTotals().data}
-				totalsMatch={hasDate ? null : childProps.data.groupTotalsMatch()}
-				data={childProps.data.applyUpdatesWithGroupKey()}
-				defs={childProps.defs}
-				updateTotals={updateTotals}
-				updateCell={updateCell}
-				copyRow={copyRow}
-				deleteRow={deleteRow}
-				toggleColumnSort={toggleColumnSort}
-				addRowEnd={addRowEnd}
-			/>
-			<TableLegend />
+			{categoryPresenceAtLeastOneYes &&
+				<>
+					<h3>Numeric data</h3>
+					<TableActions
+						onSave={handleSave}
+						onRevert={handleRevert}
+						onClear={handleClear}
+						addRowStart={addRowStart}
+						reSort={reSort}
+						csvExportUrl="./human-effects/csv-export"
+						csvImportUrl={"./human-effects/csv-import?table=" + props.table}
+					/>
+					<TableContent
+						tableErrors={tableErrors}
+						sort={sort}
+						totals={childProps.data.getTotals().data}
+						totalsMatch={hasDate ? null : childProps.data.groupTotalsMatch()}
+						data={childProps.data.applyUpdatesWithGroupKey()}
+						defs={childProps.defs}
+						updateTotals={updateTotals}
+						updateCell={updateCell}
+						copyRow={copyRow}
+						deleteRow={deleteRow}
+						toggleColumnSort={toggleColumnSort}
+						addRowEnd={addRowEnd}
+					/>
+					<TableLegend />
+					<Link to="/settings/human-effects-dsg">Configure Disaggregations</Link>
+				</>
+			}
 		</div>
 	)
 }

@@ -1,7 +1,7 @@
 import {authLoaderWithPerm} from "~/util/auth";
 import {MainContainer} from "~/frontend/container";
 import {Table} from "~/frontend/editabletable/view";
-import {Link, useLoaderData} from "@remix-run/react";
+import {useLoaderData} from "@remix-run/react";
 import {HumanEffectsTableFromString, HumanEffectTablesDefs} from "~/frontend/human_effects/defs";
 import {useFetcher} from "@remix-run/react"
 import {loadData} from "~/backend.server/handlers/human_effects"
@@ -73,7 +73,6 @@ export default function Screen() {
 				defs={data.defs}
 				categoryPresence={data.categoryPresence}
 			/>
-			<Link to="/settings/human-effects-dsg">Configure Disaggregations</Link>
 		</MainContainer>
 	);
 }
