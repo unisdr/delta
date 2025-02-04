@@ -22,7 +22,7 @@ export const action = authActionApi(async (args) => {
 	const saveRes = await jsonCreate({
 		data,
 		fieldsDef: fieldsDefApi,
-		create: hazardEventCreate,
+		create: hazardEventCreate
 	});
 
 	return Response.json(saveRes)
