@@ -148,7 +148,6 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							ref={contentReapeaterRef}
 							id="spatialFootprint"
 							mapper_preview={true}
-							debug={true}
 							table_columns={[
 								{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "40%" },
 								{
@@ -193,23 +192,6 @@ export function HazardEventForm(props: HazardEventFormProps) {
 											mapsCoordsField.closest(".dts-form-component")?.style.setProperty("display", "none");
 											geoLevelField.closest(".dts-form-component")?.style.setProperty("display", "block");
 										}
-
-										/*const value = e.target.value;
-										const fileField = document.getElementById("attachments_file");
-										const urlField = document.getElementById("attachments_url");
-			
-										if (fileField && urlField) {
-											const fileDiv = fileField.closest(".dts-form-component");
-											const urlDiv = urlField.closest(".dts-form-component");
-			
-											if (value === "File") {
-											fileDiv?.style.setProperty("display", "block");
-											urlDiv?.style.setProperty("display", "none");
-											} else if (value === "Link") {
-											fileDiv?.style.setProperty("display", "none");
-											urlDiv?.style.setProperty("display", "block");
-											}
-										}*/
 									},
 								},
 								{ id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson" },
