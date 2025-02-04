@@ -17,6 +17,7 @@ import {
 } from "~/backend.server/handlers/form";
 
 import {
+	authActionGetAuth,
 	authActionWithPerm,
 	authLoaderWithPerm,
 } from "~/util/auth";
@@ -58,12 +59,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
+
+	const user = authActionGetAuth(actionArgs);
 	return formSave({
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (id) {
-				return hazardEventUpdate(tx, id, data);
+				return hazardEventUpdate(tx, id, data,  user.user.id);
 			} else {
 				throw "not an create screen"
 			}
