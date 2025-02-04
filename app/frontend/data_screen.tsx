@@ -58,11 +58,11 @@ export function DataMainLinks(props: DataMainLinksProps) {
 	return (
 		<div className="dts-main-container mg-grid mg-grid__col-auto" role="region" aria-label="Main container">
 			<div className="mg-grid__col--span-all" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', bottom: '1rem' }} role="navigation" aria-label="Main links">
-				<a href={props.baseRoute + (props.relLinkToNew ? props.relLinkToNew : "/edit/new")} className="mg-button mg-button--small mg-button-primary" role="button" aria-label={`Create new ${props.resourceName}`}>New {props.resourceName}</a>
+				<a href={props.baseRoute + (props.relLinkToNew ? props.relLinkToNew : "/edit/new")} className="mg-button mg-button--small mg-button-primary" role="button" aria-label={`Create new ${props.resourceName}`}>Add new {props.resourceName}</a>
 				{props.csvExportLinks && (
 					<>
 						<a href={`${props.baseRoute}/csv-export`} className="mg-button mg-button--small mg-button-outline" role="button" aria-label="Export CSV">CSV Export</a>
-						<a href={`${props.baseRoute}/csv-import`} className="mg-button mg-button--small mg-button-outline" role="button" aria-label="Import CSV">CSV Import</a>
+						<a href={`${props.baseRoute}/csv-import`} className="mg-button mg-button--small mg-button-secondary" role="button" aria-label="Import CSV">CSV Import</a>
 					</>
 				)}
 			</div>

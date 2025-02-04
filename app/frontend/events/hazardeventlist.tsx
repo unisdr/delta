@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 import {
 	useLoaderData,
 	Link,
@@ -18,6 +20,8 @@ import {
 
 import { hazardEventsLoader } from "~/backend.server/handlers/events/hazardevent"
 
+import { createFloatingTooltip } from "~/util/tooltip";
+
 interface ListViewArgs {
 	isPublic: boolean
 	basePath: string
@@ -32,6 +36,26 @@ export function ListView(args: ListViewArgs) {
 	const { items } = ld.data
 
 	const pagination = Pagination(ld.data.pagination)
+
+	// Refs for the status elements
+	const statusRefs = useRef(new Map<number, HTMLElement>());
+
+	useEffect(() => {
+		if (typeof window !== "undefined") { // This check ensures that DOM-related code runs only in the browser
+			items.forEach((item, index) => {
+				const element = statusRefs.current.get(index);
+				if (element) {
+					createFloatingTooltip({
+						content: item.approvalStatus,
+						target: element,
+						placement: "top",
+						offsetValue: 8, // You can adjust this value based on your UI needs
+						arrowSelector: ".dts-tooltip__arrow" // Ensure you have this CSS class in your styles
+					});
+				}
+			});
+		}
+	}, [items]);
 
 	return (
 		<div className="dts-main-container">
@@ -50,6 +74,20 @@ export function ListView(args: ListViewArgs) {
 						<Link to={args.basePath} className="mg-button mg-button--small mg-button-outline">Clear filters</Link>
 					</div>
 				</Form>
+				{!args.isPublic && (
+					<div className="dts-legend">
+						<span className="dts-body-label">Status legend</span>
+						<div className="dts-legend__item">
+							<span className="dts-status dts-status--draft"></span> Draft
+						</div>
+						<div className="dts-legend__item">
+							<span className="dts-status dts-status--published"></span> Published
+						</div>
+						<div className="dts-legend__item">
+							<span className="dts-status dts-status--rejected"></span> Rejected
+						</div>
+					</div>
+				)}
 			</div>
 
 			{ld.data.pagination.totalItems ? (
@@ -85,7 +123,11 @@ export function ListView(args: ListViewArgs) {
 									</td>
 									{!args.isPublic && (
 										<td className="dts-table__cell-centered">
-											<span className={`dts-status dts-status--${item.approvalStatus}`}></span>
+											{/* <span className={`dts-status dts-status--${item.approvalStatus}`}></span> */}
+											<span
+												ref={el => statusRefs.current.set(index, el!)}
+												className={`dts-status dts-status--${item.approvalStatus.toLowerCase()}`}
+											></span>
 										</td>
 									)}
 									<td>
