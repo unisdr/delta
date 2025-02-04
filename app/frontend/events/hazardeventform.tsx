@@ -17,10 +17,11 @@ import {
 import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker"
 import {formatDate} from "~/util/date";
 
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
 import { ContentRepeater } from "~/components/ContentRepeater";
+import { TreeView, buildTree } from "~/components/TreeView";
 
 export const route = "/hazard-event"
 
@@ -59,6 +60,7 @@ export const fieldsDefView: FormInputDef<HazardEventViewModel>[] = [
 interface HazardEventFormProps extends UserFormProps<HazardEventFields> {
 	hip: Hip;
 	parent?: HazardEventViewModel;
+	treeData: any[];
 }
 
 export function hazardEventLabel(args: {
@@ -95,6 +97,7 @@ export function hazardEventLink(args: {
 
 export function HazardEventForm(props: HazardEventFormProps) {
 	const fields = props.fields;
+	const treeData = props.treeData;
 
 	const [selected, setSelected] = useState(props.parent);
 
@@ -109,6 +112,10 @@ export function HazardEventForm(props: HazardEventFormProps) {
 			window.removeEventListener('message', handleMessage);
 		};
 	}, []);
+
+	const targetObject = useRef<HTMLDivElement>(null);
+	const treeViewRef = useRef<any>(null);
+	const contentReapeaterRef = useRef<any>(null);
 
 	return (
 		<FormView
@@ -138,16 +145,86 @@ export function HazardEventForm(props: HazardEventFormProps) {
 				spatialFootprint: (
 					<Field key="spatialFootprint" label="Spatial Footprint">
 						<ContentRepeater
+							ref={contentReapeaterRef}
 							id="spatialFootprint"
 							mapper_preview={true}
+							debug={true}
 							table_columns={[
 								{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "50%" },                        
 								{ type: "action", caption: "Action", width: "50%" },
 							]}
 							dialog_fields={[
 								{ id: "title", caption: "Title", type: "input", required: true },
-								{ id: "map_coords", caption: "Map Coords", type: "mapper", placeholder: "", required: true, mapperGeoJSONField: "geojson" },	
-								{ id: "geojson", type: "hidden" },
+								{ id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson" },
+								{ id: "geographic_level", caption: "Geographic Level", type: "custom",
+									render: (data: any, handleFieldChange: any) => {
+										return (
+											<>
+											  <div style={{ display: "flex", alignItems: "center", gap: "1%" }}>
+												{/* Spatial Footprint Container */}
+												<div
+												  id="spatialFootprint_geographic_level_container"
+												  style={{
+													position: "relative",
+													width: "100%",
+													padding: "0.4rem 0.8rem",
+													backgroundColor: "white",
+													border: "1px solid #cccccc",
+													borderRadius: "6px",
+													color: "#999",
+													minHeight: "3.5rem",
+													overflow: "hidden",
+													cursor: "pointer",
+												  }}
+												>
+												  <span>{data}</span>
+												  {/* Select Geographic Level Button */}
+												  <a
+													href="#"
+													style={{
+													  width: "auto",
+													  zIndex: 1000,
+													  textAlign: "center",
+													  padding: "0.7rem 0.8rem",
+													  color: "#000",
+													  textDecoration: "none",
+													  borderRadius: "4px",
+													  display: "inline-flex",
+													  alignItems: "center",
+													  justifyContent: "center",
+													  backgroundColor: "#cccccc",
+													  position: "absolute",
+													  top: "-2px",
+													  right: "-2px",
+													}}
+													onClick={(e) => {
+													  e.preventDefault();
+													  treeViewRef.current?.treeViewOpen(e);
+													}}
+												  >
+													<img
+													  src="/assets/icons/globe.svg"
+													  alt="Globe SVG File"
+													  title="Globe SVG File"
+													  style={{ width: "20px", height: "20px", marginRight: "0.5rem" }}
+													/>
+													Select
+												  </a>
+												</div>
+										  
+												{/* Hidden Textarea */}
+												<textarea
+												  id="spatialFootprint_geographic_level"
+												  name="spatialFootprint_geographic_level"
+												  className="dts-hidden-textarea"
+												  style={{ display: "none" }}
+												></textarea>
+											  </div>
+											</>
+										  );										  
+									}
+								},
+								{ id: "geojson", caption: "Map Coordinates / Geographic Level", type: "hidden", required: true },
 							]}
 							data={(() => {
 								try {
@@ -165,6 +242,60 @@ export function HazardEventForm(props: HazardEventFormProps) {
 									console.error("Failed to process items.");
 								}
 							}}
+						/>
+						<TreeView 
+							ref={treeViewRef} 
+							treeData={treeData} 
+							caption="Select Geographic level" 
+							rootCaption="Geographic levels" 
+							onApply={
+								(dialogRef: any, selectedItems: any) => {
+									console.log('targetObject', contentReapeaterRef.current);
+
+									if (contentReapeaterRef.current.getDialogRef()) {
+										// Set Name in the div
+										contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
+										// Set GeoJSON in the hidden textarea
+										selectedItems.data.map((item: any) => {
+											if (item.id == selectedItems.selectedId) {
+												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
+												const setField = { id: "geojson", value: item.geojson };
+												contentReapeaterRef.current.handleFieldChange(setField, item.geojson);
+
+												const setFieldGoeLevel = { id: "geographic_level", value: selectedItems.names };
+												contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
+											}
+										});
+									}
+
+									/*if (targetObject.current) { 
+										targetObject.current.querySelector('span').textContent = selectedItems.names;
+
+										selectedItems.data.map((item: any) => {
+											if (item.id == selectedItems.selectedId) {
+												targetObject.current.querySelector('pre').textContent = `GEO JSON:\n${item.geojson}`;
+											}
+										});
+									}
+									console.log('selectedItems', selectedItems);*/
+								}
+							}
+							onRenderItemName={
+								(item: any) => {
+									return (typeof(item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
+								}
+							}
+							appendCss={
+								`
+									ul.tree li div[disable="true"] {
+										color: #ccc;
+									}
+									ul.tree li div[disable="true"] .btn-face.select {
+										display: none;
+									}
+								`
+							}
+							disableButtonSelect={true}
 						/>
 					</Field>
 				),

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { initTokenField, renderTokenField } from "./controls/tokenfield";
 import { renderMapper, renderMapperDialog } from "./controls/mapper";
 // Import Leaflet Core
@@ -55,7 +55,7 @@ interface TableColumn {
 interface DialogField {
   id: string;
   caption: string;
-  type: "input" | "select" | "file" | "option" | "textarea" | "mapper" | "tokenfield" | "hidden";
+  type: "input" | "select" | "file" | "option" | "textarea" | "mapper" | "tokenfield" | "hidden" | "custom";
   required?: boolean;
   options?: string[];
   placeholder?: string;
@@ -165,7 +165,7 @@ const loadLeaflet = (() => {
   };
 })();
 
-export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
+export const ContentRepeater = forwardRef(({
   id,
   dnd_order = false,
   base_path = "",
@@ -179,7 +179,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   file_viewer_temp_url = "",
   file_viewer_url = "",
   mapper_preview = false,
-}) => {
+}, ref: any) => {
   const [items, setItems] = useState<Record<string, any>>(() => {
     const initialState: Record<string, any> = {};
     data.forEach((item) => {
@@ -1228,7 +1228,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     onChange(Object.values(items));
   };
 
-  const handleFieldChange = (field: DialogField, value: any) => {
+  const handleFieldChange = useCallback((field: any, value: any) => {
     if (debug) console.log(`handleFieldChange triggered!`, field);
     setFormData((prev: Record<string, any>) => ({ ...prev, [field.id]: value }));
     if (field.onChange) {
@@ -1240,7 +1240,13 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
         setDialogFields
       );
     }
-  };
+  }, [formData]);
+
+  useImperativeHandle(ref, () => ({
+    getDialogRef: () => { return dialogRef.current },
+    getFormData: () => { return formData },
+    handleFieldChange: handleFieldChange,
+  }), [formData, handleFieldChange]);
 
   const handleDragStart = (index: number) => {
     dragIndex.current = index;
@@ -1452,6 +1458,11 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                       <div className="dts-form-component__label">
                         <span>{field.caption}</span>
                       </div>
+                      {field.type === "custom" && (
+                        <>
+                          {field.render && field.render(value, handleFieldChange)}
+                        </>
+                      )}
                       {field.type === "hidden" && (
                         <>
                         <textarea
@@ -1836,4 +1847,4 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       </dialog>
     </div>
   );
-};
+});
