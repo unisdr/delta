@@ -31,6 +31,9 @@ import {
 	hazardEventById
 } from "~/backend.server/models/event";
 
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { divisionTable } from "~/drizzle/schema";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	let {request} = loaderArgs;
@@ -45,7 +48,15 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		}
 		return {hip, parentId, parent};
 	}
-	return {hip};
+
+	// Define Keys Mapping (Make it Adaptable)
+	const idKey = "id"; 
+	const parentKey = "parentId"; 
+	const nameKey = "name"; 
+	const rawData = await dr.select().from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	return {hip: hip, treeData: treeData};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -73,7 +84,7 @@ export default function Screen() {
 	let fieldsInitial = {parent: ld.parentId}
 
 	return formScreen({
-		extraData: {hip: ld.hip, parent: ld.parent},
+		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData},
 		fieldsInitial,
 		form: HazardEventForm,
 		edit: false
