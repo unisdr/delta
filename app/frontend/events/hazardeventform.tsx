@@ -155,6 +155,43 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							]}
 							dialog_fields={[
 								{ id: "title", caption: "Title", type: "input", required: true },
+								{
+									id: "map_option",
+									caption: "Option",
+									type: "option",
+									options: ["Map Coordinates", "Geographic Level"],
+									onChange: (e) => {
+										const value = e.target.value;
+
+										const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
+										const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
+										
+										if (value === "Map Coordinates") {
+											mapsCoordsField.closest(".dts-form-component")?.style.setProperty("display", "block");
+											geoLevelField.closest(".dts-form-component")?.style.setProperty("display", "none");
+										} else if (value === "Geographic Level") {
+											mapsCoordsField.closest(".dts-form-component")?.style.setProperty("display", "none");
+											geoLevelField.closest(".dts-form-component")?.style.setProperty("display", "block");
+										}
+
+										/*const value = e.target.value;
+										const fileField = document.getElementById("attachments_file");
+										const urlField = document.getElementById("attachments_url");
+			
+										if (fileField && urlField) {
+											const fileDiv = fileField.closest(".dts-form-component");
+											const urlDiv = urlField.closest(".dts-form-component");
+			
+											if (value === "File") {
+											fileDiv?.style.setProperty("display", "block");
+											urlDiv?.style.setProperty("display", "none");
+											} else if (value === "Link") {
+											fileDiv?.style.setProperty("display", "none");
+											urlDiv?.style.setProperty("display", "block");
+											}
+										}*/
+									},
+								},
 								{ id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson" },
 								{ id: "geographic_level", caption: "Geographic Level", type: "custom",
 									render: (data: any, handleFieldChange: any) => {
