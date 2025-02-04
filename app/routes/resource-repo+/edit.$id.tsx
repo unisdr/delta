@@ -32,7 +32,9 @@ export const action = createAction({
 	update: resourceRepoUpdate,
 	redirectTo: (id) => `${route}/${id}`,
 	getById: resourceRepoByIdTx,
-	tableName: getTableName(resourceRepoTable)
+	tableName: getTableName(resourceRepoTable),
+	action: (isCreate) =>
+		isCreate ? "Create resource repo" : "Update resource repo",
 });
 
 export default function Screen() {
