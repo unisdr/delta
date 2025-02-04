@@ -12,7 +12,7 @@ import {
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params, request} = actionArgs
-	let recordId = params.id
+	let recordId = params.disRecId
 	let url = new URL(request.url)
 	let tblStr = url.searchParams.get("tbl") || ""
 	return loadData(recordId, tblStr)
@@ -20,7 +20,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 
 export const action = authLoaderWithPerm("EditData", async (actionArgs) => {
 	let {params, request} = actionArgs
-	let recordId = params.id
+	let recordId = params.disRecId
 	if (!recordId) {
 		throw new Error("no record id")
 	}

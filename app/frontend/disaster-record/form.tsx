@@ -111,7 +111,10 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 			plural="Disaster Records"
 			singular="Disaster Record"
 			extraActions={
-				<Link to={"/disaster-record/edit-sub/"+item.id +"/human-effects"}>Human Direct Effects</Link>
+				<ul>
+					<li><Link to={"/disaster-record/edit-sub/" + item.id + "/human-effects"}>Human Direct Effects</Link></li>
+					<li><Link to={"/disaster-record/edit-sub/" + item.id + "/disruptions"}>Disruptions</Link></li>
+				</ul>
 			}
 		>
 			<FieldsView

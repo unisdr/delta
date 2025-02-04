@@ -8,7 +8,7 @@ export const loader = authLoaderWithPerm("EditData", async () => {
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const {params, request} = actionArgs
 	let url = new URL(request.url)
-	let recordId = params.id || ""
+	let recordId = params.disRecId || ""
 	let table = url.searchParams.get("table") || ""
 	return await clear(table, recordId)
 })
