@@ -17,6 +17,7 @@ import {
 
 
 import {
+	authActionGetAuth,
 	authActionWithPerm,
 	authLoaderWithPerm,
 } from "~/util/auth";
@@ -61,13 +62,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
+	const user = authActionGetAuth(actionArgs);
 	return formSave({
 		isCreate: true,
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (!id) {
-				return hazardEventCreate(tx, data);
+				return hazardEventCreate(tx, data, user.user.id);
 			} else {
 				throw "not an update screen"
 			}
