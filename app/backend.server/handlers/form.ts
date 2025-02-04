@@ -635,6 +635,7 @@ interface CreateActionArgs<T> {
 	getById: (tx: Tx, id: string) => Promise<T>;
 	redirectTo: (id: string) => string;
 	tableName: string;
+	action: (isCreate: boolean)=> string;
 }
 
 export function createAction<T>(args: CreateActionArgs<T>) {
@@ -648,13 +649,11 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 				if (!id) {
 					const newRecord = await args.create(tx, data);
 					if (newRecord.ok) {
-						console.log("id of new inserted record= ", newRecord.id);
-
 						logAudit({
 							tableName: args.tableName,
 							recordId: String(newRecord.id),
 							userId: user.user.id,
-							action: "create",
+							action: args.action? args.action(true) : "create",
 							newValues: data,
 						});
 					}
@@ -668,12 +667,11 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 							tableName: args.tableName,
 							recordId: id,
 							userId: user.user.id,
-							action: "update",
+							action: args.action? args.action(false) : "update",
 							oldValues: oldRecord,
 							newValues: data,
 						});
 					}
-					//   return args.update(tx, id, data);
 					return updateResult;
 				}
 			},
