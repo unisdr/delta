@@ -92,6 +92,7 @@ export function HazardPicker(props: HazardPickerProps) {
 		<>
 			<Field label="Hazard Class">
 				<select
+					id="hazard-class"
 					required={props.required}
 					value={selectedClass || ""}
 					onChange={(e) => {
@@ -111,6 +112,7 @@ export function HazardPicker(props: HazardPickerProps) {
 
 			<Field label="Hazard Cluster">
 				<select
+					id="hazard-cluster"
 					required={props.required}
 					value={selectedCluster || ""}
 					onChange={(e) => {
@@ -130,6 +132,7 @@ export function HazardPicker(props: HazardPickerProps) {
 
 			<Field label="Specific Hazard">
 				<select
+					id="specific-hazard"
 					required={props.required}
 					name={props.name}
 					value={selectedHazard || ""}

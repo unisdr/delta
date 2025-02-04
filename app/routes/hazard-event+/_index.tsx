@@ -1,8 +1,8 @@
-import {DataMainLinks} from "~/frontend/data_screen"
+import { DataMainLinks } from "~/frontend/data_screen"
 
-import {hazardEventsLoader} from "~/backend.server/handlers/events/hazardevent"
+import { hazardEventsLoader } from "~/backend.server/handlers/events/hazardevent"
 
-import {ListView} from "~/frontend/events/hazardeventlist"
+import { ListView } from "~/frontend/events/hazardeventlist"
 
 import {
 	useLoaderData,
@@ -12,10 +12,10 @@ import {
 	authLoaderPublicOrWithPerm,
 } from "~/util/auth";
 
-import {MainContainer} from "~/frontend/container"
+import { MainContainer } from "~/frontend/container"
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-	return hazardEventsLoader({loaderArgs})
+	return hazardEventsLoader({ loaderArgs })
 })
 
 export default function Data() {
@@ -23,30 +23,32 @@ export default function Data() {
 	return (
 		<MainContainer title="Hazardous events">
 			<>
-				<DataMainLinks relLinkToNew="/new" isPublic={ld.isPublic} baseRoute="/hazard-event" resourceName="Hazardous Event" csvExportLinks={true} />
-				{!ld.isPublic && (
-					<>
-						<div className="dts-legend">
-							<span className="dts-body-label">Status legend</span>
-							<div className="dts-legend__item">
-								<span className="dts-status dts-status--draft" aria-labelledby="legend1"></span>
-								<span id="legend1">Draft</span>
+				<section>
+					<DataMainLinks relLinkToNew="/new" isPublic={ld.isPublic} baseRoute="/hazard-event" resourceName="Hazardous Event" csvExportLinks={true} />
+					{!ld.isPublic && (
+						<>
+							<div className="dts-legend">
+								<span className="dts-body-label">Status legend</span>
+								<div className="dts-legend__item">
+									<span className="dts-status dts-status--draft" aria-labelledby="legend1"></span>
+									<span id="legend1">Draft</span>
+								</div>
+								<div className="dts-legend__item">
+									<span className="dts-status dts-status--published" aria-labelledby="legend2"></span>
+									<span id="legend2">Published</span>
+								</div>
+								<div className="dts-legend__item">
+									<span className="dts-status dts-status--rejected" aria-labelledby="legend3"></span>
+									<span id="legend3">Rejected</span>
+								</div>
 							</div>
-							<div className="dts-legend__item">
-								<span className="dts-status dts-status--published" aria-labelledby="legend2"></span>
-								<span id="legend2">Published</span>
-							</div>
-							<div className="dts-legend__item">
-								<span className="dts-status dts-status--rejected" aria-labelledby="legend3"></span>
-								<span id="legend3">Rejected</span>
-							</div>
-						</div>
-					</>
-				)}
-				<ListView
-					isPublic={ld.isPublic}
-					basePath="/hazard-event"
-				></ListView>
+						</>
+					)}
+					<ListView
+						isPublic={ld.isPublic}
+						basePath="/hazard-event"
+					></ListView>
+				</section>
 			</>
 		</MainContainer>
 	)
