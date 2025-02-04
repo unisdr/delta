@@ -34,7 +34,7 @@ export function validate(_fields: Partial<HazardEventFields>): Errors<HazardEven
 	return errors
 }
 
-export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, request: Request): Promise<CreateResult<HazardEventFields>> {
+export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userId?: number): Promise<CreateResult<HazardEventFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
@@ -63,17 +63,16 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, reque
 				createdAt: new Date(),
 			}).returning();
 
-			const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-			const userId=session.get("userId");
-
-			logAudit({
-				tableName: getTableName(hazardEventTable),
-				recordId: newHazardEventRecord[0].id,
-				action: "Create hazardous event",
-				newValues: JSON.stringify(newHazardEventRecord[0]),
-				oldValues: null,
-				userId: userId,
-			})
+			if(userId){
+				logAudit({
+					tableName: getTableName(hazardEventTable),
+					recordId: newHazardEventRecord[0].id,
+					action: "Create hazardous event",
+					newValues: JSON.stringify(newHazardEventRecord[0]),
+					oldValues: null,
+					userId: userId,
+				})
+			}
 	} catch (error: any) {
 		let res = checkConstraintError(error, hazardEventTableConstraits)
 		if (res) {
@@ -98,7 +97,7 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, reque
 
 export const RelationCycleError = {code: "ErrRelationCycle", message: "Event relation cycle not allowed. This event or one of it's children, is set as the parent."}
 
-export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<HazardEventFields>, request: Request): Promise<UpdateResult<HazardEventFields>> {
+export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<HazardEventFields>, userId?: number): Promise<UpdateResult<HazardEventFields>> {
 	let errors = validate(fields);
 	errors.form = errors.form || [];
 
@@ -132,16 +131,16 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 			return {ok: false, errors}
 		}
 
-		const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-		const userId=session.get("userId");
-		logAudit({
-			tableName: getTableName(hazardEventTable),
-			recordId: res[0].id,
-			action: "Update hazardous event",
-			newValues: res[0],
-			oldValues: oldRecord[0],
-			userId: userId,
-		})
+		if(userId){
+			logAudit({
+				tableName: getTableName(hazardEventTable),
+				recordId: res[0].id,
+				action: "Update hazardous event",
+				newValues: res[0],
+				oldValues: oldRecord[0],
+				userId: userId,
+			})
+		}
 	} catch (error: any) {
 		let res = checkConstraintError(error, hazardEventTableConstraits)
 		if (res) {
