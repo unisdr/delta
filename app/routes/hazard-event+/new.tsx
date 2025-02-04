@@ -50,13 +50,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
+	
 	return formSave({
 		isCreate: true,
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (!id) {
-				return hazardEventCreate(tx, data);
+				return hazardEventCreate(tx, data, actionArgs.request);
 			} else {
 				throw "not an update screen"
 			}

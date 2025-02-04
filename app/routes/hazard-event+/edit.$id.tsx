@@ -52,7 +52,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (id) {
-				return hazardEventUpdate(tx, id, data);
+				return hazardEventUpdate(tx, id, data, actionArgs.request);
 			} else {
 				throw "not an create screen"
 			}

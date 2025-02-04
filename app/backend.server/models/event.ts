@@ -15,11 +15,14 @@ import {dr, Tx} from "~/db.server";
 
 import {
 	eq,
+	getTableName,
 	sql
 } from "drizzle-orm";
 import {isValidUUID} from "~/util/id";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
+import { logAudit } from "./auditLogs";
+import { sessionCookie } from "~/util/session";
 
 export interface HazardEventFields extends Omit<EventInsert, 'id'>, Omit<HazardEventInsert, 'id'>, ObjectWithImportId {
 	parent: string
@@ -31,7 +34,7 @@ export function validate(_fields: Partial<HazardEventFields>): Errors<HazardEven
 	return errors
 }
 
-export async function hazardEventCreate(tx: Tx, fields: HazardEventFields): Promise<CreateResult<HazardEventFields>> {
+export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, request: Request): Promise<CreateResult<HazardEventFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
@@ -52,12 +55,24 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields): Prom
 	}
 	try {
 
-		await tx
+		let newHazardEventRecord = await tx
 			.insert(hazardEventTable)
 			.values({
 				...values,
 				id: eventId,
 				createdAt: new Date(),
+			}).returning();
+
+			const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+			const userId=session.get("userId");
+
+			logAudit({
+				tableName: getTableName(hazardEventTable),
+				recordId: newHazardEventRecord[0].id,
+				action: "create hazard event",
+				newValues: JSON.stringify(newHazardEventRecord[0]),
+				oldValues: null,
+				userId: userId,
 			})
 	} catch (error: any) {
 		let res = checkConstraintError(error, hazardEventTableConstraits)
@@ -83,7 +98,7 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields): Prom
 
 export const RelationCycleError = {code: "ErrRelationCycle", message: "Event relation cycle not allowed. This event or one of it's children, is set as the parent."}
 
-export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<HazardEventFields>): Promise<UpdateResult<HazardEventFields>> {
+export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<HazardEventFields>, request: Request): Promise<UpdateResult<HazardEventFields>> {
 	let errors = validate(fields);
 	errors.form = errors.form || [];
 
@@ -102,6 +117,7 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 */
 
 	try {
+		let oldRecord = await tx.select().from(hazardEventTable).where(eq(hazardEventTable.id, id));
 		let res = await tx
 			.update(hazardEventTable)
 			.set({
@@ -109,11 +125,23 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 				updatedAt: new Date(),
 			})
 			.where(eq(hazardEventTable.id, id))
-			.returning({id: hazardEventTable.id})
+			// .returning({id: hazardEventTable.id})
+			.returning()
 		if (res.length === 0) {
 			errors.form.push(`Record with id ${id} does not exist`)
 			return {ok: false, errors}
 		}
+
+		const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+		const userId=session.get("userId");
+		logAudit({
+			tableName: getTableName(hazardEventTable),
+			recordId: res[0].id,
+			action: "update hazard event",
+			newValues: res[0],
+			oldValues: oldRecord[0],
+			userId: userId,
+		})
 	} catch (error: any) {
 		let res = checkConstraintError(error, hazardEventTableConstraits)
 		if (res) {
