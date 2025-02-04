@@ -55,7 +55,7 @@ interface TableColumn {
 interface DialogField {
   id: string;
   caption: string;
-  type: "input" | "select" | "file" | "option" | "textarea" | "mapper" | "tokenfield";
+  type: "input" | "select" | "file" | "option" | "textarea" | "mapper" | "tokenfield" | "hidden";
   required?: boolean;
   options?: string[];
   placeholder?: string;
@@ -71,6 +71,7 @@ interface DialogField {
     currentDialogFields?: DialogField[] | null,
     setDialogFields?: React.Dispatch<React.SetStateAction<DialogField[]>> | null
   ) => void;
+  mapperGeoJSONField?: string;
 }
 
 interface ContentRepeaterProps {
@@ -1436,6 +1437,10 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
               {currentDialogFields.map((field, index) => {
                 const fieldId = `${id}_${field.id}`;
                 const value = formData[field.id] || "";
+                
+                if (field.type === "hidden") {
+                  field.show = false;
+                }
 
                 return (
                   <div
@@ -1447,6 +1452,15 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                       <div className="dts-form-component__label">
                         <span>{field.caption}</span>
                       </div>
+                      {field.type === "hidden" && (
+                        <>
+                        <textarea
+                          id={fieldId}
+                          onChange={(e) => handleFieldChange(field, e.target.value)}
+                          value={value}
+                        ></textarea>
+                        </>
+                      )}
                       {
                         field.type == "tokenfield" && (
                           renderTokenField(field, fieldId, value, tokenfieldRefs, handleFieldChange)
@@ -1533,8 +1547,23 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                               </a>                    
                               {value &&
                               (() => {
+                                //console.log('id', id);
+                                //console.log(field?.mapperGeoJSONField || '');
+
+                                const getGeoJSON = () => {
+                                  let retValue = null;
+                                  const mapperGeoField = formData[field.mapperGeoJSONField] || "";
+                                  // console.log('field', `${id}_${field.mapperGeoJSONField}`);
+                                  // console.log('field.id', item);
+                                  // console.log('object', Object.values(items));
+                                  if (mapperGeoField != '') {
+                                    retValue = JSON.parse(mapperGeoField);
+                                  }
+                                  return retValue;
+                                };
+
                                 try {
-                                  const parsedValue = JSON.parse(value); // Parse JSON object
+                                  let parsedValue = JSON.parse(value); // Parse JSON object
                                   if (parsedValue && parsedValue.mode) {
                                     const { mode, coordinates, center, radius } = parsedValue;
 
@@ -1556,6 +1585,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                           onClick={() => {
                                             const newWindow = window.open();
                                             if (newWindow) {
+                                              parsedValue = getGeoJSON() || parsedValue;
                                               newWindow.document.write(
                                                 `<pre>${JSON.stringify(parsedValue, null, 2)}</pre>`
                                               );
@@ -1588,6 +1618,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                                           onClick={() => {
                                             const newWindow = window.open();
                                             if (newWindow) {
+                                              parsedValue = getGeoJSON() || parsedValue;
                                               newWindow.document.write(
                                                 `<pre>${JSON.stringify(parsedValue, null, 2)}</pre>`
                                               );

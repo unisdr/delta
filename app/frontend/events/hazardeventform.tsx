@@ -146,7 +146,8 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							]}
 							dialog_fields={[
 								{ id: "title", caption: "Title", type: "input", required: true },
-								{ id: "map_coords", caption: "Map Coords", type: "mapper", placeholder: "", required: true }
+								{ id: "map_coords", caption: "Map Coords", type: "mapper", placeholder: "", required: true, mapperGeoJSONField: "geojson" },	
+								{ id: "geojson", type: "hidden" },
 							]}
 							data={(() => {
 								try {
