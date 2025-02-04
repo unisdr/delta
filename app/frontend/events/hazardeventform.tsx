@@ -150,8 +150,28 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							mapper_preview={true}
 							debug={true}
 							table_columns={[
-								{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "50%" },                        
-								{ type: "action", caption: "Action", width: "50%" },
+								{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "40%" },
+								{
+									type: "custom",
+									caption: "Option",
+									render: (item) => {
+										if (item.map_option === "Map Coordinates") {
+											return (
+												<>
+													<span>Map Coordinates</span>
+												</>
+											);
+										} else if (item.map_option === "Geographic Level") {
+											return (
+												<>
+													<span>Geographic Level</span>
+												</>
+											);
+										}
+									},
+									width: "40%",
+								},                 
+								{ type: "action", caption: "Action", width: "20%" },
 							]}
 							dialog_fields={[
 								{ id: "title", caption: "Title", type: "input", required: true },
@@ -304,17 +324,6 @@ export function HazardEventForm(props: HazardEventFormProps) {
 											}
 										});
 									}
-
-									/*if (targetObject.current) { 
-										targetObject.current.querySelector('span').textContent = selectedItems.names;
-
-										selectedItems.data.map((item: any) => {
-											if (item.id == selectedItems.selectedId) {
-												targetObject.current.querySelector('pre').textContent = `GEO JSON:\n${item.geojson}`;
-											}
-										});
-									}
-									console.log('selectedItems', selectedItems);*/
 								}
 							}
 							onRenderItemName={
@@ -418,88 +427,39 @@ export function HazardEventView(props: HazardEventViewProps) {
 						<p>Spatial Footprint:</p>
 						{(() => {
 						  try {
-							const footprints = JSON.parse(item.spatialFootprint); // Parse the JSON string
+							const footprints = JSON.parse(item.spatialFootprint); // Parse JSON string
+
 							return (
-							  <ul>
-								{footprints.map((footprint: any, index: number) => (
-								  <li key={footprint.id || index}>
-									Title: {footprint.title} <br />
-									Shape: {(() => {
-									  try {
-										const coords = JSON.parse(footprint.map_coords);
-										const shape = coords.mode;
-										switch (shape) {
-										  case "circle":
-											return (
-											  <>
-												Circle <br />
-												Center: {coords.center.join(", ")} <br />
-												Radius: {coords.radius} meters
-											  </>
-											);
-										  case "lines":
-											return (
-											  <>
-												Lines <br />
-												Coordinates:{" "}
-												{coords.coordinates.map((line: number[], i: number) => (
-												  <span key={i}>
-													[{line.join(", ")}]
-													{i < coords.coordinates.length - 1 ? ", " : ""}
-												  </span>
-												))}
-											  </>
-											);
-										  case "polygon":
-											return (
-											  <>
-												Polygon <br />
-												Coordinates:{" "}
-												{coords.coordinates.map((point: number[], i: number) => (
-												  <span key={i}>
-													[{point.join(", ")}]
-													{i < coords.coordinates.length - 1 ? ", " : ""}
-												  </span>
-												))}
-											  </>
-											);
-										  case "rectangle":
-											return (
-											  <>
-												Rectangle <br />
-												Coordinates:{" "}
-												{coords.coordinates.map((corner: number[], i: number) => (
-												  <span key={i}>
-													[{corner.join(", ")}]
-													{i < coords.coordinates.length - 1 ? ", " : ""}
-												  </span>
-												))}
-											  </>
-											);
-										  case "markers":
-											return (
-											  <>
-												Markers <br />
-												Coordinates:{" "}
-												{coords.coordinates.map((marker: number[], i: number) => (
-												  <span key={i}>
-													[{marker.join(", ")}]
-													{i < coords.coordinates.length - 1 ? ", " : ""}
-												  </span>
-												))}
-											  </>
-											);
-										  default:
-											return "Unknown Shape";
-										}
-									  } catch {
-										return "Invalid map_coords format.";
-									  }
-									})()}
-								  </li>
-								))}
-							  </ul>
+							  <table style={{ borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem" }}>
+								<thead>
+								  <tr style={{ backgroundColor: "#f4f4f4" }}>
+									<th style={{ border: "1px solid #ddd", padding: "8px", textAlign: "left" }}>Title</th>
+									<th style={{ border: "1px solid #ddd", padding: "8px", textAlign: "left" }}>Option</th>
+								  </tr>
+								</thead>
+								<tbody>
+								  {footprints.map((footprint: any, index: number) => {
+									try {
+									  const option = footprint.map_option || "Unknown Option";
+									  return (
+										<tr key={footprint.id || index}>
+										  <td style={{ border: "1px solid #ddd", padding: "8px" }}>{footprint.title}</td>
+										  <td style={{ border: "1px solid #ddd", padding: "8px" }}>{option}</td>
+										</tr>
+									  );
+									} catch {
+									  return (
+										<tr key={index}>
+										  <td style={{ border: "1px solid #ddd", padding: "8px" }}>{footprint.title}</td>
+										  <td style={{ border: "1px solid #ddd", padding: "8px", color: "red" }}>Invalid Data</td>
+										</tr>
+									  );
+									}
+								  })}
+								</tbody>
+							  </table>
 							);
+							
 						  } catch {
 							return <p>Invalid JSON format in spatialFootprint.</p>;
 						  }
