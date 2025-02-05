@@ -1,6 +1,6 @@
 
-import {Pagination} from "~/frontend/pagination/view";
-import {MainContainer} from "./container";
+import { Pagination } from "~/frontend/pagination/view";
+import { MainContainer } from "./container";
 
 interface DataScreenProps<T> {
 	plural: string;
@@ -56,14 +56,16 @@ export function DataMainLinks(props: DataMainLinksProps) {
 	if (props.isPublic) return null;
 
 	return (
-		<ul>
-			<li><a href={props.baseRoute + (props.relLinkToNew ? props.relLinkToNew : "/edit/new")}>New {props.resourceName}</a></li>
-			{props.csvExportLinks && (
-				<>
-					<li><a href={`${props.baseRoute}/csv-export`}>CSV Export</a></li>
-					<li><a href={`${props.baseRoute}/csv-import`}>CSV Import</a></li>
-				</>
-			)}
-		</ul>
+		<div className="dts-main-container mg-grid mg-grid__col-auto" role="region" aria-label="Main container" style={{ marginBottom: '2rem' }}>
+			<div className="mg-grid__col--span-all" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', bottom: '1rem' }} role="navigation" aria-label="Main links">
+				<a href={props.baseRoute + (props.relLinkToNew ? props.relLinkToNew : "/edit/new")} className="mg-button mg-button--small mg-button-primary" role="button" aria-label={`Create new ${props.resourceName}`}>Add new {props.resourceName}</a>
+				{props.csvExportLinks && (
+					<>
+						<a href={`${props.baseRoute}/csv-export`} className="mg-button mg-button--small mg-button-outline" role="button" aria-label="Export CSV">CSV Export</a>
+						<a href={`${props.baseRoute}/csv-import`} className="mg-button mg-button--small mg-button-secondary" role="button" aria-label="Import CSV">CSV Import</a>
+					</>
+				)}
+			</div>
+		</div>
 	);
 }
