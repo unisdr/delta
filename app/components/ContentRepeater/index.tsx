@@ -72,6 +72,7 @@ interface DialogField {
     setDialogFields?: React.Dispatch<React.SetStateAction<DialogField[]>> | null
   ) => void;
   mapperGeoJSONField?: string;
+  render?: (value: any, handleFieldChange: any | null, formData: any | null) => React.ReactNode; // Custom render function for "custom" type
 }
 
 interface ContentRepeaterProps {
@@ -165,8 +166,8 @@ const loadLeaflet = (() => {
   };
 })();
 
-export const ContentRepeater = forwardRef(({
-  id,
+export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(({
+  id = "",
   dnd_order = false,
   base_path = "",
   table_columns = [],
@@ -1384,7 +1385,7 @@ export const ContentRepeater = forwardRef(({
                               (() => {
                                 const getGeoJSON = () => {
                                   let retValue = null;
-                                  const mapperGeoField = formData[field.mapperGeoJSONField] || "";
+                                  const mapperGeoField = (field.mapperGeoJSONField) ? (formData[field.mapperGeoJSONField] || "") : "";
                                   if (mapperGeoField != '') {
                                     retValue = JSON.parse(mapperGeoField);
                                   }
