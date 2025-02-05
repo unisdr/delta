@@ -703,18 +703,19 @@ export const sectorTable = pgTable(
 			(): AnyPgColumn => sectorTable.id
 		), // Reference to parent sector
 		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
-		subsector: text("subsector").notNull(), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
+		subsector: text("subsector"), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
 		description: text("description"), // Optional description for the sector | Additional details about the sector
-		pdnaGrouping: text("pdna_grouping").notNull(), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
+		pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
+		...createdUpdatedTimestamps,
 	},
 	(table) => [
-		// Constraint: subsector cannot be empty
-		check("subsector_not_empty", sql`${table.subsector} <> ''`),
-		// Ensure the PDNA grouping is one of the specified categories
-		check(
-			"pdna_grouping_valid",
-			sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
-		),
+		// // Constraint: subsector cannot be empty
+		// check("subsector_not_empty", sql`${table.subsector} <> ''`),
+		// // Ensure the PDNA grouping is one of the specified categories
+		// check(
+		// 	"pdna_grouping_valid",
+		// 	sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
+		// ),
 	]
 );
 
@@ -729,6 +730,11 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 		disasterRecordId: uuid("disaster_record_id")
 			.notNull()
 			.references((): AnyPgColumn => disasterRecordsTable.id), // Links to disaster record
+		withDamage: boolean("with_damage"),
+		withDisruption: boolean("with_disruption"),
+		disruptionResponseCost: integer("disruption_response_cost"),
+		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
+		withLosses: boolean("with_losses"),
 	}
 );
 
