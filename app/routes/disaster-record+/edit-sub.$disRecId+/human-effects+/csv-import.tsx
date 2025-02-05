@@ -26,7 +26,7 @@ import {eqArr} from "~/util/array";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {request, params} = loaderArgs
-	let recordId = params.id || ""
+	let recordId = params.disRecId || ""
 	let url = new URL(request.url)
 	let tblStr = url.searchParams.get("table") || ""
 	let tbl = HumanEffectsTableFromString(tblStr)
@@ -48,7 +48,7 @@ class UserError extends Error {
 
 export const action = authActionWithPerm("EditData", async (actionArgs): Promise<Res> => {
 	const {request, params} = actionArgs
-	let recordId = params.id || ""
+	let recordId = params.disRecId || ""
 
 	const uploadHandler = unstable_composeUploadHandlers(
 		unstable_createMemoryUploadHandler(),

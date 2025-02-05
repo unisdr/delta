@@ -5,11 +5,10 @@ export const loader = authLoaderWithPerm("EditData", async () => {
 	return "use POST"
 });
 
-
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const {params} = actionArgs
 	let req = actionArgs.request 
-	let recordId = params.id || ""
+	let recordId = params.disRecId || ""
 	return await saveData(req, recordId)
 })
 

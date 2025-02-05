@@ -1,7 +1,7 @@
 import {authLoaderWithPerm} from "~/util/auth";
 import {MainContainer} from "~/frontend/container";
 import {Table} from "~/frontend/editabletable/view";
-import {Link, useLoaderData} from "@remix-run/react";
+import {useLoaderData} from "@remix-run/react";
 import {HumanEffectsTableFromString, HumanEffectTablesDefs} from "~/frontend/human_effects/defs";
 import {useFetcher} from "@remix-run/react"
 import {loadData} from "~/backend.server/handlers/human_effects"
@@ -12,7 +12,7 @@ import {
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params, request} = actionArgs
-	let recordId = params.id
+	let recordId = params.disRecId
 	let url = new URL(request.url)
 	let tblStr = url.searchParams.get("tbl") || ""
 	return loadData(recordId, tblStr)
@@ -20,7 +20,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 
 export const action = authLoaderWithPerm("EditData", async (actionArgs) => {
 	let {params, request} = actionArgs
-	let recordId = params.id
+	let recordId = params.disRecId
 	if (!recordId) {
 		throw new Error("no record id")
 	}
@@ -73,7 +73,6 @@ export default function Screen() {
 				defs={data.defs}
 				categoryPresence={data.categoryPresence}
 			/>
-			<Link to="/settings/human-effects-dsg">Configure Disaggregations</Link>
 		</MainContainer>
 	);
 }

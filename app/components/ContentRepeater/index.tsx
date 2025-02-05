@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { initTokenField, renderTokenField } from "./controls/tokenfield";
 import { renderMapper, renderMapperDialog } from "./controls/mapper";
 // Import Leaflet Core
@@ -55,7 +55,7 @@ interface TableColumn {
 interface DialogField {
   id: string;
   caption: string;
-  type: "input" | "select" | "file" | "option" | "textarea" | "mapper" | "tokenfield" | "hidden";
+  type: "input" | "select" | "file" | "option" | "textarea" | "mapper" | "tokenfield" | "hidden" | "custom";
   required?: boolean;
   options?: string[];
   placeholder?: string;
@@ -165,7 +165,7 @@ const loadLeaflet = (() => {
   };
 })();
 
-export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
+export const ContentRepeater = forwardRef(({
   id,
   dnd_order = false,
   base_path = "",
@@ -179,7 +179,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
   file_viewer_temp_url = "",
   file_viewer_url = "",
   mapper_preview = false,
-}) => {
+}, ref: any) => {
   const [items, setItems] = useState<Record<string, any>>(() => {
     const initialState: Record<string, any> = {};
     data.forEach((item) => {
@@ -1069,77 +1069,79 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     map.setZoom(Math.min(map.getZoom(), calculatedZoom));
   };
 
-  window.onload = () => {
+window.onload = () => {
     document.getElementById("map").style.height = "${window.outerHeight - 100}px";
 
     const map = L.map("map").setView([43.833, 87.616], 2);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
+        attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
     const items = ${JSON.stringify(Object.values(items))};
     const boundsArray = [];
-    const centers = []; // Store the center points of all shapes
+    const centers = [];
 
     items.forEach((item) => {
-      const mapCoords = JSON.parse(item.map_coords);
+        try {
+            const geojsonData = JSON.parse(item.geojson); // Replace map_coords with geojson
 
-      switch (mapCoords.mode) {
-        case "lines":
-          const polyline = L.polyline(mapCoords.coordinates, {
-            color: "${glbColors.line}",
-          }).addTo(map);
-          boundsArray.push(...mapCoords.coordinates);
-          centers.push(polyline.getBounds().getCenter());
-          break;
-        case "polygon":
-          const polygon = L.polygon(mapCoords.coordinates, {
-            color: "${glbColors.polygon}",
-          }).addTo(map);
-          boundsArray.push(...mapCoords.coordinates);
-          centers.push(polygon.getBounds().getCenter());
-          break;
-        case "rectangle":
-          const rectangle = L.rectangle(mapCoords.coordinates, {
-            color: "${glbColors.rectangle}",
-          }).addTo(map);
-          boundsArray.push(rectangle.getBounds().getSouthWest());
-          boundsArray.push(rectangle.getBounds().getNorthEast());
-          centers.push(rectangle.getBounds().getCenter());
-          break;
-        case "circle":
-          const circleCenter = L.latLng(mapCoords.center[0], mapCoords.center[1]);
-          const circle = L.circle(circleCenter, {
-            radius: mapCoords.radius,
-            color: "${glbColors.circle}",
-          }).addTo(map);
-          const circleBounds = circle.getBounds();
-          boundsArray.push(circleBounds.getSouthWest());
-          boundsArray.push(circleBounds.getNorthEast());
-          centers.push(circleCenter);
-          break;
-        case "markers":
-          mapCoords.coordinates.forEach((coord) => {
-            const marker = L.marker(coord, {
-              icon: L.icon(${JSON.stringify(glbMarkerIcon)}),
+            L.geoJSON(geojsonData, {
+                style: (feature) => ({
+                    color: getColorForType(feature.geometry.type),
+                    weight: 2,
+                }),
+                pointToLayer: (feature, latlng) => {
+                    if (feature.geometry.type === "Point") {
+                        return L.marker(latlng, {
+                            icon: L.icon(${JSON.stringify(glbMarkerIcon)}),
+                        });
+                    }
+                    return L.circleMarker(latlng, {
+                        radius: 5,
+                        fillColor: getColorForType(feature.geometry.type),
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+                },
+                onEachFeature: (feature, layer) => {
+                    if (feature.geometry.type !== "Point") {
+                        boundsArray.push(layer.getBounds());
+                        centers.push(layer.getBounds().getCenter());
+                    } else {
+                        centers.push(layer.getLatLng());
+                    }
+                },
             }).addTo(map);
-            boundsArray.push(coord);
-            centers.push(L.latLng(coord[0], coord[1]));
-          });
-          break;
-        default:
-          console.warn("Unsupported mode:", mapCoords.mode);
-      }
+        } catch (error) {
+            console.error("Error parsing GeoJSON:", error);
+        }
     });
 
     if (boundsArray.length > 0) {
-      const bounds = L.latLngBounds(boundsArray);
-      adjustZoomBasedOnDistance(map, bounds, centers);
+        const bounds = L.latLngBounds(boundsArray.flat());
+        adjustZoomBasedOnDistance(map, bounds, centers);
     } else {
-      console.warn("No valid bounds available for fitting the map.");
+        console.warn("No valid bounds available for fitting the map.");
     }
-  };
+};
+
+// Function to dynamically assign colors for different geometry types
+function getColorForType(geometryType) {
+    const colors = {
+        Point: "${glbColors.markers}",
+        LineString: "${glbColors.line}",
+        Polygon: "${glbColors.polygon}",
+        MultiPolygon: "${glbColors.polygon}",
+        MultiPoint: "${glbColors.markers}",
+        MultiLineString: "${glbColors.line}",
+    };
+    return colors[geometryType] || "black";
+}
+
+
 </script>
 
       </body>
@@ -1228,7 +1230,7 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
     onChange(Object.values(items));
   };
 
-  const handleFieldChange = (field: DialogField, value: any) => {
+  const handleFieldChange = useCallback((field: any, value: any) => {
     if (debug) console.log(`handleFieldChange triggered!`, field);
     setFormData((prev: Record<string, any>) => ({ ...prev, [field.id]: value }));
     if (field.onChange) {
@@ -1240,7 +1242,13 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
         setDialogFields
       );
     }
-  };
+  }, [formData]);
+
+  useImperativeHandle(ref, () => ({
+    getDialogRef: () => { return dialogRef.current },
+    getFormData: () => { return formData },
+    handleFieldChange: handleFieldChange,
+  }), [formData, handleFieldChange]);
 
   const handleDragStart = (index: number) => {
     dragIndex.current = index;
@@ -1375,8 +1383,6 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
               onClick={(e) => {
                 e.preventDefault();
                 handlePreviewMap();
-                //console.log("JSON Data:", Object.values(items));
-                //console.log(JSON.stringify(Object.values(items)));
               }}
             >
               Preview Map
@@ -1452,6 +1458,11 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
                       <div className="dts-form-component__label">
                         <span>{field.caption}</span>
                       </div>
+                      {field.type === "custom" && (
+                        <>
+                          {field.render && field.render(value, handleFieldChange)}
+                        </>
+                      )}
                       {field.type === "hidden" && (
                         <>
                         <textarea
@@ -1836,4 +1847,4 @@ export const ContentRepeater: React.FC<ContentRepeaterProps> = ({
       </dialog>
     </div>
   );
-};
+});
