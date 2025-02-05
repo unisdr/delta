@@ -189,17 +189,11 @@ export function HazardEventForm(props: HazardEventFormProps) {
 										const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
 										const geoLevelFieldComponent = geoLevelField.closest(".dts-form-component") as HTMLElement;
 										if (value === "Map Coordinates") {
-											if (mapsCoordsFieldComponent) { 
-												const mapsCoordsFieldComponentStyle = mapsCoordsFieldComponent?.style || null;
-												if (mapsCoordsFieldComponentStyle) mapsCoordsFieldComponentStyle.setProperty("display", "block");
-											}
-											if (geoLevelFieldComponent) { 
-												const geoLevelFieldComponentStyle = geoLevelFieldComponent?.style || null;
-												if (geoLevelFieldComponentStyle) geoLevelFieldComponent.style.setProperty("display", "none");
-											}
+										  mapsCoordsFieldComponent.style.setProperty("display", "block");
+										  geoLevelFieldComponent.style.setProperty("display", "none");
 										} else if (value === "Geographic Level") {
-											if (mapsCoordsFieldComponent) mapsCoordsFieldComponent.style.setProperty("display", "none");
-											if (geoLevelFieldComponent) geoLevelFieldComponent.style.setProperty("display", "block");
+										  mapsCoordsFieldComponent.style.setProperty("display", "none");
+										  geoLevelFieldComponent.style.setProperty("display", "block");
 										}
 									},
 								},
@@ -208,65 +202,12 @@ export function HazardEventForm(props: HazardEventFormProps) {
 									render: (data: any, handleFieldChange: any, formData: any) => {
 										return (
 											<>
-											  <div style={{ display: "flex", alignItems: "center", gap: "1%" }}>
-												{/* Spatial Footprint Container */}
-												<div
-												  id="spatialFootprint_geographic_level_container"
-												  style={{
-													position: "relative",
-													width: "100%",
-													padding: "0.4rem 0.8rem",
-													backgroundColor: "white",
-													border: "1px solid #cccccc",
-													borderRadius: "6px",
-													color: "#999",
-													minHeight: "3.5rem",
-													overflow: "hidden",
-													cursor: "pointer",
-												  }}
-												>
+											  <div className="input-group">
+												<div id="spatialFootprint_geographic_level_container" className="wrapper">
 												  <span onClick={() => { previewGeoJSON(formData['geojson']) }}>{data}</span>
-												  {/* Select Geographic Level Button */}
-												  <a
-													href="#"
-													style={{
-													  width: "auto",
-													  zIndex: 1000,
-													  textAlign: "center",
-													  padding: "0.7rem 0.8rem",
-													  color: "#000",
-													  textDecoration: "none",
-													  borderRadius: "4px",
-													  display: "inline-flex",
-													  alignItems: "center",
-													  justifyContent: "center",
-													  backgroundColor: "#cccccc",
-													  position: "absolute",
-													  top: "-2px",
-													  right: "-2px",
-													}}
-													onClick={(e) => {
-													  e.preventDefault();
-													  treeViewRef.current?.treeViewOpen(e);
-													}}
-												  >
-													<img
-													  src="/assets/icons/globe.svg"
-													  alt="Globe SVG File"
-													  title="Globe SVG File"
-													  style={{ width: "20px", height: "20px", marginRight: "0.5rem" }}
-													/>
-													Select
-												  </a>
+												  <a href="#" className="btn" onClick={(e) => { e.preventDefault(); treeViewRef.current?.treeViewOpen(e); }}><img src="/assets/icons/globe.svg" alt="Globe SVG File" title="Globe SVG File"/>Select</a>
 												</div>
-										  
-												{/* Hidden Textarea */}
-												<textarea
-												  id="spatialFootprint_geographic_level"
-												  name="spatialFootprint_geographic_level"
-												  className="dts-hidden-textarea"
-												  style={{ display: "none" }}
-												></textarea>
+												<textarea id="spatialFootprint_geographic_level" name="spatialFootprint_geographic_level" className="dts-hidden-textarea" style={{ display: "none" }}></textarea>
 											  </div>
 											</>
 										  );										  
@@ -284,8 +225,6 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							onChange={(items: any) => {
 								try {
 									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
-									console.log("Updated Items:", parsedItems);
-									// Save or process `parsedItems` here, e.g., updating state or making an API call
 								} catch {
 									console.error("Failed to process items.");
 								}
@@ -298,12 +237,8 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							rootCaption="Geographic levels" 
 							onApply={
 								(dialogRef: any, selectedItems: any) => {
-									console.log('targetObject', contentReapeaterRef.current);
-
 									if (contentReapeaterRef.current.getDialogRef()) {
-										// Set Name in the div
 										contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
-										// Set GeoJSON in the hidden textarea
 										selectedItems.data.map((item: any) => {
 											if (item.id == selectedItems.selectedId) {
 												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
