@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
@@ -170,9 +170,10 @@ interface TreeViewProps {
     onRenderItemName?: (node: any) => any;
     multiSelect?: boolean;
     appendCss?: string;
+    disableButtonSelect?: boolean;
 }
 
-export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "" }) => {
+export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "", disableButtonSelect = false }, ref: any) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -181,6 +182,19 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
     const [selectedItems, setSelectedItems] = useState<{ [key: number]: boolean }>({});
 
     const dialogRef = useRef<HTMLDialogElement>(null);
+
+    useImperativeHandle(ref, () => ({
+        treeViewOpen: () => {
+            if (dialogRef.current) {
+                dialogRef.current.showModal();
+            }
+        },
+        treeViewClose: () => {
+            if (dialogRef.current) {
+                dialogRef.current.close();
+            }
+        }
+    }));
 
     useEffect(() => {
         injectStyles(appendCss); // Inject CSS when component mounts
@@ -241,7 +255,8 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
     };
 
     // Toggle individual node expand/collapse
-    const toggleExpand = (id: number) => {
+    const toggleExpand = (e, id: number) => {
+        e.preventDefault();
         setExpandedNodes((prev) => {
             const newState = { ...prev, [id]: !prev[id] };
             return newState;
@@ -283,6 +298,8 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
     };
 
     const itemSelect = (e: any) => {
+        e.preventDefault();
+
         const textarea = e.target.closest("li")?.querySelector('textarea') as HTMLTextAreaElement;
 
         const dataId = e.target.closest("li").getAttribute("data-id") || "";
@@ -350,7 +367,7 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
                     <li key={enrichedNode.id} data-id={enrichedNode.id} data-ids={enrichedNode.dataIds}>
                         {enrichedNode.children.length > 0 ? (
                             <>
-                                <button className="btn-face" onClick={() => toggleExpand(enrichedNode.id)}>
+                                <button className="btn-face" onClick={(e) => toggleExpand(e, enrichedNode.id)}>
                                     {expandedNodes[enrichedNode.id] ? "▼" : "►"}
                                 </button>{" "}
 
@@ -429,14 +446,25 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
         treeHiddenData.value = "";
     };
     
-    const treeViewOpen = () => {
+    const treeViewOpen = (e?: any) => {
+        if (e) {
+            e.preventDefault();
+        }
         dialogRef.current.showModal();
     };
-    const treeViewDiscard = () => {
+    const treeViewDiscard = (e?: any) => {
+        if (e) {
+            e.preventDefault();
+        }
+
         dialogRef.current.close();
         treeViewClear();
     };
-    const treeViewApply = () => {
+    const treeViewApply = (e?: any) => {
+        if (e) {
+            e.preventDefault();
+        }
+
         const treeFooterSpan = dialogRef.current.querySelector(".tree-footer span") as HTMLElement;
         const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
         const selectedItems = {
@@ -505,10 +533,10 @@ export const TreeView: React.FC<TreeViewProps> = ({ treeData = [], caption = "",
                     </div>
                 </div>
             </dialog>
-            <button className="tree-button-select" onClick={treeViewOpen}>{caption}</button>
+            {disableButtonSelect ? null : <button className="tree-button-select" onClick={treeViewOpen}>{caption}</button>}
         </>
     );
-};
+});
 
 export const buildTree = (
     list: any[],

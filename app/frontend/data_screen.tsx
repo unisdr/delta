@@ -56,7 +56,7 @@ export function DataMainLinks(props: DataMainLinksProps) {
 	if (props.isPublic) return null;
 
 	return (
-		<div className="dts-main-container mg-grid mg-grid__col-auto" role="region" aria-label="Main container">
+		<div className="dts-main-container mg-grid mg-grid__col-auto" role="region" aria-label="Main container" style={{ marginBottom: '2rem' }}>
 			<div className="mg-grid__col--span-all" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', bottom: '1rem' }} role="navigation" aria-label="Main links">
 				<a href={props.baseRoute + (props.relLinkToNew ? props.relLinkToNew : "/edit/new")} className="mg-button mg-button--small mg-button-primary" role="button" aria-label={`Create new ${props.resourceName}`}>Add new {props.resourceName}</a>
 				{props.csvExportLinks && (

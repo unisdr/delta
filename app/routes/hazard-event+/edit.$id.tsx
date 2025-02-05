@@ -17,6 +17,7 @@ import {
 } from "~/backend.server/handlers/form";
 
 import {
+	authActionGetAuth,
 	authActionWithPerm,
 	authLoaderWithPerm,
 } from "~/util/auth";
@@ -31,6 +32,9 @@ import {
 	getItem2
 } from "~/backend.server/handlers/view"
 
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { divisionTable } from "~/drizzle/schema";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
@@ -43,16 +47,26 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		let parent2 = await hazardEventById(parent.id);
 		return {hip, item, parent: parent2};
 	}
-	return {hip: hip, item: item};
+
+	// Define Keys Mapping (Make it Adaptable)
+	const idKey = "id"; 
+	const parentKey = "parentId"; 
+	const nameKey = "name"; 
+	const rawData = await dr.select().from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	return {hip: hip, item: item, treeData: treeData};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
+
+	const user = authActionGetAuth(actionArgs);
 	return formSave({
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (id) {
-				return hazardEventUpdate(tx, id, data);
+				return hazardEventUpdate(tx, id, data,  user.user.id);
 			} else {
 				throw "not an create screen"
 			}
@@ -72,7 +86,7 @@ export default function Screen() {
 		parent: ""
 	}
 	return formScreen({
-		extraData: {hip: ld.hip, parent: ld.parent},
+		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData},
 		fieldsInitial,
 		form: HazardEventForm,
 		edit: true,

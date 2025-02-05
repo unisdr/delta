@@ -7,7 +7,7 @@ import {stringifyCSV} from "~/util/csv";
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params, request} = actionArgs
-	let recordId = params.id
+	let recordId = params.disRecId
 	let url = new URL(request.url)
 	let tblStr = url.searchParams.get("tbl") || ""
 	let res = await loadData(recordId, tblStr)
