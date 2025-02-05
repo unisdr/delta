@@ -145,13 +145,14 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 
 										const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
 										const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
-										
+										const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
+										const geoLevelFieldComponent = geoLevelField.closest(".dts-form-component") as HTMLElement;
 										if (value === "Map Coordinates") {
-											mapsCoordsField.closest(".dts-form-component")?.style.setProperty("display", "block");
-											geoLevelField.closest(".dts-form-component")?.style.setProperty("display", "none");
+										  mapsCoordsFieldComponent.style.setProperty("display", "block");
+										  geoLevelFieldComponent.style.setProperty("display", "none");
 										} else if (value === "Geographic Level") {
-											mapsCoordsField.closest(".dts-form-component")?.style.setProperty("display", "none");
-											geoLevelField.closest(".dts-form-component")?.style.setProperty("display", "block");
+										  mapsCoordsFieldComponent.style.setProperty("display", "none");
+										  geoLevelFieldComponent.style.setProperty("display", "block");
 										}
 									},
 								},
