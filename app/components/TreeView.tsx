@@ -173,7 +173,7 @@ interface TreeViewProps {
     disableButtonSelect?: boolean;
 }
 
-export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "", disableButtonSelect = false }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "", disableButtonSelect = false }, ref: any) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -255,7 +255,7 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     };
 
     // Toggle individual node expand/collapse
-    const toggleExpand = (e, id: number) => {
+    const toggleExpand = (e: any, id: number) => {
         e.preventDefault();
         setExpandedNodes((prev) => {
             const newState = { ...prev, [id]: !prev[id] };
@@ -264,13 +264,13 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     };
 
     // Filter function with auto-expand logic
-    const filterTree = (nodes: any[], query: string, expandedState: { [key: number]: boolean }) => {
+    const filterTree = (nodes: any[], query: string, expandedState: { [key: number]: boolean }): any[] => {
         if (!query) return nodes;
 
         return nodes
-            .map((node) => {
+            .map((node: any): any | null  => {
                 const match = node.name.toLowerCase().includes(query.toLowerCase());
-                const filteredChildren = filterTree(node.children, query, expandedState);
+                const filteredChildren = filterTree(node.children, query, expandedState) || [];
 
                 if (match || filteredChildren.length > 0) {
                     expandedState[node.id] = true; // Auto-expand matching nodes
@@ -309,18 +309,19 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
 
         let arrLocation = [] as string[];
         let arrHiddenData = [] as any[];
-        arrDataIds.forEach((id) => {
-            const getSpan = dialogRef.current.querySelector(`li[data-id="${id}"] span`) as HTMLElement;
-            const textAreas = dialogRef.current.querySelectorAll(`li[data-id="${id}"] textarea[data-id="${id}"]`) as HTMLTextAreaElement;
-            arrLocation.push(getSpan?.textContent || "");
-            let arrHiddenDataItem = {} as any;
-            textAreas.forEach((textarea: any) => {
-                arrHiddenDataItem[textarea.name] = textarea.value;
-            });
-            arrHiddenData.push({ id: id, ...arrHiddenDataItem });
+        arrDataIds.forEach((id: any) => {
+            const dialogRefCurrent = dialogRef.current;
+            if (dialogRefCurrent) {
+                const getSpan = dialogRefCurrent.querySelector(`li[data-id="${id}"] span`) as HTMLElement;
+                const textAreas = dialogRefCurrent.querySelectorAll(`li[data-id="${id}"] textarea[data-id="${id}"]`) as HTMLTextAreaElement;
+                arrLocation.push(getSpan?.textContent || "");
+                let arrHiddenDataItem = {} as any;
+                textAreas.forEach((textarea: any) => {
+                    arrHiddenDataItem[textarea.name] = textarea.value;
+                });
+                arrHiddenData.push({ id: id, ...arrHiddenDataItem });
+            }
         });
-
-        console.log(arrLocation.join(" / "));
 
         dialogRef.current.querySelector(".tree-footer span").setAttribute("selected-name", selectedName);
         dialogRef.current.querySelector(".tree-footer span").setAttribute("data-id", dataId);
@@ -433,17 +434,19 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     );
 
     const treeViewClear = () => {
-
         setExpandedNodes({});
         setSearchTerm("");
-        dialogRef.current.querySelector(".tree-footer span").textContent = "";
 
-        const treeFooterSpan = dialogRef.current.querySelector(".tree-footer span") as HTMLElement;
-        const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
-        treeFooterSpan.setAttribute("data-ids", "");
-        treeFooterSpan.setAttribute("data-id", "");
-        treeFooterSpan.setAttribute("selected-name", "");
-        treeHiddenData.value = "";
+        const dialogCurrent = dialogRef.current;
+        if (dialogCurrent) {
+            dialogCurrent.querySelector(".tree-footer span").textContent = "";
+            const treeFooterSpan = dialogCurrent.querySelector(".tree-footer span") as HTMLElement;
+            const treeHiddenData = dialogCurrent.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
+            treeFooterSpan.setAttribute("data-ids", "");
+            treeFooterSpan.setAttribute("data-id", "");
+            treeFooterSpan.setAttribute("selected-name", "");
+            treeHiddenData.value = ""; 
+        }
     };
     
     const treeViewOpen = (e?: any) => {

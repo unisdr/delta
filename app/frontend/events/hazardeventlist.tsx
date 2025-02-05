@@ -59,18 +59,17 @@ export function ListView(args: ListViewArgs) {
 		}
 	}, [items]);
 
+
 	return (
-		<div className="dts-main-container">
-			<div>
+		<div>
+			<div className="dts-main-container">
 				<h3 className="dts-heading-3">Filters</h3>
 				<Form className="dts-form">
 					<div className="dts-form-component mg-grid__col--span-3">
 						<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
 					</div>
 					<div className="mg-grid mg-grid__col-2 dts-form__actions"
-						style={{
-							gap: "1rem",          // Add spacing between buttons
-						}}
+						style={{ gap: "1rem" }}
 					>
 						<input type="submit" value="Apply" className="mg-button mg-button--small mg-button-primary" />
 						<Link to={args.basePath} className="mg-button mg-button--small mg-button-outline">Clear filters</Link>
@@ -95,6 +94,24 @@ export function ListView(args: ListViewArgs) {
 						</div></>
 				)}
 			</div>
+			{!args.isPublic && (
+				<><div>{/* Add the EventCounter component */}
+					<span >
+						<strong><EventCounter totalEvents={items.length} /></strong>
+					</span>
+				</div><div className="dts-legend">
+						<span className="dts-body-label">Status legend</span>
+						<div className="dts-legend__item">
+							<span className="dts-status dts-status--draft"></span> Draft
+						</div>
+						<div className="dts-legend__item">
+							<span className="dts-status dts-status--published"></span> Published
+						</div>
+						<div className="dts-legend__item">
+							<span className="dts-status dts-status--rejected"></span> Rejected
+						</div>
+					</div></>
+			)}
 
 			{ld.data.pagination.totalItems ? (
 				<>
@@ -129,7 +146,6 @@ export function ListView(args: ListViewArgs) {
 									</td>
 									{!args.isPublic && (
 										<td className="dts-table__cell-centered">
-											{/* <span className={`dts-status dts-status--${item.approvalStatus}`}></span> */}
 											<span
 												ref={el => statusRefs.current.set(index, el!)}
 												className={`dts-status dts-status--${item.approvalStatus.toLowerCase()}`}

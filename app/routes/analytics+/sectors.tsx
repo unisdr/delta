@@ -132,7 +132,7 @@ export default function SectorsAnalysis() {
 
             {/* Dashboard Sections */}
             {/* <DisasterSummary filters={filters} /> */}
-            <ImpactOnSector sectorId={filters.sectorId} filters={filters} />
+            {/* <ImpactOnSector sectorId={filters.sectorId} filters={filters} /> */}
 
 
 

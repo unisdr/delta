@@ -1,10 +1,10 @@
-import {useState} from "react";
+import { useState } from "react";
 
 import {
 	Field,
 } from "~/frontend/form";
 
-import {useEffect} from "react";
+import { useEffect } from "react";
 
 
 export interface HazardPickerProps {
@@ -37,7 +37,7 @@ export interface Hazard {
 	name: string;
 }
 
-function sortByName<T extends {name: string}>(array: T[]): T[] {
+function sortByName<T extends { name: string }>(array: T[]): T[] {
 	return [...array].sort((a, b) => a.name.localeCompare(b.name));
 }
 
