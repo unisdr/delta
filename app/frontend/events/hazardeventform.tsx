@@ -21,7 +21,9 @@ import {useEffect, useState, useRef} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
 import { ContentRepeater } from "~/components/ContentRepeater";
-import { TreeView, buildTree } from "~/components/TreeView";
+import {  previewMap, previewGeoJSON } from "~/components/ContentRepeater/controls/mapper";
+import { TreeView } from "~/components/TreeView";
+
 
 export const route = "/hazard-event"
 
@@ -179,7 +181,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 									caption: "Option",
 									type: "option",
 									options: ["Map Coordinates", "Geographic Level"],
-									onChange: (e) => {
+									onChange: (e: any) => {
 										const value = e.target.value;
 
 										const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
@@ -196,7 +198,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 								},
 								{ id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson" },
 								{ id: "geographic_level", caption: "Geographic Level", type: "custom",
-									render: (data: any, handleFieldChange: any) => {
+									render: (data: any, handleFieldChange: any, formData: any) => {
 										return (
 											<>
 											  <div style={{ display: "flex", alignItems: "center", gap: "1%" }}>
@@ -216,7 +218,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 													cursor: "pointer",
 												  }}
 												>
-												  <span>{data}</span>
+												  <span onClick={() => { previewGeoJSON(formData['geojson']) }}>{data}</span>
 												  {/* Select Geographic Level Button */}
 												  <a
 													href="#"
@@ -342,204 +344,9 @@ export function HazardEventView(props: HazardEventViewProps) {
 	let cluster = item.hazard.cluster;
 	let cls = cluster.class;
 
-	//Mapper
-	const glbMapperJS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-	const glbMapperCSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-	const glbColors = {
-	polygon: "#0074D9",
-	line: "#FF851B",
-	rectangle: "#2ECC40",
-	circle: "#FF4136",
-	marker: "#85144b"
-	};
-	const glbMarkerIcon = {
-	iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png", // Replace with your marker icon if necessary
-	iconSize: [20, 20],
-	iconAnchor: [5, 20],
-	popupAnchor: [0, -20],
-	shadowUrl: null, // Remove shadow
-	className: "custom-leaflet-marker", // Add a custom class
-	}
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
-
-		const newTab = window.open("", "_blank");
-	  
-		if (!newTab) {
-		  alert("Popup blocker is preventing the map from opening.");
-		  return;
-		}
-	  
-		newTab.document.write(`
-		  <!DOCTYPE html>
-		  <html lang="en">
-		  <head>
-			<title>Map Preview</title>
-			<link rel="stylesheet" href="${glbMapperCSS}" />
-			<style>
-			  #map {
-				position: relative;
-				display: block;
-				width: 100%;
-				height: 100vh;
-			  }
-			</style>
-		  </head>
-		  <body>
-			<div id="map"></div>
-			<script src="${glbMapperJS}"></script>
-	<script>
-	  const adjustZoomBasedOnDistance = (map, bounds, centers) => {
-		console.log(bounds);
-	
-		let maxDistance = 0;
-	
-		if (centers.length === 1) {
-		  // Calculate maxDistance for a single shape based on its bounds
-		  const singleShapeBounds = bounds.isValid() ? bounds : null;
-	
-		  if (singleShapeBounds) {
-			maxDistance = singleShapeBounds.getNorthEast().distanceTo(singleShapeBounds.getSouthWest());
-		  } else {
-			console.warn("No valid bounds available for the single shape.");
-			map.setView(centers[0], 14); // Default zoom for a single center if no bounds
-			return;
-		  }
-		} else {
-		  // Calculate the maximum distance between all centers
-		  for (let i = 0; i < centers.length; i++) {
-			for (let j = i + 1; j < centers.length; j++) {
-			  const distance = centers[i].distanceTo(centers[j]);
-			  maxDistance = Math.max(maxDistance, distance);
-			}
-		  }
-		}
-	
-		// Define zoom level thresholds based on distances
-		const globalLevelDistance = 10000000; // ~10,000km
-		const regionalLevelDistance = 5000000; // ~5,000km
-		const countryLevelDistance = 1000000; // ~1,000km
-		const cityLevelDistance = 100000; // ~100km
-		const townLevelDistance1 = 20000; // ~20km
-		const townLevelDistance2 = 15000; // ~15km
-		const townLevelDistance3 = 10000; // ~10km
-		const townLevelDistance4 = 5000; // ~5km
-	
-		let calculatedZoom;
-	
-		// Adjust zoom based on maximum distance
-		if (maxDistance > globalLevelDistance) {
-		  calculatedZoom = 2; // Minimum zoom for global scale
-		} else if (maxDistance > regionalLevelDistance) {
-		  calculatedZoom = 4; // Regional scale
-		} else if (maxDistance > countryLevelDistance) {
-		  calculatedZoom = 7; // Country-level zoom
-		} else if (maxDistance > cityLevelDistance) {
-		  calculatedZoom = 10; // City-level zoom
-		} else if (maxDistance > townLevelDistance1) {
-		  calculatedZoom = 11; // Town-level zoom
-		} else if (maxDistance > townLevelDistance2) {
-		  calculatedZoom = 12; // Town-level zoom
-		} else if (maxDistance > townLevelDistance3) {
-		  calculatedZoom = 13; // Town-level zoom
-		} else if (maxDistance > townLevelDistance4) {
-		  calculatedZoom = 14; // Town-level zoom
-		} else {
-		  calculatedZoom = 17; // Local zoom for nearby shapes
-		}
-	
-		console.log("maxDistance:", maxDistance);
-		console.log("calculatedZoom:", calculatedZoom);
-	
-		// Fit bounds first with padding
-		map.fitBounds(bounds, {
-		  padding: [50, 50],
-		});
-	
-		// Set the zoom level dynamically
-		map.setZoom(Math.min(map.getZoom(), calculatedZoom));
-	  };
-	
-	window.onload = () => {
-		document.getElementById("map").style.height = "${window.outerHeight - 100}px";
-	
-		const map = L.map("map").setView([43.833, 87.616], 2);
-	
-		L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-			attribution: "&copy; OpenStreetMap contributors",
-		}).addTo(map);
-	
-		const items = ${JSON.stringify(JSON.parse(item.spatialFootprint))};
-		const boundsArray = [];
-		const centers = [];
-	
-		items.forEach((item) => {
-			try {
-				const geojsonData = JSON.parse(item.geojson); // Replace map_coords with geojson
-	
-				L.geoJSON(geojsonData, {
-					style: (feature) => ({
-						color: getColorForType(feature.geometry.type),
-						weight: 2,
-					}),
-					pointToLayer: (feature, latlng) => {
-						if (feature.geometry.type === "Point") {
-							return L.marker(latlng, {
-								icon: L.icon(${JSON.stringify(glbMarkerIcon)}),
-							});
-						}
-						return L.circleMarker(latlng, {
-							radius: 5,
-							fillColor: getColorForType(feature.geometry.type),
-							color: "#000",
-							weight: 1,
-							opacity: 1,
-							fillOpacity: 0.8
-						});
-					},
-					onEachFeature: (feature, layer) => {
-						if (feature.geometry.type !== "Point") {
-							boundsArray.push(layer.getBounds());
-							centers.push(layer.getBounds().getCenter());
-						} else {
-							centers.push(layer.getLatLng());
-						}
-					},
-				}).addTo(map);
-			} catch (error) {
-				console.error("Error parsing GeoJSON:", error);
-			}
-		});
-	
-		if (boundsArray.length > 0) {
-			const bounds = L.latLngBounds(boundsArray.flat());
-			adjustZoomBasedOnDistance(map, bounds, centers);
-		} else {
-			console.warn("No valid bounds available for fitting the map.");
-		}
-	};
-	
-	// Function to dynamically assign colors for different geometry types
-	function getColorForType(geometryType) {
-		const colors = {
-			Point: "${glbColors.markers}",
-			LineString: "${glbColors.line}",
-			Polygon: "${glbColors.polygon}",
-			MultiPolygon: "${glbColors.polygon}",
-			MultiPoint: "${glbColors.markers}",
-			MultiLineString: "${glbColors.line}",
-		};
-		return colors[geometryType] || "black";
-	}
-	
-	
-	</script>
-	
-		  </body>
-		  </html>
-		`);
-	  
-		newTab.document.close();
+		previewMap(JSON.stringify(JSON.parse(item.spatialFootprint)));
 	};
 
 	return (
@@ -626,8 +433,16 @@ export function HazardEventView(props: HazardEventViewProps) {
 									  const option = footprint.map_option || "Unknown Option";
 									  return (
 										<tr key={footprint.id || index}>
-										  <td style={{ border: "1px solid #ddd", padding: "8px" }}>{footprint.title}</td>
-										  <td style={{ border: "1px solid #ddd", padding: "8px" }}>{option}</td>
+										  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+											<a href="#" onClick={(e) => { e.preventDefault();  const newGeoJson = [{"geojson": footprint.geojson}];  previewMap(JSON.stringify(newGeoJson)); }}>
+												{footprint.title}
+											</a>
+										  </td>
+										  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+											<a href="#" onClick={(e) => { e.preventDefault();  const newGeoJson = footprint.geojson;  previewGeoJSON((newGeoJson)); }}>
+											{option}
+											</a>
+										  </td>
 										</tr>
 									  );
 									} catch {
