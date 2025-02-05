@@ -115,9 +115,10 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 					</Field>
 				,
 				attachments: props.edit ? (
-					<Field key="attachments" label="Attachments">
+					<Field key="attachments" label="">
 						<ContentRepeater
 							id="attachments"
+							caption="Attachments"
 							dnd_order={true}
 							save_path_temp="/uploads/temp"
 							file_viewer_temp_url="/resource-repo/file-temp-viewer"

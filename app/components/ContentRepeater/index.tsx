@@ -89,7 +89,53 @@ interface ContentRepeaterProps {
   file_viewer_temp_url?: string;
   file_viewer_url?: string;
   mapper_preview?: boolean;
+  caption?: string;
 }
+
+const injectStyles = (appendCss?: string) => {
+  const styleLayout = [
+      `
+        .content-repeater {
+          background: #f2f2f2;
+          padding: 2.4rem;
+          margin: 2.4rem 0 2.4rem;
+        }
+
+        .content-repeater .dts-table th {
+          font-size: 1.6rem;
+        }
+
+        .content-repeater .dts-table th, .dts-table td {
+          border-bottom: 1px solid #E3E3E3 !important;
+        }
+
+        .content-repeater-caption {
+          font-size: 1.8rem;
+          line-height: 1.33;
+          font-weight: 500;
+          margin-bottom: 2.4rem;
+        }
+
+        .content-repeater-actions {
+          margin-top: 1rem !important;
+        }
+
+        ${appendCss}
+      `
+  ];
+
+  const styleId = "ContentRepeaterStyles";
+
+  // Check if the style is already in the document
+  if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.type = "text/css";
+      style.id = styleId; // Assign a unique ID
+      style.innerHTML = styleLayout[0]; // Change index to switch between styles
+      document.head.appendChild(style);
+  }
+};
+
 
 const loadLeaflet = (() => {
   let isLoaded = false;
@@ -180,6 +226,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
   file_viewer_temp_url = "",
   file_viewer_url = "",
   mapper_preview = false,
+  caption = "",
 }, ref: any) => {
   const [items, setItems] = useState<Record<string, any>>(() => {
     const initialState: Record<string, any> = {};
@@ -198,6 +245,10 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
   const fileInputRefs = useRef<{ [key: string]: React.RefObject<HTMLInputElement> }>({});
   const tokenfieldRefs = useRef<{ [key: string]: React.RefObject<HTMLInputElement> }>({});
   const dragIndex = useRef<number | null>(null);
+
+  useEffect(() => {
+      injectStyles(); // Inject CSS when component mounts
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1103,7 +1154,8 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
 
   return (
     <div id={id} className="content-repeater">
-      <table className="dts-table" style={{ background: "#ffffff" }}>
+      {caption && <div className="content-repeater-caption">{caption}</div>}
+      <table className="dts-table" >
         <thead>
           <tr>
             {table_columns.map((column, index) => {
@@ -1175,6 +1227,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       ></textarea>
 
       <ul
+        className="content-repeater-actions"
         style={{
           listStyle: "none",
           margin: 0,
