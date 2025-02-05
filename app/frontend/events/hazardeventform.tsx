@@ -24,7 +24,6 @@ import { ContentRepeater } from "~/components/ContentRepeater";
 import {  previewMap, previewGeoJSON } from "~/components/ContentRepeater/controls/mapper";
 import { TreeView } from "~/components/TreeView";
 
-
 export const route = "/hazard-event"
 
 export const fieldsDefCommon = [

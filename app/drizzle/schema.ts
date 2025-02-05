@@ -605,6 +605,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 		.references((): AnyPgColumn => sectorTable.id),
 	sectorName: text("sector_name"), // Direct name of the sector involved
 	subSector: text("sub_sector"), // Sub-sector detail
+	spatialFootprint: zeroText("spatial_footprint"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
 });

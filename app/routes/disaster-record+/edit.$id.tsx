@@ -33,6 +33,10 @@ import {
 import { getTableName } from "drizzle-orm";
 import { disasterRecordsTable } from "~/drizzle/schema";
 
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { divisionTable } from "~/drizzle/schema";
+
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("actionArgs", actionArgs.params);
 	// return {item: null};
@@ -53,7 +57,14 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	
 	console.log("recordsNonecoLosses", dbNonecoLosses);
 
-	return {item, recordsNonecoLosses: dbNonecoLosses};
+	// Define Keys Mapping (Make it Adaptable)
+	const idKey = "id"; 
+	const parentKey = "parentId"; 
+	const nameKey = "name"; 
+	const rawData = await dr.select().from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	return {item, recordsNonecoLosses: dbNonecoLosses, treeData};
 });
 
 export const action = createAction({
@@ -68,14 +79,14 @@ export const action = createAction({
 });
 
 export default function Screen() {
-	const ld = useLoaderData<{item: DisasterRecordsViewModel | null, recordsNonecoLosses: nonecoLossesProps}>();
+	const ld = useLoaderData<{item: DisasterRecordsViewModel | null, recordsNonecoLosses: nonecoLossesProps, treeData: any[]}>();
 	console.log(ld);
 
 	return (
 		<>
 			<FormScreen
 				fieldsDef={fieldsDef}
-				formComponent={DisasterRecordsForm}
+				formComponent={(props) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>
