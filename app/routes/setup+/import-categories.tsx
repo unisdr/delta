@@ -101,6 +101,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
   }
 
   if (importType === 'all' || importType === 'categories') {
+    filePath = currentDirectory();
     filePath = filePath + '/app/hips/categories.csv'; // Replace with your file path
     
     try {
@@ -158,7 +159,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
   return {
     ok: 'action', 
-    message: 'Category imported',
+    message: importType == 'all' ? 'Category & sector imported' : importType == 'categories' ? 'Categories imported' : 'Sectors imported',
   }; 
 });
 
@@ -173,7 +174,7 @@ export default function Index() {
 
   return (
     <div>
-      <h1>Import Categories</h1>
+      <h1>Import Categories and Sectors</h1>
       {
         actionData && actionData.ok === 'action' ? (
           <div>
