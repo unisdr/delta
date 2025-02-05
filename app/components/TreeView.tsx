@@ -307,27 +307,31 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         const selectedName = e.target.closest("li").querySelector("span")?.textContent || "";
         const arrDataIds = dataIds.split(",");
 
-        let arrLocation = [] as string[];
-        let arrHiddenData = [] as any[];
-        arrDataIds.forEach((id: any) => {
-            const dialogRefCurrent = dialogRef.current;
-            if (dialogRefCurrent) {
+        const dialogRefCurrent = dialogRef.current;
+        if (dialogRefCurrent) {
+            let arrLocation = [] as string[];
+            let arrHiddenData = [] as any[];
+            arrDataIds.forEach((id: any) => {
                 const getSpan = dialogRefCurrent.querySelector(`li[data-id="${id}"] span`) as HTMLElement;
-                const textAreas = dialogRefCurrent.querySelectorAll(`li[data-id="${id}"] textarea[data-id="${id}"]`) as HTMLTextAreaElement;
+                const textAreas = dialogRefCurrent.querySelectorAll(`li[data-id="${id}"] textarea[data-id="${id}"]`) as NodeListOf<HTMLTextAreaElement>;
                 arrLocation.push(getSpan?.textContent || "");
                 let arrHiddenDataItem = {} as any;
-                textAreas.forEach((textarea: any) => {
+                Array.from(textAreas).forEach((textarea) => {
                     arrHiddenDataItem[textarea.name] = textarea.value;
                 });
                 arrHiddenData.push({ id: id, ...arrHiddenDataItem });
-            }
-        });
+            });
 
-        dialogRef.current.querySelector(".tree-footer span").setAttribute("selected-name", selectedName);
-        dialogRef.current.querySelector(".tree-footer span").setAttribute("data-id", dataId);
-        dialogRef.current.querySelector(".tree-footer span").textContent = arrLocation.join(" / ");
-        dialogRef.current.querySelector(".tree-footer span").setAttribute("data-ids", dataIds);
-        dialogRef.current.querySelector(".tree-hidden-data").value = JSON.stringify(arrHiddenData);
+            const treeFooterSpan = dialogRefCurrent.querySelector(".tree-footer span") as HTMLElement;
+            if (treeFooterSpan) {
+                treeFooterSpan.setAttribute("selected-name", selectedName);
+                treeFooterSpan.setAttribute("data-id", dataId);
+                treeFooterSpan.textContent = arrLocation.join(" / ");
+                treeFooterSpan.setAttribute("data-ids", dataIds);
+                const treeHiddenData = dialogRefCurrent.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
+                if (treeHiddenData) treeHiddenData.value = JSON.stringify(arrHiddenData);
+            }
+        }
     };
     
     const handleCheckboxChange = (e: any) => {
@@ -339,8 +343,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     
         // Auto-check parents up to the root when an item is checked
         if (isChecked) {
-            dataIds.forEach((ancestorId) => {
-                const ancestorCheckbox = document.querySelector(`li[data-id="${ancestorId}"] > .tree-checkbox`);
+            dataIds.forEach((ancestorId: any) => {
+                const ancestorCheckbox = document.querySelector(`li[data-id="${ancestorId}"] > .tree-checkbox`) as HTMLInputElement;
                 if (ancestorCheckbox) {
                     ancestorCheckbox.checked = true;
                 }
@@ -349,7 +353,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     
         // Auto-uncheck all children when an item is unchecked
         if (!isChecked) {
-            listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox) => {
+            listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox: any) => {
                 childCheckbox.checked = false;
             });
         }
@@ -392,7 +396,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                         data-id={enrichedNode.id}
                                         key={`${enrichedNode.id}-${field}`}
                                         name={field}
-                                        defaultValue={typeof value === "object" ? JSON.stringify(value) : value}
+                                        defaultValue={value ? JSON.stringify(value) : ""}
                                         style={{ display: "none" }}
                                     />
                                 ))}
@@ -421,7 +425,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                         data-id={enrichedNode.id}
                                         key={`${enrichedNode.id}-${field}`}
                                         name={field}
-                                        defaultValue={typeof value === "object" ? JSON.stringify(value) : value}
+                                        defaultValue={value ? JSON.stringify(value) : ""}
                                         style={{ display: "none" }}
                                     />
                                 ))}
@@ -439,13 +443,15 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
 
         const dialogCurrent = dialogRef.current;
         if (dialogCurrent) {
-            dialogCurrent.querySelector(".tree-footer span").textContent = "";
             const treeFooterSpan = dialogCurrent.querySelector(".tree-footer span") as HTMLElement;
+            if (treeFooterSpan) {
+                treeFooterSpan.textContent = "";
+                treeFooterSpan.setAttribute("data-ids", "");
+                treeFooterSpan.setAttribute("data-id", "");
+                treeFooterSpan.setAttribute("selected-name", "");
+            }
             const treeHiddenData = dialogCurrent.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
-            treeFooterSpan.setAttribute("data-ids", "");
-            treeFooterSpan.setAttribute("data-id", "");
-            treeFooterSpan.setAttribute("selected-name", "");
-            treeHiddenData.value = ""; 
+            if (treeHiddenData) treeHiddenData.value = ""; 
         }
     };
     
@@ -453,14 +459,15 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         if (e) {
             e.preventDefault();
         }
-        dialogRef.current.showModal();
+        if (dialogRef.current) 
+            dialogRef.current.showModal();
     };
     const treeViewDiscard = (e?: any) => {
         if (e) {
             e.preventDefault();
         }
-
-        dialogRef.current.close();
+        if (dialogRef.current) 
+            dialogRef.current.close();
         treeViewClear();
     };
     const treeViewApply = (e?: any) => {
@@ -468,25 +475,27 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             e.preventDefault();
         }
 
-        const treeFooterSpan = dialogRef.current.querySelector(".tree-footer span") as HTMLElement;
-        const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
-        const selectedItems = {
-            dataIds: treeFooterSpan.getAttribute("data-ids"),
-            names: treeFooterSpan.textContent,
-            selectedId: treeFooterSpan.getAttribute("data-id") || "",
-            selectedName: treeFooterSpan.getAttribute("selected-name"),
-            data: JSON.parse(treeHiddenData.value || "[]"),
+        if (dialogRef.current) {
+            const treeFooterSpan = dialogRef.current.querySelector(".tree-footer span") as HTMLElement;
+            const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
+            const selectedItems = {
+                dataIds: treeFooterSpan.getAttribute("data-ids"),
+                names: treeFooterSpan.textContent,
+                selectedId: treeFooterSpan.getAttribute("data-id") || "",
+                selectedName: treeFooterSpan.getAttribute("selected-name"),
+                data: JSON.parse(treeHiddenData.value || "[]"),
+            }
+
+            if (selectedItems.selectedId === "") {
+                alert("No item selected.");
+                return;
+            }
+
+            if (onApply) onApply(dialogRef.current, selectedItems || {});
+
+            treeViewClear();
+            dialogRef.current.close();
         }
-
-        if (selectedItems.selectedId === "") {
-            alert("No item selected.");
-            return;
-        }
-
-        onApply(dialogRef.current, selectedItems || {});
-
-        treeViewClear();
-        dialogRef.current.close();
     }
 
     const filteredTree = searchTerm ? filterTree(treeData, searchTerm, {}) : treeData;
@@ -569,7 +578,7 @@ export const buildTree = (
             nameOutput = nameValue?.[selectedKey] || "Unnamed";
         }
 
-        const hiddenData = {};
+        const hiddenData: Record<string, any> = {};
         if (additionalFields) {
             additionalFields.forEach((field) => {
                 hiddenData[field] = item[field] || "";
@@ -585,7 +594,7 @@ export const buildTree = (
         });
     });
 
-    const tree = [];
+    const tree: any[] = [];
     map.forEach((node) => {
         if (node.parentId === null) {
             tree.push(node);

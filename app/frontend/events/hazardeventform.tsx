@@ -186,13 +186,20 @@ export function HazardEventForm(props: HazardEventFormProps) {
 
 										const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
 										const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
-										
+										const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
+										const geoLevelFieldComponent = geoLevelField.closest(".dts-form-component") as HTMLElement;
 										if (value === "Map Coordinates") {
-											mapsCoordsField.closest(".dts-form-component")?.style.setProperty("display", "block");
-											geoLevelField.closest(".dts-form-component")?.style.setProperty("display", "none");
+											if (mapsCoordsFieldComponent) { 
+												const mapsCoordsFieldComponentStyle = mapsCoordsFieldComponent?.style || null;
+												if (mapsCoordsFieldComponentStyle) mapsCoordsFieldComponentStyle.setProperty("display", "block");
+											}
+											if (geoLevelFieldComponent) { 
+												const geoLevelFieldComponentStyle = geoLevelFieldComponent?.style || null;
+												if (geoLevelFieldComponentStyle) geoLevelFieldComponent.style.setProperty("display", "none");
+											}
 										} else if (value === "Geographic Level") {
-											mapsCoordsField.closest(".dts-form-component")?.style.setProperty("display", "none");
-											geoLevelField.closest(".dts-form-component")?.style.setProperty("display", "block");
+											if (mapsCoordsFieldComponent) mapsCoordsFieldComponent.style.setProperty("display", "none");
+											if (geoLevelFieldComponent) geoLevelFieldComponent.style.setProperty("display", "block");
 										}
 									},
 								},

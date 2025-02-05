@@ -1,0 +1,25 @@
+.content-repeater {
+    background: #f2f2f2;
+    padding: 2.4rem;
+    margin: 2.4rem 0 2.4rem;
+    border: 1px solid #E3E3E3;
+  }
+
+  .content-repeater .dts-table th {
+    font-size: 1.6rem;
+  }
+
+  .content-repeater .dts-table th, .dts-table td {
+    border-bottom: 1px solid #E3E3E3 !important;
+  }
+
+  .content-repeater-caption {
+    font-size: 1.8rem;
+    line-height: 1.33;
+    font-weight: 500;
+    margin-bottom: 2.4rem;
+  }
+
+  .content-repeater-actions {
+    margin-top: 1rem !important;
+  }
