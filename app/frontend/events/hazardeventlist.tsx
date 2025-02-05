@@ -22,6 +22,8 @@ import { hazardEventsLoader } from "~/backend.server/handlers/events/hazardevent
 
 import { createFloatingTooltip } from "~/util/tooltip";
 
+import { EventCounter } from '~/components/EventCounter';
+
 interface ListViewArgs {
 	isPublic: boolean
 	basePath: string
@@ -75,18 +77,22 @@ export function ListView(args: ListViewArgs) {
 					</div>
 				</Form>
 				{!args.isPublic && (
-					<div className="dts-legend">
-						<span className="dts-body-label">Status legend</span>
-						<div className="dts-legend__item">
-							<span className="dts-status dts-status--draft"></span> Draft
-						</div>
-						<div className="dts-legend__item">
-							<span className="dts-status dts-status--published"></span> Published
-						</div>
-						<div className="dts-legend__item">
-							<span className="dts-status dts-status--rejected"></span> Rejected
-						</div>
-					</div>
+					<><div>{/* Add the EventCounter component */}
+						<span >
+							<strong><EventCounter totalEvents={items.length} /></strong>
+						</span>
+					</div><div className="dts-legend">
+							<span className="dts-body-label">Status legend</span>
+							<div className="dts-legend__item">
+								<span className="dts-status dts-status--draft"></span> Draft
+							</div>
+							<div className="dts-legend__item">
+								<span className="dts-status dts-status--published"></span> Published
+							</div>
+							<div className="dts-legend__item">
+								<span className="dts-status dts-status--rejected"></span> Rejected
+							</div>
+						</div></>
 				)}
 			</div>
 
