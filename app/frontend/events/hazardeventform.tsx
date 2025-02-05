@@ -145,8 +145,9 @@ export function HazardEventForm(props: HazardEventFormProps) {
 					</Field>
 				),
 				spatialFootprint: (
-					<Field key="spatialFootprint" label="Spatial Footprint">
+					<Field key="spatialFootprint" label="">
 						<ContentRepeater
+							caption="Spatial Footprint"
 							ref={contentReapeaterRef}
 							id="spatialFootprint"
 							mapper_preview={true}
