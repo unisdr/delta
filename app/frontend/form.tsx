@@ -551,6 +551,7 @@ export function ViewScreenPublicApproved<T>(props: ViewScreenPublicApprovedProps
 interface ViewComponentProps {
 	isPublic?: boolean;
 	path: string;
+	listUrl?: string 
 	id: any;
 	plural: string;
 	singular: string;
@@ -564,7 +565,7 @@ export function ViewComponent(props: ViewComponentProps) {
 		<MainContainer title={props.plural}>
 			<>
 				<p>
-					<Link to={props.path}>{props.plural}</Link>
+					<Link to={props.listUrl || props.path}>{props.plural}</Link>
 				</p>
 				{!props.isPublic && (
 					<>
@@ -590,6 +591,8 @@ export function ViewComponent(props: ViewComponentProps) {
 
 interface FormViewProps {
 	path: string;
+	listUrl?: string
+	viewUrl?: string
 	edit: boolean;
 	id?: any;
 	plural: string;
@@ -608,11 +611,11 @@ export function FormView(props: FormViewProps) {
 		<MainContainer title={pluralCap}>
 			<>
 				<p>
-					<Link to={props.path}>{pluralCap}</Link>
+					<Link to={props.listUrl || props.path}>{pluralCap}</Link>
 				</p>
 				{props.edit && props.id && (
 					<p>
-						<Link to={`${props.path}/${String(props.id)}`}>View</Link>
+						<Link to={props.viewUrl || `${props.path}/${String(props.id)}`}>View</Link>
 					</p>
 				)}
 				<h2>{props.edit ? "Edit" : "Add"} {props.singular}</h2>

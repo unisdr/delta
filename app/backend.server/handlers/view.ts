@@ -53,6 +53,7 @@ export async function getItem2<T>(
 	return res;
 }
 
+// TODO: defaultOrderBy is not working, remove
 export function createPaginatedLoader<T>(
 	table: any,
 	fetchData: (offsetLimit: OffsetLimit) => Promise<T[]>,

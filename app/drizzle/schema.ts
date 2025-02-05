@@ -468,6 +468,11 @@ export type DisplacementStocksInsert =
 export const disruptionTable = pgTable("disruption", {
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
+	// TODO: make this a foreign key
+	sectorId: text("sector_id").notNull(),
 	durationDays: integer("duration_days"),
 	durationHours: integer("duration_hours"),
 	usersAffected: integer("users_affected"),
