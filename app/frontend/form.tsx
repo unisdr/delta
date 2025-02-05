@@ -635,9 +635,9 @@ interface ActionLinksProps {
 export function ActionLinks({route, id}: ActionLinksProps) {
 	return (
 		<>
-			<Link to={`${route}/${id}`}>View</Link>&nbsp;
-			<Link to={`${route}/edit/${id}`}>Edit</Link>&nbsp;
-			<Link to={`${route}/delete/${id}`}>Delete</Link>&nbsp;
+			<Link to={`${route}/${id}`} className="mg-button mg-button--small mg-button-ghost">View</Link>&nbsp;
+			<Link to={`${route}/edit/${id}`} className="mg-button mg-button--small mg-button-ghost">Edit</Link>&nbsp;
+			<Link to={`${route}/delete/${id}`}className="mg-button mg-button--small mg-button-ghost">Delete</Link>&nbsp;
 		</>
 	);
 }
