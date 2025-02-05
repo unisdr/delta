@@ -108,7 +108,6 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 							ref={contentReapeaterRef}
 							id="spatialFootprint"
 							mapper_preview={true}
-							debug={true}
 							table_columns={[
 								{ type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "40%" },
 								{
