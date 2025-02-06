@@ -62,19 +62,13 @@ export function ListView(args: ListViewArgs) {
 
 	return (
 		<div>
-			<div className="dts-main-container">
-				<h3 className="dts-heading-3">Filters</h3>
+			<div className="dts-filter">
+				<h3>Filters</h3>
 				<Form className="dts-form">
-					<div className="mg-grid mg-grid__col-12 dts-form__group">
-						<div className="mg-grid__col-3 dts-form-component">
-							<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
-						</div>
-					</div>
-					<div className="mg-grid mg-grid__col-2 dts-form__actions"
-						style={{ gap: "1rem" }}
-					>
-						<input type="submit" value="Apply" className="mg-button mg-button--small mg-button-primary" />
-						<Link to={args.basePath} className="mg-button mg-button--small mg-button-outline">Clear filters</Link>
+					<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
+					<div className="dts-form__actions">
+						<input type="submit" value="Apply" className="mg-button mg-button-primary" />
+						<Link to={args.basePath} className="mg-button mg-button-outline">Clear filters</Link>
 					</div>
 				</Form>
 			</div>
@@ -111,8 +105,8 @@ export function ListView(args: ListViewArgs) {
 								<th>Hazard ID</th>
 								<th>Hazard Name</th>
 								<th>Event Description</th>
-								{!args.isPublic && (
-									<th></th>
+								{ !args.isPublic && (
+									<th>Actions</th>
 								)}
 							</tr>
 						</thead>

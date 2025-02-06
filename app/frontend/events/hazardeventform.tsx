@@ -428,5 +428,3 @@ export function HazardEventView(props: HazardEventViewProps) {
 		</ViewComponent>
 	);
 }
-
-

@@ -485,6 +485,7 @@ function jsonPayloadExample<T>(
 				val = true;
 				break;
 			case "enum":
+			case "enum-flex":
 				val = item.enumData![0].key;
 				break;
 			default:
@@ -1062,6 +1063,7 @@ export async function csvImportExample<T>(
 			case "date":
 				return "2025-01-01";
 			case "enum":
+			case "enum-flex":
 				return field.enumData && field.enumData.length > 0
 					? field.enumData[0].key
 					: "";

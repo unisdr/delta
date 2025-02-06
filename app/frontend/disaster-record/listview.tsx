@@ -43,7 +43,7 @@ export function ListView(args: ListViewArgs) {
 									<th>Status</th>
 								)}
 								{ !args.isPublic && (
-									<th></th>
+									<th>Actions</th>
 								)}
 							</tr>
 						</thead>

@@ -302,3 +302,7 @@ form > label {
     pointer-events: none; /* Prevent clicks on the icon */
   }
   
+
+table.table-border {
+	border: 1px solid #aaa;
+}

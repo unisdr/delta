@@ -75,4 +75,24 @@
     height: 20px;
     margin-right: 0.5rem;
 }
-  
+
+.content-repeater .input-file .uploading {
+    display: none;
+    width: 100%;
+    padding: 0.4rem 0.8rem;
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    color: #999;
+}
+
+.content-repeater .input-file .file-link {
+    display: inline-block;
+    width: 100%;
+    padding: 0.4rem 0.8rem;
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}

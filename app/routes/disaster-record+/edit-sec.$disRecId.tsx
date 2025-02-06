@@ -5,11 +5,12 @@ import { MainContainer } from "~/frontend/container";
 import type { MetaFunction } from "@remix-run/node";
 
 import { useLocation } from 'react-router-dom';
-import {
-	PropRecord,
-	upsertRecord,
 
-} from "~/backend.server/models/noneco_losses";
+
+import {
+	upsertRecord as disRecSectorsUpsertRecord,
+} from "~/backend.server/models/disaster_record__sectors";
+
 
 import {getSectors, SectorType} from "~/backend.server/models/sector";
 
@@ -28,6 +29,7 @@ import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
 import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
 import { string } from "prop-types";
 import { configCurrencies } from  "~/util/config";
+import { isEmpty } from "ol/extent";
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -100,12 +102,18 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	let frmType = formData.get("type") || formData.get("frmType") || ''; 
 	let frmSector = formData.get("sector") || formData.get("frmSector") || ''; 
 	let frmSubSector = formData.get("subsector") || formData.get("frmSubSector") || ''; 
-	let frmDescription = formData.get("description") || ''; 
+
+	let frmWithDamage = formData.get("with_damage") || ''; 
+	let frmWithLosses = formData.get("with_losses") || ''; 
+	let frmWithDisruption = formData.get("with_disruption") || ''; 
+	let frmDisruptionResponseCost = formData.get("disruption_response_cost") || ''; 
+	let frmDisruptionResponseCostCurrency = formData.get("disruption_response_cost_currency") || ''; 
+
 	let this_showForm:boolean = false;
 	let intTypeID:number = 0;
 	let intSectorID:number = 0;
 	let intSubSectorID:number = 0;
-	let intTypeIDforDB:number = 0;
+	let intSectorIDforDB:number = 0;
 	let sectorData = {};
 	let subSectorData = {};
 
@@ -115,44 +123,37 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	}
 	if (intTypeID > 0 && typeof frmSector === "string" && frmSector !== '' && parseInt(frmSector) > 0) {
 		intSectorID = parseInt(frmSector);
-		intTypeIDforDB = intSectorID;
 		subSectorData = await getSectors(intSectorID);
 	}
 	if (intSectorID > 0 && typeof frmSubSector === "string" && frmSubSector !== '' && parseInt(frmSubSector) > 0) {
 		intSubSectorID = parseInt(frmSubSector);
-		intTypeIDforDB = intSubSectorID;
+		intSectorIDforDB = intSubSectorID;
 		this_showForm = true;
 	}
-	// if (intTypeID === 6 && intSectorID > 0) {
-	// 	subSectorData = await getSectors(intSectorID);
-	// }
-	// if (intTypeID === 6 && intSectorID > 0 && typeof frmSubSector === "string" && frmSubSector !== '' && parseInt(frmSubSector) > 0) {
-	// 	intSubSectorID = parseInt(frmSubSector);
-	// 	intTypeIDforDB = intSubSectorID;
-	// }
 
-	// if (intTypeID !== 6 && intSectorID > 0) {
-	// 	this_showForm = true;
-	// } else if (intTypeID === 6 && intSectorID > 0 && intSubSectorID > 0) {
-	// 	this_showForm = true;
-	// }
-
-	if (this_showForm && frmDescription.toString() !== '' && intTypeID > 0) {
-		const formRecord:PropRecord = { 
+	if (this_showForm && intSectorID > 0 && (frmWithDamage || frmWithDisruption || frmWithLosses)) {
+		const formRecord:any = { 
 			// id: '70bc07e0-a671-4dbc-8ac8-0c21bc62a878',
-			categortyId: intTypeIDforDB,
-			disasterRecordId: String(params.id),
-			description: String(frmDescription),
+			sectorId: intSectorIDforDB,
+			disasterRecordId: params.disRecId,
+			withDamage: frmWithDamage === 'on' ? true : false,
+			withDisruption: frmWithDisruption === 'on' ? true : false,
+			disruptionResponseCost: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' ? frmDisruptionResponseCost : null,
+			disruptionResponseCostCurrency: frmWithDisruption === 'on' && frmDisruptionResponseCostCurrency !== '' ? frmDisruptionResponseCostCurrency : null,
+			withLosses: frmWithLosses === 'on' ? true : false,
 		};
 	
 		try {
-			await upsertRecord(formRecord).catch(console.error);
-			return redirect("/disaster-record/edit/" + params.id);
+			await disRecSectorsUpsertRecord(formRecord).catch(console.error);
+			return redirect("/disaster-record/edit/" + params.disRecId);
 		} catch (e) {
 			console.log(e);
 			throw e;
 		}
 	}
+
+	// console.log( formData );
+	// console.log( params );
 
 	return {
 		ok: 'action', 
@@ -348,7 +349,7 @@ export default function Screen() {
 				{(actionData?.showForm) &&
 					<>
 						<h2 className="dts-heading-3">Damage</h2>
-						<div className="mg-grid mg-grid__col-2">
+						<div className="mg-grid mg-grid__col-3">
 							<div className="dts-form-component">
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
@@ -360,7 +361,7 @@ export default function Screen() {
 							</div>
 						</div>
 						<h2 className="dts-heading-3">Losses</h2>
-						<div className="mg-grid mg-grid__col-2">
+						<div className="mg-grid mg-grid__col-3">
 							<div className="dts-form-component">
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
@@ -372,8 +373,8 @@ export default function Screen() {
 							</div>
 						</div>
 						<h2 className="dts-heading-3">Disruption</h2>
-						<div className="mg-grid mg-grid__col-2">
-							<div className="dts-form-component">
+						<div className="mg-grid mg-grid__col-3">
+							<div className="dts-form-component mg-grid__col">
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
@@ -382,12 +383,19 @@ export default function Screen() {
 									</div>
 								</label>					
 							</div>
-							<div>
+							<div className="dts-form-component mg-grid__col">
 								<label>
 								<div className="dts-form-component__label">
 									<span>Response Cost</span>
 								</div>
 								<input type="number" name="disruption_response_cost" placeholder="enter disruption response cost" />
+								</label>
+							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+								<div className="dts-form-component__label">
+									<span>Currency</span>
+								</div>
 								<select name="disruption_response_cost_currency">
 									{
 										Array.isArray(loaderData.currency) && loaderData.currency.map((item, index) => (

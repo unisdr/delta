@@ -19,6 +19,7 @@ import {
 
 import { DisasterRecordsViewModel } from "~/backend.server/models/disaster_record";
 import { nonecoLossesFilderBydisasterRecordsId, PropRecord as nonecoLossesProps } from "~/backend.server/models/noneco_losses";
+import { sectorsFilderBydisasterRecordsId } from "~/backend.server/models/disaster_record__sectors";
 
 
 
@@ -54,8 +55,10 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	}
 
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
+	const dbDisRecSectos = await sectorsFilderBydisasterRecordsId(params.id);
 	
-	console.log("recordsNonecoLosses", dbNonecoLosses);
+	// console.log("recordsNonecoLosses", dbNonecoLosses);
+	console.log("recordsNonecoLosses", dbDisRecSectos);
 
 	// Define Keys Mapping (Make it Adaptable)
     const idKey = "id";
@@ -64,7 +67,12 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
     const rawData = await dr.select().from(divisionTable);
     const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
-    return {item, recordsNonecoLosses: dbNonecoLosses, treeData};
+    return {
+		item, 
+		recordsNonecoLosses: dbNonecoLosses, 
+		recordsDisRecSectors: dbDisRecSectos,
+		treeData
+	};
 });
 
 export const action = createAction({
@@ -79,14 +87,19 @@ export const action = createAction({
 });
 
 export default function Screen() {
-	const ld = useLoaderData<{item: DisasterRecordsViewModel | null, recordsNonecoLosses: nonecoLossesProps, treeData: any[]}>();
+	const ld = useLoaderData<{
+		item: DisasterRecordsViewModel | null, 
+		recordsNonecoLosses: nonecoLossesProps, 
+		recordsDisRecSectors: any,
+		treeData: any[]
+	}>();
 	console.log(ld);
 
 	return (
 		<>
 			<FormScreen
 				fieldsDef={fieldsDef}
-				formComponent={(props) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
+				formComponent={(props: any) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>
@@ -118,21 +131,48 @@ export default function Screen() {
 								<div className="dts-form__section-remove">
 									<Link to={`/disaster-record/edit-sec/${ld.item.id}`}>[ Add new record ]</Link>
 								</div>
-								<h4 className="dts-heading-4">Damages</h4>
-								<div className="mg-grid mg-grid__col-1">
-									<div className="dts-form-component">
+								{ld.recordsDisRecSectors && Array.isArray(ld.recordsDisRecSectors) && ld.recordsDisRecSectors.map((item, index) => (
+									<div key={ index }>
+										<h3 className="dts-heading-3">
+											<Link to={`/disaster-record/edit-sec/${item.disRecSectorsdisasterRecordId}/?id=${item.disRecSectorsId}`}>
+												{ item.catNameParent2 ? item.catNameParent2 + ' > ' + item.catNameParent1 : item.catNameParent1 }
+												&nbsp; &gt; &nbsp;
+												{ item.catName }
+											</Link>
+										</h3>
+										{ item.disRecSectorsWithDamage &&
+											<>
+												<h4 className="dts-heading-4">
+													Damages
+
+												</h4>
+											</>
+										}
+										{ item.disRecSectorsWithLosses &&
+											<>
+												<h4 className="dts-heading-4">Losses</h4>
+											</>
+										}
+										{ item.disRecSectorsWithDisruption && (
+											<>
+												<h4 className="dts-heading-4">
+													Disruption &nbsp;
+													{ item.disruptionResponseCost && (
+														<>with response cost: { item.disruptionResponseCost } { item.disruptionResponseCostCurrency }</>
+													)}
+													&nbsp;
+													|
+													&nbsp;
+													<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/disruptions?sectorId=${item.disRecSectorsId}`}>[ add ]</Link>
+												</h4>
+											</>
+										)}
 									</div>
-								</div>
-								<h4 className="dts-heading-4">Losses</h4>
-								<div className="mg-grid mg-grid__col-1">
-									<div className="dts-form-component">
-									</div>
-								</div>
-								<h4 className="dts-heading-4">Disruptions</h4>
-								<div className="mg-grid mg-grid__col-1">
-									<div className="dts-form-component">
-									</div>
-								</div>
+									
+								))}
+
+								
+								
 							</div>
 						</fieldset>
 					</div>
@@ -144,12 +184,11 @@ export default function Screen() {
 								<legend className="dts-heading-3">Non-economic Losses</legend>
 								<div className="dts-form__body">
 									<div className="dts-form__section-remove">
-										
 										<Link to={`${route}/non-economic-losses/${ld.item.id}`}>[ Add new record ]</Link>
 									</div>
 									<div className="mg-grid mg-grid__col-1">
 										<div className="dts-form-component">
-											<table>
+											<table className="dts-table table-border">
 												<thead>
 													<tr>
 														<th>ID</th>

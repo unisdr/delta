@@ -155,6 +155,23 @@ describe("validateFromMap", function () {
 	})
 
 	runTest({
+		name: "handles boolean field - off",
+		defs: [{key: "k3", type: "bool", label: "Boolean Field"}],
+		data: {k3: "off"},
+		expectedOk: true,
+		expectedData: {k3: false},
+	})
+
+	runTest({
+		name: "handles boolean field - false",
+		defs: [{key: "k3", type: "bool", label: "Boolean Field"}],
+		data: {k3: "false"},
+		expectedOk: true,
+		expectedData: {k3: false},
+	})
+
+
+	runTest({
 		name: "handles date field",
 		defs: [{key: "k5", type: "date", required: true, label: "Date Field"}],
 		data: {k5: "2024-12-31"},

@@ -339,61 +339,72 @@ export function Input(props: InputProps) {
 		case "enum":
 			{
 				let vs = props.value as string;
-				return <Field label={label}>
-					<select
-						required={props.def.required}
-						name={props.name}
-						defaultValue={vs}
-					>
-						{props.enumData!.map((v) => (
-							<option key={v.key} value={v.key}>{v.label}</option>
-						))}
-					</select>
-					<FieldErrors2 errors={props.errors} />
-				</Field>
+				return <div className="mg-grid mg-grid__col-3">
+					<div className="dts-form-component ">
+						<Field label={label}>
+							<select
+								required={props.def.required}
+								name={props.name}
+								defaultValue={vs}
+							>
+								{props.enumData!.map((v) => (
+									<option key={v.key} value={v.key}>{v.label}</option>
+								))}
+							</select>
+							<FieldErrors2 errors={props.errors} />
+						</Field>
+					</div>
+				</div>
 			}
 		case "enum-flex":
 			{
 				let vs = props.value as string;
 				let contains = props.enumData!.some(e => e.key == vs)
-
-				return <Field label={label}>
-					<select
-						required={props.def.required}
-						name={props.name}
-						defaultValue={vs}
-					>
-						{!contains && vs &&
-							<option key={vs} value={vs}>{vs}</option>
-						}
-						{props.enumData!.map((v) => (
-							<option key={v.key} value={v.key}>{v.label}</option>
-						))}
-					</select>
-					<FieldErrors2 errors={props.errors} />
-				</Field>
+				return <div className="mg-grid mg-grid__col-3">
+					<div className="dts-form-component ">
+						<Field label={label}>
+							<select
+								required={props.def.required}
+								name={props.name}
+								defaultValue={vs}
+							>
+								{!contains && vs &&
+									<option key={vs} value={vs}>{vs}</option>
+								}
+								{props.enumData!.map((v) => (
+									<option key={v.key} value={v.key}>{v.label}</option>
+								))}
+							</select>
+							<FieldErrors2 errors={props.errors} />
+						</Field>
+					</div>
+				</div>
 			}
 		case "bool":
 			let v = props.value as boolean;
 			if (v) {
-				return <Field label={label}>
-					<input
-						required={props.def.required}
-						type="checkbox"
-						name={props.name}
-						defaultChecked
-					/>
-					<FieldErrors2 errors={props.errors} />
-				</Field>
+				return <div className="dts-form-component">
+					<Field label={label}>
+						<input type="hidden" name={props.name} value="off" />
+						<input
+							type="checkbox"
+							name={props.name}
+							defaultChecked
+						/>
+						<FieldErrors2 errors={props.errors} />
+					</Field>
+				</div>
 			} else {
-				return <Field label={label}>
-					<input
-						required={props.def.required}
-						type="checkbox"
-						name={props.name}
-					/>
-					<FieldErrors2 errors={props.errors} />
-				</Field>
+				return <div className="dts-form-component">
+					<Field label={label}>
+						<input type="hidden" name={props.name} value="off" />
+						<input
+							type="checkbox"
+							name={props.name}
+						/>
+						<FieldErrors2 errors={props.errors} />
+					</Field>
+				</div>
 			}
 		case "textarea":
 			let defaultValueTextArea = "";
@@ -401,14 +412,16 @@ export function Input(props: InputProps) {
 				let v = props.value as string;
 				defaultValueTextArea = v
 			}
-			return <Field label={label}>
-				<textarea
-					required={props.def.required}
-					name={props.name}
-					defaultValue={defaultValueTextArea}
-				/>
-				<FieldErrors2 errors={props.errors} />
-			</Field>
+			return <div className="dts-form-component">
+				<Field label={label}>
+					<textarea
+						required={props.def.required}
+						name={props.name}
+						defaultValue={defaultValueTextArea}
+					/>
+					<FieldErrors2 errors={props.errors} />
+				</Field>
+			</div>
 		case "text":
 		case "date":
 		case "number":
@@ -425,15 +438,18 @@ export function Input(props: InputProps) {
 					defaultValue = String(v)
 				}
 			}
-			return <Field label={label}>
-				<input
-					required={props.def.required}
-					type={props.def.type}
-					name={props.name}
-					defaultValue={defaultValue}
-				/>
-				<FieldErrors2 errors={props.errors} />
-			</Field>
+			return <div className="dts-form-component">
+				<Field label={label}>
+					<input
+						required={props.def.required}
+						type={props.def.type}
+						name={props.name}
+						defaultValue={defaultValue}
+					/>
+					<FieldErrors2 errors={props.errors} />
+				</Field>
+			</div>
+
 	}
 }
 
@@ -551,7 +567,7 @@ export function ViewScreenPublicApproved<T>(props: ViewScreenPublicApprovedProps
 interface ViewComponentProps {
 	isPublic?: boolean;
 	path: string;
-	listUrl?: string 
+	listUrl?: string
 	id: any;
 	plural: string;
 	singular: string;
@@ -569,12 +585,10 @@ export function ViewComponent(props: ViewComponentProps) {
 				</p>
 				{!props.isPublic && (
 					<>
-						<p>
-							<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
-						</p>
-						<p>
-							<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
-						</p>
+						<div >
+							<Link to={`${props.path}/edit/${String(props.id)}`} className="mg-button mg-button-secondary" style={{margin: "5px"}}>Edit</Link>
+							<Link to={`${props.path}/delete/${String(props.id)}`} className="mg-button mg-button-secondary">Delete</Link>
+						</div>
 						{props.extraActions}
 					</>
 				)}
@@ -621,9 +635,11 @@ export function FormView(props: FormViewProps) {
 				<h2>{props.edit ? "Edit" : "Add"} {props.singular}</h2>
 				{props.edit && props.id && <p>ID: {String(props.id)}</p>}
 				{props.infoNodes}
-				<Form errors={props.errors}>
+				<Form errors={props.errors} className="dts-form">
 					<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
-					<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+					<div className="dts-form__actions">
+						<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+					</div>
 				</Form>
 			</>
 		</MainContainer>
@@ -637,11 +653,29 @@ interface ActionLinksProps {
 
 export function ActionLinks({route, id}: ActionLinksProps) {
 	return (
-		<>
-			<Link to={`${route}/${id}`} className="mg-button mg-button--small mg-button-ghost">View</Link>&nbsp;
-			<Link to={`${route}/edit/${id}`} className="mg-button mg-button--small mg-button-ghost">Edit</Link>&nbsp;
-			<Link to={`${route}/delete/${id}`}className="mg-button mg-button--small mg-button-ghost">Delete</Link>&nbsp;
-		</>
+		<div style={{display: "flex", justifyContent: "space-evenly"}}>
+			<Link to={`${route}/${id}`}>
+				<button type="button" className="mg-button mg-button-outline">
+					<svg aria-hidden="true" focusable="false" role="img">
+						<use href="assets/icons/eye-show-password.svg#eye-show"></use>
+					</svg>
+				</button>
+			</Link>
+			<Link to={`${route}/edit/${id}`}>
+				<button type="button" className="mg-button mg-button-outline">
+					<svg aria-hidden="true" focusable="false" role="img">
+						<use href="assets/icons/edit.svg#edit"></use>
+					</svg>
+				</button>
+			</Link>
+			<Link to={`${route}/delete/${id}`}>
+				<button type="button" className="mg-button mg-button-outline">
+					<svg aria-hidden="true" focusable="false" role="img">
+						<use href="assets/icons/trash-alt.svg#delete"></use>
+					</svg>
+				</button>
+			</Link>
+		</div>
 	);
 }
 

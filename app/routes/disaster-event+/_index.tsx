@@ -27,7 +27,7 @@ export default function Data() {
 		plural: "Disaster events",
 		resourceName: "Disaster event",
 		baseRoute: route,
-		columns: ["ID", "Hazardous Event", "Start Date", "End Date", ""],
+		columns: ["ID", "Hazardous Event", "Start Date", "End Date", "Actions"],
 		items: items,
 		paginationData: pagination,
 		csvExportLinks:true,
