@@ -5,3 +5,9 @@ build
 app/data
 information-pages-override
 public/uploads
+
+# Ignore backup script
+backup.sh
+
+# Ignore backups directory
+backups/
