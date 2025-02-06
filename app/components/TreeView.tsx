@@ -195,6 +195,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     useImperativeHandle(ref, () => ({
         treeViewOpen: () => {
             if (dialogRef.current) {
+                
                 dialogRef.current.showModal();
 
                 let contHeight = [] as number[];
@@ -211,7 +212,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             }
         },
         treeViewClose: () => {
-            if (dialogRef.current) {
+            if (dialogRef.current) {   
                 dialogRef.current.close();
             }
         }
@@ -513,6 +514,11 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             }
             const treeHiddenData = dialogCurrent.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
             if (treeHiddenData) treeHiddenData.value = ""; 
+        }
+
+        const dtsFormBody = dialogCurrent.querySelector(".dts-form__body") as HTMLElement;
+        if (dtsFormBody) {
+            dtsFormBody.style.height = "";
         }
     };
     
