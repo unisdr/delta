@@ -1,0 +1,7 @@
+.mapper-selected-shape {
+    font-size: 1rem;
+    margin: 0.5rem;
+    padding: 1rem;
+    position: relative;
+    border: 1px solid #ddd;
+}

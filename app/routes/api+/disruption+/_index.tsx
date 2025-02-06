@@ -1,6 +1,6 @@
 import {
-	fieldsDefApi,
-} from "~/frontend/disruption"
+	fieldsDefApi
+} from "~/backend.server/models/disruption"
 
 import {
 	authLoaderApiDocs,
@@ -18,7 +18,7 @@ export const loader = authLoaderApiDocs(async () => {
 
 	return new Response(docs, {
 		status: 200,
-		headers: { "Content-Type": "text/plain" },
+		headers: {"Content-Type": "text/plain"},
 	})
 })
 

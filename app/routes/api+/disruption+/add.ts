@@ -4,8 +4,8 @@ import {
 } from "~/util/auth"
 
 import {
-	fieldsDefApi,
-} from "~/frontend/disruption"
+	fieldsDefApi
+} from "~/backend.server/models/disruption"
 
 import {
 	jsonCreate,

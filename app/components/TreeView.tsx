@@ -77,6 +77,7 @@ const injectStyles = (appendCss?: string) => {
                 border: 1px solid #000;
                 border-radius: 5px;
             }
+
             .tree-btn {
                 display: inline-block;
                 background-color: buttonface;
@@ -89,6 +90,10 @@ const injectStyles = (appendCss?: string) => {
             .tree-btn.main-btn {
                 padding: 4px 8px 4px 8px;
             }
+            .tree-dialog .mg-button.mg-button-primary {
+                margin-right: 1rem;
+            }
+
             .tree-search {  
                 display: inline-block;
                 padding: 0.4rem;
@@ -112,14 +117,15 @@ const injectStyles = (appendCss?: string) => {
             }
 
             .tree-dialog {
-                width: 50vw !important;
+                max-width: 50vw;
                 max-width: none !important;
                 max-height: none !important;
             }
             .tree-dialog .dts-form__body {
                 position: relative;
                 overflow: scroll;
-                height: 500px;
+                // height: 500px;
+                border-bottom: 1px dotted #979797 !important;
             }
             .tree-footer {
                 display: flex;  /* Enables flexbox */
@@ -128,10 +134,13 @@ const injectStyles = (appendCss?: string) => {
                 width: 100%;
                 padding-top: 1.5rem;
             }
-            .tree-footer span {
+            .tree-footer div {
                 font-weight: bold;
                 flex: 1; /* Allows it to take up available space */
                 white-space: normal; /* Allows text wrapping */
+            }
+            .tree-footer div .selected {
+                display: inline-flex; align-items: center; background: rgb(240, 240, 240); color: rgb(51, 51, 51); border-radius: 4px; padding: 4px 8px; margin: 2px; border: 1px solid rgb(204, 204, 204);
             }
             .tree-checkbox {
                 margin-right: 0.5rem;
@@ -166,14 +175,14 @@ interface TreeViewProps {
     rootCaption?: string;
     targetObject?: any | null;
     base_path?: string;
-    onApply?: (dialogRef: any, selectedItem: { [key: string]: any }) => void;
+    onApply?: (selectedItem: { [key: string]: any }) => void;
     onRenderItemName?: (node: any) => any;
     multiSelect?: boolean;
     appendCss?: string;
     disableButtonSelect?: boolean;
 }
 
-export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "", disableButtonSelect = false }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "", disableButtonSelect = false }, ref: any) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -182,19 +191,6 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     const [selectedItems, setSelectedItems] = useState<{ [key: number]: boolean }>({});
 
     const dialogRef = useRef<HTMLDialogElement>(null);
-
-    useImperativeHandle(ref, () => ({
-        treeViewOpen: () => {
-            if (dialogRef.current) {
-                dialogRef.current.showModal();
-            }
-        },
-        treeViewClose: () => {
-            if (dialogRef.current) {
-                dialogRef.current.close();
-            }
-        }
-    }));
 
     useEffect(() => {
         injectStyles(appendCss); // Inject CSS when component mounts
@@ -255,7 +251,7 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     };
 
     // Toggle individual node expand/collapse
-    const toggleExpand = (e, id: number) => {
+    const toggleExpand = (e: any, id: number) => {
         e.preventDefault();
         setExpandedNodes((prev) => {
             const newState = { ...prev, [id]: !prev[id] };
@@ -264,13 +260,13 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     };
 
     // Filter function with auto-expand logic
-    const filterTree = (nodes: any[], query: string, expandedState: { [key: number]: boolean }) => {
+    const filterTree = (nodes: any[], query: string, expandedState: { [key: number]: boolean }): any[] => {
         if (!query) return nodes;
 
         return nodes
-            .map((node) => {
+            .map((node: any): any | null  => {
                 const match = node.name.toLowerCase().includes(query.toLowerCase());
-                const filteredChildren = filterTree(node.children, query, expandedState);
+                const filteredChildren = filterTree(node.children, query, expandedState) || [];
 
                 if (match || filteredChildren.length > 0) {
                     expandedState[node.id] = true; // Auto-expand matching nodes
@@ -307,26 +303,71 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
         const selectedName = e.target.closest("li").querySelector("span")?.textContent || "";
         const arrDataIds = dataIds.split(",");
 
-        let arrLocation = [] as string[];
-        let arrHiddenData = [] as any[];
-        arrDataIds.forEach((id) => {
-            const getSpan = dialogRef.current.querySelector(`li[data-id="${id}"] span`) as HTMLElement;
-            const textAreas = dialogRef.current.querySelectorAll(`li[data-id="${id}"] textarea[data-id="${id}"]`) as HTMLTextAreaElement;
-            arrLocation.push(getSpan?.textContent || "");
-            let arrHiddenDataItem = {} as any;
-            textAreas.forEach((textarea: any) => {
-                arrHiddenDataItem[textarea.name] = textarea.value;
+        const dialogRefCurrent = dialogRef.current;
+        if (dialogRefCurrent) {
+            let arrLocation = [] as string[];
+            let arrHiddenData = [] as any[];
+            arrDataIds.forEach((id: any) => {
+                const getSpan = dialogRefCurrent.querySelector(`li[data-id="${id}"] span`) as HTMLElement;
+                const textAreas = dialogRefCurrent.querySelectorAll(`li[data-id="${id}"] textarea[data-id="${id}"]`) as NodeListOf<HTMLTextAreaElement>;
+                arrLocation.push(getSpan?.textContent || "");
+                let arrHiddenDataItem = {} as any;
+                Array.from(textAreas).forEach((textarea) => {
+                    arrHiddenDataItem[textarea.name] = textarea.value;
+                });
+                arrHiddenData.push({ id: id, ...arrHiddenDataItem });
             });
-            arrHiddenData.push({ id: id, ...arrHiddenDataItem });
-        });
 
-        console.log(arrLocation.join(" / "));
+            const treeFooterSpan = dialogRefCurrent.querySelector(".tree-footer div") as HTMLElement;
+            if (treeFooterSpan) {
+                treeFooterSpan.setAttribute("selected-name", selectedName);
+                treeFooterSpan.setAttribute("data-id", dataId);
+                
+                // Create the main container div
+                const selectedDiv = document.createElement("div");
+                selectedDiv.classList.add("selected");
 
-        dialogRef.current.querySelector(".tree-footer span").setAttribute("selected-name", selectedName);
-        dialogRef.current.querySelector(".tree-footer span").setAttribute("data-id", dataId);
-        dialogRef.current.querySelector(".tree-footer span").textContent = arrLocation.join(" / ");
-        dialogRef.current.querySelector(".tree-footer span").setAttribute("data-ids", dataIds);
-        dialogRef.current.querySelector(".tree-hidden-data").value = JSON.stringify(arrHiddenData);
+                // Create the span that holds arrLocation
+                const textSpan = document.createElement("span");
+                textSpan.textContent = arrLocation.join(" / ");
+
+                // Create the close (×) button
+                const closeButton = document.createElement("span");
+                closeButton.style.marginLeft = "5px";
+                closeButton.style.cursor = "pointer";
+                closeButton.style.color = "red";
+                closeButton.textContent = "×";
+
+                // Remove the entire selectedDiv when close button is clicked
+                closeButton.addEventListener("click", () => {
+                    const selectedContainer = selectedDiv.closest("div[selected-name]");
+                
+                    // Remove the selected div
+                    selectedDiv.remove();
+                
+                    // If selectedContainer exists, clear its `data-ids`
+                    if (selectedContainer) {
+                        selectedContainer.setAttribute("data-id", "");
+                        selectedContainer.setAttribute("data-ids", "");
+                    }
+                });
+                
+
+                // Append textSpan and closeButton inside selectedDiv
+                selectedDiv.appendChild(textSpan);
+                selectedDiv.appendChild(closeButton);
+
+                // Clear previous content and append new div
+                treeFooterSpan.innerHTML = "";
+                treeFooterSpan.appendChild(selectedDiv);
+
+                //treeFooterSpan.textContent = arrLocation.join(" / ");
+
+                treeFooterSpan.setAttribute("data-ids", dataIds);
+                const treeHiddenData = dialogRefCurrent.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
+                if (treeHiddenData) treeHiddenData.value = JSON.stringify(arrHiddenData);
+            }
+        }
     };
     
     const handleCheckboxChange = (e: any) => {
@@ -338,8 +379,8 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     
         // Auto-check parents up to the root when an item is checked
         if (isChecked) {
-            dataIds.forEach((ancestorId) => {
-                const ancestorCheckbox = document.querySelector(`li[data-id="${ancestorId}"] > .tree-checkbox`);
+            dataIds.forEach((ancestorId: any) => {
+                const ancestorCheckbox = document.querySelector(`li[data-id="${ancestorId}"] > .tree-checkbox`) as HTMLInputElement;
                 if (ancestorCheckbox) {
                     ancestorCheckbox.checked = true;
                 }
@@ -348,7 +389,7 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     
         // Auto-uncheck all children when an item is unchecked
         if (!isChecked) {
-            listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox) => {
+            listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox: any) => {
                 childCheckbox.checked = false;
             });
         }
@@ -391,7 +432,7 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
                                         data-id={enrichedNode.id}
                                         key={`${enrichedNode.id}-${field}`}
                                         name={field}
-                                        defaultValue={typeof value === "object" ? JSON.stringify(value) : value}
+                                        defaultValue={value ? JSON.stringify(value) : ""}
                                         style={{ display: "none" }}
                                     />
                                 ))}
@@ -420,7 +461,7 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
                                         data-id={enrichedNode.id}
                                         key={`${enrichedNode.id}-${field}`}
                                         name={field}
-                                        defaultValue={typeof value === "object" ? JSON.stringify(value) : value}
+                                        defaultValue={value ? JSON.stringify(value) : ""}
                                         style={{ display: "none" }}
                                     />
                                 ))}
@@ -433,31 +474,54 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
     );
 
     const treeViewClear = () => {
-
         setExpandedNodes({});
         setSearchTerm("");
-        dialogRef.current.querySelector(".tree-footer span").textContent = "";
 
-        const treeFooterSpan = dialogRef.current.querySelector(".tree-footer span") as HTMLElement;
-        const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
-        treeFooterSpan.setAttribute("data-ids", "");
-        treeFooterSpan.setAttribute("data-id", "");
-        treeFooterSpan.setAttribute("selected-name", "");
-        treeHiddenData.value = "";
+        const dialogCurrent = dialogRef.current;
+        if (dialogCurrent) {
+            const treeFooterSpan = dialogCurrent.querySelector(".tree-footer div") as HTMLElement;
+            if (treeFooterSpan) {
+                treeFooterSpan.textContent = "";
+                treeFooterSpan.setAttribute("data-ids", "");
+                treeFooterSpan.setAttribute("data-id", "");
+                treeFooterSpan.setAttribute("selected-name", "");
+            }
+            const treeHiddenData = dialogCurrent.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
+            if (treeHiddenData) treeHiddenData.value = ""; 
+        }
+
+        const dtsFormBody = dialogCurrent?.querySelector(".dts-form__body") as HTMLElement | null;
+        if (dtsFormBody) {
+            dtsFormBody.style.height = "";
+        }
     };
     
     const treeViewOpen = (e?: any) => {
         if (e) {
             e.preventDefault();
         }
-        dialogRef.current.showModal();
+        if (dialogRef.current) {
+            dialogRef.current.showModal();
+
+            let contHeight = [] as number[];
+            contHeight[0] = (dialogRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
+            contHeight[1] = (dialogRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
+            contHeight[2] = (dialogRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
+            contHeight[3] = (dialogRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
+            let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - contHeight[3] - 16;
+
+            const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement | null;
+            if (dtsFormBody) {
+                dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+            }
+        }
     };
     const treeViewDiscard = (e?: any) => {
         if (e) {
             e.preventDefault();
         }
-
-        dialogRef.current.close();
+        if (dialogRef.current) 
+            dialogRef.current.close();
         treeViewClear();
     };
     const treeViewApply = (e?: any) => {
@@ -465,26 +529,34 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
             e.preventDefault();
         }
 
-        const treeFooterSpan = dialogRef.current.querySelector(".tree-footer span") as HTMLElement;
-        const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
-        const selectedItems = {
-            dataIds: treeFooterSpan.getAttribute("data-ids"),
-            names: treeFooterSpan.textContent,
-            selectedId: treeFooterSpan.getAttribute("data-id") || "",
-            selectedName: treeFooterSpan.getAttribute("selected-name"),
-            data: JSON.parse(treeHiddenData.value || "[]"),
+        if (dialogRef.current) {
+            const treeFooterSpan = dialogRef.current.querySelector(".tree-footer div") as HTMLElement;
+            const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
+            const treeFooterSpanSelectedName = treeFooterSpan.querySelector(".selected span") as HTMLElement;
+            const selectedItems = {
+                dataIds: treeFooterSpan.getAttribute("data-ids"),
+                names: treeFooterSpanSelectedName?.textContent || "",
+                selectedId: treeFooterSpan.getAttribute("data-id") || "",
+                selectedName: treeFooterSpan.getAttribute("selected-name"),
+                data: JSON.parse(treeHiddenData.value || "[]"),
+            }
+
+            if (selectedItems.selectedId === "") {
+                alert("No item selected.");
+                return;
+            }
+
+            if (onApply) onApply(selectedItems || {});
+
+            treeViewClear();
+            dialogRef.current.close();
         }
-
-        if (selectedItems.selectedId === "") {
-            alert("No item selected.");
-            return;
-        }
-
-        onApply(dialogRef.current, selectedItems || {});
-
-        treeViewClear();
-        dialogRef.current.close();
     }
+
+    useImperativeHandle(ref, () => ({
+        treeViewOpen,
+        treeViewClose: treeViewDiscard,
+    }));
 
     const filteredTree = searchTerm ? filterTree(treeData, searchTerm, {}) : treeData;
 
@@ -501,7 +573,7 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
                         </a>
                     </div>
                     <div>
-                        <div>
+                        <div className="tree-filters">
                         <button
                                 className="tree-btn"
                                 onClick={expandAll}
@@ -528,7 +600,7 @@ export const TreeView = forwardRef(({ treeData = [], caption = "", rootCaption =
                             <p className="tree" style={{ marginBottom: "1rem" }}>{rootCaption}</p>
                             {filteredTree.length > 0 ? renderTree(filteredTree) : <p className="tree">No results found.</p>}
                         </div>
-                        <div className="tree-footer"><span></span><button className="tree-btn main-btn" onClick={treeViewApply}>Apply</button><button className="tree-btn main-btn" onClick={treeViewDiscard}>Discard</button></div>
+                        <div className="tree-footer"><div></div><button className="mg-button mg-button-primary" onClick={treeViewApply}>Apply</button><button className="mg-button mg-button-outline" onClick={treeViewDiscard}>Discard</button></div>
                         <textarea className="tree-hidden-data" style={{display: "none"}}></textarea>
                     </div>
                 </div>
@@ -566,7 +638,7 @@ export const buildTree = (
             nameOutput = nameValue?.[selectedKey] || "Unnamed";
         }
 
-        const hiddenData = {};
+        const hiddenData: Record<string, any> = {};
         if (additionalFields) {
             additionalFields.forEach((field) => {
                 hiddenData[field] = item[field] || "";
@@ -582,7 +654,7 @@ export const buildTree = (
         });
     });
 
-    const tree = [];
+    const tree: any[] = [];
     map.forEach((node) => {
         if (node.parentId === null) {
             tree.push(node);

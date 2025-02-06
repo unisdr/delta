@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { initTokenField, renderTokenField } from "./controls/tokenfield";
-import { renderMapper, renderMapperDialog } from "./controls/mapper";
-// Import Leaflet Core
+import { renderMapper, renderMapperDialog, previewMap, previewGeoJSON } from "./controls/mapper";
+import "./assets/content-repeater.css";
+import "./assets/mapper.css";
 
 declare namespace L {
   export const map: any;
@@ -33,7 +34,8 @@ const glbColors = {
   line: "#FF851B",
   rectangle: "#2ECC40",
   circle: "#FF4136",
-  marker: "#85144b"
+  marker: "#85144b",
+  geographic_level: "#fc9003",
 };
 const glbMarkerIcon = {
   iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png", // Replace with your marker icon if necessary
@@ -72,6 +74,7 @@ interface DialogField {
     setDialogFields?: React.Dispatch<React.SetStateAction<DialogField[]>> | null
   ) => void;
   mapperGeoJSONField?: string;
+  render?: (value: any, handleFieldChange: any | null, formData: any | null) => React.ReactNode; // Custom render function for "custom" type
 }
 
 interface ContentRepeaterProps {
@@ -88,6 +91,7 @@ interface ContentRepeaterProps {
   file_viewer_temp_url?: string;
   file_viewer_url?: string;
   mapper_preview?: boolean;
+  caption?: string;
 }
 
 const loadLeaflet = (() => {
@@ -165,8 +169,8 @@ const loadLeaflet = (() => {
   };
 })();
 
-export const ContentRepeater = forwardRef(({
-  id,
+export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(({
+  id = "",
   dnd_order = false,
   base_path = "",
   table_columns = [],
@@ -179,6 +183,7 @@ export const ContentRepeater = forwardRef(({
   file_viewer_temp_url = "",
   file_viewer_url = "",
   mapper_preview = false,
+  caption = "",
 }, ref: any) => {
   const [items, setItems] = useState<Record<string, any>>(() => {
     const initialState: Record<string, any> = {};
@@ -972,183 +977,7 @@ export const ContentRepeater = forwardRef(({
     if (debug) console.log("Drawing state reset.");
   };
   const handlePreviewMap = () => {
-    const newTab = window.open("", "_blank");
-  
-    if (!newTab) {
-      alert("Popup blocker is preventing the map from opening.");
-      return;
-    }
-  
-    newTab.document.write(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <title>Map Preview</title>
-        <link rel="stylesheet" href="${glbMapperCSS}" />
-        <style>
-          #map {
-            position: relative;
-            display: block;
-            width: 100%;
-            height: 100vh;
-          }
-        </style>
-      </head>
-      <body>
-        <div id="map"></div>
-        <script src="${glbMapperJS}"></script>
-<script>
-  const adjustZoomBasedOnDistance = (map, bounds, centers) => {
-    console.log(bounds);
-
-    let maxDistance = 0;
-
-    if (centers.length === 1) {
-      // Calculate maxDistance for a single shape based on its bounds
-      const singleShapeBounds = bounds.isValid() ? bounds : null;
-
-      if (singleShapeBounds) {
-        maxDistance = singleShapeBounds.getNorthEast().distanceTo(singleShapeBounds.getSouthWest());
-      } else {
-        console.warn("No valid bounds available for the single shape.");
-        map.setView(centers[0], 14); // Default zoom for a single center if no bounds
-        return;
-      }
-    } else {
-      // Calculate the maximum distance between all centers
-      for (let i = 0; i < centers.length; i++) {
-        for (let j = i + 1; j < centers.length; j++) {
-          const distance = centers[i].distanceTo(centers[j]);
-          maxDistance = Math.max(maxDistance, distance);
-        }
-      }
-    }
-
-    // Define zoom level thresholds based on distances
-    const globalLevelDistance = 10000000; // ~10,000km
-    const regionalLevelDistance = 5000000; // ~5,000km
-    const countryLevelDistance = 1000000; // ~1,000km
-    const cityLevelDistance = 100000; // ~100km
-    const townLevelDistance1 = 20000; // ~20km
-    const townLevelDistance2 = 15000; // ~15km
-    const townLevelDistance3 = 10000; // ~10km
-    const townLevelDistance4 = 5000; // ~5km
-
-    let calculatedZoom;
-
-    // Adjust zoom based on maximum distance
-    if (maxDistance > globalLevelDistance) {
-      calculatedZoom = 2; // Minimum zoom for global scale
-    } else if (maxDistance > regionalLevelDistance) {
-      calculatedZoom = 4; // Regional scale
-    } else if (maxDistance > countryLevelDistance) {
-      calculatedZoom = 7; // Country-level zoom
-    } else if (maxDistance > cityLevelDistance) {
-      calculatedZoom = 10; // City-level zoom
-    } else if (maxDistance > townLevelDistance1) {
-      calculatedZoom = 11; // Town-level zoom
-    } else if (maxDistance > townLevelDistance2) {
-      calculatedZoom = 12; // Town-level zoom
-    } else if (maxDistance > townLevelDistance3) {
-      calculatedZoom = 13; // Town-level zoom
-    } else if (maxDistance > townLevelDistance4) {
-      calculatedZoom = 14; // Town-level zoom
-    } else {
-      calculatedZoom = 17; // Local zoom for nearby shapes
-    }
-
-    console.log("maxDistance:", maxDistance);
-    console.log("calculatedZoom:", calculatedZoom);
-
-    // Fit bounds first with padding
-    map.fitBounds(bounds, {
-      padding: [50, 50],
-    });
-
-    // Set the zoom level dynamically
-    map.setZoom(Math.min(map.getZoom(), calculatedZoom));
-  };
-
-window.onload = () => {
-    document.getElementById("map").style.height = "${window.outerHeight - 100}px";
-
-    const map = L.map("map").setView([43.833, 87.616], 2);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(map);
-
-    const items = ${JSON.stringify(Object.values(items))};
-    const boundsArray = [];
-    const centers = [];
-
-    items.forEach((item) => {
-        try {
-            const geojsonData = JSON.parse(item.geojson); // Replace map_coords with geojson
-
-            L.geoJSON(geojsonData, {
-                style: (feature) => ({
-                    color: getColorForType(feature.geometry.type),
-                    weight: 2,
-                }),
-                pointToLayer: (feature, latlng) => {
-                    if (feature.geometry.type === "Point") {
-                        return L.marker(latlng, {
-                            icon: L.icon(${JSON.stringify(glbMarkerIcon)}),
-                        });
-                    }
-                    return L.circleMarker(latlng, {
-                        radius: 5,
-                        fillColor: getColorForType(feature.geometry.type),
-                        color: "#000",
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    });
-                },
-                onEachFeature: (feature, layer) => {
-                    if (feature.geometry.type !== "Point") {
-                        boundsArray.push(layer.getBounds());
-                        centers.push(layer.getBounds().getCenter());
-                    } else {
-                        centers.push(layer.getLatLng());
-                    }
-                },
-            }).addTo(map);
-        } catch (error) {
-            console.error("Error parsing GeoJSON:", error);
-        }
-    });
-
-    if (boundsArray.length > 0) {
-        const bounds = L.latLngBounds(boundsArray.flat());
-        adjustZoomBasedOnDistance(map, bounds, centers);
-    } else {
-        console.warn("No valid bounds available for fitting the map.");
-    }
-};
-
-// Function to dynamically assign colors for different geometry types
-function getColorForType(geometryType) {
-    const colors = {
-        Point: "${glbColors.markers}",
-        LineString: "${glbColors.line}",
-        Polygon: "${glbColors.polygon}",
-        MultiPolygon: "${glbColors.polygon}",
-        MultiPoint: "${glbColors.markers}",
-        MultiLineString: "${glbColors.line}",
-    };
-    return colors[geometryType] || "black";
-}
-
-
-</script>
-
-      </body>
-      </html>
-    `);
-  
-    newTab.document.close();
+    previewMap(JSON.stringify(Object.values(items)));
   };
   
   const handleSave = () => {
@@ -1278,7 +1107,8 @@ function getColorForType(geometryType) {
 
   return (
     <div id={id} className="content-repeater">
-      <table className="dts-table" style={{ background: "#ffffff" }}>
+      {caption && <div className="content-repeater-caption">{caption}</div>}
+      <table className="dts-table" >
         <thead>
           <tr>
             {table_columns.map((column, index) => {
@@ -1349,17 +1179,7 @@ function getColorForType(geometryType) {
         readOnly
       ></textarea>
 
-      <ul
-        style={{
-          listStyle: "none",
-          margin: 0,
-          padding: "1rem",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "1.6rem",
-          background: "#F2F2F2",
-        }}
-      >
+      <ul className="content-repeater-actions">
         <li>
           <a
             type="button"
@@ -1460,7 +1280,7 @@ function getColorForType(geometryType) {
                       </div>
                       {field.type === "custom" && (
                         <>
-                          {field.render && field.render(value, handleFieldChange)}
+                          {field.render && field.render(value, handleFieldChange, formData)}
                         </>
                       )}
                       {field.type === "hidden" && (
@@ -1507,37 +1327,9 @@ function getColorForType(geometryType) {
                       )}
                       {field.type === "mapper" && (
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1%' }}>
-                            <div
-                              id={`${id}_${fieldId}`}
-                              style={{
-                                position: "relative",
-                                width: "100%",
-                                padding: '0.4rem 0.8rem',
-                                backgroundColor: 'white',
-                                border: '1px solid #cccccc',
-                                borderRadius: '6px',
-                                color: '#999',
-                                minHeight: '3.5rem',
-                                overflow: 'hidden',
-                                cursor: "pointer",
-                              }}
-                            >  
-                              <a 
-                                style={{
-                                  width: "auto",
-                                  zIndex: "1000",
-                                  textAlign: "center",
-                                  padding: "0.7rem 0.8rem",
-                                  color: "#000",
-                                  textDecoration: "none",
-                                  borderRadius: "4px",
-                                  display: "inline-flex", // Use inline-flex for centering inline content
-                                  alignItems: "center",   // Vertically center items
-                                  justifyContent: "center", // Optional: Center items horizontally
-                                  backgroundColor: "#cccccc",
-                                  position: "absolute", top: "-2px", right: "-2px"
-                                }}
+                          <div className="input-group">
+                            <div className="wrapper">  
+                              <a className="btn"
                                 onClick={() => {
                                   setIsDialogMapOpen(true);
                                   if (dialogMapRef.current) {
@@ -1546,27 +1338,13 @@ function getColorForType(geometryType) {
                                     dialogElement.mapperField = field;
                                   }
                                   initializeMap(value ? JSON.parse(value) : null);
-                                }}
-                              >
-                                <img 
-                                  src={`${base_path}/assets/icons/globe.svg`}
-                                  alt="Globe SVG File" 
-                                  title="Globe SVG File" 
-                                  style={{ width: "20px", height: "20px", marginRight: "0.5rem" }} // Adjust size and spacing
-                                /> 
-                                Open Map
-                              </a>                    
+                                }}>
+                                <img src={`${base_path}/assets/icons/globe.svg`} alt="Globe SVG File"  title="Globe SVG File" />Open Map</a>                    
                               {value &&
                               (() => {
-                                //console.log('id', id);
-                                //console.log(field?.mapperGeoJSONField || '');
-
                                 const getGeoJSON = () => {
                                   let retValue = null;
-                                  const mapperGeoField = formData[field.mapperGeoJSONField] || "";
-                                  // console.log('field', `${id}_${field.mapperGeoJSONField}`);
-                                  // console.log('field.id', item);
-                                  // console.log('object', Object.values(items));
+                                  const mapperGeoField = (field.mapperGeoJSONField) ? (formData[field.mapperGeoJSONField] || "") : "";
                                   if (mapperGeoField != '') {
                                     retValue = JSON.parse(mapperGeoField);
                                   }
@@ -1584,24 +1362,11 @@ function getColorForType(geometryType) {
                                       // Handle circle mode
                                       return (
                                         <div
-                                          style={{
-                                            fontSize: "1rem",
-                                            margin: "0.5rem",
-                                            padding: "1rem",
-                                            position: "relative",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "5px",
-                                          }}
+                                          className="mapper-selected-shape"
                                           title={title}
                                           onClick={() => {
-                                            const newWindow = window.open();
-                                            if (newWindow) {
-                                              parsedValue = getGeoJSON() || parsedValue;
-                                              newWindow.document.write(
-                                                `<pre>${JSON.stringify(parsedValue, null, 2)}</pre>`
-                                              );
-                                              newWindow.document.close();
-                                            }
+                                            parsedValue = getGeoJSON() || parsedValue;
+                                            previewGeoJSON(JSON.stringify(parsedValue, null, 2));
                                           }}
                                         >
                                           <h4>{title}</h4>
@@ -1617,14 +1382,7 @@ function getColorForType(geometryType) {
                                       // Handle polygons, rectangles, or lines
                                       return (
                                         <div
-                                          style={{
-                                            fontSize: "1rem",
-                                            margin: "0.5rem",
-                                            padding: "1rem",
-                                            position: "relative",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "5px",
-                                          }}
+                                          className="mapper-selected-shape"
                                           title={title}
                                           onClick={() => {
                                             const newWindow = window.open();
@@ -1714,35 +1472,18 @@ function getColorForType(geometryType) {
                         </div>
                       )}
                       {field.type === "file" && (
-                        <div>
+                        <div className="input-file">
                           <div 
                             id={`file-link-loading-${field.id}`}
-                            style={{
-                              display: 'none',
-                              width: '100%',
-                              padding: '0.4rem 0.8rem',
-                              backgroundColor: 'white',
-                              border: '1px solid #cccccc',
-                              borderRadius: '6px',
-                              marginBottom: '1rem',
-                              color: '#999'
-                            }}   
+                            className="uploading"
                           >Uploading, please wait...</div>
                           {formData[field.id]?.name && (
                             <a
                               id={`file-link-${field.id}`}
+                              className="file-link"
                               href={`${base_path}${(formData[field.id]?.view) ? formData[field.id]?.view : ((file_viewer_url) ? `${file_viewer_url}/?name=${formData[field.id]?.name.split("/").slice(-2).join("/")}${(field.download) ? '&download=true' : ''}` : formData[field.id]?.name)}`}
                               target={!field.download ? "_blank" : undefined}
                               rel="noopener noreferrer"
-                              style={{
-                                display: "inline-block",
-                                width: "100%",
-                                padding: "0.4rem 0.8rem",
-                                backgroundColor: "white",
-                                border: "1px solid #cccccc",
-                                borderRadius: "6px",
-                                marginBottom: "1rem",
-                              }}
                             >
                               {formData[field.id]?.name.split("/").pop()}
                             </a>

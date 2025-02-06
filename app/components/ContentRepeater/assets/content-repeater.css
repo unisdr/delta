@@ -1,0 +1,98 @@
+.content-repeater {
+    background: #f2f2f2;
+    padding: 2.4rem;
+    margin: 2.4rem 0 2.4rem;
+    border: 1px solid #E3E3E3;
+  }
+
+.content-repeater .dts-table th {
+    font-size: 1.6rem;
+}
+
+.content-repeater .dts-table th, .dts-table td {
+    border-bottom: 1px solid #E3E3E3 !important;
+}
+.content-repeater .dts-table tr:last-child td {
+    border-bottom: 1px dotted #979797 !important;
+}
+
+.content-repeater-caption {
+    font-size: 1.8rem;
+    line-height: 1.33;
+    font-weight: 500;
+    margin-bottom: 2.4rem;
+}
+
+.content-repeater-actions {
+    list-style: none;
+    margin: 0;
+    padding: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.6rem;
+    background: #F2F2F2;
+    margin-top: 1rem !important;
+}
+
+.content-repeater .input-group {
+    display: flex;
+    align-items: center;
+    gap: 1%;
+}
+
+.content-repeater .wrapper {
+    position: relative;
+    width: 100%;
+    padding: 0.4rem 0.8rem;
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    color: #999;
+    min-height: 3.5rem;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+.content-repeater .input-group .btn {
+    width: auto;
+    z-index: 1000;
+    text-align: center;
+    padding: 0.7rem 0.8rem;
+    color: #000;
+    text-decoration: none;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #cccccc;
+    position: absolute;
+    top: -2px;
+    right: -2px;
+}
+
+.content-repeater .input-group .btn img {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5rem;
+}
+
+.content-repeater .input-file .uploading {
+    display: none;
+    width: 100%;
+    padding: 0.4rem 0.8rem;
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    color: #999;
+}
+
+.content-repeater .input-file .file-link {
+    display: inline-block;
+    width: 100%;
+    padding: 0.4rem 0.8rem;
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
