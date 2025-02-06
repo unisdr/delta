@@ -45,7 +45,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		let parent = item!.event.ps[0].p.he;
 		// get parent of parent as well, to match what we use in new form
 		let parent2 = await hazardEventById(parent.id);
-		return {hip, item, parent: parent2};
+		return {hip, item, parent: parent2, treeData: []};
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
