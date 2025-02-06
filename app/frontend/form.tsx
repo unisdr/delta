@@ -11,8 +11,6 @@ import {formatDate} from "~/util/date"
 import {MainContainer} from "./container";
 
 import {capitalizeFirstLetter} from "~/util/string"
-import {Style} from "ol/style";
-import {flashMessage} from "~/util/session";
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -387,8 +385,8 @@ export function Input(props: InputProps) {
 			if (v) {
 				return <div className="dts-form-component">
 					<Field label={label}>
+						<input type="hidden" name={props.name} value="off" />
 						<input
-							required={props.def.required}
 							type="checkbox"
 							name={props.name}
 							defaultChecked
@@ -399,8 +397,8 @@ export function Input(props: InputProps) {
 			} else {
 				return <div className="dts-form-component">
 					<Field label={label}>
+						<input type="hidden" name={props.name} value="off" />
 						<input
-							required={props.def.required}
 							type="checkbox"
 							name={props.name}
 						/>

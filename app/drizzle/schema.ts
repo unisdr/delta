@@ -485,6 +485,36 @@ export const disruptionTable = pgTable("disruption", {
 export type Disruption = typeof disruptionTable.$inferSelect
 export type DisruptionInsert = typeof disruptionTable.$inferInsert
 
+export const damagesTable = pgTable("damages", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
+	// TODO: make this a foreign key
+	sectorId: text("sector_id").notNull(),
+	isPublic: boolean("is_public").notNull(),
+	damage: text("damage", {enum: ["partial", "total"]}).notNull(),
+	damageAmount: integer("damage_amount"),
+	damageUnitType: text("damage_unit_type", {enum: ["numbers", "other"]}),
+	repairCostUnit: integer("repair_cost_unit"),
+	repairCostUnitCurr: text("repair_cost_unit_curr"),
+	repairUnits: integer("repair_units"),
+	repairCostTotalOverride: integer("repair_cost_total_override"),
+	recoveryCostUnit: integer("recovery_cost_unit"),
+	recoveryCostUnitCurr: text("recovery_cost_unit_curr"),
+	recoveryUnits: integer("recovery_units"),
+	recoveryCostTotalOverride: integer("recovery_cost_total_override"),
+	disruptionDurationDays: integer("disruption_duration_days"),
+	disruptionDurationHours: integer("disruption_duration_hours"),
+	disruptionUsersAffected: integer("disruption_users_affected"),
+	disruptionPeopleAffected: integer("disruption_people_affected"),
+	disruptionDescription: text("disruption_description"),
+})
+
+export type Damages = typeof damagesTable.$inferSelect
+export type DamagesInsert = typeof damagesTable.$inferInsert
+
 // Hazard Information Profiles (HIPs)
 // https://www.preventionweb.net/publication/hazard-information-profiles-hips
 
