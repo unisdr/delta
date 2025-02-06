@@ -124,7 +124,7 @@ const injectStyles = (appendCss?: string) => {
             .tree-dialog .dts-form__body {
                 position: relative;
                 overflow: scroll;
-                height: 500px;
+                // height: 500px;
                 border-bottom: 1px dotted #979797 !important;
             }
             .tree-footer {
@@ -196,6 +196,18 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         treeViewOpen: () => {
             if (dialogRef.current) {
                 dialogRef.current.showModal();
+
+                let contHeight = [] as number[];
+                contHeight[0] = dialogRef.current.querySelector(".dts-dialog__content")?.offsetHeight || 0;
+                contHeight[1] = dialogRef.current.querySelector(".dts-dialog__header")?.offsetHeight || 0;
+                contHeight[2] = dialogRef.current.querySelector(".tree-filters")?.offsetHeight || 0;
+                contHeight[3] = dialogRef.current.querySelector(".tree-footer")?.offsetHeight || 0;
+                let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - contHeight[3] - 16;
+
+                const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement;
+                if (dtsFormBody) {
+                    dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+                }
             }
         },
         treeViewClose: () => {
@@ -563,7 +575,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                         </a>
                     </div>
                     <div>
-                        <div>
+                        <div className="tree-filters">
                         <button
                                 className="tree-btn"
                                 onClick={expandAll}
