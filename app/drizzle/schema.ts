@@ -740,6 +740,11 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 		disruptionResponseCost: integer("disruption_response_cost"),
 		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
 		withLosses: boolean("with_losses"),
+	},
+	(table) => {
+		return [
+			unique("disRecSectosUniqueIdx").on(table.disasterRecordId, table.sectorId),
+		];
 	}
 );
 
