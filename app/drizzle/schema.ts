@@ -485,6 +485,77 @@ export const disruptionTable = pgTable("disruption", {
 export type Disruption = typeof disruptionTable.$inferSelect
 export type DisruptionInsert = typeof disruptionTable.$inferInsert
 
+export const damagesTable = pgTable("damages", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
+	// TODO: make this a foreign key
+	sectorId: text("sector_id").notNull(),
+	isPublic: boolean("is_public").notNull(),
+	damage: text("damage", {enum: ["partial", "total"]}).notNull(),
+	damageAmount: integer("damage_amount"),
+	damageUnitType: text("damage_unit_type", {enum: ["numbers", "other"]}),
+	repairCostUnit: integer("repair_cost_unit"),
+	repairCostUnitCurr: text("repair_cost_unit_curr"),
+	repairUnits: integer("repair_units"),
+	repairCostTotalOverride: integer("repair_cost_total_override"),
+	recoveryCostUnit: integer("recovery_cost_unit"),
+	recoveryCostUnitCurr: text("recovery_cost_unit_curr"),
+	recoveryUnits: integer("recovery_units"),
+	recoveryCostTotalOverride: integer("recovery_cost_total_override"),
+	disruptionDurationDays: integer("disruption_duration_days"),
+	disruptionDurationHours: integer("disruption_duration_hours"),
+	disruptionUsersAffected: integer("disruption_users_affected"),
+	disruptionPeopleAffected: integer("disruption_people_affected"),
+	disruptionDescription: text("disruption_description"),
+})
+
+export type Damages = typeof damagesTable.$inferSelect
+export type DamagesInsert = typeof damagesTable.$inferInsert
+
+export const lossesTable = pgTable("losses", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
+	sectorId: text("sector_id").notNull(),
+	type: text("type", {
+		enum: ["increased_expenditure", "loss_revenue_forecasted", "non_economic_losses"]
+	}).notNull(),
+	relatedTo: text("related_to", {
+		enum: [
+			"infrastructure_equipment",
+			"production_delivery_access",
+			"governance",
+			"risk_vulnerability_drr",
+			"other"
+		]
+	}).notNull(),
+	description: text("description"),
+	publicValueUnit: text("public_value_unit", {
+		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
+	}),
+	publicValue: integer("public_value"),
+	publicCostPerUnit: integer("public_cost_per_unit"),
+	publicCostPerUnitCurr: text("public_cost_per_unit_curr"),
+	publicTotalCost: integer("public_total_cost"),
+	publicTotalCostCurr: text("public_total_cost_curr"),
+	privateValueUnit: text("private_value_unit", {
+		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
+	}),
+	privateValue: integer("private_value"),
+	privateCostPerUnit: integer("private_cost_per_unit"),
+	privateCostPerUnitCurr: text("private_cost_per_unit_curr"),
+	privateTotalCost: integer("private_total_cost"),
+	privateTotalCostCurr: text("private_total_cost_curr")
+})
+
+export type Losses = typeof lossesTable.$inferSelect
+export type LossesInsert = typeof lossesTable.$inferInsert
+
 // Hazard Information Profiles (HIPs)
 // https://www.preventionweb.net/publication/hazard-information-profiles-hips
 
@@ -740,6 +811,11 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 		disruptionResponseCost: integer("disruption_response_cost"),
 		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
 		withLosses: boolean("with_losses"),
+	},
+	(table) => {
+		return [
+			unique("disRecSectosUniqueIdx").on(table.disasterRecordId, table.sectorId),
+		];
 	}
 );
 

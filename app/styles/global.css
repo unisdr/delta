@@ -59,3 +59,7 @@ form > label {
 .input-normal {
 	border: 1px solid #ccc; /* Default border to ensure visibility change */
 }
+
+table.table-border {
+	border: 1px solid #aaa;
+}
