@@ -27,7 +27,8 @@ const glbColors = {
   line: "#FF851B",
   rectangle: "#2ECC40",
   circle: "#FF4136",
-  marker: "#85144b"
+  marker: "#85144b",
+  geographic_level: "#fc9003",
 };
 const glbMarkerIcon = {
   iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png", // Replace with your marker icon if necessary
@@ -538,8 +539,6 @@ export const previewMap = (items: any) => {
         <script src="${glbMapperJS}"></script>
         <script>
           const adjustZoomBasedOnDistance = (map, bounds, centers) => {
-            console.log(bounds);
-
             let maxDistance = 0;
 
             if (centers.length === 1) {
@@ -596,9 +595,6 @@ export const previewMap = (items: any) => {
               calculatedZoom = 17; // Local zoom for nearby shapes
             }
 
-            console.log("maxDistance:", maxDistance);
-            console.log("calculatedZoom:", calculatedZoom);
-
             // Fit bounds first with padding
             map.fitBounds(bounds, {
               padding: [50, 50],
@@ -607,6 +603,19 @@ export const previewMap = (items: any) => {
             // Set the zoom level dynamically
             map.setZoom(Math.min(map.getZoom(), calculatedZoom));
           };
+
+        // Function to dynamically assign colors for different geometry types
+        function getColorForType(geometryType) {
+            const colors = {
+                marker: "${glbColors.marker}",
+                lines: "${glbColors.line}",
+                polygon: "${glbColors.polygon}",
+                rectangle: "${glbColors.rectangle}",
+                circle: "${glbColors.circle}",
+                geographic_level: "${glbColors.geographic_level}",
+            };
+            return colors[geometryType] || "black";
+        }
 
         window.onload = () => {
             document.getElementById("map").style.height = "${window.outerHeight - 100}px";
@@ -624,10 +633,14 @@ export const previewMap = (items: any) => {
             items.forEach((item) => {
                 try {
                     const geojsonData = JSON.parse(item.geojson); // Replace map_coords with geojson
+                    const map_coords = (item?.map_coords || null) ? JSON.parse(item.map_coords) : [];
 
+                    const getShape = map_coords?.mode || "geographic_level";
+                    
                     L.geoJSON(geojsonData, {
                         style: (feature) => ({
-                            color: getColorForType(feature.geometry.type),
+                            color: getColorForType(getShape),
+                            fillColor: getColorForType(getShape),
                             weight: 2,
                         }),
                         pointToLayer: (feature, latlng) => {
@@ -638,8 +651,8 @@ export const previewMap = (items: any) => {
                             }
                             return L.circleMarker(latlng, {
                                 radius: 5,
-                                fillColor: getColorForType(feature.geometry.type),
-                                color: "#000",
+                                color: getColorForType(getShape), 
+                                fillColor: getColorForType(getShape),
                                 weight: 1,
                                 opacity: 1,
                                 fillOpacity: 0.8
@@ -666,19 +679,6 @@ export const previewMap = (items: any) => {
                 console.warn("No valid bounds available for fitting the map.");
             }
         };
-
-        // Function to dynamically assign colors for different geometry types
-        function getColorForType(geometryType) {
-            const colors = {
-                Point: "${glbColors.marker}",
-                LineString: "${glbColors.line}",
-                Polygon: "${glbColors.polygon}",
-                MultiPolygon: "${glbColors.polygon}",
-                MultiPoint: "${glbColors.marker}",
-                MultiLineString: "${glbColors.line}",
-            };
-            return colors[geometryType] || "black";
-        }
       </script>
       </body>
       </html>
