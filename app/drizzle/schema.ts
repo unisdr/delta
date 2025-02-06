@@ -515,6 +515,47 @@ export const damagesTable = pgTable("damages", {
 export type Damages = typeof damagesTable.$inferSelect
 export type DamagesInsert = typeof damagesTable.$inferInsert
 
+export const lossesTable = pgTable("losses", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
+	sectorId: text("sector_id").notNull(),
+	type: text("type", {
+		enum: ["increased_expenditure", "loss_revenue_forecasted", "non_economic_losses"]
+	}).notNull(),
+	relatedTo: text("related_to", {
+		enum: [
+			"infrastructure_equipment",
+			"production_delivery_access",
+			"governance",
+			"risk_vulnerability_drr",
+			"other"
+		]
+	}).notNull(),
+	description: text("description"),
+	publicValueUnit: text("public_value_unit", {
+		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
+	}),
+	publicValue: integer("public_value"),
+	publicCostPerUnit: integer("public_cost_per_unit"),
+	publicCostPerUnitCurr: text("public_cost_per_unit_curr"),
+	publicTotalCost: integer("public_total_cost"),
+	publicTotalCostCurr: text("public_total_cost_curr"),
+	privateValueUnit: text("private_value_unit", {
+		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
+	}),
+	privateValue: integer("private_value"),
+	privateCostPerUnit: integer("private_cost_per_unit"),
+	privateCostPerUnitCurr: text("private_cost_per_unit_curr"),
+	privateTotalCost: integer("private_total_cost"),
+	privateTotalCostCurr: text("private_total_cost_curr")
+})
+
+export type Losses = typeof lossesTable.$inferSelect
+export type LossesInsert = typeof lossesTable.$inferInsert
+
 // Hazard Information Profiles (HIPs)
 // https://www.preventionweb.net/publication/hazard-information-profiles-hips
 
