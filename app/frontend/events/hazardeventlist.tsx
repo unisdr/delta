@@ -75,24 +75,6 @@ export function ListView(args: ListViewArgs) {
 						<Link to={args.basePath} className="mg-button mg-button--small mg-button-outline">Clear filters</Link>
 					</div>
 				</Form>
-				{!args.isPublic && (
-					<><div>{/* Add the EventCounter component */}
-						<span >
-							<strong><EventCounter totalEvents={items.length} /></strong>
-						</span>
-					</div><div className="dts-legend">
-							<span className="dts-body-label">Status legend</span>
-							<div className="dts-legend__item">
-								<span className="dts-status dts-status--draft"></span> Draft
-							</div>
-							<div className="dts-legend__item">
-								<span className="dts-status dts-status--published"></span> Published
-							</div>
-							<div className="dts-legend__item">
-								<span className="dts-status dts-status--rejected"></span> Rejected
-							</div>
-						</div></>
-				)}
 			</div>
 			{!args.isPublic && (
 				<><div>{/* Add the EventCounter component */}
