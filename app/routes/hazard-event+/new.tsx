@@ -47,7 +47,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		if (!parent){
 			throw new Response("Parent not found", {status: 404});
 		}
-		return {hip, parentId, parent};
+		return {hip, parentId, parent, treeData: []};
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
