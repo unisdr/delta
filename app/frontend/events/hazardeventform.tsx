@@ -236,7 +236,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							caption="Select Geographic level" 
 							rootCaption="Geographic levels" 
 							onApply={
-								(dialogRef: any, selectedItems: any) => {
+								(selectedItems: any) => {
 									if (contentReapeaterRef.current.getDialogRef()) {
 										contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
 										selectedItems.data.map((item: any) => {

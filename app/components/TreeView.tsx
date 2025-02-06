@@ -175,7 +175,7 @@ interface TreeViewProps {
     rootCaption?: string;
     targetObject?: any | null;
     base_path?: string;
-    onApply?: (dialogRef: any, selectedItem: { [key: string]: any }) => void;
+    onApply?: (selectedItem: { [key: string]: any }) => void;
     onRenderItemName?: (node: any) => any;
     multiSelect?: boolean;
     appendCss?: string;
@@ -191,32 +191,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     const [selectedItems, setSelectedItems] = useState<{ [key: number]: boolean }>({});
 
     const dialogRef = useRef<HTMLDialogElement>(null);
-
-    useImperativeHandle(ref, () => ({
-        treeViewOpen: () => {
-            if (dialogRef.current) {
-                
-                dialogRef.current.showModal();
-
-                let contHeight = [] as number[];
-                contHeight[0] = dialogRef.current.querySelector(".dts-dialog__content")?.offsetHeight || 0;
-                contHeight[1] = dialogRef.current.querySelector(".dts-dialog__header")?.offsetHeight || 0;
-                contHeight[2] = dialogRef.current.querySelector(".tree-filters")?.offsetHeight || 0;
-                contHeight[3] = dialogRef.current.querySelector(".tree-footer")?.offsetHeight || 0;
-                let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - contHeight[3] - 16;
-
-                const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement;
-                if (dtsFormBody) {
-                    dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
-                }
-            }
-        },
-        treeViewClose: () => {
-            if (dialogRef.current) {   
-                dialogRef.current.close();
-            }
-        }
-    }));
 
     useEffect(() => {
         injectStyles(appendCss); // Inject CSS when component mounts
@@ -516,7 +490,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             if (treeHiddenData) treeHiddenData.value = ""; 
         }
 
-        const dtsFormBody = dialogCurrent.querySelector(".dts-form__body") as HTMLElement;
+        const dtsFormBody = dialogCurrent?.querySelector(".dts-form__body") as HTMLElement | null;
         if (dtsFormBody) {
             dtsFormBody.style.height = "";
         }
@@ -526,8 +500,21 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         if (e) {
             e.preventDefault();
         }
-        if (dialogRef.current) 
+        if (dialogRef.current) {
             dialogRef.current.showModal();
+
+            let contHeight = [] as number[];
+            contHeight[0] = (dialogRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
+            contHeight[1] = (dialogRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
+            contHeight[2] = (dialogRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
+            contHeight[3] = (dialogRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
+            let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - contHeight[3] - 16;
+
+            const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement | null;
+            if (dtsFormBody) {
+                dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+            }
+        }
     };
     const treeViewDiscard = (e?: any) => {
         if (e) {
@@ -559,12 +546,17 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                 return;
             }
 
-            if (onApply) onApply(dialogRef.current, selectedItems || {});
+            if (onApply) onApply(selectedItems || {});
 
             treeViewClear();
             dialogRef.current.close();
         }
     }
+
+    useImperativeHandle(ref, () => ({
+        treeViewOpen,
+        treeViewClose: treeViewDiscard,
+    }));
 
     const filteredTree = searchTerm ? filterTree(treeData, searchTerm, {}) : treeData;
 
