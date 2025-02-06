@@ -1472,35 +1472,18 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                         </div>
                       )}
                       {field.type === "file" && (
-                        <div>
+                        <div className="input-file">
                           <div 
                             id={`file-link-loading-${field.id}`}
-                            style={{
-                              display: 'none',
-                              width: '100%',
-                              padding: '0.4rem 0.8rem',
-                              backgroundColor: 'white',
-                              border: '1px solid #cccccc',
-                              borderRadius: '6px',
-                              marginBottom: '1rem',
-                              color: '#999'
-                            }}   
+                            className="uploading"
                           >Uploading, please wait...</div>
                           {formData[field.id]?.name && (
                             <a
                               id={`file-link-${field.id}`}
+                              className="file-link"
                               href={`${base_path}${(formData[field.id]?.view) ? formData[field.id]?.view : ((file_viewer_url) ? `${file_viewer_url}/?name=${formData[field.id]?.name.split("/").slice(-2).join("/")}${(field.download) ? '&download=true' : ''}` : formData[field.id]?.name)}`}
                               target={!field.download ? "_blank" : undefined}
                               rel="noopener noreferrer"
-                              style={{
-                                display: "inline-block",
-                                width: "100%",
-                                padding: "0.4rem 0.8rem",
-                                backgroundColor: "white",
-                                border: "1px solid #cccccc",
-                                borderRadius: "6px",
-                                marginBottom: "1rem",
-                              }}
                             >
                               {formData[field.id]?.name.split("/").pop()}
                             </a>
