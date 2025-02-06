@@ -77,6 +77,7 @@ const injectStyles = (appendCss?: string) => {
                 border: 1px solid #000;
                 border-radius: 5px;
             }
+
             .tree-btn {
                 display: inline-block;
                 background-color: buttonface;
@@ -89,6 +90,10 @@ const injectStyles = (appendCss?: string) => {
             .tree-btn.main-btn {
                 padding: 4px 8px 4px 8px;
             }
+            .tree-dialog .mg-button.mg-button-primary {
+                margin-right: 1rem;
+            }
+
             .tree-search {  
                 display: inline-block;
                 padding: 0.4rem;
@@ -112,7 +117,7 @@ const injectStyles = (appendCss?: string) => {
             }
 
             .tree-dialog {
-                width: 50vw !important;
+                max-width: 50vw;
                 max-width: none !important;
                 max-height: none !important;
             }
@@ -120,6 +125,7 @@ const injectStyles = (appendCss?: string) => {
                 position: relative;
                 overflow: scroll;
                 height: 500px;
+                border-bottom: 1px dotted #979797 !important;
             }
             .tree-footer {
                 display: flex;  /* Enables flexbox */
@@ -128,10 +134,13 @@ const injectStyles = (appendCss?: string) => {
                 width: 100%;
                 padding-top: 1.5rem;
             }
-            .tree-footer span {
+            .tree-footer div {
                 font-weight: bold;
                 flex: 1; /* Allows it to take up available space */
                 white-space: normal; /* Allows text wrapping */
+            }
+            .tree-footer div .selected {
+                display: inline-flex; align-items: center; background: rgb(240, 240, 240); color: rgb(51, 51, 51); border-radius: 4px; padding: 4px 8px; margin: 2px; border: 1px solid rgb(204, 204, 204);
             }
             .tree-checkbox {
                 margin-right: 0.5rem;
@@ -322,11 +331,51 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                 arrHiddenData.push({ id: id, ...arrHiddenDataItem });
             });
 
-            const treeFooterSpan = dialogRefCurrent.querySelector(".tree-footer span") as HTMLElement;
+            const treeFooterSpan = dialogRefCurrent.querySelector(".tree-footer div") as HTMLElement;
             if (treeFooterSpan) {
                 treeFooterSpan.setAttribute("selected-name", selectedName);
                 treeFooterSpan.setAttribute("data-id", dataId);
-                treeFooterSpan.textContent = arrLocation.join(" / ");
+                
+                // Create the main container div
+                const selectedDiv = document.createElement("div");
+                selectedDiv.classList.add("selected");
+
+                // Create the span that holds arrLocation
+                const textSpan = document.createElement("span");
+                textSpan.textContent = arrLocation.join(" / ");
+
+                // Create the close (×) button
+                const closeButton = document.createElement("span");
+                closeButton.style.marginLeft = "5px";
+                closeButton.style.cursor = "pointer";
+                closeButton.style.color = "red";
+                closeButton.textContent = "×";
+
+                // Remove the entire selectedDiv when close button is clicked
+                closeButton.addEventListener("click", () => {
+                    const selectedContainer = selectedDiv.closest("div[selected-name]");
+                
+                    // Remove the selected div
+                    selectedDiv.remove();
+                
+                    // If selectedContainer exists, clear its `data-ids`
+                    if (selectedContainer) {
+                        selectedContainer.setAttribute("data-id", "");
+                        selectedContainer.setAttribute("data-ids", "");
+                    }
+                });
+                
+
+                // Append textSpan and closeButton inside selectedDiv
+                selectedDiv.appendChild(textSpan);
+                selectedDiv.appendChild(closeButton);
+
+                // Clear previous content and append new div
+                treeFooterSpan.innerHTML = "";
+                treeFooterSpan.appendChild(selectedDiv);
+
+                //treeFooterSpan.textContent = arrLocation.join(" / ");
+
                 treeFooterSpan.setAttribute("data-ids", dataIds);
                 const treeHiddenData = dialogRefCurrent.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
                 if (treeHiddenData) treeHiddenData.value = JSON.stringify(arrHiddenData);
@@ -443,7 +492,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
 
         const dialogCurrent = dialogRef.current;
         if (dialogCurrent) {
-            const treeFooterSpan = dialogCurrent.querySelector(".tree-footer span") as HTMLElement;
+            const treeFooterSpan = dialogCurrent.querySelector(".tree-footer div") as HTMLElement;
             if (treeFooterSpan) {
                 treeFooterSpan.textContent = "";
                 treeFooterSpan.setAttribute("data-ids", "");
@@ -476,11 +525,12 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         }
 
         if (dialogRef.current) {
-            const treeFooterSpan = dialogRef.current.querySelector(".tree-footer span") as HTMLElement;
+            const treeFooterSpan = dialogRef.current.querySelector(".tree-footer div") as HTMLElement;
             const treeHiddenData = dialogRef.current.querySelector(".tree-hidden-data") as HTMLTextAreaElement;
+            const treeFooterSpanSelectedName = treeFooterSpan.querySelector(".selected span") as HTMLElement;
             const selectedItems = {
                 dataIds: treeFooterSpan.getAttribute("data-ids"),
-                names: treeFooterSpan.textContent,
+                names: treeFooterSpanSelectedName?.textContent || "",
                 selectedId: treeFooterSpan.getAttribute("data-id") || "",
                 selectedName: treeFooterSpan.getAttribute("selected-name"),
                 data: JSON.parse(treeHiddenData.value || "[]"),
@@ -540,7 +590,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                             <p className="tree" style={{ marginBottom: "1rem" }}>{rootCaption}</p>
                             {filteredTree.length > 0 ? renderTree(filteredTree) : <p className="tree">No results found.</p>}
                         </div>
-                        <div className="tree-footer"><span></span><button className="tree-btn main-btn" onClick={treeViewApply}>Apply</button><button className="tree-btn main-btn" onClick={treeViewDiscard}>Discard</button></div>
+                        <div className="tree-footer"><div></div><button className="mg-button mg-button-primary" onClick={treeViewApply}>Apply</button><button className="mg-button mg-button-outline" onClick={treeViewDiscard}>Discard</button></div>
                         <textarea className="tree-hidden-data" style={{display: "none"}}></textarea>
                     </div>
                 </div>
