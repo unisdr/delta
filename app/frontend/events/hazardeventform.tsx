@@ -129,7 +129,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 			fieldsDef={fieldsDef}
 			override={{
 				parent:
-					<Field key="parent" label="Parent">
+				<Field key="parent" label="Parent">
 						{selected ? hazardEventLink(selected) : "-"}&nbsp;
 						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
 						<input type="hidden" name="parent" value={selected?.id || ""} />
@@ -181,7 +181,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 									options: ["Map Coordinates", "Geographic Level"],
 									onChange: (e) => {
 										const value = e.target.value;
-
+										
 										const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
 										const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
 										
@@ -214,39 +214,39 @@ export function HazardEventForm(props: HazardEventFormProps) {
 													minHeight: "3.5rem",
 													overflow: "hidden",
 													cursor: "pointer",
-												  }}
+												}}
 												>
 												  <span>{data}</span>
 												  {/* Select Geographic Level Button */}
 												  <a
 													href="#"
 													style={{
-													  width: "auto",
-													  zIndex: 1000,
-													  textAlign: "center",
-													  padding: "0.7rem 0.8rem",
-													  color: "#000",
-													  textDecoration: "none",
-													  borderRadius: "4px",
-													  display: "inline-flex",
-													  alignItems: "center",
-													  justifyContent: "center",
-													  backgroundColor: "#cccccc",
-													  position: "absolute",
-													  top: "-2px",
-													  right: "-2px",
+														width: "auto",
+														zIndex: 1000,
+														textAlign: "center",
+														padding: "0.7rem 0.8rem",
+														color: "#000",
+														textDecoration: "none",
+														borderRadius: "4px",
+														display: "inline-flex",
+														alignItems: "center",
+														justifyContent: "center",
+														backgroundColor: "#cccccc",
+														position: "absolute",
+														top: "-2px",
+														right: "-2px",
 													}}
 													onClick={(e) => {
 													  e.preventDefault();
 													  treeViewRef.current?.treeViewOpen(e);
 													}}
-												  >
+													>
 													<img
 													  src="/assets/icons/globe.svg"
 													  alt="Globe SVG File"
 													  title="Globe SVG File"
 													  style={{ width: "20px", height: "20px", marginRight: "0.5rem" }}
-													/>
+													  />
 													Select
 												  </a>
 												</div>
@@ -257,19 +257,19 @@ export function HazardEventForm(props: HazardEventFormProps) {
 												  name="spatialFootprint_geographic_level"
 												  className="dts-hidden-textarea"
 												  style={{ display: "none" }}
-												></textarea>
+												  ></textarea>
 											  </div>
 											</>
 										  );										  
-									}
-								},
-								{ id: "geojson", caption: "Map Coordinates / Geographic Level", type: "hidden", required: true },
+										}
+									},
+									{ id: "geojson", caption: "Map Coordinates / Geographic Level", type: "hidden", required: true },
 							]}
 							data={(() => {
 								try {
-								return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
+									return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
 								} catch {
-								return []; // Default to an empty array if parsing fails
+									return []; // Default to an empty array if parsing fails
 								}
 							})()}
 							onChange={(items: any) => {
@@ -281,7 +281,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 									console.error("Failed to process items.");
 								}
 							}}
-						/>
+							/>
 						<TreeView 
 							ref={treeViewRef} 
 							treeData={treeData} 
@@ -290,7 +290,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							onApply={
 								(dialogRef: any, selectedItems: any) => {
 									console.log('targetObject', contentReapeaterRef.current);
-
+									
 									if (contentReapeaterRef.current.getDialogRef()) {
 										// Set Name in the div
 										contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
@@ -300,7 +300,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
 												const setField = { id: "geojson", value: item.geojson };
 												contentReapeaterRef.current.handleFieldChange(setField, item.geojson);
-
+												
 												const setFieldGoeLevel = { id: "geographic_level", value: selectedItems.names };
 												contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 											}
@@ -315,20 +315,20 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							}
 							appendCss={
 								`
-									ul.tree li div[disable="true"] {
-										color: #ccc;
+								ul.tree li div[disable="true"] {
+									color: #ccc;
 									}
 									ul.tree li div[disable="true"] .btn-face.select {
 										display: none;
+										}
+										`
 									}
-								`
-							}
-							disableButtonSelect={true}
-						/>
+									disableButtonSelect={true}
+									/>
 					</Field>
 				),
 			}}
-		/>
+			/>
 	);
 }
 

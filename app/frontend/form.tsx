@@ -11,6 +11,8 @@ import {formatDate} from "~/util/date"
 import {MainContainer} from "./container";
 
 import {capitalizeFirstLetter} from "~/util/string"
+import { Style } from "ol/style";
+import { flashMessage } from "~/util/session";
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -335,7 +337,9 @@ export function Input(props: InputProps) {
 			throw `Unknown type ${props.def.type}`
 		case "enum":
 			let vs = props.value as string;
-			return <Field label={label}>
+			return <div className="mg-grid mg-grid__col-3">
+			<div className="dts-form-component ">
+			<Field label={label}>
 				<select
 					required={props.def.required}
 					name={props.name}
@@ -347,10 +351,13 @@ export function Input(props: InputProps) {
 				</select>
 				<FieldErrors2 errors={props.errors} />
 			</Field>
+			</div>
+			</div>
 		case "bool":
 			let v = props.value as boolean;
 			if (v) {
-				return <Field label={label}>
+				return <div className="dts-form-component">
+					<Field label={label}>
 					<input
 						required={props.def.required}
 						type="checkbox"
@@ -359,8 +366,10 @@ export function Input(props: InputProps) {
 					/>
 					<FieldErrors2 errors={props.errors} />
 				</Field>
+				</div>
 			} else {
-				return <Field label={label}>
+				return <div className="dts-form-component">
+				<Field label={label}>
 					<input
 						required={props.def.required}
 						type="checkbox"
@@ -368,6 +377,7 @@ export function Input(props: InputProps) {
 					/>
 					<FieldErrors2 errors={props.errors} />
 				</Field>
+				</div>
 			}
 		case "textarea":
 			let defaultValueTextArea = "";
@@ -375,7 +385,8 @@ export function Input(props: InputProps) {
 				let v = props.value as string;
 				defaultValueTextArea = v
 			}
-			return <Field label={label}>
+			return <div className="dts-form-component">
+			<Field label={label}>
 				<textarea
 					required={props.def.required}
 					name={props.name}
@@ -383,6 +394,7 @@ export function Input(props: InputProps) {
 				/>
 				<FieldErrors2 errors={props.errors} />
 			</Field>
+			</div>
 		case "text":
 		case "date":
 		case "number":
@@ -399,7 +411,8 @@ export function Input(props: InputProps) {
 					defaultValue = String(v)
 				}
 			}
-			return <Field label={label}>
+			return	<div className="dts-form-component">
+			<Field label={label}>
 				<input
 					required={props.def.required}
 					type={props.def.type}
@@ -408,6 +421,8 @@ export function Input(props: InputProps) {
 				/>
 				<FieldErrors2 errors={props.errors} />
 			</Field>
+			</div>
+			
 	}
 }
 
@@ -536,12 +551,10 @@ export function ViewComponent(props: ViewComponentProps) {
 				</p>
 				{!props.isPublic && (
 					<>
-						<p>
-							<Link to={`${props.path}/edit/${String(props.id)}`}>Edit</Link>
-						</p>
-						<p>
-							<Link to={`${props.path}/delete/${String(props.id)}`}>Delete</Link>
-						</p>
+						<div >
+							<Link to={`${props.path}/edit/${String(props.id)}`} className="mg-button mg-button-secondary" style={{margin: "5px"}}>Edit</Link>
+							<Link to={`${props.path}/delete/${String(props.id)}`} className="mg-button mg-button-secondary">Delete</Link>
+						</div>
 						{props.extraActions}
 					</>
 				)}
@@ -586,9 +599,11 @@ export function FormView(props: FormViewProps) {
 				<h2>{props.edit ? "Edit" : "Add"} {props.singular}</h2>
 				{props.edit && props.id && <p>ID: {String(props.id)}</p>}
 				{props.infoNodes}
-				<Form errors={props.errors}>
+				<Form errors={props.errors} className="dts-form">
 					<Inputs def={props.fieldsDef} fields={props.fields} errors={props.errors} override={props.override} />
+					<div className="dts-form__actions">
 					<SubmitButton label={props.edit ? `Update ${props.singular}` : `Create ${props.singular}`} />
+					</div>
 				</Form>
 			</>
 		</MainContainer>
@@ -602,11 +617,29 @@ interface ActionLinksProps {
 
 export function ActionLinks({route, id}: ActionLinksProps) {
 	return (
-		<>
-			<Link to={`${route}/${id}`}>View</Link>&nbsp;
-			<Link to={`${route}/edit/${id}`}>Edit</Link>&nbsp;
-			<Link to={`${route}/delete/${id}`}>Delete</Link>&nbsp;
-		</>
+		<div style={{display: "flex", justifyContent:"space-evenly" }}>
+			<Link to={`${route}/${id}`}>
+			<button type="button" className="mg-button mg-button-outline">
+					<svg aria-hidden="true" focusable="false" role="img">
+						<use href="assets/icons/eye-show-password.svg#eye-show"></use>
+					</svg>
+				</button>
+			</Link>
+			<Link to={`${route}/edit/${id}`}>
+			<button type="button" className="mg-button mg-button-outline">
+					<svg aria-hidden="true" focusable="false" role="img">
+						<use href="assets/icons/edit.svg#edit"></use>
+					</svg>
+				</button>
+			</Link>
+			<Link to={`${route}/delete/${id}`}>
+				<button type="button" className="mg-button mg-button-outline">
+					<svg aria-hidden="true" focusable="false" role="img">
+						<use href="assets/icons/trash-alt.svg#delete"></use>
+					</svg>
+				</button>
+			</Link>
+		</div>
 	);
 }
 

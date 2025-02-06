@@ -1,11 +1,8 @@
-import {useState} from "react";
+import { useState } from "react";
 
-import {
-	Field,
-} from "~/frontend/form";
+import { Field } from "~/frontend/form";
 
-import {useEffect} from "react";
-
+import { useEffect } from "react";
 
 export interface HazardPickerProps {
 	defaultValue: string;
@@ -15,9 +12,9 @@ export interface HazardPickerProps {
 }
 
 export interface Hip {
-	classes: Class[]
-	clusters: Cluster[]
-	hazards: Hazard[]
+	classes: Class[];
+	clusters: Cluster[];
+	hazards: Hazard[];
 }
 
 export interface Class {
@@ -37,7 +34,7 @@ export interface Hazard {
 	name: string;
 }
 
-function sortByName<T extends {name: string}>(array: T[]): T[] {
+function sortByName<T extends { name: string }>(array: T[]): T[] {
 	return [...array].sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -61,20 +58,23 @@ export function HazardPicker(props: HazardPickerProps) {
 			setSelectedClass(null);
 			setSelectedCluster(null);
 			setSelectedHazard(null);
-			return
+			return;
 		}
 		setSelectedHazard(props.defaultValue);
-		const defaultHazard = hazards.find((hazard) => hazard.id === props.defaultValue);
+		const defaultHazard = hazards.find(
+			(hazard) => hazard.id === props.defaultValue
+		);
 		if (!defaultHazard) {
-			throw "hazard not found"
+			throw "hazard not found";
 		}
 		setSelectedCluster(defaultHazard.clusterId);
-		const defaultCluster = clusters.find((cluster) => cluster.id === defaultHazard.clusterId);
+		const defaultCluster = clusters.find(
+			(cluster) => cluster.id === defaultHazard.clusterId
+		);
 		if (!defaultCluster) {
-			throw "cluster not found"
+			throw "cluster not found";
 		}
 		setSelectedClass(defaultCluster.classId);
-
 	}, [props.defaultValue]);
 
 	const filteredClusters = clusters.filter(
@@ -85,65 +85,73 @@ export function HazardPicker(props: HazardPickerProps) {
 	);
 
 	if (!isClient) {
-		return <p>Please enable Javascript</p>
+		return <p>Please enable Javascript</p>;
 	}
 
 	return (
 		<>
-			<Field label="Hazard Class">
-				<select
-					required={props.required}
-					value={selectedClass || ""}
-					onChange={(e) => {
-						setSelectedClass(Number(e.target.value));
-						setSelectedCluster(null);
-						setSelectedHazard("");
-					}}
-				>
-					<option value="">Select Class</option>
-					{classes.map((c) => (
-						<option key={c.id} value={c.id}>
-							{c.name}
-						</option>
-					))}
-				</select>
-			</Field>
+			<div className="mg-grid mg-grid__col-3">
+				<div className="dts-form-component">
+					<Field label="Hazard Class">
+						<select
+							required={props.required}
+							value={selectedClass || ""}
+							onChange={(e) => {
+								setSelectedClass(Number(e.target.value));
+								setSelectedCluster(null);
+								setSelectedHazard("");
+							}}
+						>
+							<option value="">Select Class</option>
+							{classes.map((c) => (
+								<option key={c.id} value={c.id}>
+									{c.name}
+								</option>
+							))}
+						</select>
+					</Field>
+				</div>
 
-			<Field label="Hazard Cluster">
-				<select
-					required={props.required}
-					value={selectedCluster || ""}
-					onChange={(e) => {
-						setSelectedCluster(Number(e.target.value));
-						setSelectedHazard("");
-					}}
-					disabled={!selectedClass}
-				>
-					<option value="">Select Cluster</option>
-					{filteredClusters.map((cluster) => (
-						<option key={cluster.id} value={cluster.id}>
-							{cluster.name}
-						</option>
-					))}
-				</select>
-			</Field>
+				<div className="dts-form-component">
+					<Field label="Hazard Cluster">
+						<select
+							required={props.required}
+							value={selectedCluster || ""}
+							onChange={(e) => {
+								setSelectedCluster(Number(e.target.value));
+								setSelectedHazard("");
+							}}
+							disabled={!selectedClass}
+						>
+							<option value="">Select Cluster</option>
+							{filteredClusters.map((cluster) => (
+								<option key={cluster.id} value={cluster.id}>
+									{cluster.name}
+								</option>
+							))}
+						</select>
+					</Field>
+				</div>
 
-			<Field label="Specific Hazard">
-				<select
-					required={props.required}
-					name={props.name}
-					value={selectedHazard || ""}
-					onChange={(e) => setSelectedHazard(e.target.value)}
-					disabled={!selectedCluster}
-				>
-					<option value="">Select Hazard</option>
-					{filteredHazards.map((hazard) => (
-						<option key={hazard.id} value={hazard.id}>
-							{hazard.name}
-						</option>
-					))}
-				</select>
-			</Field>
+				<div className="dts-form-component">
+					<Field label="Specific Hazard">
+						<select
+							required={props.required}
+							name={props.name}
+							value={selectedHazard || ""}
+							onChange={(e) => setSelectedHazard(e.target.value)}
+							disabled={!selectedCluster}
+						>
+							<option value="">Select Hazard</option>
+							{filteredHazards.map((hazard) => (
+								<option key={hazard.id} value={hazard.id}>
+									{hazard.name}
+								</option>
+							))}
+						</select>
+					</Field>
+				</div>
+			</div>
 		</>
 	);
 }

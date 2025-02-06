@@ -37,10 +37,12 @@ export function ListView(args: ListViewArgs) {
 		<div>
 			<div className="dts-filter">
 				<h3>Filters</h3>
-				<Form>
+				<Form className="dts-form">
 					<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
-					<input type="submit" value="Apply" />
-					<Link to={args.basePath}>Clear filters</Link>
+					<div className="dts-form__actions">
+						<input type="submit" value="Apply" className="mg-button mg-button-primary" />
+						<Link to={args.basePath} className="mg-button mg-button-outline">Clear filters</Link>
+					</div>
 				</Form>
 			</div>
 
@@ -59,7 +61,7 @@ export function ListView(args: ListViewArgs) {
 								<th>Hazard Name</th>
 								<th>Event Description</th>
 								{ !args.isPublic && (
-									<th></th>
+									<th>Actions</th>
 								)}
 							</tr>
 						</thead>
