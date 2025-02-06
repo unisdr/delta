@@ -377,8 +377,8 @@ export function Input(props: InputProps) {
 			let v = props.value as boolean;
 			if (v) {
 				return <Field label={label}>
+					<input type="hidden" name={props.name} value="off" />
 					<input
-						required={props.def.required}
 						type="checkbox"
 						name={props.name}
 						defaultChecked
@@ -387,8 +387,8 @@ export function Input(props: InputProps) {
 				</Field>
 			} else {
 				return <Field label={label}>
+					<input type="hidden" name={props.name} value="off" />
 					<input
-						required={props.def.required}
 						type="checkbox"
 						name={props.name}
 					/>
