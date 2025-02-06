@@ -90,18 +90,20 @@ export default function TreeViewPage() {
             <section>
                 <div className="mg-container">
                     <TreeView 
-                        treeData={treeData} 
+                        treeData={treeData as any} 
                         caption="Select Geographic level" 
                         rootCaption="Geographic levels" 
-                        targetObject={targetObject} 
                         onApply={
-                            (dialogRef: any, selectedItems: any) => {
-                                if (targetObject.current) { 
-                                    targetObject.current.querySelector('span').textContent = selectedItems.names;
+                            (selectedItems: any) => {
+                                const targetObjectCurrent = targetObject.current as HTMLDivElement | null;
+                                if (targetObjectCurrent) { 
+                                    const targetObjectSpan = targetObjectCurrent.querySelector('span');
+                                    if (targetObjectSpan) targetObjectSpan.textContent = selectedItems.names;
 
                                     selectedItems.data.map((item: any) => {
                                         if (item.id == selectedItems.selectedId) {
-                                            targetObject.current.querySelector('pre').textContent = `GEO JSON:\n${item.geojson}`;
+                                            const targetObjectPre = targetObjectCurrent.querySelector('pre') as HTMLPreElement | null;
+                                            if (targetObjectPre) targetObjectPre.textContent = `GEO JSON:\n${item.geojson}`;
                                         }
                                     });
                                 }

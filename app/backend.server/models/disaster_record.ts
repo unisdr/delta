@@ -33,6 +33,7 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 			assessmentModes: fields.assessmentModes,
 			originatorRecorderInst: fields.originatorRecorderInst,
 			approvalStatus: fields.approvalStatus,
+			spatialFootprint: fields.spatialFootprint,
 			updatedAt: sql`NOW()`,
 		})
 		.returning({id: disasterRecordsTable.id});
@@ -56,6 +57,7 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Disas
 			assessmentModes: fields.assessmentModes,
 			originatorRecorderInst: fields.originatorRecorderInst,
 			approvalStatus: fields.approvalStatus,
+			spatialFootprint: fields.spatialFootprint,
 			updatedAt: sql`NOW()`,
 		})
 		.where(eq(disasterRecordsTable.id, id));

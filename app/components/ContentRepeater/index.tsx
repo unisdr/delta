@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { initTokenField, renderTokenField } from "./controls/tokenfield";
 import { renderMapper, renderMapperDialog, previewMap, previewGeoJSON } from "./controls/mapper";
-// Import Leaflet Core
+import "./assets/content-repeater.css";
+import "./assets/mapper.css";
 
 declare namespace L {
   export const map: any;
@@ -91,51 +92,6 @@ interface ContentRepeaterProps {
   mapper_preview?: boolean;
   caption?: string;
 }
-
-const injectStyles = (appendCss?: string) => {
-  const styleLayout = [
-      `
-        .content-repeater {
-          background: #f2f2f2;
-          padding: 2.4rem;
-          margin: 2.4rem 0 2.4rem;
-        }
-
-        .content-repeater .dts-table th {
-          font-size: 1.6rem;
-        }
-
-        .content-repeater .dts-table th, .dts-table td {
-          border-bottom: 1px solid #E3E3E3 !important;
-        }
-
-        .content-repeater-caption {
-          font-size: 1.8rem;
-          line-height: 1.33;
-          font-weight: 500;
-          margin-bottom: 2.4rem;
-        }
-
-        .content-repeater-actions {
-          margin-top: 1rem !important;
-        }
-
-        ${appendCss}
-      `
-  ];
-
-  const styleId = "ContentRepeaterStyles";
-
-  // Check if the style is already in the document
-  if (!document.getElementById(styleId)) {
-      const style = document.createElement("style");
-      style.type = "text/css";
-      style.id = styleId; // Assign a unique ID
-      style.innerHTML = styleLayout[0]; // Change index to switch between styles
-      document.head.appendChild(style);
-  }
-};
-
 
 const loadLeaflet = (() => {
   let isLoaded = false;
@@ -245,10 +201,6 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
   const fileInputRefs = useRef<{ [key: string]: React.RefObject<HTMLInputElement> }>({});
   const tokenfieldRefs = useRef<{ [key: string]: React.RefObject<HTMLInputElement> }>({});
   const dragIndex = useRef<number | null>(null);
-
-  useEffect(() => {
-      injectStyles(); // Inject CSS when component mounts
-  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1226,18 +1178,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
         readOnly
       ></textarea>
 
-      <ul
-        className="content-repeater-actions"
-        style={{
-          listStyle: "none",
-          margin: 0,
-          padding: "1rem",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "1.6rem",
-          background: "#F2F2F2",
-        }}
-      >
+      <ul className="content-repeater-actions">
         <li>
           <a
             type="button"
@@ -1385,37 +1326,9 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                       )}
                       {field.type === "mapper" && (
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1%' }}>
-                            <div
-                              id={`${id}_${fieldId}`}
-                              style={{
-                                position: "relative",
-                                width: "100%",
-                                padding: '0.4rem 0.8rem',
-                                backgroundColor: 'white',
-                                border: '1px solid #cccccc',
-                                borderRadius: '6px',
-                                color: '#999',
-                                minHeight: '3.5rem',
-                                overflow: 'hidden',
-                                cursor: "pointer",
-                              }}
-                            >  
-                              <a 
-                                style={{
-                                  width: "auto",
-                                  zIndex: "1000",
-                                  textAlign: "center",
-                                  padding: "0.7rem 0.8rem",
-                                  color: "#000",
-                                  textDecoration: "none",
-                                  borderRadius: "4px",
-                                  display: "inline-flex", // Use inline-flex for centering inline content
-                                  alignItems: "center",   // Vertically center items
-                                  justifyContent: "center", // Optional: Center items horizontally
-                                  backgroundColor: "#cccccc",
-                                  position: "absolute", top: "-2px", right: "-2px"
-                                }}
+                          <div className="input-group">
+                            <div className="wrapper">  
+                              <a className="btn"
                                 onClick={() => {
                                   setIsDialogMapOpen(true);
                                   if (dialogMapRef.current) {
@@ -1424,16 +1337,8 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                     dialogElement.mapperField = field;
                                   }
                                   initializeMap(value ? JSON.parse(value) : null);
-                                }}
-                              >
-                                <img 
-                                  src={`${base_path}/assets/icons/globe.svg`}
-                                  alt="Globe SVG File" 
-                                  title="Globe SVG File" 
-                                  style={{ width: "20px", height: "20px", marginRight: "0.5rem" }} // Adjust size and spacing
-                                /> 
-                                Open Map
-                              </a>                    
+                                }}>
+                                <img src={`${base_path}/assets/icons/globe.svg`} alt="Globe SVG File"  title="Globe SVG File" />Open Map</a>                    
                               {value &&
                               (() => {
                                 const getGeoJSON = () => {
@@ -1456,14 +1361,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                       // Handle circle mode
                                       return (
                                         <div
-                                          style={{
-                                            fontSize: "1rem",
-                                            margin: "0.5rem",
-                                            padding: "1rem",
-                                            position: "relative",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "5px",
-                                          }}
+                                          className="mapper-selected-shape"
                                           title={title}
                                           onClick={() => {
                                             parsedValue = getGeoJSON() || parsedValue;
@@ -1483,14 +1381,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                       // Handle polygons, rectangles, or lines
                                       return (
                                         <div
-                                          style={{
-                                            fontSize: "1rem",
-                                            margin: "0.5rem",
-                                            padding: "1rem",
-                                            position: "relative",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "5px",
-                                          }}
+                                          className="mapper-selected-shape"
                                           title={title}
                                           onClick={() => {
                                             const newWindow = window.open();

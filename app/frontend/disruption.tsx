@@ -7,10 +7,12 @@ import {
 } from "~/frontend/form"
 
 import {DisruptionFields, DisruptionViewModel} from "~/backend.server/models/disruption"
-import {configCurrencies} from "~/util/config"
 
-// TODO: fix
-export const route = "/disaster-record/edit-sub/placeholder-id/disruptions"
+export const route = "/disaster-record/edit-sub/_/disruptions"
+
+export function route2(recordId: string): string {
+	return `/disaster-record/edit-sub/${recordId}/disruptions`
+}
 
 interface DisruptionFormProps extends UserFormProps<DisruptionFields> {
 	fieldDef: FormInputDef<DisruptionFields>[]
@@ -20,6 +22,7 @@ export function DisruptionForm(props: DisruptionFormProps) {
 	return (
 		<FormView
 			path={route}
+			listUrl={route2(props.fields.recordId!)+"?sectorId=" + props.fields.sectorId}
 			edit={props.edit}
 			id={props.id}
 			plural="Disruptions"
@@ -27,6 +30,14 @@ export function DisruptionForm(props: DisruptionFormProps) {
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
+			override={{
+				recordId: (
+					<input key="recordId" name="recordId" type="hidden" value={props.fields.recordId} />
+				),
+				sectorId: (
+					<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
+				),
+			}}
 		/>
 	)
 }
@@ -40,11 +51,24 @@ export function DisruptionView(props: DisruptionViewProps) {
 	return (
 		<ViewComponent
 			path={route}
+			listUrl={route2(props.item.recordId!)+"?sectorId=" + props.item.sectorId}
 			id={props.item.id}
 			plural="Disruptions"
 			singular="Disruption"
 		>
-			<FieldsView def={props.fieldDef} fields={props.item} override={{}} />
+			<FieldsView
+				def={props.fieldDef}
+				fields={props.item}
+				override={{
+					recordId: (
+						<p key="recordId">Disaster record ID: {props.item.recordId}</p>
+					),
+					sectorId: (
+						<p key="sectorId">Sector ID: {props.item.sectorId}</p>
+					),
+				}}
+
+			/>
 		</ViewComponent>
 	)
 }

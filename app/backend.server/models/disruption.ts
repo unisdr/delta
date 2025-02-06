@@ -11,6 +11,8 @@ export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 
 export const fieldsDef: FormInputDef<DisruptionFields>[] =
 	[
+		{key: "recordId", label: "", type: "other"},
+		{key: "sectorId", label: "", type: "other"},
 		{key: "durationDays", label: "Duration (Days)", type: "number"},
 		{key: "durationHours", label: "Duration (Hours)", type: "number"},
 		{key: "usersAffected", label: "Users Affected", type: "number"},

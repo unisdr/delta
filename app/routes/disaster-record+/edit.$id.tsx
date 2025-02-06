@@ -33,6 +33,10 @@ import {
 import { getTableName } from "drizzle-orm";
 import { disasterRecordsTable } from "~/drizzle/schema";
 
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { divisionTable } from "~/drizzle/schema";
+
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("actionArgs", actionArgs.params);
 	// return {item: null};
@@ -53,7 +57,14 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	
 	console.log("recordsNonecoLosses", dbNonecoLosses);
 
-	return {item, recordsNonecoLosses: dbNonecoLosses};
+	// Define Keys Mapping (Make it Adaptable)
+    const idKey = "id";
+    const parentKey = "parentId";
+    const nameKey = "name";
+    const rawData = await dr.select().from(divisionTable);
+    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+    return {item, recordsNonecoLosses: dbNonecoLosses, treeData};
 });
 
 export const action = createAction({
@@ -68,14 +79,14 @@ export const action = createAction({
 });
 
 export default function Screen() {
-	const ld = useLoaderData<{item: DisasterRecordsViewModel | null, recordsNonecoLosses: nonecoLossesProps}>();
+	const ld = useLoaderData<{item: DisasterRecordsViewModel | null, recordsNonecoLosses: nonecoLossesProps, treeData: any[]}>();
 	console.log(ld);
 
 	return (
 		<>
 			<FormScreen
 				fieldsDef={fieldsDef}
-				formComponent={DisasterRecordsForm}
+				formComponent={(props) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>
@@ -86,7 +97,7 @@ export default function Screen() {
 								<legend className="dts-heading-3">Human Direct Effects</legend>
 								<div className="dts-form__body">
 									<div className="dts-form__section-remove">
-										<Link to={`/disaster-record-wip/edit/${ld.item.id}/human-effects`}>[ Add new record ]</Link>
+										<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>
 									</div>
 									<div className="mg-grid mg-grid__col-1">
 										<div className="dts-form-component">
@@ -102,13 +113,24 @@ export default function Screen() {
 						<fieldset className="dts-form__section">
 							<div className="dts-form__intro">
 								<legend className="dts-heading-3">Sectors</legend>
-								<div className="dts-form__body">
-									<div className="dts-form__section-remove">
-										[ Add new record ]
+							</div>
+							<div className="dts-form__body">
+								<div className="dts-form__section-remove">
+									<Link to={`/disaster-record/edit-sec/${ld.item.id}`}>[ Add new record ]</Link>
+								</div>
+								<h4 className="dts-heading-4">Damages</h4>
+								<div className="mg-grid mg-grid__col-1">
+									<div className="dts-form-component">
 									</div>
-									<div className="mg-grid mg-grid__col-1">
-										<div className="dts-form-component">
-										</div>
+								</div>
+								<h4 className="dts-heading-4">Losses</h4>
+								<div className="mg-grid mg-grid__col-1">
+									<div className="dts-form-component">
+									</div>
+								</div>
+								<h4 className="dts-heading-4">Disruptions</h4>
+								<div className="mg-grid mg-grid__col-1">
+									<div className="dts-form-component">
 									</div>
 								</div>
 							</div>
