@@ -150,22 +150,30 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 								type: "custom",
 								caption: "File/URL",
 								render: (item) => {
-									// Get the file name or fallback to URL
-									const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-								
-									// Truncate long file names while preserving the file extension
-									const maxLength = 30; // Adjust to fit your design
-									let truncatedFileName = fullFileName;
-								
-									if (fullFileName && fullFileName.length > maxLength) {
-										const extension = fullFileName.includes('.')
-											? fullFileName.substring(fullFileName.lastIndexOf('.'))
-											: '';
-										const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
-										truncatedFileName = `${baseName}...${extension}`;
+									let strRet = "N/A"; // Default to "N/A"		
+
+									const fileOption = item?.file_option || "";
+
+									if (fileOption === "File") {
+										// Get the file name or fallback to URL
+										const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
+									
+										// Truncate long file names while preserving the file extension
+										const maxLength = 30; // Adjust to fit your design
+										strRet = fullFileName;
+									
+										if (fullFileName && fullFileName.length > maxLength) {
+											const extension = fullFileName.includes('.')
+												? fullFileName.substring(fullFileName.lastIndexOf('.'))
+												: '';
+											const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
+											strRet = `${baseName}...${extension}`;
+										}
+									} else if (fileOption === "Link") {
+										strRet = item.url || "N/A";
 									}
 								
-									return truncatedFileName || "N/A"; // Return the truncated name or fallback to "N/A"
+									return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
 								},
 								},                        
 								{ type: "action", caption: "Action" },
