@@ -86,7 +86,7 @@ export default function Screen() {
 		<>
 			<FormScreen
 				fieldsDef={fieldsDef}
-				formComponent={(props) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
+				formComponent={(props: any) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>
