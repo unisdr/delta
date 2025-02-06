@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, us
 import { initTokenField, renderTokenField } from "./controls/tokenfield";
 import { renderMapper, renderMapperDialog, previewMap, previewGeoJSON } from "./controls/mapper";
 import "./assets/content-repeater.css";
+import "./assets/mapper.css";
 
 declare namespace L {
   export const map: any;
@@ -1177,18 +1178,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
         readOnly
       ></textarea>
 
-      <ul
-        className="content-repeater-actions"
-        style={{
-          listStyle: "none",
-          margin: 0,
-          padding: "1rem",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "1.6rem",
-          background: "#F2F2F2",
-        }}
-      >
+      <ul className="content-repeater-actions">
         <li>
           <a
             type="button"
@@ -1336,37 +1326,9 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                       )}
                       {field.type === "mapper" && (
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1%' }}>
-                            <div
-                              id={`${id}_${fieldId}`}
-                              style={{
-                                position: "relative",
-                                width: "100%",
-                                padding: '0.4rem 0.8rem',
-                                backgroundColor: 'white',
-                                border: '1px solid #cccccc',
-                                borderRadius: '6px',
-                                color: '#999',
-                                minHeight: '3.5rem',
-                                overflow: 'hidden',
-                                cursor: "pointer",
-                              }}
-                            >  
-                              <a 
-                                style={{
-                                  width: "auto",
-                                  zIndex: "1000",
-                                  textAlign: "center",
-                                  padding: "0.7rem 0.8rem",
-                                  color: "#000",
-                                  textDecoration: "none",
-                                  borderRadius: "4px",
-                                  display: "inline-flex", // Use inline-flex for centering inline content
-                                  alignItems: "center",   // Vertically center items
-                                  justifyContent: "center", // Optional: Center items horizontally
-                                  backgroundColor: "#cccccc",
-                                  position: "absolute", top: "-2px", right: "-2px"
-                                }}
+                          <div className="input-group">
+                            <div className="wrapper">  
+                              <a className="btn"
                                 onClick={() => {
                                   setIsDialogMapOpen(true);
                                   if (dialogMapRef.current) {
@@ -1375,16 +1337,8 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                     dialogElement.mapperField = field;
                                   }
                                   initializeMap(value ? JSON.parse(value) : null);
-                                }}
-                              >
-                                <img 
-                                  src={`${base_path}/assets/icons/globe.svg`}
-                                  alt="Globe SVG File" 
-                                  title="Globe SVG File" 
-                                  style={{ width: "20px", height: "20px", marginRight: "0.5rem" }} // Adjust size and spacing
-                                /> 
-                                Open Map
-                              </a>                    
+                                }}>
+                                <img src={`${base_path}/assets/icons/globe.svg`} alt="Globe SVG File"  title="Globe SVG File" />Open Map</a>                    
                               {value &&
                               (() => {
                                 const getGeoJSON = () => {
@@ -1407,14 +1361,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                       // Handle circle mode
                                       return (
                                         <div
-                                          style={{
-                                            fontSize: "1rem",
-                                            margin: "0.5rem",
-                                            padding: "1rem",
-                                            position: "relative",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "5px",
-                                          }}
+                                          className="mapper-selected-shape"
                                           title={title}
                                           onClick={() => {
                                             parsedValue = getGeoJSON() || parsedValue;
@@ -1434,14 +1381,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                       // Handle polygons, rectangles, or lines
                                       return (
                                         <div
-                                          style={{
-                                            fontSize: "1rem",
-                                            margin: "0.5rem",
-                                            padding: "1rem",
-                                            position: "relative",
-                                            border: "1px solid #ddd",
-                                            borderRadius: "5px",
-                                          }}
+                                          className="mapper-selected-shape"
                                           title={title}
                                           onClick={() => {
                                             const newWindow = window.open();

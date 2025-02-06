@@ -12,6 +12,9 @@
 .content-repeater .dts-table th, .dts-table td {
     border-bottom: 1px solid #E3E3E3 !important;
 }
+.content-repeater .dts-table tr:last-child td {
+    border-bottom: 1px dotted #979797 !important;
+}
 
 .content-repeater-caption {
     font-size: 1.8rem;
@@ -21,6 +24,13 @@
 }
 
 .content-repeater-actions {
+    list-style: none;
+    margin: 0;
+    padding: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.6rem;
+    background: #F2F2F2;
     margin-top: 1rem !important;
 }
 
