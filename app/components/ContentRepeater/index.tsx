@@ -34,7 +34,8 @@ const glbColors = {
   line: "#FF851B",
   rectangle: "#2ECC40",
   circle: "#FF4136",
-  marker: "#85144b"
+  marker: "#85144b",
+  geographic_level: "#fc9003",
 };
 const glbMarkerIcon = {
   iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png", // Replace with your marker icon if necessary
