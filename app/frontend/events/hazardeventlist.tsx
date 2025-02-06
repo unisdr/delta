@@ -65,8 +65,10 @@ export function ListView(args: ListViewArgs) {
 			<div className="dts-main-container">
 				<h3 className="dts-heading-3">Filters</h3>
 				<Form className="dts-form">
-					<div className="dts-form-component mg-grid__col--span-3">
-						<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
+					<div className="mg-grid mg-grid__col-12 dts-form__group">
+						<div className="mg-grid__col-3 dts-form-component">
+							<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
+						</div>
 					</div>
 					<div className="mg-grid mg-grid__col-2 dts-form__actions"
 						style={{ gap: "1rem" }}
