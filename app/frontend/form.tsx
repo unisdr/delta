@@ -457,7 +457,6 @@ export interface FieldsViewProps<T> {
 	def: FormInputDef<T>[]
 	fields: T
 	override?: Record<string, ReactElement>
-	otherRenderView?: Record<string, ReactElement>;
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
@@ -465,9 +464,6 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 		.map((def) => {
 			if (props.override && props.override[def.key]) {
 				return props.override[def.key]
-			}
-			if (props.otherRenderView && props.otherRenderView[def.key]) {
-				return props.otherRenderView[def.key]
 			}
 			return <FieldView key={def.key} def={def} value={props.fields[def.key]} />
 		})

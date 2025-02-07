@@ -352,8 +352,6 @@ export function HazardEventView(props: HazardEventViewProps) {
 					updatedAt: (
 						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 					),
-				}}
-				otherRenderView={{
 					spatialFootprint: (
 						<div>
 							<p>Spatial Footprint:</p>

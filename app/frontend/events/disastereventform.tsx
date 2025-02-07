@@ -259,9 +259,6 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 				updatedAt: (
 					<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 				),
-
-			}}
-			otherRenderView={{
 				attachments: (
 				  <>
 					{item.attachments && item.attachments !== "[]" ? (
