@@ -386,8 +386,8 @@ export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	displacedMediumLong: boolean("displaced_medium_long"),
 	displacedLong: boolean("displaced_long"),
 	displacedPermanent: boolean("displaced_permanent"),
-	displacedPreemptive: boolean("displaced_preemptive"),
-	displacedReactive: boolean("displaced_reactive"),
+	displacementStocksPreemptive: boolean("displacement_stocks_preemptive"),
+	displacementStocksReactive: boolean("displacement_stocks_reactive"),
 });
 
 export type HumanCategoryPresence = typeof humanDsgConfigTable.$inferSelect;
