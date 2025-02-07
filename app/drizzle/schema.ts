@@ -231,10 +231,6 @@ export const eventRelationshipRel = relations(
 	})
 );
 
-export type EventRelationship = typeof eventRelationshipTable.$inferSelect;
-export type EventRelationshipInsert =
-	typeof eventRelationshipTable.$inferInsert;
-
 export const hazardEventTable = pgTable("hazard_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
@@ -800,33 +796,22 @@ export const sectorTable = pgTable(
 			(): AnyPgColumn => sectorTable.id
 		), // Reference to parent sector
 		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
-		// subsector: text("subsector"), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
 		description: text("description"), // Optional description for the sector | Additional details about the sector
-		// pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
 		...createdUpdatedTimestamps,
-	},
-	(table) => [
-		// // Constraint: subsector cannot be empty
-		// check("subsector_not_empty", sql`${table.subsector} <> ''`),
-		// // Ensure the PDNA grouping is one of the specified categories
-		// check(
-		// 	"pdna_grouping_valid",
-		// 	sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
-		// ),
-	]
+	}
 );
 
 /** [SectorDisasterRecordsRelation] table links `sector` to `disaster_records` */
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
-		id: uuid("id").primaryKey().defaultRandom(), // Unique ID for the relation
+		id: serial("id").primaryKey(),
 		sectorId: integer("sector_id")
 			.notNull()
-			.references((): AnyPgColumn => sectorTable.id), // Links to sector
+			.references((): AnyPgColumn => sectorTable.id),
 		disasterRecordId: uuid("disaster_record_id")
 			.notNull()
-			.references((): AnyPgColumn => disasterRecordsTable.id), // Links to disaster record
+			.references((): AnyPgColumn => disasterRecordsTable.id),
 		withDamage: boolean("with_damage"),
 		withDisruption: boolean("with_disruption"),
 		disruptionResponseCost: integer("disruption_response_cost"),

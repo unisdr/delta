@@ -1,31 +1,27 @@
-
 import {
-  fetchAllSectors,
+  getMidLevelSectors,
+  getSubsectorsByParentId,
   Sector,
 } from "~/backend.server/models/analytics/sectors";
 
-export interface SectorWithSubsectors extends Sector {
-  subsectors?: Sector[];
+export interface SectorWithSubsectors extends Omit<Sector, 'subsectors'> {
+  subsectors: Sector[];
 }
 
-export const getSectorsWithSubsectors = async (): Promise<
-  SectorWithSubsectors[]
-> => {
-  const sectors = await fetchAllSectors();
+export const getSectorsWithSubsectors = async (): Promise<SectorWithSubsectors[]> => {
+  // Get all mid-level sectors (e.g., Energy, Agriculture)
+  const sectors = await getMidLevelSectors();
+  
+  // For each sector, get its subsectors (e.g., Energy Equipment, Crops)
+  const sectorsWithSubs = await Promise.all(
+    sectors.map(async (sector) => {
+      const subsectors = await getSubsectorsByParentId(sector.id);
+      return {
+        ...sector,
+        subsectors,
+      };
+    })
+  );
 
-  // Organize sectors into a hierarchical structure
-  const sectorMap = new Map<number | null, Sector[]>();
-  sectors.forEach((sector) => {
-    const parentId = sector.parentId;
-    if (!sectorMap.has(parentId)) {
-      sectorMap.set(parentId, []);
-    }
-    sectorMap.get(parentId)!.push(sector);
-  });
-
-  // Map top-level sectors with their subsectors
-  return (sectorMap.get(null) || []).map((sector) => ({
-    ...sector,
-    subsectors: sectorMap.get(sector.id) || [],
-  }));
+  return sectorsWithSubs;
 };

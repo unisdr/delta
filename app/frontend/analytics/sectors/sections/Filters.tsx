@@ -8,9 +8,8 @@ interface Sector {
   id: number;
   sectorname: string;
   parentId: number | null;
-  subsector: string;
   description: string | null;
-  subsectors?: Sector[];
+  subsectors: Sector[];
 }
 
 interface DisasterEvent {
@@ -59,8 +58,6 @@ const Filters: React.FC<FiltersProps> = ({
     toDate: "",
     disasterEventId: "",
   });
-
-
 
   // Ensure the component is mounted before running client-side code
   useEffect(() => {
@@ -412,20 +409,23 @@ const Filters: React.FC<FiltersProps> = ({
     <div className="mg-grid mg-grid__col-6">
       {/* Row 1: Sector and Sub Sector */}
       <div className="dts-form-component mg-grid__col--span-3">
-        <label htmlFor="sector-select" >Sector *</label>
+        <label htmlFor="sector-select">Sector *</label>
         <select
           id="sector-select"
-          name="sector"// Optional, but improves accessibility
+          name="sector"
           className="filter-select"
-          value={filters.sectorId}
+          value={filters.sectorId || ""}
           required
-          onChange={(e) => handleFilterChange("sectorId", e.target.value)}
+          onChange={(e) => {
+            handleFilterChange("sectorId", e.target.value);
+            handleFilterChange("subSectorId", ""); // Reset subsector when sector changes
+          }}
         >
           <option value="" disabled>
-            {sectorsLoading ? "Loading sectors..." : "Select Sector Type"}
+            {sectorsLoading ? "Loading sectors..." : "Select Sector"}
           </option>
-          {sectors
-            .filter((sector) => sector.parentId === null)
+          {[...sectors]
+            .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
             .map((sector) => (
               <option key={sector.id} value={sector.id}>
                 {sector.sectorname}
@@ -440,18 +440,29 @@ const Filters: React.FC<FiltersProps> = ({
           id="sub-sector-select"
           name="sub-sector"
           className="filter-select"
-          value={filters.subSectorId}
+          value={filters.subSectorId || ""}
           onChange={(e) => handleFilterChange("subSectorId", e.target.value)}
           disabled={!filters.sectorId}
         >
           <option value="" disabled>
             {filters.sectorId ? "Select Sub Sector" : "Select Sector First"}
           </option>
-          {subSectors.map((subSector) => (
-            <option key={subSector.id} value={subSector.id}>
-              {subSector.subsector}
-            </option>
-          ))}
+          {(() => {
+            const selectedSector = sectors.find(s => s.id.toString() === filters.sectorId);
+            const subsectors = selectedSector?.subsectors || [];
+
+            if (subsectors.length === 0 && filters.sectorId) {
+              return <option disabled>No subsectors found</option>;
+            }
+
+            return subsectors
+              .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
+              .map((subsector) => (
+                <option key={subsector.id} value={subsector.id}>
+                  {subsector.sectorname}
+                </option>
+              ));
+          })()}
         </select>
       </div>
 
@@ -516,20 +527,22 @@ const Filters: React.FC<FiltersProps> = ({
             !disasterEvents.some((event) => event.name === filters.disasterEventId) && (
               <ul className="autocomplete-list">
                 {disasterEvents.length > 0 ? (
-                  disasterEvents.map((event) => (
-                    <li
-                      key={event.id}
-                      onClick={() => {
-                        setFilters((prev) => ({
-                          ...prev,
-                          disasterEventId: event.name,
-                        }));
-                        queryClient.invalidateQueries("disasterEvents");
-                      }}
-                    >
-                      {event.name}
-                    </li>
-                  ))
+                  [...disasterEvents]
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((event) => (
+                      <li
+                        key={event.id}
+                        onClick={() => {
+                          setFilters((prev) => ({
+                            ...prev,
+                            disasterEventId: event.name,
+                          }));
+                          queryClient.invalidateQueries("disasterEvents");
+                        }}
+                      >
+                        {event.name}
+                      </li>
+                    ))
                 ) : (
                   <li className="no-results">No matching events found</li>
                 )}
