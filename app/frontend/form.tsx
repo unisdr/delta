@@ -5,7 +5,7 @@ import {Link} from "@remix-run/react";
 import {
 	useActionData,
 } from "@remix-run/react";
-import {ReactElement} from "react";
+import {ReactElement, useState} from "react";
 
 import {formatDate} from "~/util/date"
 import {MainContainer} from "./container";
@@ -652,6 +652,13 @@ interface ActionLinksProps {
 }
 
 export function ActionLinks({route, id}: ActionLinksProps) {
+	const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+	// const confirmDelele = async() =>{
+	// 	try{
+
+	// 	}
+	// }
 	return (
 		<div style={{display: "flex", justifyContent: "space-evenly"}}>
 			<Link to={`${route}/${id}`}>
@@ -668,13 +675,31 @@ export function ActionLinks({route, id}: ActionLinksProps) {
 					</svg>
 				</button>
 			</Link>
-			<Link to={`${route}/delete/${id}`}>
+			<button type="button" className="mg-button mg-button-outline"
+			style={{color:"red"}}
+			{/* <Link to={`${route}/delete/${id}`}>
 				<button type="button" className="mg-button mg-button-outline">
 					<svg aria-hidden="true" focusable="false" role="img">
 						<use href="assets/icons/trash-alt.svg#delete"></use>
 					</svg>
 				</button>
-			</Link>
+			</Link> */}
+
+			{/* Delete confirmation popup  */}
+			// {showConfirmDelete &&(
+			// 	<div className="popup-overlay">
+			// 		<div className="popup">
+			// 			<p>Are you sure you want to delete this hazard event?</p>
+			// 			<button onClick={confirmDelele} className="mg-button mg-button-primary">
+			// 			Yes
+			// 			</button>
+			// 			<button onClick={()=> setShowConfirmDelete(false)}
+			// 			className="mg-button mg-buttom-secondary">
+			// 				No
+			// 			</button>
+			// 		</div>
+			// 	</div>
+			// )}
 		</div>
 	);
 }
