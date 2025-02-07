@@ -30,7 +30,7 @@ interface LoaderRes {
 	item: DisruptionViewModel | null
 	fieldDef: FormInputDef<DisruptionFields>[]
 	recordId: string
-	sectorId: string
+	sectorId: number
 }
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -43,7 +43,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	}
 	if (params.id === "new") {
 		let url = new URL(request.url)
-		let sectorId = url.searchParams.get("sectorId") || ""
+		let sectorId = Number(url.searchParams.get("sectorId")) || 0
 		if (!sectorId) {
 			throw new Response("Not Found", {status: 404});
 		}
