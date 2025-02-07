@@ -11,3 +11,14 @@ backup.sh
 
 # Ignore backups directory
 backups/
+
+# Drizzle migration files
+app/drizzle/out/
+app/drizzle/meta/
+*.sql
+drizzle.config.js
+
+# Migration metadata
+app/drizzle/out/meta/
+*_snapshot.json
+*_schema_snapshot.json
