@@ -2,11 +2,11 @@ import {
 	damagesTable,
 } from "~/drizzle/schema"
 
-import { dr } from "~/db.server"
+import {dr} from "~/db.server"
 
-import { desc } from "drizzle-orm"
+import {desc} from "drizzle-orm"
 
-import { createApiListLoader } from "~/backend.server/handlers/view"
+import {createApiListLoader} from "~/backend.server/handlers/view"
 
 export const loader = createApiListLoader(
 	damagesTable,
@@ -15,18 +15,17 @@ export const loader = createApiListLoader(
 			...offsetLimit,
 			columns: {
 				id: true,
-				damage: true,
-				damageAmount: true,
-				damageUnitType: true,
-				repairCostUnit: true,
-				repairCostUnitCurr: true,
-				recoveryCostUnit: true,
-				recoveryCostUnitCurr: true
+				recordId: true,
+				sectorId: true,
+				pubDamageAmount: true,
+				pubDamageUnitType: true,
+				privDamageAmount: true,
+				privDamageUnitType: true
 			},
-			orderBy: [desc(damagesTable.damageAmount)],
+			orderBy: [desc(damagesTable.id)],
 		})
 	},
-	[desc(damagesTable.damageAmount)]
+	[]
 )
 
 
