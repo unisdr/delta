@@ -139,7 +139,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			withDamage: frmWithDamage === 'on' ? true : false,
 			withDisruption: frmWithDisruption === 'on' ? true : false,
 			disruptionResponseCost: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' ? frmDisruptionResponseCost : null,
-			disruptionResponseCostCurrency: frmWithDisruption === 'on' && frmDisruptionResponseCostCurrency !== '' ? frmDisruptionResponseCostCurrency : null,
+			disruptionResponseCostCurrency: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' && frmDisruptionResponseCostCurrency !== '' ? frmDisruptionResponseCostCurrency : null,
 			withLosses: frmWithLosses === 'on' ? true : false,
 		};
 	

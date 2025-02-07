@@ -779,9 +779,9 @@ export const sectorTable = pgTable(
 			(): AnyPgColumn => sectorTable.id
 		), // Reference to parent sector
 		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
-		subsector: text("subsector"), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
+		// subsector: text("subsector"), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
 		description: text("description"), // Optional description for the sector | Additional details about the sector
-		pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
+		// pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
 		...createdUpdatedTimestamps,
 	},
 	(table) => [
@@ -799,7 +799,7 @@ export const sectorTable = pgTable(
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
-		id: serial("id").primaryKey(), // Unique ID for the relation
+		id: uuid("id").primaryKey().defaultRandom(), // Unique ID for the relation
 		sectorId: integer("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id), // Links to sector

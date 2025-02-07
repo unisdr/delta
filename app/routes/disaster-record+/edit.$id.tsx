@@ -4,6 +4,7 @@ import {
 	disasterRecordsUpdate,
 	disasterRecordsById,
 	disasterRecordsByIdTx,
+	getHumanEffectRecordsById,
 } from "~/backend.server/models/disaster_record";
 
 import {
@@ -55,10 +56,12 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	}
 
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
-	const dbDisRecSectos = await sectorsFilderBydisasterRecordsId(params.id);
+	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
+	const dbDisRecHummanEffects = await getHumanEffectRecordsById(params.id);
 	
 	// console.log("recordsNonecoLosses", dbNonecoLosses);
-	console.log("recordsNonecoLosses", dbDisRecSectos);
+	// console.log("recordsNonecoLosses", dbDisRecSectors);
+	console.log("Humman Effects: ", dbDisRecHummanEffects);
 
 	// Define Keys Mapping (Make it Adaptable)
     const idKey = "id";
@@ -70,7 +73,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
     return {
 		item, 
 		recordsNonecoLosses: dbNonecoLosses, 
-		recordsDisRecSectors: dbDisRecSectos,
+		recordsDisRecSectors: dbDisRecSectors,
+		recordsHummanEffects: dbDisRecHummanEffects,
 		treeData
 	};
 });
@@ -90,7 +94,8 @@ export default function Screen() {
 	const ld = useLoaderData<{
 		item: DisasterRecordsViewModel | null, 
 		recordsNonecoLosses: nonecoLossesProps, 
-		recordsDisRecSectors: any,
+		recordsDisRecSectors: any | null,
+		recordsHummanEffects: any | null,
 		treeData: any[]
 	}>();
 	console.log(ld);
@@ -108,13 +113,42 @@ export default function Screen() {
 						<fieldset className="dts-form__section">
 							<div className="dts-form__intro">
 								<legend className="dts-heading-3">Human Direct Effects</legend>
-								<div className="dts-form__body">
-									<div className="dts-form__section-remove">
-										<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>
-									</div>
-									<div className="mg-grid mg-grid__col-1">
-										<div className="dts-form-component">
-										</div>
+							</div>
+							<div className="dts-form__body">
+								<div className="dts-form__section-remove">
+									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>
+								</div>
+								<div className="mg-grid mg-grid__col-1">
+									<div className="dts-form-component">
+									{ld.recordsHummanEffects && (
+										<>
+										<ul>
+											{ ld.recordsHummanEffects.deaths && (
+												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}>Deaths</Link></li>
+											)}
+											{ ld.recordsHummanEffects.injured && (
+												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}>Injured</Link></li>
+											)}
+											{ ld.recordsHummanEffects.missing && (
+												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}>Missing</Link></li>	
+											)}
+											{ (ld.recordsHummanEffects.affectedDirect || ld.recordsHummanEffects.affectedIndirect)  && (
+												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Affected</Link></li>
+											)}
+											{ (ld.recordsHummanEffects.displacedShort 
+												|| ld.recordsHummanEffects.displacedMediumShort
+												|| ld.recordsHummanEffects.displacedMediumLong
+												|| ld.recordsHummanEffects.displacedLong
+												|| ld.recordsHummanEffects.displacedPermanent
+												)  && (
+													<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>Displaced</Link></li>
+											)}
+											{ (ld.recordsHummanEffects.displacedPreemptive || ld.recordsHummanEffects.displacedReactive)  && (
+												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=DisplacementStocks`}>Displacement Stocks</Link></li>
+											)}
+										</ul>
+										</>
+									)}
 									</div>
 								</div>
 							</div>
@@ -131,48 +165,76 @@ export default function Screen() {
 								<div className="dts-form__section-remove">
 									<Link to={`/disaster-record/edit-sec/${ld.item.id}`}>[ Add new record ]</Link>
 								</div>
-								{ld.recordsDisRecSectors && Array.isArray(ld.recordsDisRecSectors) && ld.recordsDisRecSectors.map((item, index) => (
-									<div key={ index }>
-										<h3 className="dts-heading-3">
-											<Link to={`/disaster-record/edit-sec/${item.disRecSectorsdisasterRecordId}/?id=${item.disRecSectorsId}`}>
-												{ item.catNameParent2 ? item.catNameParent2 + ' > ' + item.catNameParent1 : item.catNameParent1 }
-												&nbsp; &gt; &nbsp;
-												{ item.catName }
-											</Link>
-										</h3>
-										{ item.disRecSectorsWithDamage &&
-											<>
-												<h4 className="dts-heading-4">
-													Damages
-
-												</h4>
-											</>
-										}
-										{ item.disRecSectorsWithLosses &&
-											<>
-												<h4 className="dts-heading-4">Losses</h4>
-											</>
-										}
-										{ item.disRecSectorsWithDisruption && (
-											<>
-												<h4 className="dts-heading-4">
-													Disruption &nbsp;
-													{ item.disruptionResponseCost && (
-														<>with response cost: { item.disruptionResponseCost } { item.disruptionResponseCostCurrency }</>
-													)}
-													&nbsp;
-													|
-													&nbsp;
-													<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/disruptions?sectorId=${item.disRecSectorsId}`}>[ add ]</Link>
-												</h4>
-											</>
-										)}
+								<div className="mg-grid mg-grid__col-1">
+									<div className="dts-form-component">
+										<table className="dts-table table-border">
+											<thead>
+												<tr>
+													<th></th>
+													<th></th>
+													<th></th>
+													<th></th>
+													<th className="center" colSpan={2}>Disruption</th>
+													<th></th>
+												</tr>
+												<tr>
+													<th>ID</th>
+													<th>Sector</th>
+													<th>Damage</th>
+													<th>Losses</th>
+													<th>Disruption</th>
+													<th>Response Cost</th>
+													<th>Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{ld.recordsDisRecSectors && Array.isArray(ld.recordsDisRecSectors) && ld.recordsDisRecSectors.map((item, index) => (
+													<tr key={ index }>
+														<td>{ item.disRecSectorsId.slice(0, 8) }</td>
+														<td>
+															{ item.catNameParent2 ? item.catNameParent2 + ' > ' + item.catNameParent1 : item.catNameParent1 }
+															&nbsp; &gt; &nbsp;
+															{ item.catName }
+														</td>
+														<td>
+															{ item.disRecSectorsWithDamage &&
+																<>
+																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/damages?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
+																</>
+															}
+														</td>
+														<td>
+															{ item.disRecSectorsWithLosses &&
+																<>
+																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/losses?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
+																</>
+															}
+														</td>
+														<td>
+															{ item.disRecSectorsWithDisruption &&
+																<>
+																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/disruptions?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
+																</>
+															}
+														</td>
+														<td>
+															{ item.disruptionResponseCost && (
+																<>
+																	{ item.disruptionResponseCost } { item.disruptionResponseCostCurrency }
+																</>
+															)}
+														</td>
+														<td>
+															{ ld.item && ld.item.id && (
+																<Link to={`/disaster-record/edit-sec/${ld.item.id}/?id=${item.disRecSectorsId}`}>Edit</Link>
+															)}
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
 									</div>
-									
-								))}
-
-								
-								
+								</div>
 							</div>
 						</fieldset>
 					</div>
