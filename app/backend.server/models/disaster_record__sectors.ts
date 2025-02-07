@@ -42,7 +42,7 @@ export async function disRecSectorsCreate(tx: Tx, fields: DisRecSectorsFields): 
 	return {ok: true, id: res[0].id};
 }
 
-export async function disRecSectorsUpdate(tx: Tx, idStr: number, fields: DisRecSectorsFields): Promise<UpdateResult<DisRecSectorsFields>> {
+export async function disRecSectorsUpdate(tx: Tx, idStr: string, fields: DisRecSectorsFields): Promise<UpdateResult<DisRecSectorsFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors};
@@ -89,11 +89,11 @@ export type DisRecSectorsViewModel = Exclude<Awaited<ReturnType<typeof disRecSec
 	undefined
 >;
 
-export async function disRecSectorsById(id: number) {
+export async function disRecSectorsById(id: string) {
 	return disRecSectorsByIdTx(dr, id);
 }
 
-export async function disRecSectorsByIdTx(tx: Tx, id: number) {
+export async function disRecSectorsByIdTx(tx: Tx, id: string) {
 	let res= await tx.query.sectorDisasterRecordsRelationTable.findFirst({
 		where: eq(sectorDisasterRecordsRelationTable.id, id),
 	});
@@ -124,6 +124,7 @@ export async function sectorsFilderBydisasterRecordsId(idStr: string) {
 			disruptionResponseCost: sectorDisasterRecordsRelationTable.disruptionResponseCost,
 			disruptionResponseCostCurrency: sectorDisasterRecordsRelationTable.disruptionResponseCostCurrency,
 			disRecSectorsdisasterRecordId: sectorDisasterRecordsRelationTable.disasterRecordId,
+			disRecSectorsSectorId: sectorDisasterRecordsRelationTable.sectorId,
 			catName: catTable.sectorname,
 			catNameParent1: catTableParent1.sectorname,
 			catNameParent2: catTableParent2.sectorname,

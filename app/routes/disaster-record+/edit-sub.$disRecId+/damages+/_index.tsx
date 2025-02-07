@@ -41,19 +41,12 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				id: true,
 				recordId: true,
 				sectorId: true,
-				damage: true,
-				damageAmount: true,
-				damageUnitType: true,
-				repairCostUnit: true,
-				repairCostUnitCurr: true,
-				repairUnits: true,
-				repairCostTotalOverride: true,
-				recoveryCostUnit: true,
-				recoveryCostUnitCurr: true,
-				recoveryUnits: true,
-				recoveryCostTotalOverride: true,
+				pubDamageAmount: true,
+				pubDamageUnitType: true,
+				privDamageAmount: true,
+				privDamageUnitType: true
 			},
-			orderBy: [desc(damagesTable.damageAmount)],
+			orderBy: [desc(damagesTable.id)],
 		})
 	}
 
@@ -74,9 +67,7 @@ export default function Data() {
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", ld.sectorId]]),
 		columns: [
-			"ID", "Disaster Record ID", "Sector ID", "Damage", "Damage Amount", "Damage Unit Type",
-			"Repair Cost Unit", "Repair Cost Currency", "Repair Units", "Repair Cost Total Override",
-			"Recovery Cost Unit", "Recovery Cost Currency", "Recovery Units", "Recovery Cost Total Override", "Actions"
+			"ID", "Dis Rec ID", "Sec ID", "Pub Dmg Amnt", "Unit", "Priv Dmg Amnt", "Unit", "Actions"
 		],
 		items: items,
 		paginationData: pagination,
@@ -86,17 +77,10 @@ export default function Data() {
 				<td><Link to={`${route}/${item.id}`}>{item.id}</Link></td>
 				<td>{item.recordId}</td>
 				<td>{item.sectorId}</td>
-				<td>{item.damage}</td>
-				<td>{item.damageAmount ?? "-"}</td>
-				<td>{item.damageUnitType ?? "-"}</td>
-				<td>{item.repairCostUnit ?? "-"}</td>
-				<td>{item.repairCostUnitCurr ?? "-"}</td>
-				<td>{item.repairUnits ?? "-"}</td>
-				<td>{item.repairCostTotalOverride ?? "-"}</td>
-				<td>{item.recoveryCostUnit ?? "-"}</td>
-				<td>{item.recoveryCostUnitCurr ?? "-"}</td>
-				<td>{item.recoveryUnits ?? "-"}</td>
-				<td>{item.recoveryCostTotalOverride ?? "-"}</td>
+				<td>{item.pubDamageAmount ?? "-"}</td>
+				<td>{item.pubDamageUnitType ?? "-"}</td>
+				<td>{item.privDamageAmount ?? "-"}</td>
+				<td>{item.privDamageUnitType ?? "-"}</td>
 				<td><ActionLinks route={route} id={item.id} /></td>
 			</tr>
 		),

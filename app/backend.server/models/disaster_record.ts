@@ -1,5 +1,5 @@
 import {dr, Tx} from "~/db.server";
-import {disasterRecordsTable, disasterRecords} from "~/drizzle/schema";
+import {disasterRecordsTable, disasterRecords, humanCategoryPresenceTable} from "~/drizzle/schema";
 import {eq,sql} from "drizzle-orm";
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
@@ -90,5 +90,15 @@ export async function disasterRecordsDeleteById(idStr: string): Promise<DeleteRe
 	return {ok: true}
 }
 
+export async function getHumanEffectRecordsById(disasterRecordidStr: string) {
+	return _getHumanEffectRecordsByIdTx(dr, disasterRecordidStr);
+}
 
-
+async function _getHumanEffectRecordsByIdTx(tx: Tx, disasterRecordidStr: string) {
+	let id = disasterRecordidStr;
+	let res= await tx.query.humanCategoryPresenceTable.findFirst({
+		where: eq(humanCategoryPresenceTable.recordId, id),
+	});
+	
+	return res;
+}
