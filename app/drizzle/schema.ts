@@ -471,8 +471,9 @@ export const disruptionTable = pgTable("disruption", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	// TODO: make this a foreign key
-	sectorId: text("sector_id").notNull(),
+	sectorId: integer("sector_id")
+		.references((): AnyPgColumn => sectorTable.id)
+		.notNull(),
 	durationDays: integer("duration_days"),
 	durationHours: integer("duration_hours"),
 	usersAffected: integer("users_affected"),
@@ -491,10 +492,9 @@ export const damagesTable = pgTable("damages", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	// TODO: make this a foreign key
-	sectorId: text("sector_id").notNull(),
-
-	// Public damages
+	sectorId: integer("sector_id")
+		.references((): AnyPgColumn => sectorTable.id)
+		.notNull(),
 	pubDamage: text("pub_damage", {enum: ["partial", "total"]}).notNull(),
 	pubDamageAmount: integer("pub_damage_amount"),
 	pubDamageUnitType: text("pub_damage_unit_type", {enum: ["numbers", "other"]}),
@@ -540,7 +540,9 @@ export const lossesTable = pgTable("losses", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sectorId: text("sector_id").notNull(),
+	sectorId: integer("sector_id")
+		.references((): AnyPgColumn => sectorTable.id)
+		.notNull(),
 	type: text("type", {
 		enum: ["increased_expenditure", "loss_revenue_forecasted", "non_economic_losses"]
 	}).notNull(),
