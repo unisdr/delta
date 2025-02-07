@@ -3,12 +3,14 @@ import {useLoaderData} from "@remix-run/react";
 import {Link} from "@remix-run/react";
 
 import {useActionData} from "@remix-run/react";
-import {ReactElement, useRef, useState} from "react";
+import {ReactElement, useRef} from "react";
 
 import {formatDate} from "~/util/date";
 import {MainContainer} from "./container";
 
 import {capitalizeFirstLetter} from "~/util/string";
+
+import React from 'react'
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -245,7 +247,6 @@ export function formScreen<T, D>(opts: FormScreenOpts<T, D>) {
 	return opts.form(mergedProps);
 }
 
-// enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
 export type FormInputType =
 	| "text"
 	| "textarea"
@@ -254,7 +255,7 @@ export type FormInputType =
 	| "bool"
 	| "other"
 	| "enum"
-	| "enum-flex";
+	| "enum-flex"; // enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
 
 export interface EnumEntry {
 	key: string;
@@ -315,27 +316,42 @@ export interface InputsProps<T> {
 	fields: Partial<T>;
 	errors?: Errors<T>;
 	override?: Record<string, ReactElement>;
+	headersAfter?: Record<string, ReactElement>
 }
 
 export function Inputs<T>(props: InputsProps<T>) {
 	return props.def.map((def) => {
+		let after = null;
+		if (props.headersAfter && props.headersAfter[def.key]) {
+			after = props.headersAfter[def.key]
+		}
 		if (props.override && props.override[def.key]) {
-			return props.override[def.key];
+			return (
+				<React.Fragment key={def.key}>
+					{props.override[def.key]}
+					{after}
+				</React.Fragment>
+			)
 		}
 		let errors: string[] | undefined;
 		if (props.errors && props.errors.fields) {
 			errors = errorsToStrings(props.errors.fields[def.key]);
 		}
 		return (
-			<Input
-				key={def.key}
-				def={def}
-				name={def.key}
-				value={props.fields[def.key]}
-				errors={errors}
-				enumData={def.enumData}
-			/>
+			<React.Fragment key={def.key}>
+				<Input
+					key={def.key}
+					def={def}
+					name={def.key}
+					value={props.fields[def.key]}
+					errors={errors}
+					enumData={def.enumData}
+				/>
+				{after}
+			</React.Fragment>
 		);
+
+
 	});
 }
 
@@ -483,16 +499,31 @@ export function Input(props: InputProps) {
 export interface FieldsViewProps<T> {
 	def: FormInputDef<T>[]
 	fields: T
+	headersAfter?: Record<string, ReactElement>
 	override?: Record<string, ReactElement>
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
 	return props.def
 		.map((def) => {
-			if (props.override && props.override[def.key]) {
-				return props.override[def.key]
+			let after = null;
+			if (props.headersAfter && props.headersAfter[def.key]) {
+				after = props.headersAfter[def.key]
 			}
-			return <FieldView key={def.key} def={def} value={props.fields[def.key]} />
+			if (props.override && props.override[def.key]) {
+				return (
+					<React.Fragment key={def.key}>
+						{props.override[def.key]}
+						{after}
+					</React.Fragment>
+				)
+			}
+			return (
+				<React.Fragment key={def.key}>
+					<FieldView key={def.key} def={def} value={props.fields[def.key]} />
+					{after}
+				</React.Fragment>
+			);
 		})
 }
 
@@ -671,6 +702,7 @@ interface FormViewProps {
 	fields: any;
 	fieldsDef: any;
 	override?: Record<string, ReactElement>;
+	headersAfter?: Record<string, ReactElement>
 }
 
 export function FormView(props: FormViewProps) {
@@ -699,6 +731,7 @@ export function FormView(props: FormViewProps) {
 						fields={props.fields}
 						errors={props.errors}
 						override={props.override}
+						headersAfter={props.headersAfter}
 					/>
 					<div className="dts-form__actions">
 						<SubmitButton
@@ -722,12 +755,12 @@ interface ActionLinksProps {
 }
 
 export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
-	const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+	//const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 	const dialogRef = useRef<HTMLDialogElement>(null);
 
 	const handleDeleteClick = (event: React.MouseEvent) => {
 		event.preventDefault();
-		setShowConfirmDelete(true);
+		//setShowConfirmDelete(true);
 		if (dialogRef.current) {
 			dialogRef.current.showModal(); // Show as a modal with backdrop
 		}
@@ -742,7 +775,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 		} catch (error) {
 			console.error("Error deleting hazard event: ", error);
 		}
-		setShowConfirmDelete(false);
+		//setShowConfirmDelete(false);
 		if (dialogRef.current) {
 			dialogRef.current.close(); // Close modal
 		}
@@ -795,7 +828,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 							</button>
 							<button
 								onClick={() => {
-									setShowConfirmDelete(false);
+									//setShowConfirmDelete(false);
 									if (dialogRef.current) {
 										dialogRef.current.close();
 									}
