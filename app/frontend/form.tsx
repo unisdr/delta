@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { Link } from "@remix-run/react";
 
 import { useActionData } from "@remix-run/react";
-import { ReactElement, useState } from "react";
+import { ReactElement, useRef, useState } from "react";
 
 import { formatDate } from "~/util/date";
 import { MainContainer } from "./container";
@@ -726,10 +726,14 @@ interface ActionLinksProps {
 
 export function ActionLinks({ route, id, deleteMessage }: ActionLinksProps) {
 	const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+	const dialogRef = useRef<HTMLDialogElement>(null);
 
 	const handleDeleteClick = (event: React.MouseEvent) => {
 		event.preventDefault();
 		setShowConfirmDelete(true);
+		if (dialogRef.current) {
+			dialogRef.current.showModal(); // Show as a modal with backdrop
+		}
 	};
 
 	const confirmDelele = async () => {
@@ -742,43 +746,12 @@ export function ActionLinks({ route, id, deleteMessage }: ActionLinksProps) {
 			console.error("Error deleting hazard event: ", error);
 		}
 		setShowConfirmDelete(false);
+		if (dialogRef.current) {
+			dialogRef.current.close(); // Close modal
+		}
 	};
 	return (
 		<>
-			<style>
-				{`
-				.popup-overlay {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: rgba(0, 0, 0, 0.5);
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				}
-
-				.popup {
-				background: white;
-				padding: 20px;
-				border-radius: 8px;
-				text-align: center;
-				}
-
-				.popup h2 {
-					margin-top: 0;
-					font-size: 20px;
-					font-weight: bold;
-					color: #333;
-					}
-
-				.popup-title {
-				text-align: center;
-				margin-bottom: 10px;
-				}
-				`}
-			</style>
 			<div style={{ display: "flex", justifyContent: "space-evenly" }}>
 				<Link to={`${route}/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
@@ -806,28 +779,37 @@ export function ActionLinks({ route, id, deleteMessage }: ActionLinksProps) {
 				</button>
 
 				{/* Delete confirmation popup  */}
-				{showConfirmDelete && (
-					<div className="popup-overlay">
-						<div className="popup">
-							<h2 className="popup-title">Confirm Deletion</h2>{" "}
-							<p>{deleteMessage || "Are you sure you want to delete this item?"}</p>
-							<div className="dts-external-links">
-								<button
-									onClick={confirmDelele}
-									className="mg-button mg-button-primary"
-								>
-									Yes
-								</button>
-								<button
-									onClick={() => setShowConfirmDelete(false)}
-									className="mg-button mg-button-outline"
-								>
-									No
-								</button>
-							</div>
+				<dialog ref={dialogRef} className="dts-dialog">
+					<div className="dts-dialog__content">
+						<div className="dts-form__intro">
+							<h2>Confirm Deletion</h2>
+						</div>
+						<div className="dts-form__body">
+							<p>
+								{deleteMessage || "Are you sure you want to delete this item?"}
+							</p>
+						</div>
+						<div className="dts-form__actions">
+							<button
+								onClick={confirmDelele}
+								className="mg-button mg-button-primary"
+							>
+								Yes
+							</button>
+							<button
+								onClick={() => {
+									setShowConfirmDelete(false);
+									if (dialogRef.current) {
+										dialogRef.current.close();
+									}
+								}}
+								className="mg-button mg-button-outline"
+							>
+								No
+							</button>
 						</div>
 					</div>
-				)}
+				</dialog>
 			</div>
 		</>
 	);
