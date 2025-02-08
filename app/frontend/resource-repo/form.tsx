@@ -225,8 +225,6 @@ export function ResourceRepoView(props: ResourceRepoViewProps) {
 					updatedAt: (
 						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 					),
-				}}
-				otherRenderView={{
 					attachments: (
 						<>
 							<p>Attachments:</p>

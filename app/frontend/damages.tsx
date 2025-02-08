@@ -30,6 +30,14 @@ export function DamagesForm(props: DamagesFormProps) {
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
+			headersAfter={{
+				sectorId: (
+					<h2>Public</h2>
+				),
+				pubDisruptionDescription: (
+					<h2>Private</h2>
+				),
+			}}
 			override={{
 				recordId: (
 					<input key="recordId" name="recordId" type="hidden" value={props.fields.recordId} />
@@ -59,6 +67,14 @@ export function DamagesView(props: DamagesViewProps) {
 			<FieldsView
 				def={props.fieldDef}
 				fields={props.item}
+				headersAfter={{
+					sectorId: (
+						<h2>Public</h2>
+					),
+					pubDisruptionDescription: (
+						<h2>Private</h2>
+					),
+				}}
 				override={{
 					recordId: (
 						<p key="recordId">Disaster record ID: {props.item.recordId}</p>

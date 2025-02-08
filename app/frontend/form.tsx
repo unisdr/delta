@@ -1,22 +1,24 @@
-import { Form as ReactForm } from "@remix-run/react";
-import { useLoaderData } from "@remix-run/react";
-import { Link } from "@remix-run/react";
+import {Form as ReactForm} from "@remix-run/react";
+import {useLoaderData} from "@remix-run/react";
+import {Link} from "@remix-run/react";
 
-import { useActionData } from "@remix-run/react";
-import { ReactElement, useState } from "react";
+import {useActionData} from "@remix-run/react";
+import {ReactElement, useRef} from "react";
 
-import { formatDate } from "~/util/date";
-import { MainContainer } from "./container";
+import {formatDate} from "~/util/date";
+import {MainContainer} from "./container";
 
-import { capitalizeFirstLetter } from "~/util/string";
+import {capitalizeFirstLetter} from "~/util/string";
+
+import React from 'react'
 
 export type FormResponse<T> =
-	| { ok: true; data: T }
-	| { ok: false; data: T; errors: Errors<T> };
+	| {ok: true; data: T}
+	| {ok: false; data: T; errors: Errors<T>};
 
 export type FormResponse2<T> =
-	| { ok: true; data: Partial<T> }
-	| { ok: false; data: Partial<T>; errors: Errors<T> };
+	| {ok: true; data: Partial<T>}
+	| {ok: false; data: Partial<T>; errors: Errors<T>};
 
 export interface FormError {
 	def?: FormInputDefSpecific;
@@ -102,7 +104,7 @@ interface FormMessageProps {
 	children: React.ReactNode;
 }
 
-export function FormMessage({ children }: FormMessageProps) {
+export function FormMessage({children}: FormMessageProps) {
 	return <div className="form-message">{children}</div>;
 }
 
@@ -111,7 +113,7 @@ interface FieldProps {
 	label: string;
 }
 
-export function Field({ children, label }: FieldProps) {
+export function Field({children, label}: FieldProps) {
 	return (
 		<div className="form-field">
 			<label>
@@ -127,7 +129,7 @@ interface FieldErrorsProps<T> {
 	field: keyof T;
 }
 
-export function FieldErrors<T>({ errors, field }: FieldErrorsProps<T>) {
+export function FieldErrors<T>({errors, field}: FieldErrorsProps<T>) {
 	if (!errors || !errors.fields) {
 		return null;
 	}
@@ -135,14 +137,14 @@ export function FieldErrors<T>({ errors, field }: FieldErrorsProps<T>) {
 	if (!fieldErrors || fieldErrors.length == 0) {
 		return null;
 	}
-	return FieldErrors2({ errors: errorsToStrings(fieldErrors) });
+	return FieldErrors2({errors: errorsToStrings(fieldErrors)});
 }
 
 interface FieldErrors2Props {
 	errors: string[] | undefined;
 }
 
-export function FieldErrors2({ errors }: FieldErrors2Props) {
+export function FieldErrors2({errors}: FieldErrors2Props) {
 	if (!errors) {
 		return null;
 	}
@@ -150,7 +152,7 @@ export function FieldErrors2({ errors }: FieldErrors2Props) {
 	return (
 		<ul className="form-field-errors">
 			{errors.map((error, index) => (
-				<li style={{ color: "red" }} key={index}>
+				<li style={{color: "red"}} key={index}>
 					{error}
 				</li>
 			))}
@@ -189,7 +191,7 @@ interface FormProps<T> {
 	className?: string;
 }
 
-export function Form<T>({ children, errors, className }: FormProps<T>) {
+export function Form<T>({children, errors, className}: FormProps<T>) {
 	errors = errors || {};
 	errors.form = errors.form || [];
 
@@ -245,7 +247,6 @@ export function formScreen<T, D>(opts: FormScreenOpts<T, D>) {
 	return opts.form(mergedProps);
 }
 
-// enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
 export type FormInputType =
 	| "text"
 	| "textarea"
@@ -254,7 +255,7 @@ export type FormInputType =
 	| "bool"
 	| "other"
 	| "enum"
-	| "enum-flex";
+	| "enum-flex"; // enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
 
 export interface EnumEntry {
 	key: string;
@@ -278,7 +279,7 @@ export interface FormInputDefSpecific {
 }
 
 export function fieldsFromMap<T>(
-	data: { [key: string]: string },
+	data: {[key: string]: string},
 	fieldsDef: FormInputDef<T>[]
 ): T {
 	return Object.fromEntries(
@@ -315,27 +316,42 @@ export interface InputsProps<T> {
 	fields: Partial<T>;
 	errors?: Errors<T>;
 	override?: Record<string, ReactElement>;
+	headersAfter?: Record<string, ReactElement>
 }
 
 export function Inputs<T>(props: InputsProps<T>) {
 	return props.def.map((def) => {
+		let after = null;
+		if (props.headersAfter && props.headersAfter[def.key]) {
+			after = props.headersAfter[def.key]
+		}
 		if (props.override && props.override[def.key]) {
-			return props.override[def.key];
+			return (
+				<React.Fragment key={def.key}>
+					{props.override[def.key]}
+					{after}
+				</React.Fragment>
+			)
 		}
 		let errors: string[] | undefined;
 		if (props.errors && props.errors.fields) {
 			errors = errorsToStrings(props.errors.fields[def.key]);
 		}
 		return (
-			<Input
-				key={def.key}
-				def={def}
-				name={def.key}
-				value={props.fields[def.key]}
-				errors={errors}
-				enumData={def.enumData}
-			/>
+			<React.Fragment key={def.key}>
+				<Input
+					key={def.key}
+					def={def}
+					name={def.key}
+					value={props.fields[def.key]}
+					errors={errors}
+					enumData={def.enumData}
+				/>
+				{after}
+			</React.Fragment>
 		);
+
+
 	});
 }
 
@@ -481,22 +497,34 @@ export function Input(props: InputProps) {
 }
 
 export interface FieldsViewProps<T> {
-	def: FormInputDef<T>[];
-	fields: T;
-	override?: Record<string, ReactElement>;
-	otherRenderView?: Record<string, ReactElement>;
+	def: FormInputDef<T>[]
+	fields: T
+	headersAfter?: Record<string, ReactElement>
+	override?: Record<string, ReactElement>
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
-	return props.def.map((def) => {
-		if (props.override && props.override[def.key]) {
-			return props.override[def.key];
-		}
-		if (props.otherRenderView && props.otherRenderView[def.key]) {
-			return props.otherRenderView[def.key];
-		}
-		return <FieldView key={def.key} def={def} value={props.fields[def.key]} />;
-	});
+	return props.def
+		.map((def) => {
+			let after = null;
+			if (props.headersAfter && props.headersAfter[def.key]) {
+				after = props.headersAfter[def.key]
+			}
+			if (props.override && props.override[def.key]) {
+				return (
+					<React.Fragment key={def.key}>
+						{props.override[def.key]}
+						{after}
+					</React.Fragment>
+				)
+			}
+			return (
+				<React.Fragment key={def.key}>
+					<FieldView key={def.key} def={def} value={props.fields[def.key]} />
+					{after}
+				</React.Fragment>
+			);
+		})
 }
 
 export interface FieldViewProps {
@@ -569,9 +597,9 @@ interface FormScreenProps<T> {
 }
 
 export function FormScreen<T>(props: FormScreenProps<T>) {
-	const ld = useLoaderData<{ item: T | null }>();
+	const ld = useLoaderData<{item: T | null}>();
 
-	const fieldsInitial = ld.item ? { ...ld.item } : {};
+	const fieldsInitial = ld.item ? {...ld.item} : {};
 
 	return formScreen({
 		extraData: {},
@@ -583,12 +611,12 @@ export function FormScreen<T>(props: FormScreenProps<T>) {
 }
 
 interface ViewScreenProps<T> {
-	viewComponent: React.ComponentType<{ item: T }>;
+	viewComponent: React.ComponentType<{item: T}>;
 }
 
 export function ViewScreen<T>(props: ViewScreenProps<T>) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{ item: T }>();
+	const ld = useLoaderData<{item: T}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
@@ -596,14 +624,14 @@ export function ViewScreen<T>(props: ViewScreenProps<T>) {
 }
 
 interface ViewScreenPublicApprovedProps<T> {
-	viewComponent: React.ComponentType<{ item: T; isPublic: boolean }>;
+	viewComponent: React.ComponentType<{item: T; isPublic: boolean}>;
 }
 
 export function ViewScreenPublicApproved<T>(
 	props: ViewScreenPublicApprovedProps<T>
 ) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{ item: T; isPublic: boolean }>();
+	const ld = useLoaderData<{item: T; isPublic: boolean}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
@@ -638,7 +666,7 @@ export function ViewComponent(props: ViewComponentProps) {
 							<Link
 								to={`${props.path}/edit/${String(props.id)}`}
 								className="mg-button mg-button-secondary"
-								style={{ margin: "5px" }}
+								style={{margin: "5px"}}
 							>
 								Edit
 							</Link>
@@ -674,6 +702,7 @@ interface FormViewProps {
 	fields: any;
 	fieldsDef: any;
 	override?: Record<string, ReactElement>;
+	headersAfter?: Record<string, ReactElement>
 }
 
 export function FormView(props: FormViewProps) {
@@ -702,6 +731,7 @@ export function FormView(props: FormViewProps) {
 						fields={props.fields}
 						errors={props.errors}
 						override={props.override}
+						headersAfter={props.headersAfter}
 					/>
 					<div className="dts-form__actions">
 						<SubmitButton
@@ -724,12 +754,16 @@ interface ActionLinksProps {
 	deleteMessage?: string;
 }
 
-export function ActionLinks({ route, id, deleteMessage }: ActionLinksProps) {
-	const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
+	//const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+	const dialogRef = useRef<HTMLDialogElement>(null);
 
 	const handleDeleteClick = (event: React.MouseEvent) => {
 		event.preventDefault();
-		setShowConfirmDelete(true);
+		//setShowConfirmDelete(true);
+		if (dialogRef.current) {
+			dialogRef.current.showModal(); // Show as a modal with backdrop
+		}
 	};
 
 	const confirmDelele = async () => {
@@ -741,45 +775,14 @@ export function ActionLinks({ route, id, deleteMessage }: ActionLinksProps) {
 		} catch (error) {
 			console.error("Error deleting hazard event: ", error);
 		}
-		setShowConfirmDelete(false);
+		//setShowConfirmDelete(false);
+		if (dialogRef.current) {
+			dialogRef.current.close(); // Close modal
+		}
 	};
 	return (
 		<>
-			<style>
-				{`
-				.popup-overlay {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: rgba(0, 0, 0, 0.5);
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				}
-
-				.popup {
-				background: white;
-				padding: 20px;
-				border-radius: 8px;
-				text-align: center;
-				}
-
-				.popup h2 {
-					margin-top: 0;
-					font-size: 20px;
-					font-weight: bold;
-					color: #333;
-					}
-
-				.popup-title {
-				text-align: center;
-				margin-bottom: 10px;
-				}
-				`}
-			</style>
-			<div style={{ display: "flex", justifyContent: "space-evenly" }}>
+			<div style={{display: "flex", justifyContent: "space-evenly"}}>
 				<Link to={`${route}/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
@@ -797,7 +800,7 @@ export function ActionLinks({ route, id, deleteMessage }: ActionLinksProps) {
 				<button
 					type="button"
 					className="mg-button mg-button-outline"
-					style={{ color: "red" }}
+					style={{color: "red"}}
 					onClick={handleDeleteClick}
 				>
 					<svg aria-hidden="true" focusable="false" role="img">
@@ -806,28 +809,37 @@ export function ActionLinks({ route, id, deleteMessage }: ActionLinksProps) {
 				</button>
 
 				{/* Delete confirmation popup  */}
-				{showConfirmDelete && (
-					<div className="popup-overlay">
-						<div className="popup">
-							<h2 className="popup-title">Confirm Deletion</h2>{" "}
-							<p>{deleteMessage || "Are you sure you want to delete this item?"}</p>
-							<div className="dts-external-links">
-								<button
-									onClick={confirmDelele}
-									className="mg-button mg-button-primary"
-								>
-									Yes
-								</button>
-								<button
-									onClick={() => setShowConfirmDelete(false)}
-									className="mg-button mg-button-outline"
-								>
-									No
-								</button>
-							</div>
+				<dialog ref={dialogRef} className="dts-dialog">
+					<div className="dts-dialog__content">
+						<div className="dts-form__intro">
+							<h2>Confirm Deletion</h2>
+						</div>
+						<div className="dts-form__body">
+							<p>
+								{deleteMessage || "Are you sure you want to delete this item?"}
+							</p>
+						</div>
+						<div className="dts-form__actions">
+							<button
+								onClick={confirmDelele}
+								className="mg-button mg-button-primary"
+							>
+								Yes
+							</button>
+							<button
+								onClick={() => {
+									//setShowConfirmDelete(false);
+									if (dialogRef.current) {
+										dialogRef.current.close();
+									}
+								}}
+								className="mg-button mg-button-outline"
+							>
+								No
+							</button>
 						</div>
 					</div>
-				)}
+				</dialog>
 			</div>
 		</>
 	);
