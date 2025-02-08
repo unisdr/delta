@@ -5,25 +5,55 @@ import { getImpactOnSector } from "~/backend.server/handlers/analytics/ImpactonS
 export const loader: LoaderFunction = async ({ request }) => {
   try {
     const url = new URL(request.url);
-    const sectorIdParam = url.searchParams.get("sectorId");
+    const sectorId = url.searchParams.get("sectorId");
+    const filters = {
+      startDate: url.searchParams.get("startDate"),
+      endDate: url.searchParams.get("endDate"),
+      hazardType: url.searchParams.get("hazardType"),
+      geographicLevel: url.searchParams.get("geographicLevel"),
+    };
 
-    if (!sectorIdParam) {
-      return new Response("Sector ID is required", { status: 400 });
+    // Input validation
+    if (!sectorId) {
+      return json(
+        { success: false, error: "Sector ID is required" },
+        { status: 400 }
+      );
     }
 
-    const sectorId = parseInt(sectorIdParam, 10);
-
-    if (isNaN(sectorId)) {
-      return new Response("Invalid Sector ID format", { status: 400 });
+    // Validate that sectorId is a valid format (numeric string)
+    if (!/^\d+$/.test(sectorId)) {
+      return json(
+        { success: false, error: "Invalid Sector ID format - must be numeric" },
+        { status: 400 }
+      );
     }
 
     // Call the handler to fetch sector impact data
     const result = await getImpactOnSector(sectorId);
 
-    // Return the result as JSON
-    return json(result, { status: 200 });
+    if (!result.success) {
+      return json(
+        { success: false, error: result.error },
+        { status: 400 }
+      );
+    }
+
+    // Return successful response
+    return json(
+      { success: true, data: result.data },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        },
+      }
+    );
   } catch (error) {
-    console.error("Error in Impact on Sector API:", error);
-    return new Response("Failed to fetch impact on sector", { status: 500 });
+    console.error("Error in ImpactOnSectors loader:", error);
+    return json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
   }
 };

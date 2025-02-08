@@ -1,141 +1,184 @@
 import { dr } from "~/db.server";
 import { sql } from "drizzle-orm";
 import {
-  disasterEventTable,
-  hazardEventTable,
-  sectorTable,
+  damagesTable,
+  lossesTable,
+  disasterRecordsTable,
 } from "~/drizzle/schema";
+import { and, eq, inArray, like } from "drizzle-orm";
+import { getSectorsByParentId } from "./sectors";
 
-// Function to fetch hazard events for a given sector
-const getHazardEventsForSector = async (
-  sectorId: number
-): Promise<string[]> => {
-  try {
-    const results = await dr
-      .select({
-        hazardEventId: hazardEventTable.id,
-      })
-      .from(hazardEventTable)
-      .innerJoin(
-        sectorTable,
-        sql`${hazardEventTable.hazardId} = ${sectorTable.id}::TEXT` // Explicitly cast `sector.id` to `TEXT`
-      )
-      .where(sql`${sectorTable.id} = ${sectorId}`);
+// Types
+interface TimeSeriesData {
+  year: number;
+  count: number;
+  amount: number;
+}
 
-    // Explicitly typing the map function result
-    return results.map((row: { hazardEventId: string }) => row.hazardEventId);
-  } catch (error) {
-    console.error("Error fetching hazard events for sector:", error);
-    throw new Error("Failed to fetch hazard events for the given sector");
+interface SectorImpactData {
+  eventCount: number;
+  totalDamage: string;
+  totalLoss: string;
+  eventsOverTime: { [year: string]: string };
+  damageOverTime: { [year: string]: string };
+  lossOverTime: { [year: string]: string };
+}
+
+// Helper function to validate sector ID
+const validateSectorId = (sectorId: string): number => {
+  if (!sectorId || sectorId.trim() === '') {
+    throw new Error("Invalid sector ID provided");
   }
+  const numericId = parseInt(sectorId, 10);
+  if (isNaN(numericId)) {
+    throw new Error("Sector ID must be a valid number");
+  }
+  return numericId;
 };
 
-// Function to fetch disaster events related to hazard events
-const getDisasterEventsForHazards = async (
-  hazardEventIds: string[]
-): Promise<string[]> => {
-  try {
-    if (hazardEventIds.length === 0) return [];
+// Function to get all disaster records for a sector
+const getDisasterRecordsForSector = async (sectorId: string): Promise<string[]> => {
+  const numericSectorId = validateSectorId(sectorId);
 
-    const results = await dr
-      .select({
-        disasterEventId: disasterEventTable.id,
-      })
-      .from(disasterEventTable)
-      .where(
-        sql`${disasterEventTable.hazardEventId} IN (${sql.join(
-          hazardEventIds.map((id) => `'${id}'`)
-        )})`
-      );
+  // Get all subsectors if this is a parent sector
+  const subsectors = await getSectorsByParentId(numericSectorId);
+  const sectorIds = subsectors.length > 0 
+    ? [numericSectorId, ...subsectors.map(s => s.id)]
+    : [numericSectorId];
 
-    // Explicitly typing the map function result
-    return results.map(
-      (row: { disasterEventId: string }) => row.disasterEventId
+  const records = await dr
+    .select({ id: disasterRecordsTable.id })
+    .from(disasterRecordsTable)
+    .where(
+      and(
+        inArray(disasterRecordsTable.sectorId, sectorIds),
+        sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'approved'`
+      )
     );
-  } catch (error) {
-    console.error("Error fetching disaster events for hazard events:", error);
-    throw new Error("Failed to fetch disaster events for the given hazards");
-  }
+
+  return records.map((record) => record.id);
 };
 
-// Fetch aggregated data for the selected sector
-export const fetchSectorImpactData = async (sectorId: number) => {
+// Function to aggregate damages data
+const aggregateDamagesData = async (recordIds: string[]) => {
+  if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
+
+  const damagesData = await dr
+    .select({
+      year: sql<number>`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`.as("year"),
+      total: sql<number>`
+        SUM(
+          COALESCE(${damagesTable.pubRepairCostTotalOverride}, 
+            ${damagesTable.pubRepairCostUnit} * ${damagesTable.pubRepairUnits}, 0) +
+          COALESCE(${damagesTable.privRepairCostTotalOverride},
+            ${damagesTable.privRepairCostUnit} * ${damagesTable.privRepairUnits}, 0)
+        )`.as("total")
+    })
+    .from(damagesTable)
+    .innerJoin(
+      disasterRecordsTable,
+      eq(damagesTable.recordId, disasterRecordsTable.id)
+    )
+    .where(inArray(damagesTable.recordId, recordIds))
+    .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`);
+
+  const totalDamage = damagesData.reduce((sum, row) => sum + (row.total || 0), 0);
+  const damagesByYear = new Map(damagesData.map(row => [row.year, row.total || 0]));
+
+  return { total: totalDamage, byYear: damagesByYear };
+};
+
+// Function to aggregate losses data
+const aggregateLossesData = async (recordIds: string[]) => {
+  if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
+
+  const lossesData = await dr
+    .select({
+      year: sql<number>`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`.as("year"),
+      total: sql<number>`
+        SUM(
+          COALESCE(${lossesTable.publicTotalCost}, 0) +
+          COALESCE(${lossesTable.privateTotalCost}, 0)
+        )`.as("total")
+    })
+    .from(lossesTable)
+    .innerJoin(
+      disasterRecordsTable,
+      eq(lossesTable.recordId, disasterRecordsTable.id)
+    )
+    .where(inArray(lossesTable.recordId, recordIds))
+    .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`);
+
+  const totalLoss = lossesData.reduce((sum, row) => sum + (row.total || 0), 0);
+  const lossesByYear = new Map(lossesData.map(row => [row.year, row.total || 0]));
+
+  return { total: totalLoss, byYear: lossesByYear };
+};
+
+// Function to get event counts by year
+const getEventCountsByYear = async (recordIds: string[]) => {
+  if (recordIds.length === 0) return new Map<number, number>();
+
+  const eventCounts = await dr
+    .select({
+      year: sql<number>`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`.as("year"),
+      count: sql<number>`COUNT(*)`.as("count")
+    })
+    .from(disasterRecordsTable)
+    .where(inArray(disasterRecordsTable.id, recordIds))
+    .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`);
+
+  return new Map(eventCounts.map(row => [row.year, row.count]));
+};
+
+// Main function to fetch sector impact data
+export const fetchSectorImpactData = async (sectorId: string) => {
   try {
-    // Step 1: Get hazard events related to the sector
-    const hazardEventIds = await getHazardEventsForSector(sectorId);
-
-    if (hazardEventIds.length === 0) {
-      throw new Error(`No hazard events found for sector ID ${sectorId}`);
+    // Get all disaster records for the sector and its subsectors
+    const recordIds = await getDisasterRecordsForSector(sectorId);
+    
+    // If no records found, return empty data
+    if (recordIds.length === 0) {
+      return {
+        eventCount: 0,
+        totalDamage: "0",
+        totalLoss: "0",
+        eventsOverTime: {},
+        damageOverTime: {},
+        lossOverTime: {}
+      };
     }
 
-    // Step 2: Get disaster events related to the hazard events
-    const disasterEventIds = await getDisasterEventsForHazards(hazardEventIds);
-
-    if (disasterEventIds.length === 0) {
-      throw new Error(`No disaster events found for sector ID ${sectorId}`);
-    }
-
-    // Step 3: Aggregate data from disaster events
-    const eventCountQuery = dr
-      .select({ count: sql<number>`COUNT(*)`.as("count") })
-      .from(disasterEventTable)
-      .where(
-        sql`${disasterEventTable.id} IN (${sql.join(
-          disasterEventIds.map((id) => `'${id}'`)
-        )})`
-      );
-
-    const totalsQuery = dr
-      .select({
-        totalDamage:
-          sql<number>`SUM(${disasterEventTable.subtotaldamageUsd})`.as(
-            "totalDamage"
-          ),
-        totalLoss: sql<number>`SUM(${disasterEventTable.subtotalLossesUsd})`.as(
-          "totalLoss"
-        ),
-      })
-      .from(disasterEventTable)
-      .where(
-        sql`${disasterEventTable.id} IN (${sql.join(
-          disasterEventIds.map((id) => `'${id}'`)
-        )})`
-      );
-
-    const timeSeriesQuery = dr
-      .select({
-        year: sql<number>`EXTRACT(YEAR FROM ${disasterEventTable.startDateUTC})`.as(
-          "year"
-        ),
-        damage: sql<number>`SUM(${disasterEventTable.subtotaldamageUsd})`.as(
-          "damage"
-        ),
-        loss: sql<number>`SUM(${disasterEventTable.subtotalLossesUsd})`.as(
-          "loss"
-        ),
-      })
-      .from(disasterEventTable)
-      .where(
-        sql`${disasterEventTable.id} IN (${sql.join(
-          disasterEventIds.map((id) => `'${id}'`)
-        )})`
-      )
-      .groupBy(sql`EXTRACT(YEAR FROM ${disasterEventTable.startDateUTC})`);
-
-    const [eventCount, totals, timeSeries] = await Promise.all([
-      eventCountQuery.execute(),
-      totalsQuery.execute(),
-      timeSeriesQuery.execute(),
+    // Get all required data
+    const [damagesResult, lossesResult, eventsByYear] = await Promise.all([
+      aggregateDamagesData(recordIds),
+      aggregateLossesData(recordIds),
+      getEventCountsByYear(recordIds)
     ]);
 
+    // Convert Maps to objects for the response
+    const eventsOverTime = Object.fromEntries(
+      Array.from(eventsByYear.entries()).map(([year, count]) => [year.toString(), count.toString()])
+    );
+
+    const damageOverTime = Object.fromEntries(
+      Array.from(damagesResult.byYear.entries()).map(([year, amount]) => [year.toString(), amount.toString()])
+    );
+
+    const lossOverTime = Object.fromEntries(
+      Array.from(lossesResult.byYear.entries()).map(([year, amount]) => [year.toString(), amount.toString()])
+    );
+
     return {
-      eventCount: eventCount[0]?.count || 0,
-      totalDamage: totals[0]?.totalDamage || 0,
-      totalLoss: totals[0]?.totalLoss || 0,
-      timeSeries,
+      eventCount: recordIds.length,
+      totalDamage: damagesResult.total.toString(),
+      totalLoss: lossesResult.total.toString(),
+      eventsOverTime,
+      damageOverTime,
+      lossOverTime
     };
   } catch (error) {
-    console.error("Error fetching sector impact data:", error);
-    throw new Error("Failed to fetch sector impact data");
+    console.error("Error in fetchSectorImpactData:", error);
+    throw error;
   }
 };

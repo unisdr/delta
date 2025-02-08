@@ -1,44 +1,41 @@
 import { fetchSectorImpactData } from "~/backend.server/models/analytics/ImpactonSectors";
 
-interface TimeSeriesRow {
-  year: number;
-  damage: number;
-  loss: number;
+interface SectorImpactResponse {
+  success: boolean;
+  data?: {
+    eventCount: number;
+    totalDamage: string;
+    totalLoss: string;
+    eventsOverTime: { [key: string]: string };
+    damageOverTime: { [key: string]: string };
+    lossOverTime: { [key: string]: string };
+  };
+  error?: string;
 }
 
-export const getImpactOnSector = async (sectorId: number) => {
+export const getImpactOnSector = async (sectorId: string): Promise<SectorImpactResponse> => {
   try {
-    // Fetch the sector impact data
-    const { eventCount, totalDamage, totalLoss, timeSeries } =
-      await fetchSectorImpactData(sectorId);
+    // Input validation
+    if (!sectorId) {
+      return {
+        success: false,
+        error: "Invalid sector ID provided",
+      };
+    }
 
-    // Transform the time series data for charts
-    const eventsOverTime = timeSeries.map((row: TimeSeriesRow) => ({
-      year: row.year,
-      count: row.damage + row.loss, // Aggregate damage and loss
-    }));
+    // Fetch data from the model
+    const data = await fetchSectorImpactData(sectorId);
 
-    const damageOverTime = timeSeries.map((row: TimeSeriesRow) => ({
-      year: row.year,
-      amount: row.damage,
-    }));
-
-    const lossOverTime = timeSeries.map((row: TimeSeriesRow) => ({
-      year: row.year,
-      amount: row.loss,
-    }));
-
-    // Return the transformed data
+    // Return successful response
     return {
-      eventCount,
-      totalDamage,
-      totalLoss,
-      eventsOverTime,
-      damageOverTime,
-      lossOverTime,
+      success: true,
+      data
     };
   } catch (error) {
-    console.error("Error fetching sector impact data:", error);
-    throw new Error("Failed to fetch sector impact data");
+    console.error("Error in getImpactOnSector:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "An unexpected error occurred"
+    };
   }
 };
