@@ -213,6 +213,7 @@ export function Form<T>({children, errors, className}: FormProps<T>) {
 }
 
 export interface UserFormProps<T> {
+	fieldDef?: FormInputDef<T>[]
 	edit: boolean;
 	id: any; // only valid when edit is true
 	fields: Partial<T>;
@@ -311,6 +312,8 @@ export function fieldsFromMap<T>(
 	) as T;
 }
 
+
+
 export interface InputsProps<T> {
 	def: FormInputDef<T>[];
 	fields: Partial<T>;
@@ -320,6 +323,10 @@ export interface InputsProps<T> {
 }
 
 export function Inputs<T>(props: InputsProps<T>) {
+	if (!props.def){
+		throw new Error("props.def not passed to form/Inputs")
+	}
+
 	return props.def.map((def) => {
 		let after = null;
 		if (props.headersAfter && props.headersAfter[def.key]) {
@@ -496,6 +503,10 @@ export function Input(props: InputProps) {
 	}
 }
 
+export interface ViewPropsBase<T> {
+	def: FormInputDef<T>[]
+}
+
 export interface FieldsViewProps<T> {
 	def: FormInputDef<T>[]
 	fields: T
@@ -592,6 +603,7 @@ export function FieldView(props: FieldViewProps) {
 }
 
 interface FormScreenProps<T> {
+	// this is not used
 	fieldsDef: FormInputDef<T>[];
 	formComponent: any;
 }
@@ -610,6 +622,27 @@ export function FormScreen<T>(props: FormScreenProps<T>) {
 	});
 }
 
+interface FormScreenPropsWithDef<T> {
+	fieldsDef: FormInputDef<T>[];
+	formComponent: any;
+}
+
+export function FormScreenWithDef<T>(props: FormScreenPropsWithDef<T>) {
+	const ld = useLoaderData<{item: T | null, def: FormInputDef<T>[]}>();
+
+	const fieldsInitial = ld.item ? {...ld.item} : {};
+
+	return formScreen({
+		extraData: {
+			def: ld.def
+		},
+		fieldsInitial,
+		form: props.formComponent,
+		edit: !!ld.item,
+		id: (ld.item as any)?.id || null,
+	});
+}
+
 interface ViewScreenProps<T> {
 	viewComponent: React.ComponentType<{item: T}>;
 }
@@ -621,6 +654,19 @@ export function ViewScreen<T>(props: ViewScreenProps<T>) {
 		throw "invalid";
 	}
 	return <ViewComponent item={ld.item} />;
+}
+
+interface ViewScreenPropsWithDef<T,X> {
+	viewComponent: React.ComponentType<{item: T, def: FormInputDef<X>[]}>;
+}
+
+export function ViewScreenWithDef<T,X>(props: ViewScreenPropsWithDef<T,X>) {
+	let ViewComponent = props.viewComponent;
+	const ld = useLoaderData<{item: T, def: FormInputDef<X>[]}>();
+	if (!ld.item) {
+		throw "invalid";
+	}
+	return <ViewComponent item={ld.item} def={ld.def} />;
 }
 
 interface ViewScreenPublicApprovedProps<T> {
@@ -706,6 +752,10 @@ interface FormViewProps {
 }
 
 export function FormView(props: FormViewProps) {
+	if (!props.fieldsDef){
+		throw new Error("props.fieldsDef not passed to FormView")
+	}
+
 	const pluralCap = capitalizeFirstLetter(props.plural);
 	return (
 		<MainContainer title={pluralCap}>

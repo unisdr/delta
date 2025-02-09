@@ -3,11 +3,34 @@ import {devExample1Table, DevExample1Insert} from "~/drizzle/schema";
 import {eq} from "drizzle-orm";
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
-import {Errors, hasErrors} from "~/frontend/form";
+import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForNumberId} from "./common";
 
-
 export interface DevExample1Fields extends Omit<DevExample1Insert, "id"> {}
+
+export const fieldsDef: FormInputDef<DevExample1Fields>[] = [
+	{key: "field1", label: "Field 1", type: "text", required: true},
+	{key: "field2", label: "Field 2", type: "text"},
+	{key: "field3", label: "Field 3", type: "number", required: true},
+	{key: "field4", label: "Field 4", type: "number"},
+	{key: "field5", label: "Field 5", type: "date"},
+	{
+		key: "field6", label: "Field 6", type: "enum", required: true, enumData: [
+			{key: "one", label: "One"},
+			{key: "two", label: "Two"},
+			{key: "three", label: "Three"}
+		]
+	}
+];
+
+export const fieldsDefApi: FormInputDef<DevExample1Fields>[] = [
+	...fieldsDef,
+	{key: "apiImportId", label: "", type: "other"},
+];
+
+export const fieldsDefView: FormInputDef<DevExample1Fields>[] = [
+	...fieldsDef,
+];
 
 export function validate(fields: Partial<DevExample1Fields>): Errors<DevExample1Fields> {
 	let errors: Errors<DevExample1Fields> = {};

@@ -4,14 +4,12 @@ import {
 } from "~/util/auth";
 
 import {
-	fieldsDefApi,
-} from "~/frontend/dev_example1";
-
-import {
 	jsonUpdate,
 } from "~/backend.server/handlers/form";
-import {devExample1Update} from "~/backend.server/models/dev_example1";
-
+import {
+	fieldsDefApi,
+	devExample1Update
+} from "~/backend.server/models/dev_example1";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");

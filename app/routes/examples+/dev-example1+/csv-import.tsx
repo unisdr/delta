@@ -5,11 +5,9 @@ import {
 import {
 	devExample1Create,
 	devExample1Update,
-	devExample1IdByImportId
+	devExample1IdByImportId,
+	fieldsDefApi
 } from "~/backend.server/models/dev_example1";
-import {
-	fieldsDefApi,
-} from "~/frontend/dev_example1";
 
 import {
 	createAction,

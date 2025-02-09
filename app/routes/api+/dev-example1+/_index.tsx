@@ -1,6 +1,7 @@
 import {
-	fieldsDefApi,
-} from "~/frontend/dev_example1";
+	fieldsDefApi
+} from "~/backend.server/models/dev_example1";
+
 import {
 	authLoaderApiDocs,
 } from "~/util/auth";
