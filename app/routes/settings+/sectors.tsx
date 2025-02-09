@@ -2,168 +2,126 @@ import { authLoader, authLoaderGetAuth } from "~/util/auth";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
+import { dr } from "~/db.server";
+import { sectorTable } from "~/drizzle/schema";
+import { useLoaderData } from "@remix-run/react";
+import { useState } from "react";
+
+// Tree Node Component
+const TreeNode = ({ node }: { node: any }) => {
+	const [expanded, setExpanded] = useState(false);
+
+	return (
+		<li>
+			<div
+				style={{ cursor: "pointer", userSelect: "none" }}
+				onClick={() => setExpanded(!expanded)}
+			>
+				{node.children.length > 0 ? (
+					<span>{expanded ? "▼ " : "▶ "}</span>
+				) : (
+					<span> </span>
+				)}
+				{node.sectorname}
+			</div>
+			{expanded && node.children.length > 0 && (
+				<ul style={{ paddingLeft: "20px" }}>
+					{node.children.map((child: any) => (
+						<TreeNode key={child.id} node={child} />
+					))}
+				</ul>
+			)}
+		</li>
+	);
+};
+
+// Table Component
+const SectorsTable = ({ sectors }: { sectors: any[] }) => (
+	<table className="dts-table">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Sector Name</th>
+				<th>Parent ID</th>
+				<th>Created At</th>
+			</tr>
+		</thead>
+		<tbody>
+			{sectors.map((sector) => (
+				<tr key={sector.id}>
+					<td>{sector.id}</td>
+					<td>{sector.sectorname}</td>
+					<td>{sector.parentId || "None"}</td>
+					<td>{sector.createdAt.toLocaleString()}</td>
+				</tr>
+			))}
+		</tbody>
+	</table>
+);
+
+// Utility to Build Tree Structure
+function buildTree(
+	list: any[],
+	idKey = "id",
+	parentKey = "parentId",
+	nameKey = "sectorname"
+) {
+	let map: Record<number, any> = {};
+	let roots: any[] = [];
+
+	list.forEach((item) => {
+		map[item[idKey]] = { ...item, children: [] };
+	});
+
+	list.forEach((item) => {
+		if (item[parentKey]) {
+			map[item[parentKey]]?.children.push(map[item[idKey]]);
+		} else {
+			roots.push(map[item[idKey]]);
+		}
+	});
+
+	return roots;
+}
 
 export const loader = authLoader(async (loaderArgs) => {
-  const { user } = authLoaderGetAuth(loaderArgs);
+	const { user } = authLoaderGetAuth(loaderArgs);
+	const sectors = await dr.select().from(sectorTable);
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "sectorname";
 
-  return { message: `Hello ${user.email}` };
+	const treeData = buildTree(sectors, idKey, parentKey, nameKey);
+
+	return { sectors: sectors, treeData };
 });
 
-export default function Settings() {
-  return (
-    <MainContainer title="Sectors" headerExtra={<NavSettings />}>
-      {/* Scoped Inline Styles */}
-      <style>
-        {`
-		.table-styled {
-		  width: 100%;
-		  border-collapse: collapse;
-		  margin-top: 20px;
-		  font-size: 14px;
-		}
+export default function SectorsPage() {
+	const { sectors, treeData } = useLoaderData<typeof loader>();
+	const [viewMode, setViewMode] = useState<"tree" | "table">("tree");
 
-		.table-styled th,
-		.table-styled td {
-		  padding: 12px 15px;
-		  border: 1px solid #ddd;
-		  text-align: left;
-		}
+	return (
+		<MainContainer title="Sectors" headerExtra={<NavSettings />}>
+			<>
+				<div className="dts-page-intro">
+					<button
+						className="mg-button mg-button-secondary"
+						onClick={() => setViewMode(viewMode === "tree" ? "table" : "tree")}
+					>
+						Switch to {viewMode === "tree" ? "Table" : "Tree"} View
+					</button>
+				</div>
 
-		.table-styled th {
-		  background-color: #f4f4f4;
-		  font-weight: bold;
-		}
-
-		.filter-icon {
-		  position: absolute;
-		  right: 10px;
-		  top: 50%;
-		  transform: translateY(-50%);
-		  cursor: pointer;
-		}
-
-		.table-styled tr:nth-child(even) {
-		  background-color: #f9f9f9;
-		}`}
-      </style>
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <strong>
-          <p>Sector access</p>
-        </strong>
-        <table
-          className="table-styled"
-          style={{ marginTop: "0px", width: "100%" }}
-        >
-          <thead>
-            <tr>
-              <th>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  Level 1?
-                  <button>
-                    <img src="/assets/icons/filter-solid.svg" alt="Filter" />
-                  </button>
-                </div>
-              </th>
-              <th>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  Level 2?
-                  <button>
-                    <img src="/assets/icons/filter-solid.svg" alt="Filter" />
-                  </button>
-                </div>
-              </th>
-              <th>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  Level 3?
-                  <button>
-                    <img src="/assets/icons/filter-solid.svg" alt="Filter" />
-                  </button>
-                </div>
-              </th>
-              <th>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  Level 4?
-                  <button>
-                    <img src="/assets/icons/filter-solid.svg" alt="Filter" />
-                  </button>
-                </div>
-              </th>
-              <th>Modified</th>
-              <th>
-                <img src="/assets/icons/edit.svg" alt="Edit" />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Sector 1</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>31-10-2026</td>
-              <td>
-                <button className="icon-button">
-                  <img src="/assets/icons/edit.svg" alt="Edit" />
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>Sector 1</td>
-              <td>Sector 2</td>
-              <td></td>
-              <td></td>
-              <td>31-10-2026</td>
-              <td>
-                <button className="icon-button">
-                  <img src="/assets/icons/edit.svg" alt="Edit" />
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>Sector 1</td>
-              <td>Sector 2</td>
-              <td>Sector 3</td>
-              <td></td>
-              <td>31-10-2026</td>
-              <td>
-                <button className="icon-button">
-                  <img src="/assets/icons/edit.svg" alt="Edit" />
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td>Sector 1</td>
-              <td>Sector 2</td>
-              <td>Sector 3</td>
-              <td>Sector 4</td>
-              <td>31-10-2026</td>
-              <td>
-                <button className="icon-button">
-                  <img src="/assets/icons/edit.svg" alt="Edit" />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            style={{
-              margin: "10px",
-              padding: "10px 15px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-              backgroundColor: "#004f91",
-              color: "white",
-              border: "none",
-            }}
-          >
-            Save changes
-          </button>
-        </div>
-      </div>
-    </MainContainer>
-  );
+				{viewMode === "tree" ? (
+					<ul>
+						{treeData.map((sector: any) => (
+							<TreeNode key={sector.id} node={sector} />
+						))}
+					</ul>
+				) : (
+					<SectorsTable sectors={sectors} />
+				)}
+			</>
+		</MainContainer>
+	);
 }
