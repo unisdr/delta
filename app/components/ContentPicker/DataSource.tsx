@@ -1,6 +1,6 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { formatDate } from "~/util/date";
-import { sql } from "drizzle-orm";
+import { sql, eq, ilike, or, asc, count } from "drizzle-orm";
 
 export function extractMainTableName(sqlQuery: string) {
     const regex = /\bFROM\s+([\w.]+)/i;  // Match "FROM table_name"
@@ -15,56 +15,125 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
     // Escape search query to avoid SQL injection
     const safeSearchPattern = `%${searchQuery.replace(/'/g, "''")}%`;
 
-    // Format the SQL query by replacing placeholders
-    const query = pickerConfig.dataSourceSQL
-        .replace(/\[safeSearchPattern\]/g, `%${safeSearchPattern}%`)
-        .replace(/\[limit\]/g, `${limit}`)
-        .replace(/\[offset\]/g, `${offset}`);
+    let rows = [];
 
-    console.log("Executing SQL Query:", query);
-    console.log("Main Table Name:", extractMainTableName(query));
+    if (pickerConfig.dataSourceDrizzle) {
+        try {
+            let query = pickerConfig.dataSourceDrizzle.select(dr);
 
-    try {
-        const result = await dr.execute(query);
-        const rows = result.rows ?? [];
+            if (pickerConfig.dataSourceDrizzle.joins?.length) {
+                pickerConfig.dataSourceDrizzle.joins.forEach((join: any) => {
+                    query = query.innerJoin(join.table, join.condition);
+                });
+            }    
 
-        return rows.map((row: any) => {
-            let formattedRow: any = {};
+            if (pickerConfig.dataSourceDrizzle.whereIlike?.length) {
+                const newWhereConditions = pickerConfig.dataSourceDrizzle.whereIlike.map((condition: any) =>
+                    ilike(condition.column, safeSearchPattern)
+                );
+                query = query.where(or(...newWhereConditions));
+            }
 
-            pickerConfig.table_columns.forEach((col: any) => {
-                if (col.column_type === "db") {
-                    const fieldValue = row[col.column_field] ?? "N/A";
+            rows = await query.limit(limit).offset(offset).execute();
+        } catch (error) {
+            console.error("Error fetching data from Drizzle ORM:", error);
+            return [];
+        }
+    } else {
+        // Format the SQL query by replacing placeholders
+        const query = pickerConfig.dataSourceSQL
+            .replace(/\[safeSearchPattern\]/g, `%${safeSearchPattern}%`)
+            .replace(/\[limit\]/g, `${limit}`)
+            .replace(/\[offset\]/g, `${offset}`);
 
-                    // Auto-detect and format date fields
-                    let finalValue = fieldValue;
-                    if (typeof fieldValue === "string" && Date.parse(fieldValue)) {
-                        finalValue = formatDate(new Date(fieldValue));
-                    }
-
-                    // Apply custom render function if available
-                    formattedRow[col.column_field] = col.render ? col.render(row) : finalValue;
-                }
-            });
-
-            return formattedRow;
-        });
-    } catch (error) {
-        console.error("Database query failed:", error);
-        return [];
+        try {
+            const result = await dr.execute(query);
+            rows = result.rows ?? [];
+        } catch (error) {
+            console.error("Database query failed:", error);
+            return [];
+        }
     }
+
+    return rows.map((row: any) => {
+        let formattedRow: any = {};
+
+        pickerConfig.table_columns.forEach((col: any) => {
+            if (col.column_type === "db") {
+                const fieldValue = row[col.column_field] ?? "N/A";
+
+                // Auto-detect and format date fields
+                let finalValue = fieldValue;
+                if (typeof fieldValue === "string" && Date.parse(fieldValue)) {
+                    finalValue = formatDate(new Date(fieldValue));
+                }
+
+                // Apply custom render function if available
+                formattedRow[col.column_field] = col.render ? col.render(row) : finalValue;
+            }
+        });
+
+        return formattedRow;
+    });
 }
 
 export async function getTotalRecords(pickerConfig: any, searchQuery: string) {
-    const query = pickerConfig.dataSourceSQL;
-    const mainTableName = extractMainTableName(query);
+    if (pickerConfig.dataSourceDrizzle) {
+        return await getTotalRecordsDrizzle(pickerConfig, searchQuery);
+    } else {
+        return await getTotalRecordsSQL(pickerConfig, searchQuery);
+    }
+}
 
-    // Extract full base query (keep JOINs & fields, remove only LIMIT & OFFSET)
+async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
+    if (!pickerConfig.dataSourceDrizzle?.table) {
+        console.error("Error: No table defined for Drizzle ORM query.");
+        return 0;
+    }
+
+    const safeSearchPattern = `%${searchQuery}%`;
+
+    try {
+        // ✅ Start a new query with `.from()` and `.count()`
+        let query = dr
+            .select({ total: count() })
+            .from(pickerConfig.dataSourceDrizzle.table);
+
+        // ✅ Extract and apply dynamic `JOIN`s
+        if (pickerConfig.dataSourceDrizzle.joins) {
+            pickerConfig.dataSourceDrizzle.joins.forEach((join: any) => {
+                query = query.innerJoin(join.table, join.condition);
+            });
+        }
+
+        // ✅ Extract WHERE conditions and replace placeholders
+        const newWhereConditions = pickerConfig.dataSourceDrizzle.whereIlike.map((condition: any) =>
+            ilike(condition.column, safeSearchPattern)
+        );
+
+        if (newWhereConditions.length) {
+            query = query.where(or(...newWhereConditions));
+        }
+
+        // ✅ Execute the COUNT query
+        const result = await query.execute();
+        return result[0]?.total ?? 0;
+    } catch (error) {
+        console.error("Error fetching total records (Drizzle):", error);
+        return 0;
+    }
+}
+
+async function getTotalRecordsSQL(pickerConfig: any, searchQuery: string) {
+    const mainTableName = pickerConfig.dataSourceSQLTable;
+
+    // Format the SQL query
     const baseQuery = pickerConfig.dataSourceSQL
         .replace(/\[safeSearchPattern\]/g, `%${searchQuery}%`)
-        .replace(/\bLIMIT\s+\[\w+\].*/gi, '') 
+        .replace(/\bLIMIT\s+\[\w+\].*/gi, '')
         .replace(/\bOFFSET\s+\[\w+\].*/gi, '');
 
-    // Construct the total count query dynamically
+    // Construct total records SQL
     const totalRecordsSQL = sql`
         SELECT CASE
             WHEN (
@@ -87,7 +156,7 @@ export async function getTotalRecords(pickerConfig: any, searchQuery: string) {
         const totalRecordsResult = await dr.execute(totalRecordsSQL);
         return totalRecordsResult.rows[0]?.total ?? 0;
     } catch (error) {
-        console.error("Error fetching total records:", error);
+        console.error("Error fetching total records (SQL):", error);
         return 0;
     }
 }

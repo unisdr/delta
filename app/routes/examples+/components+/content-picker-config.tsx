@@ -1,4 +1,8 @@
 import { hazardEventLabel } from "~/frontend/events/hazardeventform";
+import { eq, ilike, or, asc } from "drizzle-orm";
+import { disasterEventTable, hazardEventTable, hipHazardTable } from "~/drizzle/schema";
+
+console.log('disasterEventTable.name: ', disasterEventTable.name); // disaster_event
 
 export const contentPickerConfig = {
     id: "disasterEventId",
@@ -43,4 +47,32 @@ export const contentPickerConfig = {
         LIMIT [limit]
         OFFSET [offset];
     `,
+    dataSourceSQLTable: "disaster_event",
+    /*dataSourceDrizzle: {
+        table: disasterEventTable,
+        select: (dr: any) => {
+            return dr.select({
+                id: disasterEventTable.id,
+                startDateUTC: disasterEventTable.startDateUTC,
+                endDateUTC: disasterEventTable.endDateUTC,
+                hazardEventId: hazardEventTable.id,
+                hazardEventName: hipHazardTable.nameEn,
+            })
+            .from(disasterEventTable)
+            // .innerJoin(hazardEventTable, eq(disasterEventTable.hazardEventId, hazardEventTable.id))
+            // .innerJoin(hipHazardTable, eq(hazardEventTable.hazardId, hipHazardTable.id))
+            .orderBy(asc(disasterEventTable.startDateUTC))
+        },
+        joins: [
+            { table: hazardEventTable, condition: eq(disasterEventTable.hazardEventId, hazardEventTable.id) },
+            { table: hipHazardTable, condition: eq(hazardEventTable.hazardId, hipHazardTable.id) }
+        ],
+        whereIlike: [
+            { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.glide, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.nameGlobalOrRegional, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.nameNational, placeholder: "[safeSearchPattern]" },
+            { column: hipHazardTable.nameEn, placeholder: "[safeSearchPattern]" }
+        ]
+    },*/
 };
