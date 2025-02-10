@@ -20,7 +20,6 @@ const injectStyles = (appendCss?: string) => {
                 list-style: none;
                 margin: 0;
                 padding: 0;
-                z-index: 1;
             }
 
             ul.tree ul {
@@ -178,11 +177,14 @@ interface TreeViewProps {
     onApply?: (selectedItem: { [key: string]: any }) => void;
     onRenderItemName?: (node: any) => any;
     multiSelect?: boolean;
+    noSelect?: boolean;
     appendCss?: string;
     disableButtonSelect?: boolean;
+    dialogMode?: boolean;
+    search?: boolean;
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, appendCss = "", disableButtonSelect = false }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true }, ref: any) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -422,7 +424,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
 
                                 <div {...renderItemName(enrichedNode, parentIds)}>
                                     <span>{enrichedNode.name}</span>
-                                    {!multiSelect && (
+                                    {(!multiSelect && !noSelect) && (
                                         <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
                                     )}
                                 </div>
@@ -451,7 +453,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
 
                                 <div {...renderItemName(enrichedNode, parentIds)}>
                                     <span>{enrichedNode.name}</span> 
-                                    {!multiSelect && (
+                                    {(!multiSelect && !noSelect) && (
                                         <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
                                     )}
                                 </div>
@@ -560,51 +562,65 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
 
     const filteredTree = searchTerm ? filterTree(treeData, searchTerm, {}) : treeData;
 
-    return (
-        <>
-            <dialog ref={dialogRef} className="dts-dialog tree-dialog">
-                <div className="dts-dialog__content">
-                    <div className="dts-dialog__header" style={{justifyContent: "space-between"}}>
-                        <h2 className="dts-heading-2" style={{marginBottom: "0px"}}>{caption}</h2>
-                        <a type="button" aria-label="Close dialog" onClick={treeViewDiscard}>
-                            <svg aria-hidden="true" focusable="false" role="img">
-                                <use href={`${base_path}/assets/icons/close.svg#close`}></use>
-                            </svg>
-                        </a>
-                    </div>
-                    <div>
-                        <div className="tree-filters">
-                        <button
-                                className="tree-btn"
-                                onClick={expandAll}
-                                disabled={isExpandDisabled}
-                            >
-                                Expand All
-                            </button>
-                            <button
-                                className="tree-btn"
-                                onClick={collapseAll}
-                                disabled={isCollapseDisabled}
-                            >
-                                Collapse All
-                            </button>
-                            <input
-                                className="tree-search input-normal"
-                                type="text"
-                                placeholder="Search..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="dts-form__body">
-                            <p className="tree" style={{ marginBottom: "1rem" }}>{rootCaption}</p>
-                            {filteredTree.length > 0 ? renderTree(filteredTree) : <p className="tree">No results found.</p>}
-                        </div>
+    const treeViewContent = (noAction?: boolean) => {
+        return (
+            <div>
+                <div className="tree-filters">
+                <button
+                        className="tree-btn"
+                        onClick={expandAll}
+                        disabled={isExpandDisabled}
+                    >
+                        Expand All
+                    </button>
+                    <button
+                        className="tree-btn"
+                        onClick={collapseAll}
+                        disabled={isCollapseDisabled}
+                    >
+                        Collapse All
+                    </button>
+                    {search && <input
+                        className="tree-search input-normal"
+                        type="text"
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />}
+                </div>
+                <div className="dts-form__body">
+                    <p className="tree" style={{ marginBottom: "1rem" }}>{rootCaption}</p>
+                    {filteredTree.length > 0 ? renderTree(filteredTree) : <p className="tree">No results found.</p>}
+                </div>
+                {
+                    (noAction) && <>
                         <div className="tree-footer"><div></div><button className="mg-button mg-button-primary" onClick={treeViewApply}>Apply</button><button className="mg-button mg-button-outline" onClick={treeViewDiscard}>Discard</button></div>
                         <textarea className="tree-hidden-data" style={{display: "none"}}></textarea>
+                    </>
+                }
+            </div>
+        )
+    }
+
+    return (
+        <>
+            {(dialogMode) ? 
+                <dialog ref={dialogRef} className="dts-dialog tree-dialog">
+                    <div className="dts-dialog__content">
+                        <div className="dts-dialog__header" style={{justifyContent: "space-between"}}>
+                            <h2 className="dts-heading-2" style={{marginBottom: "0px"}}>{caption}</h2>
+                            <a type="button" aria-label="Close dialog" onClick={treeViewDiscard}>
+                                <svg aria-hidden="true" focusable="false" role="img">
+                                    <use href={`${base_path}/assets/icons/close.svg#close`}></use>
+                                </svg>
+                            </a>
+                        </div>
+                        {treeViewContent(true)}
                     </div>
-                </div>
-            </dialog>
+                </dialog>
+            : 
+                treeViewContent(false)
+            }
             {disableButtonSelect ? null : <button className="tree-button-select" onClick={treeViewOpen}>{caption}</button>}
         </>
     );

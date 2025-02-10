@@ -2,8 +2,6 @@ import { hazardEventLabel } from "~/frontend/events/hazardeventform";
 import { eq, ilike, or, asc } from "drizzle-orm";
 import { disasterEventTable, hazardEventTable, hipHazardTable } from "~/drizzle/schema";
 
-console.log('disasterEventTable.name: ', disasterEventTable.name); // disaster_event
-
 export const contentPickerConfig = {
     id: "disasterEventId",
     dataSources: "/examples/components/content-picker-datasource",
