@@ -249,6 +249,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
                 { name: "HIPs import", link: "/setup/import-hip" },
                 { name: "Categories import", link: "/setup/import-categories" },
                 { name: "API Keys", link: "/settings/api-key" },
+                { name: "Assets", link: "/settings/assets" },
                 { name: "Measures/Units", link: "/settings/measure" },
               ],
             },

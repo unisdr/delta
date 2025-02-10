@@ -545,6 +545,20 @@ export const measureTable = pgTable("measure", {
 export type Measure = typeof measureTable.$inferSelect
 export type MeasureInsert = typeof measureTable.$inferInsert
 
+export const assetTable = pgTable("asset", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	sectorId: integer("sector_id")
+		.references((): AnyPgColumn => sectorTable.id)
+		.notNull(),
+	name: text("name").notNull(),
+	nationalId: text("national_id").notNull(),
+	notes: text("notes").notNull(),
+});
+
+export type Asset = typeof assetTable.$inferSelect;
+export type AssetInsert = typeof assetTable.$inferInsert;
+
 export const lossesTable = pgTable("losses", {
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),
