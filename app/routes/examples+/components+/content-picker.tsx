@@ -7,7 +7,7 @@ export const loader = async () => {
 };
 
 // React Component to Render Tree
-export default function TreeViewPage() {
+export default function Page() {
     return (
         <>
             <div className="dts-page-header">

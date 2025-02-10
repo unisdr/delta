@@ -1,35 +1,9 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import "./assets/content-picker.css";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
-            `
-            .content-picker .select {
-                display: inline-block;
-                background-color: buttonface;
-                padding: 4px 8px 1px 8px;
-                border: 1px solid #000;
-                border-radius: 5px;
-                white-space: nowrap;
-            }
-
-            .content-picker .dts-dialog {
-                max-width: 50vw;
-                max-width: none !important;
-                max-height: none !important;
-            }
-            .content-picker .dts-dialog .dts-form__body {
-                position: relative;
-                overflow: scroll;
-                // height: 500px;
-                border-bottom: 1px dotted #979797 !important;
-            }
-
-            .content-picker .cp-filter {
-                margin-bottom: 1rem;
-                display: flex;
-                flex-direction: row-reverse;
-            }
-            
+        `
             ${appendCss}
         `
     ];
@@ -360,23 +334,9 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                       </table>
                                   </div>
                               </div>
-                              <div className="cp-footer"
-                                  style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      alignItems: "center",
-                                      padding: "10px 15px",
-                                      fontSize: "14px",
-                                      color: "#333",
-                                  }}
-                              >
+                              <div className="cp-footer">
                                   <span>Page {currentPage} of {totalPages} | Showing {(tableData ?? []).length} items</span>
-                                  <div
-                                      style={{
-                                          display: "flex",
-                                          gap: "10px",
-                                      }}
-                                  >
+                                  <div className="cp-page-nav">
                                     <button onClick={goToPreviousPage} disabled={currentPage <= 1}>
                                         ◀ Previous
                                     </button>
@@ -390,73 +350,20 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                       </div>
                   </dialog>
   
-                  <div
-                      style={{
-                          display: "flex",
-                          alignItems: "center",
-                          border: "1px solid #ccc",
-                          borderRadius: "0.25rem",
-                          overflow: "hidden",
-                          width: "fit-content",
-                          backgroundColor: "#fff"
-                      }}
-                  >
+                  <div className="cp-input-container">
                         {(selectedItem === "") && (
-                        <div
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                padding: "4px 8px",
-                                margin: "0px",
-                                flex: 1,
-                            }}
-                        >
+                        <div className="cp-unselected">
                           <span>{defaultText !== "" ? defaultText : caption}</span>
                         </div>
                         )}
 
                         {(selectedItem !== "") && (
-                            <div 
-                            style={{
-                            display: "inline-flex",
-                            //display: "inline-flex",
-                            alignItems: "center",
-                            borderRadius: "4px",
-                            padding: "4px 8px",
-                            margin: "2px",
-                            border: "1px solid #E3E3E3",
-                            flex: 1,
-                            fontSize: "100%",
-                            lineHeight: "1.15",
-                            color: "#495057",
-                            backgroundColor: "#fff"
-                            }}
-                            >
-                            <span>{selectedItem}</span><span style={{marginLeft: "5px", cursor: "pointer", color: "red"}} onClick={removeItem}>×</span>
+                            <div className="cp-selected">
+                            <span>{selectedItem}</span><span className="cp-remove-item" onClick={removeItem}>×</span>
                             </div>
                         )}
-                      <div
-                          style={{
-                              backgroundColor: "#e9ecef",
-                              border: "none",
-                              padding: "0.4rem 0.4rem 0.1rem 0.4rem",
-                              cursor: "pointer",
-                              borderLeft: "1px solid #ced4da",
-                          }}
-                          onClick={openPicker}
-                      >
-                        <svg
-                        aria-hidden="true"
-                        focusable="false"
-                        role="img"
-                        style={{
-                            WebkitMaskImage: `url(${base_path}/assets/icons/search-black.svg)`,
-                            maskImage: `url(${base_path}/assets/icons/search-black.svg)`,
-                            backgroundColor: "black", // Set the desired color
-                            width: "20px",
-                            height: "20px",
-                        }}
-                        ></svg>
+                      <div className="cp-search" onClick={openPicker}>
+                        <svg aria-hidden="true" focusable="false" role="img"></svg>
                         <input type="hidden" id={id} name={id} value={selectedItem} />
                       </div>
                   </div>
