@@ -6,11 +6,11 @@ Define database schema. Start by copying an example from dev_example1, replacing
 
 ## Database access layer
 `app/backend.server/models/dev_example1.ts`
-Start by copying an example. This will contain all database queries and record validation.
+Start by copying an example. This includes the form field definitions. Also contains all database queries and record validation.
 
 ## Form definition
 `app/frontend/dev_example1.tsx`
-Copy this file as well. This includes the form field definition, view definition, including a list of fields.
+Copy this file as well. This includes the form definition, view definition.
 
 ## Routes
 `app/routes/examples+/dev_example1+`
