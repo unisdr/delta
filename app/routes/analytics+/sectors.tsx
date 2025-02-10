@@ -7,6 +7,7 @@ import { MainContainer } from "~/frontend/container";
 
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector";
+import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard";
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
@@ -25,7 +26,6 @@ export const meta: MetaFunction = ({ data }) => {
 
 // React component for Sectors Analysis page
 export default function SectorsAnalysis() {
-
   const [isMounted, setIsMounted] = useState(false);
 
   const [filters, setFilters] = useState<{
@@ -38,7 +38,6 @@ export default function SectorsAnalysis() {
     fromDate: string | null;
     toDate: string | null;
     disasterEventId: string | null;
-
   } | null>(null);
 
   const handleApplyFilters = (newFilters: {
@@ -52,13 +51,13 @@ export default function SectorsAnalysis() {
     toDate: string | null;
     disasterEventId: string | null;
   }) => {
-    console.log("Filters applied:", newFilters); // Log filters to the terminal
-    setFilters(newFilters); // Update the state with the applied filters
+    console.log("Filters applied:", newFilters);
+    setFilters(newFilters);
   };
 
   const handleClearFilters = () => {
-    console.log("Filters cleared"); // Log the clearing action
-    setFilters(null); // Reset the filters to null
+    console.log("Filters cleared");
+    setFilters(null);
   };
 
   const handleAdvancedSearch = () => {
@@ -70,7 +69,6 @@ export default function SectorsAnalysis() {
   }, []);
 
   if (!isMounted) {
-    // Render a loader or nothing until the client mounts
     return (
       <div
         style={{
@@ -117,20 +115,25 @@ export default function SectorsAnalysis() {
             </div>
           )}
 
-          {/* Placeholder for dashboard sections: Hide unless filters are applied */}
+          {/* Dashboard sections */}
           {filters && (
             <div style={{ marginTop: "2rem", maxWidth: "100%", overflow: "hidden" }}>
-              {/* <p style={{ fontSize: "1.4rem", color: "#555" }}>Dashboard content will be displayed here based on the selected filters.</p> */}
-
-              {/* Dashboard Sections */}
+              {/* Impact on Sector Section */}
               {filters.sectorId && (
-                <ImpactOnSector
-                  sectorId={filters.sectorId}
-                  filters={filters}
-                />
+                <div className="space-y-8">
+                  <ImpactOnSector
+                    sectorId={filters.sectorId}
+                    filters={filters}
+                  />
+
+                  {/* Impact by Hazard Section */}
+                  <div className="mt-8 bg-white p-6 rounded-lg shadow-sm">
+                    <ImpactByHazard filters={filters} />
+                  </div>
+                </div>
               )}
 
-              {/* Work In Progress Message */}
+              {/* Work In Progress Message - Updated list */}
               <div
                 className="construction-message"
                 style={{
@@ -164,10 +167,9 @@ export default function SectorsAnalysis() {
                     color: "#555",
                   }}
                 >
-                  <li>Impact in sectors by hazard type</li>
                   <li>Impact on sectors by Location</li>
                   <li>Effect details in sectors</li>
-                  <li>The most damaging events for sectors </li>
+                  <li>The most damaging events for sectors</li>
                 </ul>
                 <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
                   are still under construction. Please stay tuned for future updates!
@@ -175,8 +177,13 @@ export default function SectorsAnalysis() {
               </div>
             </div>
           )}
+          <p></p>
+          <div className="dts-caption mt-4">
+            * Data shown is based on approved or published records
+          </div>
         </div>
       </div>
+
     </MainContainer>
   );
 }
