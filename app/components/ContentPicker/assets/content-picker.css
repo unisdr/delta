@@ -1,0 +1,93 @@
+.content-picker .select {
+    display: inline-block;
+    background-color: buttonface;
+    padding: 4px 8px 1px 8px;
+    border: 1px solid #000;
+    border-radius: 5px;
+    white-space: nowrap;
+}
+
+.content-picker .dts-dialog {
+    max-width: 50vw;
+    max-width: none !important;
+    max-height: none !important;
+}
+.content-picker .dts-dialog .dts-form__body {
+    position: relative;
+    overflow: scroll;
+    border-bottom: 1px dotted #979797 !important;
+}
+
+.content-picker .cp-filter {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.content-picker .cp-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #333;
+}
+
+.content-picker .cp-footer .cp-page-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.content-picker .cp-input-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    width: fit-content;
+    background-color: #fff;
+}
+
+.content-picker .cp-unselected {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    margin: 0px;
+    flex: 1;
+}
+
+.content-picker .cp-selected {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 2px;
+    border: 1px solid #E3E3E3;
+    flex: 1;
+    font-size: 100%;
+    line-height: 1.15;
+    color: #495057;
+    background-color: #fff;
+}
+
+.content-picker .cp-remove-item {
+    margin-left: 5px;
+    cursor: pointer;
+    color: red; 
+}
+
+.content-picker .cp-search {
+    background-color: #e9ecef;
+    border: none;
+    padding: 0.4rem 0.4rem 0.1rem 0.4rem;
+    cursor: pointer;
+    border-left: 1px solid #ced4da;
+}
+
+.content-picker .cp-search svg {
+    -webkit-mask-image: url(/assets/icons/search-black.svg);
+    mask-image: url(/assets/icons/search-black.svg);
+    background-color: black;
+    width: 20px;
+    height: 20px;
+}

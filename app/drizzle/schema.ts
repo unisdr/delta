@@ -768,6 +768,10 @@ export const categoriesTable = pgTable("categories", {
 	...createdUpdatedTimestamps,
 });
 
+export const categoryCategoryParent_Rel = relations(categoriesTable, ({ one }) => ({
+    categoryParent: one(categoriesTable, { fields: [categoriesTable.parentId], references: [categoriesTable.id] }),
+}));
+
 export type nonecoLosses = typeof nonecoLossesTable.$inferSelect;
 export type nonecoLossesInsert = typeof nonecoLossesTable.$inferInsert;
 
@@ -791,6 +795,10 @@ export const nonecoLossesTable = pgTable(
 		];
 	}
 );
+
+export const nonecoLossesCategory_Rel = relations(nonecoLossesTable, ({ one }) => ({
+    category: one(categoriesTable, { fields: [nonecoLossesTable.categortyId], references: [categoriesTable.id] }),
+}));
 
 /**
  * This sector table is configured to support hierarchical relationships and sector-specific details.

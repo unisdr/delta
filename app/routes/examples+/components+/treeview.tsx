@@ -6,18 +6,18 @@ import { eq, not, and, isNotNull, sql, desc } from "drizzle-orm";
 import { useEffect, useState, useRef } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 
-import { ContentPicker } from "~/components/ContentPicker";
-import {hazardEventLink} from "~/frontend/events/hazardeventform"
-import {hazardBasicInfoJoin} from "~/backend.server/models/event"
-import {formatDate} from "~/util/date";
-
+// Define the expected return type
+interface LoaderData {
+    treeData: any[];  // Adjust the type if you have a proper structure
+    disasterEventTable: any[];  // Adjust the type as needed
+}
 
 // Loader to Fetch & Transform Data
 export const loader = async () => {
 
     let arrDisasterEventTable = [] as any[];
 
-    try {
+    /*try {
         const results = await dr.query.disasterEventTable.findMany({
             columns: {
                 id: true,
@@ -47,7 +47,7 @@ export const loader = async () => {
     
     } catch (error) {
         console.error("Error querying disasterEventTable:", error);
-    }    
+    } */
 
     //const rawData = await dr.select().from(divisionTable); // Can replace `divisionTable` with any table
 
@@ -112,7 +112,7 @@ export const loader = async () => {
 
 // React Component to Render Tree
 export default function TreeViewPage() {
-    const {treeData: treeData, disasterEventTable: disasterEventTable} = useLoaderData();
+    const { treeData, disasterEventTable} = useLoaderData() as LoaderData;
 
     const targetObject = useRef<HTMLDivElement>(null);
 
@@ -123,7 +123,7 @@ export default function TreeViewPage() {
             <div className="dts-page-header">
                 <header className="dts-page-title">
                     <div className="mg-container">
-                        <h1 className="dts-heading-1">Styled Tree View Example</h1>
+                        <h1 className="dts-heading-1">TreeView Example</h1>
                     </div>
                 </header>
             </div>
@@ -194,29 +194,6 @@ export default function TreeViewPage() {
                                     >
                                     </pre>
                                 </div>
-                            </div>
-                            <div className="form-field">
-                                <label>
-                                    <div>
-                                    <ContentPicker 
-                                        dataSources="/hazard-event/component-sample-data" 
-                                        caption="Disaster Event"
-                                        defaultText="Select Disaster Event..."
-                                        table_columns={[
-                                            { column_type: "db", column_field: "id", column_title: "ID", searchable: true },
-                                            { column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event", searchable: true },
-                                            { column_type: "db", column_field: "startDateUTC", column_title: "Start Date" },
-                                            { column_type: "db", column_field: "endDateUTC", column_title: "End Date" },
-                                            { column_type: "custom", column_field: "action", column_title: "Action" },
-                                        ]}
-                                    />
-                                    </div>
-                                </label>
-                            </div>
-                            <div className="form-field">
-                                <label>National Disaster ID
-                                 <div><input type="text" name="nationalDisasterId" value="001" /></div>
-                                 </label>
                             </div>
                         </div>
                     </form>
