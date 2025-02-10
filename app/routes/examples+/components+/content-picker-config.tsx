@@ -2,7 +2,7 @@ import { hazardEventLabel } from "~/frontend/events/hazardeventform";
 
 export const contentPickerConfig = {
     id: "disasterEventId",
-    dataSources: "/examples/components/data-picker-datasource",
+    dataSources: "/examples/components/content-picker-datasource",
     caption: "Disaster Event",
     defaultText: "Select Disaster Event...",
     table_columns: [

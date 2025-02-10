@@ -1,5 +1,5 @@
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
-import { contentPickerConfig } from "./data-picker-config";
+import { contentPickerConfig } from "./content-picker-config";
 
 export const loader = async ({ request }: { request: Request }) => {
     const url = new URL(request.url);

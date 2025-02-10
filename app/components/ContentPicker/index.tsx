@@ -421,7 +421,6 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                             display: "inline-flex",
                             //display: "inline-flex",
                             alignItems: "center",
-                            color: "rgb(51, 51, 51)",
                             borderRadius: "4px",
                             padding: "4px 8px",
                             margin: "2px",

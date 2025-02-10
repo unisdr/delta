@@ -6,13 +6,6 @@ import { eq, not, and, isNotNull, sql, desc } from "drizzle-orm";
 import { useEffect, useState, useRef } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 
-import { ContentPicker } from "~/components/ContentPicker";
-import { contentPickerConfig } from "./component-sample-config";
-import {hazardEventLink} from "~/frontend/events/hazardeventform"
-import {hazardBasicInfoJoin} from "~/backend.server/models/event"
-import {formatDate} from "~/util/date";
-
-
 
 // Loader to Fetch & Transform Data
 export const loader = async () => {
