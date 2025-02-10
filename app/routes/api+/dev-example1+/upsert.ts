@@ -4,18 +4,14 @@ import {
 } from "~/util/auth";
 
 import {
-	fieldsDefApi,
-} from "~/frontend/dev_example1";
-
-
-import {
 	jsonUpsert,
 } from "~/backend.server/handlers/form";
 
 import {
 	devExample1Create,
 	devExample1Update,
-	devExample1IdByImportId
+	devExample1IdByImportId,
+	fieldsDefApi
 } from "~/backend.server/models/dev_example1";
 
 export const loader = authLoaderApi(async () => {

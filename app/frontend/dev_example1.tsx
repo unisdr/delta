@@ -1,60 +1,38 @@
 import {
 	UserFormProps,
-	FormInputDef,
 	FieldsView,
 	ViewComponent,
-	FormView
+	FormView,
+	ViewPropsBase
 } from "~/frontend/form";
-
-import {DevExample1} from "~/drizzle/schema";
 
 import {DevExample1Fields, DevExample1ViewModel} from "~/backend.server/models/dev_example1"
 
 export const route = "/examples/dev-example1"
 
-export const fieldsDef: FormInputDef<DevExample1Fields>[] = [
-	{key: "field1", label: "Field 1", type: "text", required: true},
-	{key: "field2", label: "Field 2", type: "text"},
-	{key: "field3", label: "Field 3", type: "number", required: true},
-	{key: "field4", label: "Field 4", type: "number"},
-	{key: "field5", label: "Field 5", type: "date"},
-	{
-		key: "field6", label: "Field 6", type: "enum", required: true, enumData: [
-			{key: "one", label: "One"},
-			{key: "two", label: "Two"},
-			{key: "three", label: "Three"}
-		]
-	}
-];
-
-export const fieldsDefApi: FormInputDef<DevExample1Fields>[] = [
-	...fieldsDef,
-	{key: "apiImportId", label: "", type: "other"},
-];
-
-export const fieldsDefView: FormInputDef<DevExample1Fields>[] = [
-	...fieldsDef,
-];
-
-interface DevExample1FormProps extends UserFormProps<DevExample1Fields> {}
+interface DevExample1FormProps extends UserFormProps<DevExample1Fields> {
+}
 
 export function DevExample1Form(props: DevExample1FormProps) {
+	if (!props.fieldDef){
+		throw new Error("fieldDef not passed to DevExample1Form")
+	}
 	return (
 		<FormView
 			path={route}
 			edit={props.edit}
 			id={props.id}
 			plural="Dev examples"
-			singular={(props.edit ? "Edit" : "Add") + " dev example"}
+			singular="dev example"
 			errors={props.errors}
 			fields={props.fields}
-			fieldsDef={fieldsDef}
+			fieldsDef={props.fieldDef}
 		/>
 	);
 }
 
 
-interface DevExample1ViewProps {
+interface DevExample1ViewProps extends ViewPropsBase<DevExample1Fields> {
 	item: DevExample1ViewModel;
 }
 
@@ -66,7 +44,7 @@ export function DevExample1View(props: DevExample1ViewProps) {
 			plural="Dev examples"
 			singular="Dev example"
 		>
-			<FieldsView def={fieldsDefView} fields={props.item} override={{}} />
+			<FieldsView def={props.def} fields={props.item} override={{}} />
 		</ViewComponent>
 	);
 }

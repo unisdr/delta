@@ -23,6 +23,13 @@ const injectStyles = (appendCss?: string) => {
                 // height: 500px;
                 border-bottom: 1px dotted #979797 !important;
             }
+
+            .content-picker .cp-filter {
+                margin-bottom: 1rem;
+                display: flex;
+                flex-direction: row-reverse;
+            }
+            
             ${appendCss}
         `
     ];
@@ -40,6 +47,7 @@ const injectStyles = (appendCss?: string) => {
 };
 
 interface ContentPickerProps {
+    id: string;
     dataSources: any;
     table_columns: any[];
     caption?: string;
@@ -50,13 +58,17 @@ interface ContentPickerProps {
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "" }, ref) => {
+    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "" }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
+      const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
       const [searchQuery, setSearchQuery] = useState(""); // Search query state
+      const [debouncedQuery, setDebouncedQuery] = useState(searchQuery); // New debounced state
       const [currentPage, setCurrentPage] = useState(1);
       const [totalPages, setTotalPages] = useState(1);
       const itemsPerPage = 10; // Number of items per page
+      const [loading, setLoading] = useState(false);
+      const [selectedItem, setSelectedItem] = useState("");
   
       useEffect(() => {
           injectStyles(appendCss);
@@ -64,8 +76,9 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
   
       // Fetch data if `dataSources` is an API URL
       const fetchTableData = async (query = "", page = 1) => {
+        setLoading(true); // Start loading
+    
         if (Array.isArray(dataSources)) {
-            // Perform client-side pagination & filtering
             const filteredData = (dataSources ?? []).filter((row) =>
                 (table_columns ?? []).some(
                     (col) =>
@@ -75,34 +88,51 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                 )
             );
     
-            const totalPagesCalc = Math.ceil(filteredData.length / itemsPerPage);
-            setTotalPages(totalPagesCalc);
+            setTotalPages(Math.ceil(filteredData.length / itemsPerPage));
             setTableData(filteredData.slice((page - 1) * itemsPerPage, page * itemsPerPage));
+            setLoading(false); // Stop loading
             return;
         }
     
-        if (!dataSources) return;
+        if (!dataSources) {
+            setLoading(false);
+            return;
+        }
     
         try {
             const response = await fetch(`${dataSources}?query=${query}&page=${page}&limit=${itemsPerPage}`);
             if (!response.ok) throw new Error("Failed to fetch data");
     
             const { data = [], totalRecords = 0 } = await response.json();
-            const totalPagesCalc = Math.ceil(totalRecords / itemsPerPage); // ✅ Correctly calculate total pages
-    
+            setTotalPages(Math.ceil(totalRecords / itemsPerPage));
             setTableData(data);
-            setTotalPages(totalPagesCalc); // ✅ Ensure total pages is updated
         } catch (error) {
             console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false); // Ensure loading is set to false after data is fetched
         }
     };
     
+    // Debounce logic using useEffect
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedQuery(searchQuery);
+        }, 500); // Wait 500ms before setting debouncedQuery
+
+        return () => {
+            clearTimeout(handler); // Clear timeout if user types again before 500ms
+        };
+    }, [searchQuery]); // Run only when `searchQuery` changes
+
+    // Fetch data when debouncedQuery changes (prevents excessive API calls)
+    useEffect(() => {
+        fetchTableData(debouncedQuery, 1);
+    }, [debouncedQuery]); // Runs only when `debouncedQuery` updates
   
       // Handle search input change
       const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-          setSearchQuery(e.target.value);
-          setCurrentPage(1);
-          fetchTableData(e.target.value, 1);
+        setSearchQuery(e.target.value); // Update state immediately
+        setCurrentPage(1); // Reset to first page
       };
   
       // Pagination navigation handlers
@@ -159,18 +189,25 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
       };
   
       const clearPicker = () => {
-          if (dialogRef.current) {
-              const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-              if (dtsFormBody) {
-                  dtsFormBody.style.height = "auto";
-              }
-  
-              const cpContainer = dialogRef.current.querySelector(".cp-container") as HTMLElement | null;
-              if (cpContainer) {
-                  cpContainer.style.display = "none";
-              }
-          }
-      };
+        if (!dialogRef.current) return;
+    
+        // Reset styles
+        const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement | null;
+        if (dtsFormBody) {
+            dtsFormBody.style.height = "auto";
+            dtsFormBody.scrollTop = 0; // Reset scrolling
+        }
+    
+        const cpContainer = dialogRef.current.querySelector(".cp-container") as HTMLElement | null;
+        if (cpContainer) {
+            cpContainer.style.display = "none";
+        }
+    
+        setTableData([]); // Ensure React state is cleared
+        setSearchQuery(""); // Clear search input
+        setCurrentPage(1); // Reset pagination
+        setTotalPages(1); // Reset total pages
+    };
   
       const discardPicker = (e?: any) => {
           if (e) {
@@ -180,10 +217,85 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
           if (dialogRef.current) dialogRef.current.close();
           clearPicker();
       };
+
+      const selectItem = (e: any) => {
+        e.preventDefault();
+    
+        const rowId = e.target.dataset.id;
+    
+        // Ensure we get a valid primary column, fallback to the first column
+        const primaryColumn = table_columns.find((col) => col.is_primary_id) || table_columns[0];
+    
+        if (!primaryColumn) {
+            console.error("No primary column found in table_columns");
+            return;
+        }
+    
+        const selectedRow = tableData.find((row: any) => row[primaryColumn.column_field] === rowId);
+
+        // Extract all fields marked with `is_selected_field: true`
+        /*const selectedFields = table_columns
+        .filter((col) => col.is_selected_field)
+        .reduce((acc, col) => {
+            acc[col.column_field] = selectedRow[col.column_field] || "N/A";
+            return acc;
+        }, {} as Record<string, any>); // Ensuring correct type
+        */
+
+        const selectedValues = table_columns
+        .filter((col) => col.is_selected_field)
+        .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
+        .join(", "); // Convert array to comma-separated string
+    
+        console.log("Selected item:", selectedRow);
+        console.log("Selected Fields (is_selected_field):", selectedValues);
+
+        // Update the hidden input value
+        //const hiddenInput = document.querySelector(`input[name="${id}"]`) as HTMLInputElement | null;
+
+        if (componentRef.current) {
+            const hiddenInput = componentRef.current.querySelector(`#${id}`) as HTMLInputElement | null;
+            console.log("hiddenInput:", hiddenInput);
+            if (hiddenInput) {
+                //alert(selectedValues)
+                //hiddenInput.defaultValue = selectedValues;
+
+                setSelectedItem(selectedValues);
+            }   
+        }
+
+        if (dialogRef.current) {
+            dialogRef.current.close();
+        }
+        
+        clearPicker();
+    };
+
+    const removeItem = (e: any) => {
+        e.preventDefault();
+        setSelectedItem("");
+    }
+    
+
+      useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+          if (event.key === "Escape" && dialogRef.current?.open) {
+            console.log("Escape key pressed! Closing dialog...");
+            dialogRef.current.close();
+            clearPicker();
+          }
+        };
+    
+        document.addEventListener("keydown", handleKeyDown);
+    
+        return () => {
+          document.removeEventListener("keydown", handleKeyDown);
+        };
+      }, []);
   
       return (
           <>
-              <div className="content-picker">
+              <div className="content-picker" ref={componentRef}>
                   <dialog ref={dialogRef} className="dts-dialog">
                       <div className="dts-dialog__content">
                           <div className="dts-dialog__header" style={{ justifyContent: "space-between" }}>
@@ -214,23 +326,36 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                               </tr>
                                           </thead>
                                           <tbody>
-                                              {(tableData ?? []).length > 0 ? (
-                                                  (tableData ?? []).map((row, rowIndex) => (
-                                                      <tr key={rowIndex}>
-                                                          {(table_columns ?? []).map((col, colIndex) => (
-                                                              <td key={colIndex}>
-                                                                  {col.column_type === "db"
-                                                                      ? row[col.column_field] || "N/A"
-                                                                      : <a href="#">Select</a>}
-                                                              </td>
-                                                          ))}
-                                                      </tr>
-                                                  ))
-                                              ) : (
-                                                  <tr>
-                                                      <td colSpan={(table_columns ?? []).length} style={{ textAlign: "center" }}>No results found.</td>
-                                                  </tr>
-                                              )}
+                                          {loading ? (
+                                                <tr>
+                                                    <td colSpan={(table_columns ?? []).length} style={{ textAlign: "center" }}>
+                                                        Loading data...
+                                                    </td>
+                                                </tr>
+                                            ) : tableData.length > 0 ? (
+                                                tableData.map((row, rowIndex) => {
+                                                    const primaryColumn = table_columns.find((col) => col.is_primary_id);
+                                                    return (
+                                                        <tr key={rowIndex}>
+                                                            {table_columns.map((col, colIndex) => (
+                                                                <td key={colIndex}>
+                                                                    {col.column_type === "db" ? (
+                                                                        row[col.column_field] || "N/A"
+                                                                    ) : (
+                                                                        <a href={primaryColumn ? `#${row[primaryColumn.column_field]}` : "#"} data-id={primaryColumn ? `${row[primaryColumn.column_field]}` : ""} onClick={selectItem}>Select</a>
+                                                                    )}
+                                                                </td>
+                                                            ))}
+                                                        </tr>
+                                                    );
+                                                })
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={(table_columns ?? []).length} style={{ textAlign: "center" }}>
+                                                        No results found.
+                                                    </td>
+                                                </tr>
+                                            )}
                                           </tbody>
                                       </table>
                                   </div>
@@ -276,34 +401,67 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                           backgroundColor: "#fff"
                       }}
                   >
-                      <div
-                          style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              padding: "4px 8px",
-                              margin: "2px",
-                              flex: 1,
-                          }}
-                      >
+                        {(selectedItem === "") && (
+                        <div
+                            style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                padding: "4px 8px",
+                                margin: "0px",
+                                flex: 1,
+                            }}
+                        >
                           <span>{defaultText !== "" ? defaultText : caption}</span>
-                      </div>
-  
+                        </div>
+                        )}
+
+                        {(selectedItem !== "") && (
+                            <div 
+                            style={{
+                            display: "inline-flex",
+                            //display: "inline-flex",
+                            alignItems: "center",
+                            color: "rgb(51, 51, 51)",
+                            borderRadius: "4px",
+                            padding: "4px 8px",
+                            margin: "2px",
+                            border: "1px solid #E3E3E3",
+                            flex: 1,
+                            fontSize: "100%",
+                            lineHeight: "1.15",
+                            color: "#495057",
+                            backgroundColor: "#fff"
+                            }}
+                            >
+                            <span>{selectedItem}</span><span style={{marginLeft: "5px", cursor: "pointer", color: "red"}} onClick={removeItem}>×</span>
+                            </div>
+                        )}
                       <div
                           style={{
                               backgroundColor: "#e9ecef",
                               border: "none",
-                              padding: "0.8rem 1rem",
+                              padding: "0.4rem 0.4rem 0.1rem 0.4rem",
                               cursor: "pointer",
                               borderLeft: "1px solid #ced4da",
                           }}
                           onClick={openPicker}
                       >
-                          🔍
+                        <svg
+                        aria-hidden="true"
+                        focusable="false"
+                        role="img"
+                        style={{
+                            WebkitMaskImage: `url(${base_path}/assets/icons/search-black.svg)`,
+                            maskImage: `url(${base_path}/assets/icons/search-black.svg)`,
+                            backgroundColor: "black", // Set the desired color
+                            width: "20px",
+                            height: "20px",
+                        }}
+                        ></svg>
+                        <input type="hidden" id={id} name={id} value={selectedItem} />
                       </div>
                   </div>
               </div>
           </>
       );
   });
-  
-  

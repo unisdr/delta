@@ -1,4 +1,4 @@
-import { dr, Tx } from "~/db.server";
+import {dr, Tx} from "~/db.server";
 
 import {
 	LoaderFunctionArgs,
@@ -22,8 +22,8 @@ import {
 	validateFromJsonFull,
 } from "~/frontend/form_validate";
 
-import { formStringData } from "~/util/httputil";
-import { redirectWithMessage } from "~/util/session";
+import {formStringData} from "~/util/httputil";
+import {redirectWithMessage} from "~/util/session";
 
 import {
 	authActionWithPerm,
@@ -33,19 +33,19 @@ import {
 	authActionGetAuth,
 } from "~/util/auth";
 
-import { getItem2 } from "~/backend.server/handlers/view";
-import { configApprovedRecordsArePublic, configSiteURL } from "~/util/config";
+import {getItem2} from "~/backend.server/handlers/view";
+import {configApprovedRecordsArePublic, configSiteURL} from "~/util/config";
 
-import { PermissionId } from "~/frontend/user/roles";
-import { logAudit } from "../models/auditLogs";
-import { auditLogsTable, userTable } from "~/drizzle/schema";
-import { and, desc, eq } from "drizzle-orm";
+import {PermissionId} from "~/frontend/user/roles";
+import {logAudit} from "../models/auditLogs";
+import {auditLogsTable, userTable} from "~/drizzle/schema";
+import {and, desc, eq} from "drizzle-orm";
 
-export type ErrorResult<T> = { ok: false; errors: Errors<T> };
+export type ErrorResult<T> = {ok: false; errors: Errors<T>};
 
-export type CreateResult<T> = { ok: true; id: any } | ErrorResult<T>;
+export type CreateResult<T> = {ok: true; id: any} | ErrorResult<T>;
 
-export type UpdateResult<T> = { ok: true } | ErrorResult<T>;
+export type UpdateResult<T> = {ok: true} | ErrorResult<T>;
 
 export function errorForForm<T>(err: FormError): ErrorResult<T> {
 	return {
@@ -72,7 +72,7 @@ function createFields<T extends Record<string, any>>(
 	field: keyof T,
 	err: string | FormError
 ): Partial<Record<keyof T, (string | FormError)[]>> {
-	return { [field]: [err] } as Partial<Record<keyof T, (string | FormError)[]>>;
+	return {[field]: [err]} as Partial<Record<keyof T, (string | FormError)[]>>;
 }
 
 interface FormCreateArgs<T> {
@@ -90,7 +90,7 @@ interface FormCreateArgs<T> {
 export async function formCreate<T>(
 	args: FormCreateArgs<T>
 ): Promise<FormResponse<T> | TypedResponse<never>> {
-	const { request } = args.actionArgs;
+	const {request} = args.actionArgs;
 	const formData = formStringData(await request.formData());
 	let u = new URL(request.url);
 	if (args.queryParams) {
@@ -127,13 +127,13 @@ interface FormUpdateArgs<T> {
 export async function formUpdate<T>(
 	args: FormUpdateArgs<T>
 ): Promise<FormResponse<T> | TypedResponse<never>> {
-	const { request, params } = args.actionArgs;
+	const {request, params} = args.actionArgs;
 	const formData = formStringData(await request.formData());
 	const data = args.fieldsFromMap(formData, args.fieldsDef);
 
 	const id = params["id"];
 	if (!id) {
-		throw new Response("Missing item ID", { status: 400 });
+		throw new Response("Missing item ID", {status: 400});
 	}
 
 	const res = await args.update(id, data);
@@ -150,7 +150,7 @@ export async function formUpdate<T>(
 	});
 }
 
-export type SaveResult<T> = { ok: true; id?: any } | ErrorResult<T>;
+export type SaveResult<T> = {ok: true; id?: any} | ErrorResult<T>;
 
 interface FormSaveArgs<T> {
 	// overwrite id=new logic
@@ -165,7 +165,7 @@ interface FormSaveArgs<T> {
 export async function formSave<T>(
 	args: FormSaveArgs<T>
 ): Promise<FormResponse2<T> | TypedResponse<never>> {
-	const { request, params } = args.actionArgs;
+	const {request, params} = args.actionArgs;
 	const formData = formStringData(await request.formData());
 	let u = new URL(request.url);
 
@@ -240,7 +240,7 @@ export async function jsonCreate<T>(
 		};
 	}
 
-	const res: { id: string | null; errors?: Errors<T> }[] = [];
+	const res: {id: string | null; errors?: Errors<T>}[] = [];
 
 	const fail = function () {
 		throw "fail";
@@ -251,20 +251,20 @@ export async function jsonCreate<T>(
 			for (const item of args.data) {
 				const validateRes = validateFromJsonFull(item, args.fieldsDef, true);
 				if (!validateRes.ok) {
-					res.push({ id: null, errors: validateRes.errors });
+					res.push({id: null, errors: validateRes.errors});
 					return fail();
 				}
 				const one = await args.create(tx, validateRes.resOk!);
 				if (!one.ok) {
-					res.push({ id: null, errors: one.errors });
+					res.push({id: null, errors: one.errors});
 					return fail();
 				}
-				res.push({ id: one.id });
+				res.push({id: one.id});
 			}
 		});
 	} catch (error) {
 		if (error == "fail") {
-			return { ok: false, res: res };
+			return {ok: false, res: res};
 		} else {
 			throw error;
 		}
@@ -289,7 +289,7 @@ export interface JsonUpsertArgs<T extends ObjectWithImportId> {
 }
 
 export type UpsertResult<T> =
-	| { ok: true; status: "create" | "update"; id: any }
+	| {ok: true; status: "create" | "update"; id: any}
 	| ErrorResult<T>;
 
 export interface JsonUpsertRes<T> {
@@ -330,7 +330,7 @@ export async function jsonUpsert<T extends ObjectWithImportId>(
 
 				const validateRes = validateFromJsonFull(item, args.fieldsDef, true);
 				if (!validateRes.ok) {
-					res.push({ ok: false, errors: validateRes.errors });
+					res.push({ok: false, errors: validateRes.errors});
 					return fail();
 				}
 
@@ -343,23 +343,23 @@ export async function jsonUpsert<T extends ObjectWithImportId>(
 						validateRes.resOk!
 					);
 					if (!updateRes.ok) {
-						res.push({ ok: false, errors: updateRes.errors });
+						res.push({ok: false, errors: updateRes.errors});
 						return fail();
 					}
-					res.push({ ok: true, status: "update", id: existingId });
+					res.push({ok: true, status: "update", id: existingId});
 				} else {
 					const createRes = await args.create(tx, validateRes.resOk!);
 					if (!createRes.ok) {
-						res.push({ ok: false, errors: createRes.errors });
+						res.push({ok: false, errors: createRes.errors});
 						return fail();
 					}
-					res.push({ ok: true, status: "create", id: createRes.id });
+					res.push({ok: true, status: "create", id: createRes.id});
 				}
 			}
 		});
 	} catch (error) {
 		if (error == "fail") {
-			return { ok: false, res };
+			return {ok: false, res};
 		} else {
 			throw error;
 		}
@@ -401,7 +401,7 @@ export async function jsonUpdate<T>(
 		};
 	}
 
-	const res: { ok: boolean; errors?: Errors<T> }[] = [];
+	const res: {ok: boolean; errors?: Errors<T>}[] = [];
 
 	try {
 		await dr.transaction(async (tx) => {
@@ -430,22 +430,22 @@ export async function jsonUpdate<T>(
 				const validateRes = validateFromJson(item, args.fieldsDef, true, true);
 
 				if (!validateRes.ok) {
-					res.push({ ok: false, errors: validateRes.errors });
+					res.push({ok: false, errors: validateRes.errors});
 					return fail();
 				}
 
 				const one = await args.update(tx, id, validateRes.resOk!);
 
 				if (!one.ok) {
-					res.push({ ok: false, errors: one.errors });
+					res.push({ok: false, errors: one.errors});
 					return fail();
 				}
-				res.push({ ok: true });
+				res.push({ok: true});
 			}
 		});
 	} catch (error) {
 		if (error == "fail") {
-			return { ok: false, res };
+			return {ok: false, res};
 		} else {
 			throw error;
 		}
@@ -562,7 +562,7 @@ export function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): string {
 	return parts.join("");
 }
 
-export type DeleteResult = { ok: true } | { ok: false; error: string };
+export type DeleteResult = {ok: true} | {ok: false; error: string};
 
 interface FormDeleteArgs {
 	loaderArgs: LoaderFunctionArgs;
@@ -574,10 +574,10 @@ interface FormDeleteArgs {
 }
 
 export async function formDelete(args: FormDeleteArgs) {
-	const { request, params } = args.loaderArgs;
+	const {request, params} = args.loaderArgs;
 	const id = params["id"];
 	if (!id) {
-		throw new Response("Missing item ID", { status: 400 });
+		throw new Response("Missing item ID", {status: 400});
 	}
 	const user = authActionGetAuth(args.loaderArgs);
 	const oldRecord = await args.getById(id);
@@ -607,27 +607,26 @@ export async function formDelete(args: FormDeleteArgs) {
 	});
 }
 
-interface CreateLoaderArgs<T> {
-	getById: (id: string) => Promise<T | null>;
+interface CreateLoaderArgs<T, E extends Record<string, any> = {}> {
+	getById: (id: string) => Promise<T | null>
+	extra?: E
 }
 
-export function createLoader<T>(args: CreateLoaderArgs<T>) {
-	return authLoaderWithPerm("EditData", async (loaderArgs) => {
-		const { params } = loaderArgs;
-		if (!params.id) {
-			throw "Route does not have $id param";
-		}
-		if (params.id === "new") {
-			return { item: null };
-		}
-		const item = await args.getById(params.id);
-		if (!item) {
-			throw new Response("Not Found", { status: 404 });
-		}
+type LoaderData<T, E extends Record<string, any>> = {
+	item: T | null
+} & E
 
-		return { item };
-	});
+export function createLoader<T, E extends Record<string, any> = {}>(props: CreateLoaderArgs<T, E>) {
+	return authLoaderWithPerm("EditData", async (args): Promise<LoaderData<T, E>> => {
+		let p = args.params
+		if (!p.id) throw new Error("Missing id param")
+		if (p.id === "new") return { item: null, ...(props.extra || {}) } as LoaderData<T, E>
+		let it = await props.getById(p.id)
+		if (!it) throw new Response("Not Found", { status: 404 })
+		return { item: it, ...(props.extra || {}) } as LoaderData<T, E>
+	})
 }
+
 
 interface CreateActionArgs<T> {
 	fieldsDef: any;
@@ -636,7 +635,7 @@ interface CreateActionArgs<T> {
 	getById: (tx: Tx, id: string) => Promise<T>;
 	redirectTo: (id: string) => string;
 	tableName: string;
-	action?: (isCreate: boolean)=> string;
+	action?: (isCreate: boolean) => string;
 }
 
 export function createAction<T>(args: CreateActionArgs<T>) {
@@ -654,7 +653,7 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 							tableName: args.tableName,
 							recordId: String(newRecord.id),
 							userId: user.user.id,
-							action: args.action? args.action(true) : "create",
+							action: args.action ? args.action(true) : "create",
 							newValues: data,
 						});
 					}
@@ -668,7 +667,7 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 							tableName: args.tableName,
 							recordId: id,
 							userId: user.user.id,
-							action: args.action? args.action(false) : "update",
+							action: args.action ? args.action(false) : "update",
 							oldValues: oldRecord,
 							newValues: data,
 						});
@@ -681,29 +680,33 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 	});
 }
 
-interface CreateViewLoaderArgs<T> {
+
+interface CreateViewLoaderArgs<T, E extends Record<string, any> = {}> {
 	getById: (id: string) => Promise<T | null>;
+	extra?: E;
 }
 
-export function createViewLoader<T>(args: CreateViewLoaderArgs<T>) {
+export function createViewLoader<T, E extends Record<string, any> = {}>(args: CreateViewLoaderArgs<T, E>) {
 	return authLoaderWithPerm("ViewData", async (loaderArgs) => {
-		const { params } = loaderArgs;
+		const {params} = loaderArgs;
 		const item = await getItem2(params, args.getById);
 		if (!item) {
-			throw new Response("Not Found", { status: 404 });
+			throw new Response("Not Found", {status: 404});
 		}
-		return { item };
+
+		return {item, ...args.extra};
 	});
 }
 
+
 interface CreateViewLoaderPublicApprovedArgs<
-	T extends { approvalStatus: string }
+	T extends {approvalStatus: string}
 > {
 	getById: (id: string) => Promise<T | null | undefined>;
 }
 
 interface CreateViewLoaderPublicApprovedWithAuditLogArgs<
-	T extends { approvalStatus: string }
+	T extends {approvalStatus: string}
 > {
 	getById: (id: string) => Promise<T | null | undefined>;
 	recordId: string;
@@ -711,24 +714,24 @@ interface CreateViewLoaderPublicApprovedWithAuditLogArgs<
 }
 
 export function createViewLoaderPublicApproved<
-	T extends { approvalStatus: string }
+	T extends {approvalStatus: string}
 >(args: CreateViewLoaderPublicApprovedArgs<T>) {
 	if (!configApprovedRecordsArePublic()) {
 		return authLoaderWithPerm("ViewData", async (loaderArgs) => {
-			const { params } = loaderArgs;
+			const {params} = loaderArgs;
 			const item = await getItem2(params, args.getById);
 			if (!item) {
-				throw new Response("Not Found", { status: 404 });
+				throw new Response("Not Found", {status: 404});
 			}
-			return { item, isPublic: false };
+			return {item, isPublic: false};
 		});
 	}
 
 	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-		const { params } = loaderArgs;
+		const {params} = loaderArgs;
 		const item = await getItem2(params, args.getById);
 		if (!item) {
-			throw new Response("Not Found", { status: 404 });
+			throw new Response("Not Found", {status: 404});
 		}
 		const isPublic = authLoaderIsPublic(loaderArgs);
 		if (isPublic) {
@@ -738,29 +741,29 @@ export function createViewLoaderPublicApproved<
 				});
 			}
 		}
-		return { item, isPublic };
+		return {item, isPublic};
 	});
 }
 
 export function createViewLoaderPublicApprovedWithAuditLog<
-	T extends { approvalStatus: string }
+	T extends {approvalStatus: string}
 >(args: CreateViewLoaderPublicApprovedWithAuditLogArgs<T>) {
 	if (!configApprovedRecordsArePublic()) {
 		return authLoaderWithPerm("ViewData", async (loaderArgs) => {
-			const { params } = loaderArgs;
+			const {params} = loaderArgs;
 			const item = await getItem2(params, args.getById);
 			if (!item) {
-				throw new Response("Not Found", { status: 404 });
+				throw new Response("Not Found", {status: 404});
 			}
-			return { item, isPublic: false, auditLogs: [] };
+			return {item, isPublic: false, auditLogs: []};
 		});
 	}
 
 	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-		const { params } = loaderArgs;
+		const {params} = loaderArgs;
 		const item = await getItem2(params, args.getById);
 		if (!item) {
-			throw new Response("Not Found", { status: 404 });
+			throw new Response("Not Found", {status: 404});
 		}
 		const isPublic = authLoaderIsPublic(loaderArgs);
 		if (isPublic) {
@@ -789,7 +792,7 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 			)
 			.orderBy(desc(auditLogsTable.timestamp));
 
-		return { item, isPublic, auditLogs };
+		return {item, isPublic, auditLogs};
 	});
 }
 
@@ -846,7 +849,7 @@ export async function csvCreate<T>(
 	args: CsvCreateArgs<T>
 ): Promise<CsvCreateRes> {
 	if (args.data.length <= 1) {
-		return { ok: false, error: { code: "no_data", message: "Empty file" } };
+		return {ok: false, error: {code: "no_data", message: "Empty file"}};
 	}
 
 	const headers = args.data[0];
@@ -866,8 +869,8 @@ export async function csvCreate<T>(
 				const rerr = (fe: FormError | string) => {
 					rowError =
 						typeof fe === "string"
-							? { row: i, code: "unknown_error", message: fe }
-							: { row: i, ...fe };
+							? {row: i, code: "unknown_error", message: fe}
+							: {row: i, ...fe};
 					return fail();
 				};
 
@@ -885,12 +888,12 @@ export async function csvCreate<T>(
 		});
 	} catch (error) {
 		if (error === "fail") {
-			return { ok: false, rowError };
+			return {ok: false, rowError};
 		} else {
 			throw error;
 		}
 	}
-	return { ok: true, res };
+	return {ok: true, res};
 }
 
 export interface CsvUpdateArgs<T> {
@@ -909,7 +912,7 @@ export async function csvUpdate<T>(
 	args: CsvUpdateArgs<T>
 ): Promise<CsvUpdateRes> {
 	if (args.data.length <= 1) {
-		return { ok: false, error: { code: "no_data", message: "Empty file" } };
+		return {ok: false, error: {code: "no_data", message: "Empty file"}};
 	}
 	const headers = args.data[0];
 	const rows = args.data.slice(1);
@@ -925,8 +928,8 @@ export async function csvUpdate<T>(
 				const rerr = (fe: FormError | string) => {
 					rowError =
 						typeof fe === "string"
-							? { row: i, code: "unknown_error", message: fe }
-							: { row: i, ...fe };
+							? {row: i, code: "unknown_error", message: fe}
+							: {row: i, ...fe};
 					return fail();
 				};
 				const item = Object.fromEntries(headers.map((key, i) => [key, row[i]]));
@@ -946,12 +949,12 @@ export async function csvUpdate<T>(
 		});
 	} catch (error) {
 		if (error === "fail") {
-			return { ok: false, rowError };
+			return {ok: false, rowError};
 		} else {
 			throw error;
 		}
 	}
-	return { ok: true };
+	return {ok: true};
 }
 
 export interface CsvUpsertArgs<T extends ObjectWithImportId> {
@@ -972,7 +975,7 @@ export async function csvUpsert<T extends ObjectWithImportId>(
 	args: CsvUpsertArgs<T>
 ): Promise<CsvUpsertRes> {
 	if (args.data.length <= 1) {
-		return { ok: false, error: { code: "no_data", message: "Empty file" } };
+		return {ok: false, error: {code: "no_data", message: "Empty file"}};
 	}
 
 	const headers = args.data[0];
@@ -990,8 +993,8 @@ export async function csvUpsert<T extends ObjectWithImportId>(
 				const rerr = (fe: FormError | string) => {
 					rowError =
 						typeof fe === "string"
-							? { row: i, code: "unknown_error", message: fe }
-							: { row: i, ...fe };
+							? {row: i, code: "unknown_error", message: fe}
+							: {row: i, ...fe};
 					return fail();
 				};
 				const item = Object.fromEntries(headers.map((key, i) => [key, row[i]]));
@@ -1022,12 +1025,12 @@ export async function csvUpsert<T extends ObjectWithImportId>(
 		});
 	} catch (error) {
 		if (error === "fail") {
-			return { ok: false, rowError };
+			return {ok: false, rowError};
 		} else {
 			throw error;
 		}
 	}
-	return { ok: true };
+	return {ok: true};
 }
 
 export interface CsvImportExampleArgs<T> {
@@ -1046,7 +1049,7 @@ export type ImportType = "create" | "update" | "upsert";
 export async function csvImportExample<T>(
 	args: CsvImportExampleArgs<T>
 ): Promise<CsvImportExampleRes> {
-	const { fieldsDef } = args;
+	const {fieldsDef} = args;
 	const fieldsDefsNoImportId = fieldsDef.filter(
 		(field) => field.key !== "apiImportId"
 	);

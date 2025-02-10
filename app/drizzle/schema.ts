@@ -530,6 +530,16 @@ export const damagesTable = pgTable("damages", {
 export type Damages = typeof damagesTable.$inferSelect
 export type DamagesInsert = typeof damagesTable.$inferInsert
 
+
+export const measureTable = pgTable("measure", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	name: text("name").notNull(),
+	unit: text("unit").notNull()
+})
+
+export type Measure = typeof measureTable.$inferSelect
+export type MeasureInsert = typeof measureTable.$inferInsert
+
 export const lossesTable = pgTable("losses", {
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),

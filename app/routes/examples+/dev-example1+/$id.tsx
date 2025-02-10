@@ -1,5 +1,6 @@
 import {
 	devExample1ById,
+	fieldsDefView
 } from "~/backend.server/models/dev_example1";
 
 import {
@@ -11,15 +12,16 @@ import {
 } from "~/backend.server/handlers/form";
 
 import {
-	ViewScreen
+	ViewScreenWithDef
 } from "~/frontend/form";
 
 export const loader = createViewLoader({
-	getById: devExample1ById
+	getById: devExample1ById,
+	extra: {def: fieldsDefView}
 });
 
 export default function Screen() {
-	return ViewScreen({
+	return ViewScreenWithDef({
 		viewComponent: DevExample1View
 	})
 }
