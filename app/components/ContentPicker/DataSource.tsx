@@ -31,7 +31,7 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
         return rows.map((row: any) => {
             let formattedRow: any = {};
 
-            pickerConfig.table_columns.forEach((col) => {
+            pickerConfig.table_columns.forEach((col: any) => {
                 if (col.column_type === "db") {
                     const fieldValue = row[col.column_field] ?? "N/A";
 

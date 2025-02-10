@@ -6,6 +6,11 @@ import { eq, not, and, isNotNull, sql, desc } from "drizzle-orm";
 import { useEffect, useState, useRef } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 
+// Define the expected return type
+interface LoaderData {
+    treeData: any[];  // Adjust the type if you have a proper structure
+    disasterEventTable: any[];  // Adjust the type as needed
+}
 
 // Loader to Fetch & Transform Data
 export const loader = async () => {
@@ -107,7 +112,7 @@ export const loader = async () => {
 
 // React Component to Render Tree
 export default function TreeViewPage() {
-    const {treeData: treeData, disasterEventTable: disasterEventTable} = useLoaderData();
+    const { treeData, disasterEventTable} = useLoaderData() as LoaderData;
 
     const targetObject = useRef<HTMLDivElement>(null);
 
