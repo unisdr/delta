@@ -705,10 +705,18 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	startDate: text("start_date"),
 	endDate: text("end_date"),
 	localWarnInst: text("local_warn_inst"),
+	primaryDataSource: text("primary_data_source"),
+	otherDataSource: text("other_data_source"),
+	fieldAssessDate: timestamp("field_assess_date"),
 	assessmentModes: text("assessment_modes"),
 	originatorRecorderInst: text("originator_recorder_inst")
 		.notNull()
 		.default(""),
+	validatedBy: text("validated_by")
+		.notNull()
+		.default(""),
+	checkedBy: text("checked_by"),
+	dataCollector: text("data_collector"),
 	sectorId: integer("sector_id") // Link to the sector involved
 		.references((): AnyPgColumn => sectorTable.id),
 	sectorName: text("sector_name"), // Direct name of the sector involved
@@ -791,7 +799,7 @@ export const nonecoLossesTable = pgTable(
 	},
 	(table) => {
 		return [
-			unique("custom_nameIdx").on(table.disasterRecordId, table.categortyId),
+			unique("nonecolosses_sectorIdx").on(table.disasterRecordId, table.categortyId),
 		];
 	}
 );
@@ -824,15 +832,15 @@ export const sectorTable = pgTable(
 		// pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
 		...createdUpdatedTimestamps,
 	},
-	(table) => [
-		// // Constraint: subsector cannot be empty
-		// check("subsector_not_empty", sql`${table.subsector} <> ''`),
-		// // Ensure the PDNA grouping is one of the specified categories
-		// check(
-		// 	"pdna_grouping_valid",
-		// 	sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
-		// ),
-	]
+	// (table) => [
+	// 	// // Constraint: subsector cannot be empty
+	// 	// check("subsector_not_empty", sql`${table.subsector} <> ''`),
+	// 	// // Ensure the PDNA grouping is one of the specified categories
+	// 	// check(
+	// 	// 	"pdna_grouping_valid",
+	// 	// 	sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
+	// 	// ),
+	// ]
 );
 
 /** [SectorDisasterRecordsRelation] table links `sector` to `disaster_records` */
@@ -854,7 +862,7 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 	},
 	(table) => {
 		return [
-			unique("disRecSectosUniqueIdx").on(table.disasterRecordId, table.sectorId),
+			unique("disRecSectorsUniqueIdx").on(table.disasterRecordId, table.sectorId),
 		];
 	}
 );
