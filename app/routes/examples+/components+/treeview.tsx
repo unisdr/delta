@@ -125,7 +125,7 @@ export default function TreeViewPage() {
             <div className="dts-page-header">
                 <header className="dts-page-title">
                     <div className="mg-container">
-                        <h1 className="dts-heading-1">Styled Tree View Example</h1>
+                        <h1 className="dts-heading-1">TreeView Example</h1>
                     </div>
                 </header>
             </div>

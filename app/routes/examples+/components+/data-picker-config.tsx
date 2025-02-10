@@ -6,8 +6,8 @@ export const contentPickerConfig = {
     caption: "Disaster Event",
     defaultText: "Select Disaster Event...",
     table_columns: [
-        { column_type: "db", column_field: "id", column_title: "ID", is_primary_id: true, is_selected_field: true, searchable: true },
-        //{ column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event", searchable: true },
+        { column_type: "db", column_field: "id", column_title: "ID", is_primary_id: true, is_selected_field: true },
+        //{ column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event" },
         { column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event", 
             render: (item: any) => { 
                 return hazardEventLabel({
@@ -33,6 +33,10 @@ export const contentPickerConfig = {
         JOIN hip_hazard hh ON he.hazard_id = hh.id
         WHERE 
             LOWER(de.id::TEXT) LIKE LOWER('[safeSearchPattern]')
+            OR LOWER(de.other_id1::TEXT) LIKE LOWER('[safeSearchPattern]')
+            OR LOWER(de.glide::TEXT) LIKE LOWER('[safeSearchPattern]')
+            OR LOWER(de.name_global_or_regional::TEXT) LIKE LOWER('[safeSearchPattern]')
+            OR LOWER(de.name_national::TEXT) LIKE LOWER('[safeSearchPattern]')
             OR LOWER(hh.name_en) LIKE LOWER('[safeSearchPattern]')
             OR LOWER(he.id::TEXT) LIKE LOWER('[safeSearchPattern]')
         ORDER BY de.start_date_utc DESC
