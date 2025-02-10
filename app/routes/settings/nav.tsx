@@ -1,14 +1,14 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "@remix-run/react";
+import { useLocation } from "@remix-run/react";
+import { useMemo } from "react";
 
 export function NavSettings() {
   const location = useLocation();
 
-  // Dynamically generate menu based on the active section
-  let menu: { link: string; text: string }[] = [];
-
-  switch (true) {
-    case location.pathname.includes("/analytics"):
-      menu = [
+  // Memoize menu to prevent unnecessary recalculations
+  const menu = useMemo(() => {
+    if (location.pathname.includes("/analytics")) {
+      return [
         {
           link: "analytics/human-direct-effects",
           text: "Human Direct Effects",
@@ -17,19 +17,19 @@ export function NavSettings() {
         { link: "analytics/hazards", text: "Hazards" },
         { link: "analytics/disaster-events", text: "Disaster Events" },
       ];
-      break;
+    }
 
-    case location.pathname.includes("/settings"):
-      menu = [
+    if (location.pathname.includes("/settings")) {
+      return [
         { link: "settings/access-mgmnt", text: "Access management" },
         { link: "settings/system", text: "System settings" },
         { link: "settings/geography", text: "Geographic levels" },
         { link: "settings/sectors", text: "Sectors" },
       ];
-      break;
+    }
 
-    case location.pathname.includes("/about"):
-      menu = [
+    if (location.pathname.includes("/about")) {
+      return [
         { link: "about/about-the-system", text: "About the System" },
         {
           link: "about/technical-specifications",
@@ -39,27 +39,32 @@ export function NavSettings() {
         { link: "about/methodologies", text: "Methodologies" },
         { link: "about/support", text: "Support" },
       ];
-      break;
+    }
 
-    default:
-      menu = [];
+    return [];
+  }, [location.pathname]);
+
+  // If location is not available during SSR, render a placeholder
+  if (!location) {
+    return null;
   }
 
   return (
     <nav className="dts-sub-navigation">
       <div className="mg-container">
         <div className="dts-sub-navigation__container">
-          <ul>
-            {menu.map((item, index) => (
-              <li key={index}>
+          <ul className="dts-sub-navigation__list">
+            {menu.map(({ link, text }) => (
+              <li key={link} className="dts-sub-navigation__item">
                 <NavLink
-                  key={index}
-                  to={`/${item.link}`}
-                  className={({ isActive, isPending }) =>
-                    isActive ? "active" : isPending ? "pending" : ""
+                  to={`/${link}`}
+                  className={({ isActive }) =>
+                    isActive
+                      ? "dts-sub-navigation__link dts-sub-navigation__link--active"
+                      : "dts-sub-navigation__link"
                   }
                 >
-                  {item.text}
+                  {text}
                 </NavLink>
               </li>
             ))}

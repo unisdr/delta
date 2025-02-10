@@ -167,9 +167,16 @@ function InactivityWarning(props: InactivityWarningProps) {
 	);
 }
 
-// Create a new QueryClient instance
-const queryClient = new QueryClient();
-
+// Create a new QueryClient instance outside of component to ensure consistent instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+      staleTime: 30000,
+    },
+  },
+});
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
@@ -178,52 +185,39 @@ export default function Screen() {
 	// Display toast for flash messages
 	useEffect(() => {
 		if (flashMessage) {
+			const toastConfig = {
+				position: "top-center" as const,
+				autoClose: 5000,
+			};
+
 			if (flashMessage.type === "error") {
-				toast.error(flashMessage.text, {
-					position: "top-center",
-					autoClose: 5000,
-				});
-			} else if (flashMessage.type === "info") {
-				toast.info(flashMessage.text, {
-					position: "top-center",
-					autoClose: 5000,
-				});
+				toast.error(flashMessage.text, toastConfig);
 			} else {
-				toast.info(flashMessage.text, {
-					position: "top-center",
-					autoClose: 5000,
-				});
+				toast.info(flashMessage.text, toastConfig);
 			}
 		}
 	}, [flashMessage]);
 
 	return (
-		<QueryClientProvider client={queryClient}>
-			<html lang="en">
-				<head>
-					<link
-						rel="icon"
-						type="image/x-icon"
-						href="/favicon.ico"
-					/>
-					<Meta />
-					<Links />
-					{/* Add literal meta tags */}
-					<meta name="viewport" content="width=device-width,initial-scale=1" />
-					<meta charSet="utf-8" />
-				</head>
-				<body>
-
-					{/* Add ToastContainer to the root for toast notifications  */}
+		<html lang="en">
+			<head>
+				<meta charSet="utf-8" />
+				<meta name="viewport" content="width=device-width,initial-scale=1" />
+				<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+				<Meta />
+				<Links />
+			</head>
+			<body>
+				<QueryClientProvider client={queryClient}>
 					<ToastContainer
-						position="top-center" // Set position to the center of the page
-						autoClose={5000} // Auto-close after 5 seconds
-						hideProgressBar={false} // Show progress bar
-						newestOnTop={true} // New notifications appear on top
-						closeOnClick={true} // Close notification on click
-						pauseOnHover={true} // Pause timer on hover
-						draggable={false} // Disable dragging
-						toastClassName="custom-toast" // Apply custom styles
+						position="top-center"
+						autoClose={5000}
+						hideProgressBar={false}
+						newestOnTop={true}
+						closeOnClick={true}
+						pauseOnHover={true}
+						draggable={false}
+						toastClassName="custom-toast"
 					/>
 					<InactivityWarning loggedIn={loggedIn} />
 					<div className="dts-page-container">
@@ -232,18 +226,22 @@ export default function Screen() {
 								<div className="mg-container">
 									<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
 								</div>
-							</header>)}
+							</header>
+						)}
 						<main className="dts-main-container">
 							<Outlet />
 						</main>
 						<footer>
-							<Footer siteName={confSiteName} urlPrivacyPolicy={confFooterURLPrivPolicy} urlTermsConditions={confFooterURLTermsConds} />
+							<Footer
+								siteName={confSiteName}
+								urlPrivacyPolicy={confFooterURLPrivPolicy}
+								urlTermsConditions={confFooterURLTermsConds}
+							/>
 						</footer>
 					</div>
 					<Scripts />
-				</body>
-			</html>
-		</QueryClientProvider>
+				</QueryClientProvider>
+			</body>
+		</html>
 	);
 }
-
