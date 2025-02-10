@@ -551,9 +551,12 @@ export const assetTable = pgTable("asset", {
 	sectorId: integer("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
+	measureId: uuid("measure_id")
+		.references((): AnyPgColumn => measureTable.id)
+		.notNull(),
 	name: text("name").notNull(),
-	nationalId: text("national_id").notNull(),
-	notes: text("notes").notNull(),
+	nationalId: text("national_id"),
+	notes: text("notes"),
 });
 
 export type Asset = typeof assetTable.$inferSelect;
@@ -790,8 +793,8 @@ export const categoriesTable = pgTable("categories", {
 	...createdUpdatedTimestamps,
 });
 
-export const categoryCategoryParent_Rel = relations(categoriesTable, ({ one }) => ({
-    categoryParent: one(categoriesTable, { fields: [categoriesTable.parentId], references: [categoriesTable.id] }),
+export const categoryCategoryParent_Rel = relations(categoriesTable, ({one}) => ({
+	categoryParent: one(categoriesTable, {fields: [categoriesTable.parentId], references: [categoriesTable.id]}),
 }));
 
 export type nonecoLosses = typeof nonecoLossesTable.$inferSelect;
@@ -818,8 +821,8 @@ export const nonecoLossesTable = pgTable(
 	}
 );
 
-export const nonecoLossesCategory_Rel = relations(nonecoLossesTable, ({ one }) => ({
-    category: one(categoriesTable, { fields: [nonecoLossesTable.categortyId], references: [categoriesTable.id] }),
+export const nonecoLossesCategory_Rel = relations(nonecoLossesTable, ({one}) => ({
+	category: one(categoriesTable, {fields: [nonecoLossesTable.categortyId], references: [categoriesTable.id]}),
 }));
 
 /**

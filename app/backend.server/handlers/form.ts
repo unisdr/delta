@@ -77,7 +77,7 @@ function createFields<T extends Record<string, any>>(
 
 interface FormCreateArgs<T> {
 	queryParams?: string[];
-	fieldsDef: FormInputDef<T>[];
+	fieldsDef: FormInputDef<T>[] | (() => Promise<FormInputDef<T>[]>)
 	actionArgs: ActionFunctionArgs;
 	fieldsFromMap: (
 		formData: Record<string, string>,
@@ -90,6 +90,13 @@ interface FormCreateArgs<T> {
 export async function formCreate<T>(
 	args: FormCreateArgs<T>
 ): Promise<FormResponse<T> | TypedResponse<never>> {
+	let fieldsDef: FormInputDef<T>[] = []
+	if (typeof args.fieldsDef == "function") {
+		fieldsDef = await args.fieldsDef()
+	} else {
+		fieldsDef = args.fieldsDef
+	}
+
 	const {request} = args.actionArgs;
 	const formData = formStringData(await request.formData());
 	let u = new URL(request.url);
@@ -98,7 +105,7 @@ export async function formCreate<T>(
 			formData[k] = u.searchParams.get(k) || "";
 		}
 	}
-	const data = args.fieldsFromMap(formData, args.fieldsDef);
+	const data = args.fieldsFromMap(formData, fieldsDef);
 	const res = await args.create(data);
 	if (!res.ok) {
 		return {
@@ -609,7 +616,7 @@ export async function formDelete(args: FormDeleteArgs) {
 
 interface CreateLoaderArgs<T, E extends Record<string, any> = {}> {
 	getById: (id: string) => Promise<T | null>
-	extra?: E
+	extra?: () => Promise<E>
 }
 
 type LoaderData<T, E extends Record<string, any>> = {
@@ -620,16 +627,18 @@ export function createLoader<T, E extends Record<string, any> = {}>(props: Creat
 	return authLoaderWithPerm("EditData", async (args): Promise<LoaderData<T, E>> => {
 		let p = args.params
 		if (!p.id) throw new Error("Missing id param")
-		if (p.id === "new") return { item: null, ...(props.extra || {}) } as LoaderData<T, E>
+		let extra = (await props.extra?.()) || {}
+		if (p.id === "new") return {item: null, ...extra} as LoaderData<T, E>
 		let it = await props.getById(p.id)
-		if (!it) throw new Response("Not Found", { status: 404 })
-		return { item: it, ...(props.extra || {}) } as LoaderData<T, E>
+		if (!it) throw new Response("Not Found", {status: 404})
+		return {item: it, ...extra} as LoaderData<T, E>
 	})
 }
 
 
 interface CreateActionArgs<T> {
-	fieldsDef: any;
+	fieldsDef: FormInputDef<T>[] | (() => Promise<FormInputDef<T>[]>)
+
 	create: (tx: Tx, data: T) => Promise<SaveResult<T>>;
 	update: (tx: Tx, id: string, data: T) => Promise<SaveResult<T>>;
 	getById: (tx: Tx, id: string) => Promise<T>;
@@ -640,9 +649,15 @@ interface CreateActionArgs<T> {
 
 export function createAction<T>(args: CreateActionArgs<T>) {
 	return authActionWithPerm("EditData", async (actionArgs) => {
+		let fieldsDef: FormInputDef<T>[] = []
+		if (typeof args.fieldsDef == "function") {
+			fieldsDef = await args.fieldsDef()
+		} else {
+			fieldsDef = args.fieldsDef
+		}
 		return formSave<T>({
 			actionArgs,
-			fieldsDef: args.fieldsDef,
+			fieldsDef,
 			save: async (tx, id, data) => {
 				const user = authActionGetAuth(actionArgs);
 				user.user.id;
@@ -683,7 +698,7 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 
 interface CreateViewLoaderArgs<T, E extends Record<string, any> = {}> {
 	getById: (id: string) => Promise<T | null>;
-	extra?: E;
+	extra?: () => Promise<E>
 }
 
 export function createViewLoader<T, E extends Record<string, any> = {}>(args: CreateViewLoaderArgs<T, E>) {
@@ -693,8 +708,8 @@ export function createViewLoader<T, E extends Record<string, any> = {}>(args: Cr
 		if (!item) {
 			throw new Response("Not Found", {status: 404});
 		}
-
-		return {item, ...args.extra};
+		let extra = (await args.extra?.()) || {}
+		return {item, ...extra};
 	});
 }
 

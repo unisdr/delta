@@ -666,6 +666,9 @@ export function ViewScreenWithDef<T,X>(props: ViewScreenPropsWithDef<T,X>) {
 	if (!ld.item) {
 		throw "invalid";
 	}
+	if (!ld.def){
+		throw "def missing"
+	}
 	return <ViewComponent item={ld.item} def={ld.def} />;
 }
 

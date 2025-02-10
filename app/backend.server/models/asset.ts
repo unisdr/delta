@@ -7,21 +7,27 @@ import {deleteByIdForStringId} from "./common";
 
 export interface AssetFields extends Omit<AssetInsert, "id"> {}
 
-export let fieldsDef: FormInputDef<AssetFields>[] = [
-	{key: "sectorId", label: "Sector ID", type: "number", required: true},
-	{key: "name", label: "Name", type: "text", required: true},
-	{key: "nationalId", label: "National ID", type: "text"},
-	{key: "notes", label: "Notes", type: "textarea"},
-]
+export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
+	return [
+		{key: "sectorId", label: "Sector ID", type: "number", required: true},
+		{key: "name", label: "Name", type: "text", required: true},
+		{key: "nationalId", label: "National ID", type: "text"},
+		{key: "notes", label: "Notes", type: "textarea"},
+	]
+}
 
-export let fieldsDefApi: FormInputDef<AssetFields>[] = [
-	...fieldsDef,
-	{key: "apiImportId", label: "", type: "other"},
-]
+export async function fieldsDefApi(): Promise<FormInputDef<AssetFields>[]> {
+	return [
+		...await fieldsDef(),
+		{key: "apiImportId", label: "", type: "other"},
+	]
+}
 
-export let fieldsDefView: FormInputDef<AssetFields>[] = [
-	...fieldsDef,
-]
+export async function fieldsDefView(): Promise<FormInputDef<AssetFields>[]> {
+	return [
+		...await fieldsDef(),
+	]
+}
 
 export function validate(_fields: Partial<AssetFields>): Errors<AssetFields> {
 	let errors: Errors<AssetFields> = {}

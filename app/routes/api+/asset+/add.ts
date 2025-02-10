@@ -20,7 +20,7 @@ export let action = authActionApi(async (args) => {
 
   let saveRes = await jsonCreate({
     data,
-    fieldsDef: fieldsDefApi,
+    fieldsDef: await fieldsDefApi(),
     create: assetCreate
   })
 

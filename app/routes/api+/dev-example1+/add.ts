@@ -20,7 +20,7 @@ export const action = authActionApi(async (args) => {
 
 	const saveRes = await jsonCreate({
 		data,
-		fieldsDef: fieldsDefApi,
+		fieldsDef: await fieldsDefApi(),
 		create: devExample1Create
 	});
 

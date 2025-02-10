@@ -12,7 +12,7 @@ import {
 export const loader = authLoaderApiDocs(async () => {
 	let docs = jsonApiDocs({
 		baseUrl: "dev-example1",
-		fieldsDef: fieldsDefApi
+		fieldsDef: await fieldsDefApi()
 	})
 
 	return new Response(docs, {

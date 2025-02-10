@@ -22,7 +22,7 @@ export let action = authActionApi(async (args) => {
   let data = await args.request.json()
   let saveRes = await jsonUpsert({
     data,
-    fieldsDef: fieldsDefApi,
+    fieldsDef: await fieldsDefApi(),
     create: assetCreate,
     update: assetUpdate,
     idByImportId: assetIdByImportId,

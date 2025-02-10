@@ -8,29 +8,35 @@ import {deleteByIdForNumberId} from "./common";
 
 export interface DevExample1Fields extends Omit<DevExample1Insert, "id"> {}
 
-export const fieldsDef: FormInputDef<DevExample1Fields>[] = [
-	{key: "field1", label: "Field 1", type: "text", required: true},
-	{key: "field2", label: "Field 2", type: "text"},
-	{key: "field3", label: "Field 3", type: "number", required: true},
-	{key: "field4", label: "Field 4", type: "number"},
-	{key: "field5", label: "Field 5", type: "date"},
-	{
-		key: "field6", label: "Field 6", type: "enum", required: true, enumData: [
-			{key: "one", label: "One"},
-			{key: "two", label: "Two"},
-			{key: "three", label: "Three"}
-		]
-	}
-];
+export async function fieldsDef(): Promise<FormInputDef<DevExample1Fields>[]> {
+	return [
+		{key: "field1", label: "Field 1", type: "text", required: true},
+		{key: "field2", label: "Field 2", type: "text"},
+		{key: "field3", label: "Field 3", type: "number", required: true},
+		{key: "field4", label: "Field 4", type: "number"},
+		{key: "field5", label: "Field 5", type: "date"},
+		{
+			key: "field6", label: "Field 6", type: "enum", required: true, enumData: [
+				{key: "one", label: "One"},
+				{key: "two", label: "Two"},
+				{key: "three", label: "Three"}
+			]
+		}
+	]
+}
 
-export const fieldsDefApi: FormInputDef<DevExample1Fields>[] = [
-	...fieldsDef,
-	{key: "apiImportId", label: "", type: "other"},
-];
+export async function fieldsDefApi(): Promise<FormInputDef<DevExample1Fields>[]> {
+	return [
+		...await fieldsDef(),
+		{key: "apiImportId", label: "", type: "other"},
+	]
+}
 
-export const fieldsDefView: FormInputDef<DevExample1Fields>[] = [
-	...fieldsDef,
-];
+export async function fieldsDefView(): Promise<FormInputDef<DevExample1Fields>[]> {
+	return [
+		...await fieldsDef(),
+	]
+}
 
 export function validate(fields: Partial<DevExample1Fields>): Errors<DevExample1Fields> {
 	let errors: Errors<DevExample1Fields> = {};
@@ -38,7 +44,7 @@ export function validate(fields: Partial<DevExample1Fields>): Errors<DevExample1
 	if (fields.field3 !== undefined && fields.field3 <= 10) {
 		errors.fields.field3 = ["Field3 must be >10"];
 	}
-	if (typeof fields.field4 == "number"  && fields.field4 <= 10) {
+	if (typeof fields.field4 == "number" && fields.field4 <= 10) {
 		errors.fields.field4 = ["Field4 must be >10"];
 	}
 	return errors
@@ -96,10 +102,10 @@ export async function devExample1ById(idStr: string) {
 
 export async function devExample1ByIdTx(tx: Tx, idStr: string) {
 	let id = Number(idStr);
-	let res= await tx.query.devExample1Table.findFirst({
+	let res = await tx.query.devExample1Table.findFirst({
 		where: eq(devExample1Table.id, id),
 	});
-	if(!res){
+	if (!res) {
 		throw new Error("Id is invalid");
 	}
 	return res;

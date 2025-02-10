@@ -41,7 +41,8 @@ import {stringifyCSV} from "~/util/csv"
 
 
 interface CreateActionArgs<T extends ObjectWithImportId> {
-	fieldsDef: FormInputDef<T>[]
+	fieldsDef: FormInputDef<T>[] | (() => Promise<FormInputDef<T>[]>)
+
 	create: (tx: Tx, data: T) => Promise<CreateResult<T>>
 	update: (tx: Tx, id: string, data: Partial<T>) => Promise<UpdateResult<T>>
 	idByImportId: (tx: Tx, importId: string) => Promise<string | null>
@@ -59,6 +60,13 @@ export interface Res {
 
 export function createAction<T extends ObjectWithImportId>(args: CreateActionArgs<T>) {
 	return authActionWithPerm("EditData", async ({request}: ActionFunctionArgs): Promise<Res> => {
+
+		let fieldsDef: FormInputDef<T>[] = []
+		if (typeof args.fieldsDef == "function") {
+			fieldsDef = await args.fieldsDef()
+		} else {
+			fieldsDef = args.fieldsDef
+		}
 
 		const uploadHandler = unstable_composeUploadHandlers(
 			unstable_createMemoryUploadHandler(),
@@ -84,7 +92,7 @@ export function createAction<T extends ObjectWithImportId>(args: CreateActionArg
 					{
 						let res = await csvCreate({
 							data: all,
-							fieldsDef: args.fieldsDef,
+							fieldsDef,
 							create: args.create
 						})
 						if (!res.ok) {
@@ -96,7 +104,7 @@ export function createAction<T extends ObjectWithImportId>(args: CreateActionArg
 					{
 						let res = await csvUpdate({
 							data: all,
-							fieldsDef: args.fieldsDef,
+							fieldsDef,
 							update: args.update
 						})
 						if (!res.ok) {
@@ -108,7 +116,7 @@ export function createAction<T extends ObjectWithImportId>(args: CreateActionArg
 					{
 						let res = await csvUpsert({
 							data: all,
-							fieldsDef: args.fieldsDef,
+							fieldsDef,
 							create: args.create,
 							update: args.update,
 							idByImportId: args.idByImportId
@@ -128,7 +136,7 @@ export function createAction<T extends ObjectWithImportId>(args: CreateActionArg
 }
 
 interface CreateExampleLoaderArgs<T> {
-	fieldsDef: FormInputDef<T>[]
+	fieldsDef: FormInputDef<T>[] | (() => Promise<FormInputDef<T>[]>)
 }
 
 export function createExampleLoader<T>(args: CreateExampleLoaderArgs<T>) {
@@ -139,9 +147,15 @@ export function createExampleLoader<T>(args: CreateExampleLoaderArgs<T>) {
 		if (!["create", "update", "upsert"].includes(importType)) {
 			return new Response("Not Found", {status: 404});
 		}
+		let fieldsDef: FormInputDef<T>[] = []
+		if (typeof args.fieldsDef == "function") {
+			fieldsDef = await args.fieldsDef()
+		} else {
+			fieldsDef = args.fieldsDef
+		}
 		let res = await csvImportExample({
 			importType: importType as ImportType,
-			fieldsDef: args.fieldsDef,
+			fieldsDef: fieldsDef,
 		})
 		if (!res.ok) {
 			return new Response(res.error, {

@@ -36,13 +36,15 @@ export const action = createAction({
 });
 
 export const loader = createLoader({
-  getById: devExample1ById,
-  extra: { fieldsDef }
+	getById: devExample1ById,
+	extra: async () => {
+		return {fieldsDef: await fieldsDef()}
+	}
 })
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>()
-	let fieldsInitial = ld.item ? { ...ld.item } : {}
+	let fieldsInitial = ld.item ? {...ld.item} : {}
 
 	return formScreen({
 		extraData: {
