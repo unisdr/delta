@@ -4,13 +4,40 @@ import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
+import {allMeasures} from "./measure";
+import {allSectors} from "./sector";
+import {measureLabel} from "~/frontend/measure";
+
 
 export interface AssetFields extends Omit<AssetInsert, "id"> {}
 
 export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
+	let sectors = await allSectors(dr)
+	let measures = await allMeasures(dr)
 	return [
-		{key: "sectorId", label: "Sector ID", type: "number", required: true},
+		{
+			key: "sectorId",
+			label: "Sector",
+			type: "enum",
+			enumData: sectors.map(s => {
+				return {
+					key: String(s.id),
+					label: s.sectorname
+				}
+			})
+		},
 		{key: "name", label: "Name", type: "text", required: true},
+		{
+			key: "measureId",
+			label: "Measure",
+			type: "enum",
+			enumData: measures.map(m => {
+				return {
+					key: m.id,
+					label: measureLabel(m)
+				}
+			})
+		},
 		{key: "nationalId", label: "National ID", type: "text"},
 		{key: "notes", label: "Notes", type: "textarea"},
 	]

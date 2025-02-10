@@ -17,7 +17,9 @@ import {
 
 export const loader = createViewLoader({
   getById: assetById,
-  extra: { def: await fieldsDefView() },
+  extra: async () => {
+		return { def: await fieldsDefView() }
+	},
 });
 
 export default function Screen() {

@@ -17,7 +17,9 @@ import {
 
 export const loader = createViewLoader({
 	getById: measureById,
-	extra: {def: fieldsDefView}
+	extra: async () => {
+		return {def: fieldsDefView}
+	}
 });
 
 export default function Screen() {

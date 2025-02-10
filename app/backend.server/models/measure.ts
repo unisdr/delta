@@ -65,3 +65,8 @@ export async function measureIdByImportId(tx: Tx, importId: string) {
 	return String(res[0].id)
 }
 
+
+export async function allMeasures(tx: Tx) {
+	let res = await tx.query.measureTable.findMany()
+	return res
+}

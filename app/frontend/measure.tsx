@@ -10,6 +10,11 @@ import {MeasureFields, MeasureViewModel} from "~/backend.server/models/measure"
 
 export const route = "/settings/measure"
 
+
+export function measureLabel(obj: {name: string; unit: string}): string {
+	return `${obj.name} (${obj.unit})`
+}
+
 interface MeasureFormProps extends UserFormProps<MeasureFields> {}
 
 export function MeasureForm(props: MeasureFormProps) {

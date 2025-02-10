@@ -1,10 +1,10 @@
-import { asc, eq, sql, isNull } from 'drizzle-orm';
+import {asc, eq, sql, isNull} from 'drizzle-orm';
 
 import {
 	sectorTable
 } from '~/drizzle/schema';
 
-import {dr} from '~/db.server';
+import {dr, Tx} from '~/db.server';
 
 export type SectorType = {
 	id?: number;
@@ -46,7 +46,6 @@ export async function getSectors(sectorParent_id: number | null): Promise<{id: n
 	}
 }
 
-
 export async function upsertRecord(record: SectorType): Promise<void> {
 	// Perform the upsert operation
 	await dr
@@ -54,11 +53,16 @@ export async function upsertRecord(record: SectorType): Promise<void> {
 		.values(record)
 		.onConflictDoUpdate({
 			target: sectorTable.id,
-			set: { 
+			set: {
 				id: record.id,
 				sectorname: record.sectorname,
 				parentId: record.parentId,
 				updatedAt: sql`NOW()`,
 			},
 		});
+}
+
+export async function allSectors(tx: Tx) {
+	let res = await tx.query.sectorTable.findMany()
+	return res
 }

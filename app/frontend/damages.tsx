@@ -30,7 +30,7 @@ export function DamagesForm(props: DamagesFormProps) {
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
-			headersAfter={{
+			elementsAfter={{
 				sectorId: (
 					<h2>Public</h2>
 				),

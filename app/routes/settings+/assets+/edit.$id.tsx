@@ -24,7 +24,7 @@ import {assetTable} from "~/drizzle/schema";
 import {useLoaderData} from "@remix-run/react";
 
 export let action = createAction({
-	fieldsDef,
+	fieldsDef: fieldsDef,
 	create: assetCreate,
 	update: assetUpdate,
 	getById: assetByIdTx,

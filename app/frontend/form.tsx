@@ -319,7 +319,7 @@ export interface InputsProps<T> {
 	fields: Partial<T>;
 	errors?: Errors<T>;
 	override?: Record<string, ReactElement>;
-	headersAfter?: Record<string, ReactElement>
+	elementsAfter?: Record<string, ReactElement>
 }
 
 export function Inputs<T>(props: InputsProps<T>) {
@@ -329,8 +329,8 @@ export function Inputs<T>(props: InputsProps<T>) {
 
 	return props.def.map((def) => {
 		let after = null;
-		if (props.headersAfter && props.headersAfter[def.key]) {
-			after = props.headersAfter[def.key]
+		if (props.elementsAfter && props.elementsAfter[def.key]) {
+			after = props.elementsAfter[def.key]
 		}
 		if (props.override && props.override[def.key]) {
 			return (
@@ -751,7 +751,7 @@ interface FormViewProps {
 	fields: any;
 	fieldsDef: any;
 	override?: Record<string, ReactElement>;
-	headersAfter?: Record<string, ReactElement>
+	elementsAfter?: Record<string, ReactElement>
 }
 
 export function FormView(props: FormViewProps) {
@@ -784,7 +784,7 @@ export function FormView(props: FormViewProps) {
 						fields={props.fields}
 						errors={props.errors}
 						override={props.override}
-						headersAfter={props.headersAfter}
+						elementsAfter={props.elementsAfter}
 					/>
 					<div className="dts-form__actions">
 						<SubmitButton
