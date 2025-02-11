@@ -6,34 +6,7 @@ import { dr } from "~/db.server";
 import { sectorTable } from "~/drizzle/schema";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-
-// Tree Node Component
-const TreeNode = ({ node }: { node: any }) => {
-	const [expanded, setExpanded] = useState(false);
-
-	return (
-		<li>
-			<div
-				style={{ cursor: "pointer", userSelect: "none" }}
-				onClick={() => setExpanded(!expanded)}
-			>
-				{node.children.length > 0 ? (
-					<span>{expanded ? "▼ " : "▶ "}</span>
-				) : (
-					<span> </span>
-				)}
-				{node.sectorname}
-			</div>
-			{expanded && node.children.length > 0 && (
-				<ul style={{ paddingLeft: "20px" }}>
-					{node.children.map((child: any) => (
-						<TreeNode key={child.id} node={child} />
-					))}
-				</ul>
-			)}
-		</li>
-	);
-};
+import { Tree } from "~/components/Tree";
 
 // Table Component
 const SectorsTable = ({ sectors }: { sectors: any[] }) => (
@@ -60,12 +33,7 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 );
 
 // Utility to Build Tree Structure
-function buildTree(
-	list: any[],
-	idKey = "id",
-	parentKey = "parentId",
-	nameKey = "sectorname"
-) {
+function buildTree(list: any[], idKey = "id", parentKey = "parentId") {
 	let map: Record<number, any> = {};
 	let roots: any[] = [];
 
@@ -85,13 +53,12 @@ function buildTree(
 }
 
 export const loader = authLoader(async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs);
+	authLoaderGetAuth(loaderArgs);
 	const sectors = await dr.select().from(sectorTable);
 	const idKey = "id";
 	const parentKey = "parentId";
-	const nameKey = "sectorname";
 
-	const treeData = buildTree(sectors, idKey, parentKey, nameKey);
+	const treeData = buildTree(sectors, idKey, parentKey);
 
 	return { sectors: sectors, treeData };
 });
@@ -113,11 +80,7 @@ export default function SectorsPage() {
 				</div>
 
 				{viewMode === "tree" ? (
-					<ul>
-						{treeData.map((sector: any) => (
-							<TreeNode key={sector.id} node={sector} />
-						))}
-					</ul>
+					<Tree data={treeData} rootCaption="Sectors"/>
 				) : (
 					<SectorsTable sectors={sectors} />
 				)}
