@@ -410,4 +410,4 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
               </div>
           </>
       );
-  });
+});

@@ -23,7 +23,7 @@ import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/
 import {TreeView} from "~/components/TreeView";
 
 import { ContentPicker } from "~/components/ContentPicker";
-import { contentPickerConfig } from "./content-picker-config.js";
+import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
 
 export const route = "/disaster-record"
 
@@ -95,6 +95,8 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 	}, []);
 
 	const contentReapeaterRef = useRef<any>(null);
+
+	console.log("DisasterRecordsForm", fields);
 
 	return (
 		<>

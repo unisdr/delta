@@ -24,7 +24,7 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
 
     if (config.whereIlike?.length) {
         const newWhereConditions = config.whereIlike.map((condition: any) =>
-            ilike(condition.column, searchPattern)
+            ilike(condition.column, `%${searchPattern}%`)
         );
         query = query.where(or(...newWhereConditions)) as any;
     }
@@ -42,23 +42,24 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
     // Calculate offset for pagination
     const offset = (page - 1) * limit;
 
-    // Escape search query to avoid SQL injection
-    const safeSearchPattern = `%${searchQuery.replace(/'/g, "''")}%`;
-
     let rows = [];
 
     if (pickerConfig.dataSourceDrizzle) {
         try {
-            let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, safeSearchPattern)
+            let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery)
             .limit(limit)
             .offset(offset);
 
             rows = await query.execute();
         } catch (error) {
             console.error("Error fetching data from Drizzle ORM:", error);
+            console.log('pickerConfig.dataSourceDrizzle:', pickerConfig.dataSourceDrizzle);
             return [];
         }
     } else {
+        // Escape search query to avoid SQL injection
+        const safeSearchPattern = `%${searchQuery.replace(/'/g, "''")}%`;
+
         // Format the SQL query by replacing placeholders
         const query = pickerConfig.dataSourceSQL
             .replace(/\[safeSearchPattern\]/g, `%${safeSearchPattern}%`)
