@@ -381,16 +381,13 @@ export function Input(props: InputProps) {
 	}
 	let wrapInput = function (child: React.ReactNode) {
 		return (
-			<div className="mg-grid mg-grid__col-3">
+			<div title={props.def.tooltip} className="mg-grid mg-grid__col-3">
 				<div className="dts-form-component">
 					<Field label={label}>
 						{child}
 						<FieldErrors2 errors={props.errors} />
 						{props.def.description && 
 							<p>{props.def.description}</p>
-						}
-						{props.def.tooltip && 
-							<p>{props.def.tooltip}</p>
 						}
 					</Field>
 				</div>
