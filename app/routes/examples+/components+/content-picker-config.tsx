@@ -55,8 +55,8 @@ export const contentPickerConfig = {
         table: disasterEventTable, // Store table reference
         selects: [ // Define selected columns
             { alias: "id", column: disasterEventTable.id },
-            { alias: "startDateUTC", column: disasterEventTable.startDateUTC },
-            { alias: "endDateUTC", column: disasterEventTable.endDateUTC },
+            { alias: "startDateUTC", column: disasterEventTable.startDate },
+            { alias: "endDateUTC", column: disasterEventTable.endDate },
             { alias: "hazardEventId", column: hazardEventTable.id },
             { alias: "hazardEventName", column: hipHazardTable.nameEn }
         ],
@@ -71,6 +71,6 @@ export const contentPickerConfig = {
             { column: disasterEventTable.nameNational, placeholder: "[safeSearchPattern]" },
             { column: hipHazardTable.nameEn, placeholder: "[safeSearchPattern]" }
         ],
-        orderBy: [{ column: disasterEventTable.startDateUTC, direction: "desc" }] // Sorting
+        orderBy: [{ column: disasterEventTable.startDate, direction: "desc" }] // Sorting
     }
 };
