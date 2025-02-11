@@ -1,11 +1,41 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { formatDate } from "~/util/date";
-import { sql, eq, ilike, or, asc, count } from "drizzle-orm";
+import { sql, eq, ilike, or, asc, desc, count } from "drizzle-orm";
 
-export function extractMainTableName(sqlQuery: string) {
-    const regex = /\bFROM\s+([\w.]+)/i;  // Match "FROM table_name"
-    const match = sqlQuery.match(regex);
-    return match ? match[1] : null;
+function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: any) {
+    if (!config?.table) {
+        throw new Error("No table defined for Drizzle ORM query.");
+    }
+
+    let query = dr.select(
+        overrideSelect ? overrideSelect : 
+        Object.fromEntries(config.selects.map((s: any) => [s.alias, s.column]))
+    ).from(config.table);
+
+    if (config.joins?.length) {
+        config.joins.forEach((join: any) => {
+            if (join.type === "inner") {
+                query = query.innerJoin(join.table, join.condition) as any;
+            } else if (join.type === "left") {
+                query = query.leftJoin(join.table, join.condition) as any;
+            }
+        });
+    }
+
+    if (config.whereIlike?.length) {
+        const newWhereConditions = config.whereIlike.map((condition: any) =>
+            ilike(condition.column, searchPattern)
+        );
+        query = query.where(or(...newWhereConditions)) as any;
+    }
+
+    if (config.orderBy?.length) {
+        config.orderBy.forEach((order: any) => {
+            query = query.orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column)) as any;
+        });
+    }
+
+    return query as any;
 }
 
 export async function fetchData(pickerConfig: any, searchQuery: string = "", page: number = 1, limit: number = 10) {
@@ -19,22 +49,11 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
 
     if (pickerConfig.dataSourceDrizzle) {
         try {
-            let query = pickerConfig.dataSourceDrizzle.select(dr);
+            let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, safeSearchPattern)
+            .limit(limit)
+            .offset(offset);
 
-            if (pickerConfig.dataSourceDrizzle.joins?.length) {
-                pickerConfig.dataSourceDrizzle.joins.forEach((join: any) => {
-                    query = query.innerJoin(join.table, join.condition);
-                });
-            }    
-
-            if (pickerConfig.dataSourceDrizzle.whereIlike?.length) {
-                const newWhereConditions = pickerConfig.dataSourceDrizzle.whereIlike.map((condition: any) =>
-                    ilike(condition.column, safeSearchPattern)
-                );
-                query = query.where(or(...newWhereConditions));
-            }
-
-            rows = await query.limit(limit).offset(offset).execute();
+            rows = await query.execute();
         } catch (error) {
             console.error("Error fetching data from Drizzle ORM:", error);
             return [];
@@ -94,24 +113,18 @@ async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
     const safeSearchPattern = `%${searchQuery}%`;
 
     try {
-        let query = dr
-            .select({ total: count() })
-            .from(pickerConfig.dataSourceDrizzle.table) as any;
+        // ✅ Clone the config to avoid modifying the original
+        const countConfig = { ...pickerConfig.dataSourceDrizzle };
+        delete countConfig.orderBy; // ✅ Remove ORDER BY for COUNT(*)
 
-        if (pickerConfig.dataSourceDrizzle.joins) {
-            pickerConfig.dataSourceDrizzle.joins.forEach((join: any) => {
-                query = query.innerJoin(join.table, join.condition);
-            });
-        }
-
-        const newWhereConditions = pickerConfig.dataSourceDrizzle.whereIlike.map((condition: any) =>
-            ilike(condition.column, safeSearchPattern)
+        // ✅ Get the COUNT query by overriding SELECT
+        let query = buildDrizzleQuery(
+            countConfig, // ✅ Use modified config without ORDER BY
+            safeSearchPattern,
+            { total: sql`COUNT(*)`.as("total") } // ✅ Override select to COUNT(*)
         );
 
-        if (newWhereConditions.length) {
-            query = query.where(or(...newWhereConditions));
-        }
-
+        // ✅ Execute the COUNT query
         const result = await query.execute();
         return result[0]?.total ?? 0;
     } catch (error) {
