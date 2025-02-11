@@ -39,6 +39,8 @@ import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
 
+import { contentPickerConfig } from "./content-picker-config";
+
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("actionArgs", actionArgs.params);
 	// return {item: null};
@@ -70,12 +72,16 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
     const rawData = await dr.select().from(divisionTable);
     const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
+    const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
+    console.log("cpDisplayName: ", cpDisplayName);
+
     return {
 		item, 
 		recordsNonecoLosses: dbNonecoLosses, 
 		recordsDisRecSectors: dbDisRecSectors,
 		recordsHummanEffects: dbDisRecHummanEffects,
-		treeData
+		treeData,
+		cpDisplayName: cpDisplayName
 	};
 });
 
@@ -97,6 +103,7 @@ export default function Screen() {
 		recordsDisRecSectors: any | null,
 		recordsHummanEffects: any | null,
 		treeData: any[]
+		cpDisplayName: string
 	}>();
 	console.log(ld);
 
@@ -104,7 +111,7 @@ export default function Screen() {
 		<>
 			<FormScreen
 				fieldsDef={fieldsDef}
-				formComponent={(props: any) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
+				formComponent={(props: any) => <DisasterRecordsForm {...props} treeData={ld.treeData} cpDisplayName={ld.cpDisplayName} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>

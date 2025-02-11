@@ -75,6 +75,13 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
         }
     }
 
+    const displayNames = await Promise.all(
+        rows.map(async (row: any) => {
+            const displayName = await pickerConfig.selectedDisplay(dr, row.id);
+            return { id: row.id, displayName };
+        })
+    );
+
     return rows.map((row: any) => {
         let formattedRow: any = {};
 
@@ -89,7 +96,18 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
                 }
 
                 // Apply custom render function if available
-                formattedRow[col.column_field] = col.render ? col.render(row) : finalValue;
+
+                const display = displayNames.find((d: any) => d.id === row.id);
+
+                formattedRow[col.column_field] = col.render ? col.render(row, display?.displayName || "") : finalValue;
+
+                if ((col.is_primary_id || false)) {
+                    formattedRow["_CpID"] = row[pickerConfig.table_column_primary_key];
+                }
+
+                if ((display?.displayName || "") !== "") {
+                    formattedRow["_CpDisplayName"] = display.displayName;
+                }
             }
         });
 

@@ -1,15 +1,20 @@
 import { hazardEventLabel } from "~/frontend/events/hazardeventform";
 import { eq, ilike, or, asc } from "drizzle-orm";
 import { disasterEventTable, hazardEventTable, hipHazardTable } from "~/drizzle/schema";
-import {formatDate} from "~/util/date";
+import { formatDate, formatDateDisplay } from "~/util/date";
 
 export const contentPickerConfig = {
     id: "disasterEventId",
     dataSources: "/disaster-record/content-picker-datasource",
     caption: "Disaster Event",
     defaultText: "Select Disaster Event...",
+    table_column_primary_key: "id",
     table_columns: [
-        { column_type: "db", column_field: "id", column_title: "ID", is_primary_id: true, is_selected_field: true },
+        { column_type: "db", column_field: "display", column_title: "Event", is_primary_id: true, is_selected_field: true,
+            render: (item: any, displayName: string) => {
+                return `${displayName}`;
+            }
+        },
         //{ column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event" },
         { column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event", 
             render: (item: any) => { 
@@ -25,10 +30,9 @@ export const contentPickerConfig = {
          },
         { column_type: "db", column_field: "endDateUTC", column_title: "End Date",
             render: (item: any) => formatDate(item.endDateUTC)
-         },
+        },
         { column_type: "custom", column_field: "action", column_title: "Action" },
     ],
-    dataSourceSQLTable: "disaster_event",
     dataSourceDrizzle: {
         table: disasterEventTable, // Store table reference
         selects: [ // Define selected columns
@@ -50,5 +54,42 @@ export const contentPickerConfig = {
             { column: hipHazardTable.nameEn, placeholder: "[safeSearchPattern]" }
         ],
         orderBy: [{ column: disasterEventTable.startDate, direction: "desc" }] // Sorting
-    }
+    },
+    selectedDisplay: async (dr: any, id: any) => {
+        const row = await dr
+            .select()
+            .from(disasterEventTable)
+            .where(eq(disasterEventTable.id, id))
+            .limit(1)
+            .execute();
+    
+        if (!row.length) return "No event found";
+    
+        const event = row[0];
+        let displayName = event.nameGlobalOrRegional || event.nameNational || "";
+        let displayDate = "";
+    
+        if (event.startDate && event.endDate) {
+            const startDate = new Date(event.startDate);
+            const endDate = new Date(event.endDate);
+    
+            if (startDate.getMonth() === endDate.getMonth()) {
+                if (startDate.getDate() === endDate.getDate()) {
+                    displayDate = `${startDate.getDate()} ${formatDateDisplay(startDate, "MMM yyyy")}`;
+                } else {
+                    displayDate = `${startDate.getDate()} to ${formatDateDisplay(endDate, "d MMM yyyy")}`;
+                }
+            } else {
+                displayDate = `${formatDateDisplay(startDate, "d MMM")} to ${formatDateDisplay(endDate, "d MMM yyyy")}`;
+            }
+        }
+
+        let displayId = event.id || "";
+        //Truncate the display Id to 5 characters
+        if (displayId.length > 5) {
+            displayId = displayId.substring(0, 5);
+        }
+    
+        return `${displayName} (${displayDate}) - ${displayId}`;
+    },    
 };

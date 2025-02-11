@@ -29,12 +29,14 @@ interface ContentPickerProps {
     buttonSelectEnabled?: boolean;
     appendCss?: string;
     base_path?: string;
-    selectedValue?: string;
+    displayName?: string;
+    value?: string;
     required?: boolean;
+    table_column_primary_key?: string;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", selectedValue = "", required = true }, ref) => {
+    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, table_column_primary_key = "" }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -44,7 +46,8 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
       const [totalPages, setTotalPages] = useState(1);
       const itemsPerPage = 10; // Number of items per page
       const [loading, setLoading] = useState(false);
-      const [selectedItem, setSelectedItem] = useState("");
+      const [selectedId, setSelectedId] = useState("");
+      const [selectedName, setSelectedName] = useState("");
   
       useEffect(() => {
           injectStyles(appendCss);
@@ -219,26 +222,18 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         */
 
         const selectedValues = table_columns
-        .filter((col) => col.is_selected_field)
+        .filter((col) => col?.is_selected_field)
         .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
         .join(", "); // Convert array to comma-separated string
-    
         //console.log("Selected item:", selectedRow);
         //console.log("Selected Fields (is_selected_field):", selectedValues);
 
-        // Update the hidden input value
-        //const hiddenInput = document.querySelector(`input[name="${id}"]`) as HTMLInputElement | null;
+        //console.log("Selected item:", selectedRow['_CpID']);
+        //console.log("Selected item:", selectedRow['_CpDisplayName']);
+                
+        setSelectedId(selectedRow['_CpID']);
+        setSelectedName(selectedRow['_CpDisplayName']);
 
-        if (componentRef.current) {
-            const hiddenInput = componentRef.current.querySelector(`#${id}`) as HTMLInputElement | null;
-            //console.log("hiddenInput:", hiddenInput);
-            if (hiddenInput) {
-                //alert(selectedValues)
-                //hiddenInput.defaultValue = selectedValues;
-
-                setSelectedItem(selectedValues);
-            }   
-        }
 
         if (dialogRef.current) {
             dialogRef.current.close();
@@ -249,7 +244,8 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
 
     const removeItem = (e: any) => {
         e.preventDefault();
-        setSelectedItem("");
+        setSelectedId("");
+        setSelectedName("");
     }
     
 
@@ -264,8 +260,9 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
     
         document.addEventListener("keydown", handleKeyDown);
 
-        if (selectedValue !== "") {
-            setSelectedItem(selectedValue);
+        if (value !== "") {
+            setSelectedId(value);
+            setSelectedName(displayName);
         }
 
         const handleFormSubmit = (e: Event) => {
@@ -390,20 +387,20 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                   </dialog>
   
                   <div className="cp-input-container">
-                        {(selectedItem === "") && (
+                        {(selectedId === "") && (
                         <div className="cp-unselected" tabIndex={0}>
                           <span>{defaultText !== "" ? defaultText : caption}</span>
                         </div>
                         )}
 
-                        {(selectedItem !== "") && (
+                        {(selectedId !== "") && (
                             <div className="cp-selected">
-                            <span>{selectedItem}</span><span className="cp-remove-item" onClick={removeItem}>×</span>
+                            <span>{selectedName}</span><span className="cp-remove-item" onClick={removeItem}>×</span>
                             </div>
                         )}
                       <div className="cp-search" onClick={openPicker}>
                         <svg aria-hidden="true" focusable="false" role="img"></svg>
-                        <input type="hidden" id={id} name={id} value={selectedItem} />
+                        <input type="hidden" id={id} name={id} value={selectedId} />
                       </div>
                       <div className="cp-validation-popup">⚠️ Please fill out this field.</div>
                   </div>

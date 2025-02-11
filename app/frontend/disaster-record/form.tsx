@@ -58,6 +58,7 @@ export const fieldsDefView: FormInputDef<DisasterRecordsViewModel>[] = [
 interface DisasterRecordsFormProps extends UserFormProps<DisasterRecordsFields> {
 	parent?: DisasterRecordsViewModel;
 	treeData: any[];
+	cpDisplayName?: string;
 }
 
 export function disasterRecordsLabel(args: {
@@ -88,15 +89,14 @@ export function disasterRecordsLink(args: {
 }
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
-	const {fields, treeData} = props;
+	console.log("DisasterRecordsForm: ", props);
+	const {fields, treeData, cpDisplayName} = props;
 	const treeViewRef = useRef<any>(null);
 
 	useEffect(() => {
 	}, []);
 
 	const contentReapeaterRef = useRef<any>(null);
-
-	console.log("DisasterRecordsForm", fields);
 
 	return (
 		<>
@@ -112,7 +112,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				override={{
 					disasterEventId: (
 						<Field key="disasterEventId" label="Disaster Event *">
-							<ContentPicker {...contentPickerConfig} selectedValue={fields.disasterEventId || ""}/>
+							<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""}/>
 						</Field>
 					),
 					spatialFootprint: (
