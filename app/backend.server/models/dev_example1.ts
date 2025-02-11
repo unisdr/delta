@@ -10,7 +10,7 @@ export interface DevExample1Fields extends Omit<DevExample1Insert, "id"> {}
 
 export async function fieldsDef(): Promise<FormInputDef<DevExample1Fields>[]> {
 	return [
-		{key: "field1", label: "Field 1", type: "text", required: true},
+		{key: "field1", label: "Field 1", type: "text", required: true, tooltip: "Field 1 tooltip", description: "Field 1 description"},
 		{key: "field2", label: "Field 2", type: "text"},
 		{key: "field3", label: "Field 3", type: "number", required: true},
 		{key: "field4", label: "Field 4", type: "number"},

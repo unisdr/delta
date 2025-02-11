@@ -268,6 +268,8 @@ export interface FormInputDef<T> {
 	label: string;
 	type: FormInputType;
 	required?: boolean;
+	tooltip?: string;
+	description?: string;
 	enumData?: readonly EnumEntry[];
 }
 
@@ -276,6 +278,8 @@ export interface FormInputDefSpecific {
 	label: string;
 	type: FormInputType;
 	required?: boolean;
+	tooltip?: string;
+	description?: string;
 	enumData?: readonly EnumEntry[];
 }
 
@@ -323,7 +327,7 @@ export interface InputsProps<T> {
 }
 
 export function Inputs<T>(props: InputsProps<T>) {
-	if (!props.def){
+	if (!props.def) {
 		throw new Error("props.def not passed to form/Inputs")
 	}
 
@@ -375,83 +379,81 @@ export function Input(props: InputProps) {
 	if (props.def.required) {
 		label += " *";
 	}
+	let wrapInput = function (child: React.ReactNode) {
+		return (
+			<div className="mg-grid mg-grid__col-3">
+				<div className="dts-form-component">
+					<Field label={label}>
+						{child}
+						<FieldErrors2 errors={props.errors} />
+						{props.def.description && 
+							<p>{props.def.description}</p>
+						}
+						{props.def.tooltip && 
+							<p>{props.def.tooltip}</p>
+						}
+					</Field>
+				</div>
+			</div>
+		)
+	}
 	switch (props.def.type) {
 		default:
 			throw `Unknown type ${props.def.type}`;
 		case "enum": {
 			let vs = props.value as string;
-			return (
-				<div className="mg-grid mg-grid__col-3">
-					<div className="dts-form-component ">
-						<Field label={label}>
-							<select
-								required={props.def.required}
-								name={props.name}
-								defaultValue={vs}
-							>
-								{props.enumData!.map((v) => (
-									<option key={v.key} value={v.key}>
-										{v.label}
-									</option>
-								))}
-							</select>
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				</div>
+			return wrapInput(
+				<select
+					required={props.def.required}
+					name={props.name}
+					defaultValue={vs}
+				>
+					{props.enumData!.map((v) => (
+						<option key={v.key} value={v.key}>
+							{v.label}
+						</option>
+					))}
+				</select>
 			);
 		}
 		case "enum-flex": {
 			let vs = props.value as string;
 			let contains = props.enumData!.some((e) => e.key == vs);
-			return (
-				<div className="mg-grid mg-grid__col-3">
-					<div className="dts-form-component ">
-						<Field label={label}>
-							<select
-								required={props.def.required}
-								name={props.name}
-								defaultValue={vs}
-							>
-								{!contains && vs && (
-									<option key={vs} value={vs}>
-										{vs}
-									</option>
-								)}
-								{props.enumData!.map((v) => (
-									<option key={v.key} value={v.key}>
-										{v.label}
-									</option>
-								))}
-							</select>
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				</div>
-			);
+			return wrapInput(
+				<select
+					required={props.def.required}
+					name={props.name}
+					defaultValue={vs}
+				>
+					{!contains && vs && (
+						<option key={vs} value={vs}>
+							{vs}
+						</option>
+					)}
+					{props.enumData!.map((v) => (
+						<option key={v.key} value={v.key}>
+							{v.label}
+						</option>
+					))}
+				</select>
+			)
 		}
 		case "bool":
 			let v = props.value as boolean;
 			if (v) {
-				return (
-					<div className="dts-form-component">
-						<Field label={label}>
-							<input type="hidden" name={props.name} value="off" />
-							<input type="checkbox" name={props.name} defaultChecked />
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				);
+				return wrapInput(
+					<>
+						<input type="hidden" name={props.name} value="off" />
+						<input type="checkbox" name={props.name} defaultChecked />
+					</>
+				)
 			} else {
-				return (
-					<div className="dts-form-component">
-						<Field label={label}>
-							<input type="hidden" name={props.name} value="off" />
-							<input type="checkbox" name={props.name} />
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				);
+				return wrapInput(
+					<>
+						<input type="hidden" name={props.name} value="off" />
+						<input type="checkbox" name={props.name} />
+					</>
+				)
 			}
 		case "textarea":
 			let defaultValueTextArea = "";
@@ -459,17 +461,12 @@ export function Input(props: InputProps) {
 				let v = props.value as string;
 				defaultValueTextArea = v;
 			}
-			return (
-				<div className="dts-form-component">
-					<Field label={label}>
-						<textarea
-							required={props.def.required}
-							name={props.name}
-							defaultValue={defaultValueTextArea}
-						/>
-						<FieldErrors2 errors={props.errors} />
-					</Field>
-				</div>
+			return wrapInput(
+				<textarea
+					required={props.def.required}
+					name={props.name}
+					defaultValue={defaultValueTextArea}
+				/>
 			);
 		case "text":
 		case "date":
@@ -487,19 +484,14 @@ export function Input(props: InputProps) {
 					defaultValue = String(v);
 				}
 			}
-			return (
-				<div className="dts-form-component">
-					<Field label={label}>
-						<input
-							required={props.def.required}
-							type={props.def.type}
-							name={props.name}
-							defaultValue={defaultValue}
-						/>
-						<FieldErrors2 errors={props.errors} />
-					</Field>
-				</div>
-			);
+			return wrapInput(
+				<input
+					required={props.def.required}
+					type={props.def.type}
+					name={props.name}
+					defaultValue={defaultValue}
+				/>
+			)
 	}
 }
 
@@ -656,17 +648,17 @@ export function ViewScreen<T>(props: ViewScreenProps<T>) {
 	return <ViewComponent item={ld.item} />;
 }
 
-interface ViewScreenPropsWithDef<T,X> {
+interface ViewScreenPropsWithDef<T, X> {
 	viewComponent: React.ComponentType<{item: T, def: FormInputDef<X>[]}>;
 }
 
-export function ViewScreenWithDef<T,X>(props: ViewScreenPropsWithDef<T,X>) {
+export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 	let ViewComponent = props.viewComponent;
 	const ld = useLoaderData<{item: T, def: FormInputDef<X>[]}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
-	if (!ld.def){
+	if (!ld.def) {
 		throw "def missing"
 	}
 	return <ViewComponent item={ld.item} def={ld.def} />;
@@ -755,7 +747,7 @@ interface FormViewProps {
 }
 
 export function FormView(props: FormViewProps) {
-	if (!props.fieldsDef){
+	if (!props.fieldsDef) {
 		throw new Error("props.fieldsDef not passed to FormView")
 	}
 
