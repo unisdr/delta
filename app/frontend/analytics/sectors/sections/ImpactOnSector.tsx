@@ -159,7 +159,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         }
     }, [targetSectorId]);
 
-    const { data: apiResponse, isLoading, error } = useQuery<ApiResponse>(
+    const { data: apiResponse, error, isLoading } = useQuery<ApiResponse>(
         ["sectorImpact", targetSectorId, filters],
         async () => {
             console.log('Fetching data for:', { targetSectorId, filters });
@@ -211,18 +211,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         return response.json();
     });
 
-    // Log state changes
-    useEffect(() => {
-        console.log('State Update:', {
-            isLoading,
-            hasError: !!error,
-            hasData: !!apiResponse,
-            data: apiResponse?.data
-        });
-    }, [isLoading, error, apiResponse]);
+    console.log('Debug - Component State:', {
+        sectorId,
+        hasError: !!error,
+        isLoading,
+        hasData: !!apiResponse,
+        apiResponseData: apiResponse?.data
+    });
 
-    // Loading state
     if (isLoading) {
+        console.log('Debug - Loading state');
         return (
             <section className="dts-page-section">
                 <div className="mg-container">
@@ -237,26 +235,41 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
     // Error state
     if (error) {
-        console.log('Rendering error state:', error);
-        return renderEmptyState("An error occurred while fetching the data. Please try again.");
+        console.log('Debug - Error state:', error);
+        return (
+            <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                    <span>Error</span>
+                </h3>
+                <div className="flex items-center justify-center h-[300px]">
+                    <p className="text-gray-500">An error occurred while fetching the data. Please try again.</p>
+                </div>
+            </div>
+        );
     }
 
     // Empty state - no sector selected
-    if (!targetSectorId) {
-        console.log('Rendering empty state');
-        return renderEmptyState("Please select a sector to view impact data.");
-    }
-
-    // Empty state - no data available
-    if (!apiResponse?.data ||
-        (apiResponse.data.eventCount === 0 &&
-            Object.keys(apiResponse.data.eventsOverTime).length === 0)) {
-        console.log('Rendering empty state');
-        return renderEmptyState();
+    if (!sectorId || !apiResponse) {
+        console.log('Debug - No sector selected state');
+        return (
+            <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                    <span>No Sector Selected</span>
+                </h3>
+                <div className="flex items-center justify-center h-[300px]">
+                    <p className="text-gray-500">Please select a sector to view impact data.</p>
+                </div>
+            </div>
+        );
     }
 
     const { data } = apiResponse;
-    console.log('Processing data for render:', data);
+    console.log('Debug - Data state:', {
+        eventCount: data?.eventCount,
+        eventsData: data?.eventsOverTime,
+        damageData: data?.damageOverTime,
+        lossData: data?.lossOverTime
+    });
 
     // Transform time series data with proper typing and logging
     const eventsData = Object.entries(data.eventsOverTime)
@@ -325,9 +338,8 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                 <h2 className="dts-heading-2">{renderTitle()}</h2>
                 <p>These summaries represent disaster impact on all sectors combined. More explanation needed here.</p>
 
-                {/* First Grid: Events Count and Timeline */}
-                <div className="mg-grid mg-grid__col-3">
-                    {/* Events Count */}
+                {/* Events impacting sectors */}
+                <div className="mg-grid mg-grid--gap-default">
                     <div className="dts-data-box">
                         <h3 className="dts-body-label">
                             <span id="elementId01">Events impacting sectors</span>
@@ -340,7 +352,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-g">
-                            <span>{data.eventCount}</span>
+                            <span>{data?.eventCount ? formatNumber(data.eventCount) : "No data available"}</span>
                         </div>
                     </div>
 
@@ -357,31 +369,37 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div style={{ height: "300px" }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={eventsData}>
-                                    <defs>
-                                        <linearGradient id="eventGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="year" />
-                                    <YAxis
-                                        tickFormatter={(value) => Math.round(value).toString()}
-                                        allowDecimals={false}
-                                        domain={[0, 'auto']}
-                                    />
-                                    <RechartsTooltip content={<CustomTooltip title="Events" />} />
-                                    <Area type="monotone" dataKey="count" stroke="#8884d8" fill="url(#eventGradient)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                            {eventsData && eventsData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={eventsData}>
+                                        <defs>
+                                            <linearGradient id="eventGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="year" />
+                                        <YAxis
+                                            tickFormatter={(value) => Math.round(value).toString()}
+                                            allowDecimals={false}
+                                            domain={[0, 'auto']}
+                                        />
+                                        <RechartsTooltip content={<CustomTooltip title="Events" />} />
+                                        <Area type="monotone" dataKey="count" stroke="#8884d8" fill="url(#eventGradient)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-gray-500">No data available</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Second Grid: Damage and Loss - Now 2 columns */}
-                <div className="mg-grid mg-grid__col-2">
+                {/* Damage and Loss Section */}
+                <div className="mg-grid mg-grid--gap-default">
                     {/* Damage Box */}
                     <div className="dts-data-box">
                         <h3 className="dts-body-label">
@@ -395,28 +413,34 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-d">
-                            <span>{formatCurrency(totalDamage)}</span>
+                            <span>{data?.totalDamage ? formatCurrency(totalDamage) : "No data available"}</span>
                         </div>
-                        <div style={{ height: "200px" }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={damageData}>
-                                    <defs>
-                                        <linearGradient id="damageGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="year" />
-                                    <YAxis
-                                        tickFormatter={(value) => `$${formatNumber(value)}`}
-                                        domain={[0, 'auto']}
-                                        width={100}
-                                    />
-                                    <RechartsTooltip content={<CustomTooltip title="Damage" formatter={(value: number) => formatCurrency(value)} />} />
-                                    <Area type="monotone" dataKey="amount" stroke="#82ca9d" fill="url(#damageGradient)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        <div style={{ height: "300px" }}>
+                            {damageData && damageData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={damageData}>
+                                        <defs>
+                                            <linearGradient id="damageGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="year" />
+                                        <YAxis
+                                            tickFormatter={(value) => `$${formatNumber(value)}`}
+                                            domain={[0, 'auto']}
+                                            width={100}
+                                        />
+                                        <RechartsTooltip content={<CustomTooltip title="Damage" formatter={(value: number) => formatCurrency(value)} />} />
+                                        <Area type="monotone" dataKey="amount" stroke="#82ca9d" fill="url(#damageGradient)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-gray-500">No data available</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -433,28 +457,34 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-c">
-                            <span>{formatCurrency(totalLoss)}</span>
+                            <span>{data?.totalLoss ? formatCurrency(totalLoss) : "No data available"}</span>
                         </div>
-                        <div style={{ height: "200px" }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={lossData}>
-                                    <defs>
-                                        <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#ffc658" stopOpacity={0.1} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="year" />
-                                    <YAxis
-                                        tickFormatter={(value) => `$${formatNumber(value)}`}
-                                        domain={[0, 'auto']}
-                                        width={100}
-                                    />
-                                    <RechartsTooltip content={<CustomTooltip title="Loss" formatter={(value: number) => formatCurrency(value)} />} />
-                                    <Area type="monotone" dataKey="amount" stroke="#ffc658" fill="url(#lossGradient)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                        <div style={{ height: "300px" }}>
+                            {lossData && lossData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={lossData}>
+                                        <defs>
+                                            <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor="#ffc658" stopOpacity={0.1} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="year" />
+                                        <YAxis
+                                            tickFormatter={(value) => `$${formatNumber(value)}`}
+                                            domain={[0, 'auto']}
+                                            width={100}
+                                        />
+                                        <RechartsTooltip content={<CustomTooltip title="Loss" formatter={(value: number) => formatCurrency(value)} />} />
+                                        <Area type="monotone" dataKey="amount" stroke="#ffc658" fill="url(#lossGradient)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-gray-500">No data available</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -496,13 +526,6 @@ const ChartCard: React.FC<{
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <h3 className="text-lg font-medium mb-4">{title}</h3>
         {children}
-    </div>
-);
-
-// Empty state renderer
-const renderEmptyState = (message: string = "No data available for the selected filters.") => (
-    <div className="dts-placeholder" style={{ textAlign: "center", padding: "1rem" }}>
-        <p>{message}</p>
     </div>
 );
 
