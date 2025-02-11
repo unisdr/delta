@@ -47,15 +47,15 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 			...offsetLimit,
 			columns: {
 				id: true,
-				startDateUTC: true,
-				endDateUTC: true,
+				startDate: true,
+				endDate: true,
 			},
 			with: {
 				hazardEvent: {
 					with: hazardBasicInfoJoin
 				},
 			},
-			orderBy: [desc(disasterEventTable.startDateUTC)],
+			orderBy: [desc(disasterEventTable.startDate)],
 			where: and(
 				filters.approvalStatus ? eq(disasterEventTable.approvalStatus, filters.approvalStatus) : undefined,
 			),
