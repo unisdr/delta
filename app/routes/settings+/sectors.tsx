@@ -15,6 +15,7 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 			<tr>
 				<th>ID</th>
 				<th>Sector Name</th>
+				<th>Description</th>
 				<th>Parent ID</th>
 				<th>Created At</th>
 			</tr>
@@ -24,6 +25,12 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 				<tr key={sector.id}>
 					<td>{sector.id}</td>
 					<td>{sector.sectorname}</td>
+					<td
+						// Replace newline characters with <br/> tags
+						dangerouslySetInnerHTML={{
+							__html: sector.description?.replace(/(\r\n|\r|\n)/g, "<br/>"),
+						}}
+					/>
 					<td>{sector.parentId || "None"}</td>
 					<td>{sector.createdAt.toLocaleString()}</td>
 				</tr>
@@ -35,9 +42,9 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 export const loader = authLoader(async (loaderArgs) => {
 	authLoaderGetAuth(loaderArgs);
 	const sectors = await dr.select().from(sectorTable);
-	const idKey = "id"; 
-    const parentKey = "parentId"; 
-    const nameKey = "sectorname"; 
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "sectorname";
 
 	const treeData = buildTree(sectors, idKey, parentKey, nameKey);
 
