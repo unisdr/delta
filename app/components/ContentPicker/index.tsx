@@ -222,15 +222,15 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
         .join(", "); // Convert array to comma-separated string
     
-        console.log("Selected item:", selectedRow);
-        console.log("Selected Fields (is_selected_field):", selectedValues);
+        //console.log("Selected item:", selectedRow);
+        //console.log("Selected Fields (is_selected_field):", selectedValues);
 
         // Update the hidden input value
         //const hiddenInput = document.querySelector(`input[name="${id}"]`) as HTMLInputElement | null;
 
         if (componentRef.current) {
             const hiddenInput = componentRef.current.querySelector(`#${id}`) as HTMLInputElement | null;
-            console.log("hiddenInput:", hiddenInput);
+            //console.log("hiddenInput:", hiddenInput);
             if (hiddenInput) {
                 //alert(selectedValues)
                 //hiddenInput.defaultValue = selectedValues;
@@ -255,7 +255,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
       useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
           if (event.key === "Escape" && dialogRef.current?.open) {
-            console.log("Escape key pressed! Closing dialog...");
+            //console.log("Escape key pressed! Closing dialog...");
             dialogRef.current.close();
             clearPicker();
           }
