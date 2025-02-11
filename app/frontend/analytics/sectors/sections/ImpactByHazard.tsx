@@ -215,32 +215,46 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     }
 
     // Find the current sector and its parent
-    const findSectorWithParent = (sectors: Sector[], targetId: number): { sector: Sector | undefined; parent: Sector | undefined } => {
+    const findSectorWithParent = (sectors: Sector[], targetId: string): { sector: Sector | undefined; parent: Sector | undefined } => {
         for (const sector of sectors) {
-            if (sector.id === targetId) {
+            // Check if this is the main sector
+            if (sector.id.toString() === targetId) {
                 return { sector, parent: undefined };
             }
+            // Check subsectors
             if (sector.subsectors) {
-                for (const subsector of sector.subsectors) {
-                    if (subsector.id === targetId) {
-                        return { sector: subsector, parent: sector };
-                    }
+                const subsector = sector.subsectors.find(sub => sub.id.toString() === targetId);
+                if (subsector) {
+                    return { sector: subsector, parent: sector };
                 }
             }
         }
         return { sector: undefined, parent: undefined };
     };
 
-    const { sector: currentSector, parent: parentSector } = sectorsData?.sectors && targetSectorId
-        ? findSectorWithParent(sectorsData.sectors, parseInt(targetSectorId, 10))
-        : { sector: undefined, parent: undefined };
-
     // Construct title based on sector/subsector selection
-    const sectionTitle = currentSector
-        ? parentSector
-            ? `Impact in ${currentSector.sectorname} (${parentSector.sectorname}) by Hazard Type`
-            : `Impact in ${currentSector.sectorname} by Hazard Type`
-        : "Impact by Hazard Type";
+    const sectionTitle = () => {
+        if (!sectorsData?.sectors) return "Impact by Hazard Type";
+
+        if (filters.sectorId) {
+            const { sector, parent } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+            
+            if (filters.subSectorId && sector) {
+                // Case: Subsector is selected
+                const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsData.sectors, filters.subSectorId);
+                if (subsector && mainSector) {
+                    return `Impact in ${subsector.sectorname} (${mainSector.sectorname} Sector) by Hazard Type`;
+                }
+            }
+
+            // Case: Only sector is selected
+            if (sector) {
+                return `Impact in ${sector.sectorname} Sector by Hazard Type`;
+            }
+        }
+
+        return "Impact by Hazard Type";
+    };
 
     const formatChartData = (rawData: any[]) => {
         return rawData.map(item => ({
@@ -257,7 +271,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     return (
         <section className="dts-page-section" style={{ maxWidth: "100%", overflow: "hidden" }}>
             <div className="mg-container" style={{ maxWidth: "100%", overflow: "hidden" }}>
-                <h2 className="dts-heading-2">{sectionTitle}</h2>
+                <h2 className="dts-heading-2">{sectionTitle()}</h2>
                 <p className="dts-body-text mb-6">Analysis of how different hazards affect this sector</p>
 
                 <div className="mg-grid mg-grid__col-3">
