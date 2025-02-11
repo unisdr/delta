@@ -15,6 +15,9 @@ interface Sector {
 interface DisasterEvent {
   id: string;
   name: string;
+  glide: string;
+  national_disaster_id: string;
+  other_id1: string;
 }
 
 interface Hazard {
@@ -77,27 +80,25 @@ const Filters: React.FC<FiltersProps> = ({
 
   // Fetch data from the REST API
   // React Query for fetching sectors
-  const { data: sectorsData, isLoading: sectorsLoading } = useQuery("sectors", async () => {
-    const response = await fetch("/api/analytics/sectors");
-    if (!response.ok) throw new Error("Failed to fetch sectors");
-    return response.json();
+  const { data: sectorsData, isLoading: sectorsLoading } = useQuery({
+    queryKey: ["sectors"],
+    queryFn: async () => {
+      const response = await fetch("/api/analytics/sectors");
+      if (!response.ok) throw new Error("Failed to fetch sectors");
+      return response.json();
+    }
   });
 
   // React Query for fetching disaster events
-  const { data: disasterEventsData, isLoading: eventsLoading } = useQuery(
-    ["disasterEvents", filters.disasterEventId],
-    async () => {
-      const response = await fetch(
-        `/api/analytics/disaster-events?query=${encodeURIComponent(filters.disasterEventId)}`
-      );
+  const { data: disasterEventsData, isLoading: eventsLoading } = useQuery({
+    queryKey: ["disasterEvents"],
+    queryFn: async () => {
+      const response = await fetch("/api/analytics/disaster-events");
       if (!response.ok) throw new Error("Failed to fetch disaster events");
       return response.json();
     },
-    {
-      initialData: { disasterEvents: { rows: [] } }, // Ensure consistent initial state
-      enabled: !!filters.disasterEventId, // Only fetch if disasterEventId is non-empty
-    }
-  );
+    initialData: { disasterEvents: { rows: [] } }
+  });
 
   // React Query for fetching hazard types
   const { data: hazardTypesData } = useQuery(
@@ -189,9 +190,18 @@ const Filters: React.FC<FiltersProps> = ({
       name: level.name.en,
     })) || [];
 
-  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [
-    // Provide placeholder/default data if needed
-  ];
+  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
+
+  // Filter events based on search input
+  const filteredEvents = filters.disasterEventId
+    ? disasterEvents.filter(event =>
+      event.name.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      event.id.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      event.glide.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      event.national_disaster_id.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      event.other_id1.toLowerCase().includes(filters.disasterEventId.toLowerCase())
+    )
+    : disasterEvents;
 
   // Debug to ensure correct data mapping
   // console.log("Hazard Types:", hazardTypes);
@@ -309,6 +319,8 @@ const Filters: React.FC<FiltersProps> = ({
     geographicLevelId: "",
   });
 
+  const [showResults, setShowResults] = useState(true);
+
   // Render autocomplete list
   const renderAutocomplete = (
     items: Array<{ id: string | number; name: string }>,
@@ -424,13 +436,17 @@ const Filters: React.FC<FiltersProps> = ({
           <option value="" disabled>
             {sectorsLoading ? "Loading sectors..." : "Select Sector"}
           </option>
-          {[...sectors]
-            .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
-            .map((sector) => (
-              <option key={sector.id} value={sector.id}>
-                {sector.sectorname}
-              </option>
-            ))}
+          {sectors.length === 0 ? (
+            <option disabled>No sectors found in database</option>
+          ) : (
+            [...sectors]
+              .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
+              .map((sector) => (
+                <option key={sector.id} value={sector.id}>
+                  {sector.sectorname}
+                </option>
+              ))
+          )}
         </select>
       </div>
 
@@ -508,7 +524,7 @@ const Filters: React.FC<FiltersProps> = ({
 
       {/* Row 4: Disaster Event and Action Buttons */}
       <div className="dts-form-component mg-grid__col--span-4">
-        <label htmlFor="event-search" >Disaster Event</label>
+        <label htmlFor="event-search">Disaster Event</label>
         <div style={{ position: "relative" }}>
           <AiOutlineSearch className="search-icon" />
           <input
@@ -516,18 +532,20 @@ const Filters: React.FC<FiltersProps> = ({
             aria-label="Search for disaster events"
             type="text"
             className="filter-search"
-            placeholder="All disaster events"
-            value={filters.disasterEventId || ""} // Ensure consistent initial value
-            onChange={(e) => handleFilterChange("disasterEventId", e.target.value)}
+            placeholder="Search by name, ID, GLIDE number..."
+            value={filters.disasterEventId || ""}
+            onChange={(e) => {
+              handleFilterChange("disasterEventId", e.target.value);
+              setShowResults(true);
+            }}
           />
           {eventsLoading ? (
             <div style={{ marginTop: "0.5rem", color: "#004f91" }}>Loading...</div>
           ) : (
-            filters.disasterEventId.trim() !== "" &&
-            !disasterEvents.some((event) => event.name === filters.disasterEventId) && (
+            filters.disasterEventId && showResults && (
               <ul className="autocomplete-list">
-                {disasterEvents.length > 0 ? (
-                  [...disasterEvents]
+                {filteredEvents.length > 0 ? (
+                  filteredEvents
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((event) => (
                       <li
@@ -537,10 +555,13 @@ const Filters: React.FC<FiltersProps> = ({
                             ...prev,
                             disasterEventId: event.name,
                           }));
-                          queryClient.invalidateQueries("disasterEvents");
+                          setShowResults(false);
                         }}
                       >
-                        {event.name}
+                        <div>{event.name}</div>
+                        <small style={{ display: 'block', color: '#666' }}>
+                          GLIDE: {event.glide} | ID: {event.national_disaster_id} | {event.other_id1}
+                        </small>
                       </li>
                     ))
                 ) : (
