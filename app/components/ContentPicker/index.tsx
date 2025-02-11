@@ -29,10 +29,11 @@ interface ContentPickerProps {
     buttonSelectEnabled?: boolean;
     appendCss?: string;
     base_path?: string;
+    selectedValue?: string;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "" }, ref) => {
+    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", selectedValue = "" }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -261,6 +262,10 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         };
     
         document.addEventListener("keydown", handleKeyDown);
+
+        if (selectedValue !== "") {
+            setSelectedItem(selectedValue);
+        }
     
         return () => {
           document.removeEventListener("keydown", handleKeyDown);

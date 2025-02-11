@@ -24,7 +24,7 @@ export default function Page() {
                             <div className="form-field">
                                 <label>
                                     <div>
-                                    <ContentPicker {...contentPickerConfig}/>
+                                    <ContentPicker {...contentPickerConfig} selectedValue="10ce015c-9461-4641-bb6f-0024d8393f47"/>
                                     </div>
                                 </label>
                             </div>

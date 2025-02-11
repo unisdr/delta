@@ -94,19 +94,16 @@ async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
     const safeSearchPattern = `%${searchQuery}%`;
 
     try {
-        // ✅ Start a new query with `.from()` and `.count()`
         let query = dr
             .select({ total: count() })
-            .from(pickerConfig.dataSourceDrizzle.table);
+            .from(pickerConfig.dataSourceDrizzle.table) as any;
 
-        // ✅ Extract and apply dynamic `JOIN`s
         if (pickerConfig.dataSourceDrizzle.joins) {
             pickerConfig.dataSourceDrizzle.joins.forEach((join: any) => {
                 query = query.innerJoin(join.table, join.condition);
             });
         }
 
-        // ✅ Extract WHERE conditions and replace placeholders
         const newWhereConditions = pickerConfig.dataSourceDrizzle.whereIlike.map((condition: any) =>
             ilike(condition.column, safeSearchPattern)
         );
@@ -115,7 +112,6 @@ async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
             query = query.where(or(...newWhereConditions));
         }
 
-        // ✅ Execute the COUNT query
         const result = await query.execute();
         return result[0]?.total ?? 0;
     } catch (error) {
