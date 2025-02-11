@@ -56,6 +56,7 @@ export async function upsertRecord(record: SectorType): Promise<void> {
 			set: {
 				id: record.id,
 				sectorname: record.sectorname,
+				description: record.description || null,
 				parentId: record.parentId,
 				updatedAt: sql`NOW()`,
 			},
