@@ -73,6 +73,7 @@ export default function SectorsPage() {
 											disableButtonSelect={true}
 											noSelect={true}
 											search={true}
+											expanded={true}
 										/>
 									</div>
 								</div>

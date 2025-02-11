@@ -182,9 +182,10 @@ interface TreeViewProps {
     disableButtonSelect?: boolean;
     dialogMode?: boolean;
     search?: boolean;
+    expanded?: boolean; 
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false }, ref: any) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -193,6 +194,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     const [selectedItems, setSelectedItems] = useState<{ [key: number]: boolean }>({});
 
     const dialogRef = useRef<HTMLDialogElement>(null);
+
+    
 
     useEffect(() => {
         injectStyles(appendCss); // Inject CSS when component mounts
@@ -601,6 +604,15 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             </div>
         )
     }
+
+    // Auto-expand all nodes when `expanded` is true
+    useEffect(() => {
+        if (expanded) {
+            const newState: { [key: number]: boolean } = {};
+            treeData.forEach((node) => expandRecursive(node, newState));
+            setExpandedNodes(newState);
+        }
+    }, [expanded, treeData]);
 
     return (
         <>
