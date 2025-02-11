@@ -22,11 +22,14 @@ import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
 import {TreeView} from "~/components/TreeView";
 
+import { ContentPicker } from "~/components/ContentPicker";
+import { contentPickerConfig } from "./content-picker-config.js";
+
 export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
-	{key: "disasterEventId", label: "Disaster Event", type: "text", required: true},
+	{key: "disasterEventId", label: "Disaster Event", type: "other", required: true},
 	{key: "locationDesc", label: "Location Description", type: "text"},
 	{key: "startDate", label: "Start Date (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
 	{key: "endDate", label: "End Date (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
@@ -105,6 +108,11 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				fields={props.fields}
 				fieldsDef={fieldsDef}
 				override={{
+					disasterEventId: (
+						<Field key="disasterEventId" label="Disaster Event *">
+							<ContentPicker {...contentPickerConfig} selectedValue={fields.disasterEventId || ""}/>
+						</Field>
+					),
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
 							<ContentRepeater
@@ -277,6 +285,9 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 					),
 					updatedAt: (
 						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
+					),
+					disasterEventId: (
+						<p key="disasterEventId">Disaster Event: {item.disasterEventId}</p>
 					),
 					spatialFootprint: (
 						<div>
