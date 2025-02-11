@@ -113,18 +113,15 @@ async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
     const safeSearchPattern = `%${searchQuery}%`;
 
     try {
-        // ✅ Clone the config to avoid modifying the original
         const countConfig = { ...pickerConfig.dataSourceDrizzle };
-        delete countConfig.orderBy; // ✅ Remove ORDER BY for COUNT(*)
+        delete countConfig.orderBy;
 
-        // ✅ Get the COUNT query by overriding SELECT
         let query = buildDrizzleQuery(
-            countConfig, // ✅ Use modified config without ORDER BY
+            countConfig,
             safeSearchPattern,
-            { total: sql`COUNT(*)`.as("total") } // ✅ Override select to COUNT(*)
+            { total: sql`COUNT(*)`.as("total") }
         );
 
-        // ✅ Execute the COUNT query
         const result = await query.execute();
         return result[0]?.total ?? 0;
     } catch (error) {

@@ -30,10 +30,11 @@ interface ContentPickerProps {
     appendCss?: string;
     base_path?: string;
     selectedValue?: string;
+    required?: boolean;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", selectedValue = "" }, ref) => {
+    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", selectedValue = "", required = true }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -266,7 +267,40 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         if (selectedValue !== "") {
             setSelectedItem(selectedValue);
         }
+
+        const handleFormSubmit = (e: Event) => {
+            const inputElement = document.querySelector(`input[name="${id}"]`) as HTMLInputElement;
+            if (inputElement && inputElement.value.trim() === "") {
+
+                const cpInputContainer = (inputElement?.closest('.cp-input-container') as HTMLElement) || null;
+                if (cpInputContainer) {
+                    const cpUnselected = (cpInputContainer?.querySelector(".cp-unselected") as HTMLElement) || null;
+                    if (cpUnselected) cpUnselected?.focus()
+                } 
+
+                const cpValidationPopUp = (inputElement?.closest(".cp-input-container")?.querySelector(".cp-validation-popup") as HTMLElement) || null;
+                if (cpValidationPopUp) {
+                    cpValidationPopUp.style.display = "block";
+
+                    const clientHeight = inputElement.closest(".cp-input-container")?.clientHeight || 0;
+                    cpValidationPopUp.style.bottom = `-${clientHeight+6}px`;
+              
+                    // Hide after 3 seconds
+                    setTimeout(() => {
+                        cpValidationPopUp.style.display = "none";
+                    }, 3000);
+                }
+                e.preventDefault(); // Prevent form submission
+            }
+        };
     
+        if (required) {
+            const formElement = document.querySelector("form");
+            if (formElement) {
+                formElement.addEventListener("submit", handleFormSubmit);
+            }
+        }
+
         return () => {
           document.removeEventListener("keydown", handleKeyDown);
         };
@@ -357,7 +391,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
   
                   <div className="cp-input-container">
                         {(selectedItem === "") && (
-                        <div className="cp-unselected">
+                        <div className="cp-unselected" tabIndex={0}>
                           <span>{defaultText !== "" ? defaultText : caption}</span>
                         </div>
                         )}
@@ -371,6 +405,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                         <svg aria-hidden="true" focusable="false" role="img"></svg>
                         <input type="hidden" id={id} name={id} value={selectedItem} />
                       </div>
+                      <div className="cp-validation-popup">⚠️ Please fill out this field.</div>
                   </div>
               </div>
           </>
