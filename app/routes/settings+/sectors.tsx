@@ -6,7 +6,7 @@ import { dr } from "~/db.server";
 import { sectorTable } from "~/drizzle/schema";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { Tree } from "~/components/Tree";
+import { TreeView, buildTree } from "~/components/TreeView";
 
 // Table Component
 const SectorsTable = ({ sectors }: { sectors: any[] }) => (
@@ -32,33 +32,14 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 	</table>
 );
 
-// Utility to Build Tree Structure
-function buildTree(list: any[], idKey = "id", parentKey = "parentId") {
-	let map: Record<number, any> = {};
-	let roots: any[] = [];
-
-	list.forEach((item) => {
-		map[item[idKey]] = { ...item, children: [] };
-	});
-
-	list.forEach((item) => {
-		if (item[parentKey]) {
-			map[item[parentKey]]?.children.push(map[item[idKey]]);
-		} else {
-			roots.push(map[item[idKey]]);
-		}
-	});
-
-	return roots;
-}
-
 export const loader = authLoader(async (loaderArgs) => {
 	authLoaderGetAuth(loaderArgs);
 	const sectors = await dr.select().from(sectorTable);
-	const idKey = "id";
-	const parentKey = "parentId";
+	const idKey = "id"; 
+    const parentKey = "parentId"; 
+    const nameKey = "sectorname"; 
 
-	const treeData = buildTree(sectors, idKey, parentKey);
+	const treeData = buildTree(sectors, idKey, parentKey, nameKey);
 
 	return { sectors: sectors, treeData };
 });
@@ -80,7 +61,24 @@ export default function SectorsPage() {
 				</div>
 
 				{viewMode === "tree" ? (
-					<Tree data={treeData} rootCaption="Sectors"/>
+					<section>
+						<div className="mg-container">
+							<form>
+								<div className="fields">
+									<div className="form-field">
+										<TreeView
+											treeData={treeData as any}
+											rootCaption="Sectors"
+											dialogMode={false}
+											disableButtonSelect={true}
+											noSelect={true}
+											search={true}
+										/>
+									</div>
+								</div>
+							</form>
+						</div>
+					</section>
 				) : (
 					<SectorsTable sectors={sectors} />
 				)}
