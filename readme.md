@@ -26,6 +26,8 @@ Licensed under MIT License
 
 * [HTML & CSS Templates] https://rawgit.com/PreventionWeb/templates/dts/dts/dist/template-index.html
 * [Figma Design System] https://www.figma.com/design/noegprarmNGSsk4BQlMVtY/DLDTS-Design-System-and-Screens?node-id=1569-5938&node-type=canvas&t=13qOkaBV7VQnRkzY-0
+* [DTS Variables] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7BEC43CA17-E8FF-44E6-9B1C-5DC0B386DF2A%7D&file=DTS%20Variables%20and%20baselines.xlsx&action=default&mobileredirect=true
+* [All Sectors Taxonomy and Assets] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7BD2395365-1B2D-4E11-BAE8-F40D0C6C8838%7D&file=All%20sectors_%20Taxonomies.xlsx&action=default&mobileredirect=true
 
 ## Running locally
 
