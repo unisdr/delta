@@ -41,10 +41,9 @@
 .content-picker .cp-input-container {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: stretch; /* Ensure children stretch to the tallest */
     border: 1px solid #ccc;
     border-radius: 0.25rem;
-    /* overflow: hidden; */
     width: fit-content;
     background-color: #fff;
     margin-top: 1rem;
@@ -61,17 +60,18 @@
 }
 
 .content-picker .cp-selected {
-    display: inline-flex;
+    display: flex; /* Ensure it grows properly */
     align-items: center;
     border-radius: 4px;
     padding: 4px 8px;
     margin: 2px;
     border: 1px solid #E3E3E3;
-    flex: 1;
+    flex: 1; /* Allow it to expand */
     font-size: 100%;
     line-height: 1.15;
     color: #495057;
     background-color: #fff;
+    min-height: 100%; /* Ensure height consistency */
 }
 
 .content-picker .cp-remove-item {
@@ -81,13 +81,16 @@
 }
 
 .content-picker .cp-search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-color: #e9ecef;
     border: none;
-    padding: 0.4rem 0.4rem 0.1rem 0.4rem;
+    padding: 0.4rem;
     cursor: pointer;
     border-left: 1px solid #ced4da;
+    min-height: 100%; /* Make sure it takes full height */
 }
-
 .content-picker .cp-search svg {
     -webkit-mask-image: url(/assets/icons/search-black.svg);
     mask-image: url(/assets/icons/search-black.svg);
