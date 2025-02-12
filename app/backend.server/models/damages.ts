@@ -9,13 +9,18 @@ import {configCurrencies} from "~/util/config"
 
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}
 
+export const damageTypeEnumData = [
+	{key: "partial", label: "Partially damaged"},
+	{key: "total", label: "Totally destroyed"}
+]
+
 export const fieldsDef: FormInputDef<DamagesFields>[] =
 	[
 		{key: "recordId", label: "", type: "other"},
 		{key: "sectorId", label: "", type: "other"},
 
 		// Public damages
-		{key: "pubDamage", label: "Damage", type: "enum", enumData: [{key: "partial", label: "Partial"}, {key: "total", label: "Total"}]},
+		{key: "pubDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
 		{key: "pubDamageAmount", label: "Damage Amount", type: "number"},
 		{key: "pubDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
 		{key: "pubRepairCostUnit", label: "Repair Cost Unit", type: "number"},
@@ -43,7 +48,7 @@ export const fieldsDef: FormInputDef<DamagesFields>[] =
 		{key: "pubDisruptionDescription", label: "Disruption Description", type: "textarea"},
 
 		// Private damages
-		{key: "privDamage", label: "Damage", type: "enum", enumData: [{key: "partial", label: "Partial"}, {key: "total", label: "Total"}]},
+		{key: "privDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
 		{key: "privDamageAmount", label: "Damage Amount", type: "number"},
 		{key: "privDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
 		{key: "privRepairCostUnit", label: "Repair Cost Unit", type: "number"},

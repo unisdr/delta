@@ -85,7 +85,7 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 			edit={props.edit}
 			id={props.id}
 			plural="PDNA resource repositories"
-			singular={`${props.edit ? "Edit" : "Add"} PDNA resource repository`}
+			singular="PDNA resource repository"
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={fieldsDef}

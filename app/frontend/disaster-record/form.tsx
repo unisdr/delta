@@ -104,7 +104,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				edit={props.edit}
 				id={props.id}
 				plural="Disaster Records"
-				singular={`${props.edit ? "Edit" : "Add"} Disaster Record`}
+				singular="Disaster Record"
 				errors={props.errors}
 				fields={props.fields}
 				fieldsDef={fieldsDef}

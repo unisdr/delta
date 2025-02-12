@@ -26,7 +26,7 @@ export function DamagesForm(props: DamagesFormProps) {
 			edit={props.edit}
 			id={props.id}
 			plural="Damages"
-			singular={(props.edit ? "Edit" : "Add") + " damage"}
+			singular="Damage"
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
