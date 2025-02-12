@@ -73,7 +73,13 @@ export const contentPickerConfig = {
             const startDate = new Date(event.startDate);
             const endDate = new Date(event.endDate);
     
-            if (startDate.getMonth() === endDate.getMonth()) {
+            const startYear = startDate.getFullYear();
+            const endYear = endDate.getFullYear();
+    
+            if (startYear !== endYear) {
+                // Show full format including the year in start date
+                displayDate = `${formatDateDisplay(startDate, "d MMM yyyy")} to ${formatDateDisplay(endDate, "d MMM yyyy")}`;
+            } else if (startDate.getMonth() === endDate.getMonth()) {
                 if (startDate.getDate() === endDate.getDate()) {
                     displayDate = `${startDate.getDate()} ${formatDateDisplay(startDate, "MMM yyyy")}`;
                 } else {
@@ -83,9 +89,9 @@ export const contentPickerConfig = {
                 displayDate = `${formatDateDisplay(startDate, "d MMM")} to ${formatDateDisplay(endDate, "d MMM yyyy")}`;
             }
         }
-
+    
         let displayId = event.id || "";
-        //Truncate the display Id to 5 characters
+        // Truncate the display ID to 5 characters
         if (displayId.length > 5) {
             displayId = displayId.substring(0, 5);
         }

@@ -16,6 +16,9 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import AuditLogHistory from "~/components/AuditLogHistory";
 
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { contentPickerConfig } from "./content-picker-config";
+
 interface LoaderData{
 	item: any;
 	isPublic: boolean;
@@ -38,8 +41,13 @@ export const loader = async ({
 		tableName: getTableName(disasterRecordsTable),
 	});
 
-	const result = await loaderFunction({request, params, context});
-	return {...result, auditLogs: result.auditLogs ?? []};
+	const result = await loaderFunction({request, params, context}); 
+
+	const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, result.item.disasterEventId) ?? '';
+
+	const extendedItem = { ...result.item, cpDisplayName };
+	
+	return {...result, item: extendedItem, auditLogs: result.auditLogs ?? []};
 };
 
 

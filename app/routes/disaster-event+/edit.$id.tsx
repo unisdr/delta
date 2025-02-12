@@ -21,9 +21,14 @@ import { route } from "~/frontend/events/disastereventform";
 import { useLoaderData } from "@remix-run/react";
 import { disasterEventTable } from "~/drizzle/schema";
 
-export const loader = createLoader({
-	getById: disasterEventById,
-});
+import {authLoaderWithPerm} from "~/util/auth";
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { divisionTable } from "~/drizzle/schema";
+
+// export const loader = createLoader({
+// 	getById: disasterEventById,
+// });
 
 export const action = createAction({
 	fieldsDef,
@@ -36,6 +41,24 @@ export const action = createAction({
 		isCreate ? "Create disaster event" : "Update disaster event",
 });
 
+export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
+	// ✅ Fetch existing disaster event data
+	const baseData = await createLoader({ getById: disasterEventById })(actionArgs);
+
+	// ✅ Fetch division data & build tree
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "name";
+	const rawData = await dr.select().from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	// ✅ Inject `treeData` into the loader response
+	return {
+		...baseData,
+		treeData, // Now available in `useLoaderData()`
+	};
+});
+
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>();
 	let fieldsInitial: Partial<DisasterEventFields> = ld.item
@@ -44,7 +67,7 @@ export default function Screen() {
 		  }
 		: {};
 	return formScreen({
-		extraData: { hazardEvent: ld.item?.hazardEvent },
+		extraData: { hazardEvent: ld.item?.hazardEvent, treeData: ld.treeData },
 		fieldsInitial: fieldsInitial,
 		form: DisasterEventForm,
 		edit: !!ld.item,
