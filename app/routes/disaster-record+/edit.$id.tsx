@@ -178,7 +178,7 @@ export default function Screen() {
 												<tr>
 													<th></th>
 													<th></th>
-													<th></th>
+													<th className="center" colSpan={2}>Damage</th>
 													<th></th>
 													<th className="center" colSpan={2}>Disruption</th>
 													<th></th>
@@ -187,6 +187,7 @@ export default function Screen() {
 													<th>ID</th>
 													<th>Sector</th>
 													<th>Damage</th>
+													<th>Recovery Cost</th>
 													<th>Losses</th>
 													<th>Disruption</th>
 													<th>Response Cost</th>
@@ -206,6 +207,14 @@ export default function Screen() {
 															{ item.disRecSectorsWithDamage &&
 																<>
 																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/damages?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
+																</>
+															}
+														</td>
+														<td>
+															{ item.disRecSectorsDamageRecoveryCost &&
+																<>
+																	
+																	{ item.disRecSectorsDamageRecoveryCost } { item.disRecSectorsDamageRecoveryCostCurrency }
 																</>
 															}
 														</td>
