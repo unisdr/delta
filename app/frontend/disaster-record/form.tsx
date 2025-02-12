@@ -24,6 +24,7 @@ import {TreeView} from "~/components/TreeView";
 
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
+import AuditLogHistory from "~/components/AuditLogHistory";
 
 export const route = "/disaster-record"
 
@@ -251,10 +252,12 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 interface DisasterRecordsViewProps {
 	item: DisasterRecordsViewModel;
 	isPublic: boolean;
+	auditLogs?: any[];
 }
 
 export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 	const item = props.item;
+	const auditLogs = props.auditLogs;
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
@@ -361,6 +364,14 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 					)
 				}}
 			/>
+			{/* Add Audit Log History at the end */}
+			<br/>
+			{auditLogs && auditLogs.length > 0 && (
+				<>
+					<h3>Audit Log History</h3>
+					<AuditLogHistory auditLogs={auditLogs} />
+				</>
+			)}
 		</ViewComponent>
 	);
 }

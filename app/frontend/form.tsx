@@ -662,21 +662,21 @@ export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 }
 
 interface ViewScreenPublicApprovedProps<T> {
-	viewComponent: React.ComponentType<{item: T; isPublic: boolean}>;
+	viewComponent: React.ComponentType<{item: T; isPublic: boolean; auditLogs?: any[]}>;
 }
 
 export function ViewScreenPublicApproved<T>(
 	props: ViewScreenPublicApprovedProps<T>
 ) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{item: T; isPublic: boolean}>();
+	const ld = useLoaderData<{item: T; isPublic: boolean; auditLogs?: any[]}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
 	if (ld.isPublic === undefined) {
 		throw "loader does not expose isPublic";
 	}
-	return <ViewComponent isPublic={ld.isPublic} item={ld.item} />;
+	return <ViewComponent isPublic={ld.isPublic} item={ld.item} auditLogs={ld.auditLogs} />;
 }
 
 interface ViewComponentProps {
@@ -828,14 +828,14 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 				<Link to={`${route}/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="assets/icons/eye-show-password.svg#eye-show"></use>
+							<use href="/assets/icons/eye-show-password.svg#eye-show"></use>
 						</svg>
 					</button>
 				</Link>
 				<Link to={`${route}/edit/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="assets/icons/edit.svg#edit"></use>
+							<use href="/assets/icons/edit.svg#edit"></use>
 						</svg>
 					</button>
 				</Link>
@@ -846,7 +846,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 					onClick={handleDeleteClick}
 				>
 					<svg aria-hidden="true" focusable="false" role="img">
-						<use href="assets/icons/trash-alt.svg#delete"></use>
+						<use href="/assets/icons/trash-alt.svg#delete"></use>
 					</svg>
 				</button>
 

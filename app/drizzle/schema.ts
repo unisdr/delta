@@ -895,6 +895,8 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 			.notNull()
 			.references((): AnyPgColumn => disasterRecordsTable.id), // Links to disaster record
 		withDamage: boolean("with_damage"),
+		damageRecoveryCost: integer("damage_recovery_cost"),
+		damageRecoveryCostCurrency: text("damage_recovery_cost_currency"),
 		withDisruption: boolean("with_disruption"),
 		disruptionResponseCost: integer("disruption_response_cost"),
 		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
