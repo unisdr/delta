@@ -4,28 +4,25 @@ import {
 } from "~/util/auth";
 
 import {
-  jsonUpsert,
+  jsonCreate,
 } from "~/backend.server/handlers/form";
-
 import {
-  assetCreate,
-  assetUpdate,
-  assetIdByImportId,
+  unitCreate,
   fieldsDefApi
-} from "~/backend.server/models/asset";
+} from "~/backend.server/models/unit";
 
 export let loader = authLoaderApi(async () => {
   return Response.json("Use POST")
 })
 
 export let action = authActionApi(async (args) => {
-  let data = await args.request.json()
-  let saveRes = await jsonUpsert({
+  const data = await args.request.json()
+
+  const saveRes = await jsonCreate({
     data,
     fieldsDef: await fieldsDefApi(),
-    create: assetCreate,
-    update: assetUpdate,
-    idByImportId: assetIdByImportId,
+    create: unitCreate
   })
+
   return Response.json(saveRes)
 })

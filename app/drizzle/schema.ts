@@ -496,40 +496,40 @@ export const damagesTable = pgTable("damages", {
 	sectorId: integer("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
-	pubDamage: text("pub_damage", {enum: ["partial", "total"]}).notNull(),
-	pubDamageAmount: integer("pub_damage_amount"),
-	pubDamageUnitType: text("pub_damage_unit_type", {enum: ["numbers", "other"]}),
-	pubRepairCostUnit: integer("pub_repair_cost_unit"),
-	pubRepairCostUnitCurr: text("pub_repair_cost_unit_curr"),
-	pubRepairUnits: integer("pub_repair_units"),
-	pubRepairCostTotalOverride: integer("pub_repair_cost_total_override"),
-	pubRecoveryCostUnit: integer("pub_recovery_cost_unit"),
-	pubRecoveryCostUnitCurr: text("pub_recovery_cost_unit_curr"),
-	pubRecoveryUnits: integer("pub_recovery_units"),
-	pubRecoveryCostTotalOverride: integer("pub_recovery_cost_total_override"),
-	pubDisruptionDurationDays: integer("pub_disruption_duration_days"),
-	pubDisruptionDurationHours: integer("pub_disruption_duration_hours"),
-	pubDisruptionUsersAffected: integer("pub_disruption_users_affected"),
-	pubDisruptionPeopleAffected: integer("pub_disruption_people_affected"),
-	pubDisruptionDescription: text("pub_disruption_description"),
+	publicDamage: text("public_damage", {enum: ["partial", "total"]}).notNull(),
+	publicDamageAmount: integer("public_damage_amount"),
+	publicDamageUnitType: text("public_damage_unit_type", {enum: ["numbers", "other"]}),
+	publicRepairCostUnit: integer("public_repair_cost_unit"),
+	publicRepairCostUnitCurr: text("public_repair_cost_unit_curr"),
+	publicRepairUnits: integer("public_repair_units"),
+	publicRepairCostTotalOverride: integer("public_repair_cost_total_override"),
+	publicRecoveryCostUnit: integer("public_recovery_cost_unit"),
+	publicRecoveryCostUnitCurr: text("public_recovery_cost_unit_curr"),
+	publicRecoveryUnits: integer("public_recovery_units"),
+	publicRecoveryCostTotalOverride: integer("public_recovery_cost_total_override"),
+	publicDisruptionDurationDays: integer("public_disruption_duration_days"),
+	publicDisruptionDurationHours: integer("public_disruption_duration_hours"),
+	publicDisruptionUsersAffected: integer("public_disruption_users_affected"),
+	publicDisruptionPeopleAffected: integer("public_disruption_people_affected"),
+	publicDisruptionDescription: text("public_disruption_description"),
 
 	// Private damages
-	privDamage: text("priv_damage", {enum: ["partial", "total"]}).notNull(),
-	privDamageAmount: integer("priv_damage_amount"),
-	privDamageUnitType: text("priv_damage_unit_type", {enum: ["numbers", "other"]}),
-	privRepairCostUnit: integer("priv_repair_cost_unit"),
-	privRepairCostUnitCurr: text("priv_repair_cost_unit_curr"),
-	privRepairUnits: integer("priv_repair_units"),
-	privRepairCostTotalOverride: integer("priv_repair_cost_total_override"),
-	privRecoveryCostUnit: integer("priv_recovery_cost_unit"),
-	privRecoveryCostUnitCurr: text("priv_recovery_cost_unit_curr"),
-	privRecoveryUnits: integer("priv_recovery_units"),
-	privRecoveryCostTotalOverride: integer("priv_recovery_cost_total_override"),
-	privDisruptionDurationDays: integer("priv_disruption_duration_days"),
-	privDisruptionDurationHours: integer("priv_disruption_duration_hours"),
-	privDisruptionUsersAffected: integer("priv_disruption_users_affected"),
-	privDisruptionPeopleAffected: integer("priv_disruption_people_affected"),
-	privDisruptionDescription: text("priv_disruption_description"),
+	privateDamage: text("private_damage", {enum: ["partial", "total"]}).notNull(),
+	privateDamageAmount: integer("private_damage_amount"),
+	privateDamageUnitType: text("private_damage_unit_type", {enum: ["numbers", "other"]}),
+	privateRepairCostUnit: integer("private_repair_cost_unit"),
+	privateRepairCostUnitCurr: text("private_repair_cost_unit_curr"),
+	privateRepairUnits: integer("private_repair_units"),
+	privateRepairCostTotalOverride: integer("private_repair_cost_total_override"),
+	privateRecoveryCostUnit: integer("private_recovery_cost_unit"),
+	privateRecoveryCostUnitCurr: text("private_recovery_cost_unit_curr"),
+	privateRecoveryUnits: integer("private_recovery_units"),
+	privateRecoveryCostTotalOverride: integer("private_recovery_cost_total_override"),
+	privateDisruptionDurationDays: integer("private_disruption_duration_days"),
+	privateDisruptionDurationHours: integer("private_disruption_duration_hours"),
+	privateDisruptionUsersAffected: integer("private_disruption_users_affected"),
+	privateDisruptionPeopleAffected: integer("private_disruption_people_affected"),
+	privateDisruptionDescription: text("private_disruption_description"),
 })
 
 export type Damages = typeof damagesTable.$inferSelect
@@ -540,11 +540,26 @@ export const measureTable = pgTable("measure", {
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),
 	name: text("name").notNull(),
-	unit: text("unit").notNull()
+	type: text({enum: ["number", "area", "volume", "duration"]})
+		.notNull()
+		.default("area"),
+	//	unit: text("unit").notNull()
 })
 
 export type Measure = typeof measureTable.$inferSelect
 export type MeasureInsert = typeof measureTable.$inferInsert
+
+export const unitTable = pgTable("unit", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	type: text({enum: ["number", "area", "volume", "duration"]})
+		.notNull()
+		.default("area"),
+	name: text("name").notNull()
+})
+
+export type Unit = typeof unitTable.$inferSelect
+export type UnitInsert = typeof unitTable.$inferInsert
 
 export const assetTable = pgTable("asset", {
 	...apiImportIdField(),

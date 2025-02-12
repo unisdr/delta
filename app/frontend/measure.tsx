@@ -7,12 +7,14 @@ import {
 } from "~/frontend/form";
 
 import {MeasureFields, MeasureViewModel} from "~/backend.server/models/measure"
+import {typeEnumKey, typeLabelForKey} from "~/backend.server/models/measureunit";
 
 export const route = "/settings/measure"
 
 
-export function measureLabel(obj: {name: string; unit: string}): string {
-	return `${obj.name} (${obj.unit})`
+export function measureLabel(obj: {name: string; type: typeEnumKey}): string {
+	let typeLabel = typeLabelForKey(obj.type)
+	return `${obj.name} (${typeLabel})`
 }
 
 interface MeasureFormProps extends UserFormProps<MeasureFields> {}

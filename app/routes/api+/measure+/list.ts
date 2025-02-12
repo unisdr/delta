@@ -13,7 +13,7 @@ export const loader = createApiListLoader(
 	async (offsetLimit) => {
 		return dr.query.measureTable.findMany({
 			...offsetLimit,
-			columns: {id: true, name: true, unit: true},
+			columns: {id: true, name: true},
 			orderBy: [desc(measureTable.name)],
 		});
 	},

@@ -26,7 +26,7 @@ export function DisruptionForm(props: DisruptionFormProps) {
 			edit={props.edit}
 			id={props.id}
 			plural="Disruptions"
-			singular={(props.edit ? "Edit" : "Add") + " disruption"}
+			singular="Disruption"
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
