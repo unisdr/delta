@@ -41,10 +41,10 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				id: true,
 				recordId: true,
 				sectorId: true,
-				pubDamageAmount: true,
-				pubDamageUnitType: true,
-				privDamageAmount: true,
-				privDamageUnitType: true
+				publicDamageAmount: true,
+				publicDamageUnitType: true,
+				privateDamageAmount: true,
+				privateDamageUnitType: true
 			},
 			orderBy: [desc(damagesTable.id)],
 		})
@@ -77,10 +77,10 @@ export default function Data() {
 				<td><Link to={`${route}/${item.id}`}>{item.id}</Link></td>
 				<td>{item.recordId}</td>
 				<td>{item.sectorId}</td>
-				<td>{item.pubDamageAmount ?? "-"}</td>
-				<td>{item.pubDamageUnitType ?? "-"}</td>
-				<td>{item.privDamageAmount ?? "-"}</td>
-				<td>{item.privDamageUnitType ?? "-"}</td>
+				<td>{item.publicDamageAmount ?? "-"}</td>
+				<td>{item.publicDamageUnitType ?? "-"}</td>
+				<td>{item.privateDamageAmount ?? "-"}</td>
+				<td>{item.privateDamageUnitType ?? "-"}</td>
 				<td><ActionLinks route={route} id={item.id} /></td>
 			</tr>
 		),
