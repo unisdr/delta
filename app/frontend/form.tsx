@@ -189,14 +189,15 @@ interface FormProps<T> {
 	children: React.ReactNode;
 	errors?: Errors<T>;
 	className?: string;
+	ref?: React.Ref<HTMLFormElement>
 }
 
-export function Form<T>({children, errors, className}: FormProps<T>) {
-	errors = errors || {};
+export function Form<T>(props: FormProps<T>) {
+	let errors = props.errors || {};
 	errors.form = errors.form || [];
 
 	return (
-		<ReactForm method="post" className={className}>
+		<ReactForm ref={props.ref} method="post" className={props.className}>
 			{errors.form.length > 0 ? (
 				<>
 					<h2>Form Errors</h2>
@@ -207,7 +208,7 @@ export function Form<T>({children, errors, className}: FormProps<T>) {
 					</ul>
 				</>
 			) : null}
-			<div className="fields">{children}</div>
+			<div className="fields">{props.children}</div>
 		</ReactForm>
 	);
 }
@@ -741,6 +742,7 @@ interface FormViewProps {
 	fieldsDef: any;
 	override?: Record<string, ReactElement|undefined|null>;
 	elementsAfter?: Record<string, ReactElement>
+	ref?: React.Ref<HTMLFormElement>;
 }
 
 export function FormView(props: FormViewProps) {
@@ -767,7 +769,7 @@ export function FormView(props: FormViewProps) {
 				</h2>
 				{props.edit && props.id && <p>ID: {String(props.id)}</p>}
 				{props.infoNodes}
-				<Form errors={props.errors} className="dts-form">
+				<Form ref={props.ref} errors={props.errors} className="dts-form">
 					<Inputs
 						def={props.fieldsDef}
 						fields={props.fields}

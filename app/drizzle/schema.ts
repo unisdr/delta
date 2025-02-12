@@ -499,10 +499,16 @@ export const damagesTable = pgTable("damages", {
 	publicDamage: text("public_damage", {enum: ["partial", "total"]}).notNull(),
 	publicDamageAmount: integer("public_damage_amount"),
 	publicDamageUnitType: text("public_damage_unit_type", {enum: ["numbers", "other"]}),
+	// repair when publicDamage=partial
 	publicRepairCostUnit: integer("public_repair_cost_unit"),
 	publicRepairCostUnitCurrency: text("public_repair_cost_unit_currency"),
 	publicRepairUnits: integer("public_repair_units"),
 	publicRepairCostTotalOverride: integer("public_repair_cost_total_override"),
+	// replacement when publicDamage=total
+	publicReplacementCostUnit: integer("public_replacement_cost_unit"),
+	publicReplacementCostUnitCurrency: text("public_replacement_cost_unit_currency"),
+	publicReplacementUnits: integer("public_replacement_units"),
+	publicReplacementCostTotalOverride: integer("public_replacement_cost_total_override"),
 	publicRecoveryCostUnit: integer("public_recovery_cost_unit"),
 	publicRecoveryCostUnitCurrency: text("public_recovery_cost_unit_currency"),
 	publicRecoveryUnits: integer("public_recovery_units"),
@@ -517,10 +523,16 @@ export const damagesTable = pgTable("damages", {
 	privateDamage: text("private_damage", {enum: ["partial", "total"]}).notNull(),
 	privateDamageAmount: integer("private_damage_amount"),
 	privateDamageUnitType: text("private_damage_unit_type", {enum: ["numbers", "other"]}),
+	// repair when publicDamage=partial
 	privateRepairCostUnit: integer("private_repair_cost_unit"),
 	privateRepairCostUnitCurrency: text("private_repair_cost_unit_currency"),
 	privateRepairUnits: integer("private_repair_units"),
 	privateRepairCostTotalOverride: integer("private_repair_cost_total_override"),
+	// replacement when publicDamage=partial
+	privateReplacementCostUnit: integer("private_replacement_cost_unit"),
+	privateReplacementCostUnitCurrency: text("private_replacement_cost_unit_currency"),
+	privateReplacementUnits: integer("private_replacement_units"),
+	privateReplacementCostTotalOverride: integer("private_replacement_cost_total_override"),
 	privateRecoveryCostUnit: integer("private_recovery_cost_unit"),
 	privateRecoveryCostUnitCurrency: text("private_recovery_cost_unit_currency"),
 	privateRecoveryUnits: integer("private_recovery_units"),

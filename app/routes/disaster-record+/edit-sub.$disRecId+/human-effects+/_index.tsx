@@ -1,7 +1,7 @@
 import {authLoaderWithPerm} from "~/util/auth";
 import {MainContainer} from "~/frontend/container";
 import {Table} from "~/frontend/editabletable/view";
-import {useLoaderData} from "@remix-run/react";
+import {useLoaderData, Link} from "@remix-run/react";
 import {HumanEffectsTableFromString, HumanEffectTablesDefs} from "~/frontend/human_effects/defs";
 import {useFetcher} from "@remix-run/react"
 import {loadData} from "~/backend.server/handlers/human_effects"
@@ -51,6 +51,7 @@ export default function Screen() {
 
 	return (
 		<MainContainer title="Human Direct Effects">
+			<Link to={"/disaster-record/" + ld.recordId}>Back to disaster record</Link>
 			<p>{data.tbl.label}</p>
 			<fetcher.Form method="get" action=".">
 				<select
