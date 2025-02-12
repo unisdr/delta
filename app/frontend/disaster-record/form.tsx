@@ -89,7 +89,6 @@ export function disasterRecordsLink(args: {
 }
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
-	console.log("DisasterRecordsForm: ", props);
 	const {fields, treeData, cpDisplayName} = props;
 	const treeViewRef = useRef<any>(null);
 
@@ -251,7 +250,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 
 interface DisasterRecordsViewProps {
 	item: DisasterRecordsViewModel;
-	isPublic: boolean
+	isPublic: boolean;
 }
 
 export function DisasterRecordsView(props: DisasterRecordsViewProps) {
@@ -289,7 +288,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 					),
 					disasterEventId: (
-						<p key="disasterEventId">Disaster Event: {item.disasterEventId}</p>
+						<p key="disasterEventId">Disaster Event: {(item as any).cpDisplayName || ""}</p>
 					),
 					spatialFootprint: (
 						<div>
