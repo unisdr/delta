@@ -828,14 +828,14 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 				<Link to={`${route}/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="assets/icons/eye-show-password.svg#eye-show"></use>
+							<use href="/assets/icons/eye-show-password.svg#eye-show"></use>
 						</svg>
 					</button>
 				</Link>
 				<Link to={`${route}/edit/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="assets/icons/edit.svg#edit"></use>
+							<use href="/assets/icons/edit.svg#edit"></use>
 						</svg>
 					</button>
 				</Link>
@@ -846,7 +846,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 					onClick={handleDeleteClick}
 				>
 					<svg aria-hidden="true" focusable="false" role="img">
-						<use href="assets/icons/trash-alt.svg#delete"></use>
+						<use href="/assets/icons/trash-alt.svg#delete"></use>
 					</svg>
 				</button>
 
