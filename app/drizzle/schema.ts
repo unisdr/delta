@@ -545,6 +545,19 @@ export const measureTable = pgTable("measure", {
 export type Measure = typeof measureTable.$inferSelect
 export type MeasureInsert = typeof measureTable.$inferInsert
 
+export const unitTable = pgTable("unit", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	type: text({enum: ["number", "area", "volume", "duration"]})
+		.notNull()
+		.default("area"),
+	name: text("name").notNull()
+})
+
+export type Unit = typeof unitTable.$inferSelect
+export type UnitInsert = typeof unitTable.$inferInsert
+
+
 export const assetTable = pgTable("asset", {
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),

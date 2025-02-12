@@ -28,12 +28,12 @@ export function DevExample1Form(props: DevExample1FormProps) {
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
 		/>
-	);
+	)
 }
 
 
 interface DevExample1ViewProps extends ViewPropsBase<DevExample1Fields> {
-	item: DevExample1ViewModel;
+	item: DevExample1ViewModel
 }
 
 export function DevExample1View(props: DevExample1ViewProps) {
@@ -46,6 +46,6 @@ export function DevExample1View(props: DevExample1ViewProps) {
 		>
 			<FieldsView def={props.def} fields={props.item} override={{}} />
 		</ViewComponent>
-	);
+	)
 }
 
