@@ -23,6 +23,7 @@ import {
 } from "~/frontend/form";
 import {approvalStatusField} from "../approval";
 import {formatDate} from "~/util/date";
+import AuditLogHistory from "~/components/AuditLogHistory";
 
 export const route = "/disaster-event"
 
@@ -377,10 +378,11 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 interface DisasterEventViewProps {
 	item: DisasterEventViewModel;
 	isPublic: boolean;
+	auditLogs?: any[];
 }
 
 export function DisasterEventView(props: DisasterEventViewProps) {
-	const {item} = props;
+	const {item, auditLogs} = props;
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
@@ -514,8 +516,18 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 						})()}
 					</div>
 				)
-			  }}			  
+			  }}	
+
+			
 			/>
+			{/* Add Audit Log History at the end */}
+			<br/>
+			{auditLogs && auditLogs.length > 0 && (
+				<>
+					<h3>Audit Log History</h3>
+					<AuditLogHistory auditLogs={auditLogs} />
+				</>
+			)}
 		</ViewComponent>
 	);
 }

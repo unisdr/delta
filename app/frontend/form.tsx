@@ -665,21 +665,21 @@ export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 }
 
 interface ViewScreenPublicApprovedProps<T> {
-	viewComponent: React.ComponentType<{item: T; isPublic: boolean}>;
+	viewComponent: React.ComponentType<{item: T; isPublic: boolean; auditLogs?: any[]}>;
 }
 
 export function ViewScreenPublicApproved<T>(
 	props: ViewScreenPublicApprovedProps<T>
 ) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{item: T; isPublic: boolean}>();
+	const ld = useLoaderData<{item: T; isPublic: boolean; auditLogs?: any[]}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
 	if (ld.isPublic === undefined) {
 		throw "loader does not expose isPublic";
 	}
-	return <ViewComponent isPublic={ld.isPublic} item={ld.item} />;
+	return <ViewComponent isPublic={ld.isPublic} item={ld.item} auditLogs={ld.auditLogs} />;
 }
 
 interface ViewComponentProps {

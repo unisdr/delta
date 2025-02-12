@@ -13,10 +13,8 @@ import {disasterRecordsById} from "~/backend.server/models/disaster_record";
 import { disasterRecordsTable } from "~/drizzle/schema";
 import { getTableName } from "drizzle-orm";
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import AuditLogHistory from "~/components/AuditLogHistory";
 
-import { dr } from "~/db.server"; // Drizzle ORM instance
+import { dr } from "~/db.server";
 import { contentPickerConfig } from "./content-picker-config";
 
 interface LoaderData{
@@ -47,18 +45,14 @@ export const loader = async ({
 
 	const extendedItem = { ...result.item, cpDisplayName };
 	
-	return {...result, item: extendedItem, auditLogs: result.auditLogs ?? []};
+	return {...result, item: extendedItem};
 };
 
 
 export default function Screen() {
-	const { auditLogs } = useLoaderData<typeof loader>();
 	return (
 		<>
 			<ViewScreenPublicApproved viewComponent={DisasterRecordsView} />
-			<br/>
-			<h3>Audit Log History</h3>
-			<AuditLogHistory auditLogs={auditLogs} />
 		</>
 	);
 }

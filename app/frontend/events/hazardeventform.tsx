@@ -23,6 +23,7 @@ import {approvalStatusField} from "~/frontend/approval";
 import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
 import {TreeView} from "~/components/TreeView";
+import AuditLogHistory from "~/components/AuditLogHistory";
 
 export const route = "/hazard-event"
 
@@ -279,11 +280,13 @@ export function HazardEventForm(props: HazardEventFormProps) {
 
 interface HazardEventViewProps {
 	item: HazardEventViewModel;
-	isPublic: boolean
+	isPublic: boolean;
+	auditLogs?: any[];
 }
 
 export function HazardEventView(props: HazardEventViewProps) {
 	const item = props.item;
+	const auditLogs = props.auditLogs;
 	let cluster = item.hazard.cluster;
 	let cls = cluster.class;
 
@@ -424,6 +427,14 @@ export function HazardEventView(props: HazardEventViewProps) {
 					),
 				}}
 			/>
+			{/* Add Audit Log History at the end */}
+			<br/>
+			{auditLogs && auditLogs.length > 0 && (
+				<>
+					<h3>Audit Log History</h3>
+					<AuditLogHistory auditLogs={auditLogs} />
+				</>
+			)}
 		</ViewComponent>
 	);
 }

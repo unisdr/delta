@@ -6,10 +6,8 @@ import {
 
 import { ViewScreenPublicApproved } from "~/frontend/form";
 import { hazardEventById } from "~/backend.server/models/event";
-import AuditLogHistory from "~/components/AuditLogHistory";
 import { getTableName } from "drizzle-orm";
 import { hazardEventTable } from "~/drizzle/schema";
-import { useLoaderData } from "@remix-run/react";
 import { LoaderFunctionArgs } from "@remix-run/node";
 
 interface LoaderData{
@@ -36,17 +34,13 @@ export const loader = async ({
 	});
 
 	const result = await loaderFunction({request, params, context});
-	return {...result, auditLogs: result.auditLogs ?? []};
+	return {...result};
 };
 
 export default function Screen() {
-	const { auditLogs } = useLoaderData<typeof loader>();
 	return (
 		<>
 			<ViewScreenPublicApproved viewComponent={HazardEventView} />
-			<br/>
-			<h3>Audit Log History</h3>
-			<AuditLogHistory auditLogs={auditLogs} />
 		</>
 	);
 }
