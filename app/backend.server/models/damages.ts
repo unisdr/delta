@@ -25,7 +25,7 @@ export const fieldsDef: FormInputDef<DamagesFields>[] =
 		{key: "publicDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
 		{key: "publicRepairCostUnit", label: "Repair Cost Unit", type: "number"},
 		{
-			key: "publicRepairCostUnitCurr",
+			key: "publicRepairCostUnitCurrency",
 			label: "Repair Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
@@ -34,7 +34,7 @@ export const fieldsDef: FormInputDef<DamagesFields>[] =
 		{key: "publicRepairCostTotalOverride", label: "Repair Cost Total Override", type: "number"},
 		{key: "publicRecoveryCostUnit", label: "Recovery Cost Unit", type: "number"},
 		{
-			key: "publicRecoveryCostUnitCurr",
+			key: "publicRecoveryCostUnitCurrency",
 			label: "Recovery Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
@@ -53,7 +53,7 @@ export const fieldsDef: FormInputDef<DamagesFields>[] =
 		{key: "privateDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
 		{key: "privateRepairCostUnit", label: "Repair Cost Unit", type: "number"},
 		{
-			key: "privateRepairCostUnitCurr",
+			key: "privateRepairCostUnitCurrency",
 			label: "Repair Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
@@ -62,7 +62,7 @@ export const fieldsDef: FormInputDef<DamagesFields>[] =
 		{key: "privateRepairCostTotalOverride", label: "Repair Cost Total Override", type: "number"},
 		{key: "privateRecoveryCostUnit", label: "Recovery Cost Unit", type: "number"},
 		{
-			key: "privateRecoveryCostUnitCurr",
+			key: "privateRecoveryCostUnitCurrency",
 			label: "Recovery Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))

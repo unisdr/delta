@@ -500,11 +500,11 @@ export const damagesTable = pgTable("damages", {
 	publicDamageAmount: integer("public_damage_amount"),
 	publicDamageUnitType: text("public_damage_unit_type", {enum: ["numbers", "other"]}),
 	publicRepairCostUnit: integer("public_repair_cost_unit"),
-	publicRepairCostUnitCurr: text("public_repair_cost_unit_curr"),
+	publicRepairCostUnitCurrency: text("public_repair_cost_unit_currency"),
 	publicRepairUnits: integer("public_repair_units"),
 	publicRepairCostTotalOverride: integer("public_repair_cost_total_override"),
 	publicRecoveryCostUnit: integer("public_recovery_cost_unit"),
-	publicRecoveryCostUnitCurr: text("public_recovery_cost_unit_curr"),
+	publicRecoveryCostUnitCurrency: text("public_recovery_cost_unit_currency"),
 	publicRecoveryUnits: integer("public_recovery_units"),
 	publicRecoveryCostTotalOverride: integer("public_recovery_cost_total_override"),
 	publicDisruptionDurationDays: integer("public_disruption_duration_days"),
@@ -518,11 +518,11 @@ export const damagesTable = pgTable("damages", {
 	privateDamageAmount: integer("private_damage_amount"),
 	privateDamageUnitType: text("private_damage_unit_type", {enum: ["numbers", "other"]}),
 	privateRepairCostUnit: integer("private_repair_cost_unit"),
-	privateRepairCostUnitCurr: text("private_repair_cost_unit_curr"),
+	privateRepairCostUnitCurrency: text("private_repair_cost_unit_currency"),
 	privateRepairUnits: integer("private_repair_units"),
 	privateRepairCostTotalOverride: integer("private_repair_cost_total_override"),
 	privateRecoveryCostUnit: integer("private_recovery_cost_unit"),
-	privateRecoveryCostUnitCurr: text("private_recovery_cost_unit_curr"),
+	privateRecoveryCostUnitCurrency: text("private_recovery_cost_unit_currency"),
 	privateRecoveryUnits: integer("private_recovery_units"),
 	privateRecoveryCostTotalOverride: integer("private_recovery_cost_total_override"),
 	privateDisruptionDurationDays: integer("private_disruption_duration_days"),
@@ -587,10 +587,11 @@ export const lossesTable = pgTable("losses", {
 	sectorId: integer("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
+	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
 	type: text("type", {
 		enum: ["increased_expenditure", "loss_revenue_forecasted", "non_economic_losses"]
 	}).notNull(),
-	relatedTo: text("related_to", {
+	relatedToNotAgriculture: text("related_to_not_agriculture", {
 		enum: [
 			"infrastructure_equipment",
 			"production_delivery_access",
@@ -598,24 +599,30 @@ export const lossesTable = pgTable("losses", {
 			"risk_vulnerability_drr",
 			"other"
 		]
-	}).notNull(),
+	}),
+	relatedToAgriculture: text("related_to_agriculture", {
+		enum: [
+			"value1",
+			"value2",
+		]
+	}),
 	description: text("description"),
 	publicValueUnit: text("public_value_unit", {
 		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
 	}),
 	publicValue: integer("public_value"),
 	publicCostPerUnit: integer("public_cost_per_unit"),
-	publicCostPerUnitCurr: text("public_cost_per_unit_curr"),
+	publicCostPerUnitCurrency: text("public_cost_per_unit_currency"),
 	publicTotalCost: integer("public_total_cost"),
-	publicTotalCostCurr: text("public_total_cost_curr"),
+	publicTotalCostCurrency: text("public_total_cost_currency"),
 	privateValueUnit: text("private_value_unit", {
 		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
 	}),
 	privateValue: integer("private_value"),
 	privateCostPerUnit: integer("private_cost_per_unit"),
-	privateCostPerUnitCurr: text("private_cost_per_unit_curr"),
+	privateCostPerUnitCurrency: text("private_cost_per_unit_currency"),
 	privateTotalCost: integer("private_total_cost"),
-	privateTotalCostCurr: text("private_total_cost_curr")
+	privateTotalCostCurrency: text("private_total_cost_currency")
 })
 
 export type Losses = typeof lossesTable.$inferSelect

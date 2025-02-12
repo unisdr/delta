@@ -62,6 +62,9 @@ export default function Data() {
 	const {items, pagination} = ld.data
 
 	return DataScreen({
+		headerElement: (
+			<Link to={"/disaster-record/"+ld.recordId}>Back to disaster record</Link>
+		),
 		plural: "Losses",
 		resourceName: "Loss",
 		baseRoute: route2(ld.recordId),

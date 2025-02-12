@@ -34,7 +34,7 @@ export function DamagesForm(props: DamagesFormProps) {
 				sectorId: (
 					<h2>Public</h2>
 				),
-				pubDisruptionDescription: (
+				publicDisruptionDescription: (
 					<h2>Private</h2>
 				),
 			}}

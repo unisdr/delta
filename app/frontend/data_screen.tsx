@@ -13,6 +13,7 @@ interface DataScreenProps<T> {
 	paginationData: any;
 	renderRow: (item: T, baseRoute: string) => React.ReactNode;
 	csvExportLinks?: boolean;
+	headerElement?: React.ReactNode
 }
 
 export function DataScreen<T>(props: DataScreenProps<T>) {
@@ -20,6 +21,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 	return (
 		<MainContainer title={props.plural}>
 			<>
+				{props.headerElement}
 				<DataMainLinks searchParams={props.searchParams} isPublic={props.isPublic} baseRoute={props.baseRoute} resourceName={props.resourceName} csvExportLinks={props.csvExportLinks} />
 				{props.paginationData.totalItems ? (
 					<>

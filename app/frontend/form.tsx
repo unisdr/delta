@@ -322,7 +322,7 @@ export interface InputsProps<T> {
 	def: FormInputDef<T>[];
 	fields: Partial<T>;
 	errors?: Errors<T>;
-	override?: Record<string, ReactElement>;
+	override?: Record<string, ReactElement|undefined|null>;
 	elementsAfter?: Record<string, ReactElement>
 }
 
@@ -336,7 +336,7 @@ export function Inputs<T>(props: InputsProps<T>) {
 		if (props.elementsAfter && props.elementsAfter[def.key]) {
 			after = props.elementsAfter[def.key]
 		}
-		if (props.override && props.override[def.key]) {
+		if (props.override && props.override[def.key] !== undefined) {
 			return (
 				<React.Fragment key={def.key}>
 					{props.override[def.key]}
@@ -500,7 +500,7 @@ export interface FieldsViewProps<T> {
 	def: FormInputDef<T>[]
 	fields: T
 	headersAfter?: Record<string, ReactElement>
-	override?: Record<string, ReactElement>
+	override?: Record<string, ReactElement|undefined|null>
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
@@ -510,7 +510,7 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 			if (props.headersAfter && props.headersAfter[def.key]) {
 				after = props.headersAfter[def.key]
 			}
-			if (props.override && props.override[def.key]) {
+			if (props.override && props.override[def.key] !== undefined) {
 				return (
 					<React.Fragment key={def.key}>
 						{props.override[def.key]}
@@ -739,7 +739,7 @@ interface FormViewProps {
 	errors: any;
 	fields: any;
 	fieldsDef: any;
-	override?: Record<string, ReactElement>;
+	override?: Record<string, ReactElement|undefined|null>;
 	elementsAfter?: Record<string, ReactElement>
 }
 

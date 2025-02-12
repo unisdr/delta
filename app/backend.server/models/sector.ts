@@ -67,3 +67,25 @@ export async function allSectors(tx: Tx) {
 	let res = await tx.query.sectorTable.findMany()
 	return res
 }
+
+let agricultureSectorId = 1201
+
+export async function sectorIsAgriculture(tx: Tx, id: number, depth: number = 0): Promise<boolean> {
+	let maxDepth = 100
+  if (depth > maxDepth){
+		throw new Error("sector parent loop detected")
+	}
+  let row = await tx.query.sectorTable.findFirst({
+		where: eq(sectorTable.id, id)
+	})
+  if (!row) {
+		throw new Error("sector not found by id")
+	}
+  if (row.id == agricultureSectorId){
+		return true
+	}
+  if (row.parentId == null){
+		return false
+	}
+  return await sectorIsAgriculture(tx, row.parentId, depth + 1)
+}
