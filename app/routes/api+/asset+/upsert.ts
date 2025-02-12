@@ -27,6 +27,5 @@ export let action = authActionApi(async (args) => {
     update: assetUpdate,
     idByImportId: assetIdByImportId,
   })
-
   return Response.json(saveRes)
 })

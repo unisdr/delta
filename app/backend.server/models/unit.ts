@@ -5,17 +5,13 @@ import { eq } from "drizzle-orm";
 import { CreateResult, DeleteResult, UpdateResult } from "~/backend.server/handlers/form";
 import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
 import { deleteByIdForStringId } from "./common";
+import {typeEnumData} from "./measureunit";
 
 export interface UnitFields extends Omit<UnitInsert, "id"> {}
 
 export async function fieldsDef(): Promise<FormInputDef<UnitFields>[]> {
   return [
-    { key: "type", label: "Type", type: "enum", required: true, enumData: [
-			{ key: "number", label: "Number"},
-      { key: "area", label: "Area" },
-      { key: "volume", label: "Volume" },
-			{ key: "duration", label: "Duration"},
-    ] },
+    { key: "type", label: "Type", type: "enum", required: true, enumData: typeEnumData},
     { key: "name", label: "Name", type: "text", required: true },
   ]
 }

@@ -25,7 +25,7 @@ export const loader = createPaginatedLoader(
 	async (offsetLimit) => {
 		return dr.query.measureTable.findMany({
 			...offsetLimit,
-			columns: {id: true, name: true, unit: true},
+			columns: {id: true, name: true},
 			orderBy: [desc(measureTable.name)],
 		});
 	},
@@ -50,7 +50,6 @@ export default function Data() {
 					<Link to={`${route}/${item.id}`}>{item.id}</Link>
 				</td>
 				<td>{item.name}</td>
-				<td>{item.unit}</td>
 				<td>
 					<ActionLinks route={route} id={item.id} />
 				</td>

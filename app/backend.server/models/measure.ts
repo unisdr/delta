@@ -5,12 +5,16 @@ import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
+import {typeEnumData} from "./measureunit";
 
 export interface MeasureFields extends Omit<MeasureInsert, "id"> {}
 
 export const fieldsDef: FormInputDef<MeasureFields>[] = [
 	{key: "name", label: "Name", type: "text", required: true},
-	{key: "unit", label: "Unit", type: "text", required: true}
+	{
+		key: "type", label: "Type", type: "enum", required: true, enumData: typeEnumData
+	},
+	//{key: "unit", label: "Unit", type: "text", required: true}
 ];
 
 export const fieldsDefApi: FormInputDef<MeasureFields>[] = [
