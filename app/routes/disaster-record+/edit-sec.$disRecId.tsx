@@ -108,6 +108,8 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	let frmWithDisruption = formData.get("with_disruption") || ''; 
 	let frmDisruptionResponseCost = formData.get("disruption_response_cost") || ''; 
 	let frmDisruptionResponseCostCurrency = formData.get("disruption_response_cost_currency") || ''; 
+	let frmDamageRecoveryCost = formData.get("damage_recovery_cost") || ''; 
+	let frmDamageRecoveryCostCurrency = formData.get("damage_recovery_cost_currency") || ''; 
 
 	let this_showForm:boolean = false;
 	let intTypeID:number = 0;
@@ -137,6 +139,8 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			sectorId: intSectorIDforDB,
 			disasterRecordId: params.disRecId,
 			withDamage: frmWithDamage === 'on' ? true : false,
+			damageRecoveryCost: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' ? frmDamageRecoveryCost : null,
+			damageRecoveryCostCurrency: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' && frmDamageRecoveryCostCurrency !== '' ? frmDamageRecoveryCostCurrency : null,
 			withDisruption: frmWithDisruption === 'on' ? true : false,
 			disruptionResponseCost: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' ? frmDisruptionResponseCost : null,
 			disruptionResponseCostCurrency: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' && frmDisruptionResponseCostCurrency !== '' ? frmDisruptionResponseCostCurrency : null,
@@ -350,15 +354,38 @@ export default function Screen() {
 					<>
 						<h2 className="dts-heading-3">Damage</h2>
 						<div className="mg-grid mg-grid__col-3">
-							<div className="dts-form-component">
+							<div className="dts-form-component mg-grid__col">
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
 										<input type="checkbox" name="with_damage" aria-describedby="" />
 										<span>Has Damage</span>
 									</div>
-								</label>					
+								</label>
 							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Recovery Cost</span>
+									</div>
+									<input type="number" name="damage_recovery_cost" placeholder="enter the damage recovery cost" />
+								</label>
+							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Currency</span>
+									</div>
+									<select name="damage_recovery_cost_currency">
+										{
+											Array.isArray(loaderData.currency) && loaderData.currency.map((item, index) => (
+												<option key={index} value={item}>{item}</option>
+											))
+										}
+									</select>
+								</label>
+							</div>
+							
 						</div>
 						<h2 className="dts-heading-3">Losses</h2>
 						<div className="mg-grid mg-grid__col-3">
@@ -385,24 +412,24 @@ export default function Screen() {
 							</div>
 							<div className="dts-form-component mg-grid__col">
 								<label>
-								<div className="dts-form-component__label">
-									<span>Response Cost</span>
-								</div>
-								<input type="number" name="disruption_response_cost" placeholder="enter disruption response cost" />
+									<div className="dts-form-component__label">
+										<span>Response Cost</span>
+									</div>
+									<input type="number" name="disruption_response_cost" placeholder="enter disruption response cost" />
 								</label>
 							</div>
 							<div className="dts-form-component mg-grid__col">
 								<label>
-								<div className="dts-form-component__label">
-									<span>Currency</span>
-								</div>
-								<select name="disruption_response_cost_currency">
-									{
-										Array.isArray(loaderData.currency) && loaderData.currency.map((item, index) => (
-											<option key={index} value={item}>{item}</option>
-										))
-									}
-								</select>
+									<div className="dts-form-component__label">
+										<span>Currency</span>
+									</div>
+									<select name="disruption_response_cost_currency">
+										{
+											Array.isArray(loaderData.currency) && loaderData.currency.map((item, index) => (
+												<option key={index} value={item}>{item}</option>
+											))
+										}
+									</select>
 								</label>
 							</div>
 						</div>
