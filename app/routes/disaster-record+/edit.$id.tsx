@@ -73,7 +73,6 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
     const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
     const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
-    console.log("cpDisplayName: ", cpDisplayName);
 
     return {
 		item, 
