@@ -97,3 +97,4 @@ export async function unitDeleteById(idStr: string): Promise<DeleteResult> {
   await deleteByIdForStringId(idStr, unitTable)
   return { ok: true }
 }
+

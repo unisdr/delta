@@ -29,15 +29,23 @@ import {assetsForSector} from "~/backend.server/models/asset"
 import {dr} from "~/db.server";
 
 
-async function getResponseData(item: DamagesViewModel|null, recordId: string, sectorId: number){
-	let assets = (await assetsForSector(dr, sectorId)).map( a => {
+async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number) {
+	let assets = (await assetsForSector(dr, sectorId)).map(a => {
 		return {
-			"id": a.id,
-			"label": a.name
+			id: a.id,
+			label: a.name
 		}
 	})
+	/*
+	let units = (await dr.query.unitTable.findMany()).map(u => {
+		return {
+			id: u.id,
+			label: u.name,
+		}
+	})*/
 	return {
 		assets,
+		//units,
 		item,
 		recordId,
 		sectorId,

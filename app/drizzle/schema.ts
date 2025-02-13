@@ -502,6 +502,10 @@ export const damagesTable = pgTable("damages", {
 	publicDamage: text("public_damage", {enum: ["partial", "total"]}).notNull(),
 	publicDamageAmount: integer("public_damage_amount"),
 	publicDamageUnitType: text("public_damage_unit_type", {enum: ["numbers", "other"]}),
+	/*
+	publicDamageUnitType: uuid("public_damage_unit_type")
+		.references((): AnyPgColumn => unitTable.id)
+	 */
 	// repair when publicDamage=partial
 	publicRepairCostUnit: integer("public_repair_cost_unit"),
 	publicRepairCostUnitCurrency: text("public_repair_cost_unit_currency"),
