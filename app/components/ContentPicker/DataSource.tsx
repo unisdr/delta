@@ -41,8 +41,6 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
 
 export async function fetchData(pickerConfig: any, searchQuery: string = "", page: number = 1, limit: number = 10) {
 
-    console.log('pickerConfig:', pickerConfig);
-
     if (pickerConfig.viewMode === "grid") {
         // Calculate offset for pagination
         const offset = (page - 1) * limit;

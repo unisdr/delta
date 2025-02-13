@@ -27,6 +27,11 @@ import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
 import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
 import { string } from "prop-types";
 
+//#Category: Start
+import { ContentPicker } from "~/components/ContentPicker";
+import { contentPickerConfigCategory } from "./content-picker-config";
+//#Category: End
+
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
 	return [
@@ -85,6 +90,10 @@ interface PropsAction {
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// get first level categories
 	let arrayCat = await getCategories(null);
+
+	//#Category: This is how you get the display name of a sector. Syntax: selectedDisplay(dr object, sectorId)
+	const sectorDisplayName = await contentPickerConfigCategory.selectedDisplay(dr, "501");
+	//#Category: End
 
 	return { ok:'loader', categories: arrayCat, subcategories: [], factors: [] };
 });
@@ -170,6 +179,15 @@ export default function Screen() {
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
 
 	const locationUrlPath = useLocation();
+
+	//#Category: Start
+	const [showForm, setShowForm] = useState(false);
+	useEffect(() => {
+		if (actionData?.showForm !== undefined) {
+		  setShowForm(actionData.showForm);
+		}
+	}, [actionData]);
+	//#Category: End
 
 	// console.log( loaderData );
 	// console.log( actionData );
@@ -271,6 +289,31 @@ export default function Screen() {
 		</div>
 		
 			<Form className="dts-form" ref={formRef} name="frmFilter" id="frmFilter" method="post" onSubmit={(event) => submit(event.currentTarget)}>
+
+				{/* //#Category: Added ContentPicker */}
+				<div className="mg-grid mg-grid__col-auto">
+					<div className="form-field">
+						<label>
+							<div>
+							<ContentPicker 
+								{...contentPickerConfigCategory} 
+								value={""} //Assign the sector id here
+								displayName={""} //Assign the sector name here, from the loaderData > sectorDisplayName sample
+								onSelect={(selectedItems: any) => {
+									//This is where you can get the selected sector id
+
+									console.log('selectedItems: ', selectedItems);
+									console.log('loaderData: ', loaderData);
+
+									setShowForm(true);
+								}}
+							 />
+							</div>
+						</label>
+					</div>
+				</div>
+				{/* //#Category: End */}
+				
 				<input ref={formRefHidden} type="hidden" name="action" defaultValue="" />
 				<input ref={formRefHiddenType} type="text" name="frmType" value={ actionData?.frmType } />
 				<input ref={formRefHiddenSubType} type="text" name="frmSubtype" defaultValue={ actionData?.frmSubType } />
@@ -335,7 +378,7 @@ export default function Screen() {
 				</div>
 
 
-				{(actionData?.showForm) &&
+				{(actionData?.showForm || showForm) &&
 					<>
 						<div>
 							<label>

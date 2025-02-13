@@ -1,6 +1,6 @@
 import { hazardEventLabel } from "~/frontend/events/hazardeventform";
 import { eq, ilike, or, asc } from "drizzle-orm";
-import { disasterEventTable, hazardEventTable, hipHazardTable, sectorTable } from "~/drizzle/schema";
+import { disasterEventTable, hazardEventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
 import { formatDate, formatDateDisplay } from "~/util/date";
 
 export const contentPickerConfig = {
@@ -101,11 +101,10 @@ export const contentPickerConfig = {
     },    
 };
 
-
 export const contentPickerConfigSector = {
     id: "sectorId",
     viewMode: "tree",
-    dataSources: "/disaster-record/content-picker-datasource-sector",
+    dataSources: "/disaster-record/content-picker-datasource?view=1",
     caption: "Sectors",
     defaultText: "Select Sector...",
     table_column_primary_key: "id",
@@ -152,3 +151,54 @@ export const contentPickerConfigSector = {
         return `${pathArray.join(" / ")}`; // Format the path like: "/Parent/Child/Sub-Child"
     }
 };
+
+export const contentPickerConfigCategory = {
+    id: "categoryId",
+    viewMode: "tree",
+    dataSources: "/disaster-record/content-picker-datasource?view=2",
+    caption: "Category",
+    defaultText: "Select Category...",
+    table_column_primary_key: "id",
+    table_columns: [
+        { column_type: "db", column_field: "id", column_title: "Id", is_primary_id: true, is_selected_field: true },
+        { column_type: "db", column_field: "parentId", column_title: "Parent Id", tree_field: "parentKey" },
+        { column_type: "db", column_field: "name", column_title: "Name", tree_field: "nameKey" },
+        { column_type: "custom", column_field: "action", column_title: "Action" },
+    ],
+    dataSourceDrizzle: {
+        table: categoriesTable, // Store table reference
+        selects: [ // Define selected columns
+            { alias: "id", column: categoriesTable.id },
+            { alias: "parentId", column: categoriesTable.parentId },
+            { alias: "name", column: categoriesTable.name },
+        ],
+        orderBy: [{ column: categoriesTable.name, direction: "asc" }] // Sorting
+    },
+    selectedDisplay: async (dr: any, id: any) => {
+        // Function to recursively get parent hierarchy
+        const getCategoryPath = async (categoryId: any, path: string[] = []): Promise<string[]> => {
+            const row = await dr
+                .select()
+                .from(categoriesTable)
+                .where(eq(categoriesTable.id, categoryId))
+                .limit(1)
+                .execute();
+    
+            if (!row.length) return path; // Stop if no parent found
+    
+            const category = row[0];
+            path.unshift(category.name); // Add sector name at the beginning
+    
+            if (category.parentId) {
+                return getCategoryPath(category.parentId, path); // Recursively get parent path
+            }
+            
+            return path;
+        };
+    
+        const pathArray = await getCategoryPath(id);
+        if (!pathArray.length) return "No category found";
+    
+        return `${pathArray.join(" / ")}`; // Format the path like: "/Parent/Child/Sub-Child"
+    }
+}
