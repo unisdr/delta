@@ -1,6 +1,7 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { formatDate } from "~/util/date";
 import { sql, eq, ilike, or, asc, desc, count } from "drizzle-orm";
+import { buildTree } from "~/components/TreeView";
 
 function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: any) {
     if (!config?.table) {
@@ -39,80 +40,108 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
 }
 
 export async function fetchData(pickerConfig: any, searchQuery: string = "", page: number = 1, limit: number = 10) {
-    // Calculate offset for pagination
-    const offset = (page - 1) * limit;
 
-    let rows = [];
+    console.log('pickerConfig:', pickerConfig);
 
-    if (pickerConfig.dataSourceDrizzle) {
-        try {
-            let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery)
-            .limit(limit)
-            .offset(offset);
+    if (pickerConfig.viewMode === "grid") {
+        // Calculate offset for pagination
+        const offset = (page - 1) * limit;
 
-            rows = await query.execute();
-        } catch (error) {
-            console.error("Error fetching data from Drizzle ORM:", error);
-            console.log('pickerConfig.dataSourceDrizzle:', pickerConfig.dataSourceDrizzle);
-            return [];
-        }
-    } else {
-        // Escape search query to avoid SQL injection
-        const safeSearchPattern = `%${searchQuery.replace(/'/g, "''")}%`;
+        let rows = [];
 
-        // Format the SQL query by replacing placeholders
-        const query = pickerConfig.dataSourceSQL
-            .replace(/\[safeSearchPattern\]/g, `%${safeSearchPattern}%`)
-            .replace(/\[limit\]/g, `${limit}`)
-            .replace(/\[offset\]/g, `${offset}`);
+        if (pickerConfig.dataSourceDrizzle) {
+            try {
+                let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery)
+                .limit(limit)
+                .offset(offset);
 
-        try {
-            const result = await dr.execute(query);
-            rows = result.rows ?? [];
-        } catch (error) {
-            console.error("Database query failed:", error);
-            return [];
-        }
-    }
-
-    const displayNames = await Promise.all(
-        rows.map(async (row: any) => {
-            const displayName = await pickerConfig.selectedDisplay(dr, row.id);
-            return { id: row.id, displayName };
-        })
-    );
-
-    return rows.map((row: any) => {
-        let formattedRow: any = {};
-
-        pickerConfig.table_columns.forEach((col: any) => {
-            if (col.column_type === "db") {
-                const fieldValue = row[col.column_field] ?? "N/A";
-
-                // Auto-detect and format date fields
-                let finalValue = fieldValue;
-                if (typeof fieldValue === "string" && Date.parse(fieldValue)) {
-                    finalValue = formatDate(new Date(fieldValue));
-                }
-
-                // Apply custom render function if available
-
-                const display = displayNames.find((d: any) => d.id === row.id);
-
-                formattedRow[col.column_field] = col.render ? col.render(row, display?.displayName || "") : finalValue;
-
-                if ((col.is_primary_id || false)) {
-                    formattedRow["_CpID"] = row[pickerConfig.table_column_primary_key];
-                }
-
-                if ((display?.displayName || "") !== "") {
-                    formattedRow["_CpDisplayName"] = display.displayName;
-                }
+                rows = await query.execute();
+            } catch (error) {
+                console.error("Error fetching data from Drizzle ORM:", error);
+                console.log('pickerConfig.dataSourceDrizzle:', pickerConfig.dataSourceDrizzle);
+                return [];
             }
-        });
+        } else {
+            // Escape search query to avoid SQL injection
+            const safeSearchPattern = `%${searchQuery.replace(/'/g, "''")}%`;
 
-        return formattedRow;
-    });
+            // Format the SQL query by replacing placeholders
+            const query = pickerConfig.dataSourceSQL
+                .replace(/\[safeSearchPattern\]/g, `%${safeSearchPattern}%`)
+                .replace(/\[limit\]/g, `${limit}`)
+                .replace(/\[offset\]/g, `${offset}`);
+
+            try {
+                const result = await dr.execute(query);
+                rows = result.rows ?? [];
+            } catch (error) {
+                console.error("Database query failed:", error);
+                return [];
+            }
+        }
+
+        const displayNames = await Promise.all(
+            rows.map(async (row: any) => {
+                const displayName = await pickerConfig.selectedDisplay(dr, row.id);
+                return { id: row.id, displayName };
+            })
+        );
+
+        return rows.map((row: any) => {
+            let formattedRow: any = {};
+
+            pickerConfig.table_columns.forEach((col: any) => {
+                if (col.column_type === "db") {
+                    const fieldValue = row[col.column_field] ?? "N/A";
+
+                    // Auto-detect and format date fields
+                    let finalValue = fieldValue;
+                    if (typeof fieldValue === "string" && Date.parse(fieldValue)) {
+                        finalValue = formatDate(new Date(fieldValue));
+                    }
+
+                    // Apply custom render function if available
+
+                    const display = displayNames.find((d: any) => d.id === row.id);
+
+                    formattedRow[col.column_field] = col.render ? col.render(row, display?.displayName || "") : finalValue;
+
+                    if ((col.is_primary_id || false)) {
+                        formattedRow["_CpID"] = row[pickerConfig.table_column_primary_key];
+                    }
+
+                    if ((display?.displayName || "") !== "") {
+                        formattedRow["_CpDisplayName"] = `${display.displayName} ${pickerConfig.viewMode}`;
+                    }
+                }
+            });
+
+            return formattedRow;
+        });
+    } else if (pickerConfig.viewMode === "tree") {
+        let rows = [];
+
+        if (pickerConfig.dataSourceDrizzle) {
+            try {
+                let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery);
+
+                rows = await query.execute();
+            } catch (error) {
+                console.error("Error fetching data from Drizzle ORM:", error);
+                console.log('pickerConfig.dataSourceDrizzle:', pickerConfig.dataSourceDrizzle);
+                return [];
+            }
+        }
+    
+        // Extract idKey dynamically
+        const idKey = pickerConfig.table_columns.find((col: any) => col.is_primary_id)?.column_field || "id";
+        // Extract parentKey dynamically
+        const parentKey = pickerConfig.table_columns.find((col: any) => col.tree_field === "parentKey")?.column_field || "parentId";
+        // Extract nameKey dynamically
+        const nameKey = pickerConfig.table_columns.find((col: any) => col.tree_field === "nameKey")?.column_field || "name";
+        
+        return buildTree(rows, idKey, parentKey, nameKey, [], null, [], pickerConfig);
+    }
 }
 
 export async function getTotalRecords(pickerConfig: any, searchQuery: string) {

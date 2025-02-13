@@ -5,6 +5,7 @@ import { formatDate, formatDateDisplay } from "~/util/date";
 
 export const contentPickerConfig = {
     id: "disasterEventId",
+    viewMode: "grid",
     dataSources: "/disaster-record/content-picker-datasource",
     caption: "Disaster Event",
     defaultText: "Select Disaster Event...",

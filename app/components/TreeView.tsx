@@ -152,6 +152,7 @@ const injectStyles = (appendCss?: string) => {
                 border-radius: 5px;
                 white-space: nowrap;
             }
+
             ${appendCss}
         `
     ];
@@ -183,9 +184,10 @@ interface TreeViewProps {
     dialogMode?: boolean;
     search?: boolean;
     expanded?: boolean; 
+    onClick?: ((e: any, dialogRefCurrent: any) => void) | undefined;
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onClick = undefined }, ref: any) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -410,7 +412,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             {nodes.map((node) => {
                 const enrichedNode = getFullLineage(node, parentIds);
                 return (
-                    <li key={enrichedNode.id} data-id={enrichedNode.id} data-ids={enrichedNode.dataIds}>
+                    <li key={enrichedNode.id} data-id={enrichedNode.id} data-ids={enrichedNode.ids} data-path={enrichedNode.path} data-has_children={enrichedNode.has_children}>
                         {enrichedNode.children.length > 0 ? (
                             <>
                                 <button className="btn-face" onClick={(e) => toggleExpand(e, enrichedNode.id)}>
@@ -425,7 +427,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                     />
                                 )}
 
-                                <div {...renderItemName(enrichedNode, parentIds)}>
+                                <div {...renderItemName(enrichedNode, parentIds)} onClick={treeViewClick}>
                                     <span>{enrichedNode.name}</span>
                                     {(!multiSelect && !noSelect) && (
                                         <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
@@ -454,7 +456,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                     />
                                 )}
 
-                                <div {...renderItemName(enrichedNode, parentIds)}>
+                                <div {...renderItemName(enrichedNode, parentIds)} onClick={treeViewClick}>
                                     <span>{enrichedNode.name}</span> 
                                     {(!multiSelect && !noSelect) && (
                                         <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
@@ -557,6 +559,17 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             dialogRef.current.close();
         }
     }
+    const treeViewClick = (e?: any) => {
+        if (e) {
+            e.preventDefault();
+        }
+
+        if (typeof onClick === 'function') onClick(e, dialogRef?.current || null);
+
+        // if (e.target.tagName === "BUTTON") {
+        //     toggleExpand(e, parseInt(e.currentTarget.getAttribute("data-id")));
+        // }
+    }
 
     useImperativeHandle(ref, () => ({
         treeViewOpen,
@@ -644,11 +657,13 @@ export const buildTree = (
     parentKey: string,
     nameKey: string,
     nameObj: string[] = ["en"], // Default priority order
-    priorityKey?: string | null, // Make this explicitly optional
-    additionalFields?: string[] // Array of field keys for hidden data
+    priorityKey?: string | null, // Explicitly optional
+    additionalFields?: string[], // Array of field keys for hidden data
+    pickerConfig?: any | null
 ) => {
     const map = new Map();
 
+    // Step 1: Convert list to a map and initialize tree nodes
     list.forEach((item) => {
         let nameOutput = "Unnamed";
         const nameValue = item[nameKey];
@@ -666,6 +681,7 @@ export const buildTree = (
             nameOutput = nameValue?.[selectedKey] || "Unnamed";
         }
 
+        // Store additional hidden fields
         const hiddenData: Record<string, any> = {};
         if (additionalFields) {
             additionalFields.forEach((field) => {
@@ -673,26 +689,44 @@ export const buildTree = (
             });
         }
 
+        // Initialize node in map
         map.set(item[idKey], {
             id: item[idKey],
             parentId: item[parentKey] ?? null,
             name: nameOutput,
             children: [],
-            hiddenData, // Add hidden fields to each node
+            has_children: false, // Default to false
+            hiddenData,
+            path: "",  // Path will be updated in the next step
+            ids: "",   // Comma-separated IDs will be updated
         });
     });
 
     const tree: any[] = [];
+
+    // Step 2: Build hierarchical structure
     map.forEach((node) => {
         if (node.parentId === null) {
+            node.path = node.name;  // Root nodes start with their own name (No leading '/')
+            node.ids = `${node.id}`;  // Root node ID
             tree.push(node);
         } else {
             const parent = map.get(node.parentId);
             if (parent) {
                 parent.children.push(node);
+                parent.has_children = true; // ✅ Mark parent as having children
             }
         }
     });
+
+    // Step 3: Recursively traverse and set correct paths & IDs
+    const setPathsAndIds = (node: any, parentPath: string, parentIds: string) => {
+        node.path = parentPath ? `${parentPath} / ${node.name}` : node.name; // ✅ Spaces added around '/'
+        node.ids = parentIds ? `${parentIds},${node.id}` : `${node.id}`; // Comma-separated hierarchy of IDs
+        node.children.forEach((child: any) => setPathsAndIds(child, node.path, node.ids));
+    };
+
+    tree.forEach((rootNode) => setPathsAndIds(rootNode, "", "")); // Initialize paths & IDs from root
 
     return tree;
 };

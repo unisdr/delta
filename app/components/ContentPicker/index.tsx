@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import "./assets/content-picker.css";
+import { TreeView, buildTree } from "~/components/TreeView";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
@@ -22,6 +23,7 @@ const injectStyles = (appendCss?: string) => {
 
 interface ContentPickerProps {
     id: string;
+    viewMode?: string | "grid" | "tree";
     dataSources: any;
     table_columns: any[];
     caption?: string;
@@ -32,11 +34,10 @@ interface ContentPickerProps {
     displayName?: string;
     value?: string;
     required?: boolean;
-    table_column_primary_key?: string;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, table_column_primary_key = "" }, ref) => {
+    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -77,18 +78,32 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
             setLoading(false);
             return;
         }
-    
-        try {
-            const response = await fetch(`${dataSources}?query=${query}&page=${page}&limit=${itemsPerPage}`);
+        
+        if (viewMode === "tree") {
+            const response = await fetch(`${dataSources}?query=${query}`);
             if (!response.ok) throw new Error("Failed to fetch data");
-    
-            const { data = [], totalRecords = 0 } = await response.json();
-            setTotalPages(Math.ceil(totalRecords / itemsPerPage));
+            const { data = [] } = await response.json();
+
+            /*const idKey = "id"; 
+            const parentKey = "parentId"; 
+            const nameKey = "sectorname"; 
+            const treeData = buildTree(data, idKey, parentKey, nameKey);*/
+
             setTableData(data);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false); // Ensure loading is set to false after data is fetched
+            setLoading(false);
+        } else {    
+            try {
+                const response = await fetch(`${dataSources}?query=${query}&page=${page}&limit=${itemsPerPage}`);
+                if (!response.ok) throw new Error("Failed to fetch data");
+        
+                const { data = [], totalRecords = 0 } = await response.json();
+                setTotalPages(Math.ceil(totalRecords / itemsPerPage));
+                setTableData(data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false); // Ensure loading is set to false after data is fetched
+            }
         }
     };
     
@@ -148,16 +163,16 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
               let contHeight = [] as number[];
               contHeight[0] = (dialogRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
               contHeight[1] = (dialogRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
-              contHeight[2] = (dialogRef.current.querySelector(".cp-filters") as HTMLElement | null)?.offsetHeight || 0;
-              contHeight[3] = (dialogRef.current.querySelector(".cp-footer") as HTMLElement | null)?.offsetHeight || 0;
-              let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - contHeight[3];
+              //contHeight[2] = (dialogRef.current.querySelector(".cp-filters") as HTMLElement | null)?.offsetHeight || 0;
+              //contHeight[3] = (dialogRef.current.querySelector(".cp-footer") as HTMLElement | null)?.offsetHeight || 0;
+              let getHeight = contHeight[0] - contHeight[1]; //- contHeight[2] - contHeight[3];
               getHeight += 240;
   
               const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement | null;
               if (dtsFormBody) {
                   dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
   
-                  const cpContainer = dialogRef.current.querySelector(".cp-container") as HTMLElement | null;
+                  const cpContainer = dialogRef.current.querySelector(".cp-view-mode") as HTMLElement | null;
                   if (cpContainer) {
                       cpContainer.style.display = "block";
                   }
@@ -177,7 +192,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
             dtsFormBody.scrollTop = 0; // Reset scrolling
         }
     
-        const cpContainer = dialogRef.current.querySelector(".cp-container") as HTMLElement | null;
+        const cpContainer = dialogRef.current.querySelector(".cp-view-mode") as HTMLElement | null;
         if (cpContainer) {
             cpContainer.style.display = "none";
         }
@@ -210,16 +225,12 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
             return;
         }
     
-        const selectedRow = tableData.find((row: any) => row[primaryColumn.column_field] === rowId);
+        const selectedRow = tableData.find((row: any) => row[primaryColumn.column_field].toString() === rowId.toString());
 
-        // Extract all fields marked with `is_selected_field: true`
-        /*const selectedFields = table_columns
-        .filter((col) => col.is_selected_field)
-        .reduce((acc, col) => {
-            acc[col.column_field] = selectedRow[col.column_field] || "N/A";
-            return acc;
-        }, {} as Record<string, any>); // Ensuring correct type
-        */
+        // console.log('rowId: ', rowId);
+        // console.log('primaryColumn.column_field: ', primaryColumn.column_field);
+        // console.log('tableData: ', tableData);
+        // console.log('selectedRow: ', selectedRow);
 
         const selectedValues = table_columns
         .filter((col) => col?.is_selected_field)
@@ -227,13 +238,11 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         .join(", "); // Convert array to comma-separated string
         //console.log("Selected item:", selectedRow);
         //console.log("Selected Fields (is_selected_field):", selectedValues);
-
         //console.log("Selected item:", selectedRow['_CpID']);
         //console.log("Selected item:", selectedRow['_CpDisplayName']);
                 
         setSelectedId(selectedRow['_CpID']);
         setSelectedName(selectedRow['_CpDisplayName']);
-
 
         if (dialogRef.current) {
             dialogRef.current.close();
@@ -316,7 +325,53 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                   </svg>
                               </a>
                           </div>
-                          <div>
+
+                          {(viewMode === "tree") && (
+                            <div className="cp-view-mode tree" style={{ display: "none" }}>
+                                    <TreeView 
+                                        treeData={tableData} 
+                                        rootCaption="Sectors" 
+                                        dialogMode={false}
+                                        disableButtonSelect={true}
+                                        noSelect={true}
+                                        appendCss={
+                                            `
+                                                ul.tree li[data-has_children="false"] span {
+                                                    display: inline-block;
+                                                    cursor: pointer;
+                                                    padding: 0.3rem;
+                                                    margin-bottom: 0.3rem;
+                                                    background-color: #f9f9f9;
+                                                    border: 1px solid #e9e9e9;
+                                                    border-radius: 5px;
+                                                }
+                                                ul.tree li[data-has_children="false"]:hover span {
+                                                    text-decoration: underline;
+                                                }
+                                            `
+                                        }
+                                        onClick={(e) => {
+                                            const dataHasChildren = e.target.closest("li")?.getAttribute("data-has_children") || "";
+                                            if (dataHasChildren === "false") {
+                                                const dataId = e.target.closest("li").getAttribute("data-id") || "";
+                                                const dataPath = e.target.closest("li").getAttribute("data-path") || "";
+
+                                                setSelectedId(dataId);
+                                                setSelectedName(dataPath);
+                                        
+                                                if (dialogRef.current) {
+                                                    dialogRef.current.close();
+                                                }
+                                                
+                                                clearPicker();
+                                            }
+                                        }}
+                                    />
+                            </div>                            
+                          )}
+
+                          {(viewMode === "grid") && (
+                          <div className="cp-view-mode grid" style={{ display: "none" }}>
                               <div className="cp-filter">
                                   <input
                                       type="text"
@@ -326,7 +381,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                   />
                               </div>
                               <div className="dts-form__body">
-                                  <div className="cp-container" style={{ display: "none" }}>
+                                  <div className="cp-container">
                                       <table className="dts-table">
                                           <thead>
                                               <tr>
@@ -383,6 +438,8 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                   </div>
                               </div>
                           </div>
+                          )}
+
                       </div>
                   </dialog>
   
