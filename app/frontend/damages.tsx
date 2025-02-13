@@ -51,7 +51,7 @@ export function DamagesForm(props: DamagesFormProps) {
 				let p = f.closest(".mg-grid")
 				if (p) {
 					let p = f.closest(".mg-grid") as HTMLElement | null
-					if (p) p.style.display = show ? "block" : "none"
+					if (p) p.style.display = show ? "grid" : "none"
 				}
 			}
 		}
