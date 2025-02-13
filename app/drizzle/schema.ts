@@ -595,6 +595,7 @@ export const assetTable = pgTable("asset", {
 	measureId: uuid("measure_id")
 		.references((): AnyPgColumn => measureTable.id)
 		.notNull(),
+	isBuiltIn: boolean("is_built_in").notNull(),
 	name: text("name").notNull(),
 	nationalId: text("national_id"),
 	notes: text("notes"),

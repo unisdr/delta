@@ -64,13 +64,15 @@ export function validate(_fields: Partial<AssetFields>): Errors<AssetFields> {
 
 export async function assetCreate(
 	tx: Tx,
-	fields: AssetFields
+	fields: AssetFields,
 ): Promise<CreateResult<AssetFields>> {
 	let errors = validate(fields)
 
 	if (hasErrors(errors)) {
 		return {ok: false, errors}
 	}
+
+	fields.isBuiltIn = false
 
 	let res = await tx.insert(assetTable)
 		.values({
@@ -84,7 +86,7 @@ export async function assetCreate(
 export async function assetUpdate(
 	tx: Tx,
 	idStr: string,
-	fields: Partial<AssetFields>
+	fields: Partial<AssetFields>,
 ): Promise<UpdateResult<AssetFields>> {
 	let errors = validate(fields)
 
