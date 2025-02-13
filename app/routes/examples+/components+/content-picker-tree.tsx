@@ -11,7 +11,7 @@ export const loader = async () => {
 
 // React Component to Render Tree
 export default function Page() {
-    const { selectedDisplay } = useLoaderData();
+    const { selectedDisplay } = useLoaderData<{ selectedDisplay: string }>();
 
     return (
         <>

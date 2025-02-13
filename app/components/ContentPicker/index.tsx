@@ -34,10 +34,11 @@ interface ContentPickerProps {
     displayName?: string;
     value?: string;
     required?: boolean;
+    onSelect?: ((item: any) => void) | undefined;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true }, ref) => {
+    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -249,6 +250,10 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         }
         
         clearPicker();
+
+        if (typeof onSelect === "function") {
+            onSelect({ value: selectedRow['_CpID'], name: selectedRow['_CpDisplayName'], object: selectedRow });
+        }
     };
 
     const removeItem = (e: any) => {
@@ -364,6 +369,10 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                                 }
                                                 
                                                 clearPicker();
+
+                                                if (typeof onSelect === "function") {
+                                                    onSelect({ value: dataId, name: dataPath, object: e.target.closest("li") });
+                                                }
                                             }
                                         }}
                                     />

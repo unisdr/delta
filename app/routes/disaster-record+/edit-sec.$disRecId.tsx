@@ -31,6 +31,11 @@ import { string } from "prop-types";
 import { configCurrencies } from  "~/util/config";
 import { isEmpty } from "ol/extent";
 
+//#Sector: Start
+import { ContentPicker } from "~/components/ContentPicker";
+import { contentPickerConfigSector } from "./content-picker-config";
+//#Sector: End
+
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
 	return [
@@ -92,6 +97,10 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	let arrayType = await getSectors(null);
 	let arrayCurrency = configCurrencies();
 
+	//#Sector: This is how you get the display name of a sector. Syntax: selectedDisplay(dr object, sectorId)
+	const sectorDisplayName = await contentPickerConfigSector.selectedDisplay(dr, "1302020201");
+	//#Sector: End
+
 	return { ok:'loader', type: arrayType, sectors: [], subsectors: [], currency: arrayCurrency };
 });
 
@@ -101,7 +110,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const formData = await req.formData(); 
 	let frmType = formData.get("type") || formData.get("frmType") || ''; 
 	let frmSector = formData.get("sector") || formData.get("frmSector") || ''; 
-	let frmSubSector = formData.get("subsector") || formData.get("frmSubSector") || ''; 
+	let frmSubSector = formData.get("subsector") || formData.get("frmSubSector") || formData.get("sectorId") || ''; 
 
 	let frmWithDamage = formData.get("with_damage") || ''; 
 	let frmWithLosses = formData.get("with_losses") || ''; 
@@ -185,6 +194,15 @@ export default function Screen() {
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
 
 	const locationUrlPath = useLocation();
+
+	//#Sector: Start
+	const [showForm, setShowForm] = useState(false);
+	useEffect(() => {
+		if (actionData?.showForm !== undefined) {
+		  setShowForm(actionData.showForm);
+		}
+	}, [actionData]);
+	//#Sector: End
 
 	// console.log( loaderData );
 	// console.log( actionData );
@@ -277,19 +295,41 @@ export default function Screen() {
   return (
 	<MainContainer title="Disaster Records: Sectors">
 	  <>
-
-
-
-
 		<div className="dts-form__intro">
 			<h2 className="dts-heading-2">Sectors</h2>
 		</div>
 		
 			<Form className="dts-form" ref={formRef} name="frmFilter" id="frmFilter" method="post" onSubmit={(event) => submit(event.currentTarget)}>
+				
+				{/* //#Sector: Added ContentPicker */}
+				<div className="mg-grid mg-grid__col-auto">
+					<div className="form-field">
+						<label>
+							<div>
+							<ContentPicker 
+								{...contentPickerConfigSector} 
+								value={""} //Assign the sector id here
+								displayName={""} //Assign the sector name here, from the loaderData > sectorDisplayName sample
+								onSelect={(selectedItems: any) => {
+									//This is where you can get the selected sector id
+
+									console.log('selectedItems: ', selectedItems);
+									console.log('loaderData: ', loaderData);
+
+									setShowForm(true);
+								}}
+							 />
+							</div>
+						</label>
+					</div>
+				</div>
+				{/* //#Sector: End */}
+
 				<input ref={formRefHidden} type="hidden" name="action" defaultValue="" />
 				<input ref={formRefHiddenType} type="text" name="frmType" value={ actionData?.frmType } />
 				<input ref={formRefHiddenSector} type="text" name="frmSector" defaultValue={ actionData?.frmSector } />
 				<input ref={formRefHiddenSubSector} type="text" name="frmSubSector" defaultValue={ actionData?.frmSubSector } />
+
 				<div className="mg-grid mg-grid__col-auto">
 					<div className="dts-form-component">
 					<label>
@@ -349,8 +389,7 @@ export default function Screen() {
 					</label>
 				</div>
 
-
-				{(actionData?.showForm) &&
+				{(actionData?.showForm || showForm) &&
 					<>
 						<h2 className="dts-heading-3">Damage</h2>
 						<div className="mg-grid mg-grid__col-3">
