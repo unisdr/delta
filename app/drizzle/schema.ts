@@ -483,6 +483,7 @@ export const disruptionTable = pgTable("disruption", {
 	responseOperation: text("response_operation"),
 	responseCost: integer("response_cost"),
 	responseCurrency: text("response_currency"),
+	spatialFootprint: zeroText("spatial_footprint"),
 })
 
 export type Disruption = typeof disruptionTable.$inferSelect
