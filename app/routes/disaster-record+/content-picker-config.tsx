@@ -105,7 +105,7 @@ export const contentPickerConfig = {
 export const contentPickerConfigSector = {
     id: "sectorId",
     viewMode: "tree",
-    dataSources: "/examples/components/content-picker-datasource-tree",
+    dataSources: "/disaster-record/content-picker-datasource-sector",
     caption: "Sectors",
     defaultText: "Select Sector...",
     table_column_primary_key: "id",

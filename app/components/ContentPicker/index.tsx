@@ -347,7 +347,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                                     padding: 0.3rem;
                                                     margin-bottom: 0.3rem;
                                                     background-color: #f9f9f9;
-                                                    border: 1px solid #e9e9e9;
+                                                    border: 1px solid #007B7A;
                                                     border-radius: 5px;
                                                 }
                                                 ul.tree li[data-has_children="false"]:hover span {
