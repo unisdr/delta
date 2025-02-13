@@ -1,5 +1,6 @@
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
 import { contentPickerConfig } from "./content-picker-config";
+import { json } from "@remix-run/node";
 
 export const loader = async ({ request }: { request: Request }) => {
     const url = new URL(request.url);
@@ -11,9 +12,9 @@ export const loader = async ({ request }: { request: Request }) => {
         const results = await fetchData(contentPickerConfig, searchQuery, page, limit);
         const totalRecords = await getTotalRecords(contentPickerConfig, searchQuery);
 
-        return { data: results, totalRecords, page, limit };
+        return json({ data: results, totalRecords, page, limit });
     } catch (error) {
         console.error("Error fetching disaster events:", error);
-        return { error: "Error fetching data" };
+        return json({ error: "Error fetching data" });
     }
 };
