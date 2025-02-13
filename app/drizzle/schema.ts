@@ -35,6 +35,7 @@ function zeroStrMap(name: string) {
 	return jsonb(name).$type<Record<string, string>>().default({}).notNull();
 }
 
+
 /*
 function zeroInteger(name: string) {
 	return integer(name).notNull().default(0)

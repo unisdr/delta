@@ -5,7 +5,8 @@ import {
 	ViewComponent,
 	FormView,
 	WrapInput,
-	errorsToStrings
+	errorsToStrings,
+	WrapInputBasic
 } from "~/frontend/form"
 
 import {DamagesFields, DamagesViewModel} from "~/backend.server/models/damages"
@@ -36,6 +37,7 @@ export function DamagesForm(props: DamagesFormProps) {
 		props.fields.privateDamage = "partial"
 	}
 
+	// show fields based on type
 	let formRef = useRef<HTMLFormElement>(null)
 
 	let setDisplay = (form: HTMLFormElement, prefix: string, show: boolean) => {
@@ -44,6 +46,7 @@ export function DamagesForm(props: DamagesFormProps) {
 			"CostUnitCurrency",
 			"Units",
 			"CostTotalOverride",
+			"CostTotalOverrideCheckbox",
 		]
 		for (let field of fields) {
 			let f = form.querySelector('[name="' + prefix + field + '"]')
@@ -58,6 +61,8 @@ export function DamagesForm(props: DamagesFormProps) {
 	}
 
 	useEffect(() => {
+
+
 		let showBasedOnType = (publicOrPrivate: string, totalOrPartial: string) => {
 			console.log("showBasedOnType", publicOrPrivate, totalOrPartial)
 			if (!formRef.current) return
@@ -83,6 +88,7 @@ export function DamagesForm(props: DamagesFormProps) {
 			}
 		}
 		if (formRef.current) {
+
 			attach("public")
 			showBasedOnType("public", props.fields.publicDamage!)
 			attach("private")
@@ -92,15 +98,135 @@ export function DamagesForm(props: DamagesFormProps) {
 			if (formRef.current) {
 				const pub = formRef.current.querySelector('[name="publicDamage"]')
 				if (pub) {
-					pub.removeEventListener('change', () => {})
+					//				pub.removeEventListener('change', todo)
 				}
 				const priv = formRef.current.querySelector('[name="privDamage"]')
 				if (priv) {
-					priv.removeEventListener('change', () => {})
+					//				priv.removeEventListener('change', todo)
 				}
 			}
 		}
 	}, [props.fields])
+
+	let getEl = (prefix: string, field: string): HTMLFormElement => {
+		let f = formRef.current!.querySelector('[name="' + prefix + field + '"]') as HTMLFormElement
+		return f
+	}
+
+	// handle total overrides
+	useEffect(() => {
+		let attach = (prefix: string) => {
+			if (!formRef.current) return
+			update(prefix)
+			let els = [
+				getEl(prefix, "CostUnit"),
+				getEl(prefix, "Units"),
+				getEl(prefix, "CostTotalOverrideCheckbox"),
+			]
+			els.forEach(el => {
+				el.addEventListener('input', () => {
+					update(prefix)
+				})
+			})
+		}
+		let update = (prefix: string) => {
+			if (!formRef.current) return
+
+			let costPerUnit = Number(getEl(prefix, "CostUnit").value)
+			let qtty = Number(getEl(prefix, "Units").value)
+			let r = ""
+			if (!costPerUnit || !qtty) {
+				r = ""
+			} else {
+				r = String(costPerUnit * qtty)
+			}
+			let checkbox = getEl(prefix, "CostTotalOverrideCheckbox")
+			let el = getEl(prefix, "CostTotalOverride")
+			if (!checkbox.checked) {
+				el.value = r
+				el.disabled = true
+			} else {
+				el.disabled = false
+			}
+		}
+		let detach = (prefix: string) => {
+			let els = [
+				getEl(prefix, "CostUnit"),
+				getEl(prefix, "Units"),
+				getEl(prefix, "CostTotalOverrideCheckbox"),
+			]
+			els.forEach(_el => {
+				//el.removeEventListener('change', todo)
+			})
+		}
+
+		let prefixes = [
+			"publicRepair",
+			"publicReplacement",
+			"privateRepair",
+			"privateReplacement"
+		]
+		if (formRef.current) {
+			formRef.current.addEventListener("submit", () => {
+				for (let prefix of prefixes) {
+					let c = getEl(prefix, "CostTotalOverrideCheckbox")
+					if (!c.checked) {
+						let el = getEl(prefix, "CostTotalOverride")
+						el.value = ""
+					}
+				}
+			})
+			for (let pref of prefixes) {
+				attach(pref)
+			}
+		}
+		return () => {
+			if (formRef.current) {
+				for (let pref of prefixes) {
+					detach(pref)
+				}
+			}
+		}
+	}, [props.fields])
+
+	let totalCostOverride = (prefix: string) => {
+		let def = props.fieldDef.find(d => d.key == prefix + "CostTotalOverride")!
+		let errors: string[] | undefined;
+		let key = (prefix + "CostTotalOverride") as keyof DamagesFields
+		if (props.errors && props.errors.fields) {
+			let e1 = props.errors.fields?.[key]
+			errors = errorsToStrings(e1)
+		}
+		let v = props.fields[key]
+		let checked = v !== null
+		return <>
+			<WrapInput
+				def={def}
+				child={
+					<>
+						<input
+							name={prefix + "CostTotalOverride"}
+							type="text"
+							defaultValue={v ?? ""}
+						>
+						</input>
+					</>
+				}
+				errors={errors}
+			/>
+			<WrapInputBasic
+				label="Override total cost"
+				child={
+					<input
+						name={prefix + "CostTotalOverrideCheckbox"}
+						type="checkbox"
+						defaultChecked={checked}
+					>
+					</input>
+				}
+			/>
+		</>
+	}
 
 
 	let assetDef = props.fieldDef.find(d => d.key == "assetId")
@@ -149,6 +275,12 @@ export function DamagesForm(props: DamagesFormProps) {
 		sectorId: (
 			<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
 		),
+		publicRepairCostTotalOverride: totalCostOverride("publicRepair"),
+		publicReplacementCostTotalOverride: totalCostOverride("publicReplacement"),
+		publicRecoveryCostTotalOverride: totalCostOverride("publicRecovery"),
+		privateRepairCostTotalOverride: totalCostOverride("privateRepair"),
+		privateReplacementCostTotalOverride: totalCostOverride("privateReplacement"),
+		privateRecoveryCostTotalOverride: totalCostOverride("privateRecovery"),
 	}
 
 	return (

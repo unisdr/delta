@@ -394,6 +394,23 @@ export function WrapInput(props: WrapInputProps) {
 	)
 }
 
+export interface WrapInputBasicProps {
+	label: string
+	child: React.ReactNode
+}
+
+export function WrapInputBasic(props: WrapInputBasicProps) {
+	return (
+		<div className="mg-grid mg-grid__col-3">
+			<div className="dts-form-component">
+				<Field label={props.label}>
+					{props.child}
+				</Field>
+			</div>
+		</div>
+	)
+}
+
 export interface InputProps {
 	def: FormInputDefSpecific;
 	name: string;
