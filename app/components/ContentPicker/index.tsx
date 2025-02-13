@@ -81,7 +81,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         }
         
         if (viewMode === "tree") {
-            const response = await fetch(`${dataSources}?query=${query}`);
+            const response = await fetch(`${dataSources}`);
             if (!response.ok) throw new Error("Failed to fetch data");
             const { data = [] } = await response.json();
 
