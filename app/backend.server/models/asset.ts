@@ -143,3 +143,13 @@ export async function assetDeleteById(idStr: string): Promise<DeleteResult> {
 	await deleteByIdForStringId(idStr, assetTable)
 	return {ok: true}
 }
+
+export async function assetsForSector(tx: Tx, sectorId: number) {
+	let res = await tx.query.assetTable.findMany({
+		where: eq(assetTable.sectorId, sectorId),
+		with: {
+			measure: true
+		}
+	})
+	return res
+}

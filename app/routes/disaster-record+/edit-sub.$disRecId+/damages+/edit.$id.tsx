@@ -14,7 +14,6 @@ import {
 } from "~/frontend/damages"
 
 import {
-	FormInputDef,
 	formScreen,
 } from "~/frontend/form"
 
@@ -25,12 +24,25 @@ import {getTableName} from "drizzle-orm"
 import {damagesTable} from "~/drizzle/schema"
 import {authLoaderWithPerm} from "~/util/auth"
 import {useLoaderData} from "@remix-run/react"
+import {assetsForSector} from "~/backend.server/models/asset"
 
-interface LoaderRes {
-	item: DamagesViewModel | null
-	fieldDef: FormInputDef<DamagesFields>[]
-	recordId: string
-	sectorId: number
+import {dr} from "~/db.server";
+
+
+async function getResponseData(item: DamagesViewModel|null, recordId: string, sectorId: number){
+	let assets = (await assetsForSector(dr, sectorId)).map( a => {
+		return {
+			"id": a.id,
+			"label": a.name
+		}
+	})
+	return {
+		assets,
+		item,
+		recordId,
+		sectorId,
+		fieldDef: await fieldsDef()
+	}
 }
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -45,27 +57,15 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		let url = new URL(request.url)
 		let sectorId = Number(url.searchParams.get("sectorId")) || 0
 		if (!sectorId) {
-			throw new Response("Not Found", {status: 404});
+			throw new Response("Not Found", {status: 404})
 		}
-		let res: LoaderRes = {
-			item: null,
-			fieldDef: fieldsDef,
-			recordId: params.disRecId,
-			sectorId: sectorId,
-		}
-		return res
+		return await getResponseData(null, params.disRecId, sectorId)
 	}
-	const item = await damagesById(params.id);
+	const item = await damagesById(params.id)
 	if (!item) {
-		throw new Response("Not Found", {status: 404});
+		throw new Response("Not Found", {status: 404})
 	}
-	let res: LoaderRes = {
-		item: item,
-		fieldDef: fieldsDef,
-		recordId: item.recordId,
-		sectorId: item.sectorId,
-	}
-	return res
+	return await getResponseData(item, item.recordId, item.sectorId)
 });
 
 export const action = createAction({
@@ -93,7 +93,8 @@ export default function Screen() {
 
 	return formScreen({
 		extraData: {
-			fieldDef: ld.fieldDef
+			fieldDef: ld.fieldDef,
+			assets: ld.assets,
 		},
 		fieldsInitial,
 		form: DamagesForm,

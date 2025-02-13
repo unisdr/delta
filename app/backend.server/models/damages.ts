@@ -14,10 +14,11 @@ export const damageTypeEnumData = [
 	{key: "total", label: "Totally destroyed"}
 ]
 
-export const fieldsDef: FormInputDef<DamagesFields>[] =
-	[
+export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
+	return [
 		{key: "recordId", label: "", type: "other"},
 		{key: "sectorId", label: "", type: "other"},
+		{key: "assetId", label: "Assets", type: "other"},
 
 		// Public damages
 		{key: "publicDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
@@ -99,9 +100,17 @@ export const fieldsDef: FormInputDef<DamagesFields>[] =
 		{key: "privateDisruptionDescription", label: "Disruption Description", type: "textarea"},
 
 	]
+}
 
-export const fieldsDefApi: FormInputDef<DamagesFields>[] = [...fieldsDef, {key: "apiImportId", label: "", type: "other"}]
-export const fieldsDefView: FormInputDef<DamagesFields>[] = [...fieldsDef]
+export async function fieldsDefApi(): Promise<FormInputDef<DamagesFields>[]> {
+ 	return [
+		...await fieldsDef(),
+		{key: "apiImportId", label: "", type: "other"}]
+}
+
+export async function fieldsDefView(): Promise<FormInputDef<DamagesFields>[]> {
+ 	return fieldsDef()
+}
 
 export function validate(fields: Partial<DamagesFields>): Errors<DamagesFields> {
 	let errors: Errors<DamagesFields> = {fields: {}}
@@ -202,7 +211,12 @@ export async function damagesById(idStr: string) {
 }
 
 export async function damagesByIdTx(tx: Tx, id: string) {
-	let res = await tx.query.damagesTable.findFirst({where: eq(damagesTable.id, id)})
+	let res = await tx.query.damagesTable.findFirst({
+		where: eq(damagesTable.id, id),
+		with: {
+			asset: true
+		}
+	})
 	if (!res) throw new Error("Id is invalid")
 	return res
 }

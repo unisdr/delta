@@ -21,7 +21,7 @@ export const action = authActionApi(async (args) => {
 
 	const saveRes = await jsonUpdate({
 		data,
-		fieldsDef: fieldsDefApi,
+		fieldsDef: await fieldsDefApi(),
 		update: damagesUpdate
 	})
 

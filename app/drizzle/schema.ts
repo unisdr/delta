@@ -496,6 +496,9 @@ export const damagesTable = pgTable("damages", {
 	sectorId: integer("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
+	assetId: uuid("asset_id")
+		.references((): AnyPgColumn => assetTable.id)
+		.notNull(),
 	publicDamage: text("public_damage", {enum: ["partial", "total"]}).notNull(),
 	publicDamageAmount: integer("public_damage_amount"),
 	publicDamageUnitType: text("public_damage_unit_type", {enum: ["numbers", "other"]}),
@@ -544,9 +547,15 @@ export const damagesTable = pgTable("damages", {
 	privateDisruptionDescription: text("private_disruption_description"),
 })
 
+export const damagesRel = relations(damagesTable, ({one}) => ({
+	asset: one(assetTable, {
+		fields: [damagesTable.assetId],
+		references: [assetTable.id],
+	})
+}));
+
 export type Damages = typeof damagesTable.$inferSelect
 export type DamagesInsert = typeof damagesTable.$inferInsert
-
 
 export const measureTable = pgTable("measure", {
 	...apiImportIdField(),
@@ -586,6 +595,13 @@ export const assetTable = pgTable("asset", {
 	nationalId: text("national_id"),
 	notes: text("notes"),
 });
+
+export const assetRel = relations(assetTable, ({one}) => ({
+	measure: one(measureTable, {
+		fields: [assetTable.measureId],
+		references: [measureTable.id],
+	})
+}));
 
 export type Asset = typeof assetTable.$inferSelect;
 export type AssetInsert = typeof assetTable.$inferInsert;

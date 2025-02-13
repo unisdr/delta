@@ -25,7 +25,7 @@ export const action = authActionApi(async (args) => {
 	const data = await args.request.json()
 	const saveRes = await jsonUpsert({
 		data,
-		fieldsDef: fieldsDefApi,
+		fieldsDef: await fieldsDefApi(),
 		create: damagesCreate,
 		update: damagesUpdate,
 		idByImportId: damagesIdByImportId,

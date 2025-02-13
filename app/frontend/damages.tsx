@@ -3,11 +3,14 @@ import {
 	FormInputDef,
 	FieldsView,
 	ViewComponent,
-	FormView
+	FormView,
+	WrapInput,
+	errorsToStrings
 } from "~/frontend/form"
 
 import {DamagesFields, DamagesViewModel} from "~/backend.server/models/damages"
 import {useEffect, useRef} from "react"
+import {Link} from "@remix-run/react"
 
 export const route = "/disaster-record/edit-sub/_/damages"
 
@@ -15,8 +18,14 @@ export function route2(recordId: string): string {
 	return `/disaster-record/edit-sub/${recordId}/damages`
 }
 
+interface Asset {
+	id: string
+	label: string
+}
+
 interface DamagesFormProps extends UserFormProps<DamagesFields> {
 	fieldDef: FormInputDef<DamagesFields>[]
+	assets: Asset[]
 }
 
 export function DamagesForm(props: DamagesFormProps) {
@@ -93,7 +102,47 @@ export function DamagesForm(props: DamagesFormProps) {
 		}
 	}, [props.fields])
 
+
+	let assetDef = props.fieldDef.find(d => d.key == "assetId")
+	if (!assetDef) {
+		throw new Error("assetId def does not exist")
+	}
+
+	let assetIdErrors: string[] | undefined;
+	if (props.errors && props.errors.fields) {
+		assetIdErrors = errorsToStrings(props.errors.fields["assetId"]);
+	}
+
 	let override = {
+		assetId: (
+			<>
+				{props.assets ? (
+					<WrapInput
+						def={assetDef}
+						child={
+							<>
+								<select
+									required={true}
+									name="assetId"
+								>
+									{props.assets.map((a) => (
+										<option key={a.id} value={a.id}>
+											{a.label}
+										</option>
+									))}
+								</select>
+							</>
+						}
+						errors={assetIdErrors}
+					/>
+				) : (
+					<p>No assets, add asset first.</p>
+				)}
+				<Link target="_blank" to="/settings/assets">
+					Add asset
+				</Link>
+			</>
+		),
 		recordId: (
 			<input key="recordId" name="recordId" type="hidden" value={props.fields.recordId} />
 		),
@@ -115,7 +164,7 @@ export function DamagesForm(props: DamagesFormProps) {
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
 			elementsAfter={{
-				sectorId: (
+				assetId: (
 					<h2>Public</h2>
 				),
 				publicDisruptionDescription: (
@@ -129,7 +178,7 @@ export function DamagesForm(props: DamagesFormProps) {
 
 interface DamagesViewProps {
 	item: DamagesViewModel
-	fieldDef: FormInputDef<DamagesFields>[]
+	def: FormInputDef<DamagesFields>[]
 }
 
 export function DamagesView(props: DamagesViewProps) {
@@ -137,6 +186,7 @@ export function DamagesView(props: DamagesViewProps) {
 	let override: Record<string, JSX.Element | null | undefined> = {
 		recordId: <p key="recordId">Disaster record ID: {props.item.recordId}</p>,
 		sectorId: <p key="sectorId">Sector ID: {props.item.sectorId}</p>,
+		assetId: <p key="assetId">Asset: {props.item.asset.name}</p>,
 		publicRepairCostUnit: undefined,
 		publicRepairCostUnitCurrency: undefined,
 		publicRepairUnits: undefined,
@@ -188,13 +238,13 @@ export function DamagesView(props: DamagesViewProps) {
 			singular="Damage"
 		>
 			<FieldsView
-				def={props.fieldDef}
+				def={props.def}
 				fields={props.item}
 				headersAfter={{
-					sectorId: (
+					assetId: (
 						<h2>Public</h2>
 					),
-					pubDisruptionDescription: (
+					publicDisruptionDescription: (
 						<h2>Private</h2>
 					),
 				}}

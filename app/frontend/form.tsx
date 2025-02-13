@@ -323,7 +323,7 @@ export interface InputsProps<T> {
 	def: FormInputDef<T>[];
 	fields: Partial<T>;
 	errors?: Errors<T>;
-	override?: Record<string, ReactElement|undefined|null>;
+	override?: Record<string, ReactElement | undefined | null>;
 	elementsAfter?: Record<string, ReactElement>
 }
 
@@ -367,6 +367,33 @@ export function Inputs<T>(props: InputsProps<T>) {
 	});
 }
 
+
+export interface WrapInputProps {
+	def: FormInputDefSpecific;
+	child: React.ReactNode
+	errors: string[] | undefined;
+}
+
+export function WrapInput(props: WrapInputProps) {
+	let label = props.def.label;
+	if (props.def.required) {
+		label += " *";
+	}
+	return (
+		<div title={props.def.tooltip} className="mg-grid mg-grid__col-3">
+			<div className="dts-form-component">
+				<Field label={label}>
+					{props.child}
+					<FieldErrors2 errors={props.errors} />
+					{props.def.description &&
+						<p>{props.def.description}</p>
+					}
+				</Field>
+			</div>
+		</div>
+	)
+}
+
 export interface InputProps {
 	def: FormInputDefSpecific;
 	name: string;
@@ -376,23 +403,13 @@ export interface InputProps {
 }
 
 export function Input(props: InputProps) {
-	let label = props.def.label;
-	if (props.def.required) {
-		label += " *";
-	}
 	let wrapInput = function (child: React.ReactNode) {
 		return (
-			<div title={props.def.tooltip} className="mg-grid mg-grid__col-3">
-				<div className="dts-form-component">
-					<Field label={label}>
-						{child}
-						<FieldErrors2 errors={props.errors} />
-						{props.def.description && 
-							<p>{props.def.description}</p>
-						}
-					</Field>
-				</div>
-			</div>
+			<WrapInput
+				def={props.def}
+				child={child}
+				errors={props.errors}
+			/>
 		)
 	}
 	switch (props.def.type) {
@@ -501,7 +518,7 @@ export interface FieldsViewProps<T> {
 	def: FormInputDef<T>[]
 	fields: T
 	headersAfter?: Record<string, ReactElement>
-	override?: Record<string, ReactElement|undefined|null>
+	override?: Record<string, ReactElement | undefined | null>
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
@@ -740,7 +757,7 @@ interface FormViewProps {
 	errors: any;
 	fields: any;
 	fieldsDef: any;
-	override?: Record<string, ReactElement|undefined|null>;
+	override?: Record<string, ReactElement | undefined | null>;
 	elementsAfter?: Record<string, ReactElement>
 	ref?: React.Ref<HTMLFormElement>;
 }
