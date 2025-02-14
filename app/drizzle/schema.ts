@@ -2,7 +2,9 @@ import {
 	pgTable,
 	text,
 	timestamp,
-	bigserial,
+	serial,
+	integer,
+	bigint,
 	check,
 	unique,
 	boolean,
@@ -10,7 +12,6 @@ import {
 	jsonb,
 	index,
 	AnyPgColumn,
-	bigint,
 	numeric,
 } from "drizzle-orm/pg-core";
 
@@ -24,7 +25,7 @@ import {
 function zeroTimestamp(name: string) {
 	return timestamp(name)
 		.notNull()
-		.default(sql`'2000-01-01T00:00:00.000Z'`);
+		.default(sql`CURRENT_TIMESTAMP`);
 }
 function zeroText(name: string) {
 	return text(name).notNull().default("");
@@ -39,7 +40,7 @@ function ourBigint(name: string) {
 	return bigint(name, {mode: "number"})
 }
 function ourSerial(name: string) {
-	return bigserial(name, {mode: "number"})
+	return bigint(name, {mode: "number"}).notNull()
 }
 function ourMoney(name: string) {
 	return numeric(name)
@@ -47,7 +48,7 @@ function ourMoney(name: string) {
 
 const createdUpdatedTimestamps = {
 	updatedAt: timestamp("updated_at"),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
+	createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 };
 
 const approvalFields = {
@@ -188,12 +189,14 @@ export type DivitionInsert = typeof divisionTable.$inferInsert;
 
 export const eventTable = pgTable("event", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	example: text("example"),
+	name: zeroText("name").notNull(),
+	description: zeroText("description").notNull(),
 	// parent
 });
 
-// using 2 letter relationship names, as a workaround for this bug
-// https://github.com/drizzle-team/drizzle-orm/issues/2066
+export type Event = typeof eventTable.$inferSelect;
+export type EventInsert = typeof eventTable.$inferInsert;
+
 export const eventRel = relations(eventTable, ({one, many}) => ({
 	// hazard event
 	he: one(hazardEventTable, {
@@ -210,9 +213,6 @@ export const eventRel = relations(eventTable, ({one, many}) => ({
 	// children
 	cs: many(eventRelationshipTable, {relationName: "p"}),
 }));
-
-export type Event = typeof eventTable.$inferSelect;
-export type EventInsert = typeof eventTable.$inferInsert;
 
 export const eventRelationshipTable = pgTable("event_relationship", {
 	parentId: uuid("parent_id")
@@ -247,16 +247,14 @@ export const hazardEventTable = pgTable("hazard_event", {
 	...approvalFields,
 	...apiImportIdField(),
 	id: uuid("id")
-		.primaryKey()
-		.references((): AnyPgColumn => eventTable.id),
+		.references((): AnyPgColumn => eventTable.id)
+		.primaryKey(),
 	hazardId: text("hazard_id")
 		.references((): AnyPgColumn => hipHazardTable.id)
 		.notNull(),
-	startDate: timestamp("start_date"),
-	endDate: timestamp("end_date"),
-	// data fields below not used in queries directly
-	// only on form screens
-	// should be easier to change if needed
+	startDate: timestamp("start_date").notNull(),
+	endDate: timestamp("end_date").notNull(),
+	status: text("status").notNull().default("pending"),
 	// otherId1 is id in some other system TODO
 	otherId1: zeroText("otherId1"),
 	description: zeroText("description"),
@@ -930,7 +928,7 @@ export const sectorTable = pgTable(
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
-		id: uuid("id").primaryKey().defaultRandom(), // Unique ID for the relation
+		id: serial("id").primaryKey(), // Keep using serial instead of UUID
 		sectorId: ourBigint("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id),
@@ -948,6 +946,10 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 	(table) => {
 		return [
 			unique("disRecSectorsUniqueIdx").on(table.disasterRecordId, table.sectorId),
+			index("sector_disaster_records_relation_sector_id_idx").on(table.sectorId),
+			index("sector_disaster_records_relation_disaster_record_id_idx").on(
+				table.disasterRecordId
+			),
 		];
 	}
 );
