@@ -98,7 +98,7 @@ export const action = createAction({
 		const save_path_temp = `/uploads/temp`;
 	  
 		// Process the attachments data
-		const processedAttachments = ContentRepeaterUploadFile.save(data.attachments, save_path_temp, save_path);
+		const processedAttachments = ContentRepeaterUploadFile.save(data.attachments || "", save_path_temp, save_path);
 	  
 		// Update the `attachments` field in the database
 		await dr.update(disruptionTable)
