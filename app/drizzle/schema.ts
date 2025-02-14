@@ -12,7 +12,6 @@ import {
 	AnyPgColumn,
 	bigint,
 	numeric,
-	integer
 } from "drizzle-orm/pg-core";
 
 import {sql, relations} from "drizzle-orm";
