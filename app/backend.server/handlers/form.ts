@@ -588,6 +588,7 @@ interface FormDeleteArgs {
 	redirectToError?: (id: string) => string;
 	tableName: string;
 	getById: (id: string) => Promise<any>;
+	postProcess?: (id: string, data: any) => Promise<void>;
 }
 
 export async function formDelete(args: FormDeleteArgs) {
@@ -618,6 +619,9 @@ export async function formDelete(args: FormDeleteArgs) {
 		action: "delete",
 		oldValues: oldRecord,
 	});
+	if (args.postProcess) {
+		await args.postProcess(id, oldRecord);
+	}
 	return redirectWithMessage(request, args.redirectToSuccess(id), {
 		type: "info",
 		text: "Record deleted",
@@ -828,6 +832,7 @@ interface DeleteLoaderArgs {
 	baseRoute: string;
 	tableName: string;
 	getById: (id: string) => Promise<any>;
+	postProcess?: (id: string, data: any) => Promise<void>;
 }
 
 export function createDeleteLoader(args: DeleteLoaderArgs) {
@@ -846,6 +851,7 @@ export function createDeleteLoaderWithPerm(
 			redirectToError: (id: string) => `${args.baseRoute}/${id}`,
 			tableName: args.tableName,
 			getById: args.getById,
+			postProcess: args.postProcess,
 		});
 	});
 }
