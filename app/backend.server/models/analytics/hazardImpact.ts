@@ -99,10 +99,10 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
             hazardId: hipClassTable.id,
             hazardName: hipClassTable.nameEn,
             value: sql`COALESCE(SUM(
-                COALESCE(${damagesTable.pubRepairCostTotalOverride}, 
-                    ${damagesTable.pubRepairCostUnit} * ${damagesTable.pubRepairUnits}) +
-                COALESCE(${damagesTable.privRepairCostTotalOverride},
-                    ${damagesTable.privRepairCostUnit} * ${damagesTable.privRepairUnits})
+                COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
+                    ${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}) +
+                COALESCE(${damagesTable.privateRepairCostTotalOverride},
+                    ${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits})
             ), 0)`,
         })
         .from(disasterRecordsTable)
@@ -129,10 +129,10 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         .where(and(...baseConditions))
         .groupBy(hipClassTable.id, hipClassTable.nameEn)
         .orderBy(desc(sql`COALESCE(SUM(
-            COALESCE(${damagesTable.pubRepairCostTotalOverride},
-                ${damagesTable.pubRepairCostUnit} * ${damagesTable.pubRepairUnits}) +
-            COALESCE(${damagesTable.privRepairCostTotalOverride},
-                ${damagesTable.privRepairCostUnit} * ${damagesTable.privRepairUnits})
+            COALESCE(${damagesTable.publicRepairCostTotalOverride},
+                ${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}) +
+            COALESCE(${damagesTable.privateRepairCostTotalOverride},
+                ${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits})
         ), 0)`))
         .limit(10);
 

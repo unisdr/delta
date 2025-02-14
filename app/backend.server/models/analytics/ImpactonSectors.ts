@@ -68,10 +68,10 @@ const aggregateDamagesData = async (recordIds: string[]) => {
       year: sql<number>`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`.as("year"),
       total: sql<number>`
         SUM(
-          COALESCE(${damagesTable.pubRepairCostTotalOverride}, 
-            ${damagesTable.pubRepairCostUnit} * ${damagesTable.pubRepairUnits}, 0) +
-          COALESCE(${damagesTable.privRepairCostTotalOverride},
-            ${damagesTable.privRepairCostUnit} * ${damagesTable.privRepairUnits}, 0)
+          COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
+            ${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}, 0) +
+          COALESCE(${damagesTable.privateRepairCostTotalOverride},
+            ${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits}, 0)
         )`.as("total")
     })
     .from(damagesTable)
