@@ -46,14 +46,14 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 		]
 	},
 	{key: "publicValue", label: "Value", type: "number"},
-	{key: "publicCostPerUnit", label: "Cost Per Unit", type: "number"},
+	{key: "publicCostPerUnit", label: "Cost Per Unit", type: "money"},
 	{
 		key: "publicCostPerUnitCurrency",
 		label: "Cost Currency",
 		type: "enum-flex",
 		enumData: configCurrencies().map(c => ({key: c, label: c}))
 	},
-	{key: "publicTotalCost", label: "Total Cost", type: "number"},
+	{key: "publicTotalCost", label: "Total Cost", type: "money"},
 	{
 		key: "publicTotalCostCurrency",
 		label: "Total Cost Currency",
@@ -70,14 +70,14 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 		]
 	},
 	{key: "privateValue", label: "Value", type: "number"},
-	{key: "privateCostPerUnit", label: "Cost Per Unit", type: "number"},
+	{key: "privateCostPerUnit", label: "Cost Per Unit", type: "money"},
 	{
 		key: "privateCostPerUnitCurrency",
 		label: "Cost Currency",
 		type: "enum-flex",
 		enumData: configCurrencies().map(c => ({key: c, label: c}))
 	},
-	{key: "privateTotalCost", label: "Total Cost", type: "number"},
+	{key: "privateTotalCost", label: "Total Cost", type: "money"},
 	{
 		key: "privateTotalCostCurrency",
 		label: "Total Cost Currency",

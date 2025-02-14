@@ -18,7 +18,7 @@ export const fieldsDef: FormInputDef<DisruptionFields>[] =
 		{key: "usersAffected", label: "Users Affected", type: "number"},
 		{key: "comment", label: "Comment", type: "text"},
 		{key: "responseOperation", label: "Response Operation", type: "text"},
-		{key: "responseCost", label: "Response Cost", type: "number"},
+		{key: "responseCost", label: "Response Cost", type: "money"},
 		{
 			key: "responseCurrency",
 			label: "Response Currency",
