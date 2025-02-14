@@ -1,50 +1,50 @@
-id,name,parent_id
-1,Human Life - health and livelihoods,
-2,Meaningful Places,
-3,Cultural heritage,
-4,Social and Intrinsic values,
-5,Biodiversity,
-6,Ecosystem services,
-101,Lives,1
-102,Health,1
-103,Wellbeing,1
-104,Livelihoods,1
-105,Food security,1
-201,Territory,2
-202,Homes - sense of place,2
-203,Places,2
-204,Sacred sites,2
-301,Heritage,3
-302,Historical monuments,3
-303,Artefacts,3
-304,Rituals,3
-305,Traditions - ways of life,3
-306,Customs,3
-307,Culture,3
-308,Language,3
-309,Indigenous knowledge,3
-401,Dignity,4
-402,Agency,4
-403,Identity,4
-404,Security,4
-405,Social cohesion,4
-406,Social capital,4
-407,Social fabric,4
-408,Community ( sense of),4
-409,Sovereignty,4
-410,Education,4
-411,(Human) Mobility,4
-501,Genetic diversity,5
-502,Species diversity,5
-503,Ecosystems diversity,5
-504,Habitats,5
-505,Landscapes,5
-601,Regulation and maintenance services,6
-602,Provisioning services,6
-603,Cultural services,6
-601001,Biotic (living components of an ecosystem),601
-601002,Abiotic (non-living physical and chemical components of an ecosystem),601
-602001,Biotic (living components of an ecosystem),602
-602002,Abiotic (non-living physical and chemical components of an ecosystem),602
-603001,Biotic (living components of an ecosystem),603
-603002,Abiotic (non-living physical and chemical components of an ecosystem),603
+id,name,parent_id,level
+1,Human Life - health and livelihoods,,1
+2,Meaningful Places,,1
+3,Cultural heritage,,1
+4,Social and Intrinsic values,,1
+5,Biodiversity,,1
+6,Ecosystem services,,1
+101,Lives,1,2
+102,Health,1,2
+103,Wellbeing,1,2
+104,Livelihoods,1,2
+105,Food security,1,2
+201,Territory,2,2
+202,Homes - sense of place,2,2
+203,Places,2,2
+204,Sacred sites,2,2
+301,Heritage,3,2
+302,Historical monuments,3,2
+303,Artefacts,3,2
+304,Rituals,3,2
+305,Traditions - ways of life,3,2
+306,Customs,3,2
+307,Culture,3,2
+308,Language,3,2
+309,Indigenous knowledge,3,2
+401,Dignity,4,2
+402,Agency,4,2
+403,Identity,4,2
+404,Security,4,2
+405,Social cohesion,4,2
+406,Social capital,4,2
+407,Social fabric,4,2
+408,Community ( sense of),4,2
+409,Sovereignty,4,2
+410,Education,4,2
+411,(Human) Mobility,4,2
+501,Genetic diversity,5,2
+502,Species diversity,5,2
+503,Ecosystems diversity,5,2
+504,Habitats,5,2
+505,Landscapes,5,2
+601,Regulation and maintenance services,6,2
+602,Provisioning services,6,2
+603,Cultural services,6,2
+601001,Biotic (living components of an ecosystem),601,3
+601002,Abiotic (non-living physical and chemical components of an ecosystem),601,3
+602001,Biotic (living components of an ecosystem),602,3
+602002,Abiotic (non-living physical and chemical components of an ecosystem),602,3
+603001,Biotic (living components of an ecosystem),603,3
+603002,Abiotic (non-living physical and chemical components of an ecosystem),603,3

@@ -10,7 +10,7 @@ import {
 
 import {divisionTable, DivitionInsert} from "~/drizzle/schema";
 
-import {divisionBreadcrumb, DivisionBreadcrumbRow} from "~/backend.server/models/division";
+import {divisionBreadcrumb, DivisionBreadcrumbRow, divisionById} from "~/backend.server/models/division";
 
 
 import {
@@ -63,8 +63,16 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	}
 
 	const formData = formStringData(await request.formData());
+	let recordDivision:any = {};
+	let data = fromForm(formData);
 
-	const data = fromForm(formData);
+	if (data.parentId) {
+		recordDivision  = await divisionById(Number(data.parentId));
+		data.level = recordDivision && recordDivision.level ? recordDivision.level + 1 : 1;
+	}
+	else {
+		data.level = 1;
+	}
 
 	const res = await update(id, data);
 

@@ -71,6 +71,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
       sectorname: item[1],
       parentId: parseInt(item[2]),
       description: item[3],
+      level: parseInt(item[4]),
     };
 
     all.forEach((item, key) => {
@@ -80,6 +81,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
             id: parseInt(item[0]),
             sectorname: item[1],
             description: item[3],
+            level: parseInt(item[4]),
           };
         }
         else {
@@ -88,15 +90,21 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
             sectorname: item[1],
             parentId: parseInt(item[2]),
             description: item[3],
+            level: parseInt(item[4]),
           };
         }
 
-        try {
-          upsertRecordSector(formRecord).catch(console.error);
-        } catch (e) {
-          console.log(e);
-          throw e;
+        // TODO, level 6 and up needs revision of ID it gives error saving in DB.
+        if (parseInt(item[4]) <= 5) {
+          try {
+            upsertRecordSector(formRecord).catch(console.error);
+          } catch (e) {
+            console.log(e);
+            throw e;
+          }
         }
+
+        
       }
     }); 
   }
@@ -135,6 +143,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
           formRecord = { 
             id: parseInt(item[0]),
             name: item[1],
+            level: parseInt(item[3]),
           };
         }
         else {
@@ -142,6 +151,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
             id: parseInt(item[0]),
             name: item[1],
             parentId: parseInt(item[2]),
+            level: parseInt(item[3]),
           };
         }
 

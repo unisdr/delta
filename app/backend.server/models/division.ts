@@ -7,7 +7,7 @@ import {
 	DivitionInsert,
 } from '~/drizzle/schema';
 
-import {dr} from '~/db.server';
+import {dr, Tx} from '~/db.server';
 
 import {parse} from 'csv-parse';
 
@@ -254,11 +254,15 @@ async function importDivision(
 		await importDivision(divisions, division.parent, idMap);
 	}
 
-	let parentDbId: number | null = null
+	let parentDbId: number | null = null;
+	let parentLevel: number = 1;
 
 	if (division.parent) {
 		const res = await dr
-			.select({id: divisionTable.id})
+			.select({
+				id: divisionTable.id,
+				parentLevel: divisionTable.level,
+			})
 			.from(divisionTable)
 			.where(eq(divisionTable.importId, division.parent));
 
@@ -266,27 +270,44 @@ async function importDivision(
 			throw new Error(`App error. Imported division not found`)
 		}
 		parentDbId = res[0].id;
+		parentLevel = (res[0].parentLevel) ? res[0].parentLevel + 1 : 1;
 	}
+
 	let dbId = await upsertDivision({
 		importId: importId,
 		parentId: parentDbId,
 		name: division.name,
+		level: parentLevel,
 	});
 	idMap.set(importId, dbId);
 }
 
 async function upsertDivision(division: DivitionInsert): Promise<number> {
+	let parentLevel: number | null = null;
+
+
+	if (division.parentId == null) {
+		parentLevel = 1;
+		// console.log('PARENT_ID NULL', division);
+	}
+	else {
+		parentLevel = division.level || 1;
+		// console.log('PARENT_ID NOT NULL', division);
+	}
+
 	const [res] = await dr.insert(divisionTable)
 		.values({
 			importId: division.importId,
 			parentId: division.parentId,
 			name: division.name,
+			level: parentLevel,
 		})
 		.onConflictDoUpdate({
 			target: divisionTable.importId,
 			set: {
 				parentId: division.parentId,
 				name: sql`${divisionTable.name} || ${JSON.stringify(division.name)}::jsonb`,
+				level: parentLevel,
 			},
 		})
 		.returning({id: divisionTable.id});
@@ -320,10 +341,22 @@ export async function update(id: number, data: DivitionInsert): Promise<{ok: boo
 			.set({
 				parentId: data.parentId,
 				name: data.name,
+				level: data.level,
 			})
 			.where(eq(divisionTable.id, id));
 		return {ok: true};
 	} catch (error) {
 		return {ok: false, errors: ["Failed to update the division"]};
 	}
+}
+
+
+export async function divisionById(id: number) {
+	const res = await dr.query.divisionTable.findFirst({
+		where: eq(divisionTable.id, id),
+		with: {
+			divisionParent: true
+		}
+	});
+	return res
 }
