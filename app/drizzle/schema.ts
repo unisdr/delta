@@ -11,7 +11,7 @@ import {
 	index,
 	AnyPgColumn,
 	bigint,
-	doublePrecision
+	numeric
 } from "drizzle-orm/pg-core";
 
 import {sql, relations} from "drizzle-orm";
@@ -42,7 +42,7 @@ function ourSerial(name: string) {
 	return bigserial(name, {mode: "number"})
 }
 function ourMoney(name: string) {
-	return doublePrecision(name)
+	return numeric(name)
 }
 
 const createdUpdatedTimestamps = {
