@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom';
 import {
 	PropRecord,
 	upsertRecord,
-
+	nonecoLossesById,
 } from "~/backend.server/models/noneco_losses";
 import {getCategories, CategoryType} from "~/backend.server/models/category";
 
@@ -26,6 +26,11 @@ import {
 import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
 import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
 import { string } from "prop-types";
+
+//#Category: Start
+import { ContentPicker } from "~/components/ContentPicker";
+import { contentPickerConfigCategory } from "./content-picker-config";
+//#Category: End
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -53,6 +58,8 @@ interface Factor {
 type PropsLoader = { 
 	ok: string; 
 	categories: PropsItem[];
+	record: PropRecord;
+	categoryDisplayName?: string;
 };
 
 type PropsForm = { 
@@ -72,64 +79,64 @@ interface PropsAction {
 	ok?: string;
 	error?: string;
 	data?: string;
-	categories?:object;
-	subcategories?:SubCategory;
-	factors?:Factor;
 	form?:PropsForm;
 	showForm: boolean;
-	frmType: string;
-	frmSubType: string;
-	frmFactor: string;
 }
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
+	const {params} = actionArgs;
+	const req = actionArgs.request;
 	// get first level categories
 	let arrayCat = await getCategories(null);
+	let categoryDisplayName:string = '';
 
-	return { ok:'loader', categories: arrayCat, subcategories: [], factors: [] };
+	// Parse the request URL
+	const parsedUrl = new URL(req.url);
+
+	// Extract query string parameters
+	const queryParams = parsedUrl.searchParams;
+	const xId = queryParams.get('id') || ''; 
+	let record:any = {};
+	if (xId) {
+		record = await nonecoLossesById(xId);
+		console.log( xId );
+	}
+	if ( record ) {
+		categoryDisplayName = await contentPickerConfigCategory.selectedDisplay(dr, record.categortyId);
+		console.log( record );
+		console.log( categoryDisplayName );
+	}
+
+	// //#Category: This is how you get the display name of a sector. Syntax: selectedDisplay(dr object, sectorId)
+	// const sectorDisplayName = await contentPickerConfigCategory.selectedDisplay(dr, "501");
+	// //#Category: End
+
+	return { 
+		ok:'loader',
+		record: record,
+		categoryDisplayName: categoryDisplayName,
+	 };
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const {params} = actionArgs;
 	const req = actionArgs.request;
 	const formData = await req.formData(); 
-	let frmType = formData.get("type") || formData.get("frmType") || ''; 
-	let frmSubtype = formData.get("subtype") || formData.get("frmSubtype") || ''; 
-	let frmFactor = formData.get("factor") || formData.get("frmFactor") || ''; 
+	let frmId = formData.get("id") || ''; 
+	let frmCategoryId = formData.get("categoryId") || ''; 
 	let frmDescription = formData.get("description") || ''; 
 	let this_showForm:boolean = false;
-	let intCatetoryID:number = 0;
-	let intCatetorySubID:number = 0;
-	let intCatetorySubTypeID:number = 0;
 	let intCatetoryIDforDB:number = 0;
-	let subCategoryData = {};
-	let factorData = {};
 
-	if (frmType !== '' && typeof frmType === "string" && parseInt(frmType) > 0) {
-		intCatetoryID = parseInt(frmType);
-		subCategoryData = await getCategories(intCatetoryID);
-	}
-	if (intCatetoryID > 0 && typeof frmSubtype === "string" && frmSubtype !== '' && parseInt(frmSubtype) > 0) {
-		intCatetorySubID = parseInt(frmSubtype);
-		intCatetoryIDforDB = intCatetorySubID;
-	}
-	if (intCatetoryID === 6 && intCatetorySubID > 0) {
-		factorData = await getCategories(intCatetorySubID);
-	}
-	if (intCatetoryID === 6 && intCatetorySubID > 0 && typeof frmFactor === "string" && frmFactor !== '' && parseInt(frmFactor) > 0) {
-		intCatetorySubTypeID = parseInt(frmFactor);
-		intCatetoryIDforDB = intCatetorySubTypeID;
-	}
 
-	if (intCatetoryID !== 6 && intCatetorySubID > 0) {
+	if (frmCategoryId && typeof frmCategoryId == 'string' && parseInt(frmCategoryId) > 0) {
 		this_showForm = true;
-	} else if (intCatetoryID === 6 && intCatetorySubID > 0 && intCatetorySubTypeID > 0) {
-		this_showForm = true;
+		intCatetoryIDforDB = parseInt(frmCategoryId);
 	}
 
-	if (this_showForm && frmDescription.toString() !== '' && intCatetoryID > 0) {
+	if (this_showForm && frmDescription.toString() !== '' && intCatetoryIDforDB > 0) {
 		const formRecord:PropRecord = { 
-			// id: '70bc07e0-a671-4dbc-8ac8-0c21bc62a878',
+			id: frmId && typeof frmId == 'string' ? frmId : undefined,
 			categortyId: intCatetoryIDforDB,
 			disasterRecordId: String(params.id),
 			description: String(frmDescription),
@@ -146,12 +153,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
 	return {
 		ok: 'action', 
-		subcategories: subCategoryData,
-		factors: factorData,
 		showForm: this_showForm,
-		frmType: frmType,
-		frmSubtype: frmSubtype,
-		frmFactor: frmFactor,
 	}; 
 });
 
@@ -171,93 +173,26 @@ export default function Screen() {
 
 	const locationUrlPath = useLocation();
 
-	// console.log( loaderData );
+	//#Category: Start
+	const [showForm, setShowForm] = useState(false);
+	useEffect(() => {
+		if (actionData?.showForm !== undefined) {
+		  setShowForm(actionData.showForm);
+		}
+	}, [actionData]);
+	//#Category: End
+
+	// console.log( 'CLIENT: ', loaderData );
+	// console.log( 'CLIENT: ', loaderData.record.categortyId );
 	// console.log( actionData );
 	// console.log( actionData?.subcategories );
 	
-	const handleSelectOnChangeSubCategories = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		console.log(e.currentTarget.value);
-		console.log(e.target.value);
-
-		if (formRefHidden.current) {
-			console.log(formRefHidden.current.value = e.target.name);
-		}
-
-		if (formRefHiddenSubType.current) {
-			formRefHiddenSubType.current.value = e.target.value;
-		}
-
-		// if (e.target.value == '' && formRefSubmit.current) {
-		// 	formRefSubmit.current.style.display = 'none';
-		// }
-		// else if (e.target.value !== '' && formRefSubmit.current) {
-		// 	formRefSubmit.current.style.display = 'block';
-		// }
-		
-		
-	};
-
-	const handleSelectOnChangeCategories = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		console.log(e.currentTarget.value);
-		console.log(e.target.value);
-
-		if (formRefHidden.current) {
-			console.log(formRefHidden.current.value = e.target.name);
-		}
-
-		if (formRefHiddenType.current) {
-			formRefHiddenType.current.value = e.target.value;
-		}
-	};
-
-	const handleSelectOnChangeFactor = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		if (formRefHiddenFactor.current) {
-			formRefHiddenFactor.current.value = e.target.value;
-		}
-	};
-
 	
 	const handleResetHiddenValues = (e: MouseEvent<HTMLAnchorElement>) => {
-	  e.preventDefault(); // prevent the default link behavior
-
-	  if (formRefHiddenType.current) {
-		formRefHiddenType.current.value = '';
-		}
-		// clear the value
-		if (formRefHiddenSubType.current) {
-			formRefHiddenSubType.current.value = '';
-		}
-		if (formRefHiddenFactor.current) {
-			formRefHiddenFactor.current.value = '';
-		}
+	  	e.preventDefault(); // prevent the default link behavior
+		
 		navigate(locationUrlPath); // navigate to the desired path
 	};
-
-	const handleAutoSubmit = () => { 
-		// const form = document.getElementById("frmFilter") as HTMLFormElement; 
-		// if (form) { 
-		// 	form.submit(); 
-		// } 
-		if (formRefSubmit.current) {
-			formRefSubmit.current.click();
-		}
-
-	};
-
-	useEffect(() => {
-		// if (formRefSubmit.current) {
-		// 	formRefSubmit.current.style.display = 'none';
-		// }
-		if (formRefHiddenType.current) {
-			formRefHiddenType.current.value = '';
-		}
-		if (formRefHiddenSubType.current) {
-			formRefHiddenSubType.current.value = '';
-		}
-		if (formRefHiddenFactor.current) {
-			formRefHiddenFactor.current.value = '';
-		}
-	}, []);
 
   return (
 	<MainContainer title="Disaster Records: Non-economic Losses">
@@ -271,71 +206,37 @@ export default function Screen() {
 		</div>
 		
 			<Form className="dts-form" ref={formRef} name="frmFilter" id="frmFilter" method="post" onSubmit={(event) => submit(event.currentTarget)}>
+				<input type="hidden" name="id" value={loaderData.record.id} readOnly={true} />
 				<input ref={formRefHidden} type="hidden" name="action" defaultValue="" />
-				<input ref={formRefHiddenType} type="text" name="frmType" value={ actionData?.frmType } />
-				<input ref={formRefHiddenSubType} type="text" name="frmSubtype" defaultValue={ actionData?.frmSubType } />
-				<input ref={formRefHiddenFactor} type="text" name="frmFactor" defaultValue={ actionData?.frmFactor } />
+
+				{/* //#Category: Added ContentPicker */}
 				<div className="mg-grid mg-grid__col-auto">
-					<div className="dts-form-component">
-					<label>
-						<div className="dts-form-component__label">
-						<span><abbr title="mandatory">*</abbr>Type</span>
-						</div>
-						
-						<select disabled={actionData?.showForm || Array.isArray(actionData?.subcategories) ? true : false} name="type" required onChange={handleSelectOnChangeCategories}>
-							<option value="">Select an option</option>
-							{loaderData.categories.map(item => (
-								<option key={item.id} value={item.id}>{item.name}</option>
-							))}
-						</select>
-						
-					</label>
-					</div>
-					{actionData?.subcategories &&
-						<div className="dts-form-component">
-							<label>
-								<div className="dts-form-component__label">
-								<span><abbr title="mandatory">*</abbr>Sub Type</span>
-								</div>
-								<select disabled={actionData?.showForm || Array.isArray(actionData?.factors) ? true : false} name="subtype" onChange={handleSelectOnChangeSubCategories}>
-									<option value="">Select an option</option>
-									{Array.isArray(actionData?.subcategories) && actionData.subcategories.map(item => (
-										<option key={item.id} value={item.id}>{item.name}</option>
-									))}
-								</select>
-							</label>
-						</div>
-					}
-					{actionData?.factors && Array.isArray(actionData?.factors) &&
-						<div className="dts-form-component">
-							<label>
-								<div className="dts-form-component__label">
-								<span><abbr title="mandatory">*</abbr>Factor</span>
-								</div>
-								<select disabled={actionData?.showForm ? true : false} name="factor" onChange={handleSelectOnChangeFactor}>
-									<option value="">Select an option</option>
-									{Array.isArray(actionData?.factors) && actionData.factors.map(item => (
-										<option key={item.id} value={item.id}>{item.name}</option>
-									))}
-								</select>
-							</label>
-						</div>
-					}
-					<div className="dts-form-component" style={actionData?.showForm ? {display:'none'}: {display:'block'}}>
+					<div className="form-field">
 						<label>
-							<div className="dts-form-component__label">
-								<span>&nbsp;</span>
+							<div>
+							<ContentPicker 
+								{...contentPickerConfigCategory} 
+								value={ 
+									(loaderData.record && loaderData.record.categortyId ) ? 
+									String(loaderData.record.categortyId) : '' 
+								} //Assign the sector id here
+								displayName={ loaderData.categoryDisplayName } //Assign the sector name here, from the loaderData > sectorDisplayName sample
+								onSelect={(selectedItems: any) => {
+									//This is where you can get the selected sector id
+
+									console.log('selectedItems: ', selectedItems);
+									console.log('loaderData: ', loaderData);
+
+									setShowForm(true);
+								}}
+							/>
 							</div>
-							<button name="submit_btn" value={'filter'} className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
-								Select
-							</button>
-							<Link onClick={handleResetHiddenValues} className="mg-button mg-button-secondary" to={ locationUrlPath } replace>Clear</Link>
 						</label>
 					</div>
 				</div>
+				{/* //#Category: End */}
 
-
-				{(actionData?.showForm) &&
+				{((loaderData.record && loaderData.record.id) || actionData?.showForm || showForm) &&
 					<>
 						<div>
 							<label>
@@ -343,6 +244,7 @@ export default function Screen() {
 								<span>* Description</span>
 								</div>
 								<textarea name="description" required rows={5} maxLength={3000} 
+									defaultValue={ (loaderData.record && loaderData.record.id) ? loaderData.record.description : '' }
 									placeholder="Describe the effect of the non-economic losses to the selected criteria." 
 									style={{width:"100%", height:"200px"}}></textarea>
 							</label>

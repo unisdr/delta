@@ -26,11 +26,16 @@ import {disruptionTable} from "~/drizzle/schema"
 import {authLoaderWithPerm} from "~/util/auth"
 import {useLoaderData} from "@remix-run/react"
 
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { divisionTable } from "~/drizzle/schema";
+
 interface LoaderRes {
 	item: DisruptionViewModel | null
 	fieldDef: FormInputDef<DisruptionFields>[]
 	recordId: string
 	sectorId: number
+	treeData?: any[]
 }
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -59,11 +64,19 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!item) {
 		throw new Response("Not Found", {status: 404});
 	}
+
+    const idKey = "id";
+    const parentKey = "parentId";
+    const nameKey = "name";
+    const rawData = await dr.select().from(divisionTable);
+    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
 	let res: LoaderRes = {
 		item: item,
 		fieldDef: fieldsDef,
 		recordId: item.recordId,
 		sectorId: item.sectorId,
+		treeData: treeData || []
 	}
 	return res
 });
@@ -93,12 +106,13 @@ export default function Screen() {
 
 	return formScreen({
 		extraData: {
-			fieldDef: ld.fieldDef
+			fieldDef: ld.fieldDef,
+			treeData: ld.treeData || []
 		},
 		fieldsInitial,
 		form: DisruptionForm,
 		edit: !!ld.item,
-		id: (ld.item as any)?.id || null,
+		id: (ld.item as any)?.id || null
 	});
 }
 

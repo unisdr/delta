@@ -35,6 +35,7 @@ function zeroStrMap(name: string) {
 	return jsonb(name).$type<Record<string, string>>().default({}).notNull();
 }
 
+
 /*
 function zeroInteger(name: string) {
 	return integer(name).notNull().default(0)
@@ -295,10 +296,10 @@ export const disasterEventTable = pgTable("disaster_event", {
 	glide: zeroText("glide"),
 	nameGlobalOrRegional: zeroText("name_global_or_regional"),
 	nameNational: zeroText("name_national"),
-	startDateUTC: timestamp("start_date_utc"),
-	endDateUTC: timestamp("end_date_utc"),
-	startDateLocal: timestamp("start_date_local"),
-	endDateLocal: timestamp("end_date_local"),
+	startDate: timestamp("start_date"),
+	endDate: timestamp("end_date"),
+	startDateLocal: text("start_date_local"),
+	endDateLocal: text("end_date_local"),
 	durationDays: integer("duration_days"),
 	affectedGeographicDivisions: zeroText("affected_geographic_divisions"),
 	affectedAdministrativeRegions: zeroText("affected_administrative_regions"),
@@ -324,6 +325,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	humanitarianNeedsTotalUsd: integer("humanitarian_needs_total"),
 	recoveryNeedsTotalUsd: integer("recovery_needs_total"),
 	attachments: zeroText("attachments"),
+	spatialFootprint: zeroText("spatial_footprint"),
 });
 
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
@@ -477,6 +479,8 @@ export const disruptionTable = pgTable("disruption", {
 	responseOperation: text("response_operation"),
 	responseCost: integer("response_cost"),
 	responseCurrency: text("response_currency"),
+	spatialFootprint: zeroText("spatial_footprint"),
+	attachments: zeroText("attachments"),
 })
 
 export type Disruption = typeof disruptionTable.$inferSelect
@@ -491,54 +495,120 @@ export const damagesTable = pgTable("damages", {
 	sectorId: integer("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
-	pubDamage: text("pub_damage", {enum: ["partial", "total"]}).notNull(),
-	pubDamageAmount: integer("pub_damage_amount"),
-	pubDamageUnitType: text("pub_damage_unit_type", {enum: ["numbers", "other"]}),
-	pubRepairCostUnit: integer("pub_repair_cost_unit"),
-	pubRepairCostUnitCurr: text("pub_repair_cost_unit_curr"),
-	pubRepairUnits: integer("pub_repair_units"),
-	pubRepairCostTotalOverride: integer("pub_repair_cost_total_override"),
-	pubRecoveryCostUnit: integer("pub_recovery_cost_unit"),
-	pubRecoveryCostUnitCurr: text("pub_recovery_cost_unit_curr"),
-	pubRecoveryUnits: integer("pub_recovery_units"),
-	pubRecoveryCostTotalOverride: integer("pub_recovery_cost_total_override"),
-	pubDisruptionDurationDays: integer("pub_disruption_duration_days"),
-	pubDisruptionDurationHours: integer("pub_disruption_duration_hours"),
-	pubDisruptionUsersAffected: integer("pub_disruption_users_affected"),
-	pubDisruptionPeopleAffected: integer("pub_disruption_people_affected"),
-	pubDisruptionDescription: text("pub_disruption_description"),
+	assetId: uuid("asset_id")
+		.references((): AnyPgColumn => assetTable.id)
+		.notNull(),
+	publicDamage: text("public_damage", {enum: ["partial", "total"]}).notNull(),
+	publicDamageAmount: integer("public_damage_amount"),
+	publicDamageUnitType: text("public_damage_unit_type", {enum: ["numbers", "other"]}),
+	/*
+	publicDamageUnitType: uuid("public_damage_unit_type")
+		.references((): AnyPgColumn => unitTable.id)
+	 */
+	// repair when publicDamage=partial
+	publicRepairCostUnit: integer("public_repair_cost_unit"),
+	publicRepairCostUnitCurrency: text("public_repair_cost_unit_currency"),
+	publicRepairUnits: integer("public_repair_units"),
+	publicRepairCostTotalOverride: integer("public_repair_cost_total_override"),
+	// replacement when publicDamage=total
+	publicReplacementCostUnit: integer("public_replacement_cost_unit"),
+	publicReplacementCostUnitCurrency: text("public_replacement_cost_unit_currency"),
+	publicReplacementUnits: integer("public_replacement_units"),
+	publicReplacementCostTotalOverride: integer("public_replacement_cost_total_override"),
+	publicRecoveryCostUnit: integer("public_recovery_cost_unit"),
+	publicRecoveryCostUnitCurrency: text("public_recovery_cost_unit_currency"),
+	publicRecoveryUnits: integer("public_recovery_units"),
+	publicRecoveryCostTotalOverride: integer("public_recovery_cost_total_override"),
+	publicDisruptionDurationDays: integer("public_disruption_duration_days"),
+	publicDisruptionDurationHours: integer("public_disruption_duration_hours"),
+	publicDisruptionUsersAffected: integer("public_disruption_users_affected"),
+	publicDisruptionPeopleAffected: integer("public_disruption_people_affected"),
+	publicDisruptionDescription: text("public_disruption_description"),
 
 	// Private damages
-	privDamage: text("priv_damage", {enum: ["partial", "total"]}).notNull(),
-	privDamageAmount: integer("priv_damage_amount"),
-	privDamageUnitType: text("priv_damage_unit_type", {enum: ["numbers", "other"]}),
-	privRepairCostUnit: integer("priv_repair_cost_unit"),
-	privRepairCostUnitCurr: text("priv_repair_cost_unit_curr"),
-	privRepairUnits: integer("priv_repair_units"),
-	privRepairCostTotalOverride: integer("priv_repair_cost_total_override"),
-	privRecoveryCostUnit: integer("priv_recovery_cost_unit"),
-	privRecoveryCostUnitCurr: text("priv_recovery_cost_unit_curr"),
-	privRecoveryUnits: integer("priv_recovery_units"),
-	privRecoveryCostTotalOverride: integer("priv_recovery_cost_total_override"),
-	privDisruptionDurationDays: integer("priv_disruption_duration_days"),
-	privDisruptionDurationHours: integer("priv_disruption_duration_hours"),
-	privDisruptionUsersAffected: integer("priv_disruption_users_affected"),
-	privDisruptionPeopleAffected: integer("priv_disruption_people_affected"),
-	privDisruptionDescription: text("priv_disruption_description"),
+	privateDamage: text("private_damage", {enum: ["partial", "total"]}).notNull(),
+	privateDamageAmount: integer("private_damage_amount"),
+	privateDamageUnitType: text("private_damage_unit_type", {enum: ["numbers", "other"]}),
+	// repair when publicDamage=partial
+	privateRepairCostUnit: integer("private_repair_cost_unit"),
+	privateRepairCostUnitCurrency: text("private_repair_cost_unit_currency"),
+	privateRepairUnits: integer("private_repair_units"),
+	privateRepairCostTotalOverride: integer("private_repair_cost_total_override"),
+	// replacement when publicDamage=partial
+	privateReplacementCostUnit: integer("private_replacement_cost_unit"),
+	privateReplacementCostUnitCurrency: text("private_replacement_cost_unit_currency"),
+	privateReplacementUnits: integer("private_replacement_units"),
+	privateReplacementCostTotalOverride: integer("private_replacement_cost_total_override"),
+	privateRecoveryCostUnit: integer("private_recovery_cost_unit"),
+	privateRecoveryCostUnitCurrency: text("private_recovery_cost_unit_currency"),
+	privateRecoveryUnits: integer("private_recovery_units"),
+	privateRecoveryCostTotalOverride: integer("private_recovery_cost_total_override"),
+	privateDisruptionDurationDays: integer("private_disruption_duration_days"),
+	privateDisruptionDurationHours: integer("private_disruption_duration_hours"),
+	privateDisruptionUsersAffected: integer("private_disruption_users_affected"),
+	privateDisruptionPeopleAffected: integer("private_disruption_people_affected"),
+	privateDisruptionDescription: text("private_disruption_description"),
 })
+
+export const damagesRel = relations(damagesTable, ({one}) => ({
+	asset: one(assetTable, {
+		fields: [damagesTable.assetId],
+		references: [assetTable.id],
+	})
+}));
 
 export type Damages = typeof damagesTable.$inferSelect
 export type DamagesInsert = typeof damagesTable.$inferInsert
 
-
 export const measureTable = pgTable("measure", {
+	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),
 	name: text("name").notNull(),
-	unit: text("unit").notNull()
+	type: text({enum: ["number", "area", "volume", "duration"]})
+		.notNull()
+		.default("area"),
+	//	unit: text("unit").notNull()
 })
 
 export type Measure = typeof measureTable.$inferSelect
 export type MeasureInsert = typeof measureTable.$inferInsert
+
+export const unitTable = pgTable("unit", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	type: text({enum: ["number", "area", "volume", "duration"]})
+		.notNull()
+		.default("area"),
+	name: text("name").notNull()
+})
+
+export type Unit = typeof unitTable.$inferSelect
+export type UnitInsert = typeof unitTable.$inferInsert
+
+export const assetTable = pgTable("asset", {
+	...apiImportIdField(),
+	id: uuid("id").primaryKey().defaultRandom(),
+	sectorId: integer("sector_id")
+		.references((): AnyPgColumn => sectorTable.id)
+		.notNull(),
+	measureId: uuid("measure_id")
+		.references((): AnyPgColumn => measureTable.id)
+		.notNull(),
+	isBuiltIn: boolean("is_built_in").notNull(),
+	name: text("name").notNull(),
+	nationalId: text("national_id"),
+	notes: text("notes"),
+});
+
+export const assetRel = relations(assetTable, ({one}) => ({
+	measure: one(measureTable, {
+		fields: [assetTable.measureId],
+		references: [measureTable.id],
+	})
+}));
+
+export type Asset = typeof assetTable.$inferSelect;
+export type AssetInsert = typeof assetTable.$inferInsert;
 
 export const lossesTable = pgTable("losses", {
 	...apiImportIdField(),
@@ -549,10 +619,11 @@ export const lossesTable = pgTable("losses", {
 	sectorId: integer("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
+	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
 	type: text("type", {
 		enum: ["increased_expenditure", "loss_revenue_forecasted", "non_economic_losses"]
 	}).notNull(),
-	relatedTo: text("related_to", {
+	relatedToNotAgriculture: text("related_to_not_agriculture", {
 		enum: [
 			"infrastructure_equipment",
 			"production_delivery_access",
@@ -560,24 +631,30 @@ export const lossesTable = pgTable("losses", {
 			"risk_vulnerability_drr",
 			"other"
 		]
-	}).notNull(),
+	}),
+	relatedToAgriculture: text("related_to_agriculture", {
+		enum: [
+			"value1",
+			"value2",
+		]
+	}),
 	description: text("description"),
 	publicValueUnit: text("public_value_unit", {
 		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
 	}),
 	publicValue: integer("public_value"),
 	publicCostPerUnit: integer("public_cost_per_unit"),
-	publicCostPerUnitCurr: text("public_cost_per_unit_curr"),
+	publicCostPerUnitCurrency: text("public_cost_per_unit_currency"),
 	publicTotalCost: integer("public_total_cost"),
-	publicTotalCostCurr: text("public_total_cost_curr"),
+	publicTotalCostCurrency: text("public_total_cost_currency"),
 	privateValueUnit: text("private_value_unit", {
 		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
 	}),
 	privateValue: integer("private_value"),
 	privateCostPerUnit: integer("private_cost_per_unit"),
-	privateCostPerUnitCurr: text("private_cost_per_unit_curr"),
+	privateCostPerUnitCurrency: text("private_cost_per_unit_currency"),
 	privateTotalCost: integer("private_total_cost"),
-	privateTotalCostCurr: text("private_total_cost_curr")
+	privateTotalCostCurrency: text("private_total_cost_currency")
 })
 
 export type Losses = typeof lossesTable.$inferSelect
@@ -700,10 +777,18 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	startDate: text("start_date"),
 	endDate: text("end_date"),
 	localWarnInst: text("local_warn_inst"),
+	primaryDataSource: text("primary_data_source"),
+	otherDataSource: text("other_data_source"),
+	fieldAssessDate: timestamp("field_assess_date"),
 	assessmentModes: text("assessment_modes"),
 	originatorRecorderInst: text("originator_recorder_inst")
 		.notNull()
 		.default(""),
+	validatedBy: text("validated_by")
+		.notNull()
+		.default(""),
+	checkedBy: text("checked_by"),
+	dataCollector: text("data_collector"),
 	sectorId: integer("sector_id") // Link to the sector involved
 		.references((): AnyPgColumn => sectorTable.id),
 	sectorName: text("sector_name"), // Direct name of the sector involved
@@ -763,6 +848,10 @@ export const categoriesTable = pgTable("categories", {
 	...createdUpdatedTimestamps,
 });
 
+export const categoryCategoryParent_Rel = relations(categoriesTable, ({one}) => ({
+	categoryParent: one(categoriesTable, {fields: [categoriesTable.parentId], references: [categoriesTable.id]}),
+}));
+
 export type nonecoLosses = typeof nonecoLossesTable.$inferSelect;
 export type nonecoLossesInsert = typeof nonecoLossesTable.$inferInsert;
 
@@ -782,10 +871,14 @@ export const nonecoLossesTable = pgTable(
 	},
 	(table) => {
 		return [
-			unique("custom_nameIdx").on(table.disasterRecordId, table.categortyId),
+			unique("nonecolosses_sectorIdx").on(table.disasterRecordId, table.categortyId),
 		];
 	}
 );
+
+export const nonecoLossesCategory_Rel = relations(nonecoLossesTable, ({one}) => ({
+	category: one(categoriesTable, {fields: [nonecoLossesTable.categortyId], references: [categoriesTable.id]}),
+}));
 
 /**
  * This sector table is configured to support hierarchical relationships and sector-specific details.
@@ -808,7 +901,16 @@ export const sectorTable = pgTable(
 		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
 		description: text("description"), // Optional description for the sector | Additional details about the sector
 		...createdUpdatedTimestamps,
-	}
+	},
+	// (table) => [
+	// 	// // Constraint: subsector cannot be empty
+	// 	// check("subsector_not_empty", sql`${table.subsector} <> ''`),
+	// 	// // Ensure the PDNA grouping is one of the specified categories
+	// 	// check(
+	// 	// 	"pdna_grouping_valid",
+	// 	// 	sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
+	// 	// ),
+	// ]
 );
 
 /** [SectorDisasterRecordsRelation] table links `sector` to `disaster_records` */
@@ -823,6 +925,8 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 			.notNull()
 			.references((): AnyPgColumn => disasterRecordsTable.id),
 		withDamage: boolean("with_damage"),
+		damageRecoveryCost: integer("damage_recovery_cost"),
+		damageRecoveryCostCurrency: text("damage_recovery_cost_currency"),
 		withDisruption: boolean("with_disruption"),
 		disruptionResponseCost: integer("disruption_response_cost"),
 		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
@@ -830,7 +934,7 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 	},
 	(table) => {
 		return [
-			unique("disRecSectosUniqueIdx").on(table.disasterRecordId, table.sectorId),
+			unique("disRecSectorsUniqueIdx").on(table.disasterRecordId, table.sectorId),
 		];
 	}
 );

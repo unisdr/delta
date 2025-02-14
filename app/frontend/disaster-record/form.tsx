@@ -22,17 +22,27 @@ import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
 import {TreeView} from "~/components/TreeView";
 
+import { ContentPicker } from "~/components/ContentPicker";
+import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
+import AuditLogHistory from "~/components/AuditLogHistory";
+
 export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
-	{key: "disasterEventId", label: "Disaster Event", type: "text", required: true},
+	{key: "disasterEventId", label: "Disaster Event", type: "other", required: true},
 	{key: "locationDesc", label: "Location Description", type: "text"},
-	{key: "startDate", label: "Start Data (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
-	{key: "endDate", label: "End Data (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
+	{key: "startDate", label: "Start Date (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
+	{key: "endDate", label: "End Date (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
 	{key: "localWarnInst", label: "Local warning and local instructions ( recommended actions)", type: "text"},
+	{key: "primaryDataSource", label: "Primary data source", type: "text", required: true},
+	{key: "otherDataSource", label: "Other data sources", type: "text"},
+	{key: "fieldAssessDate", label: "Field assessment conducted", type: "date"},
 	{key: "assessmentModes", label: "Assessments modes", type: "text"},
-	{key: "originatorRecorderInst", label: "Originator/ recorder institution", type: "text", required: true},
+	{key: "originatorRecorderInst", label: "Recording institution", type: "text", required: true},
+	{key: "validatedBy", label: "Validated by", type: "text", required: true},
+	{key: "checkedBy", label: "Checked by", type: "text"},
+	{key: "dataCollector", label: "Data collector", type: "text"},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other"},
 ] as const;
 
@@ -49,6 +59,7 @@ export const fieldsDefView: FormInputDef<DisasterRecordsViewModel>[] = [
 interface DisasterRecordsFormProps extends UserFormProps<DisasterRecordsFields> {
 	parent?: DisasterRecordsViewModel;
 	treeData: any[];
+	cpDisplayName?: string;
 }
 
 export function disasterRecordsLabel(args: {
@@ -79,7 +90,7 @@ export function disasterRecordsLink(args: {
 }
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
-	const {fields, treeData} = props;
+	const {fields, treeData, cpDisplayName} = props;
 	const treeViewRef = useRef<any>(null);
 
 	useEffect(() => {
@@ -94,11 +105,16 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				edit={props.edit}
 				id={props.id}
 				plural="Disaster Records"
-				singular={`${props.edit ? "Edit" : "Add"} Disaster Record`}
+				singular="Disaster Record"
 				errors={props.errors}
 				fields={props.fields}
 				fieldsDef={fieldsDef}
 				override={{
+					disasterEventId: (
+						<Field key="disasterEventId" label="Disaster Event *">
+							<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""}/>
+						</Field>
+					),
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
 							<ContentRepeater
@@ -235,11 +251,13 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 
 interface DisasterRecordsViewProps {
 	item: DisasterRecordsViewModel;
-	isPublic: boolean
+	isPublic: boolean;
+	auditLogs?: any[];
 }
 
 export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 	const item = props.item;
+	const auditLogs = props.auditLogs;
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
@@ -271,6 +289,9 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 					),
 					updatedAt: (
 						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
+					),
+					disasterEventId: (
+						<p key="disasterEventId">Disaster Event: {(item as any).cpDisplayName || ""}</p>
 					),
 					spatialFootprint: (
 						<div>
@@ -343,6 +364,14 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 					)
 				}}
 			/>
+			{/* Add Audit Log History at the end */}
+			<br/>
+			{auditLogs && auditLogs.length > 0 && (
+				<>
+					<h3>Audit Log History</h3>
+					<AuditLogHistory auditLogs={auditLogs} />
+				</>
+			)}
 		</ViewComponent>
 	);
 }

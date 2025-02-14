@@ -1,10 +1,10 @@
-import { asc, eq, sql, isNull } from 'drizzle-orm';
+import {asc, eq, sql, isNull} from 'drizzle-orm';
 
 import {
 	sectorTable
 } from '~/drizzle/schema';
 
-import {dr} from '~/db.server';
+import {dr, Tx} from '~/db.server';
 
 export type SectorType = {
 	id?: number;
@@ -46,7 +46,6 @@ export async function getSectors(sectorParent_id: number | null): Promise<{id: n
 	}
 }
 
-
 export async function upsertRecord(record: SectorType): Promise<void> {
 	// Perform the upsert operation
 	await dr
@@ -54,11 +53,39 @@ export async function upsertRecord(record: SectorType): Promise<void> {
 		.values(record)
 		.onConflictDoUpdate({
 			target: sectorTable.id,
-			set: { 
+			set: {
 				id: record.id,
 				sectorname: record.sectorname,
+				description: record.description || null,
 				parentId: record.parentId,
 				updatedAt: sql`NOW()`,
 			},
 		});
+}
+
+export async function allSectors(tx: Tx) {
+	let res = await tx.query.sectorTable.findMany()
+	return res
+}
+
+let agricultureSectorId = 1201
+
+export async function sectorIsAgriculture(tx: Tx, id: number, depth: number = 0): Promise<boolean> {
+	let maxDepth = 100
+  if (depth > maxDepth){
+		throw new Error("sector parent loop detected")
+	}
+  let row = await tx.query.sectorTable.findFirst({
+		where: eq(sectorTable.id, id)
+	})
+  if (!row) {
+		throw new Error("sector not found by id")
+	}
+  if (row.id == agricultureSectorId){
+		return true
+	}
+  if (row.parentId == null){
+		return false
+	}
+  return await sectorIsAgriculture(tx, row.parentId, depth + 1)
 }

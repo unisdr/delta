@@ -7,7 +7,7 @@ export const loader = async () => {
 };
 
 // React Component to Render Tree
-export default function TreeViewPage() {
+export default function Page() {
     return (
         <>
             <div className="dts-page-header">
@@ -24,7 +24,7 @@ export default function TreeViewPage() {
                             <div className="form-field">
                                 <label>
                                     <div>
-                                    <ContentPicker {...contentPickerConfig}/>
+                                    <ContentPicker {...contentPickerConfig} value="10ce015c-9461-4641-bb6f-0024d8393f47" displayName="Disaster 4 (7 to 9 Feb 2025) - 3b37b" />
                                     </div>
                                 </label>
                             </div>

@@ -9,6 +9,7 @@ import { useLocation } from 'react-router-dom';
 
 import {
 	upsertRecord as disRecSectorsUpsertRecord,
+	disRecSectorsById,
 } from "~/backend.server/models/disaster_record__sectors";
 
 
@@ -30,6 +31,11 @@ import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
 import { string } from "prop-types";
 import { configCurrencies } from  "~/util/config";
 import { isEmpty } from "ol/extent";
+
+//#Sector: Start
+import { ContentPicker } from "~/components/ContentPicker";
+import { contentPickerConfigSector } from "./content-picker-config";
+//#Sector: End
 
 // Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
@@ -57,7 +63,9 @@ interface Factor {
 type PropsLoader = { 
 	ok: string; 
 	type: PropsItem[];
-	currency: string[];
+	arrayCurrency: string[];
+	sectorDisplayName: string;
+	record: any;
 };
 
 type PropsForm = { 
@@ -88,55 +96,60 @@ interface PropsAction {
 }
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
-	// get first level categories
-	let arrayType = await getSectors(null);
-	let arrayCurrency = configCurrencies();
+	const {params} = actionArgs;
+	const req = actionArgs.request;
+	const arrayCurrency = configCurrencies();
+	let sectorDisplayName:string = '';
 
-	return { ok:'loader', type: arrayType, sectors: [], subsectors: [], currency: arrayCurrency };
+	// Parse the request URL
+	const parsedUrl = new URL(req.url);
+
+	// Extract query string parameters
+	const queryParams = parsedUrl.searchParams;
+	const xId = queryParams.get('id') || ''; 
+	let record:any = {};
+	if (xId) {
+		record = await disRecSectorsById(xId);
+	}
+	if ( record ) {
+		sectorDisplayName = await contentPickerConfigSector.selectedDisplay(dr, record.sectorId);
+		console.log( record );
+	}
+
+	return { ok:'loader', arrayCurrency: arrayCurrency, record:record, sectorDisplayName:sectorDisplayName };
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const {params} = actionArgs;
 	const req = actionArgs.request;
 	const formData = await req.formData(); 
-	let frmType = formData.get("type") || formData.get("frmType") || ''; 
-	let frmSector = formData.get("sector") || formData.get("frmSector") || ''; 
-	let frmSubSector = formData.get("subsector") || formData.get("frmSubSector") || ''; 
-
+	let frmId = formData.get("id") || ''; 
+	let frmSectorId = formData.get("sectorId") || ''; 
 	let frmWithDamage = formData.get("with_damage") || ''; 
 	let frmWithLosses = formData.get("with_losses") || ''; 
 	let frmWithDisruption = formData.get("with_disruption") || ''; 
 	let frmDisruptionResponseCost = formData.get("disruption_response_cost") || ''; 
 	let frmDisruptionResponseCostCurrency = formData.get("disruption_response_cost_currency") || ''; 
+	let frmDamageRecoveryCost = formData.get("damage_recovery_cost") || ''; 
+	let frmDamageRecoveryCostCurrency = formData.get("damage_recovery_cost_currency") || ''; 
 
 	let this_showForm:boolean = false;
-	let intTypeID:number = 0;
-	let intSectorID:number = 0;
-	let intSubSectorID:number = 0;
 	let intSectorIDforDB:number = 0;
-	let sectorData = {};
-	let subSectorData = {};
 
-	if (frmType !== '' && typeof frmType === "string" && parseInt(frmType) > 0) {
-		intTypeID = parseInt(frmType);
-		sectorData = await getSectors(intTypeID);
-	}
-	if (intTypeID > 0 && typeof frmSector === "string" && frmSector !== '' && parseInt(frmSector) > 0) {
-		intSectorID = parseInt(frmSector);
-		subSectorData = await getSectors(intSectorID);
-	}
-	if (intSectorID > 0 && typeof frmSubSector === "string" && frmSubSector !== '' && parseInt(frmSubSector) > 0) {
-		intSubSectorID = parseInt(frmSubSector);
-		intSectorIDforDB = intSubSectorID;
+	if (frmSectorId && typeof frmSectorId == 'string' && parseInt(frmSectorId) > 0) {
 		this_showForm = true;
+		intSectorIDforDB = parseInt(frmSectorId);
 	}
 
-	if (this_showForm && intSectorID > 0 && (frmWithDamage || frmWithDisruption || frmWithLosses)) {
+	if (this_showForm && intSectorIDforDB > 0 && (frmWithDamage || frmWithDisruption || frmWithLosses)) {
+		
 		const formRecord:any = { 
-			// id: '70bc07e0-a671-4dbc-8ac8-0c21bc62a878',
+			id: frmId && typeof frmId == 'string' ? frmId : undefined,
 			sectorId: intSectorIDforDB,
 			disasterRecordId: params.disRecId,
 			withDamage: frmWithDamage === 'on' ? true : false,
+			damageRecoveryCost: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' ? frmDamageRecoveryCost : null,
+			damageRecoveryCostCurrency: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' && frmDamageRecoveryCostCurrency !== '' ? frmDamageRecoveryCostCurrency : null,
 			withDisruption: frmWithDisruption === 'on' ? true : false,
 			disruptionResponseCost: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' ? frmDisruptionResponseCost : null,
 			disruptionResponseCostCurrency: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' && frmDisruptionResponseCostCurrency !== '' ? frmDisruptionResponseCostCurrency : null,
@@ -152,17 +165,12 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		}
 	}
 
-	// console.log( formData );
-	// console.log( params );
+	console.log( 'formData: ', formData );
+	console.log( 'params: ', params );
 
 	return {
 		ok: 'action', 
-		sectors: sectorData,
-		subsectors: subSectorData,
 		showForm: this_showForm,
-		frmType: frmType,
-		frmSector: frmSector,
-		frmSubSector: frmSubSector,
 	}; 
 });
 
@@ -175,190 +183,106 @@ export default function Screen() {
 	const navigation = useNavigation();
 	const formRef = useRef<HTMLFormElement>(null);
 	const formRefHidden: RefObject<HTMLInputElement> = useRef(null);
-	const formRefHiddenType: RefObject<HTMLInputElement> = useRef(null);
-	const formRefHiddenSector: RefObject<HTMLInputElement> = useRef(null);
-	const formRefHiddenSubSector: RefObject<HTMLInputElement> = useRef(null);
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
 
 	const locationUrlPath = useLocation();
 
+	//#Sector: Start
+	const [showForm, setShowForm] = useState(false);
+	useEffect(() => {
+		if (actionData?.showForm !== undefined) {
+		  setShowForm(actionData.showForm);
+		}
+	}, [actionData]);
+	//#Sector: End
+
 	// console.log( loaderData );
 	// console.log( actionData );
 	// console.log( actionData?.sectors );
-	
-	const handleSelectOnChangeSubCategories = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		console.log(e.currentTarget.value);
-		console.log(e.target.value);
-
-		if (formRefHidden.current) {
-			console.log(formRefHidden.current.value = e.target.name);
-		}
-
-		if (formRefHiddenSector.current) {
-			formRefHiddenSector.current.value = e.target.value;
-		}
-
-		// if (e.target.value == '' && formRefSubmit.current) {
-		// 	formRefSubmit.current.style.display = 'none';
-		// }
-		// else if (e.target.value !== '' && formRefSubmit.current) {
-		// 	formRefSubmit.current.style.display = 'block';
-		// }
-		
-		
-	};
-
-	const handleSelectOnChangeCategories = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		console.log(e.currentTarget.value);
-		console.log(e.target.value);
-
-		if (formRefHidden.current) {
-			console.log(formRefHidden.current.value = e.target.name);
-		}
-
-		if (formRefHiddenType.current) {
-			formRefHiddenType.current.value = e.target.value;
-		}
-	};
-
-	const handleSelectOnChangeFactor = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		if (formRefHiddenSubSector.current) {
-			formRefHiddenSubSector.current.value = e.target.value;
-		}
-	};
-
-	
-	const handleResetHiddenValues = (e: MouseEvent<HTMLAnchorElement>) => {
-	  e.preventDefault(); // prevent the default link behavior
-
-	  if (formRefHiddenType.current) {
-		formRefHiddenType.current.value = '';
-		}
-		// clear the value
-		if (formRefHiddenSector.current) {
-			formRefHiddenSector.current.value = '';
-		}
-		if (formRefHiddenSubSector.current) {
-			formRefHiddenSubSector.current.value = '';
-		}
-		navigate(locationUrlPath); // navigate to the desired path
-	};
-
-	const handleAutoSubmit = () => { 
-		// const form = document.getElementById("frmFilter") as HTMLFormElement; 
-		// if (form) { 
-		// 	form.submit(); 
-		// } 
-		if (formRefSubmit.current) {
-			formRefSubmit.current.click();
-		}
-
-	};
 
 	useEffect(() => {
 		// if (formRefSubmit.current) {
 		// 	formRefSubmit.current.style.display = 'none';
 		// }
-		if (formRefHiddenType.current) {
-			formRefHiddenType.current.value = '';
-		}
-		if (formRefHiddenSector.current) {
-			formRefHiddenSector.current.value = '';
-		}
-		if (formRefHiddenSubSector.current) {
-			formRefHiddenSubSector.current.value = '';
-		}
 	}, []);
 
   return (
 	<MainContainer title="Disaster Records: Sectors">
 	  <>
-
-
-
-
 		<div className="dts-form__intro">
 			<h2 className="dts-heading-2">Sectors</h2>
 		</div>
 		
 			<Form className="dts-form" ref={formRef} name="frmFilter" id="frmFilter" method="post" onSubmit={(event) => submit(event.currentTarget)}>
-				<input ref={formRefHidden} type="hidden" name="action" defaultValue="" />
-				<input ref={formRefHiddenType} type="text" name="frmType" value={ actionData?.frmType } />
-				<input ref={formRefHiddenSector} type="text" name="frmSector" defaultValue={ actionData?.frmSector } />
-				<input ref={formRefHiddenSubSector} type="text" name="frmSubSector" defaultValue={ actionData?.frmSubSector } />
+				<input ref={formRefHidden} type="hidden" name="id" readOnly={true}  defaultValue={ (loaderData.record && loaderData.record.id) ? loaderData.record.id : '' } />
+
+				{/* //#Sector: Added ContentPicker */}
 				<div className="mg-grid mg-grid__col-auto">
-					<div className="dts-form-component">
-					<label>
-						<div className="dts-form-component__label">
-						<span><abbr title="mandatory">*</abbr>Type</span>
-						</div>
+					<div className="form-field">
+						<label>
+							<div>
+							<ContentPicker 
+								{...contentPickerConfigSector} 
+								value={ loaderData.record ? loaderData.record.sectorId : '' } //Assign the sector id here
+								displayName={ loaderData.sectorDisplayName } //Assign the sector name here, from the loaderData > sectorDisplayName sample
+								onSelect={(selectedItems: any) => {
+									//This is where you can get the selected sector id
 
-						<select disabled={actionData?.showForm || Array.isArray(actionData?.sectors) ? true : false} name="type" required onChange={handleSelectOnChangeCategories}>
-							<option value="">Select an option</option>
-							{loaderData.type.map(item => (
-								<option key={item.id} value={item.id}>{item.sectorname}</option>
-							))}
-						</select>
-					</label>
+									console.log('selectedItems: ', selectedItems);
+									console.log('loaderData: ', loaderData);
+
+									setShowForm(true);
+								}}
+							 />
+							</div>
+						</label>
 					</div>
-					{actionData?.sectors &&
-						<div className="dts-form-component">
-							<label>
-								<div className="dts-form-component__label">
-								<span><abbr title="mandatory">*</abbr>Sector</span>
-								</div>
-								<select disabled={actionData?.showForm || Array.isArray(actionData?.subsectors) ? true : false} name="sector" onChange={handleSelectOnChangeSubCategories}>
-									<option value="">Select an option</option>
-									{Array.isArray(actionData?.sectors) && actionData.sectors.map(item => (
-										<option key={item.id} value={item.id}>{item.sectorname}</option>
-									))}
-								</select>
-							</label>
-						</div>
-					}
-					{actionData?.subsectors && Array.isArray(actionData?.subsectors) &&
-						<div className="dts-form-component">
-							<label>
-								<div className="dts-form-component__label">
-								<span><abbr title="mandatory">*</abbr>Sub Sector</span>
-								</div>
-								<select disabled={actionData?.showForm ? true : false} name="subsector" onChange={handleSelectOnChangeFactor}>
-									<option value="">Select an option</option>
-									{Array.isArray(actionData?.subsectors) && actionData.subsectors.map(item => (
-										<option key={item.id} value={item.id}>{item.sectorname}</option>
-									))}
-								</select>
-							</label>
-						</div>
-					}
 				</div>
-				<div className="form__actions" style={actionData?.showForm ? {display:'none'}: {display:'block'}}>
-					<label>
-						<div className="dts-form-component__label">
-							<span>&nbsp;</span>
-						</div>
-						<Link onClick={handleResetHiddenValues} className="mg-button mg-button-secondary" to={ locationUrlPath } replace>Clear</Link>
-						&nbsp;
-						<button name="submit_btn" value={'filter'} className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
-							Select
-						</button>
-					</label>
-				</div>
+				{/* //#Sector: End */}
 
+				<input ref={formRefHidden} type="hidden" name="action" defaultValue="" />
 
-				{(actionData?.showForm) &&
+				{((loaderData.record && loaderData.record.id) || actionData?.showForm || showForm) &&
 					<>
 						<h2 className="dts-heading-3">Damage</h2>
 						<div className="mg-grid mg-grid__col-3">
-							<div className="dts-form-component">
+							<div className="dts-form-component mg-grid__col">
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
-										<input type="checkbox" name="with_damage" aria-describedby="" />
+										<input type="checkbox" name="with_damage" aria-describedby="" defaultChecked={ (loaderData.record && loaderData.record.withDamage) ? true : false } />
 										<span>Has Damage</span>
 									</div>
-								</label>					
+								</label>
 							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Recovery Cost</span>
+									</div>
+									<input type="number" name="damage_recovery_cost" placeholder="enter the damage recovery cost" defaultValue={(loaderData.record && loaderData.record.damageRecoveryCost) ? loaderData.record.damageRecoveryCost : '' } />
+								</label>
+							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Currency</span>
+									</div>
+									<select name="damage_recovery_cost_currency">
+										{
+											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.damageRecoveryCostCurrency && loaderData.record.damageRecoveryCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
+											))
+										}
+									</select>
+								</label>
+							</div>
+							
 						</div>
 						<h2 className="dts-heading-3">Losses</h2>
 						<div className="mg-grid mg-grid__col-3">
@@ -366,7 +290,7 @@ export default function Screen() {
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
-										<input type="checkbox" name="with_losses" aria-describedby="" />
+										<input type="checkbox" name="with_losses" aria-describedby="" defaultChecked={ (loaderData.record && loaderData.record.withLosses) ? true : false } />
 										<span>Has Lossses</span>
 									</div>
 								</label>					
@@ -378,31 +302,36 @@ export default function Screen() {
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
-										<input type="checkbox" name="with_disruption" aria-describedby="" />
+										<input type="checkbox" name="with_disruption" aria-describedby="" defaultChecked={ (loaderData.record && loaderData.record.withDisruption) ? true : false } />
 										<span>Has Disruption</span>
 									</div>
 								</label>					
 							</div>
 							<div className="dts-form-component mg-grid__col">
 								<label>
-								<div className="dts-form-component__label">
-									<span>Response Cost</span>
-								</div>
-								<input type="number" name="disruption_response_cost" placeholder="enter disruption response cost" />
+									<div className="dts-form-component__label">
+										<span>Response Cost</span>
+									</div>
+									<input type="number" name="disruption_response_cost" placeholder="enter disruption response cost" defaultValue={(loaderData.record && loaderData.record.disruptionResponseCost) ? loaderData.record.disruptionResponseCost : '' } />
 								</label>
 							</div>
 							<div className="dts-form-component mg-grid__col">
 								<label>
-								<div className="dts-form-component__label">
-									<span>Currency</span>
-								</div>
-								<select name="disruption_response_cost_currency">
-									{
-										Array.isArray(loaderData.currency) && loaderData.currency.map((item, index) => (
-											<option key={index} value={item}>{item}</option>
-										))
-									}
-								</select>
+									<div className="dts-form-component__label">
+										<span>Currency</span>
+									</div>
+									<select name="disruption_response_cost_currency">
+										{
+											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.disruptionResponseCostCurrency && loaderData.record.disruptionResponseCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
+											))
+										}
+									</select>
 								</label>
 							</div>
 						</div>
@@ -411,7 +340,7 @@ export default function Screen() {
 								<div className="dts-form-component__label">
 									<span>&nbsp;</span>
 								</div>
-								<Link onClick={handleResetHiddenValues} className="mg-button mg-button-secondary" to={ locationUrlPath }>Clear</Link>
+								<Link className="mg-button mg-button-secondary" to={ locationUrlPath }>Clear</Link>
 								&nbsp;
 								<button name="submit_btn" value={'form'} ref={formRefSubmit}  className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
 									Save Changes

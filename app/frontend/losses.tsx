@@ -19,6 +19,26 @@ interface LossesFormProps extends UserFormProps<LossesFields> {
 }
 
 export function LossesForm(props: LossesFormProps) {
+
+	// select dropdown to show based if sector is related to agriculture
+	let extra = props.fields.sectorIsAgriculture ? {
+		relatedToNotAgriculture: null
+	} : {
+		relatedToAgriculture: null
+	}
+	let override = {
+		sectorIsAgriculture: (
+			<input key="sectorIsAgriculture" name="sectorIsAgriculture" type="hidden" value={props.fields.sectorIsAgriculture ? "on" : "off"} />
+		),
+		recordId: (
+			<input key="recordId" name="recordId" type="hidden" value={props.fields.recordId} />
+		),
+		sectorId: (
+			<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
+		),
+		...extra
+	}
+
 	return (
 		<FormView
 			path={route}
@@ -26,18 +46,19 @@ export function LossesForm(props: LossesFormProps) {
 			edit={props.edit}
 			id={props.id}
 			plural="Losses"
-			singular={(props.edit ? "Edit" : "Add") + " loss"}
+			singular="Loss"
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
-			override={{
-				recordId: (
-					<input key="recordId" name="recordId" type="hidden" value={props.fields.recordId} />
+			elementsAfter={{
+				description: (
+					<h2>Public</h2>
 				),
-				sectorId: (
-					<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
+				publicTotalCostCurrency: (
+					<h2>Private</h2>
 				),
 			}}
+			override={override}
 		/>
 	)
 }
@@ -48,6 +69,25 @@ interface LossesViewProps {
 }
 
 export function LossesView(props: LossesViewProps) {
+
+	// select field to show based if sector is related to agriculture
+	let extra = props.item.sectorIsAgriculture ? {
+		relatedToNotAgriculture: null
+	} : {
+		relatedToAgriculture: null
+	}
+
+	let override = {
+		sectorIsAgriculture: null,
+		recordId: (
+			<p key="recordId">Disaster record ID: {props.item.recordId}</p>
+		),
+		sectorId: (
+			<p key="sectorId">Sector ID: {props.item.sectorId}</p>
+		),
+		...extra
+	}
+
 	return (
 		<ViewComponent
 			path={route}
@@ -59,14 +99,7 @@ export function LossesView(props: LossesViewProps) {
 			<FieldsView
 				def={props.fieldDef}
 				fields={props.item}
-				override={{
-					recordId: (
-						<p key="recordId">Disaster record ID: {props.item.recordId}</p>
-					),
-					sectorId: (
-						<p key="sectorId">Sector ID: {props.item.sectorId}</p>
-					),
-				}}
+				override={override}
 			/>
 		</ViewComponent>
 	)

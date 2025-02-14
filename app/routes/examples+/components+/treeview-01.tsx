@@ -9,47 +9,12 @@ import { TreeView, buildTree } from "~/components/TreeView";
 // Define the expected return type
 interface LoaderData {
     treeData: any[];  // Adjust the type if you have a proper structure
-    disasterEventTable: any[];  // Adjust the type as needed
 }
 
 // Loader to Fetch & Transform Data
 export const loader = async () => {
 
     let arrDisasterEventTable = [] as any[];
-
-    /*try {
-        const results = await dr.query.disasterEventTable.findMany({
-            columns: {
-                id: true,
-                startDateUTC: true,
-                endDateUTC: true,
-            },
-            with: {
-                hazardEvent: {
-                    with: hazardBasicInfoJoin
-                },
-            },
-            orderBy: [desc(disasterEventTable.startDateUTC)], // Order results by latest event first
-        });
-    
-        // Iterate and log each item
-        results.forEach((item: any) => {
-            const hazardEven = hazardEventLink(item.hazardEvent);
-            const hazardEventName = hazardEven?.props?.children || "N/A";
-            arrDisasterEventTable.push({
-                id: item.id,
-                hazardEventId: item.hazardEventId,
-                startDateUTC: formatDate(item.startDateUTC),
-                endDateUTC: formatDate(item.endDateUTC),
-                hazardEventName: hazardEventName
-            });
-        });
-    
-    } catch (error) {
-        console.error("Error querying disasterEventTable:", error);
-    } */
-
-    //const rawData = await dr.select().from(divisionTable); // Can replace `divisionTable` with any table
 
     const rawData = [
         await dr.select().from(divisionTable)
@@ -105,14 +70,18 @@ export const loader = async () => {
     const idKey = "id"; 
     const parentKey = "parentId"; 
     const nameKey = "name"; 
-    //const treeData = buildTree(rawData[1], idKey, parentKey, nameKey, ["fr", "de", "en"], "");
+    
+    // Data from Database
     const treeData = buildTree(rawData[0], idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId"]);
-    return {treeData: treeData, disasterEventTable: arrDisasterEventTable};
+    // Data from Array
+    //const treeData = buildTree(rawData[1], idKey, parentKey, nameKey, ["fr", "de", "en"], "");
+
+    return treeData;
 };
 
 // React Component to Render Tree
 export default function TreeViewPage() {
-    const { treeData, disasterEventTable} = useLoaderData() as LoaderData;
+    const treeData = useLoaderData() as LoaderData;
 
     const targetObject = useRef<HTMLDivElement>(null);
 

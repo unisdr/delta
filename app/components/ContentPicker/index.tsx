@@ -1,35 +1,10 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import "./assets/content-picker.css";
+import { TreeView, buildTree } from "~/components/TreeView";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
-            `
-            .content-picker .select {
-                display: inline-block;
-                background-color: buttonface;
-                padding: 4px 8px 1px 8px;
-                border: 1px solid #000;
-                border-radius: 5px;
-                white-space: nowrap;
-            }
-
-            .content-picker .dts-dialog {
-                max-width: 50vw;
-                max-width: none !important;
-                max-height: none !important;
-            }
-            .content-picker .dts-dialog .dts-form__body {
-                position: relative;
-                overflow: scroll;
-                // height: 500px;
-                border-bottom: 1px dotted #979797 !important;
-            }
-
-            .content-picker .cp-filter {
-                margin-bottom: 1rem;
-                display: flex;
-                flex-direction: row-reverse;
-            }
-            
+        `
             ${appendCss}
         `
     ];
@@ -48,6 +23,7 @@ const injectStyles = (appendCss?: string) => {
 
 interface ContentPickerProps {
     id: string;
+    viewMode?: string | "grid" | "tree";
     dataSources: any;
     table_columns: any[];
     caption?: string;
@@ -55,10 +31,14 @@ interface ContentPickerProps {
     buttonSelectEnabled?: boolean;
     appendCss?: string;
     base_path?: string;
+    displayName?: string;
+    value?: string;
+    required?: boolean;
+    onSelect?: ((item: any) => void) | undefined;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "" }, ref) => {
+    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -68,7 +48,8 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
       const [totalPages, setTotalPages] = useState(1);
       const itemsPerPage = 10; // Number of items per page
       const [loading, setLoading] = useState(false);
-      const [selectedItem, setSelectedItem] = useState("");
+      const [selectedId, setSelectedId] = useState("");
+      const [selectedName, setSelectedName] = useState("");
   
       useEffect(() => {
           injectStyles(appendCss);
@@ -98,18 +79,32 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
             setLoading(false);
             return;
         }
-    
-        try {
-            const response = await fetch(`${dataSources}?query=${query}&page=${page}&limit=${itemsPerPage}`);
+        
+        if (viewMode === "tree") {
+            const response = await fetch(`${dataSources}`);
             if (!response.ok) throw new Error("Failed to fetch data");
-    
-            const { data = [], totalRecords = 0 } = await response.json();
-            setTotalPages(Math.ceil(totalRecords / itemsPerPage));
+            const { data = [] } = await response.json();
+
+            /*const idKey = "id"; 
+            const parentKey = "parentId"; 
+            const nameKey = "sectorname"; 
+            const treeData = buildTree(data, idKey, parentKey, nameKey);*/
+
             setTableData(data);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false); // Ensure loading is set to false after data is fetched
+            setLoading(false);
+        } else {    
+            try {
+                const response = await fetch(`${dataSources}?query=${query}&page=${page}&limit=${itemsPerPage}`);
+                if (!response.ok) throw new Error("Failed to fetch data");
+        
+                const { data = [], totalRecords = 0 } = await response.json();
+                setTotalPages(Math.ceil(totalRecords / itemsPerPage));
+                setTableData(data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false); // Ensure loading is set to false after data is fetched
+            }
         }
     };
     
@@ -169,16 +164,16 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
               let contHeight = [] as number[];
               contHeight[0] = (dialogRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
               contHeight[1] = (dialogRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
-              contHeight[2] = (dialogRef.current.querySelector(".cp-filters") as HTMLElement | null)?.offsetHeight || 0;
-              contHeight[3] = (dialogRef.current.querySelector(".cp-footer") as HTMLElement | null)?.offsetHeight || 0;
-              let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - contHeight[3];
+              //contHeight[2] = (dialogRef.current.querySelector(".cp-filters") as HTMLElement | null)?.offsetHeight || 0;
+              //contHeight[3] = (dialogRef.current.querySelector(".cp-footer") as HTMLElement | null)?.offsetHeight || 0;
+              let getHeight = contHeight[0] - contHeight[1]; //- contHeight[2] - contHeight[3];
               getHeight += 240;
   
               const dtsFormBody = dialogRef.current.querySelector(".dts-form__body") as HTMLElement | null;
               if (dtsFormBody) {
                   dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
   
-                  const cpContainer = dialogRef.current.querySelector(".cp-container") as HTMLElement | null;
+                  const cpContainer = dialogRef.current.querySelector(".cp-view-mode") as HTMLElement | null;
                   if (cpContainer) {
                       cpContainer.style.display = "block";
                   }
@@ -198,7 +193,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
             dtsFormBody.scrollTop = 0; // Reset scrolling
         }
     
-        const cpContainer = dialogRef.current.querySelector(".cp-container") as HTMLElement | null;
+        const cpContainer = dialogRef.current.querySelector(".cp-view-mode") as HTMLElement | null;
         if (cpContainer) {
             cpContainer.style.display = "none";
         }
@@ -231,63 +226,92 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
             return;
         }
     
-        const selectedRow = tableData.find((row: any) => row[primaryColumn.column_field] === rowId);
+        const selectedRow = tableData.find((row: any) => row[primaryColumn.column_field].toString() === rowId.toString());
 
-        // Extract all fields marked with `is_selected_field: true`
-        /*const selectedFields = table_columns
-        .filter((col) => col.is_selected_field)
-        .reduce((acc, col) => {
-            acc[col.column_field] = selectedRow[col.column_field] || "N/A";
-            return acc;
-        }, {} as Record<string, any>); // Ensuring correct type
-        */
+        // console.log('rowId: ', rowId);
+        // console.log('primaryColumn.column_field: ', primaryColumn.column_field);
+        // console.log('tableData: ', tableData);
+        // console.log('selectedRow: ', selectedRow);
 
         const selectedValues = table_columns
-        .filter((col) => col.is_selected_field)
+        .filter((col) => col?.is_selected_field)
         .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
         .join(", "); // Convert array to comma-separated string
-    
-        console.log("Selected item:", selectedRow);
-        console.log("Selected Fields (is_selected_field):", selectedValues);
-
-        // Update the hidden input value
-        //const hiddenInput = document.querySelector(`input[name="${id}"]`) as HTMLInputElement | null;
-
-        if (componentRef.current) {
-            const hiddenInput = componentRef.current.querySelector(`#${id}`) as HTMLInputElement | null;
-            console.log("hiddenInput:", hiddenInput);
-            if (hiddenInput) {
-                //alert(selectedValues)
-                //hiddenInput.defaultValue = selectedValues;
-
-                setSelectedItem(selectedValues);
-            }   
-        }
+        //console.log("Selected item:", selectedRow);
+        //console.log("Selected Fields (is_selected_field):", selectedValues);
+        //console.log("Selected item:", selectedRow['_CpID']);
+        //console.log("Selected item:", selectedRow['_CpDisplayName']);
+                
+        setSelectedId(selectedRow['_CpID']);
+        setSelectedName(selectedRow['_CpDisplayName']);
 
         if (dialogRef.current) {
             dialogRef.current.close();
         }
         
         clearPicker();
+
+        if (typeof onSelect === "function") {
+            onSelect({ value: selectedRow['_CpID'], name: selectedRow['_CpDisplayName'], object: selectedRow });
+        }
     };
 
     const removeItem = (e: any) => {
         e.preventDefault();
-        setSelectedItem("");
+        setSelectedId("");
+        setSelectedName("");
     }
     
 
       useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
           if (event.key === "Escape" && dialogRef.current?.open) {
-            console.log("Escape key pressed! Closing dialog...");
+            //console.log("Escape key pressed! Closing dialog...");
             dialogRef.current.close();
             clearPicker();
           }
         };
     
         document.addEventListener("keydown", handleKeyDown);
+
+        if (value !== "") {
+            setSelectedId(value);
+            setSelectedName(displayName);
+        }
+
+        const handleFormSubmit = (e: Event) => {
+            const inputElement = document.querySelector(`input[name="${id}"]`) as HTMLInputElement;
+            if (inputElement && inputElement.value.trim() === "") {
+
+                const cpInputContainer = (inputElement?.closest('.cp-input-container') as HTMLElement) || null;
+                if (cpInputContainer) {
+                    const cpUnselected = (cpInputContainer?.querySelector(".cp-unselected") as HTMLElement) || null;
+                    if (cpUnselected) cpUnselected?.focus()
+                } 
+
+                const cpValidationPopUp = (inputElement?.closest(".cp-input-container")?.querySelector(".cp-validation-popup") as HTMLElement) || null;
+                if (cpValidationPopUp) {
+                    cpValidationPopUp.style.display = "block";
+
+                    const clientHeight = inputElement.closest(".cp-input-container")?.clientHeight || 0;
+                    cpValidationPopUp.style.bottom = `-${clientHeight+6}px`;
+              
+                    // Hide after 3 seconds
+                    setTimeout(() => {
+                        cpValidationPopUp.style.display = "none";
+                    }, 3000);
+                }
+                e.preventDefault(); // Prevent form submission
+            }
+        };
     
+        if (required) {
+            const formElement = document.querySelector("form");
+            if (formElement) {
+                formElement.addEventListener("submit", handleFormSubmit);
+            }
+        }
+
         return () => {
           document.removeEventListener("keydown", handleKeyDown);
         };
@@ -306,7 +330,57 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                   </svg>
                               </a>
                           </div>
-                          <div>
+
+                          {(viewMode === "tree") && (
+                            <div className="cp-view-mode tree" style={{ display: "none" }}>
+                                    <TreeView 
+                                        treeData={tableData} 
+                                        rootCaption="Sectors" 
+                                        dialogMode={false}
+                                        disableButtonSelect={true}
+                                        noSelect={true}
+                                        appendCss={
+                                            `
+                                                ul.tree li[data-has_children="false"] span {
+                                                    display: inline-block;
+                                                    cursor: pointer;
+                                                    padding: 0.3rem;
+                                                    margin-bottom: 0.3rem;
+                                                    background-color: #f9f9f9;
+                                                    border: 1px solid #007B7A;
+                                                    border-radius: 5px;
+                                                }
+                                                ul.tree li[data-has_children="false"]:hover span {
+                                                    text-decoration: underline;
+                                                }
+                                            `
+                                        }
+                                        onClick={(e) => {
+                                            const dataHasChildren = e.target.closest("li")?.getAttribute("data-has_children") || "";
+                                            if (dataHasChildren === "false") {
+                                                const dataId = e.target.closest("li").getAttribute("data-id") || "";
+                                                const dataPath = e.target.closest("li").getAttribute("data-path") || "";
+
+                                                setSelectedId(dataId);
+                                                setSelectedName(dataPath);
+                                        
+                                                if (dialogRef.current) {
+                                                    dialogRef.current.close();
+                                                }
+                                                
+                                                clearPicker();
+
+                                                if (typeof onSelect === "function") {
+                                                    onSelect({ value: dataId, name: dataPath, object: e.target.closest("li") });
+                                                }
+                                            }
+                                        }}
+                                    />
+                            </div>                            
+                          )}
+
+                          {(viewMode === "grid") && (
+                          <div className="cp-view-mode grid" style={{ display: "none" }}>
                               <div className="cp-filter">
                                   <input
                                       type="text"
@@ -316,7 +390,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                   />
                               </div>
                               <div className="dts-form__body">
-                                  <div className="cp-container" style={{ display: "none" }}>
+                                  <div className="cp-container">
                                       <table className="dts-table">
                                           <thead>
                                               <tr>
@@ -360,23 +434,9 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                       </table>
                                   </div>
                               </div>
-                              <div className="cp-footer"
-                                  style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      alignItems: "center",
-                                      padding: "10px 15px",
-                                      fontSize: "14px",
-                                      color: "#333",
-                                  }}
-                              >
+                              <div className="cp-footer">
                                   <span>Page {currentPage} of {totalPages} | Showing {(tableData ?? []).length} items</span>
-                                  <div
-                                      style={{
-                                          display: "flex",
-                                          gap: "10px",
-                                      }}
-                                  >
+                                  <div className="cp-page-nav">
                                     <button onClick={goToPreviousPage} disabled={currentPage <= 1}>
                                         ◀ Previous
                                     </button>
@@ -387,80 +447,30 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                   </div>
                               </div>
                           </div>
+                          )}
+
                       </div>
                   </dialog>
   
-                  <div
-                      style={{
-                          display: "flex",
-                          alignItems: "center",
-                          border: "1px solid #ccc",
-                          borderRadius: "0.25rem",
-                          overflow: "hidden",
-                          width: "fit-content",
-                          backgroundColor: "#fff"
-                      }}
-                  >
-                        {(selectedItem === "") && (
-                        <div
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                padding: "4px 8px",
-                                margin: "0px",
-                                flex: 1,
-                            }}
-                        >
+                  <div className="cp-input-container">
+                        {(selectedId === "") && (
+                        <div className="cp-unselected" tabIndex={0}>
                           <span>{defaultText !== "" ? defaultText : caption}</span>
                         </div>
                         )}
 
-                        {(selectedItem !== "") && (
-                            <div 
-                            style={{
-                            display: "inline-flex",
-                            //display: "inline-flex",
-                            alignItems: "center",
-                            borderRadius: "4px",
-                            padding: "4px 8px",
-                            margin: "2px",
-                            border: "1px solid #E3E3E3",
-                            flex: 1,
-                            fontSize: "100%",
-                            lineHeight: "1.15",
-                            color: "#495057",
-                            backgroundColor: "#fff"
-                            }}
-                            >
-                            <span>{selectedItem}</span><span style={{marginLeft: "5px", cursor: "pointer", color: "red"}} onClick={removeItem}>×</span>
+                        {(selectedId !== "") && (
+                            <div className="cp-selected">
+                            <span>{selectedName}</span><span className="cp-remove-item" onClick={removeItem}>×</span>
                             </div>
                         )}
-                      <div
-                          style={{
-                              backgroundColor: "#e9ecef",
-                              border: "none",
-                              padding: "0.4rem 0.4rem 0.1rem 0.4rem",
-                              cursor: "pointer",
-                              borderLeft: "1px solid #ced4da",
-                          }}
-                          onClick={openPicker}
-                      >
-                        <svg
-                        aria-hidden="true"
-                        focusable="false"
-                        role="img"
-                        style={{
-                            WebkitMaskImage: `url(${base_path}/assets/icons/search-black.svg)`,
-                            maskImage: `url(${base_path}/assets/icons/search-black.svg)`,
-                            backgroundColor: "black", // Set the desired color
-                            width: "20px",
-                            height: "20px",
-                        }}
-                        ></svg>
-                        <input type="hidden" id={id} name={id} value={selectedItem} />
+                      <div className="cp-search" onClick={openPicker}>
+                        <svg aria-hidden="true" focusable="false" role="img"></svg>
+                        <input type="hidden" id={id} name={id} value={selectedId} />
                       </div>
+                      <div className="cp-validation-popup">⚠️ Please fill out this field.</div>
                   </div>
               </div>
           </>
       );
-  });
+});

@@ -1,3 +1,5 @@
+import {dr} from '~/db.server'
+
 import {
 	lossesCreate,
 	lossesUpdate,
@@ -25,12 +27,14 @@ import {getTableName} from "drizzle-orm"
 import {lossesTable} from "~/drizzle/schema"
 import {authLoaderWithPerm} from "~/util/auth"
 import {useLoaderData} from "@remix-run/react"
+import {sectorIsAgriculture} from "~/backend.server/models/sector"
 
 interface LoaderRes {
 	item: LossesViewModel | null
 	fieldDef: FormInputDef<LossesFields>[]
 	recordId: string
 	sectorId: number
+	sectorIsAgriculture?: boolean
 }
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -52,6 +56,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			fieldDef: fieldsDef,
 			recordId: params.disRecId,
 			sectorId: sectorId,
+			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId)
 		}
 		return res
 	}
@@ -86,6 +91,9 @@ export default function Screen() {
 
 	fieldsInitial.recordId = ld.recordId
 	fieldsInitial.sectorId = ld.sectorId
+	if (fieldsInitial.sectorIsAgriculture === undefined){
+		fieldsInitial.sectorIsAgriculture = ld.sectorIsAgriculture!
+	}
 
 	if (!ld.fieldDef) {
 		throw "invalid"

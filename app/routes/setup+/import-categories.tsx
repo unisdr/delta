@@ -75,11 +75,11 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
     all.forEach((item, key) => {
       if (key !== 0) {
-      
         if (item[2] === '') {
           formRecord = { 
             id: parseInt(item[0]),
             sectorname: item[1],
+            description: item[3],
           };
         }
         else {
@@ -87,15 +87,16 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
             id: parseInt(item[0]),
             sectorname: item[1],
             parentId: parseInt(item[2]),
+            description: item[3],
           };
         }
 
         try {
-            upsertRecordSector(formRecord).catch(console.error);
-            } catch (e) {
-              console.log(e);
-              throw e;
-            }
+          upsertRecordSector(formRecord).catch(console.error);
+        } catch (e) {
+          console.log(e);
+          throw e;
+        }
       }
     }); 
   }

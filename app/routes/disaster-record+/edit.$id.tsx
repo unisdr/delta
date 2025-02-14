@@ -39,6 +39,8 @@ import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
 
+import { contentPickerConfig } from "./content-picker-config";
+
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("actionArgs", actionArgs.params);
 	// return {item: null};
@@ -70,12 +72,15 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
     const rawData = await dr.select().from(divisionTable);
     const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
+    const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
+
     return {
 		item, 
 		recordsNonecoLosses: dbNonecoLosses, 
 		recordsDisRecSectors: dbDisRecSectors,
 		recordsHummanEffects: dbDisRecHummanEffects,
-		treeData
+		treeData,
+		cpDisplayName: cpDisplayName
 	};
 });
 
@@ -97,6 +102,7 @@ export default function Screen() {
 		recordsDisRecSectors: any | null,
 		recordsHummanEffects: any | null,
 		treeData: any[]
+		cpDisplayName: string
 	}>();
 	console.log(ld);
 
@@ -104,7 +110,7 @@ export default function Screen() {
 		<>
 			<FormScreen
 				fieldsDef={fieldsDef}
-				formComponent={(props: any) => <DisasterRecordsForm {...props} treeData={ld.treeData} />}
+				formComponent={(props: any) => <DisasterRecordsForm {...props} treeData={ld.treeData} cpDisplayName={ld.cpDisplayName} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>
@@ -172,7 +178,7 @@ export default function Screen() {
 												<tr>
 													<th></th>
 													<th></th>
-													<th></th>
+													<th className="center" colSpan={2}>Damage</th>
 													<th></th>
 													<th className="center" colSpan={2}>Disruption</th>
 													<th></th>
@@ -181,6 +187,7 @@ export default function Screen() {
 													<th>ID</th>
 													<th>Sector</th>
 													<th>Damage</th>
+													<th>Recovery Cost</th>
 													<th>Losses</th>
 													<th>Disruption</th>
 													<th>Response Cost</th>
@@ -200,6 +207,14 @@ export default function Screen() {
 															{ item.disRecSectorsWithDamage &&
 																<>
 																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/damages?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
+																</>
+															}
+														</td>
+														<td>
+															{ item.disRecSectorsDamageRecoveryCost &&
+																<>
+																	
+																	{ item.disRecSectorsDamageRecoveryCost } { item.disRecSectorsDamageRecoveryCostCurrency }
 																</>
 															}
 														</td>

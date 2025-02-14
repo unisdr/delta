@@ -37,8 +37,8 @@ export default function Data() {
 					<Link to={`${route}/${item.id}`}>{item.id.slice(0, 5)}</Link>
 				</td>
 				<td>{hazardEventLink(item.hazardEvent)}</td>
-				<td>{formatDate(item.startDateUTC)}</td>
-				<td>{formatDate(item.endDateUTC)}</td>
+				<td>{formatDate(item.startDate)}</td>
+				<td>{formatDate(item.endDate)}</td>
 				<td>
 				{ld.isPublic ? null : 
 					<ActionLinks route={route} id={item.id} />

@@ -7,18 +7,16 @@ id,sectorname,parent_id,description
 120102,Livestock,1201,
 120103,Forestry & Logging,1201,
 120104,Aquaculture,1201,
-120105,"Aquaculture or farming in water is the aquatic equivalent of agriculture or farming on land. Defined broadly, agriculture includes farming both animals (animal husbandry) and plants (agronomy, horticulture and forestry in part)",1201,
 120106,Fisheries,1201,
-12010101,Temporary/ Annual crop,120101,
-12010102,Permanent/ Perennial,120101,
+12010101,Temporary/ Annual crop,120101,"Crops which are both sown and harvested during the same agricultural year, sometimes more than once;"
+12010102,Permanent/ Perennial,120101,"Sown or planted once andnot be replanted after each annual harvest."
 12010201,Animal production,120102,
 12010202,Hunting and trapping,120102,
 12010301,Silviculture,120103,
 12010302,Logging,120103,
 12010303,Gathering  forest products,120103,
 12010401,Marine Aquaculture,120104,
-12010501,Marine Aquaculture,120105,
-12010502,Freshwater aquaculture,120105,
+12010402,Freshwater aquaculture,120104,
 12010601,Marine Fishing,120106,
 12010602,Freshwater fishing,120106,
 1202,Tourism,12,
@@ -27,7 +25,9 @@ id,sectorname,parent_id,description
 120203,Travel agency services,1202,
 120204,Recreation and other entertainment services,1202,
 1203,Commerce,12,
-120301,Wholesale Trade,1203,
+120301,Wholesale Trade,1203,"Scope: wholesale trade on own account or on a fee or contract basis (commission trade) related to domestic wholesale trade as well as international wholesale trade (import/export).
+
+Definition: Wholesale is the resale (sale without transformation) of new and used goods to retailers, business-to-business trade, such as to industrial, commercial, institutional or professional users, or resale to other wholesalers, or involves acting as an agent or broker in buying goods for, or selling goods to, such persons or companies"
 120302,Retail Trade,1203,
 120303,Sales and maintenance of vehicles,1203,
 1301,Information and Communications,13,
@@ -64,7 +64,7 @@ id,sectorname,parent_id,description
 130201010301,Extra/ultra/high voltage,1302010103,
 130201010302,Medium voltage,1302010103,
 130201010303,Low voltage,1302010103,
-130201010401,"Per usage sector  (residential, commercial, industrial, agriculture, others)",1302010104,
+130201010401,"Per usage sector (residential, commercial, industrial, agriculture, others)",1302010104,
 13020201,Gas,130202,
 13020202,Oil,130202,
 13020203,Coal,130202,

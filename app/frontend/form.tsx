@@ -189,14 +189,15 @@ interface FormProps<T> {
 	children: React.ReactNode;
 	errors?: Errors<T>;
 	className?: string;
+	ref?: React.Ref<HTMLFormElement>
 }
 
-export function Form<T>({children, errors, className}: FormProps<T>) {
-	errors = errors || {};
+export function Form<T>(props: FormProps<T>) {
+	let errors = props.errors || {};
 	errors.form = errors.form || [];
 
 	return (
-		<ReactForm method="post" className={className}>
+		<ReactForm ref={props.ref} method="post" className={props.className}>
 			{errors.form.length > 0 ? (
 				<>
 					<h2>Form Errors</h2>
@@ -207,7 +208,7 @@ export function Form<T>({children, errors, className}: FormProps<T>) {
 					</ul>
 				</>
 			) : null}
-			<div className="fields">{children}</div>
+			<div className="fields">{props.children}</div>
 		</ReactForm>
 	);
 }
@@ -268,6 +269,8 @@ export interface FormInputDef<T> {
 	label: string;
 	type: FormInputType;
 	required?: boolean;
+	tooltip?: string;
+	description?: string;
 	enumData?: readonly EnumEntry[];
 }
 
@@ -276,6 +279,8 @@ export interface FormInputDefSpecific {
 	label: string;
 	type: FormInputType;
 	required?: boolean;
+	tooltip?: string;
+	description?: string;
 	enumData?: readonly EnumEntry[];
 }
 
@@ -318,21 +323,21 @@ export interface InputsProps<T> {
 	def: FormInputDef<T>[];
 	fields: Partial<T>;
 	errors?: Errors<T>;
-	override?: Record<string, ReactElement>;
-	headersAfter?: Record<string, ReactElement>
+	override?: Record<string, ReactElement | undefined | null>;
+	elementsAfter?: Record<string, ReactElement>
 }
 
 export function Inputs<T>(props: InputsProps<T>) {
-	if (!props.def){
+	if (!props.def) {
 		throw new Error("props.def not passed to form/Inputs")
 	}
 
 	return props.def.map((def) => {
 		let after = null;
-		if (props.headersAfter && props.headersAfter[def.key]) {
-			after = props.headersAfter[def.key]
+		if (props.elementsAfter && props.elementsAfter[def.key]) {
+			after = props.elementsAfter[def.key]
 		}
-		if (props.override && props.override[def.key]) {
+		if (props.override && props.override[def.key] !== undefined) {
 			return (
 				<React.Fragment key={def.key}>
 					{props.override[def.key]}
@@ -362,6 +367,50 @@ export function Inputs<T>(props: InputsProps<T>) {
 	});
 }
 
+
+export interface WrapInputProps {
+	def: FormInputDefSpecific;
+	child: React.ReactNode
+	errors: string[] | undefined;
+}
+
+export function WrapInput(props: WrapInputProps) {
+	let label = props.def.label;
+	if (props.def.required) {
+		label += " *";
+	}
+	return (
+		<div title={props.def.tooltip} className="mg-grid mg-grid__col-3">
+			<div className="dts-form-component">
+				<Field label={label}>
+					{props.child}
+					<FieldErrors2 errors={props.errors} />
+					{props.def.description &&
+						<p>{props.def.description}</p>
+					}
+				</Field>
+			</div>
+		</div>
+	)
+}
+
+export interface WrapInputBasicProps {
+	label: string
+	child: React.ReactNode
+}
+
+export function WrapInputBasic(props: WrapInputBasicProps) {
+	return (
+		<div className="mg-grid mg-grid__col-3">
+			<div className="dts-form-component">
+				<Field label={props.label}>
+					{props.child}
+				</Field>
+			</div>
+		</div>
+	)
+}
+
 export interface InputProps {
 	def: FormInputDefSpecific;
 	name: string;
@@ -371,87 +420,72 @@ export interface InputProps {
 }
 
 export function Input(props: InputProps) {
-	let label = props.def.label;
-	if (props.def.required) {
-		label += " *";
+	let wrapInput = function (child: React.ReactNode) {
+		return (
+			<WrapInput
+				def={props.def}
+				child={child}
+				errors={props.errors}
+			/>
+		)
 	}
 	switch (props.def.type) {
 		default:
 			throw `Unknown type ${props.def.type}`;
 		case "enum": {
 			let vs = props.value as string;
-			return (
-				<div className="mg-grid mg-grid__col-3">
-					<div className="dts-form-component ">
-						<Field label={label}>
-							<select
-								required={props.def.required}
-								name={props.name}
-								defaultValue={vs}
-							>
-								{props.enumData!.map((v) => (
-									<option key={v.key} value={v.key}>
-										{v.label}
-									</option>
-								))}
-							</select>
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				</div>
+			return wrapInput(
+				<select
+					required={props.def.required}
+					name={props.name}
+					defaultValue={vs}
+				>
+					{props.enumData!.map((v) => (
+						<option key={v.key} value={v.key}>
+							{v.label}
+						</option>
+					))}
+				</select>
 			);
 		}
 		case "enum-flex": {
 			let vs = props.value as string;
 			let contains = props.enumData!.some((e) => e.key == vs);
-			return (
-				<div className="mg-grid mg-grid__col-3">
-					<div className="dts-form-component ">
-						<Field label={label}>
-							<select
-								required={props.def.required}
-								name={props.name}
-								defaultValue={vs}
-							>
-								{!contains && vs && (
-									<option key={vs} value={vs}>
-										{vs}
-									</option>
-								)}
-								{props.enumData!.map((v) => (
-									<option key={v.key} value={v.key}>
-										{v.label}
-									</option>
-								))}
-							</select>
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				</div>
-			);
+			return wrapInput(
+				<select
+					required={props.def.required}
+					name={props.name}
+					defaultValue={vs}
+				>
+					{!contains && vs && (
+						<option key={vs} value={vs}>
+							{vs}
+						</option>
+					)}
+					{props.enumData!.map((v) => (
+						<option key={v.key} value={v.key}>
+							{v.label}
+						</option>
+					))}
+				</select>
+			)
 		}
 		case "bool":
 			let v = props.value as boolean;
 			if (v) {
-				return (
-					<div className="dts-form-component">
-						<Field label={label}>
-							<input type="hidden" name={props.name} value="off" />
-							<input type="checkbox" name={props.name} defaultChecked />
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				);
+				return wrapInput(
+					<>
+						<input type="hidden" name={props.name} value="off" />
+						<input type="checkbox" name={props.name} defaultChecked />
+					</>
+				)
 			} else {
-				return (
-					<div className="dts-form-component">
-						<Field label={label}>
-							<input type="hidden" name={props.name} value="off" />
-							<input type="checkbox" name={props.name} />
-							<FieldErrors2 errors={props.errors} />
-						</Field>
-					</div>
-				);
+				return wrapInput(
+					<>
+						<input type="hidden" name={props.name} value="off" />
+						<input type="checkbox" name={props.name} />
+					</>
+				)
 			}
 		case "textarea":
 			let defaultValueTextArea = "";
@@ -459,17 +493,12 @@ export function Input(props: InputProps) {
 				let v = props.value as string;
 				defaultValueTextArea = v;
 			}
-			return (
-				<div className="dts-form-component">
-					<Field label={label}>
-						<textarea
-							required={props.def.required}
-							name={props.name}
-							defaultValue={defaultValueTextArea}
-						/>
-						<FieldErrors2 errors={props.errors} />
-					</Field>
-				</div>
+			return wrapInput(
+				<textarea
+					required={props.def.required}
+					name={props.name}
+					defaultValue={defaultValueTextArea}
+				/>
 			);
 		case "text":
 		case "date":
@@ -487,19 +516,14 @@ export function Input(props: InputProps) {
 					defaultValue = String(v);
 				}
 			}
-			return (
-				<div className="dts-form-component">
-					<Field label={label}>
-						<input
-							required={props.def.required}
-							type={props.def.type}
-							name={props.name}
-							defaultValue={defaultValue}
-						/>
-						<FieldErrors2 errors={props.errors} />
-					</Field>
-				</div>
-			);
+			return wrapInput(
+				<input
+					required={props.def.required}
+					type={props.def.type}
+					name={props.name}
+					defaultValue={defaultValue}
+				/>
+			)
 	}
 }
 
@@ -511,7 +535,7 @@ export interface FieldsViewProps<T> {
 	def: FormInputDef<T>[]
 	fields: T
 	headersAfter?: Record<string, ReactElement>
-	override?: Record<string, ReactElement>
+	override?: Record<string, ReactElement | undefined | null>
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
@@ -521,7 +545,7 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 			if (props.headersAfter && props.headersAfter[def.key]) {
 				after = props.headersAfter[def.key]
 			}
-			if (props.override && props.override[def.key]) {
+			if (props.override && props.override[def.key] !== undefined) {
 				return (
 					<React.Fragment key={def.key}>
 						{props.override[def.key]}
@@ -656,35 +680,38 @@ export function ViewScreen<T>(props: ViewScreenProps<T>) {
 	return <ViewComponent item={ld.item} />;
 }
 
-interface ViewScreenPropsWithDef<T,X> {
+interface ViewScreenPropsWithDef<T, X> {
 	viewComponent: React.ComponentType<{item: T, def: FormInputDef<X>[]}>;
 }
 
-export function ViewScreenWithDef<T,X>(props: ViewScreenPropsWithDef<T,X>) {
+export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 	let ViewComponent = props.viewComponent;
 	const ld = useLoaderData<{item: T, def: FormInputDef<X>[]}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
+	if (!ld.def) {
+		throw "def missing"
+	}
 	return <ViewComponent item={ld.item} def={ld.def} />;
 }
 
 interface ViewScreenPublicApprovedProps<T> {
-	viewComponent: React.ComponentType<{item: T; isPublic: boolean}>;
+	viewComponent: React.ComponentType<{item: T; isPublic: boolean; auditLogs?: any[]}>;
 }
 
 export function ViewScreenPublicApproved<T>(
 	props: ViewScreenPublicApprovedProps<T>
 ) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{item: T; isPublic: boolean}>();
+	const ld = useLoaderData<{item: T; isPublic: boolean; auditLogs?: any[]}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
 	if (ld.isPublic === undefined) {
 		throw "loader does not expose isPublic";
 	}
-	return <ViewComponent isPublic={ld.isPublic} item={ld.item} />;
+	return <ViewComponent isPublic={ld.isPublic} item={ld.item} auditLogs={ld.auditLogs} />;
 }
 
 interface ViewComponentProps {
@@ -747,12 +774,13 @@ interface FormViewProps {
 	errors: any;
 	fields: any;
 	fieldsDef: any;
-	override?: Record<string, ReactElement>;
-	headersAfter?: Record<string, ReactElement>
+	override?: Record<string, ReactElement | undefined | null>;
+	elementsAfter?: Record<string, ReactElement>
+	ref?: React.Ref<HTMLFormElement>;
 }
 
 export function FormView(props: FormViewProps) {
-	if (!props.fieldsDef){
+	if (!props.fieldsDef) {
 		throw new Error("props.fieldsDef not passed to FormView")
 	}
 
@@ -775,13 +803,13 @@ export function FormView(props: FormViewProps) {
 				</h2>
 				{props.edit && props.id && <p>ID: {String(props.id)}</p>}
 				{props.infoNodes}
-				<Form errors={props.errors} className="dts-form">
+				<Form ref={props.ref} errors={props.errors} className="dts-form">
 					<Inputs
 						def={props.fieldsDef}
 						fields={props.fields}
 						errors={props.errors}
 						override={props.override}
-						headersAfter={props.headersAfter}
+						elementsAfter={props.elementsAfter}
 					/>
 					<div className="dts-form__actions">
 						<SubmitButton
@@ -836,14 +864,14 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 				<Link to={`${route}/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="assets/icons/eye-show-password.svg#eye-show"></use>
+							<use href="/assets/icons/eye-show-password.svg#eye-show"></use>
 						</svg>
 					</button>
 				</Link>
 				<Link to={`${route}/edit/${id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="assets/icons/edit.svg#edit"></use>
+							<use href="/assets/icons/edit.svg#edit"></use>
 						</svg>
 					</button>
 				</Link>
@@ -854,7 +882,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 					onClick={handleDeleteClick}
 				>
 					<svg aria-hidden="true" focusable="false" role="img">
-						<use href="assets/icons/trash-alt.svg#delete"></use>
+						<use href="/assets/icons/trash-alt.svg#delete"></use>
 					</svg>
 				</button>
 

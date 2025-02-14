@@ -12,60 +12,75 @@ export interface LossesFields extends Omit<LossesInsert, "id"> {}
 export const fieldsDef: FormInputDef<LossesFields>[] = [
 	{key: "recordId", label: "", type: "other"},
 	{key: "sectorId", label: "", type: "other"},
-	{key: "type", label: "Type", type: "enum", enumData: [
-		{key: "increased_expenditure", label: "Increased Expenditure"},
-		{key: "loss_revenue_forecasted", label: "Loss Revenue (Forecasted)"},
-		{key: "non_economic_losses", label: "Non Economic Losses"}
-	]},
-	{key: "relatedTo", label: "Related To", type: "enum", enumData: [
-		{key: "infrastructure_equipment", label: "Infrastructure & Equipment"},
-		{key: "production_delivery_access", label: "Production, Delivery & Access"},
-		{key: "governance", label: "Governance"},
-		{key: "risk_vulnerability_drr", label: "Risk, Vulnerability & DRR"},
-		{key: "other", label: "Other"}
-	]},
+	{key: "sectorIsAgriculture", label: "", type: "bool"},
+	{
+		key: "type", label: "Type", type: "enum", enumData: [
+			{key: "increased_expenditure", label: "Increased Expenditure"},
+			{key: "loss_revenue_forecasted", label: "Loss Revenue (Forecasted)"},
+			{key: "non_economic_losses", label: "Non Economic Losses"}
+		]
+	},
+	{
+		key: "relatedToNotAgriculture", label: "Related To", type: "enum", enumData: [
+			{key: "infrastructure_equipment", label: "Infrastructure & Equipment"},
+			{key: "production_delivery_access", label: "Production, Delivery & Access"},
+			{key: "governance", label: "Governance"},
+			{key: "risk_vulnerability_drr", label: "Risk, Vulnerability & DRR"},
+			{key: "other", label: "Other"}
+		]
+	},
+	{
+		key: "relatedToAgriculture", label: "Related To", type: "enum", enumData: [
+			{key: "value1", label: "Agriculture Value 1"},
+			{key: "value2", label: "Agriculture Value 2"},
+		]
+	},
 	{key: "description", label: "Description", type: "textarea"},
-	{key: "publicValueUnit", label: "Public Value Unit", type: "enum", enumData: [
-		{key: "number", label: "Number"},
-		{key: "area", label: "Area"},
-		{key: "volume", label: "Volume"},
-		{key: "duration_days", label: "Duration (Days)"},
-		{key: "duration_hours", label: "Duration (Hours)"}
-	]},
-	{key: "publicValue", label: "Public Value", type: "number"},
-	{key: "publicCostPerUnit", label: "Public Cost Per Unit", type: "number"},
 	{
-		key: "publicCostPerUnitCurr",
-		label: "Public Cost Currency",
+		key: "publicValueUnit", label: "Value Unit", type: "enum", enumData: [
+			{key: "number", label: "Number"},
+			{key: "area", label: "Area"},
+			{key: "volume", label: "Volume"},
+			{key: "duration_days", label: "Duration (Days)"},
+			{key: "duration_hours", label: "Duration (Hours)"}
+		]
+	},
+	{key: "publicValue", label: "Value", type: "number"},
+	{key: "publicCostPerUnit", label: "Cost Per Unit", type: "number"},
+	{
+		key: "publicCostPerUnitCurrency",
+		label: "Cost Currency",
 		type: "enum-flex",
 		enumData: configCurrencies().map(c => ({key: c, label: c}))
 	},
-	{key: "publicTotalCost", label: "Public Total Cost", type: "number"},
+	{key: "publicTotalCost", label: "Total Cost", type: "number"},
 	{
-		key: "publicTotalCostCurr",
-		label: "Public Total Cost Currency",
+		key: "publicTotalCostCurrency",
+		label: "Total Cost Currency",
 		type: "enum-flex",
 		enumData: configCurrencies().map(c => ({key: c, label: c}))
 	},
-	{key: "privateValueUnit", label: "Private Value Unit", type: "enum", enumData: [
-		{key: "number", label: "Number"},
-		{key: "area", label: "Area"},
-		{key: "volume", label: "Volume"},
-		{key: "duration_days", label: "Duration (Days)"},
-		{key: "duration_hours", label: "Duration (Hours)"}
-	]},
-	{key: "privateValue", label: "Private Value", type: "number"},
-	{key: "privateCostPerUnit", label: "Private Cost Per Unit", type: "number"},
 	{
-		key: "privateCostPerUnitCurr",
-		label: "Private Cost Currency",
+		key: "privateValueUnit", label: "Value Unit", type: "enum", enumData: [
+			{key: "number", label: "Number"},
+			{key: "area", label: "Area"},
+			{key: "volume", label: "Volume"},
+			{key: "duration_days", label: "Duration (Days)"},
+			{key: "duration_hours", label: "Duration (Hours)"}
+		]
+	},
+	{key: "privateValue", label: "Value", type: "number"},
+	{key: "privateCostPerUnit", label: "Cost Per Unit", type: "number"},
+	{
+		key: "privateCostPerUnitCurrency",
+		label: "Cost Currency",
 		type: "enum-flex",
 		enumData: configCurrencies().map(c => ({key: c, label: c}))
 	},
-	{key: "privateTotalCost", label: "Private Total Cost", type: "number"},
+	{key: "privateTotalCost", label: "Total Cost", type: "number"},
 	{
-		key: "privateTotalCostCurr",
-		label: "Private Total Cost Currency",
+		key: "privateTotalCostCurrency",
+		label: "Total Cost Currency",
 		type: "enum-flex",
 		enumData: configCurrencies().map(c => ({key: c, label: c}))
 	}
@@ -96,6 +111,12 @@ export async function lossesCreate(tx: Tx, fields: LossesFields): Promise<Create
 	let errors = validate(fields)
 	if (hasErrors(errors)) return {ok: false, errors}
 
+	if (fields.sectorIsAgriculture) {
+		fields.relatedToNotAgriculture = null
+	} else {
+		fields.relatedToAgriculture = null
+	}
+
 	const res = await tx.insert(lossesTable).values({...fields}).returning({id: lossesTable.id})
 	return {ok: true, id: res[0].id}
 }
@@ -103,6 +124,15 @@ export async function lossesCreate(tx: Tx, fields: LossesFields): Promise<Create
 export async function lossesUpdate(tx: Tx, id: string, fields: Partial<LossesFields>): Promise<UpdateResult<LossesFields>> {
 	let errors = validate(fields)
 	if (hasErrors(errors)) return {ok: false, errors}
+
+	if (typeof fields.sectorIsAgriculture == "boolean") {
+		if (fields.sectorIsAgriculture) {
+			fields.relatedToNotAgriculture = null
+		} else {
+			fields.relatedToAgriculture = null
+		}
+	}
+
 
 	await tx.update(lossesTable).set({...fields}).where(eq(lossesTable.id, id))
 	return {ok: true}

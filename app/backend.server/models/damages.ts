@@ -9,71 +9,108 @@ import {configCurrencies} from "~/util/config"
 
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}
 
-export const fieldsDef: FormInputDef<DamagesFields>[] =
-	[
+export const damageTypeEnumData = [
+	{key: "partial", label: "Partially damaged"},
+	{key: "total", label: "Totally destroyed"}
+]
+
+export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
+	return [
 		{key: "recordId", label: "", type: "other"},
 		{key: "sectorId", label: "", type: "other"},
+		{key: "assetId", label: "Assets", type: "other"},
 
 		// Public damages
-		{key: "pubDamage", label: "Damage", type: "enum", enumData: [{key: "partial", label: "Partial"}, {key: "total", label: "Total"}]},
-		{key: "pubDamageAmount", label: "Damage Amount", type: "number"},
-		{key: "pubDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
-		{key: "pubRepairCostUnit", label: "Repair Cost Unit", type: "number"},
+		{key: "publicDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
+		{key: "publicDamageAmount", label: "Damage Amount", type: "number"},
+		{key: "publicDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
+		// repair when publicDamage=partial
+		{key: "publicRepairCostUnit", label: "Repair Cost Unit", type: "number"},
 		{
-			key: "pubRepairCostUnitCurr",
+			key: "publicRepairCostUnitCurrency",
 			label: "Repair Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "pubRepairUnits", label: "Repair Units", type: "number"},
-		{key: "pubRepairCostTotalOverride", label: "Repair Cost Total Override", type: "number"},
-		{key: "pubRecoveryCostUnit", label: "Recovery Cost Unit", type: "number"},
+		{key: "publicRepairUnits", label: "Repair Units", type: "number"},
+		{key: "publicRepairCostTotalOverride", label: "Repair Cost Total Override", type: "number"},
+		// replacement when publicDamage=partial
+		{key: "publicReplacementCostUnit", label: "Replacement Cost Unit", type: "number"},
 		{
-			key: "pubRecoveryCostUnitCurr",
+			key: "publicReplacementCostUnitCurrency",
+			label: "Replacement Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "publicReplacementUnits", label: "Replacement Units", type: "number"},
+		{key: "publicReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "number"},
+		{key: "publicRecoveryCostUnit", label: "Recovery Cost Unit", type: "number"},
+		{
+			key: "publicRecoveryCostUnitCurrency",
 			label: "Recovery Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "pubRecoveryUnits", label: "Recovery Units", type: "number"},
-		{key: "pubRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "number"},
-		{key: "pubDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},
-		{key: "pubDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number"},
-		{key: "pubDisruptionUsersAffected", label: "Disruption Users Affected", type: "number"},
-		{key: "pubDisruptionPeopleAffected", label: "Disruption People Affected", type: "number"},
-		{key: "pubDisruptionDescription", label: "Disruption Description", type: "textarea"},
+		{key: "publicRecoveryUnits", label: "Recovery Units", type: "number"},
+		{key: "publicRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "number"},
+		{key: "publicDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},
+		{key: "publicDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number"},
+		{key: "publicDisruptionUsersAffected", label: "Disruption Users Affected", type: "number"},
+		{key: "publicDisruptionPeopleAffected", label: "Disruption People Affected", type: "number"},
+		{key: "publicDisruptionDescription", label: "Disruption Description", type: "textarea"},
 
 		// Private damages
-		{key: "privDamage", label: "Damage", type: "enum", enumData: [{key: "partial", label: "Partial"}, {key: "total", label: "Total"}]},
-		{key: "privDamageAmount", label: "Damage Amount", type: "number"},
-		{key: "privDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
-		{key: "privRepairCostUnit", label: "Repair Cost Unit", type: "number"},
+		{key: "privateDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
+		{key: "privateDamageAmount", label: "Damage Amount", type: "number"},
+		{key: "privateDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{key: "numbers", label: "Numbers"}, {key: "other", label: "Other"}]},
+		// repair when publicDamage=partial
+		{key: "privateRepairCostUnit", label: "Repair Cost Unit", type: "number"},
 		{
-			key: "privRepairCostUnitCurr",
+			key: "privateRepairCostUnitCurrency",
 			label: "Repair Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "privRepairUnits", label: "Repair Units", type: "number"},
-		{key: "privRepairCostTotalOverride", label: "Repair Cost Total Override", type: "number"},
-		{key: "privRecoveryCostUnit", label: "Recovery Cost Unit", type: "number"},
+		{key: "privateRepairUnits", label: "Repair Units", type: "number"},
+		{key: "privateRepairCostTotalOverride", label: "Repair Cost Total Override", type: "number"},
+		// replacement when publicDamage=partial
+		{key: "privateReplacementCostUnit", label: "Replacement Cost Unit", type: "number"},
 		{
-			key: "privRecoveryCostUnitCurr",
+			key: "privateReplacementCostUnitCurrency",
+			label: "Replacement Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "privateReplacementUnits", label: "Replacement Units", type: "number"},
+		{key: "privateReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "number"},
+
+		{key: "privateRecoveryCostUnit", label: "Recovery Cost Unit", type: "number"},
+		{
+			key: "privateRecoveryCostUnitCurrency",
 			label: "Recovery Cost Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "privRecoveryUnits", label: "Recovery Units", type: "number"},
-		{key: "privRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "number"},
-		{key: "privDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},
-		{key: "privDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number"},
-		{key: "privDisruptionUsersAffected", label: "Disruption Users Affected", type: "number"},
-		{key: "privDisruptionPeopleAffected", label: "Disruption People Affected", type: "number"},
-		{key: "privDisruptionDescription", label: "Disruption Description", type: "textarea"},
+		{key: "privateRecoveryUnits", label: "Recovery Units", type: "number"},
+		{key: "privateRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "number"},
+		{key: "privateDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},
+		{key: "privateDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number"},
+		{key: "privateDisruptionUsersAffected", label: "Disruption Users Affected", type: "number"},
+		{key: "privateDisruptionPeopleAffected", label: "Disruption People Affected", type: "number"},
+		{key: "privateDisruptionDescription", label: "Disruption Description", type: "textarea"},
 
 	]
+}
 
-export const fieldsDefApi: FormInputDef<DamagesFields>[] = [...fieldsDef, {key: "apiImportId", label: "", type: "other"}]
-export const fieldsDefView: FormInputDef<DamagesFields>[] = [...fieldsDef]
+export async function fieldsDefApi(): Promise<FormInputDef<DamagesFields>[]> {
+ 	return [
+		...await fieldsDef(),
+		{key: "apiImportId", label: "", type: "other"}]
+}
+
+export async function fieldsDefView(): Promise<FormInputDef<DamagesFields>[]> {
+ 	return fieldsDef()
+}
 
 export function validate(fields: Partial<DamagesFields>): Errors<DamagesFields> {
 	let errors: Errors<DamagesFields> = {fields: {}}
@@ -102,6 +139,30 @@ export async function damagesCreate(tx: Tx, fields: DamagesFields): Promise<Crea
 	let errors = validate(fields)
 	if (hasErrors(errors)) return {ok: false, errors}
 
+	if (fields.publicDamage == "partial") {
+		fields.publicReplacementCostUnit = null
+		fields.publicReplacementCostUnitCurrency = null
+		fields.publicReplacementUnits = null
+		fields.publicReplacementCostTotalOverride = null
+	} else if (fields.publicDamage == "total") {
+		fields.publicRepairCostUnit = null
+		fields.publicRepairCostUnitCurrency = null
+		fields.publicRepairUnits = null
+		fields.publicRepairCostTotalOverride = null
+	}
+
+	if (fields.privateDamage == "partial") {
+		fields.privateReplacementCostUnit = null
+		fields.privateReplacementCostUnitCurrency = null
+		fields.privateReplacementUnits = null
+		fields.privateReplacementCostTotalOverride = null
+	} else if (fields.privateDamage == "total") {
+		fields.privateRepairCostUnit = null
+		fields.privateRepairCostUnitCurrency = null
+		fields.privateRepairUnits = null
+		fields.privateRepairCostTotalOverride = null
+	}
+
 	const res = await tx.insert(damagesTable).values({...fields}).returning({id: damagesTable.id})
 	return {ok: true, id: res[0].id}
 }
@@ -109,6 +170,30 @@ export async function damagesCreate(tx: Tx, fields: DamagesFields): Promise<Crea
 export async function damagesUpdate(tx: Tx, id: string, fields: Partial<DamagesFields>): Promise<UpdateResult<DamagesFields>> {
 	let errors = validate(fields)
 	if (hasErrors(errors)) return {ok: false, errors}
+
+	if (fields.publicDamage == "partial") {
+		fields.publicReplacementCostUnit = null
+		fields.publicReplacementCostUnitCurrency = null
+		fields.publicReplacementUnits = null
+		fields.publicReplacementCostTotalOverride = null
+	} else if (fields.publicDamage == "total") {
+		fields.publicRepairCostUnit = null
+		fields.publicRepairCostUnitCurrency = null
+		fields.publicRepairUnits = null
+		fields.publicRepairCostTotalOverride = null
+	}
+
+	if (fields.privateDamage == "partial") {
+		fields.privateReplacementCostUnit = null
+		fields.privateReplacementCostUnitCurrency = null
+		fields.privateReplacementUnits = null
+		fields.privateReplacementCostTotalOverride = null
+	} else if (fields.privateDamage == "total") {
+		fields.privateRepairCostUnit = null
+		fields.privateRepairCostUnitCurrency = null
+		fields.privateRepairUnits = null
+		fields.privateRepairCostTotalOverride = null
+	}
 
 	await tx.update(damagesTable).set({...fields}).where(eq(damagesTable.id, id))
 	return {ok: true}
@@ -126,7 +211,12 @@ export async function damagesById(idStr: string) {
 }
 
 export async function damagesByIdTx(tx: Tx, id: string) {
-	let res = await tx.query.damagesTable.findFirst({where: eq(damagesTable.id, id)})
+	let res = await tx.query.damagesTable.findFirst({
+		where: eq(damagesTable.id, id),
+		with: {
+			asset: true
+		}
+	})
 	if (!res) throw new Error("Id is invalid")
 	return res
 }

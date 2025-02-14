@@ -6,34 +6,8 @@ import { dr } from "~/db.server";
 import { sectorTable } from "~/drizzle/schema";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-
-// Tree Node Component
-const TreeNode = ({ node }: { node: any }) => {
-	const [expanded, setExpanded] = useState(false);
-
-	return (
-		<li>
-			<div
-				style={{ cursor: "pointer", userSelect: "none" }}
-				onClick={() => setExpanded(!expanded)}
-			>
-				{node.children.length > 0 ? (
-					<span>{expanded ? "▼ " : "▶ "}</span>
-				) : (
-					<span> </span>
-				)}
-				{node.sectorname}
-			</div>
-			{expanded && node.children.length > 0 && (
-				<ul style={{ paddingLeft: "20px" }}>
-					{node.children.map((child: any) => (
-						<TreeNode key={child.id} node={child} />
-					))}
-				</ul>
-			)}
-		</li>
-	);
-};
+import { TreeView, buildTree } from "~/components/TreeView";
+import { aliasedTable, eq } from "drizzle-orm";
 
 // Table Component
 const SectorsTable = ({ sectors }: { sectors: any[] }) => (
@@ -42,7 +16,8 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 			<tr>
 				<th>ID</th>
 				<th>Sector Name</th>
-				<th>Parent ID</th>
+				<th>Description</th>
+				<th>Parent</th>
 				<th>Created At</th>
 			</tr>
 		</thead>
@@ -51,7 +26,17 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 				<tr key={sector.id}>
 					<td>{sector.id}</td>
 					<td>{sector.sectorname}</td>
-					<td>{sector.parentId || "None"}</td>
+					<td
+						// Replace newline characters with <br/> tags
+						dangerouslySetInnerHTML={{
+							__html: sector.description?.replace(/(\r\n|\r|\n)/g, "<br/>"),
+						}}
+					/>
+					<td>
+						{sector.parentId
+							? `${sector.parentName} (ID: ${sector.parentId})`
+							: "None"}
+					</td>
 					<td>{sector.createdAt.toLocaleString()}</td>
 				</tr>
 			))}
@@ -59,34 +44,23 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 	</table>
 );
 
-// Utility to Build Tree Structure
-function buildTree(
-	list: any[],
-	idKey = "id",
-	parentKey = "parentId",
-	nameKey = "sectorname"
-) {
-	let map: Record<number, any> = {};
-	let roots: any[] = [];
-
-	list.forEach((item) => {
-		map[item[idKey]] = { ...item, children: [] };
-	});
-
-	list.forEach((item) => {
-		if (item[parentKey]) {
-			map[item[parentKey]]?.children.push(map[item[idKey]]);
-		} else {
-			roots.push(map[item[idKey]]);
-		}
-	});
-
-	return roots;
-}
-
 export const loader = authLoader(async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs);
-	const sectors = await dr.select().from(sectorTable);
+	authLoaderGetAuth(loaderArgs);
+
+	const parent = aliasedTable(sectorTable, "parent");
+	const sectors = await dr
+		.select({
+			id: sectorTable.id,
+			sectorname: sectorTable.sectorname,
+			description: sectorTable.description,
+			parentId: sectorTable.parentId,
+			createdAt: sectorTable.createdAt,
+			parentName: parent.sectorname,
+		})
+		.from(sectorTable)
+		.leftJoin(parent, eq(parent.id, sectorTable.parentId))
+		.orderBy(sectorTable.id);
+
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "sectorname";
@@ -103,24 +77,87 @@ export default function SectorsPage() {
 	return (
 		<MainContainer title="Sectors" headerExtra={<NavSettings />}>
 			<>
-				<div className="dts-page-intro">
-					<button
-						className="mg-button mg-button-secondary"
-						onClick={() => setViewMode(viewMode === "tree" ? "table" : "tree")}
+				<section className="dts-page-section">
+					<h2 className="mg-u-sr-only" id="tablist01">
+						Tablist title
+					</h2>
+					<ul
+						className="dts-tablist"
+						role="tablist"
+						aria-labelledby="tablist01"
 					>
-						Switch to {viewMode === "tree" ? "Table" : "Tree"} View
-					</button>
-				</div>
-
-				{viewMode === "tree" ? (
-					<ul>
-						{treeData.map((sector: any) => (
-							<TreeNode key={sector.id} node={sector} />
-						))}
+						<li role="presentation">
+							<button
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab01"
+								aria-selected={viewMode === "tree" ? true : false}
+								aria-controls="tabpanel01"
+								tabIndex={viewMode === "tree" ? 0 : -1}
+								onClick={() => setViewMode("tree")}
+							>
+								<span>Tree View</span>
+							</button>
+						</li>
+						<li role="presentation">
+							<button
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab02"
+								aria-selected={viewMode === "table" ? true : false}
+								aria-controls="tabpanel02"
+								tabIndex={viewMode === "table" ? 0 : -1}
+								onClick={() => setViewMode("table")}
+							>
+								<span>Table View</span>
+							</button>
+						</li>
 					</ul>
-				) : (
-					<SectorsTable sectors={sectors} />
-				)}
+					<div
+						className={
+							viewMode === "tree"
+								? "dts-tablist__panel"
+								: "dts-tablist__panel hidden"
+						}
+						id="tabpanel101"
+						role="tabpanel"
+						aria-labelledby="tab01"
+					>
+						<section>
+							<div className="mg-container">
+								<form>
+									<div className="fields">
+										<div className="form-field">
+											<TreeView
+												treeData={treeData as any}
+												rootCaption="Sectors"
+												dialogMode={false}
+												disableButtonSelect={true}
+												noSelect={true}
+												search={true}
+												expanded={true}
+											/>
+										</div>
+									</div>
+								</form>
+							</div>
+						</section>
+					</div>
+					<div
+						className={
+							viewMode === "table"
+								? "dts-tablist__panel"
+								: "dts-tablist__panel hidden"
+						}
+						id="tabpanel102"
+						role="tabpanel"
+						aria-labelledby="tab02"
+					>
+						<SectorsTable sectors={sectors} />
+					</div>
+				</section>
 			</>
 		</MainContainer>
 	);

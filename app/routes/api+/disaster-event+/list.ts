@@ -16,12 +16,12 @@ export const loader = createApiListLoader(
 			...offsetLimit,
 			columns: {
 				id: true,
-				startDateUTC: true,
-				endDateUTC: true,
+				startDate: true,
+				endDate: true,
 			},
-			orderBy: [desc(disasterEventTable.startDateUTC)],
+			orderBy: [desc(disasterEventTable.startDate)],
 		});
 	},
-	[desc(disasterEventTable.startDateUTC)]
+	[desc(disasterEventTable.startDate)]
 );
 

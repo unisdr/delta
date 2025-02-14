@@ -119,6 +119,8 @@ export async function sectorsFilderBydisasterRecordsId(idStr: string) {
 	return await dr.select({
 			disRecSectorsId: sectorDisasterRecordsRelationTable.id,
 			disRecSectorsWithDamage: sectorDisasterRecordsRelationTable.withDamage,
+			disRecSectorsDamageRecoveryCost: sectorDisasterRecordsRelationTable.damageRecoveryCost,
+			disRecSectorsDamageRecoveryCostCurrency: sectorDisasterRecordsRelationTable.damageRecoveryCostCurrency,
 			disRecSectorsWithDisruption: sectorDisasterRecordsRelationTable.withDisruption,
 			disRecSectorsWithLosses: sectorDisasterRecordsRelationTable.withLosses,
 			disruptionResponseCost: sectorDisasterRecordsRelationTable.disruptionResponseCost,
@@ -154,6 +156,8 @@ export async function upsertRecord(record: DisRecSectorsFields): Promise<void> {
 				disruptionResponseCost: record.disruptionResponseCost,
 				disruptionResponseCostCurrency: record.disruptionResponseCostCurrency,
 				withLosses: record.withLosses,
+				damageRecoveryCost: record.damageRecoveryCost,
+				damageRecoveryCostCurrency: record.damageRecoveryCostCurrency,
 			},
 		});
 }

@@ -42,7 +42,7 @@ export default function DTSMap({geoData}: DTSMapProps) {
 		const map = new Map({
 			target: mapRef.current,
 			layers: [
-				//new TileLayer({ source: new OSM()}),
+				new TileLayer({ source: new OSM()}),
 				vectorLayer,
 			],
 			view: new View({

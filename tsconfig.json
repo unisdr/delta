@@ -22,6 +22,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
+    //"noImplicitReturns": true,
+    //"noUnusedParameters": true,
+    //"noUnusedLocals": true,
     "paths": {
       "~/*": ["./app/*"]
     },

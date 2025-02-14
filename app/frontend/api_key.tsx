@@ -36,7 +36,7 @@ export function ApiKeyForm(props: ApiKeyFormProps) {
 			edit={props.edit}
 			id={props.id}
 			plural="API Keys"
-			singular={props.edit ? "Edit API Key" : "Add API Key"}
+			singular="API Key"
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={fieldsDef}
