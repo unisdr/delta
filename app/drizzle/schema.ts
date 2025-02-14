@@ -11,7 +11,8 @@ import {
 	index,
 	AnyPgColumn,
 	bigint,
-	numeric
+	numeric,
+	integer
 } from "drizzle-orm/pg-core";
 
 import {sql, relations} from "drizzle-orm";
