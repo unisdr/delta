@@ -11,6 +11,7 @@ import {
 import { useQuery } from "react-query";
 import { createFloatingTooltip, FloatingTooltipProps } from "~/util/tooltip";
 import { IoInformationCircleOutline } from "react-icons/io5";
+import { formatCurrency, formatNumber, formatPercentage } from "~/frontend/utils/formatters";
 
 // Types
 interface ApiResponse {
@@ -46,23 +47,8 @@ interface Sector {
 }
 
 // Utility functions
-const formatCurrency = (value: string | number) => {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(numValue);
-};
-
-const formatNumber = (value: string | number) => {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat("en-US").format(numValue);
-};
-
 const calculateTotal = (data: { year: number; amount: number }[]) => {
-    return data.reduce((sum, item) => sum + (item.amount || 0), 0);
+    return data.reduce((acc, curr) => acc + curr.amount, 0);
 };
 
 // Transform time series data
@@ -70,25 +56,33 @@ const transformTimeSeriesData = (data: Record<string, string>) => {
     return Object.entries(data)
         .map(([year, value]) => ({
             year: parseInt(year),
-            value: parseFloat(value)
+            amount: parseFloat(value)
         }))
         .sort((a, b) => a.year - b.year);
 };
 
 // Custom tooltip for charts
-const CustomTooltip = ({ active, payload, label, title, formatter }: any) => {
-    if (active && payload?.length) {
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+    title: string;
+    formatter: (value: number) => string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, title, formatter }) => {
+    if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-4 shadow-lg rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-600 mb-2">{label}</p>
-                {payload.map((entry: any, index: number) => (
-                    <p key={index} className="text-sm" style={{ color: entry.color }}>
-                        <span className="font-medium">{title}: </span>
-                        {formatter ? formatter(entry.value) : entry.name === "amount"
-                            ? formatCurrency(entry.value)
-                            : formatNumber(entry.value)}
-                    </p>
-                ))}
+            <div className="custom-tooltip" style={{
+                backgroundColor: 'white',
+                padding: '10px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+            }}>
+                <p style={{ margin: 0 }}>{`Year: ${label}`}</p>
+                <p style={{ margin: 0, color: payload[0].color }}>
+                    {`${title}: ${formatter(payload[0].value)}`}
+                </p>
             </div>
         );
     }
@@ -385,7 +379,17 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                             allowDecimals={false}
                                             domain={[0, 'auto']}
                                         />
-                                        <RechartsTooltip content={<CustomTooltip title="Events" />} />
+                                        <RechartsTooltip 
+                                            content={({ active, payload, label }) => (
+                                                <CustomTooltip 
+                                                    active={active} 
+                                                    payload={payload} 
+                                                    label={label} 
+                                                    title="Events" 
+                                                    formatter={formatNumber} 
+                                                />
+                                            )} 
+                                        />
                                         <Area type="monotone" dataKey="count" stroke="#8884d8" fill="url(#eventGradient)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -432,7 +436,17 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
-                                        <RechartsTooltip content={<CustomTooltip title="Damage" formatter={(value: number) => formatCurrency(value)} />} />
+                                        <RechartsTooltip 
+                                            content={({ active, payload, label }) => (
+                                                <CustomTooltip 
+                                                    active={active} 
+                                                    payload={payload} 
+                                                    label={label} 
+                                                    title="Damage" 
+                                                    formatter={formatCurrency} 
+                                                />
+                                            )} 
+                                        />
                                         <Area type="monotone" dataKey="amount" stroke="#82ca9d" fill="url(#damageGradient)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -476,7 +490,17 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
-                                        <RechartsTooltip content={<CustomTooltip title="Loss" formatter={(value: number) => formatCurrency(value)} />} />
+                                        <RechartsTooltip 
+                                            content={({ active, payload, label }) => (
+                                                <CustomTooltip 
+                                                    active={active} 
+                                                    payload={payload} 
+                                                    label={label} 
+                                                    title="Loss" 
+                                                    formatter={formatCurrency} 
+                                                />
+                                            )} 
+                                        />
                                         <Area type="monotone" dataKey="amount" stroke="#ffc658" fill="url(#lossGradient)" />
                                     </AreaChart>
                                 </ResponsiveContainer>
