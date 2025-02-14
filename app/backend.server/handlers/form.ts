@@ -167,6 +167,7 @@ interface FormSaveArgs<T> {
 	save: (tx: Tx, id: string | null, data: T) => Promise<SaveResult<T>>;
 	redirectTo: (id: string) => string;
 	queryParams?: string[];
+	postProcess?: (id: string, data: T) => Promise<void>;
 }
 
 export async function formSave<T>(
@@ -215,6 +216,16 @@ export async function formSave<T>(
 	}
 
 	const redirectId = isCreate ? String(res.id) : String(id);
+
+	if (args.postProcess) {
+		try {
+			await args.postProcess(redirectId, validateRes.resOk!);
+		} catch (error) {
+			console.error("Post-process error:", error);
+			// Optional: Handle errors in post-process logic
+		}
+	}
+
 	return redirectWithMessage(request, args.redirectTo(redirectId), {
 		type: "info",
 		text: isCreate ? "New record created" : "Record updated",
@@ -645,6 +656,7 @@ interface CreateActionArgs<T> {
 	redirectTo: (id: string) => string;
 	tableName: string;
 	action?: (isCreate: boolean) => string;
+	postProcess?: (id: string, data: T) => Promise<void>;
 }
 
 export function createAction<T>(args: CreateActionArgs<T>) {
@@ -691,6 +703,7 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 				}
 			},
 			redirectTo: args.redirectTo,
+			postProcess: args.postProcess,
 		});
 	});
 }
