@@ -531,7 +531,7 @@ export function Input(props: InputProps) {
 			return wrapInput(
 				<input
 					required={props.def.required}
-					type={props.def.type}
+					type={inputType}
 					name={props.name}
 					defaultValue={defaultValue}
 				/>
