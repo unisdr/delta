@@ -533,8 +533,8 @@ export function Input(props: InputProps) {
 					<input
 						required={props.def.required}
 						type="text"
-						inputMode="numeric"
-						pattern="\d*"
+						inputMode="decimal"
+						pattern="[0-9]*\.?[0-9]*"
 						name={props.name}
 						defaultValue={defaultValue}
 					/>)
