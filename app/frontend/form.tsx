@@ -522,11 +522,22 @@ export function Input(props: InputProps) {
 					inputType = "number"
 					let v = props.value as number;
 					defaultValue = String(v);
-				} else if (props.def.type == "money"){
+				} else if (props.def.type == "money") {
 					inputType = "number"
 					let v = props.value as string;
 					defaultValue = v;
 				}
+			}
+			if (inputType == "number") {
+				return wrapInput(
+					<input
+						required={props.def.required}
+						type="text"
+						inputMode="numeric"
+						pattern="\d*"
+						name={props.name}
+						defaultValue={defaultValue}
+					/>)
 			}
 			return wrapInput(
 				<input
