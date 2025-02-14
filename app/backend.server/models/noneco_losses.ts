@@ -2,6 +2,7 @@ import {dr, Tx} from "~/db.server";
 import {nonecoLossesTable, nonecoLosses, categoriesTable} from "~/drizzle/schema";
 import {eq,sql,aliasedTable} from "drizzle-orm";
 
+
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
@@ -59,9 +60,17 @@ export type NonecoLossesViewModel = Exclude<Awaited<ReturnType<typeof nonecoLoss
 
 export async function nonecoLossesById(idStr: string) {
 	let id = idStr;
-	return await dr.query.nonecoLossesTable.findFirst({
+	const res = await dr.query.nonecoLossesTable.findFirst({
 		where: eq(nonecoLossesTable.id, id),
+		with: {
+			category: true,
+		},
 	});
+
+	if(!res){
+		throw new Error("Id is invalid");
+	}
+	return res;
 }
 
 export async function nonecoLossesDeleteById(idStr: string): Promise<DeleteResult> {
@@ -75,6 +84,7 @@ export type PropRecord = {
 	disasterRecordId: string;
 	description: string;
 	updatedAt?: Date;
+	category?: any;
 };
 
 export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {

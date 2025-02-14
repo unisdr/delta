@@ -116,11 +116,6 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		console.log( record );
 	}
 
-	//#Sector: This is how you get the display name of a sector. Syntax: selectedDisplay(dr object, sectorId)
-	// const sectorDisplayName = await contentPickerConfigSector.selectedDisplay(dr, "1302020201");
-	//#Sector: End
-	
-
 	return { ok:'loader', arrayCurrency: arrayCurrency, record:record, sectorDisplayName:sectorDisplayName };
 });
 
