@@ -6,6 +6,7 @@ import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handler
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {configCurrencies} from "~/util/config"
+import {unitsEnum} from "~/frontend/unit_picker"
 
 export interface LossesFields extends Omit<LossesInsert, "id"> {}
 
@@ -36,15 +37,7 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 		]
 	},
 	{key: "description", label: "Description", type: "textarea"},
-	{
-		key: "publicValueUnit", label: "Value Unit", type: "enum", enumData: [
-			{key: "number", label: "Number"},
-			{key: "area", label: "Area"},
-			{key: "volume", label: "Volume"},
-			{key: "duration_days", label: "Duration (Days)"},
-			{key: "duration_hours", label: "Duration (Hours)"}
-		]
-	},
+	{key: "publicValueUnit", label: "Value Unit", type: "enum", enumData: unitsEnum},
 	{key: "publicValue", label: "Value", type: "number"},
 	{key: "publicCostPerUnit", label: "Cost Per Unit", type: "money"},
 	{
@@ -61,13 +54,7 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 		enumData: configCurrencies().map(c => ({key: c, label: c}))
 	},
 	{
-		key: "privateValueUnit", label: "Value Unit", type: "enum", enumData: [
-			{key: "number", label: "Number"},
-			{key: "area", label: "Area"},
-			{key: "volume", label: "Volume"},
-			{key: "duration_days", label: "Duration (Days)"},
-			{key: "duration_hours", label: "Duration (Hours)"}
-		]
+		key: "privateValueUnit", label: "Value Unit", type: "enum", enumData: unitsEnum
 	},
 	{key: "privateValue", label: "Value", type: "number"},
 	{key: "privateCostPerUnit", label: "Cost Per Unit", type: "money"},

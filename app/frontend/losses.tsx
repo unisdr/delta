@@ -7,6 +7,7 @@ import {
 } from "~/frontend/form"
 
 import {LossesFields, LossesViewModel} from "~/backend.server/models/losses"
+import {UnitPicker} from "./unit_picker"
 
 export const route = "/disaster-record/edit-sub/_/losses"
 
@@ -36,6 +37,8 @@ export function LossesForm(props: LossesFormProps) {
 		sectorId: (
 			<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
 		),
+		publicValueUnit: <UnitPicker name="publicValueUnit" defaultValue={props.fields.publicValueUnit || undefined} />,
+		privateValueUnit: <UnitPicker name="privateValueUnit" defaultValue={props.fields.privateValueUnit || undefined} />,
 		...extra
 	}
 
@@ -100,6 +103,14 @@ export function LossesView(props: LossesViewProps) {
 				def={props.fieldDef}
 				fields={props.item}
 				override={override}
+				elementsAfter={{
+					description: (
+						<h2>Public</h2>
+					),
+					publicTotalCostCurrency: (
+						<h2>Private</h2>
+					),
+				}}
 			/>
 		</ViewComponent>
 	)

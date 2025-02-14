@@ -6,6 +6,7 @@ import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handler
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {configCurrencies} from "~/util/config"
+import {unitsEnum} from "~/frontend/unit_picker"
 
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}
 
@@ -15,99 +16,105 @@ export const damageTypeEnumData = [
 ]
 
 export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
-  return [
-    { key: "recordId", label: "", type: "other" },
-    { key: "sectorId", label: "", type: "other" },
-    { key: "assetId", label: "Assets", type: "other" },
+	return [
+		{key: "recordId", label: "", type: "other"},
+		{key: "sectorId", label: "", type: "other"},
+		{key: "assetId", label: "Assets", type: "other"},
 
-    // Public damages
-    { key: "publicDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData },
-    { key: "publicDamageAmount", label: "Damage Amount", type: "number" },
-    { key: "publicDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{ key: "numbers", label: "Numbers" }, { key: "other", label: "Other" }] },
-    // repair when publicDamage=partial
-    { key: "publicRepairCostUnit", label: "Repair Cost Unit", type: "money" },
-    {
-      key: "publicRepairCostUnitCurrency",
-      label: "Repair Cost Currency",
-      type: "enum-flex",
-      enumData: configCurrencies().map(c => ({ key: c, label: c }))
-    },
-    { key: "publicRepairUnits", label: "Repair Units", type: "number" },
-    { key: "publicRepairCostTotalOverride", label: "Repair Cost Total Override", type: "money" },
-    // replacement when publicDamage=partial
-    { key: "publicReplacementCostUnit", label: "Replacement Cost Unit", type: "money" },
-    {
-      key: "publicReplacementCostUnitCurrency",
-      label: "Replacement Cost Currency",
-      type: "enum-flex",
-      enumData: configCurrencies().map(c => ({ key: c, label: c }))
-    },
-    { key: "publicReplacementUnits", label: "Replacement Units", type: "number" },
-    { key: "publicReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "money" },
-    { key: "publicRecoveryCostUnit", label: "Recovery Cost Unit", type: "money" },
-    {
-      key: "publicRecoveryCostUnitCurrency",
-      label: "Recovery Cost Currency",
-      type: "enum-flex",
-      enumData: configCurrencies().map(c => ({ key: c, label: c }))
-    },
-    { key: "publicRecoveryUnits", label: "Recovery Units", type: "number" },
-    { key: "publicRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "money" },
-    { key: "publicDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number" },
-    { key: "publicDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number" },
-    { key: "publicDisruptionUsersAffected", label: "Disruption Users Affected", type: "number" },
-    { key: "publicDisruptionPeopleAffected", label: "Disruption People Affected", type: "number" },
-    { key: "publicDisruptionDescription", label: "Disruption Description", type: "textarea" },
+		// Public damages
+		{key: "publicDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
+		{key: "publicDamageAmount", label: "Damage Amount", type: "number"},
+		//{ key: "publicDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{ key: "numbers", label: "Numbers" }, { key: "other", label: "Other" }] },
+		// repair when publicDamage=partial
+		{key: "publicRepairCostUnit", label: "Repair Cost Unit", type: "money"},
+		{
+			key: "publicRepairCostUnitCurrency",
+			label: "Repair Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "publicRepairUnit", label: "Repair Unit", type: "enum", enumData: unitsEnum},
+		{key: "publicRepairUnits", label: "Repair Units", type: "number"},
+		{key: "publicRepairCostTotalOverride", label: "Repair Cost Total Override", type: "money"},
+		// replacement when publicDamage=partial
+		{key: "publicReplacementCostUnit", label: "Replacement Cost Unit", type: "money"},
+		{
+			key: "publicReplacementCostUnitCurrency",
+			label: "Replacement Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "publicReplacementUnit", label: "Replacement Unit", type: "enum", enumData: unitsEnum},
+		{key: "publicReplacementUnits", label: "Replacement Units", type: "number"},
+		{key: "publicReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "money"},
+		{key: "publicRecoveryCostUnit", label: "Recovery Cost Unit", type: "money"},
+		{
+			key: "publicRecoveryCostUnitCurrency",
+			label: "Recovery Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "publicRecoveryUnit", label: "Recovery Unit", type: "enum", enumData: unitsEnum},
+		{key: "publicRecoveryUnits", label: "Recovery Units", type: "number"},
+		{key: "publicRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "money"},
+		{key: "publicDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},
+		{key: "publicDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number"},
+		{key: "publicDisruptionUsersAffected", label: "Disruption Users Affected", type: "number"},
+		{key: "publicDisruptionPeopleAffected", label: "Disruption People Affected", type: "number"},
+		{key: "publicDisruptionDescription", label: "Disruption Description", type: "textarea"},
 
-    // Private damages
-    { key: "privateDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData },
-    { key: "privateDamageAmount", label: "Damage Amount", type: "number" },
-    { key: "privateDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{ key: "numbers", label: "Numbers" }, { key: "other", label: "Other" }] },
-    // repair when publicDamage=partial
-    { key: "privateRepairCostUnit", label: "Repair Cost Unit", type: "money" },
-    {
-      key: "privateRepairCostUnitCurrency",
-      label: "Repair Cost Currency",
-      type: "enum-flex",
-      enumData: configCurrencies().map(c => ({ key: c, label: c }))
-    },
-    { key: "privateRepairUnits", label: "Repair Units", type: "number" },
-    { key: "privateRepairCostTotalOverride", label: "Repair Cost Total Override", type: "money" },
-    // replacement when publicDamage=partial
-    { key: "privateReplacementCostUnit", label: "Replacement Cost Unit", type: "money" },
-    {
-      key: "privateReplacementCostUnitCurrency",
-      label: "Replacement Cost Currency",
-      type: "enum-flex",
-      enumData: configCurrencies().map(c => ({ key: c, label: c }))
-    },
-    { key: "privateReplacementUnits", label: "Replacement Units", type: "number" },
-    { key: "privateReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "money" },
-    { key: "privateRecoveryCostUnit", label: "Recovery Cost Unit", type: "money" },
-    {
-      key: "privateRecoveryCostUnitCurrency",
-      label: "Recovery Cost Currency",
-      type: "enum-flex",
-      enumData: configCurrencies().map(c => ({ key: c, label: c }))
-    },
-    { key: "privateRecoveryUnits", label: "Recovery Units", type: "number" },
-    { key: "privateRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "money" },
-    { key: "privateDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number" },
-    { key: "privateDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number" },
-    { key: "privateDisruptionUsersAffected", label: "Disruption Users Affected", type: "number" },
-    { key: "privateDisruptionPeopleAffected", label: "Disruption People Affected", type: "number" },
-    { key: "privateDisruptionDescription", label: "Disruption Description", type: "textarea" },
-  ];
+		// Private damages
+		{key: "privateDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
+		{key: "privateDamageAmount", label: "Damage Amount", type: "number"},
+		//{ key: "privateDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{ key: "numbers", label: "Numbers" }, { key: "other", label: "Other" }] },
+		// repair when publicDamage=partial
+		{key: "privateRepairCostUnit", label: "Repair Cost Unit", type: "money"},
+		{
+			key: "privateRepairCostUnitCurrency",
+			label: "Repair Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "privateRepairUnit", label: "Repair Unit", type: "enum", enumData: unitsEnum},
+		{key: "privateRepairUnits", label: "Repair Units", type: "number"},
+		{key: "privateRepairCostTotalOverride", label: "Repair Cost Total Override", type: "money"},
+		// replacement when publicDamage=partial
+		{key: "privateReplacementCostUnit", label: "Replacement Cost Unit", type: "money"},
+		{
+			key: "privateReplacementCostUnitCurrency",
+			label: "Replacement Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "privateReplacementUnit", label: "Replacement Unit", type: "enum", enumData: unitsEnum},
+		{key: "privateReplacementUnits", label: "Replacement Units", type: "number"},
+		{key: "privateReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "money"},
+		{key: "privateRecoveryCostUnit", label: "Recovery Cost Unit", type: "money"},
+		{
+			key: "privateRecoveryCostUnitCurrency",
+			label: "Recovery Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: "privateRecoveryUnit", label: "Recovery Unit", type: "enum", enumData: unitsEnum},
+		{key: "privateRecoveryUnits", label: "Recovery Units", type: "number"},
+		{key: "privateRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "money"},
+		{key: "privateDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},
+		{key: "privateDisruptionDurationHours", label: "Disruption Duration (Hours)", type: "number"},
+		{key: "privateDisruptionUsersAffected", label: "Disruption Users Affected", type: "number"},
+		{key: "privateDisruptionPeopleAffected", label: "Disruption People Affected", type: "number"},
+		{key: "privateDisruptionDescription", label: "Disruption Description", type: "textarea"},
+	];
 }
 
 export async function fieldsDefApi(): Promise<FormInputDef<DamagesFields>[]> {
- 	return [
+	return [
 		...await fieldsDef(),
 		{key: "apiImportId", label: "", type: "other"}]
 }
 
 export async function fieldsDefView(): Promise<FormInputDef<DamagesFields>[]> {
- 	return fieldsDef()
+	return fieldsDef()
 }
 
 export function validate(fields: Partial<DamagesFields>): Errors<DamagesFields> {
