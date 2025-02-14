@@ -16,12 +16,12 @@ import {
 } from "~/frontend/form";
 
 import {
-	createLoader,
 	createAction
 } from "~/backend.server/handlers/form";
 import {getTableName} from "drizzle-orm";
 import {assetTable} from "~/drizzle/schema";
 import {useLoaderData} from "@remix-run/react";
+import {authLoaderWithPerm} from "~/util/auth";
 
 export let action = createAction({
 	fieldsDef: fieldsDef,
@@ -34,22 +34,31 @@ export let action = createAction({
 		isCreate ? "Create asset" : "Update asset",
 });
 
-export let loader = createLoader({
-	getById: assetById,
-	extra: async () => {
-		return {
-			fieldsDef: await fieldsDef(),
-		}
+export let loader = authLoaderWithPerm("EditData", async (args) => {
+	let p = args.params
+	if (!p.id) throw new Error("Missing id param")
+	let url = new URL(args.request.url)
+	let sectorId = url.searchParams.get("sectorId") || ""
+	let extra = {
+		fieldsDef: await fieldsDef(),
+		sectorId,
 	}
+	if (p.id === "new") return {item: null, ...extra}
+	let it = await assetById(p.id)
+	if (!it) throw new Response("Not Found", {status: 404})
+	return {item: it, ...extra}
 })
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>()
 	let fieldsInitial = ld.item ? {...ld.item} : {}
+	if ('sectorId' in fieldsInitial && !fieldsInitial.sectorId && ld.sectorId) {
+		fieldsInitial.sectorId = ld.sectorId
+	}
 
 	return formScreen({
 		extraData: {
-			fieldDef: ld.fieldsDef
+			fieldDef: ld.fieldsDef,
 		},
 		fieldsInitial,
 		form: AssetForm,

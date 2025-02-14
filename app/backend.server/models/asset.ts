@@ -19,7 +19,7 @@ export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 			key: "sectorId",
 			label: "Sector",
 			type: "enum",
-			enumData: sectors.map(s => {
+			enumData: sectors.sort((a, b) => a.sectorname.localeCompare(b.sectorname)).map(s => {
 				return {
 					key: String(s.id),
 					label: s.sectorname
@@ -31,7 +31,7 @@ export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 			key: "measureId",
 			label: "Measure",
 			type: "enum",
-			enumData: measures.map(m => {
+			enumData: measures.sort((a, b) => a.name.localeCompare(b.name)).map(m => {
 				return {
 					key: m.id,
 					label: measureLabel(m)
@@ -166,7 +166,7 @@ export async function assetsForSector(tx: Tx, sectorId: number) {
 		where: inArray(assetTable.id, assetIds),
 		with: {
 			measure: true
-		}
+		},
 	})
 	return res
 }
