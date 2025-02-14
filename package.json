@@ -15,7 +15,9 @@
     "typecheck": "tsc",
     "dbsync": "yarn run drizzle-kit push",
     "dbmigrate": "yarn drizzle-kit migrate",
-    "import-regions": "cross-env NODE_ENV=development tsx scripts/import_ph_regions.ts"
+    "import-regions": "cross-env NODE_ENV=development tsx scripts/import_ph_regions.ts",
+    "import-divisions": "cross-env NODE_ENV=development tsx scripts/import_ph_divisions.ts",
+    "check-divisions": "cross-env NODE_ENV=development tsx scripts/check_divisions.ts"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +35,7 @@
     "@turf/turf": "^7.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/leaflet": "1.9.16",
+    "@types/node-fetch": "^2.6.12",
     "bcryptjs": "^2.4.3",
     "cross-env": "^7.0.3",
     "csv-parse": "^5.6.0",
@@ -71,6 +74,7 @@
     "remix-utils": "^8.0.0",
     "sweetalert2": "^11.15.3",
     "ws": "^8.18.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
