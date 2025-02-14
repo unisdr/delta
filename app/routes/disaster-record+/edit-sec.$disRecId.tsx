@@ -271,7 +271,12 @@ export default function Screen() {
 									<select name="damage_recovery_cost_currency">
 										{
 											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
-												<option key={index} value={item}>{item}</option>
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.damageRecoveryCostCurrency && loaderData.record.damageRecoveryCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
 											))
 										}
 									</select>
@@ -318,7 +323,12 @@ export default function Screen() {
 									<select name="disruption_response_cost_currency">
 										{
 											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
-												<option key={index} value={item}>{item}</option>
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.disruptionResponseCostCurrency && loaderData.record.disruptionResponseCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
 											))
 										}
 									</select>
