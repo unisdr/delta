@@ -254,6 +254,7 @@ export type FormInputType =
 	| "textarea"
 	| "date"
 	| "number"
+	| "money"
 	| "bool"
 	| "other"
 	| "enum"
@@ -297,6 +298,8 @@ export function fieldsFromMap<T>(
 					return [k, vs];
 				case "number":
 					return [k, Number(vs)];
+				case "money":
+					return [k, vs];
 				case "text":
 					return [k, vs];
 				case "textarea":
@@ -503,23 +506,48 @@ export function Input(props: InputProps) {
 		case "text":
 		case "date":
 		case "number":
+		case "money":
+			let inputType = "";
 			let defaultValue = "";
 			if (props.value !== null && props.value !== undefined) {
 				if (props.def.type == "text") {
+					inputType = "text"
 					let v = props.value as string;
 					defaultValue = v;
 				} else if (props.def.type == "date") {
+					inputType = "date"
 					let v = props.value as Date;
 					defaultValue = formatDate(v);
 				} else if (props.def.type == "number") {
 					let v = props.value as number;
 					defaultValue = String(v);
+					return wrapInput(
+						<input
+							required={props.def.required}
+							type="text"
+							inputMode="numeric"
+							pattern="[0-9]*"
+							name={props.name}
+							defaultValue={defaultValue}
+						/>)
+				} else if (props.def.type == "money") {
+					let v = props.value as string;
+					defaultValue = v;
+					return wrapInput(
+						<input
+							required={props.def.required}
+							type="text"
+							inputMode="decimal"
+							pattern="[0-9]*\.?[0-9]*"
+							name={props.name}
+							defaultValue={defaultValue}
+						/>)
 				}
 			}
 			return wrapInput(
 				<input
 					required={props.def.required}
-					type={props.def.type}
+					type={inputType}
 					name={props.name}
 					defaultValue={defaultValue}
 				/>
@@ -590,6 +618,7 @@ export function FieldView(props: FieldViewProps) {
 			);
 		case "textarea":
 		case "text":
+		case "money":
 			let str = props.value as string;
 			if (!str.trim()) {
 				return <p>{props.def.label}: -</p>;
