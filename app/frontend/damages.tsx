@@ -207,6 +207,8 @@ export function DamagesForm(props: DamagesFormProps) {
 						<input
 							name={prefix + "CostTotalOverride"}
 							type="text"
+							inputMode="decimal"
+							pattern="[0-9]*\.?[0-9]*"
 							defaultValue={v ?? ""}
 						>
 						</input>

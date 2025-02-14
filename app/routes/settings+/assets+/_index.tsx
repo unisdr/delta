@@ -25,7 +25,13 @@ export const loader = createPaginatedLoader(
   async (offsetLimit) => {
     return dr.query.assetTable.findMany({
       ...offsetLimit,
-      columns: {id: true, name: true, nationalId: true, notes: true},
+      columns: {
+				id: true,
+				name: true,
+			},
+			with: {
+				sector: true,
+			},
       orderBy: [desc(assetTable.name)],
     });
   },
@@ -40,7 +46,7 @@ export default function Data() {
     plural: "Assets",
     resourceName: "Asset",
     baseRoute: route,
-    columns: ["ID", "Name", "National ID", "Notes", "Actions"],
+    columns: ["ID", "Name", "Sector", "Actions"],
     items: items,
     paginationData: pagination,
     csvExportLinks: true,
@@ -50,8 +56,7 @@ export default function Data() {
           <Link to={`${route}/${item.id}`}>{item.id}</Link>
         </td>
         <td>{item.name}</td>
-        <td>{item.nationalId}</td>
-        <td>{item.notes}</td>
+        <td>{item.sector.sectorname}</td>
         <td>
           <ActionLinks route={route} id={item.id} />
         </td>

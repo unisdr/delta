@@ -1,6 +1,6 @@
 import {dr, Tx} from "~/db.server";
 import {assetTable, AssetInsert} from "~/drizzle/schema";
-import {eq} from "drizzle-orm";
+import {eq, sql, inArray} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
@@ -147,8 +147,23 @@ export async function assetDeleteById(idStr: string): Promise<DeleteResult> {
 }
 
 export async function assetsForSector(tx: Tx, sectorId: number) {
+	let res1 = await tx.execute(sql`
+		WITH RECURSIVE sector_rec AS (
+    	SELECT id, parent_id
+      FROM sector
+      WHERE id = ${sectorId}
+      UNION ALL
+      SELECT s.id, s.parent_id
+      FROM sector s
+      JOIN sector_rec rec ON rec.parent_id = s.id
+    )
+    SELECT a.id
+    FROM asset a
+    JOIN sector_rec s ON a.sector_id = s.id													 
+	`)
+	let assetIds = res1.rows.map(r => r.id as string)
 	let res = await tx.query.assetTable.findMany({
-		where: eq(assetTable.sectorId, sectorId),
+		where: inArray(assetTable.id, assetIds),
 		with: {
 			measure: true
 		}
