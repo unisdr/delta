@@ -2,15 +2,16 @@ import {
 	pgTable,
 	text,
 	timestamp,
-	serial,
+	bigserial,
 	check,
 	unique,
-	integer,
 	boolean,
 	uuid,
 	jsonb,
 	index,
 	AnyPgColumn,
+	bigint,
+	doublePrecision
 } from "drizzle-orm/pg-core";
 
 import {sql, relations} from "drizzle-orm";
@@ -34,12 +35,16 @@ function zeroBool(name: string) {
 function zeroStrMap(name: string) {
 	return jsonb(name).$type<Record<string, string>>().default({}).notNull();
 }
+function ourBigint(name: string) {
+	return bigint(name, {mode: "number"})
+}
+function ourSerial(name: string) {
+	return bigserial(name, {mode: "number"})
+}
+function ourMoney(name: string) {
+	return doublePrecision(name)
+}
 
-
-/*
-function zeroInteger(name: string) {
-	return integer(name).notNull().default(0)
-}*/
 const createdUpdatedTimestamps = {
 	updatedAt: timestamp("updated_at"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -63,7 +68,7 @@ function apiImportIdField() {
 
 export const sessionTable = pgTable("session", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	userId: integer("user_id")
+	userId: ourBigint("user_id")
 		.notNull()
 		.references(() => userTable.id),
 	lastActiveAt: zeroTimestamp("last_active_at"),
@@ -81,7 +86,7 @@ export const sessionsRelations = relations(sessionTable, ({one}) => ({
 }));
 
 export const userTable = pgTable("user", {
-	id: serial("id").primaryKey(),
+	id: ourSerial("id").primaryKey(),
 	role: zeroText("role"),
 	firstName: zeroText("first_name"),
 	lastName: zeroText("last_name"),
@@ -109,10 +114,10 @@ export type UserInsert = typeof userTable.$inferInsert;
 
 export const apiKeyTable = pgTable("api_key", {
 	...createdUpdatedTimestamps,
-	id: serial("id").primaryKey(),
+	id: ourSerial("id").primaryKey(),
 	secret: text("secret").notNull().unique(),
 	name: zeroText("name"),
-	managedByUserId: integer("user_id")
+	managedByUserId: ourBigint("user_id")
 		.notNull()
 		.references(() => userTable.id),
 });
@@ -129,14 +134,14 @@ export const apiKeyRelations = relations(apiKeyTable, ({one}) => ({
 
 export const devExample1Table = pgTable("dev_example1", {
 	...apiImportIdField(),
-	id: serial("id").primaryKey(),
+	id: ourSerial("id").primaryKey(),
 	// for both required and optional text fields setting it to "" makes sense, it's different for numbers where 0 could be a valid entry
 	field1: text("field1").notNull(),
 	field2: text("field2").notNull(),
 	// required
-	field3: integer("field3").notNull(),
+	field3: ourBigint("field3").notNull(),
 	// optional
-	field4: integer("field4"),
+	field4: ourBigint("field4"),
 	field5: timestamp("field5"),
 	field6: text({enum: ["one", "two", "three"]})
 		.notNull()
@@ -154,17 +159,17 @@ export type CommonPassword = typeof commonPasswordsTable.$inferSelect;
 export type CommonPasswordInsert = typeof commonPasswordsTable.$inferInsert;
 
 export const country1Table = pgTable("country1", {
-	id: serial("id").primaryKey(),
+	id: ourSerial("id").primaryKey(),
 	name: zeroStrMap("name"),
 });
 
 export const divisionTable = pgTable(
 	"division",
 	{
-		id: serial("id").primaryKey(),
+		id: ourSerial("id").primaryKey(),
 		importId: text("import_id").unique(),
-		//country: integer("country"),
-		parentId: integer("parent_id").references(
+		//country: ourBigint("country"),
+		parentId: ourBigint("parent_id").references(
 			(): AnyPgColumn => divisionTable.id
 		),
 		name: zeroStrMap("name"),
@@ -304,7 +309,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	endDate: timestamp("end_date"),
 	startDateLocal: text("start_date_local"),
 	endDateLocal: text("end_date_local"),
-	durationDays: integer("duration_days"),
+	durationDays: ourBigint("duration_days"),
 	affectedGeographicDivisions: zeroText("affected_geographic_divisions"),
 	affectedAdministrativeRegions: zeroText("affected_administrative_regions"),
 	disasterDeclaration: zeroBool("disaster_declaration"),
@@ -321,13 +326,13 @@ export const disasterEventTable = pgTable("disaster_event", {
 	originatorRecorderOfInformation: zeroText(
 		"originator_recorder_of_information"
 	),
-	effectsTotalLocalCurrency: integer("effects_total_local_currency"),
-	effectsTotalUsd: integer("effects_total_usd"),
-	subtotaldamageUsd: integer("subtotal_damage_usd"),
-	subtotalLossesUsd: integer("subtotal_losses_usd"),
-	responseCostTotalUsd: integer("response_cost_total"),
-	humanitarianNeedsTotalUsd: integer("humanitarian_needs_total"),
-	recoveryNeedsTotalUsd: integer("recovery_needs_total"),
+	effectsTotalLocalCurrency: ourMoney("effects_total_local_currency"),
+	effectsTotalUsd: ourMoney("effects_total_usd"),
+	subtotaldamageUsd: ourMoney("subtotal_damage_usd"),
+	subtotalLossesUsd: ourMoney("subtotal_losses_usd"),
+	responseCostTotalUsd: ourMoney("response_cost_total"),
+	humanitarianNeedsTotalUsd: ourMoney("humanitarian_needs_total"),
+	recoveryNeedsTotalUsd: ourMoney("recovery_needs_total"),
 	attachments: zeroText("attachments"),
 	spatialFootprint: zeroText("spatial_footprint"),
 });
@@ -401,7 +406,7 @@ export const deathsTable = pgTable("deaths", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	deaths: integer("deaths"),
+	deaths: ourBigint("deaths"),
 });
 
 export type Deaths = typeof deathsTable.$inferSelect;
@@ -412,7 +417,7 @@ export const injuredTable = pgTable("injured", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	injured: integer("injured"),
+	injured: ourBigint("injured"),
 });
 
 export type Injured = typeof injuredTable.$inferSelect;
@@ -424,7 +429,7 @@ export const missingTable = pgTable("missing", {
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
 	asOf: timestamp("as_of"),
-	missing: integer("missing"),
+	missing: ourBigint("missing"),
 });
 
 export type Missing = typeof missingTable.$inferSelect;
@@ -435,8 +440,8 @@ export const affectedTable = pgTable("affected", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	direct: integer("direct"),
-	indirect: integer("indirect"),
+	direct: ourBigint("direct"),
+	indirect: ourBigint("indirect"),
 });
 export type Affected = typeof affectedTable.$inferSelect;
 export type AffectedInsert = typeof affectedTable.$inferInsert;
@@ -446,11 +451,11 @@ export const displacedTable = pgTable("displaced", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	short: integer("short"), // First 10 days
-	mediumShort: integer("medium_short"), // Days 10-30
-	mediumLong: integer("medium_long"), // Days 30-90
-	long: integer("long"), // More than 90 days
-	permanent: integer("permanent"), // Permanently relocated
+	short: ourBigint("short"), // First 10 days
+	mediumShort: ourBigint("medium_short"), // Days 10-30
+	mediumLong: ourBigint("medium_long"), // Days 30-90
+	long: ourBigint("long"), // More than 90 days
+	permanent: ourBigint("permanent"), // Permanently relocated
 });
 export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
@@ -460,8 +465,8 @@ export const displacementStocksTable = pgTable("displacement_stocks", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	preemptive: integer("preemptive"), // Assisted pre-emptive displacement
-	reactive: integer("reactive"), // Assisted reactive displacement
+	preemptive: ourBigint("preemptive"), // Assisted pre-emptive displacement
+	reactive: ourBigint("reactive"), // Assisted reactive displacement
 });
 export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
 export type DisplacementStocksInsert =
@@ -473,15 +478,15 @@ export const disruptionTable = pgTable("disruption", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sectorId: integer("sector_id")
+	sectorId: ourBigint("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
-	durationDays: integer("duration_days"),
-	durationHours: integer("duration_hours"),
-	usersAffected: integer("users_affected"),
+	durationDays: ourBigint("duration_days"),
+	durationHours: ourBigint("duration_hours"),
+	usersAffected: ourBigint("users_affected"),
 	comment: text("comment"),
 	responseOperation: text("response_operation"),
-	responseCost: integer("response_cost"),
+	responseCost: ourMoney("response_cost"),
 	responseCurrency: text("response_currency"),
 	spatialFootprint: zeroText("spatial_footprint"),
 	attachments: zeroText("attachments"),
@@ -496,61 +501,61 @@ export const damagesTable = pgTable("damages", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sectorId: integer("sector_id")
+	sectorId: ourBigint("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	assetId: uuid("asset_id")
 		.references((): AnyPgColumn => assetTable.id)
 		.notNull(),
 	publicDamage: text("public_damage", {enum: ["partial", "total"]}).notNull(),
-	publicDamageAmount: integer("public_damage_amount"),
-	publicDamageUnitType: text("public_damage_unit_type", {enum: ["numbers", "other"]}),
+	publicDamageAmount: ourBigint("public_damage_amount"),
+	publicDamageUnitType: text("public_damage_unit_type", {enum: ["number", "other"]}),
 	/*
 	publicDamageUnitType: uuid("public_damage_unit_type")
 		.references((): AnyPgColumn => unitTable.id)
 	 */
 	// repair when publicDamage=partial
-	publicRepairCostUnit: integer("public_repair_cost_unit"),
+	publicRepairCostUnit: ourMoney("public_repair_cost_unit"),
 	publicRepairCostUnitCurrency: text("public_repair_cost_unit_currency"),
-	publicRepairUnits: integer("public_repair_units"),
-	publicRepairCostTotalOverride: integer("public_repair_cost_total_override"),
+	publicRepairUnits: ourBigint("public_repair_units"),
+	publicRepairCostTotalOverride: ourMoney("public_repair_cost_total_override"),
 	// replacement when publicDamage=total
-	publicReplacementCostUnit: integer("public_replacement_cost_unit"),
+	publicReplacementCostUnit: ourMoney("public_replacement_cost_unit"),
 	publicReplacementCostUnitCurrency: text("public_replacement_cost_unit_currency"),
-	publicReplacementUnits: integer("public_replacement_units"),
-	publicReplacementCostTotalOverride: integer("public_replacement_cost_total_override"),
-	publicRecoveryCostUnit: integer("public_recovery_cost_unit"),
+	publicReplacementUnits: ourBigint("public_replacement_units"),
+	publicReplacementCostTotalOverride: ourMoney("public_replacement_cost_total_override"),
+	publicRecoveryCostUnit: ourMoney("public_recovery_cost_unit"),
 	publicRecoveryCostUnitCurrency: text("public_recovery_cost_unit_currency"),
-	publicRecoveryUnits: integer("public_recovery_units"),
-	publicRecoveryCostTotalOverride: integer("public_recovery_cost_total_override"),
-	publicDisruptionDurationDays: integer("public_disruption_duration_days"),
-	publicDisruptionDurationHours: integer("public_disruption_duration_hours"),
-	publicDisruptionUsersAffected: integer("public_disruption_users_affected"),
-	publicDisruptionPeopleAffected: integer("public_disruption_people_affected"),
+	publicRecoveryUnits: ourBigint("public_recovery_units"),
+	publicRecoveryCostTotalOverride: ourMoney("public_recovery_cost_total_override"),
+	publicDisruptionDurationDays: ourBigint("public_disruption_duration_days"),
+	publicDisruptionDurationHours: ourBigint("public_disruption_duration_hours"),
+	publicDisruptionUsersAffected: ourBigint("public_disruption_users_affected"),
+	publicDisruptionPeopleAffected: ourBigint("public_disruption_people_affected"),
 	publicDisruptionDescription: text("public_disruption_description"),
 
 	// Private damages
 	privateDamage: text("private_damage", {enum: ["partial", "total"]}).notNull(),
-	privateDamageAmount: integer("private_damage_amount"),
-	privateDamageUnitType: text("private_damage_unit_type", {enum: ["numbers", "other"]}),
+	privateDamageAmount: ourBigint("private_damage_amount"),
+	privateDamageUnitType: text("private_damage_unit_type", {enum: ["number", "other"]}),
 	// repair when publicDamage=partial
-	privateRepairCostUnit: integer("private_repair_cost_unit"),
+	privateRepairCostUnit: ourMoney("private_repair_cost_unit"),
 	privateRepairCostUnitCurrency: text("private_repair_cost_unit_currency"),
-	privateRepairUnits: integer("private_repair_units"),
-	privateRepairCostTotalOverride: integer("private_repair_cost_total_override"),
+	privateRepairUnits: ourBigint("private_repair_units"),
+	privateRepairCostTotalOverride: ourMoney("private_repair_cost_total_override"),
 	// replacement when publicDamage=partial
-	privateReplacementCostUnit: integer("private_replacement_cost_unit"),
+	privateReplacementCostUnit: ourMoney("private_replacement_cost_unit"),
 	privateReplacementCostUnitCurrency: text("private_replacement_cost_unit_currency"),
-	privateReplacementUnits: integer("private_replacement_units"),
-	privateReplacementCostTotalOverride: integer("private_replacement_cost_total_override"),
-	privateRecoveryCostUnit: integer("private_recovery_cost_unit"),
+	privateReplacementUnits: ourBigint("private_replacement_units"),
+	privateReplacementCostTotalOverride: ourMoney("private_replacement_cost_total_override"),
+	privateRecoveryCostUnit: ourMoney("private_recovery_cost_unit"),
 	privateRecoveryCostUnitCurrency: text("private_recovery_cost_unit_currency"),
-	privateRecoveryUnits: integer("private_recovery_units"),
-	privateRecoveryCostTotalOverride: integer("private_recovery_cost_total_override"),
-	privateDisruptionDurationDays: integer("private_disruption_duration_days"),
-	privateDisruptionDurationHours: integer("private_disruption_duration_hours"),
-	privateDisruptionUsersAffected: integer("private_disruption_users_affected"),
-	privateDisruptionPeopleAffected: integer("private_disruption_people_affected"),
+	privateRecoveryUnits: ourBigint("private_recovery_units"),
+	privateRecoveryCostTotalOverride: ourMoney("private_recovery_cost_total_override"),
+	privateDisruptionDurationDays: ourBigint("private_disruption_duration_days"),
+	privateDisruptionDurationHours: ourBigint("private_disruption_duration_hours"),
+	privateDisruptionUsersAffected: ourBigint("private_disruption_users_affected"),
+	privateDisruptionPeopleAffected: ourBigint("private_disruption_people_affected"),
 	privateDisruptionDescription: text("private_disruption_description"),
 })
 
@@ -592,7 +597,7 @@ export type UnitInsert = typeof unitTable.$inferInsert
 export const assetTable = pgTable("asset", {
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),
-	sectorId: integer("sector_id")
+	sectorId: ourBigint("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	measureId: uuid("measure_id")
@@ -620,7 +625,7 @@ export const lossesTable = pgTable("losses", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sectorId: integer("sector_id")
+	sectorId: ourBigint("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
@@ -646,18 +651,18 @@ export const lossesTable = pgTable("losses", {
 	publicValueUnit: text("public_value_unit", {
 		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
 	}),
-	publicValue: integer("public_value"),
-	publicCostPerUnit: integer("public_cost_per_unit"),
+	publicValue: ourBigint("public_value"),
+	publicCostPerUnit: ourMoney("public_cost_per_unit"),
 	publicCostPerUnitCurrency: text("public_cost_per_unit_currency"),
-	publicTotalCost: integer("public_total_cost"),
+	publicTotalCost: ourMoney("public_total_cost"),
 	publicTotalCostCurrency: text("public_total_cost_currency"),
 	privateValueUnit: text("private_value_unit", {
 		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
 	}),
-	privateValue: integer("private_value"),
-	privateCostPerUnit: integer("private_cost_per_unit"),
+	privateValue: ourBigint("private_value"),
+	privateCostPerUnit: ourMoney("private_cost_per_unit"),
 	privateCostPerUnitCurrency: text("private_cost_per_unit_currency"),
-	privateTotalCost: integer("private_total_cost"),
+	privateTotalCost: ourMoney("private_total_cost"),
 	privateTotalCostCurrency: text("private_total_cost_currency")
 })
 
@@ -674,7 +679,7 @@ export type LossesInsert = typeof lossesTable.$inferInsert
 export const hipClassTable = pgTable(
 	"hip_class",
 	{
-		id: integer("id").primaryKey(),
+		id: ourBigint("id").primaryKey(),
 		nameEn: zeroText("name_en"),
 	},
 	(table) => [check("name_en_not_empty", sql`${table.nameEn} <> ''`)]
@@ -686,8 +691,8 @@ export const hipClassTable = pgTable(
 export const hipClusterTable = pgTable(
 	"hip_cluster",
 	{
-		id: integer("id").primaryKey(),
-		classId: integer("class_id")
+		id: ourBigint("id").primaryKey(),
+		classId: ourBigint("class_id")
 			.references((): AnyPgColumn => hipClassTable.id)
 			.notNull(),
 		nameEn: zeroText("name_en"),
@@ -709,7 +714,7 @@ export const hipHazardTable = pgTable(
 	"hip_hazard",
 	{
 		id: text("id").primaryKey(),
-		clusterId: integer("cluster_id")
+		clusterId: ourBigint("cluster_id")
 			.references((): AnyPgColumn => hipClusterTable.id)
 			.notNull(),
 		nameEn: zeroText("name_en"),
@@ -793,7 +798,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 		.default(""),
 	checkedBy: text("checked_by"),
 	dataCollector: text("data_collector"),
-	sectorId: integer("sector_id") // Link to the sector involved
+	sectorId: ourBigint("sector_id") // Link to the sector involved
 		.references((): AnyPgColumn => sectorTable.id),
 	sectorName: text("sector_name"), // Direct name of the sector involved
 	subSector: text("sub_sector"), // Sub-sector detail
@@ -829,7 +834,7 @@ export const auditLogsTable = pgTable("audit_logs", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	tableName: text("table_name").notNull(),
 	recordId: text("record_id").notNull(),
-	userId: integer("user_id")
+	userId: ourBigint("user_id")
 		.notNull()
 		.references(() => userTable.id, {onDelete: "cascade"}),
 	action: text("action").notNull(), // INSERT, UPDATE, DELETE
@@ -844,9 +849,9 @@ export type categoriesType = typeof categoriesTable.$inferSelect;
 
 // Table for generic classification categories
 export const categoriesTable = pgTable("categories", {
-	id: serial("id").primaryKey(), // Unique identifier for each category
+	id: ourSerial("id").primaryKey(), // Unique identifier for each category
 	name: text("name").notNull(), // Title or description of the category
-	parentId: integer("parent_id").references(
+	parentId: ourBigint("parent_id").references(
 		(): AnyPgColumn => categoriesTable.id
 	), // Foreign key referencing another category's ID; null if it's a root category
 	...createdUpdatedTimestamps,
@@ -867,7 +872,7 @@ export const nonecoLossesTable = pgTable(
 		disasterRecordId: uuid("disaster_record_id")
 			.references((): AnyPgColumn => disasterRecordsTable.id)
 			.notNull(),
-		categortyId: integer("category_id")
+		categortyId: ourBigint("category_id")
 			.references((): AnyPgColumn => categoriesTable.id)
 			.notNull(),
 		description: text("description").notNull(),
@@ -898,8 +903,8 @@ export const nonecoLossesCategory_Rel = relations(nonecoLossesTable, ({one}) => 
 export const sectorTable = pgTable(
 	"sector",
 	{
-		id: serial("id").primaryKey(), // Unique sector ID
-		parentId: integer("parent_id").references(
+		id: ourSerial("id").primaryKey(), // Unique sector ID
+		parentId: ourBigint("parent_id").references(
 			(): AnyPgColumn => sectorTable.id
 		), // Reference to parent sector
 		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
@@ -924,17 +929,17 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
 		id: uuid("id").primaryKey().defaultRandom(), // Unique ID for the relation
-		sectorId: integer("sector_id")
+		sectorId: ourBigint("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id), // Links to sector
 		disasterRecordId: uuid("disaster_record_id")
 			.notNull()
 			.references((): AnyPgColumn => disasterRecordsTable.id), // Links to disaster record
 		withDamage: boolean("with_damage"),
-		damageRecoveryCost: integer("damage_recovery_cost"),
+		damageRecoveryCost: ourMoney("damage_recovery_cost"),
 		damageRecoveryCostCurrency: text("damage_recovery_cost_currency"),
 		withDisruption: boolean("with_disruption"),
-		disruptionResponseCost: integer("disruption_response_cost"),
+		disruptionResponseCost: ourMoney("disruption_response_cost"),
 		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
 		withLosses: boolean("with_losses"),
 	},
