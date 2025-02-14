@@ -116,11 +116,6 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		console.log( record );
 	}
 
-	//#Sector: This is how you get the display name of a sector. Syntax: selectedDisplay(dr object, sectorId)
-	// const sectorDisplayName = await contentPickerConfigSector.selectedDisplay(dr, "1302020201");
-	//#Sector: End
-	
-
 	return { ok:'loader', arrayCurrency: arrayCurrency, record:record, sectorDisplayName:sectorDisplayName };
 });
 
@@ -276,7 +271,12 @@ export default function Screen() {
 									<select name="damage_recovery_cost_currency">
 										{
 											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
-												<option key={index} value={item}>{item}</option>
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.damageRecoveryCostCurrency && loaderData.record.damageRecoveryCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
 											))
 										}
 									</select>
@@ -323,7 +323,12 @@ export default function Screen() {
 									<select name="disruption_response_cost_currency">
 										{
 											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
-												<option key={index} value={item}>{item}</option>
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.disruptionResponseCostCurrency && loaderData.record.disruptionResponseCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
 											))
 										}
 									</select>

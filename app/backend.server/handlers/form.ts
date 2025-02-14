@@ -167,6 +167,7 @@ interface FormSaveArgs<T> {
 	save: (tx: Tx, id: string | null, data: T) => Promise<SaveResult<T>>;
 	redirectTo: (id: string) => string;
 	queryParams?: string[];
+	postProcess?: (id: string, data: T) => Promise<void>;
 }
 
 export async function formSave<T>(
@@ -195,10 +196,14 @@ export async function formSave<T>(
 	const isCreate = args.isCreate || id === "new";
 
 	let res0: SaveResult<T>;
+	let finalId: string | null = null;
 
 	try {
 		await dr.transaction(async (tx) => {
 			res0 = await args.save(tx, isCreate ? null : id, validateRes.resOk!);
+            if (res0.ok) {
+                finalId = isCreate ? String(res0.id) : String(id);
+            }
 		});
 	} catch (error) {
 		throw error;
@@ -215,6 +220,11 @@ export async function formSave<T>(
 	}
 
 	const redirectId = isCreate ? String(res.id) : String(id);
+
+    if (args.postProcess && finalId) {
+        await args.postProcess(finalId, validateRes.resOk!);
+    }
+
 	return redirectWithMessage(request, args.redirectTo(redirectId), {
 		type: "info",
 		text: isCreate ? "New record created" : "Record updated",
@@ -645,6 +655,7 @@ interface CreateActionArgs<T> {
 	redirectTo: (id: string) => string;
 	tableName: string;
 	action?: (isCreate: boolean) => string;
+	postProcess?: (id: string, data: T) => Promise<void>;
 }
 
 export function createAction<T>(args: CreateActionArgs<T>) {
@@ -691,6 +702,7 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 				}
 			},
 			redirectTo: args.redirectTo,
+			postProcess: args.postProcess,
 		});
 	});
 }
