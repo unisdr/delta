@@ -519,25 +519,30 @@ export function Input(props: InputProps) {
 					let v = props.value as Date;
 					defaultValue = formatDate(v);
 				} else if (props.def.type == "number") {
-					inputType = "number"
 					let v = props.value as number;
 					defaultValue = String(v);
+					return wrapInput(
+						<input
+							required={props.def.required}
+							type="text"
+							inputMode="numeric"
+							pattern="[0-9]*"
+							name={props.name}
+							defaultValue={defaultValue}
+						/>)
 				} else if (props.def.type == "money") {
-					inputType = "number"
 					let v = props.value as string;
 					defaultValue = v;
+					return wrapInput(
+						<input
+							required={props.def.required}
+							type="text"
+							inputMode="decimal"
+							pattern="[0-9]*\.?[0-9]*"
+							name={props.name}
+							defaultValue={defaultValue}
+						/>)
 				}
-			}
-			if (inputType == "number") {
-				return wrapInput(
-					<input
-						required={props.def.required}
-						type="text"
-						inputMode="decimal"
-						pattern="[0-9]*\.?[0-9]*"
-						name={props.name}
-						defaultValue={defaultValue}
-					/>)
 			}
 			return wrapInput(
 				<input
