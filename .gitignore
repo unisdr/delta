@@ -1,18 +1,37 @@
-node_modules
-# Keep environment variables out of version control
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build
+build/
+dist/
+.next/
+out/
+
+# Environment
 .env
-build
-app/data
-information-pages-override
-public/uploads
+.env.local
+.env.*.local
 
-# Ignore backup script
+# Data and scripts
+data/
+scripts/
+app/data/
+information-pages-override/
+public/uploads/
+
+# Backup files
 backup.sh
-
-# Ignore backups directory
 backups/
 
-# Drizzle migration files
+# Drizzle
 app/drizzle/out/
 app/drizzle/meta/
 *.sql
@@ -22,3 +41,7 @@ drizzle.config.js
 app/drizzle/out/meta/
 *_snapshot.json
 *_schema_snapshot.json
+
+# OS
+.DS_Store
+Thumbs.db
