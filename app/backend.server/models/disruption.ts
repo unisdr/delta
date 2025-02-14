@@ -26,6 +26,7 @@ export const fieldsDef: FormInputDef<DisruptionFields>[] =
 			enumData: configCurrencies().map(c => {return {key: c, label: c}})
 		},
 		{key: "spatialFootprint", label: "Spatial Footprint", type: "other"},
+		{key: "attachments", label: "Attachments", type: "other"},
 	]
 
 

@@ -21,7 +21,7 @@ import {
 import {
 	createAction
 } from "~/backend.server/handlers/form"
-import {getTableName} from "drizzle-orm"
+import {getTableName,eq} from "drizzle-orm"
 import {disruptionTable} from "~/drizzle/schema"
 import {authLoaderWithPerm} from "~/util/auth"
 import {useLoaderData} from "@remix-run/react"
@@ -29,6 +29,8 @@ import {useLoaderData} from "@remix-run/react"
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
+
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
 interface LoaderRes {
 	item: DisruptionViewModel | null
@@ -87,7 +89,24 @@ export const action = createAction({
 	update: disruptionUpdate,
 	getById: disruptionByIdTx,
 	redirectTo: (id) => `${route}/${id}`,
-	tableName: getTableName(disruptionTable)
+	tableName: getTableName(disruptionTable),
+	postProcess: async (id, data) => {
+		console.log(`Post-processing record: ${id}`);
+		console.log(`data: `, data);
+
+		const save_path = `/uploads/disaster-record/${id}`;
+		const save_path_temp = `/uploads/temp`;
+	  
+		// Process the attachments data
+		const processedAttachments = ContentRepeaterUploadFile.save(data.attachments || "", save_path_temp, save_path);
+	  
+		// Update the `attachments` field in the database
+		await dr.update(disruptionTable)
+		  .set({
+			attachments: processedAttachments || "[]", // Ensure it defaults to an empty array if undefined
+		  })
+		  .where(eq(disruptionTable.id, id));
+	}
 })
 
 export default function Screen() {
