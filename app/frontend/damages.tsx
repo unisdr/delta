@@ -198,7 +198,7 @@ export function DamagesForm(props: DamagesFormProps) {
 			errors = errorsToStrings(e1)
 		}
 		let v = props.fields[key]
-		let checked = v !== null
+		let checked = v !== null && v !== undefined
 		return <>
 			<WrapInput
 				def={def}
