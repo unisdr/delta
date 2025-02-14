@@ -207,6 +207,8 @@ export function DamagesForm(props: DamagesFormProps) {
 						<input
 							name={prefix + "CostTotalOverride"}
 							type="text"
+							inputMode="decimal"
+							pattern="[0-9]*\.?[0-9]*"
 							defaultValue={v ?? ""}
 						>
 						</input>
@@ -250,8 +252,9 @@ export function DamagesForm(props: DamagesFormProps) {
 								<select
 									required={true}
 									name="assetId"
+									defaultValue={props.fields.assetId || ""}
 								>
-									{props.assets.map((a) => (
+									{props.assets.sort((a,b) => a.label.localeCompare(b.label)).map((a) => (
 										<option key={a.id} value={a.id}>
 											{a.label}
 										</option>
@@ -264,7 +267,7 @@ export function DamagesForm(props: DamagesFormProps) {
 				) : (
 					<p>No assets, add asset first.</p>
 				)}
-				<Link target="_blank" to="/settings/assets">
+				<Link target="_blank" to={"/settings/assets/edit/new?sectorId="+props.fields.sectorId}>
 					Add asset
 				</Link>
 			</>

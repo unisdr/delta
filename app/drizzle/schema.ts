@@ -612,6 +612,10 @@ export const assetRel = relations(assetTable, ({one}) => ({
 	measure: one(measureTable, {
 		fields: [assetTable.measureId],
 		references: [measureTable.id],
+	}),
+	sector: one(sectorTable, {
+		fields: [assetTable.sectorId],
+		references: [sectorTable.id],
 	})
 }));
 

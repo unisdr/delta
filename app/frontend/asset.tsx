@@ -10,7 +10,8 @@ import {AssetFields, AssetViewModel} from "~/backend.server/models/asset";
 
 export const route = "/settings/assets";
 
-interface AssetFormProps extends UserFormProps<AssetFields> {}
+interface AssetFormProps extends UserFormProps<AssetFields> {
+}
 
 export function AssetForm(props: AssetFormProps) {
 	if (!props.fieldDef) {
