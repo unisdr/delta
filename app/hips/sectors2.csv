@@ -1,112 +1,112 @@
-id,sectorname,parent_id,description
-11,Social Sector,,
-12,Productive Sector,,
-13,Infrastructure Sector,,
-1201,Agriculture,12,
-120101,Crops,1201,
-120102,Livestock,1201,
-120103,Forestry & Logging,1201,
-120104,Aquaculture,1201,
-120106,Fisheries,1201,
-12010101,Temporary/ Annual crop,120101,"Crops which are both sown and harvested during the same agricultural year, sometimes more than once;"
-12010102,Permanent/ Perennial,120101,"Sown or planted once andnot be replanted after each annual harvest."
-12010201,Animal production,120102,
-12010202,Hunting and trapping,120102,
-12010301,Silviculture,120103,
-12010302,Logging,120103,
-12010303,Gathering  forest products,120103,
-12010401,Marine Aquaculture,120104,
-12010402,Freshwater aquaculture,120104,
-12010601,Marine Fishing,120106,
-12010602,Freshwater fishing,120106,
-1202,Tourism,12,
-120201,Accommodation services,1202,
-120202,Food and beverage services,1202,
-120203,Travel agency services,1202,
-120204,Recreation and other entertainment services,1202,
-1203,Commerce,12,
+id,sectorname,parent_id,description,level
+11,Social Sector,,,1
+12,Productive Sector,,,1
+13,Infrastructure Sector,,,1
+1201,Agriculture,12,,2
+120101,Crops,1201,,3
+120102,Livestock,1201,,3
+120103,Forestry & Logging,1201,,3
+120104,Aquaculture,1201,,3
+120106,Fisheries,1201,,3
+12010101,Temporary/ Annual crop,120101,"Crops which are both sown and harvested during the same agricultural year, sometimes more than once;",4
+12010102,Permanent/ Perennial,120101,Sown or planted once andnot be replanted after each annual harvest.,4
+12010201,Animal production,120102,,4
+12010202,Hunting and trapping,120102,,4
+12010301,Silviculture,120103,,4
+12010302,Logging,120103,,4
+12010303,Gathering  forest products,120103,,4
+12010401,Marine Aquaculture,120104,,4
+12010402,Freshwater aquaculture,120104,,4
+12010601,Marine Fishing,120106,,4
+12010602,Freshwater fishing,120106,,4
+1202,Tourism,12,,2
+120201,Accommodation services,1202,,3
+120202,Food and beverage services,1202,,3
+120203,Travel agency services,1202,,3
+120204,Recreation and other entertainment services,1202,,3
+1203,Commerce,12,,2
 120301,Wholesale Trade,1203,"Scope: wholesale trade on own account or on a fee or contract basis (commission trade) related to domestic wholesale trade as well as international wholesale trade (import/export).
 
-Definition: Wholesale is the resale (sale without transformation) of new and used goods to retailers, business-to-business trade, such as to industrial, commercial, institutional or professional users, or resale to other wholesalers, or involves acting as an agent or broker in buying goods for, or selling goods to, such persons or companies"
-120302,Retail Trade,1203,
-120303,Sales and maintenance of vehicles,1203,
-1301,Information and Communications,13,
-130101,Publishing,1301,
-130102,"Motion picture, video and television program production, sound recording and music publishing",1301,
-130103,Programming and broadcasting,1301,
-130104,Telecommunications,1301,
-130105,"Computer programming, consultancy and related activities",1301,
-130106,Information services,1301,
-13010401,Wired telecommunication activities,130104,
-13010402,Wireless telecommunication activities,130104,
-13010403,Satellite telecommunication activities,130104,
-13010404,Other telecommunication,130104,
-1302,Energy,13,
-130201,Energy equipment and services,1302,
-130202,Consumable fuels,1302,
-13020101,Electricity,130201,
-1302010101,Electricity Sources/Generation,13020101,
-1302010102,Electricity storage,13020101,
-1302010103,Electricity transmission,13020101,
-1302010104,Electricity distribution,13020101,
-130201010101,Non Renewable,1302010101,
-130201010102,Renewable,1302010101,
-13020101010101,Fossil Fuels,130201010101,
-13020101010102,Nuclear,130201010101,
-13020101010103,Non-renewable waste,130201010101,
-13020101010201,Renew. Hydropower,130201010102,
-13020101010202,Marine energy,130201010102,
-13020101010203,Wave energy,130201010102,
-13020101010204,Solar energy,130201010102,
-13020101010205,Geothermal,130201010102,
-13020101010206,Bioenergy,130201010102,
-13020101010207,Non-bio renewable fuels,130201010102,
-130201010301,Extra/ultra/high voltage,1302010103,
-130201010302,Medium voltage,1302010103,
-130201010303,Low voltage,1302010103,
-130201010401,"Per usage sector (residential, commercial, industrial, agriculture, others)",1302010104,
-13020201,Gas,130202,
-13020202,Oil,130202,
-13020203,Coal,130202,
-13020204,Steam,130202,
-13020205,Hot water,130202,
-1302020101,Manufacture,13020201,
-1302020102,Distribution,13020201,
-1302020201,Manufacture,13020202,
-1302020202,Distribution through mains,13020202,
-1101,Housing,11,
-110101,Type of housing / structural,1101,
-11010101,Permanent,110101,
-11010102,Temporary,110101,
-1204,Services,12,
-120401,Administrative and support services,1204,
-120402,"Professional, scientific and technical activities",1204,
-120403,Real estate,1204,
-120404,Finance and insurance activities,1204,
-120405,"Public administration and defence, compulsory social security ",1204,
-1205,Mining and quarrying,12,
-1206,Manufacturing,12,
-1207,Construction,12,
-1102,Culture,11,
-110201,Tangible,1102,
-110202,Intagible cultural heritage,1102,
-1303,Transportation,13,
-130301,Road transport,1303,
-130302,Railroad transport,1303,
-130303,Pipeline transport,1303,
-130304,Air transport,1303,
-130305,"Transport support, including airports, ports, tunnels, bridges, etc. ",1303,
-130306,Postal services,1303,
-1103,Education,11,
-110301,Level 0 - Early childhood,1103,Early childhood (01 Early childhood educational development (below 3) & Early childhood (02 Pre-primary - 3 to start primary)
-110302,Level 1 - Primary education,1103,
-110303,Level 2 - Lower secondary education ( General or vocational),1103,
-110304,Level 3 - Upper secondary education ( General or vocational),1103,
-110305,Level 4 - Post-secondary non-tertiary education ( general or vocational),1103,"Post-secondary non-tertiary education provides learning experiences building on secondary education, preparing for labour market entry as well as tertiary education. It aims at theindividual acquisition of knowledge, skills and competencies lower than the level of complexity characteristic of tertiary education"
-110306,Level 5 - Short-cycle tertiary education ( general or vocational),1103,
-110307,"Level 6,7,8 - Bachelors, Master, Phd (academic or professional)",1103,
-1104,Health,11,
-110401,Service delivery; health programmes,1104,
-110402,"Service delivery; Organisation and management of services, incl. the health network",1104,
-11040201,"community,  primary, secondary, tertiary levels",110402,
-1104020101,"Hospitals, health centres, clinics, dispensaries, pharmacies, health posts, blood banks, laboratories",11040201,
+Definition: Wholesale is the resale (sale without transformation) of new and used goods to retailers, business-to-business trade, such as to industrial, commercial, institutional or professional users, or resale to other wholesalers, or involves acting as an agent or broker in buying goods for, or selling goods to, such persons or companies",3
+120302,Retail Trade,1203,,3
+120303,Sales and maintenance of vehicles,1203,,3
+1301,Information and Communications,13,,2
+130101,Publishing,1301,,3
+130102,"Motion picture, video and television program production, sound recording and music publishing",1301,,3
+130103,Programming and broadcasting,1301,,3
+130104,Telecommunications,1301,,3
+130105,"Computer programming, consultancy and related activities",1301,,3
+130106,Information services,1301,,3
+13010401,Wired telecommunication activities,130104,,4
+13010402,Wireless telecommunication activities,130104,,4
+13010403,Satellite telecommunication activities,130104,,4
+13010404,Other telecommunication,130104,,4
+1302,Energy,13,,2
+130201,Energy equipment and services,1302,,3
+130202,Consumable fuels,1302,,3
+13020101,Electricity,130201,,4
+1302010101,Electricity Sources/Generation,13020101,,5
+1302010102,Electricity storage,13020101,,5
+1302010103,Electricity transmission,13020101,,5
+1302010104,Electricity distribution,13020101,,5
+130201010101,Non Renewable,1302010101,,6
+130201010102,Renewable,1302010101,,6
+13020101010101,Fossil Fuels,130201010101,,7
+13020101010102,Nuclear,130201010101,,7
+13020101010103,Non-renewable waste,130201010101,,7
+13020101010201,Renew. Hydropower,130201010102,,7
+13020101010202,Marine energy,130201010102,,7
+13020101010203,Wave energy,130201010102,,7
+13020101010204,Solar energy,130201010102,,7
+13020101010205,Geothermal,130201010102,,7
+13020101010206,Bioenergy,130201010102,,7
+13020101010207,Non-bio renewable fuels,130201010102,,7
+130201010301,Extra/ultra/high voltage,1302010103,,6
+130201010302,Medium voltage,1302010103,,6
+130201010303,Low voltage,1302010103,,6
+130201010401,"Per usage sector (residential, commercial, industrial, agriculture, others)",1302010104,,6
+13020201,Gas,130202,,4
+13020202,Oil,130202,,4
+13020203,Coal,130202,,4
+13020204,Steam,130202,,4
+13020205,Hot water,130202,,4
+1302020101,Manufacture,13020201,,5
+1302020102,Distribution,13020201,,5
+1302020201,Manufacture,13020202,,5
+1302020202,Distribution through mains,13020202,,5
+1101,Housing,11,,2
+110101,Type of housing / structural,1101,,3
+11010101,Permanent,110101,,4
+11010102,Temporary,110101,,4
+1204,Services,12,,2
+120401,Administrative and support services,1204,,3
+120402,"Professional, scientific and technical activities",1204,,3
+120403,Real estate,1204,,3
+120404,Finance and insurance activities,1204,,3
+120405,"Public administration and defence, compulsory social security ",1204,,3
+1205,Mining and quarrying,12,,2
+1206,Manufacturing,12,,2
+1207,Construction,12,,2
+1102,Culture,11,,2
+110201,Tangible,1102,,3
+110202,Intagible cultural heritage,1102,,3
+1303,Transportation,13,,2
+130301,Road transport,1303,,3
+130302,Railroad transport,1303,,3
+130303,Pipeline transport,1303,,3
+130304,Air transport,1303,,3
+130305,"Transport support, including airports, ports, tunnels, bridges, etc. ",1303,,3
+130306,Postal services,1303,,3
+1103,Education,11,,2
+110301,Level 0 - Early childhood,1103,Early childhood (01 Early childhood educational development (below 3) & Early childhood (02 Pre-primary - 3 to start primary),3
+110302,Level 1 - Primary education,1103,,3
+110303,Level 2 - Lower secondary education ( General or vocational),1103,,3
+110304,Level 3 - Upper secondary education ( General or vocational),1103,,3
+110305,Level 4 - Post-secondary non-tertiary education ( general or vocational),1103,"Post-secondary non-tertiary education provides learning experiences building on secondary education, preparing for labour market entry as well as tertiary education. It aims at theindividual acquisition of knowledge, skills and competencies lower than the level of complexity characteristic of tertiary education",3
+110306,Level 5 - Short-cycle tertiary education ( general or vocational),1103,,3
+110307,"Level 6,7,8 - Bachelors, Master, Phd (academic or professional)",1103,,3
+1104,Health,11,,2
+110401,Service delivery; health programmes,1104,,3
+110402,"Service delivery; Organisation and management of services, incl. the health network",1104,,3
+11040201,"community,  primary, secondary, tertiary levels",110402,,4
+1104020101,"Hospitals, health centres, clinics, dispensaries, pharmacies, health posts, blood banks, laboratories",11040201,,5

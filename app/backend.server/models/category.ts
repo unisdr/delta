@@ -12,6 +12,7 @@ export type CategoryType = {
 	parentId?: number;
 	updatedAt?: Date;
 	createdAt?: Date;
+	level?: number;
 };
 
 export async function getCategories(categoryParent_id: number | null): Promise<{id: number, name: string, parent_id: number | null}[]> {
@@ -88,6 +89,7 @@ export async function upsertRecord(record: CategoryType): Promise<void> {
 				id: record.id,
 				name: record.name,
 				parentId: record.parentId,
+				level: record.level,
 				updatedAt: sql`NOW()`,
 			},
 		});

@@ -169,9 +169,14 @@ export const divisionTable = pgTable(
 		),
 		name: zeroStrMap("name"),
 		geojson: jsonb("geojson"),
+		level: integer("level"),	// value is parent level + 1 otherwise 1
 	},
 	(table) => [index("parent_idx").on(table.parentId)]
 );
+
+export const divisionParent_Rel = relations(divisionTable, ({one}) => ({
+	divisionParent: one(divisionTable, {fields: [divisionTable.parentId], references: [divisionTable.id]}),
+}));
 
 export type Division = typeof divisionTable.$inferSelect;
 export type DivitionInsert = typeof divisionTable.$inferInsert;
@@ -849,6 +854,7 @@ export const categoriesTable = pgTable("categories", {
 	parentId: integer("parent_id").references(
 		(): AnyPgColumn => categoriesTable.id
 	), // Foreign key referencing another category's ID; null if it's a root category
+	level: integer("level").notNull().default(1),
 	...createdUpdatedTimestamps,
 });
 
@@ -906,6 +912,7 @@ export const sectorTable = pgTable(
 		// subsector: text("subsector"), // Name of the subsector (e.g., "Agriculture", "Health") | Specific area within a sector, such as 'Health' in 'Social Sectors'
 		description: text("description"), // Optional description for the sector | Additional details about the sector
 		// pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
+		level: integer("level").notNull().default(1),	// value is parent level + 1 otherwise 1
 		...createdUpdatedTimestamps,
 	},
 	// (table) => [

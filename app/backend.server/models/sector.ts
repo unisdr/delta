@@ -13,6 +13,7 @@ export type SectorType = {
 	description?: string;
 	updatedAt?: Date;
 	createdAt?: Date;
+	level?: number;
 };
 
 export async function getSectors(sectorParent_id: number | null): Promise<{id: number, sectorname: string, parent_id: number | null}[]> {
@@ -58,6 +59,7 @@ export async function upsertRecord(record: SectorType): Promise<void> {
 				sectorname: record.sectorname,
 				description: record.description || null,
 				parentId: record.parentId,
+				level: record.level,
 				updatedAt: sql`NOW()`,
 			},
 		});
