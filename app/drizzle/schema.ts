@@ -67,6 +67,29 @@ function apiImportIdField() {
 	};
 }
 
+function unitsEnum(name: string) {
+	return text(name, {
+		enum: [
+			"number_count",
+			"area_m2",
+			"area_km2",
+			"area_ha",
+			"area_mi2",
+			"area_ac",
+			"area_ft2",
+			"area_yd2",
+			"volume_l",
+			"volume_m3",
+			"volume_ft3",
+			"volume_yd3",
+			"volume_gal",
+			"volume_bbl",
+			"duration_days",
+			"duration_hours"
+		]
+	})
+}
+
 export const sessionTable = pgTable("session", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	userId: ourBigint("user_id")
@@ -508,7 +531,7 @@ export const damagesTable = pgTable("damages", {
 		.notNull(),
 	publicDamage: text("public_damage", {enum: ["partial", "total"]}).notNull(),
 	publicDamageAmount: ourBigint("public_damage_amount"),
-	publicDamageUnitType: text("public_damage_unit_type", {enum: ["number", "other"]}),
+	//publicDamageUnitType: text("public_damage_unit_type", {enum: ["number", "other"]}),
 	/*
 	publicDamageUnitType: uuid("public_damage_unit_type")
 		.references((): AnyPgColumn => unitTable.id)
@@ -516,15 +539,18 @@ export const damagesTable = pgTable("damages", {
 	// repair when publicDamage=partial
 	publicRepairCostUnit: ourMoney("public_repair_cost_unit"),
 	publicRepairCostUnitCurrency: text("public_repair_cost_unit_currency"),
+	publicRepairUnit: unitsEnum("public_repair_unit"),
 	publicRepairUnits: ourBigint("public_repair_units"),
 	publicRepairCostTotalOverride: ourMoney("public_repair_cost_total_override"),
 	// replacement when publicDamage=total
 	publicReplacementCostUnit: ourMoney("public_replacement_cost_unit"),
 	publicReplacementCostUnitCurrency: text("public_replacement_cost_unit_currency"),
+	publicReplacementUnit: unitsEnum("public_replacement_unit"),
 	publicReplacementUnits: ourBigint("public_replacement_units"),
 	publicReplacementCostTotalOverride: ourMoney("public_replacement_cost_total_override"),
 	publicRecoveryCostUnit: ourMoney("public_recovery_cost_unit"),
 	publicRecoveryCostUnitCurrency: text("public_recovery_cost_unit_currency"),
+	publicRecoveryUnit: unitsEnum("public_recovery_unit"),
 	publicRecoveryUnits: ourBigint("public_recovery_units"),
 	publicRecoveryCostTotalOverride: ourMoney("public_recovery_cost_total_override"),
 	publicDisruptionDurationDays: ourBigint("public_disruption_duration_days"),
@@ -536,19 +562,22 @@ export const damagesTable = pgTable("damages", {
 	// Private damages
 	privateDamage: text("private_damage", {enum: ["partial", "total"]}).notNull(),
 	privateDamageAmount: ourBigint("private_damage_amount"),
-	privateDamageUnitType: text("private_damage_unit_type", {enum: ["number", "other"]}),
+	//privateDamageUnitType: text("private_damage_unit_type", {enum: ["number", "other"]}),
 	// repair when publicDamage=partial
 	privateRepairCostUnit: ourMoney("private_repair_cost_unit"),
 	privateRepairCostUnitCurrency: text("private_repair_cost_unit_currency"),
+	privateRepairUnit: unitsEnum("private_repair_unit"),
 	privateRepairUnits: ourBigint("private_repair_units"),
 	privateRepairCostTotalOverride: ourMoney("private_repair_cost_total_override"),
 	// replacement when publicDamage=partial
 	privateReplacementCostUnit: ourMoney("private_replacement_cost_unit"),
 	privateReplacementCostUnitCurrency: text("private_replacement_cost_unit_currency"),
+	privateReplacementUnit: unitsEnum("private_replacement_unit"),
 	privateReplacementUnits: ourBigint("private_replacement_units"),
 	privateReplacementCostTotalOverride: ourMoney("private_replacement_cost_total_override"),
 	privateRecoveryCostUnit: ourMoney("private_recovery_cost_unit"),
 	privateRecoveryCostUnitCurrency: text("private_recovery_cost_unit_currency"),
+	privateRecoveryUnit: unitsEnum("private_recovery_unit"),
 	privateRecoveryUnits: ourBigint("private_recovery_units"),
 	privateRecoveryCostTotalOverride: ourMoney("private_recovery_cost_total_override"),
 	privateDisruptionDurationDays: ourBigint("private_disruption_duration_days"),
@@ -651,17 +680,13 @@ export const lossesTable = pgTable("losses", {
 		]
 	}),
 	description: text("description"),
-	publicValueUnit: text("public_value_unit", {
-		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
-	}),
+	publicValueUnit: unitsEnum("public_value_unit"),
 	publicValue: ourBigint("public_value"),
 	publicCostPerUnit: ourMoney("public_cost_per_unit"),
 	publicCostPerUnitCurrency: text("public_cost_per_unit_currency"),
 	publicTotalCost: ourMoney("public_total_cost"),
 	publicTotalCostCurrency: text("public_total_cost_currency"),
-	privateValueUnit: text("private_value_unit", {
-		enum: ["number", "area", "volume", "duration_days", "duration_hours"]
-	}),
+	privateValueUnit: unitsEnum("private_value_unit"),
 	privateValue: ourBigint("private_value"),
 	privateCostPerUnit: ourMoney("private_cost_per_unit"),
 	privateCostPerUnitCurrency: text("private_cost_per_unit_currency"),

@@ -562,7 +562,7 @@ export interface ViewPropsBase<T> {
 export interface FieldsViewProps<T> {
 	def: FormInputDef<T>[]
 	fields: T
-	headersAfter?: Record<string, ReactElement>
+	elementsAfter?: Record<string, ReactElement>
 	override?: Record<string, ReactElement | undefined | null>
 }
 
@@ -570,8 +570,8 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 	return props.def
 		.map((def) => {
 			let after = null;
-			if (props.headersAfter && props.headersAfter[def.key]) {
-				after = props.headersAfter[def.key]
+			if (props.elementsAfter && props.elementsAfter[def.key]) {
+				after = props.elementsAfter[def.key]
 			}
 			if (props.override && props.override[def.key] !== undefined) {
 				return (

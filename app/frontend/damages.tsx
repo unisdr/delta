@@ -12,6 +12,7 @@ import {
 import {DamagesFields, DamagesViewModel} from "~/backend.server/models/damages"
 import {useEffect, useRef} from "react"
 import {Link} from "@remix-run/react"
+import {UnitPicker} from "./unit_picker"
 
 export const route = "/disaster-record/edit-sub/_/damages"
 
@@ -44,6 +45,8 @@ export function DamagesForm(props: DamagesFormProps) {
 		let fields = [
 			"CostUnit",
 			"CostUnitCurrency",
+			"UnitType",
+			"Unit",
 			"Units",
 			"CostTotalOverride",
 			"CostTotalOverrideCheckbox",
@@ -254,7 +257,7 @@ export function DamagesForm(props: DamagesFormProps) {
 									name="assetId"
 									defaultValue={props.fields.assetId || ""}
 								>
-									{props.assets.sort((a,b) => a.label.localeCompare(b.label)).map((a) => (
+									{props.assets.sort((a, b) => a.label.localeCompare(b.label)).map((a) => (
 										<option key={a.id} value={a.id}>
 											{a.label}
 										</option>
@@ -267,7 +270,7 @@ export function DamagesForm(props: DamagesFormProps) {
 				) : (
 					<p>No assets, add asset first.</p>
 				)}
-				<Link target="_blank" to={"/settings/assets/edit/new?sectorId="+props.fields.sectorId}>
+				<Link target="_blank" to={"/settings/assets/edit/new?sectorId=" + props.fields.sectorId}>
 					Add asset
 				</Link>
 			</>
@@ -278,6 +281,16 @@ export function DamagesForm(props: DamagesFormProps) {
 		sectorId: (
 			<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
 		),
+
+		publicRepairUnit: <UnitPicker labelPrefix="Repair" name="publicRepairUnit" defaultValue={props.fields.publicRepairUnit || undefined} />,
+		publicReplacementUnit: <UnitPicker labelPrefix="Replacement" name="publicReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
+		publicRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="publicRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
+
+		privateRepairUnit: <UnitPicker labelPrefix="Repair" name="privateRepairUnit" defaultValue={props.fields.publicRepairUnit || undefined} />,
+		privateReplacementUnit: <UnitPicker labelPrefix="Replacement" name="privateReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
+		privateRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="privateRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
+
+
 		publicRepairCostTotalOverride: totalCostOverride("publicRepair"),
 		publicReplacementCostTotalOverride: totalCostOverride("publicReplacement"),
 		publicRecoveryCostTotalOverride: totalCostOverride("publicRecovery"),
@@ -322,20 +335,26 @@ export function DamagesView(props: DamagesViewProps) {
 		recordId: <p key="recordId">Disaster record ID: {props.item.recordId}</p>,
 		sectorId: <p key="sectorId">Sector ID: {props.item.sectorId}</p>,
 		assetId: <p key="assetId">Asset: {props.item.asset.name}</p>,
+
+
 		publicRepairCostUnit: undefined,
 		publicRepairCostUnitCurrency: undefined,
+		publicRepairUnit: undefined,
 		publicRepairUnits: undefined,
 		publicRepairCostTotalOverride: undefined,
 		publicReplacementCostUnit: undefined,
 		publicReplacementCostUnitCurrency: undefined,
+		publicReplacementUnit: undefined,
 		publicReplacementUnits: undefined,
 		publicReplacementCostTotalOverride: undefined,
 		privateRepairCostUnit: undefined,
 		privateRepairCostUnitCurrency: undefined,
+		privateRepairUnit: undefined,
 		privateRepairUnits: undefined,
 		privateRepairCostTotalOverride: undefined,
 		privateReplacementCostUnit: undefined,
 		privateReplacementCostUnitCurrency: undefined,
+		privateReplacementUnit: undefined,
 		privateReplacementUnits: undefined,
 		privateReplacementCostTotalOverride: undefined,
 	}
@@ -343,11 +362,13 @@ export function DamagesView(props: DamagesViewProps) {
 	if (props.item.publicDamage == "total") {
 		override.publicRepairCostUnit = null
 		override.publicRepairCostUnitCurrency = null
+		override.publicRepairUnit = null
 		override.publicRepairUnits = null
 		override.publicRepairCostTotalOverride = null
 	} else {
 		override.publicReplacementCostUnit = null
 		override.publicReplacementCostUnitCurrency = null
+		override.publicReplacementUnit = null
 		override.publicReplacementUnits = null
 		override.publicReplacementCostTotalOverride = null
 	}
@@ -355,11 +376,13 @@ export function DamagesView(props: DamagesViewProps) {
 	if (props.item.privateDamage == "total") {
 		override.privateRepairCostUnit = null
 		override.privateRepairCostUnitCurrency = null
+		override.privateRepairUnit = null
 		override.privateRepairUnits = null
 		override.privateRepairCostTotalOverride = null
 	} else {
 		override.privateReplacementCostUnit = null
 		override.privateReplacementCostUnitCurrency = null
+		override.privateReplacementUnit = null
 		override.privateReplacementUnits = null
 		override.privateReplacementCostTotalOverride = null
 	}
@@ -375,7 +398,7 @@ export function DamagesView(props: DamagesViewProps) {
 			<FieldsView
 				def={props.def}
 				fields={props.item}
-				headersAfter={{
+				elementsAfter={{
 					assetId: (
 						<h2>Public</h2>
 					),
