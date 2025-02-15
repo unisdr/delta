@@ -20,6 +20,7 @@ const COLORS = ["#4F81BD", "#C0504D", "#9BBB59", "#8064A2", "#4BACC6"];
 
 interface ImpactByHazardProps {
     filters: {
+        disasterEventId: any;
         sectorId: string | null;
         hazardTypeId: string | null;
         hazardClusterId: string | null;
@@ -173,9 +174,13 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
 
     const queryParams = new URLSearchParams();
     if (targetSectorId) queryParams.set("sectorId", targetSectorId);
+    if (filters.hazardTypeId) queryParams.set("hazardTypeId", filters.hazardTypeId);
+    if (filters.hazardClusterId) queryParams.set("hazardClusterId", filters.hazardClusterId);
+    if (filters.specificHazardId) queryParams.set("specificHazardId", filters.specificHazardId);
     if (filters.fromDate) queryParams.set("fromDate", filters.fromDate);
     if (filters.toDate) queryParams.set("toDate", filters.toDate);
     if (filters.geographicLevelId) queryParams.set("geographicLevelId", filters.geographicLevelId);
+
 
     // Add sectors query
     const { data: sectorsData } = useQuery({
@@ -238,7 +243,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
 
         if (filters.sectorId) {
             const { sector, parent } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
-            
+
             if (filters.subSectorId && sector) {
                 // Case: Subsector is selected
                 const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsData.sectors, filters.subSectorId);

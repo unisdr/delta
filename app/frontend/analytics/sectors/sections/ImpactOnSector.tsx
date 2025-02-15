@@ -37,7 +37,18 @@ interface ImpactData {
 
 interface Props {
     sectorId: string | null;
-    filters: Record<string, string | null>;
+    // filters: Record<string, string | null>;
+    filters: {
+        disasterEventId: any;
+        sectorId: string | null;
+        hazardTypeId: string | null;
+        hazardClusterId: string | null;
+        specificHazardId: string | null;
+        geographicLevelId: string | null;
+        fromDate: string | null;
+        toDate: string | null;
+        subSectorId: string | null;
+    };
 }
 
 interface Sector {
@@ -138,7 +149,8 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     console.log('Component Render - Props:', { sectorId, filters });
 
     // Determine which ID to use for the API call
-    const targetSectorId = filters.subSectorId || sectorId;
+    // const targetSectorId = filters.subSectorId || sectorId;
+    const targetSectorId = filters.subSectorId || filters.sectorId;
     console.log('Target Sector ID:', targetSectorId);
 
     // Track previous values for debugging
@@ -163,16 +175,24 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
             const params = new URLSearchParams({ sectorId: targetSectorId });
 
             // Add all filter values that are not null or empty
+            // Object.entries(filters).forEach(([key, value]) => {
+            //     if (value !== null && value !== "") {
+            //         // Handle date format conversion for API
+            //         if (key === 'fromDate' || key === 'toDate') {
+            //             const date = new Date(value);
+            //             const formattedDate = date.toISOString().split('T')[0];
+            //             params.append(key, formattedDate);
+            //         } else {
+            //             params.append(key, value);
+            //         }
+            //     }
+            // });
             Object.entries(filters).forEach(([key, value]) => {
                 if (value !== null && value !== "") {
-                    // Convert dates to proper format if needed
-                    if (key === 'fromDate' || key === 'toDate') {
-                        params.append(key, value);
-                    } else {
-                        params.append(key, value);
-                    }
+                    params.append(key, value);
                 }
             });
+
 
             console.log('API Request URL:', `/api/analytics/ImpactonSectors?${params}`);
 
@@ -267,37 +287,34 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
     // Transform time series data with proper typing and logging
     const eventsData = Object.entries(data.eventsOverTime)
-        .map(([year, count]) => {
-            const transformedData = {
-                year: parseInt(year),
-                count: parseInt(count)
-            };
-            console.log('Transformed event data:', transformedData);
-            return transformedData;
-        })
+        .map(([year, count]) => ({
+            year: parseInt(year),
+            count: parseInt(count),
+        }))
+        .filter((entry) => entry.year >= parseInt(filters.fromDate?.split('-')[0] || '0') &&
+            entry.year <= parseInt(filters.toDate?.split('-')[0] || '9999'))
         .sort((a, b) => a.year - b.year);
+
 
     const damageData = Object.entries(data.damageOverTime)
-        .map(([year, amount]) => {
-            const transformedData = {
-                year: parseInt(year),
-                amount: parseFloat(amount)
-            };
-            console.log('Transformed damage data:', transformedData);
-            return transformedData;
-        })
+        .map(([year, amount]) => ({
+            year: parseInt(year),
+            amount: parseFloat(amount),
+        }))
+        .filter((entry) => entry.year >= parseInt(filters.fromDate?.split('-')[0] || '0') &&
+            entry.year <= parseInt(filters.toDate?.split('-')[0] || '9999'))
         .sort((a, b) => a.year - b.year);
 
+
     const lossData = Object.entries(data.lossOverTime)
-        .map(([year, amount]) => {
-            const transformedData = {
-                year: parseInt(year),
-                amount: parseFloat(amount)
-            };
-            console.log('Transformed loss data:', transformedData);
-            return transformedData;
-        })
+        .map(([year, amount]) => ({
+            year: parseInt(year),
+            amount: parseFloat(amount),
+        }))
+        .filter((entry) => entry.year >= parseInt(filters.fromDate?.split('-')[0] || '0') &&
+            entry.year <= parseInt(filters.toDate?.split('-')[0] || '9999'))
         .sort((a, b) => a.year - b.year);
+
 
     console.log('Final transformed data:', {
         eventsData,
@@ -346,7 +363,12 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-g">
-                            <span>{data?.eventCount ? formatNumber(data.eventCount) : "No data available"}</span>
+                            {/* <span>{data?.eventCount ? formatNumber(data.eventCount) : "No data available"}</span> */}
+                            <span>
+                                {eventsData.length > 0
+                                    ? formatNumber(eventsData.reduce((sum, event) => sum + event.count, 0))
+                                    : "No data available"}
+                            </span>
                         </div>
                     </div>
 
@@ -379,16 +401,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                             allowDecimals={false}
                                             domain={[0, 'auto']}
                                         />
-                                        <RechartsTooltip 
+                                        <RechartsTooltip
                                             content={({ active, payload, label }) => (
-                                                <CustomTooltip 
-                                                    active={active} 
-                                                    payload={payload} 
-                                                    label={label} 
-                                                    title="Events" 
-                                                    formatter={formatNumber} 
+                                                <CustomTooltip
+                                                    active={active}
+                                                    payload={payload}
+                                                    label={label}
+                                                    title="Events"
+                                                    formatter={formatNumber}
                                                 />
-                                            )} 
+                                            )}
                                         />
                                         <Area type="monotone" dataKey="count" stroke="#8884d8" fill="url(#eventGradient)" />
                                     </AreaChart>
@@ -436,16 +458,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
-                                        <RechartsTooltip 
+                                        <RechartsTooltip
                                             content={({ active, payload, label }) => (
-                                                <CustomTooltip 
-                                                    active={active} 
-                                                    payload={payload} 
-                                                    label={label} 
-                                                    title="Damage" 
-                                                    formatter={formatCurrency} 
+                                                <CustomTooltip
+                                                    active={active}
+                                                    payload={payload}
+                                                    label={label}
+                                                    title="Damage"
+                                                    formatter={formatCurrency}
                                                 />
-                                            )} 
+                                            )}
                                         />
                                         <Area type="monotone" dataKey="amount" stroke="#82ca9d" fill="url(#damageGradient)" />
                                     </AreaChart>
@@ -490,16 +512,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
-                                        <RechartsTooltip 
+                                        <RechartsTooltip
                                             content={({ active, payload, label }) => (
-                                                <CustomTooltip 
-                                                    active={active} 
-                                                    payload={payload} 
-                                                    label={label} 
-                                                    title="Loss" 
-                                                    formatter={formatCurrency} 
+                                                <CustomTooltip
+                                                    active={active}
+                                                    payload={payload}
+                                                    label={label}
+                                                    title="Loss"
+                                                    formatter={formatCurrency}
                                                 />
-                                            )} 
+                                            )}
                                         />
                                         <Area type="monotone" dataKey="amount" stroke="#ffc658" fill="url(#lossGradient)" />
                                     </AreaChart>
