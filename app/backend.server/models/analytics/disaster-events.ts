@@ -1,6 +1,6 @@
-
 import { dr } from "~/db.server";
 import { sql } from "drizzle-orm";
+import { disasterEventTable } from "~/drizzle/schema";
 
 /**
  * Fetch disaster events from the database based on the query parameter.
@@ -23,10 +23,18 @@ export const fetchDisasterEvents = async (query?: string) => {
     // Execute query and return the full result object
     const result = await dr.execute(
       sql`
-        SELECT id, name_national AS name, glide, national_disaster_id, other_id1
+        SELECT 
+          id, 
+          name_national AS name, 
+          glide, 
+          national_disaster_id, 
+          other_id1,
+          start_date,
+          end_date,
+          effects_total_usd
         FROM disaster_event
         WHERE ${queryCondition}
-        ORDER BY start_date_utc
+        ORDER BY start_date DESC
       `
     );
 
