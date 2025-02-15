@@ -251,11 +251,11 @@ export const getGeographicImpact = async (filters: GeographicImpactFilters): Pro
                 damage: sql<string>`
                     (
                         -- Public repair cost
-                        COALESCE(${damagesTable.pubRepairCostTotalOverride}, 
-                            NULLIF(${damagesTable.pubRepairCostUnit} * ${damagesTable.pubRepairUnits}, 0), 0) +
+                        COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
+                            NULLIF(${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}, 0), 0) +
                         -- Private repair cost
-                        COALESCE(${damagesTable.privRepairCostTotalOverride}, 
-                            NULLIF(${damagesTable.privRepairCostUnit} * ${damagesTable.privRepairUnits}, 0), 0)
+                        COALESCE(${damagesTable.privateRepairCostTotalOverride}, 
+                            NULLIF(${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits}, 0), 0)
                     )::text
                 `.as('damage'),
                 // Calculate total loss
