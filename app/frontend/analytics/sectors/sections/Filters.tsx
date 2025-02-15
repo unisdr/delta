@@ -96,8 +96,7 @@ const Filters: React.FC<FiltersProps> = ({
       const response = await fetch("/api/analytics/disaster-events");
       if (!response.ok) throw new Error("Failed to fetch disaster events");
       return response.json();
-    },
-    initialData: { disasterEvents: { rows: [] } }
+    }
   });
 
   // React Query for fetching hazard types
@@ -195,13 +194,13 @@ const Filters: React.FC<FiltersProps> = ({
   // Filter events based on search input
   const filteredEvents = filters.disasterEventId
     ? disasterEvents.filter(event =>
-      event.name.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      event.id.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      event.glide.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      event.national_disaster_id.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      event.other_id1.toLowerCase().includes(filters.disasterEventId.toLowerCase())
+      event.name?.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      event.id?.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      (event.glide || "").toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      (event.national_disaster_id || "").toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
+      (event.other_id1 || "").toLowerCase().includes(filters.disasterEventId.toLowerCase())
     )
-    : disasterEvents;
+    : [];
 
   // Debug to ensure correct data mapping
   // console.log("Hazard Types:", hazardTypes);
