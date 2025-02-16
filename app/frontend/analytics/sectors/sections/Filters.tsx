@@ -189,6 +189,36 @@ const Filters: React.FC<FiltersProps> = ({
       name: level.name.en,
     })) || [];
 
+  // Auto-select hazard cluster when there's only one option available
+  useEffect(() => {
+    if (filters.hazardTypeId && hazardClusters.length === 1) {
+      const cluster = hazardClusters[0];
+      setFilters(prev => ({
+        ...prev,
+        hazardClusterId: cluster.id.toString()
+      }));
+      setDisplayValues(prev => ({
+        ...prev,
+        hazardClusterId: cluster.name
+      }));
+    }
+  }, [hazardClusters, filters.hazardTypeId]);
+
+  // Auto-select specific hazard when there's only one option available
+  useEffect(() => {
+    if (filters.hazardClusterId && specificHazards.length === 1) {
+      const hazard = specificHazards[0];
+      setFilters(prev => ({
+        ...prev,
+        specificHazardId: hazard.id.toString()
+      }));
+      setDisplayValues(prev => ({
+        ...prev,
+        specificHazardId: hazard.name
+      }));
+    }
+  }, [specificHazards, filters.hazardClusterId]);
+
   const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
 
   // Filter events based on search input
