@@ -1,0 +1,197 @@
+.impact-map-container {
+    position: relative;
+  }
+  
+  .map-legend {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .map-legend h4 {
+    margin: 0;
+  }
+  
+  .map-legend div {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+  }
+  
+  .map-legend span {
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  .metric-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .metric-btn {
+    padding: 8px 15px;
+    border: 1px solid #004f91;
+    background: #f0f8ff;
+    color: #004f91;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  
+  .metric-btn.active {
+    background: #004f91;
+    color: white;
+    font-weight: bold;
+  }
+
+  .impact-map-container {
+    position: relative;
+  }
+  
+  .map-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 1000;
+    min-width: 200px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .region-name {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 2px;
+    color: #ffffff;
+  }
+
+  .metric-value {
+    color: #e0e0e0;
+  }
+
+  .map-header {
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .map-header h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+    color: #333;
+  }
+
+  .legend {
+    background: white;
+    padding: 8px;
+    border-radius: 4px;
+    position: absolute;
+    bottom: 25px;  
+    right: 10px;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 12px;
+    max-width: 200px;
+  }
+
+  .legend h4 {
+    margin: 0 0 6px 0;
+    font-size: 0.9em;
+    color: #333;
+  }
+
+  .legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .legend-color {
+    width: 16px;
+    height: 16px;
+    border: 1px solid rgba(0,0,0,0.1);
+    display: inline-block;
+  }
+
+  .legend-label {
+    font-size: 0.85em;
+    color: #666;
+  }
+
+  .map-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .back-button {
+    padding: 6px 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.2s ease;
+  }
+
+  .back-button:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
+  }
+
+  .back-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .loading-indicator {
+    font-size: 14px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .loading-indicator::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-top-color: #666;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }

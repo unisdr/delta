@@ -13,61 +13,64 @@ import { getSectorsByParentId } from "./sectors";
 function normalizeLocationName(name: string): string {
     return name
         .toLowerCase()
-        // Remove parentheses and their contents
-        .replace(/\([^)]*\)/g, '')
-        // Remove common words that might differ
-        .replace(/\b(region|province|city)\b/g, '')
-        // Remove extra spaces and trim
         .replace(/\s+/g, ' ')
+        .replace(/\bregion\b/g, '')  // Remove standalone "region"
+        .replace(/\s+/g, ' ')        // Clean up double spaces
         .trim();
 }
 
 // Helper function to find matching division
-function findMatchingDivision(locationName: string, divisions: any[]): any {
+async function findMatchingDivision(locationName: string, divisions: any[]): Promise<any> {
     const normalizedLocation = normalizeLocationName(locationName);
-    console.log("Normalized location name:", normalizedLocation);
+    console.log("Normalized location:", normalizedLocation);
+    
+    // Try exact match first
+    let match = divisions.find(d => {
+        const divNameFull = d.name.en.toLowerCase();
+        const divNameSimple = divNameFull
+            .replace(/\s*\(.*?\)\s*/g, '')  // Remove anything in parentheses
+            .replace(/\bregion\b/g, '')     // Remove "region"
+            .replace(/\s+/g, ' ')           // Clean up spaces
+            .trim();
+            
+        console.log("Comparing with division:", {
+            original: d.name.en,
+            normalized: divNameFull,
+            simple: divNameSimple
+        });
 
-    // First try exact match after normalization
-    const exactMatch = divisions.find(div => {
-        const divName = normalizeLocationName(div.name?.en || '');
-        return divName === normalizedLocation;
-    });
-
-    if (exactMatch) {
-        console.log("Found exact match:", exactMatch.name?.en);
-        return exactMatch;
-    }
-
-    // Then try partial matches
-    const partialMatch = divisions.find(div => {
-        const divName = normalizeLocationName(div.name?.en || '');
-        // Check if either name contains the other
-        return divName.includes(normalizedLocation) || normalizedLocation.includes(divName);
-    });
-
-    if (partialMatch) {
-        console.log("Found partial match:", partialMatch.name?.en);
-        return partialMatch;
-    }
-
-    // Special cases for regions
-    const regionMatches = {
-        'calabarzon': 'CALABARZON (Region IV-A)',
-        'abra': 'Cordillera Administrative Region (CAR)',
-        'northern luzon': 'Cordillera Administrative Region (CAR)'
-    };
-
-    for (const [key, value] of Object.entries(regionMatches)) {
-        if (normalizedLocation.includes(key)) {
-            const match = divisions.find(div => normalizeLocationName(div.name?.en || '') === normalizeLocationName(value));
-            if (match) {
-                console.log("Found region match:", match.name?.en);
-                return match;
-            }
+        // First try exact match with simple names
+        if (normalizedLocation === divNameSimple) {
+            return true;
         }
+
+        // Then try partial matches
+        const locationParts: string[] = normalizedLocation.split(' ');
+        const divParts: string[] = divNameSimple.split(' ');
+        
+        // Check if all parts of the location are in the division name
+        return locationParts.every((part: string) => 
+            divParts.some((divPart: string) => 
+                divPart.includes(part) || part.includes(divPart)
+            )
+        );
+    });
+
+    if (match) {
+        console.log("Found match:", {
+            name: match.name.en,
+            level: match.level,
+            parentId: match.parentId
+        });
+    } else {
+        console.log("No match found for:", normalizedLocation);
+        console.log("Available divisions:", divisions.map(d => ({
+            name: d.name.en,
+            level: d.level
+        })));
     }
 
-    return null;
+    return match;
 }
 
 // Helper function to calculate the area of a ring
@@ -176,12 +179,15 @@ export interface GeographicImpactFilters {
     fromDate?: string;
     toDate?: string;
     disasterEventId?: string;
+    level?: number;
+    parentId?: number;
 }
 
-async function getDisasterRecordsForSector(sectorId: string): Promise<string[]> {
+// Get all disaster records for a sector including subsectors
+export async function getDisasterRecordsForSector(sectorId: string): Promise<string[]> {
     const numericSectorId = parseInt(sectorId, 10);
     if (isNaN(numericSectorId)) {
-        throw new Error("Invalid sector ID format");
+        throw new Error("Invalid sector ID");
     }
 
     // Get all subsectors if this is a parent sector
@@ -195,176 +201,169 @@ async function getDisasterRecordsForSector(sectorId: string): Promise<string[]> 
     const records = await dr
         .select({ id: disasterRecordsTable.id })
         .from(disasterRecordsTable)
-        .where(
-            and(
-                inArray(disasterRecordsTable.sectorId, sectorIds),
-                sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'approved'`
-            )
-        );
+        .where(and(
+            inArray(disasterRecordsTable.sectorId, sectorIds),
+            sql`${disasterRecordsTable.approvalStatus} ILIKE 'approved'`
+        ));
 
     console.log("Found records:", records);
     return records.map(r => r.id);
 }
 
-export const getGeographicImpact = async (filters: GeographicImpactFilters): Promise<{ type: "FeatureCollection", features: any[] }> => {
+export async function getGeographicImpact(filters: GeographicImpactFilters): Promise<{ type: "FeatureCollection", features: any[] }> {
+    console.log("Processing geographic impact for sector:", filters.sectorId);
+
     try {
-        if (!filters.sectorId) {
-            throw new Error("Sector ID is required");
+        // Build the base query conditions
+        const conditions = [
+            sql`CAST(${divisionTable.level} AS BIGINT) = CAST(${filters.level || 1} AS BIGINT)` // Cast both sides to BIGINT
+        ];
+        
+        if (filters.parentId) {
+            conditions.push(sql`${divisionTable.parentId} = ${filters.parentId}`);
         }
 
-        console.log("Processing geographic impact for sector:", filters.sectorId);
-
-        // Get all divisions with their GeoJSON data
+        // Get divisions first
         const divisions = await dr
             .select({
                 id: divisionTable.id,
                 name: divisionTable.name,
                 geojson: divisionTable.geojson,
+                level: divisionTable.level,
+                importId: divisionTable.importId,
                 parentId: divisionTable.parentId
             })
             .from(divisionTable)
-            .execute();
+            .where(and(...conditions));
 
-        console.log("Found divisions:", divisions.length);
-        console.log("Division names:", divisions.map(d => d.name?.en));
+        console.log("Found divisions:", divisions.map(d => ({
+            id: d.id,
+            name: d.name.en,
+            importId: d.importId,
+            level: d.level,
+            parentId: d.parentId
+        })));
 
-        // Get all disaster records for the sector
+        // Get disaster records for the sector (including subsectors)
         const recordIds = await getDisasterRecordsForSector(filters.sectorId);
 
-        // Build additional conditions for date and event filters
-        const additionalConditions = [];
-        if (filters.disasterEventId) {
-            additionalConditions.push(eq(disasterRecordsTable.disasterEventId, filters.disasterEventId));
-        }
-        if (filters.fromDate) {
-            additionalConditions.push(sql`${disasterRecordsTable.startDate} >= ${filters.fromDate}`);
-        }
-        if (filters.toDate) {
-            additionalConditions.push(sql`${disasterRecordsTable.endDate} <= ${filters.toDate}`);
-        }
-
-        // Get records with their damage and loss values
-        const records = await dr
+        // Get damages and losses data
+        const damagesQuery = dr
             .select({
                 locationDesc: disasterRecordsTable.locationDesc,
-                // Calculate total damage
-                damage: sql<string>`
-                    (
-                        -- Public repair cost
-                        COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
-                            NULLIF(${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}, 0), 0) +
-                        -- Private repair cost
-                        COALESCE(${damagesTable.privateRepairCostTotalOverride}, 
-                            NULLIF(${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits}, 0), 0)
-                    )::text
-                `.as('damage'),
-                // Calculate total loss
-                loss: sql<string>`
-                    (
-                        COALESCE(${lossesTable.publicTotalCost}, 0) + 
-                        COALESCE(${lossesTable.privateTotalCost}, 0)
-                    )::text
-                `.as('loss')
+                damage: sql<string>`CAST(SUM(
+                    COALESCE(${damagesTable.publicRepairCostTotalOverride}, 0) + 
+                    COALESCE(${damagesTable.publicReplacementCostTotalOverride}, 0) +
+                    COALESCE(${damagesTable.privateRepairCostTotalOverride}, 0) + 
+                    COALESCE(${damagesTable.privateReplacementCostTotalOverride}, 0)
+                ) AS TEXT)`,
             })
-            .from(disasterRecordsTable)
-            .leftJoin(damagesTable, eq(damagesTable.recordId, disasterRecordsTable.id))
-            .leftJoin(lossesTable, eq(lossesTable.recordId, disasterRecordsTable.id))
-            .where(
-                and(
-                    inArray(disasterRecordsTable.id, recordIds),
-                    ...additionalConditions
-                )
-            )
-            .execute();
+            .from(damagesTable)
+            .innerJoin(disasterRecordsTable, eq(damagesTable.recordId, disasterRecordsTable.id))
+            .where(inArray(damagesTable.recordId, recordIds))
+            .groupBy(disasterRecordsTable.locationDesc);
 
-        console.log("Found records with values:", records);
+        const lossesQuery = dr
+            .select({
+                locationDesc: disasterRecordsTable.locationDesc,
+                loss: sql<string>`CAST(SUM(
+                    COALESCE(${lossesTable.publicTotalCost}, 0) + 
+                    COALESCE(${lossesTable.privateTotalCost}, 0)
+                ) AS TEXT)`,
+            })
+            .from(lossesTable)
+            .innerJoin(disasterRecordsTable, eq(lossesTable.recordId, disasterRecordsTable.id))
+            .where(inArray(lossesTable.recordId, recordIds))
+            .groupBy(disasterRecordsTable.locationDesc);
 
-        // Aggregate values for each division
-        const divisionValues = new Map<number, { damage: number, loss: number }>();
-        
-        // Process each record
-        records.forEach(record => {
-            const locationName = (record.locationDesc || '').toLowerCase();
-            const damage = parseFloat(record.damage) || 0;
-            const loss = parseFloat(record.loss) || 0;
+        const [damagesResult, lossesResult] = await Promise.all([
+            damagesQuery,
+            lossesQuery
+        ]);
 
-            console.log("Processing record:", {
-                location: locationName,
-                damage,
-                loss
-            });
+        // Combine damages and losses by location
+        const locationValues: { [key: string]: { damage: number, loss: number } } = {};
 
-            // Find matching division using improved matching logic
-            const matchedDivision = findMatchingDivision(locationName, divisions);
-
-            if (matchedDivision) {
-                console.log("Matched division:", {
-                    divisionId: matchedDivision.id,
-                    divisionName: matchedDivision.name?.en,
-                    damage,
-                    loss
-                });
-
-                // Add values to the matched division
-                const current = divisionValues.get(matchedDivision.id) || { damage: 0, loss: 0 };
-                divisionValues.set(matchedDivision.id, {
-                    damage: current.damage + damage,
-                    loss: current.loss + loss
-                });
-            } else {
-                console.warn("No matching division found for location:", locationName);
+        damagesResult.forEach(record => {
+            if (!record.locationDesc) return; // Skip records with no location
+            const location = record.locationDesc.toLowerCase();
+            if (!locationValues[location]) {
+                locationValues[location] = { damage: 0, loss: 0 };
             }
+            locationValues[location].damage += parseFloat(record.damage || '0');
         });
 
-        console.log("Final division values:", Object.fromEntries(divisionValues));
+        lossesResult.forEach(record => {
+            if (!record.locationDesc) return; // Skip records with no location
+            const location = record.locationDesc.toLowerCase();
+            if (!locationValues[location]) {
+                locationValues[location] = { damage: 0, loss: 0 };
+            }
+            locationValues[location].loss += parseFloat(record.loss || '0');
+        });
 
-        // Create GeoJSON features for ALL divisions with valid geometry
-        const features = divisions
-            // Only filter out divisions without geometry
-            .filter(div => {
-                const hasGeometry = !!div.geojson;
-                if (!hasGeometry) {
-                    console.log(`Skipping division ${div.name?.en} - no geometry`);
-                }
-                return hasGeometry;
-            })
-            .map(div => {
-                const values = divisionValues.get(div.id) || { damage: 0, loss: 0 }; // Use default values if no data
-                const geometry = parseGeometry(div.geojson);
-                
-                if (!geometry) {
-                    console.warn(`Invalid geometry for division ${div.id}:`, div.geojson);
-                    return null;
-                }
-
-                return {
-                    type: "Feature",
-                    geometry,
-                    properties: {
-                        id: div.id,
-                        name: div.name || { en: 'Unknown' },
-                        totalDamage: values.damage,
-                        totalLoss: values.loss
-                    }
-                };
-            })
-            .filter((feature): feature is NonNullable<typeof feature> => feature !== null);
-
-        console.log("Final features:", features.map(f => ({
-            name: f.properties.name.en,
-            damage: f.properties.totalDamage,
-            loss: f.properties.totalLoss
+        console.log("Found records with values:", Object.entries(locationValues).map(([loc, val]) => ({
+            locationDesc: loc,
+            damage: val.damage.toString(),
+            loss: val.loss.toString()
         })));
+
+        // Create a map to store division values
+        const divisionValues: { [key: number]: { totalDamage: number, totalLoss: number } } = {};
+
+        // Process each location and find matching division
+        for (const [location, values] of Object.entries(locationValues)) {
+            console.log("Processing record:", { location, damage: values.damage, loss: values.loss });
+            
+            const matchingDivision = await findMatchingDivision(location, divisions);
+            if (matchingDivision) {
+                const divId = matchingDivision.id;
+                if (!divisionValues[divId]) {
+                    divisionValues[divId] = { totalDamage: 0, totalLoss: 0 };
+                }
+                divisionValues[divId].totalDamage += values.damage;
+                divisionValues[divId].totalLoss += values.loss;
+            } else {
+                console.log("No matching division found for location:", location);
+            }
+        }
+
+        console.log("Final division values:", divisionValues);
+
+        // Create GeoJSON features with the aggregated values
+        const features = divisions.map(division => {
+            const geometry = parseGeometry(division.geojson);
+            if (!geometry) return null;
+
+            const values = divisionValues[division.id] || { totalDamage: 0, totalLoss: 0 };
+
+            return {
+                type: "Feature",
+                geometry,
+                properties: {
+                    id: division.id,
+                    name: division.name,
+                    level: division.level,
+                    parentId: division.parentId,
+                    totalDamage: values.totalDamage,
+                    totalLoss: values.totalLoss
+                }
+            };
+        }).filter(f => f !== null);
+
+        console.log("Final features:", features.length);
+
+        if (features.length === 0) {
+            console.log("No features found for sector", filters.sectorId);
+        }
 
         return {
             type: "FeatureCollection",
             features
         };
+
     } catch (error) {
         console.error("Error in getGeographicImpact:", error);
-        return {
-            type: "FeatureCollection",
-            features: []
-        };
+        throw error;
     }
-};
+}

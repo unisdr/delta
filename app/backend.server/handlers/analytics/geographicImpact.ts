@@ -13,6 +13,8 @@ const GeographicImpactQuerySchema = z.object({
     fromDate: z.string().optional(),
     toDate: z.string().optional(),
     disasterEventId: z.string().optional(),
+    parentId: z.string().optional(),
+    level: z.string().optional()
 });
 
 export async function handleGeographicImpactQuery(params: unknown) {
@@ -20,8 +22,24 @@ export async function handleGeographicImpactQuery(params: unknown) {
         // Validate input parameters
         const validParams = GeographicImpactQuerySchema.parse(params);
         
+        // Convert string parameters to numbers where needed
+        const processedParams = {
+            ...validParams,
+            level: validParams.level ? parseInt(validParams.level, 10) : 1,
+            parentId: validParams.parentId ? parseInt(validParams.parentId, 10) : undefined
+        };
+
+        // Validate numeric parameters
+        if (processedParams.level < 1 || processedParams.level > 3) {
+            throw new Error("Invalid level: must be between 1 and 3");
+        }
+
+        if (processedParams.parentId && processedParams.parentId < 1) {
+            throw new Error("Invalid parentId: must be a positive number");
+        }
+        
         // Get geographic impact data
-        const result = await getGeographicImpact(validParams);
+        const result = await getGeographicImpact(processedParams);
         
         // Validate response data structure
         if (!result || !result.features) {
@@ -30,7 +48,7 @@ export async function handleGeographicImpactQuery(params: unknown) {
 
         // Check if we have any features
         if (result.features.length === 0) {
-            console.warn(`No features found for sector ${validParams.sectorId}`);
+            console.warn(`No features found for sector ${processedParams.sectorId}`);
         }
 
         // Check if we have any non-zero values
@@ -40,18 +58,12 @@ export async function handleGeographicImpactQuery(params: unknown) {
         );
 
         if (!hasValues) {
-            console.warn(`No damage or loss values found for sector ${validParams.sectorId}`);
+            console.warn(`No damage or loss values found for sector ${processedParams.sectorId}`);
         }
 
         return result;
-
     } catch (error) {
         console.error("Error in handleGeographicImpactQuery:", error);
-        
-        if (error instanceof z.ZodError) {
-            throw new Error("Invalid query parameters: " + error.message);
-        }
-
         throw error;
     }
 }
