@@ -34,8 +34,6 @@ export async function disRecSectorsCreate(tx: Tx, fields: DisRecSectorsFields): 
 			withDamage: fields.withDamage,
 			withDisruption: fields.withDisruption,
 			withLosses: fields.withLosses,
-			disruptionResponseCost: fields.disruptionResponseCost,
-			disruptionResponseCostCurrency: fields.disruptionResponseCostCurrency,
 		})
 		.returning({id: sectorDisasterRecordsRelationTable.id});
 
@@ -55,8 +53,6 @@ export async function disRecSectorsUpdate(tx: Tx, idStr: string, fields: DisRecS
 			withDamage: fields.withDamage,
 			withDisruption: fields.withDisruption,
 			withLosses: fields.withLosses,
-			disruptionResponseCost: fields.disruptionResponseCost,
-			disruptionResponseCostCurrency: fields.disruptionResponseCostCurrency,
 		})
 		.where(eq(sectorDisasterRecordsRelationTable.id, id));
 
@@ -123,8 +119,6 @@ export async function sectorsFilderBydisasterRecordsId(idStr: string) {
 			disRecSectorsDamageRecoveryCostCurrency: sectorDisasterRecordsRelationTable.damageRecoveryCostCurrency,
 			disRecSectorsWithDisruption: sectorDisasterRecordsRelationTable.withDisruption,
 			disRecSectorsWithLosses: sectorDisasterRecordsRelationTable.withLosses,
-			disruptionResponseCost: sectorDisasterRecordsRelationTable.disruptionResponseCost,
-			disruptionResponseCostCurrency: sectorDisasterRecordsRelationTable.disruptionResponseCostCurrency,
 			disRecSectorsdisasterRecordId: sectorDisasterRecordsRelationTable.disasterRecordId,
 			disRecSectorsSectorId: sectorDisasterRecordsRelationTable.sectorId,
 			catName: catTable.sectorname,
@@ -153,8 +147,6 @@ export async function upsertRecord(record: DisRecSectorsFields): Promise<void> {
 				disasterRecordId: record.disasterRecordId,
 				withDamage: record.withDamage,
 				withDisruption: record.withDisruption,
-				disruptionResponseCost: record.disruptionResponseCost,
-				disruptionResponseCostCurrency: record.disruptionResponseCostCurrency,
 				withLosses: record.withLosses,
 				damageRecoveryCost: record.damageRecoveryCost,
 				damageRecoveryCostCurrency: record.damageRecoveryCostCurrency,

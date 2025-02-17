@@ -2,9 +2,8 @@ import {
 	pgTable,
 	text,
 	timestamp,
-	serial,
-	integer,
 	bigint,
+	bigserial,
 	check,
 	unique,
 	boolean,
@@ -13,6 +12,7 @@ import {
 	index,
 	AnyPgColumn,
 	numeric,
+	integer
 } from "drizzle-orm/pg-core";
 
 import {sql, relations} from "drizzle-orm";
@@ -25,8 +25,9 @@ import {
 function zeroTimestamp(name: string) {
 	return timestamp(name)
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`);
+		.default(sql`'2000-01-01T00:00:00.000Z'`);
 }
+
 function zeroText(name: string) {
 	return text(name).notNull().default("");
 }
@@ -40,7 +41,7 @@ function ourBigint(name: string) {
 	return bigint(name, {mode: "number"})
 }
 function ourSerial(name: string) {
-	return bigint(name, {mode: "number"}).notNull()
+	return bigserial(name, {mode: "number"})
 }
 function ourMoney(name: string) {
 	return numeric(name)
@@ -284,7 +285,7 @@ export const hazardEventTable = pgTable("hazard_event", {
 	chainsExplanation: zeroText("chains_explanation"),
 	duration: zeroText("duration"),
 	magnitude: zeroText("magniture"),
-	spatialFootprint: zeroText("spatial_footprint"),
+	spatialFootprint: jsonb("spatial_footprint"),
 	recordOriginator: zeroText("record_originator"),
 	dataSource: zeroText("data_source"),
 });
@@ -355,8 +356,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 	responseCostTotalUsd: ourMoney("response_cost_total"),
 	humanitarianNeedsTotalUsd: ourMoney("humanitarian_needs_total"),
 	recoveryNeedsTotalUsd: ourMoney("recovery_needs_total"),
-	attachments: zeroText("attachments"),
-	spatialFootprint: zeroText("spatial_footprint"),
+	attachments: jsonb("attachments"),
+	spatialFootprint: jsonb("spatial_footprint"),
 });
 
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
@@ -428,7 +429,7 @@ export const deathsTable = pgTable("deaths", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	deaths: ourBigint("deaths"),
+	deaths: integer("deaths"),
 });
 
 export type Deaths = typeof deathsTable.$inferSelect;
@@ -439,7 +440,7 @@ export const injuredTable = pgTable("injured", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	injured: ourBigint("injured"),
+	injured: integer("injured"),
 });
 
 export type Injured = typeof injuredTable.$inferSelect;
@@ -451,7 +452,7 @@ export const missingTable = pgTable("missing", {
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
 	asOf: timestamp("as_of"),
-	missing: ourBigint("missing"),
+	missing: integer("missing"),
 });
 
 export type Missing = typeof missingTable.$inferSelect;
@@ -462,8 +463,8 @@ export const affectedTable = pgTable("affected", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	direct: ourBigint("direct"),
-	indirect: ourBigint("indirect"),
+	direct: integer("direct"),
+	indirect: integer("indirect"),
 });
 export type Affected = typeof affectedTable.$inferSelect;
 export type AffectedInsert = typeof affectedTable.$inferInsert;
@@ -473,11 +474,11 @@ export const displacedTable = pgTable("displaced", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	short: ourBigint("short"), // First 10 days
-	mediumShort: ourBigint("medium_short"), // Days 10-30
-	mediumLong: ourBigint("medium_long"), // Days 30-90
-	long: ourBigint("long"), // More than 90 days
-	permanent: ourBigint("permanent"), // Permanently relocated
+	short: integer("short"), // First 10 days
+	mediumShort: integer("medium_short"), // Days 10-30
+	mediumLong: integer("medium_long"), // Days 30-90
+	long: integer("long"), // More than 90 days
+	permanent: integer("permanent"), // Permanently relocated
 });
 export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
@@ -487,8 +488,8 @@ export const displacementStocksTable = pgTable("displacement_stocks", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	preemptive: ourBigint("preemptive"), // Assisted pre-emptive displacement
-	reactive: ourBigint("reactive"), // Assisted reactive displacement
+	preemptive: integer("preemptive"), // Assisted pre-emptive displacement
+	reactive: integer("reactive"), // Assisted reactive displacement
 });
 export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
 export type DisplacementStocksInsert =
@@ -510,8 +511,8 @@ export const disruptionTable = pgTable("disruption", {
 	responseOperation: text("response_operation"),
 	responseCost: ourMoney("response_cost"),
 	responseCurrency: text("response_currency"),
-	spatialFootprint: zeroText("spatial_footprint"),
-	attachments: zeroText("attachments"),
+	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 })
 
 export type Disruption = typeof disruptionTable.$inferSelect
@@ -765,7 +766,7 @@ export const resourceRepoTable = pgTable("resource_repo", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	title: text("title").notNull(),
 	summary: text("summary").notNull(),
-	attachments: text("attachments").notNull(),
+	attachments: jsonb("attachments"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
 });
@@ -830,7 +831,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 		.references((): AnyPgColumn => sectorTable.id),
 	sectorName: text("sector_name"), // Direct name of the sector involved
 	subSector: text("sub_sector"), // Sub-sector detail
-	spatialFootprint: zeroText("spatial_footprint"),
+	spatialFootprint: jsonb("spatial_footprint"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
 });
@@ -957,7 +958,7 @@ export const sectorTable = pgTable(
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
-		id: serial("id").primaryKey(), // Keep using serial instead of UUID
+		id: uuid("id").primaryKey().defaultRandom(), // Unique ID for the relation
 		sectorId: ourBigint("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id),
@@ -968,8 +969,6 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 		damageRecoveryCost: ourMoney("damage_recovery_cost"),
 		damageRecoveryCostCurrency: text("damage_recovery_cost_currency"),
 		withDisruption: boolean("with_disruption"),
-		disruptionResponseCost: ourMoney("disruption_response_cost"),
-		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
 		withLosses: boolean("with_losses"),
 	},
 	(table) => {

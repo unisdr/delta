@@ -18,7 +18,7 @@ export function validate(_fields: ResourceRepoFields): Errors<ResourceRepoFields
 	return errors
 }
 
-async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: string) {
+async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: any[]) {
 	if (!attachmentsData) return;
   
 	const save_path = `/uploads/resource-repo/${resourceId}`;
@@ -30,7 +30,7 @@ async function processAndSaveAttachments(tx: Tx, resourceId: string, attachments
 	// Update the `attachments` field in the database
 	await tx.update(resourceRepoTable)
 	  .set({
-		attachments: processedAttachments || "[]", // Ensure it defaults to an empty array if undefined
+		attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
 	  })
 	  .where(eq(resourceRepoTable.id, resourceId));
 }
@@ -53,7 +53,7 @@ export async function resourceRepoCreate(tx: Tx, fields: ResourceRepoFields): Pr
 
 	if (res.length > 0) {
 		const resourceId = res[0].id;
-		await processAndSaveAttachments(tx, resourceId, fields.attachments);
+		await processAndSaveAttachments(tx, resourceId, Array.isArray(fields.attachments) ? fields.attachments : []);
 	}
 
 	return {ok: true, id: res[0].id};
@@ -75,7 +75,7 @@ export async function resourceRepoUpdate(tx: Tx, idStr: string, fields: Resource
 		})
 		.where(eq(resourceRepoTable.id, id));
 
-	await processAndSaveAttachments(tx, idStr, fields.attachments);
+	await processAndSaveAttachments(tx, idStr, Array.isArray(fields.attachments) ? fields.attachments : []);
 
 	return {ok: true};
 }

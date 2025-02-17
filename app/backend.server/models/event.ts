@@ -22,7 +22,6 @@ import {isValidUUID} from "~/util/id";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { logAudit } from "./auditLogs";
-import { sessionCookie } from "~/util/session";
 
 export interface HazardEventFields extends Omit<EventInsert, 'id'>, Omit<HazardEventInsert, 'id'>, ObjectWithImportId {
 	parent: string
@@ -45,7 +44,6 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userI
 	const res = await tx
 		.insert(eventTable)
 		.values({
-			example: fields.example,
 		})
 		.returning({id: eventTable.id});
 	eventId = res[0].id
@@ -356,7 +354,6 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	const res = await tx
 		.insert(eventTable)
 		.values({
-			example: fields.example,
 		})
 		.returning({id: eventTable.id});
 	eventId = res[0].id
@@ -380,7 +377,7 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	}
 
 	if (res.length > 0) {
-		await processAndSaveAttachments(tx, eventId, fields.attachments || "");
+		await processAndSaveAttachments(tx, eventId, Array.isArray(fields?.attachments) ? fields.attachments : []);
 	}
 
 	/*
@@ -422,7 +419,7 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 			})
 			.where(eq(disasterEventTable.id, id))
 
-		await processAndSaveAttachments(tx, id, fields.attachments || "");	
+		await processAndSaveAttachments(tx, id, Array.isArray(fields?.attachments) ? fields.attachments : []);	
 	} catch (error: any) {
 		let res = checkConstraintError(error, disasterEventTableConstraits)
 		if (res) {
@@ -498,10 +495,10 @@ export async function disasterEventDelete(id: string): Promise<DeleteResult> {
 	return {ok: true}
 }
 
-async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: string) {
+async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: any[]) {
 	if (!attachmentsData) return;
   
-	const save_path = `/uploads/resource-repo/${resourceId}`;
+	const save_path = `/uploads/disaster-event/${resourceId}`;
 	const save_path_temp = `/uploads/temp`;
   
 	// Process the attachments data
@@ -510,7 +507,7 @@ async function processAndSaveAttachments(tx: Tx, resourceId: string, attachments
 	// Update the `attachments` field in the database
 	await tx.update(disasterEventTable)
 	  .set({
-		attachments: processedAttachments || "[]", // Ensure it defaults to an empty array if undefined
+		attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
 	  })
 	  .where(eq(disasterEventTable.id, resourceId));
 }
