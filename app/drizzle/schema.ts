@@ -24,8 +24,9 @@ import {
 function zeroTimestamp(name: string) {
 	return timestamp(name)
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`);
+		.default(sql`'2000-01-01T00:00:00.000Z'`);
 }
+
 function zeroText(name: string) {
 	return text(name).notNull().default("");
 }
