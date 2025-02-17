@@ -290,7 +290,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       if (field.type === "tokenfield" && element) {
         // Initialize tokenfield on the element
         initTokenField(
-          initialFormData[field.id] || "[]", // Pass current value or an empty array
+          initialFormData[field.id] || [], // Pass current value or an empty array
           element as HTMLInputElement,
           Array.isArray(field?.dataSource) ? field.dataSource : [],
           field,
@@ -983,11 +983,28 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
   const handleSave = () => {
     // Find missing required fields
     const missingFields = dialog_fields
-      .filter((field) => field.required) // Only check fields marked as required
-      .filter((field) => {
-        const fieldValue = formData[field.id]; // Get value from formData by id
-        return !fieldValue || !fieldValue.trim(); // Check if the value is empty or only whitespace
-      });
+    .filter((field) => field.required) // Only check fields marked as required
+    .filter((field) => {
+      const fieldValue = formData[field.id]; // Get value from formData by id
+  
+      // Check if fieldValue is null or undefined
+      if (fieldValue == null) {
+        return true;
+      }
+  
+      // Check if fieldValue is a string and is empty or only whitespace
+      if (typeof fieldValue === 'string' && !fieldValue.trim()) {
+        return true;
+      }
+  
+      // Check if fieldValue is an object and is empty
+      if (typeof fieldValue === 'object' && Object.keys(fieldValue).length === 0) {
+        return true;
+      }
+  
+      // For numbers and other types, consider them as having a value
+      return false;
+    });
 
     // Access the error message container
     const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error") as HTMLElement;
@@ -1337,7 +1354,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                     dialogElement.showModal();
                                     dialogElement.mapperField = field;
                                   }
-                                  initializeMap(value ? JSON.parse(value) : null);
+                                  initializeMap(value ? (value) : null);
                                 }}>
                                 <img src={`${base_path}/assets/icons/globe.svg`} alt="Globe SVG File"  title="Globe SVG File" />Open Map</a>                    
                               {value &&
@@ -1346,13 +1363,13 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                                   let retValue = null;
                                   const mapperGeoField = (field.mapperGeoJSONField) ? (formData[field.mapperGeoJSONField] || "") : "";
                                   if (mapperGeoField != '') {
-                                    retValue = JSON.parse(mapperGeoField);
+                                    retValue = (mapperGeoField);
                                   }
                                   return retValue;
                                 };
 
                                 try {
-                                  let parsedValue = JSON.parse(value); // Parse JSON object
+                                  let parsedValue = (value); // Parse JSON object
                                   if (parsedValue && parsedValue.mode) {
                                     const { mode, coordinates, center, radius } = parsedValue;
 

@@ -36,7 +36,7 @@ export const fieldsDefCommon = [
 	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "text"},
 	{key: "duration", label: "Duration", type: "text"},
 	{key: "magnitude", label: "Magnitude", type: "text"},
-	{key: "spatialFootprint", label: "Spatial Footprint", type: "other"},
+	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 	{key: "recordOriginator", label: "Record Originator", type: "text", required: true},
 	{key: "dataSource", label: "Data Source", type: "text"},
 ] as const;
@@ -181,7 +181,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 									id: "map_option",
 									caption: "Option",
 									type: "option",
-									options: ["Map Coordinates", "Geographic Level"],
+									options: ["Map Coordinates", "Geographic Level"], 
 									onChange: (e: any) => {
 										const value = e.target.value;
 
@@ -197,6 +197,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 											geoLevelFieldComponent.style.setProperty("display", "block");
 										}
 									},
+									show: true
 								},
 								{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 								{
@@ -219,14 +220,32 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							]}
 							data={(() => {
 								try {
-									return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
-								} catch {
-									return []; // Default to an empty array if parsing fails
+								  // Ensure fields exist before accessing spatialFootprint
+								  if (fields?.spatialFootprint) {
+									if (Array.isArray(fields.spatialFootprint)) {
+									  return fields.spatialFootprint;
+									} else if (typeof fields.spatialFootprint === "string") {
+									  try {
+										const parsed = JSON.parse(fields.spatialFootprint);
+										return Array.isArray(parsed) ? parsed : [];
+									  } catch (error) {
+										console.error("Invalid JSON in spatialFootprint:", error);
+										return [];
+									  }
+									} else {
+									  console.warn("Unexpected type for spatialFootprint:", typeof fields.spatialFootprint);
+									  return [];
+									}
+								  }
+								  return [];
+								} catch (error) {
+								  console.error("Error processing spatialFootprint:", error);
+								  return [];
 								}
-							})()}
+							  })()}
 							onChange={(items: any) => {
 								try {
-									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+									const parsedItems = Array.isArray(items) ? items : (items);
 								} catch {
 									console.error("Failed to process items.");
 								}
@@ -244,8 +263,8 @@ export function HazardEventForm(props: HazardEventFormProps) {
 										selectedItems.data.map((item: any) => {
 											if (item.id == selectedItems.selectedId) {
 												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-												const setField = {id: "geojson", value: item.geojson};
-												contentReapeaterRef.current.handleFieldChange(setField, item.geojson);
+												const setField = {id: "geojson", value: JSON.parse(item.geojson)};
+												contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
 
 												const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 												contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
@@ -292,7 +311,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
-		previewMap(JSON.stringify(JSON.parse(item.spatialFootprint)));
+		previewMap(JSON.stringify((item.spatialFootprint)));
 	};
 
 	return (
@@ -360,15 +379,32 @@ export function HazardEventView(props: HazardEventViewProps) {
 							<p>Spatial Footprint:</p>
 							{(() => {
 								try {
-									const footprints = JSON.parse(item.spatialFootprint); // Parse JSON string
+									let footprints: any[] = []; // Ensure footprints is always an array
 
+									if (item?.spatialFootprint) {
+									  if (Array.isArray(item.spatialFootprint)) {
+										footprints = item.spatialFootprint;
+									  } else if (typeof item.spatialFootprint === "string") {
+										try {
+										  const parsed = JSON.parse(item.spatialFootprint);
+										  footprints = Array.isArray(parsed) ? parsed : [];
+										} catch (error) {
+										  console.error("Invalid JSON in spatialFootprint:", error);
+										  footprints = [];
+										}
+									  } else {
+										console.warn("Unexpected type for spatialFootprint:", typeof item.spatialFootprint);
+										footprints = [];
+									  }
+									}
+	
 									return (
 										<>
 											<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
 												<thead>
 													<tr style={{backgroundColor: "#f4f4f4"}}>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left"}}>Title</th>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left"}}>Option</th>
+														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Title</th>
+														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Option</th>
 													</tr>
 												</thead>
 												<tbody>
@@ -383,7 +419,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 																		</a>
 																	</td>
 																	<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON((newGeoJson));}}>
+																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
 																			{option}
 																		</a>
 																	</td>
@@ -408,7 +444,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 													backgroundColor: "#f4f4f4",
 													color: "#333",
 													fontSize: "14px",
-													fontWeight: "bold",
+													fontWeight: "normal",
 													borderRadius: "4px",
 													marginBottom: "2rem",
 													cursor: "pointer"
@@ -418,7 +454,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 											</button>
 										</>
 									);
-
+	
 								} catch {
 									return <p>Invalid JSON format in spatialFootprint.</p>;
 								}

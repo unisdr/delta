@@ -1,5 +1,5 @@
 export const initTokenField = (
-  initialValue: string | undefined, // Existing tokenfield data
+  initialValue: [] | undefined, // Existing tokenfield data
   input: HTMLInputElement, // Hidden input element
   dataSource: { id: number; name: string }[], // dataSource for dropdown suggestions
   field: any, // Associated field metadata
@@ -69,11 +69,11 @@ export const initTokenField = (
   }
 
   // Initialize selected items from the initial value
-  const selectedItems: { id: number; name: string }[] = initialValue ? JSON.parse(initialValue) : [];
+  const selectedItems: { id: number; name: string }[] = initialValue ? (initialValue) : [];
 
   const updateHiddenInput = () => {
     input.value = JSON.stringify(selectedItems);
-    handleFieldChange(field, input.value);
+    handleFieldChange(field, JSON.parse(input.value));
   };
 
   // Populate initial tokens in the UI

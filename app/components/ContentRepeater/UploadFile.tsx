@@ -13,11 +13,11 @@ interface Item {
 const debug = false;
 
 class ContentRepeaterUploadFile {
-  static delete(itemsData: string, publicPath: string = path.join(process.cwd(), "public")): string {
+  static delete(itemsData: any[], publicPath: string = path.join(process.cwd(), "public")): Item[] {
     let items: Item[];
 
     try {
-      items = JSON.parse(itemsData);
+      items = itemsData;
     } catch (error) {
       throw new Error("Invalid JSON data.");
     }
@@ -77,19 +77,19 @@ class ContentRepeaterUploadFile {
     };
 
     removeEmptyDirectories(publicPath);
-    return JSON.stringify(items); // Return the items as a string
+    return items; // Return the items as a string
   }
 
   static save(
-    itemsData: string,
+    itemsData: any[],
     tempPath: string,
     destinationPath: string,
     publicPath: string = path.join(process.cwd(), "public") // Dynamic Public Path
-  ): string {
+  ): Item[] {
     let items: Item[];
   
     try {
-      items = JSON.parse(itemsData);
+      items = itemsData;
     } catch (error) {
       throw new Error("Invalid JSON data.");
     }
@@ -171,7 +171,7 @@ class ContentRepeaterUploadFile {
     });
   
     if (debug) console.log("Final data items:", JSON.stringify(items, null, 2));
-    return JSON.stringify(items); // Return updated items
+    return items; // Return updated items
   }
   
 }

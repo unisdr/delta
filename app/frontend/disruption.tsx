@@ -124,14 +124,34 @@ export function DisruptionForm(props: DisruptionFormProps) {
 							]}
 							data={(() => {
 								try {
-									return props.fields && props.fields.spatialFootprint ? JSON.parse(props.fields.spatialFootprint) : [];
-								} catch {
-									return []; // Default to an empty array if parsing fails
+								  let spatialFootprint: any[] = []; // Ensure it's always an array
+							  
+								  if (props?.fields?.spatialFootprint) {
+									if (Array.isArray(props.fields.spatialFootprint)) {
+									  spatialFootprint = props.fields.spatialFootprint;
+									} else if (typeof props.fields.spatialFootprint === "string") {
+									  try {
+										const parsed = JSON.parse(props.fields.spatialFootprint);
+										spatialFootprint = Array.isArray(parsed) ? parsed : [];
+									  } catch (error) {
+										console.error("Invalid JSON in spatialFootprint:", error);
+										spatialFootprint = [];
+									  }
+									} else {
+									  console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
+									  spatialFootprint = [];
+									}
+								  }
+							  
+								  return spatialFootprint;
+								} catch (error) {
+								  console.error("Error processing spatialFootprint:", error);
+								  return [];
 								}
-							})()}
+							  })()}
 							onChange={(items: any) => {
 								try {
-									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+									const parsedItems = Array.isArray(items) ? items : (items);
 								} catch {
 									console.error("Failed to process items.");
 								}
@@ -149,8 +169,8 @@ export function DisruptionForm(props: DisruptionFormProps) {
 										selectedItems.data.map((item: any) => {
 											if (item.id == selectedItems.selectedId) {
 												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-												const setField = {id: "geojson", value: item.geojson};
-												contentReapeaterRef.current.handleFieldChange(setField, item.geojson);
+												const setField = {id: "geojson", value: JSON.parse(item.geojson)};
+												contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
 
 												const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 												contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
@@ -192,13 +212,13 @@ export function DisruptionForm(props: DisruptionFormProps) {
 								{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
 								{ 
 									type: "custom", caption: "Tags",
-									render: (item) => {
+									render: (item: any) => {
 										try {
 											if (!item.tag) {
 												return "N/A"; // Return "N/A" if no tags exist
 											}
 											
-											const tags = JSON.parse(item.tag); // Parse the JSON string
+											const tags = (item.tag); // Parse the JSON string
 											if (Array.isArray(tags) && tags.length > 0) {
 												// Map the names and join them with commas
 												return tags.map(tag => tag.name).join(", ");
@@ -273,17 +293,36 @@ export function DisruptionForm(props: DisruptionFormProps) {
 								{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
 							]}
 							data={(() => {
-								console.log(props.fields);
 								try {
-									return props && props.fields.attachments ? JSON.parse(props.fields.attachments) : [];
-								} catch {
-									return []; // Default to an empty array if parsing fails
+								  let attachments: any[] = []; // Ensure it's always an array
+							  
+								  if (props?.fields?.attachments) {
+									if (Array.isArray(props.fields.attachments)) {
+									  attachments = props.fields.attachments;
+									} else if (typeof props.fields.attachments === "string") {
+									  try {
+										const parsed = JSON.parse(props.fields.attachments);
+										attachments = Array.isArray(parsed) ? parsed : [];
+									  } catch (error) {
+										console.error("Invalid JSON in attachments:", error);
+										attachments = [];
+									  }
+									} else {
+									  console.warn("Unexpected type for attachments:", typeof props.fields.attachments);
+									  attachments = [];
+									}
+								  }
+							  
+								  return attachments;
+								} catch (error) {
+								  console.error("Error processing attachments:", error);
+								  return [];
 								}
-							})()}
+							  })()}
 							onChange={(items: any) => {
 								try {
-									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
-									console.log("Updated Items:", parsedItems);
+									const parsedItems = Array.isArray(items) ? items : (items);
+									//console.log("Updated Items:", parsedItems);
 									// Save or process `parsedItems` here, e.g., updating state or making an API call
 								} catch {
 									console.error("Failed to process items.");
@@ -305,7 +344,7 @@ interface DisruptionViewProps {
 export function DisruptionView(props: DisruptionViewProps) {
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
-		previewMap(JSON.stringify(JSON.parse(props.item.spatialFootprint)));
+		previewMap(JSON.stringify((props.item.spatialFootprint)));
 	};
 
 	return (
@@ -331,7 +370,24 @@ export function DisruptionView(props: DisruptionViewProps) {
 							<p>Spatial Footprint:</p>
 							{(() => {
 								try {
-									const footprints = JSON.parse(props.item.spatialFootprint); // Parse JSON string
+									let footprints: any[] = []; // Ensure it's always an array
+
+									if (props?.item?.spatialFootprint) {
+									  if (Array.isArray(props.item.spatialFootprint)) {
+										footprints = props.item.spatialFootprint;
+									  } else if (typeof props.item.spatialFootprint === "string") {
+										try {
+										  const parsed = JSON.parse(props.item.spatialFootprint);
+										  footprints = Array.isArray(parsed) ? parsed : [];
+										} catch (error) {
+										  console.error("Invalid JSON in spatialFootprint:", error);
+										  footprints = [];
+										}
+									  } else {
+										console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
+										footprints = [];
+									  }
+									}								
 
 									return (
 										<>
@@ -354,7 +410,7 @@ export function DisruptionView(props: DisruptionViewProps) {
 																		</a>
 																	</td>
 																	<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON((newGeoJson));}}>
+																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
 																			{option}
 																		</a>
 																	</td>
@@ -398,7 +454,28 @@ export function DisruptionView(props: DisruptionViewProps) {
 					),
 					attachments: (
 						<>
-						  {props.item.attachments && props.item.attachments !== "[]" ? (
+						{(() => {
+							try {
+							let attachments: any[] = []; // Ensure it's always an array
+
+							if (props?.item?.attachments) {
+								if (Array.isArray(props.item.attachments)) {
+								attachments = props.item.attachments;
+								} else if (typeof props.item.attachments === "string") {
+								try {
+									const parsed = JSON.parse(props.item.attachments);
+									attachments = Array.isArray(parsed) ? parsed : [];
+								} catch (error) {
+									console.error("Invalid JSON in attachments:", error);
+									attachments = [];
+								}
+								} else {
+								console.warn("Unexpected type for attachments:", typeof props.item.attachments);
+								attachments = [];
+								}
+							}
+
+							return attachments.length > 0 ? (
 						  <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
 						  <thead>
 							  <tr style={{ backgroundColor: '#f2f2f2' }}>
@@ -408,9 +485,9 @@ export function DisruptionView(props: DisruptionViewProps) {
 							  </tr>
 						  </thead>
 							<tbody>
-							  {JSON.parse(props.item.attachments).map((attachment: any) => {
+							  {(attachments).map((attachment: any) => {
 								const tags = attachment.tag
-								  ? JSON.parse(attachment.tag).map((tag: any) => tag.name).join(", ")
+								  ? (attachment.tag).map((tag: any) => tag.name).join(", ")
 								  : "N/A";
 								const fileOrUrl =
 								  attachment.file_option === "File" && attachment.file
@@ -433,7 +510,12 @@ export function DisruptionView(props: DisruptionViewProps) {
 							  })}
 							</tbody>
 						  </table>
-						  ) : (<></>)}
+							) : (<></>);
+							} catch (error) {
+							console.error("Error processing attachments:", error);
+							return <p>Error loading attachments.</p>;
+							}
+						})()}
 						</>
 					  ),
 				}}
