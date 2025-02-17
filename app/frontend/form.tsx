@@ -507,20 +507,41 @@ export function Input(props: InputProps) {
 		case "date":
 		case "number":
 		case "money":
-			let inputType = "";
 			let defaultValue = "";
 			if (props.value !== null && props.value !== undefined) {
-				if (props.def.type == "text") {
-					inputType = "text"
-					let v = props.value as string;
-					defaultValue = v;
-				} else if (props.def.type == "date") {
-					inputType = "date"
-					let v = props.value as Date;
-					defaultValue = formatDate(v);
-				} else if (props.def.type == "number") {
-					let v = props.value as number;
-					defaultValue = String(v);
+				switch (props.def.type) {
+					case "text":
+						{
+							let v = props.value as string;
+							defaultValue = v;
+							break
+						}
+					case "date": {
+						let v = props.value as Date;
+						defaultValue = formatDate(v);
+						break
+					}
+					case "number": {
+						let v = props.value as number;
+						defaultValue = String(v);
+						break
+					}
+					case "money": {
+						let v = props.value as string;
+						defaultValue = v;
+						break
+					}
+					default:
+						throw new Error("unknown type: " + props.def.type)
+				}
+			}
+			let inputType = "";
+			switch (props.def.type) {
+				case "text":
+				case "date":
+					inputType = props.def.type
+					break
+				case "number":
 					return wrapInput(
 						<input
 							required={props.def.required}
@@ -530,9 +551,7 @@ export function Input(props: InputProps) {
 							name={props.name}
 							defaultValue={defaultValue}
 						/>)
-				} else if (props.def.type == "money") {
-					let v = props.value as string;
-					defaultValue = v;
+				case "money":
 					return wrapInput(
 						<input
 							required={props.def.required}
@@ -542,7 +561,9 @@ export function Input(props: InputProps) {
 							name={props.name}
 							defaultValue={defaultValue}
 						/>)
-				}
+			}
+			if (inputType == "") {
+				throw new Error("inputType is empty")
 			}
 			return wrapInput(
 				<input
@@ -550,8 +571,7 @@ export function Input(props: InputProps) {
 					type={inputType}
 					name={props.name}
 					defaultValue={defaultValue}
-				/>
-			)
+				/>)
 	}
 }
 
