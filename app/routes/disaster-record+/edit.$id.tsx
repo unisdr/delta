@@ -20,7 +20,10 @@ import {
 
 import { DisasterRecordsViewModel } from "~/backend.server/models/disaster_record";
 import { nonecoLossesFilderBydisasterRecordsId, PropRecord as nonecoLossesProps } from "~/backend.server/models/noneco_losses";
-import { sectorsFilderBydisasterRecordsId } from "~/backend.server/models/disaster_record__sectors";
+import { 
+	sectorsFilderBydisasterRecordsId,
+	sectorTreeDisplayText,
+} from "~/backend.server/models/disaster_record__sectors";
 
 
 
@@ -82,6 +85,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("recordsNonecoLosses", dbNonecoLosses);
 	// console.log("recordsNonecoLosses", dbDisRecSectors);
 	console.log("Humman Effects: ", dbDisRecHummanEffects);
+	// console.log("Sectors: ", await sectorTreeDisplayText(1302020101));
+	// console.log("Sectors: ", dbDisRecSectors);
 
 	// Define Keys Mapping (Make it Adaptable)
     const treeData = await initializeNewTreeView();
@@ -212,9 +217,7 @@ export default function Screen() {
 													<tr key={ index }>
 														<td>{ item.disRecSectorsId.slice(0, 8) }</td>
 														<td>
-															{ item.catNameParent2 ? item.catNameParent2 + ' > ' + item.catNameParent1 : item.catNameParent1 }
-															&nbsp; &gt; &nbsp;
-															{ item.catName }
+															{ item.sectorTreeDisplay }
 														</td>
 														<td>
 															{ item.disRecSectorsWithDamage &&
@@ -235,6 +238,13 @@ export default function Screen() {
 															{ item.disRecSectorsWithLosses &&
 																<>
 																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/losses?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
+																</>
+															}
+														</td>
+														<td>
+															{ item.disRecSectorsWithDisruption &&
+																<>
+																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/disruptions?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
 																</>
 															}
 														</td>

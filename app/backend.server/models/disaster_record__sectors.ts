@@ -124,13 +124,66 @@ export async function sectorsFilderBydisasterRecordsId(idStr: string) {
 			catName: catTable.sectorname,
 			catNameParent1: catTableParent1.sectorname,
 			catNameParent2: catTableParent2.sectorname,
+			sectorTreeDisplay: sql`(
+				WITH RECURSIVE ParentCTE AS (
+					SELECT id, sectorname, parent_id, sectorname AS full_path
+					FROM sector
+					WHERE id = ${sectorDisasterRecordsRelationTable.sectorId}
+
+					UNION ALL
+
+					SELECT t.id, t.sectorname, t.parent_id, t.sectorname || ' > ' || p.full_path AS full_path
+					FROM sector t
+					INNER JOIN ParentCTE p ON t.id = p.parent_id
+				)
+				SELECT full_path
+				FROM ParentCTE
+				WHERE parent_id IS NULL
+			)`.as('sectorTreeDisplay'),
 		}).from(sectorDisasterRecordsRelationTable)
 		.leftJoin(catTable, eq(catTable.id, sectorDisasterRecordsRelationTable.sectorId))
 		.leftJoin(catTableParent1, eq(catTableParent1.id, catTable.parentId))
 		.leftJoin(catTableParent2, eq(catTableParent2.id, catTableParent1.parentId))
 		.where(eq(sectorDisasterRecordsRelationTable.disasterRecordId, id))
-		.orderBy(catTableParent1.sectorname, catTableParent2.sectorname, catTable.sectorname)
+		.orderBy(sql`(
+				WITH RECURSIVE ParentCTE AS (
+					SELECT id, sectorname, parent_id, sectorname AS full_path
+					FROM sector
+					WHERE id = ${sectorDisasterRecordsRelationTable.sectorId}
+
+					UNION ALL
+
+					SELECT t.id, t.sectorname, t.parent_id, t.sectorname || ' > ' || p.full_path AS full_path
+					FROM sector t
+					INNER JOIN ParentCTE p ON t.id = p.parent_id
+				)
+				SELECT full_path
+				FROM ParentCTE
+				WHERE parent_id IS NULL
+			)`)
 	.execute();
+}
+
+export async function sectorTreeDisplayText(sectorId: number) {
+	let res1 = await dr.execute(sql`
+		WITH RECURSIVE ParentCTE AS (
+			SELECT id, sectorname, parent_id, sectorname AS full_path
+			FROM sector
+			WHERE id = ${sectorId}
+
+			UNION ALL
+
+			SELECT t.id, t.sectorname, t.parent_id, t.sectorname || ' > ' || p.full_path AS full_path
+			FROM sector t
+			INNER JOIN ParentCTE p ON t.id = p.parent_id
+		)
+		SELECT full_path
+		FROM ParentCTE
+		WHERE parent_id IS NULL;
+	`)
+	let sectorDisplay = res1.rows.map(r => r.full_path as string);
+	
+	return sectorDisplay;
 }
 
 	
