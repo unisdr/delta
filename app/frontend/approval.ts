@@ -6,5 +6,5 @@ export const approvalStatusField =
 		{key: "pending", label: "Pending"},
 		{key: "approved", label: "Approved"},
 		{key: "rejected", label: "Rejected"}
-	]
+	], uiRowNew: true
 } as const;

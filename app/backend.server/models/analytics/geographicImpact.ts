@@ -272,8 +272,8 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             .select({
                 locationDesc: disasterRecordsTable.locationDesc,
                 loss: sql<string>`CAST(SUM(
-                    COALESCE(${lossesTable.publicTotalCost}, 0) + 
-                    COALESCE(${lossesTable.privateTotalCost}, 0)
+                    COALESCE(${lossesTable.publicCostTotalOverride}, 0) + 
+                    COALESCE(${lossesTable.privateCostTotalOverride}, 0)
                 ) AS TEXT)`,
             })
             .from(lossesTable)

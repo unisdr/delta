@@ -269,6 +269,12 @@ export interface EnumEntry {
 	label: string;
 }
 
+export interface UIRow {
+	label?: string
+	// normally uses cols matching definiton, adjust if you add cols afterwards
+	colOverride?: number
+}
+
 export interface FormInputDef<T> {
 	key: keyof T & string;
 	label: string;
@@ -278,6 +284,8 @@ export interface FormInputDef<T> {
 	description?: string;
 	enumData?: readonly EnumEntry[];
 	psqlType?: string;
+	uiRow?: UIRow
+	uiRowNew?: boolean
 }
 
 export interface FormInputDefSpecific {
@@ -335,42 +343,134 @@ export interface InputsProps<T> {
 	elementsAfter?: Record<string, ReactElement>
 }
 
+interface UIRowWithDefs<T> {
+	uiRow?: UIRow
+	defs: FormInputDef<T>[]
+}
+
+function splitDefsIntoDows<T>(defs: FormInputDef<T>[]) {
+	let uiRows: UIRowWithDefs<T>[] = []
+	{
+		let uiRow: UIRowWithDefs<T> = {
+			defs: []
+		}
+		let onePerRow = true
+		for (let d of defs) {
+			if (d.uiRow) {
+				onePerRow = false
+			} else if (d.uiRowNew) {
+				onePerRow = true
+			}
+			if (d.uiRow || onePerRow) {
+				if (uiRow.defs.length) {
+					uiRows.push(uiRow)
+				}
+				if (d.uiRow) {
+					uiRow = {
+						uiRow: d.uiRow,
+						defs: []
+					}
+				} else {
+					uiRow = {
+						defs: []
+					}
+				}
+			}
+			uiRow.defs.push(d)
+		}
+		if (uiRow.defs.length) {
+			uiRows.push(uiRow)
+		}
+	}
+	return uiRows
+}
+
+interface rowMeta {
+	header: any
+	className: string
+}
+
+function rowMeta<T>(uiRow: UIRowWithDefs<T>): rowMeta {
+	let cols = uiRow.defs.length
+	let className = ""
+	let header
+	if (cols < 3) {
+		cols = 3
+	}
+	if (uiRow.defs.length == 1) {
+		let def = uiRow.defs[0]
+		if (def.key == "spatialFootprint" || def.key == "attachments") {
+			cols = 1
+		}
+		if (def.type == "textarea") {
+			cols = 2
+		}
+	}
+	if (uiRow.uiRow) {
+		if (uiRow.uiRow.colOverride) {
+			cols = uiRow.uiRow.colOverride
+		}
+		if (uiRow.uiRow.label) {
+			header = <h3>{uiRow.uiRow.label}</h3>
+		}
+	}
+	className = `mg-grid mg-grid__col-${cols}`
+	return {className, header}
+}
+
 export function Inputs<T>(props: InputsProps<T>) {
 	if (!props.def) {
 		throw new Error("props.def not passed to form/Inputs")
 	}
 
-	return props.def.map((def) => {
-		let after = null;
-		if (props.elementsAfter && props.elementsAfter[def.key]) {
-			after = props.elementsAfter[def.key]
-		}
-		if (props.override && props.override[def.key] !== undefined) {
-			return (
-				<React.Fragment key={def.key}>
-					{props.override[def.key]}
-					{after}
-				</React.Fragment>
-			)
-		}
-		let errors: string[] | undefined;
-		if (props.errors && props.errors.fields) {
-			errors = errorsToStrings(props.errors.fields[def.key]);
-		}
-		return (
-			<React.Fragment key={def.key}>
-				<Input
-					key={def.key}
-					def={def}
-					name={def.key}
-					value={props.fields[def.key]}
-					errors={errors}
-					enumData={def.enumData}
-				/>
-				{after}
-			</React.Fragment>
-		);
-	});
+	let uiRows = splitDefsIntoDows(props.def)
+
+	return uiRows.map((uiRow, rowIndex) => {
+		let meta = rowMeta(uiRow)
+		let afterRow = null;
+		return <React.Fragment key={rowIndex}>
+			{meta.header}
+			<div className={meta.className}>
+				{uiRow.defs.map((def, defIndex) => {
+					let after = null;
+					if (props.elementsAfter && props.elementsAfter[def.key]) {
+						if (defIndex == uiRow.defs.length - 1) {
+							afterRow = props.elementsAfter[def.key]
+						} else {
+							after = props.elementsAfter[def.key]
+						}
+					}
+					if (props.override && props.override[def.key] !== undefined) {
+						return (
+							<React.Fragment key={def.key}>
+								{props.override[def.key]}
+								{after}
+							</React.Fragment>
+						)
+					}
+					let errors: string[] | undefined;
+					if (props.errors && props.errors.fields) {
+						errors = errorsToStrings(props.errors.fields[def.key]);
+					}
+					return (
+						<React.Fragment key={def.key}>
+							<Input
+								key={def.key}
+								def={def}
+								name={def.key}
+								value={props.fields[def.key]}
+								errors={errors}
+								enumData={def.enumData}
+							/>
+							{after}
+						</React.Fragment>
+					);
+				})
+				}
+			</div>
+			{afterRow}
+		</React.Fragment>
+	})
 }
 
 
@@ -381,21 +481,22 @@ export interface WrapInputProps {
 }
 
 export function WrapInput(props: WrapInputProps) {
+	if (!props.def) {
+		throw new Error("no props.def")
+	}
 	let label = props.def.label;
 	if (props.def.required) {
 		label += " *";
 	}
 	return (
-		<div title={props.def.tooltip} className="mg-grid mg-grid__col-3">
-			<div className="dts-form-component">
-				<Field label={label}>
-					{props.child}
-					<FieldErrors2 errors={props.errors} />
-					{props.def.description &&
-						<p>{props.def.description}</p>
-					}
-				</Field>
-			</div>
+		<div title={props.def.tooltip} className="dts-form-component">
+			<Field label={label}>
+				{props.child}
+				<FieldErrors2 errors={props.errors} />
+				{props.def.description &&
+					<p>{props.def.description}</p>
+				}
+			</Field>
 		</div>
 	)
 }
@@ -407,12 +508,10 @@ export interface WrapInputBasicProps {
 
 export function WrapInputBasic(props: WrapInputBasicProps) {
 	return (
-		<div className="mg-grid mg-grid__col-3">
-			<div className="dts-form-component">
-				<Field label={props.label}>
-					{props.child}
-				</Field>
-			</div>
+		<div className="dts-form-component">
+			<Field label={props.label}>
+				{props.child}
+			</Field>
 		</div>
 	)
 }
@@ -590,29 +689,50 @@ export interface FieldsViewProps<T> {
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
-	return props.def
-		.map((def) => {
-			let after = null;
-			if (props.elementsAfter && props.elementsAfter[def.key]) {
-				after = props.elementsAfter[def.key]
-			}
-			if (props.override && props.override[def.key] !== undefined) {
-				return (
-					<React.Fragment key={def.key}>
-						{props.override[def.key]}
-						{after}
-					</React.Fragment>
-				)
-			}
-			return (
-				<React.Fragment key={def.key}>
-					<FieldView key={def.key} def={def} value={props.fields[def.key]} />
-					{after}
-				</React.Fragment>
-			);
-		})
-}
+	if (!props.def) {
+		throw new Error("props.def not passed to view")
+	}
 
+	let uiRows = splitDefsIntoDows(props.def)
+	return uiRows.map((uiRow, rowIndex) => {
+		let meta = rowMeta(uiRow)
+		let afterRow = null;
+		return <React.Fragment key={rowIndex}>
+			{meta.header}
+			<div className={meta.className}>
+				{uiRow.defs.map((def, defIndex) => {
+
+					let after = null;
+					if (props.elementsAfter && props.elementsAfter[def.key]) {
+						if (defIndex == uiRow.defs.length - 1) {
+
+							afterRow = props.elementsAfter[def.key]
+						} else {
+							after = props.elementsAfter[def.key]
+						}
+					}
+					if (props.override && props.override[def.key] !== undefined) {
+						return (
+							<React.Fragment key={def.key}>
+								{props.override[def.key]}
+								{after}
+							</React.Fragment>
+						)
+					}
+					return (
+						<React.Fragment key={def.key}>
+							<FieldView key={def.key} def={def} value={props.fields[def.key]} />
+							{after}
+
+						</React.Fragment>
+					);
+				})
+				}
+			</div>
+			{afterRow}
+		</React.Fragment>
+	})
+}
 export interface FieldViewProps {
 	def: FormInputDefSpecific;
 	value: any;

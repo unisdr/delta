@@ -88,34 +88,30 @@ export function UnitPicker(props: UnitPickerProps) {
 	let prefix = props.labelPrefix ? props.labelPrefix + " " : ""
 
 	return (
-		<div>
-			<div className="mg-grid mg-grid__col-3">
-				<div className="dts-form-component">
-					<Field label={prefix + "Unit Type"}>
-						<select name={props.name + "Type"} value={selectedType} onChange={handleTypeChange}>
-							{unitTypes.map((ut) => (
-								<option key={ut.key} value={ut.key}>
-									{ut.label}
-								</option>
-							))}
-						</select>
-					</Field>
-				</div>
+		<>
+			<div className="dts-form-component">
+				<Field label={prefix + "Unit Type"}>
+					<select name={props.name + "Type"} value={selectedType} onChange={handleTypeChange}>
+						{unitTypes.map((ut) => (
+							<option key={ut.key} value={ut.key}>
+								{ut.label}
+							</option>
+						))}
+					</select>
+				</Field>
 			</div>
-			<div className="mg-grid mg-grid__col-3">
-				<div className="dts-form-component">
-					<Field label={prefix + "Unit"}>
-						<select name={props.name} value={selectedUnit} onChange={handleUnitChange}>
-							{unitsMap[selectedType].map((u) => (
-								<option key={u.key} value={u.key}>
-									{u.label}
-								</option>
-							))}
-						</select>
-					</Field>
-				</div>
+			<div className="dts-form-component">
+				<Field label={prefix + "Unit"}>
+					<select name={props.name} value={selectedUnit} onChange={handleUnitChange}>
+						{unitsMap[selectedType].map((u) => (
+							<option key={u.key} value={u.key}>
+								{u.label}
+							</option>
+						))}
+					</select>
+				</Field>
 			</div>
-		</div>
+		</>
 	)
 }
 

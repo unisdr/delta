@@ -10,6 +10,30 @@ import {unitsEnum} from "~/frontend/unit_picker"
 
 export interface LossesFields extends Omit<LossesInsert, "id"> {}
 
+export function fieldsForPubOrPriv(pub: boolean): FormInputDef<LossesFields>[] {
+	let pre = pub ? "public" : "private"
+	return [
+		{key: pre + "Unit" as keyof LossesFields, label: "Value Unit", type: "enum", enumData: unitsEnum, uiRow: {colOverride: 5}},
+		{key: pre + "Units" as keyof LossesFields, label: "Value", type: "number"},
+		{key: pre + "CostUnit" as keyof LossesFields, label: "Cost Per Unit", type: "money"},
+		{
+			key: pre + "CostUnitCurrency" as keyof LossesFields,
+			label: "Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},
+		{key: pre + "CostTotalOverride" as keyof LossesFields, label: "Total Cost", type: "money", uiRow: {}},
+		/*
+		{
+			key: pre + "TotalCostCurrency" as keyof LossesFields,
+			label: "Total Cost Currency",
+			type: "enum-flex",
+			enumData: configCurrencies().map(c => ({key: c, label: c}))
+		},*/
+	]
+}
+
+
 export const fieldsDef: FormInputDef<LossesFields>[] = [
 	{key: "recordId", label: "", type: "other"},
 	{key: "sectorId", label: "", type: "other"},
@@ -19,7 +43,7 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 			{key: "increased_expenditure", label: "Increased Expenditure"},
 			{key: "loss_revenue_forecasted", label: "Loss Revenue (Forecasted)"},
 			{key: "non_economic_losses", label: "Non Economic Losses"}
-		]
+		], uiRow: {},
 	},
 	{
 		key: "relatedToNotAgriculture", label: "Related To", type: "enum", enumData: [
@@ -36,41 +60,12 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 			{key: "value2", label: "Agriculture Value 2"},
 		]
 	},
-	{key: "description", label: "Description", type: "textarea"},
-	{key: "publicValueUnit", label: "Value Unit", type: "enum", enumData: unitsEnum},
-	{key: "publicValue", label: "Value", type: "number"},
-	{key: "publicCostPerUnit", label: "Cost Per Unit", type: "money"},
-	{
-		key: "publicCostPerUnitCurrency",
-		label: "Cost Currency",
-		type: "enum-flex",
-		enumData: configCurrencies().map(c => ({key: c, label: c}))
-	},
-	{key: "publicTotalCost", label: "Total Cost", type: "money"},
-	{
-		key: "publicTotalCostCurrency",
-		label: "Total Cost Currency",
-		type: "enum-flex",
-		enumData: configCurrencies().map(c => ({key: c, label: c}))
-	},
-	{
-		key: "privateValueUnit", label: "Value Unit", type: "enum", enumData: unitsEnum
-	},
-	{key: "privateValue", label: "Value", type: "number"},
-	{key: "privateCostPerUnit", label: "Cost Per Unit", type: "money"},
-	{
-		key: "privateCostPerUnitCurrency",
-		label: "Cost Currency",
-		type: "enum-flex",
-		enumData: configCurrencies().map(c => ({key: c, label: c}))
-	},
-	{key: "privateTotalCost", label: "Total Cost", type: "money"},
-	{
-		key: "privateTotalCostCurrency",
-		label: "Total Cost Currency",
-		type: "enum-flex",
-		enumData: configCurrencies().map(c => ({key: c, label: c}))
-	}
+	{key: "description", label: "Description", type: "textarea", uiRowNew: true},
+
+	// Public 
+	...fieldsForPubOrPriv(true),
+	// Private 
+	...fieldsForPubOrPriv(false),
 ]
 
 export const fieldsDefApi: FormInputDef<LossesFields>[] = [...fieldsDef, {key: "apiImportId", label: "", type: "other"}]

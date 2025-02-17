@@ -29,21 +29,21 @@ export const route = "/hazard-event"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
-	{key: "otherId1", label: "Event id in other system", type: "text"},
+	{key: "otherId1", label: "Event id in other system", type: "text", uiRowNew: true, uiRow: {}},
 	{key: "startDate", label: "Start Date", type: "date", required: true},
 	{key: "endDate", label: "End Date", type: "date", required: true},
-	{key: "description", label: "Description", type: "textarea"},
+	{key: "description", label: "Description", type: "textarea", uiRowNew: true},
 	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "text"},
-	{key: "duration", label: "Duration", type: "text"},
+	{key: "duration", label: "Duration", type: "text", uiRow: {}},
 	{key: "magnitude", label: "Magnitude", type: "text"},
-	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
-	{key: "recordOriginator", label: "Record Originator", type: "text", required: true},
+	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
+	{key: "recordOriginator", label: "Record Originator", type: "text", required: true, uiRow: {}},
 	{key: "dataSource", label: "Data Source", type: "text"},
 ] as const;
 
 export const fieldsDef: FormInputDef<HazardEventFields>[] = [
 	{key: "parent", label: "", type: "other"},
-	{key: "hazardId", label: "Hazard", type: "other", required: true},
+	{key: "hazardId", label: "Hazard", type: "other", required: true, uiRow: {colOverride: 1}},
 	...fieldsDefCommon
 ];
 

@@ -13,19 +13,20 @@ export const fieldsDef: FormInputDef<DisruptionFields>[] =
 	[
 		{key: "recordId", label: "", type: "other"},
 		{key: "sectorId", label: "", type: "other"},
-		{key: "durationDays", label: "Duration (Days)", type: "number"},
-		{key: "durationHours", label: "Duration (Hours)", type: "number"},
-		{key: "usersAffected", label: "Users Affected", type: "number"},
-		{key: "comment", label: "Comment", type: "text"},
-		{key: "responseOperation", label: "Response Operation", type: "text"},
-		{key: "responseCost", label: "Response Cost", type: "money"},
+		{key: "durationDays", label: "Duration (days)", type: "number", uiRow: {}},
+		{key: "durationHours", label: "Duration (hours)", type: "number"},
+		{key: "usersAffected", label: "Number of users affected", type: "number"},
+		{key: "peopleAffected", label: "Number of people affected", type: "number"},
+		{key: "comment", label: "Add comments", type: "textarea", uiRowNew: true},
+		{key: "responseOperation", label: "Response operation", type: "textarea"},
+		{key: "responseCost", label: "Response cost", type: "money", uiRow: {}},
 		{
 			key: "responseCurrency",
-			label: "Response Currency",
+			label: "Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => {return {key: c, label: c}})
 		},
-		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
+		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
 	]
 

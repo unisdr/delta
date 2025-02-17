@@ -42,11 +42,8 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				recordId: true,
 				sectorId: true,
 				type: true,
-				publicValue: true,
-				publicTotalCost: true,
-				privateTotalCost: true,
 			},
-			orderBy: [desc(lossesTable.publicValue)],
+			orderBy: [desc(lossesTable.id)],
 		})
 	}
 
@@ -70,7 +67,7 @@ export default function Data() {
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", ld.sectorId]]),
 		columns: [
-			"ID", "Disaster Record ID", "Sector ID", "Type", "Public Value", "Public Total Cost", "Private Total Cost", "Actions"
+			"ID", "Disaster Record ID", "Sector ID", "Type", "Actions"
 		],
 		items: items,
 		paginationData: pagination,
@@ -81,9 +78,6 @@ export default function Data() {
 				<td>{item.recordId}</td>
 				<td>{item.sectorId}</td>
 				<td>{item.type}</td>
-				<td>{item.publicValue ?? "-"}</td>
-				<td>{item.publicTotalCost ?? "-"}</td>
-				<td>{item.privateTotalCost ?? "-"}</td>
 				<td><ActionLinks route={route} id={item.id} /></td>
 			</tr>
 		),

@@ -94,8 +94,8 @@ const aggregateLossesData = async (recordIds: string[]) => {
       year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`.as("year"),
       total: sql<number>`
         SUM(
-          COALESCE(${lossesTable.publicTotalCost}, 0) +
-          COALESCE(${lossesTable.privateTotalCost}, 0)
+          COALESCE(${lossesTable.publicCostTotalOverride}, 0) +
+          COALESCE(${lossesTable.privateCostTotalOverride}, 0)
         )`.as("total")
     })
     .from(lossesTable)

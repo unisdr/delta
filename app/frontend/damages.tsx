@@ -42,14 +42,15 @@ export function DamagesForm(props: DamagesFormProps) {
 	let formRef = useRef<HTMLFormElement>(null)
 
 	let setDisplay = (form: HTMLFormElement, prefix: string, show: boolean) => {
+		// since they are all on the same row now, can use one element instead
 		let fields = [
 			"CostUnit",
-			"CostUnitCurrency",
+			//"CostUnitCurrency",
 			//"UnitType",
 			//"Unit",
-			"Units",
-			"CostTotalOverride",
-			"CostTotalOverrideCheckbox",
+			//"Units",
+			//"CostTotalOverride",
+			//"CostTotalOverrideCheckbox",
 		]
 		for (let field of fields) {
 			let f = form.querySelector('[name="' + prefix + field + '"]')
@@ -110,12 +111,16 @@ export function DamagesForm(props: DamagesFormProps) {
 		}
 	}, [props.fields])
 
+
+	// handle total overrides
+	// this is duplicate code from losses
+	// TODO: abstract to have 1 copy only
+	//
 	let getEl = (prefix: string, field: string): HTMLFormElement => {
 		let f = formRef.current!.querySelector('[name="' + prefix + field + '"]') as HTMLFormElement
 		return f
 	}
 
-	// handle total overrides
 	useEffect(() => {
 		let attach = (prefix: string) => {
 			if (!formRef.current) return
@@ -192,9 +197,13 @@ export function DamagesForm(props: DamagesFormProps) {
 			}
 		}
 	}, [props.fields])
-
 	let totalCostOverride = (prefix: string) => {
-		let def = props.fieldDef.find(d => d.key == prefix + "CostTotalOverride")!
+		let defKey = prefix + "CostTotalOverride"
+		let def = props.fieldDef.find(d => d.key == defKey)!
+		if (!def) {
+			throw new Error("def not found: " + defKey)
+		}
+
 		let errors: string[] | undefined;
 		let key = (prefix + "CostTotalOverride") as keyof DamagesFields
 		if (props.errors && props.errors.fields) {
@@ -234,7 +243,6 @@ export function DamagesForm(props: DamagesFormProps) {
 		</>
 	}
 
-
 	let assetDef = props.fieldDef.find(d => d.key == "assetId")
 	if (!assetDef) {
 		throw new Error("assetId def does not exist")
@@ -264,6 +272,9 @@ export function DamagesForm(props: DamagesFormProps) {
 										</option>
 									))}
 								</select>
+								<Link target="_blank" to={"/settings/assets/edit/new?sectorId=" + props.fields.sectorId}>
+									Add asset
+								</Link>
 							</>
 						}
 						errors={assetIdErrors}
@@ -271,9 +282,6 @@ export function DamagesForm(props: DamagesFormProps) {
 				) : (
 					<p>No assets, add asset first.</p>
 				)}
-				<Link target="_blank" to={"/settings/assets/edit/new?sectorId=" + props.fields.sectorId}>
-					Add asset
-				</Link>
 			</>
 		),
 		recordId: (
@@ -287,7 +295,7 @@ export function DamagesForm(props: DamagesFormProps) {
 		//publicReplacementUnit: <UnitPicker labelPrefix="Replacement" name="publicReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
 		//publicRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="publicRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
 		privateUnit: <UnitPicker labelPrefix="Private" name="privateUnit" defaultValue={props.fields.privateUnit || undefined} />,
-	//	privateReplacementUnit: <UnitPicker labelPrefix="Replacement" name="privateReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
+		//	privateReplacementUnit: <UnitPicker labelPrefix="Replacement" name="privateReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
 		//privateRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="privateRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
 
 

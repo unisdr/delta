@@ -16,14 +16,11 @@ export const loader = createApiListLoader(
 			columns: {
 				id: true,
 				type: true,
-				publicValue: true,
-				publicTotalCost: true,
-				privateTotalCost: true
 			},
-			orderBy: [desc(lossesTable.publicValue)],
+			orderBy: [desc(lossesTable.id)],
 		})
 	},
-	[desc(lossesTable.publicValue)]
+	[desc(lossesTable.id)]
 )
 
 

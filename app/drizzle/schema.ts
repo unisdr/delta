@@ -507,6 +507,7 @@ export const disruptionTable = pgTable("disruption", {
 	durationDays: ourBigint("duration_days"),
 	durationHours: ourBigint("duration_hours"),
 	usersAffected: ourBigint("users_affected"),
+	peopleAffected: ourBigint("people_affected"),
 	comment: text("comment"),
 	responseOperation: text("response_operation"),
 	responseCost: ourMoney("response_cost"),
@@ -681,18 +682,18 @@ export const lossesTable = pgTable("losses", {
 		]
 	}),
 	description: text("description"),
-	publicValueUnit: unitsEnum("public_value_unit"),
-	publicValue: ourBigint("public_value"),
-	publicCostPerUnit: ourMoney("public_cost_per_unit"),
-	publicCostPerUnitCurrency: text("public_cost_per_unit_currency"),
-	publicTotalCost: ourMoney("public_total_cost"),
-	publicTotalCostCurrency: text("public_total_cost_currency"),
-	privateValueUnit: unitsEnum("private_value_unit"),
-	privateValue: ourBigint("private_value"),
-	privateCostPerUnit: ourMoney("private_cost_per_unit"),
-	privateCostPerUnitCurrency: text("private_cost_per_unit_currency"),
-	privateTotalCost: ourMoney("private_total_cost"),
-	privateTotalCostCurrency: text("private_total_cost_currency")
+	publicUnit: unitsEnum("public_value_unit"),
+	publicUnits: ourBigint("public_units"),
+	publicCostUnit: ourMoney("public_cost_unit"),
+	publicCostUnitCurrency: text("public_cost_unit_currency"),
+	publicCostTotalOverride: ourMoney("public_cost_total_override"),
+	//publicTotalCostCurrency: text("public_total_cost_currency"),
+	privateUnit: unitsEnum("private_value_unit"),
+	privateUnits: ourBigint("private_units"),
+	privateCostUnit: ourMoney("private_cost_unit"),
+	privateCostUnitCurrency: text("private_cost_unit_currency"),
+	privateCostTotalOverride: ourMoney("private_cost_total_override"),
+	//privateTotalCostCurrency: text("private_total_cost_currency")
 })
 
 export type Losses = typeof lossesTable.$inferSelect
