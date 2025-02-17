@@ -14,7 +14,6 @@ function testHazardFields(id: number) {
 	let data: HazardEventFields = {
 		createdAt: new Date(),
 		updatedAt: null,
-		example: "",
 		parent: "",
 		hazardId: "hazard1",
 		startDate: new Date("2024-12-30"),

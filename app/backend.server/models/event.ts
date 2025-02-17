@@ -22,7 +22,6 @@ import {isValidUUID} from "~/util/id";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { logAudit } from "./auditLogs";
-import { sessionCookie } from "~/util/session";
 
 export interface HazardEventFields extends Omit<EventInsert, 'id'>, Omit<HazardEventInsert, 'id'>, ObjectWithImportId {
 	parent: string
@@ -45,7 +44,6 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userI
 	const res = await tx
 		.insert(eventTable)
 		.values({
-			example: fields.example,
 		})
 		.returning({id: eventTable.id});
 	eventId = res[0].id
@@ -356,7 +354,6 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	const res = await tx
 		.insert(eventTable)
 		.values({
-			example: fields.example,
 		})
 		.returning({id: eventTable.id});
 	eventId = res[0].id
