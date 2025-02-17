@@ -1,11 +1,11 @@
 import { and, eq, sql, inArray } from "drizzle-orm";
 import { dr } from "~/db.server";
-import { 
-    divisionTable, 
-    damagesTable, 
-    lossesTable, 
+import {
+    divisionTable,
+    damagesTable,
+    lossesTable,
     disasterRecordsTable,
-    type Division 
+    type Division
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
 
@@ -23,7 +23,7 @@ function normalizeLocationName(name: string): string {
 async function findMatchingDivision(locationName: string, divisions: any[]): Promise<any> {
     const normalizedLocation = normalizeLocationName(locationName);
     console.log("Normalized location:", normalizedLocation);
-    
+
     // Try exact match first
     let match = divisions.find(d => {
         const divNameFull = d.name.en.toLowerCase();
@@ -32,7 +32,7 @@ async function findMatchingDivision(locationName: string, divisions: any[]): Pro
             .replace(/\bregion\b/g, '')     // Remove "region"
             .replace(/\s+/g, ' ')           // Clean up spaces
             .trim();
-            
+
         console.log("Comparing with division:", {
             original: d.name.en,
             normalized: divNameFull,
@@ -47,10 +47,10 @@ async function findMatchingDivision(locationName: string, divisions: any[]): Pro
         // Then try partial matches
         const locationParts: string[] = normalizedLocation.split(' ');
         const divParts: string[] = divNameSimple.split(' ');
-        
+
         // Check if all parts of the location are in the division name
-        return locationParts.every((part: string) => 
-            divParts.some((divPart: string) => 
+        return locationParts.every((part: string) =>
+            divParts.some((divPart: string) =>
                 divPart.includes(part) || part.includes(divPart)
             )
         );
@@ -86,7 +86,7 @@ function calculateArea(ring: number[][]): number {
 function ensureRightHandRule(ring: number[][]): number[][] {
     // Area > 0 means counterclockwise, < 0 means clockwise
     const area = calculateArea(ring);
-    
+
     // For exterior rings (first ring in polygon), we want counterclockwise (positive area)
     // If area is negative, reverse the coordinates
     if (area < 0) {
@@ -192,7 +192,7 @@ export async function getDisasterRecordsForSector(sectorId: string): Promise<str
 
     // Get all subsectors if this is a parent sector
     const subsectors = await getSectorsByParentId(numericSectorId);
-    const sectorIds = subsectors.length > 0 
+    const sectorIds = subsectors.length > 0
         ? [numericSectorId, ...subsectors.map(s => s.id)]
         : [numericSectorId];
 
@@ -201,10 +201,9 @@ export async function getDisasterRecordsForSector(sectorId: string): Promise<str
     const records = await dr
         .select({ id: disasterRecordsTable.id })
         .from(disasterRecordsTable)
-        .where(and(
-            inArray(disasterRecordsTable.sectorId, sectorIds),
-            sql`${disasterRecordsTable.approvalStatus} ILIKE 'approved'`
-        ));
+        .where(
+            inArray(disasterRecordsTable.sectorId, sectorIds)
+        );
 
     console.log("Found records:", records);
     return records.map(r => r.id);
@@ -218,7 +217,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         const conditions = [
             sql`CAST(${divisionTable.level} AS BIGINT) = CAST(${filters.level || 1} AS BIGINT)` // Cast both sides to BIGINT
         ];
-        
+
         if (filters.parentId) {
             conditions.push(sql`${divisionTable.parentId} = ${filters.parentId}`);
         }
@@ -314,7 +313,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         // Process each location and find matching division
         for (const [location, values] of Object.entries(locationValues)) {
             console.log("Processing record:", { location, damage: values.damage, loss: values.loss });
-            
+
             const matchingDivision = await findMatchingDivision(location, divisions);
             if (matchingDivision) {
                 const divId = matchingDivision.id;

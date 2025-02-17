@@ -171,7 +171,6 @@ function SectorsAnalysisContent() {
                 color: "#555",
               }}
             >
-              <li>Impact on sectors by Location</li>
               <li>Effect details in sectors</li>
               <li>The most damaging events for sectors</li>
             </ul>

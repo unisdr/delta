@@ -25,7 +25,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
 
     // Base conditions including approval status
     const baseConditions = [
-        sql`${disasterRecordsTable.approvalStatus} ILIKE 'approved'`
+        // Temporarily removed approval status check
     ];
 
     // Handle sector filtering using proper hierarchy

@@ -29,7 +29,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   const [currentParentId, setCurrentParentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 🗺️ Fetch data for the current level and parent
+  // Fetch data for the current level and parent
   const fetchGeoData = async (level: number, parentId: number | null) => {
     setLoading(true);
     try {
@@ -51,39 +51,89 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     }
   };
 
-  // 🖱️ Handle feature click
+  // Handle feature click
   const handleFeatureClick = async (feature: any) => {
     const level = feature.get('level');
     const id = feature.get('id');
 
     // Only zoom in if we're not at the lowest level (municipality)
-    if (level < 3) { // Assuming 3 is municipality level
-      setCurrentLevel(level + 1);
-      setCurrentParentId(id);
-      await fetchGeoData(level + 1, id);
+    if (level < 3) {
+      setLoading(true);
+      try {
+        // Get the feature extent for smooth zooming
+        const extent = feature.getGeometry().getExtent();
+        const view = map?.getView();
 
-      // Zoom to feature extent
-      const extent = feature.getGeometry().getExtent();
-      map?.getView().fit(extent, {
-        padding: [50, 50, 50, 50],
-        duration: 1000
-      });
+        // Calculate center and resolution for the extent
+        const center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+        const resolution = view?.getResolutionForExtent(extent);
+
+        // Animate zoom
+        view?.animate({
+          center: center,
+          resolution: resolution,
+          duration: 1000,
+          easing: (t: number) => Math.pow(t, 0.5)
+        });
+
+        // Update state and fetch new data
+        setCurrentLevel(level + 1);
+        setCurrentParentId(id);
+        await fetchGeoData(level + 1, id);
+      } catch (error) {
+        console.error('Error during drill-down:', error);
+        Swal.fire({
+          title: 'Error',
+          text: 'Failed to load detailed view',
+          icon: 'error'
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  // 🎨 Style function for features
-  const getFeatureStyle = (feature: any, isHovered: boolean = false) => {
-    const value = feature.get(selectedMetric) || 0;
-    let color = "#f7fbff"; // Lightest blue for lowest values
+  // Style function for features
+  const calculateColorRanges = (features: any[]) => {
+    const values = features.map(f => f.properties[selectedMetric] || 0);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
 
-    if (value > 60000) color = "#08519c";
-    else if (value > 40000) color = "#3182bd";
-    else if (value > 20000) color = "#6baed6";
-    else if (value > 0) color = "#bdd7e7";
+    // Create logarithmic scale for better distribution
+    const getLogScale = (value: number) => {
+      if (value <= 0) return 0;
+      return Math.log(value + 1) / Math.log(max + 1);
+    };
+
+    const ranges = [
+      { min: 0, max: max * 0.2, color: '#E3F2FD' },
+      { min: max * 0.2, max: max * 0.4, color: '#90CAF9' },
+      { min: max * 0.4, max: max * 0.6, color: '#42A5F5' },
+      { min: max * 0.6, max: max * 0.8, color: '#1E88E5' },
+      { min: max * 0.8, max: max, color: '#1565C0' }
+    ];
+
+    setLegendRanges(ranges.map(r => ({
+      color: r.color,
+      range: `${Math.round(r.min).toLocaleString()} - ${Math.round(r.max).toLocaleString()}`
+    })));
+
+    return ranges;
+  };
+
+  const getFeatureStyle = (feature: any, isHovered = false) => {
+    const value = feature.get(selectedMetric) || 0;
+    const ranges = calculateColorRanges(geoData.features);
+    const range = ranges.find(r => value >= r.min && value <= r.max);
 
     return new Style({
-      stroke: new Stroke({ color: isHovered ? "#000" : "#fff", width: isHovered ? 2 : 0.5 }),
-      fill: new Fill({ color: isHovered ? "rgba(0, 0, 0, 0.1)" : color }),
+      fill: new Fill({
+        color: range ? range.color : 'rgba(255,255,255,0.5)'
+      }),
+      stroke: new Stroke({
+        color: isHovered ? '#000' : '#666',
+        width: isHovered ? 2 : 1
+      })
     });
   };
 
@@ -117,7 +167,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     if (!vectorLayer) return;
 
     // Update the vector layer style
-    vectorLayer.setStyle((feature) => getFeatureStyle(feature));
+    vectorLayer.setStyle((feature) => getFeatureStyle(feature, false));
 
     const source = vectorLayer.getSource();
     source?.clear();
@@ -140,13 +190,26 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     });
     source?.addFeatures(geoJsonFeatures);
 
-    // Zoom to filtered features
+    // Only fit to extent if we have features and a valid extent
     const extent = source?.getExtent();
-    if (extent) {
-      map.getView().fit(extent, {
-        padding: [50, 50, 50, 50],
-        duration: 1000,
-        maxZoom: 12  // Prevent zooming in too far
+    const view = map.getView();
+
+    if (extent && !extent.some(isNaN) && extent[0] !== Infinity && extent[2] !== -Infinity) {
+      const center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+      const resolution = view.getResolutionForExtent(extent);
+      const maxResolution = view.getResolutionForZoom(12); // maxZoom: 12
+
+      view.animate({
+        center: center,
+        resolution: Math.max(resolution, maxResolution),
+        duration: 1000
+      });
+    } else {
+      // If no valid extent, reset to default Philippines view
+      view.animate({
+        center: fromLonLat([121.774017, 12.879721]),
+        zoom: 5,
+        duration: 1000
       });
     }
   };
@@ -154,38 +217,21 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Initialize map
+    const philippinesCenter = fromLonLat([121.774017, 12.879721]); // Philippines center coordinates
+    const initialZoom = 5.5; // Set a consistent initial zoom level
+
     const newMap = new Map({
       target: mapRef.current,
       layers: [
         new TileLayer({
-          source: new OSM(),
-        }),
+          source: new OSM()
+        })
       ],
       view: new View({
-        center: fromLonLat([121.774017, 12.879721]),
-        zoom: 5,
-      }),
-    });
-
-    // Add vector layer for GeoJSON data
-    const vectorSource = new VectorSource({
-      features: new GeoJSON().readFeatures(geoData, {
-        featureProjection: 'EPSG:3857',
-      }),
-    });
-    const vectorLayer = new VectorLayer({
-      source: vectorSource,
-      style: (feature) => getFeatureStyle(feature),
-    });
-    newMap.addLayer(vectorLayer);
-
-    // Add click interaction
-    newMap.on('click', (e) => {
-      const feature = newMap.forEachFeatureAtPixel(e.pixel, (feature) => feature);
-      if (feature) {
-        handleFeatureClick(feature);
-      }
+        center: philippinesCenter,
+        zoom: initialZoom,
+        constrainResolution: true // This ensures consistent zoom levels
+      })
     });
 
     setMap(newMap);
@@ -193,9 +239,8 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     return () => {
       newMap.setTarget(undefined);
     };
-  }, []);
+  }, [mapRef]);
 
-  // Setup tooltip and hover interactions
   useEffect(() => {
     if (!map) return;
 
@@ -206,87 +251,106 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
 
     map.getOverlays().clear();
 
-    // Tooltip Overlay
+    // Tooltip Overlay with offset and positioning
     const tooltip = new Overlay({
       element: tooltipRef.current!,
       offset: [10, 0],
-      positioning: "bottom-left",
+      positioning: 'bottom-left',
+      stopEvent: false // Prevents the tooltip from interfering with map events
     });
     map.addOverlay(tooltip);
 
-    // Hover Interaction
+    // Hover Interaction with debounced tooltip update
+    let hoveredFeature: any = null;
     const selectHover = new Select({
       condition: pointerMove,
       style: (feature) => getFeatureStyle(feature, true),
     });
 
-    map.addInteraction(selectHover);
+    selectHover.on('select', (e) => {
+      const selected = e.selected[0];
+      if (selected) {
+        hoveredFeature = selected;
+        const tooltipElement = tooltipRef.current;
+        if (tooltipElement) {
+          tooltipElement.style.display = 'block';
+          const value = Number(selected.get(selectedMetric)).toLocaleString();
+          const metricLabel = selectedMetric === 'totalDamage' ? 'Total Damage' : 'Total Loss';
 
-    const updateTooltip = (feature: any) => {
-      if (feature) {
-        const nameObj = feature.get("name");
-        const displayName = nameObj?.en || "Unknown Region";
-        const value = feature.get(selectedMetric) || 0;
-        const formattedValue = typeof value === 'number' ? value.toLocaleString() : value;
-        const metricLabel = selectedMetric === 'totalDamage' ? 'Total Damages' : 'Total Losses';
-
-        tooltipRef.current!.innerHTML = `
-          <div class="tooltip-content">
-            <div class="region-name">${displayName}</div>
-            <div class="metric-value">${metricLabel}: ${formattedValue}</div>
-          </div>`;
-        tooltipRef.current!.style.display = "block";
+          tooltipElement.innerHTML = `
+            <div class="tooltip-content">
+              <div class="region-name">${selected.get('name').en}</div>
+              <div class="metric-value">${metricLabel}: ${value}</div>
+            </div>
+          `;
+          tooltip.setPosition(e.mapBrowserEvent.coordinate);
+        }
       } else {
-        tooltipRef.current!.style.display = "none";
-      }
-    };
-
-    selectHover.on("select", (e) => {
-      const feature = e.selected[0];
-      updateTooltip(feature);
-      if (feature) {
-        tooltip.setPosition(e.mapBrowserEvent.coordinate);
+        hoveredFeature = null;
+        const tooltipElement = tooltipRef.current;
+        if (tooltipElement) {
+          tooltipElement.style.display = 'none';
+        }
       }
     });
 
-    return () => {
-      map.removeOverlay(tooltip);
-      map.removeInteraction(selectHover);
-      if (tooltipRef.current) {
-        tooltipRef.current.style.display = "none";
+    map.addInteraction(selectHover);
+
+    // Update tooltip position on mouse move
+    const moveListener = (evt: any) => {
+      if (hoveredFeature) {
+        tooltip.setPosition(evt.coordinate);
       }
     };
-  }, [map, selectedMetric, getFeatureStyle]);
+    map.on('pointermove', moveListener);
 
-  // Update features when geoData or selectedMetric changes
+    return () => {
+      map.removeInteraction(selectHover);
+      map.un('pointermove', moveListener);
+      map.removeOverlay(tooltip);
+    };
+  }, [map, selectedMetric]);
+
   useEffect(() => {
     if (!map || !geoData?.features) return;
 
     const vectorLayer = map.getLayers().getArray().find(layer => layer instanceof VectorLayer) as VectorLayer<VectorSource>;
-    if (!vectorLayer) return;
+    if (!vectorLayer) {
+      const newVectorLayer = new VectorLayer({
+        source: new VectorSource(),
+        style: (feature) => getFeatureStyle(feature, false) // Wrapper function
+      });
+      map.addLayer(newVectorLayer);
+    } else {
+      // Update the vector layer style with a wrapper function
+      vectorLayer.setStyle((feature) => getFeatureStyle(feature, false));
+    }
 
-    const source = vectorLayer.getSource();
-    if (!source) return;
+    const source = vectorLayer?.getSource();
+    source?.clear();
 
-    // Clear existing features
-    source.clear();
-
-    // Add new features
-    const features = new GeoJSON().readFeatures(geoData, {
+    const geoJsonFeatures = new GeoJSON().readFeatures(geoData, {
       featureProjection: 'EPSG:3857'
     });
-    source.addFeatures(features);
 
-    // Calculate the extent of all features
-    const extent = source.getExtent();
-
-    // Fit the view to show all features with padding
-    map.getView().fit(extent, {
-      padding: [50, 50, 50, 50],
-      duration: 1000,
-      maxZoom: 8  // Limit max zoom to prevent zooming in too far
+    // Set consistent properties for each feature
+    geoJsonFeatures.forEach(feature => {
+      feature.set('totalDamage', feature.get('totalDamage') || 0);
+      feature.set('totalLoss', feature.get('totalLoss') || 0);
     });
 
+    source?.addFeatures(geoJsonFeatures);
+
+    // Set consistent view for both maps
+    const extent = source?.getExtent();
+    if (extent && !extent.some(isNaN) && extent[0] !== Infinity && extent[2] !== -Infinity) {
+      const view = map.getView();
+      view.fit(extent, {
+        padding: [50, 50, 50, 50],
+        maxZoom: 5.5, // Set consistent max zoom
+        duration: 1000
+      });
+    }
   }, [map, geoData, selectedMetric]);
 
   // Reset view when filters change
@@ -295,29 +359,6 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     setCurrentLevel(1);
     setCurrentParentId(null);
   }, [filters]);
-
-  // Calculate legend ranges based on data
-  useEffect(() => {
-    if (!geoData?.features) return;
-
-    // Extract all values for the selected metric
-    const values = geoData.features
-      .map((f: { properties: { [key: string]: number } }) => f.properties[selectedMetric])
-      .filter((v: number | null | undefined) => v !== null && v !== undefined)
-      .sort((a: number, b: number) => a - b);
-
-    if (values.length === 0) return;
-
-    const maxValue = Math.max(...values);
-    const ranges = [
-      { color: "#bdd7e7", range: "0 - 20,000" },
-      { color: "#6baed6", range: "20,000 - 40,000" },
-      { color: "#3182bd", range: "40,000 - 60,000" },
-      { color: "#08519c", range: "> 60,000" }
-    ];
-
-    setLegendRanges(ranges);
-  }, [geoData, selectedMetric]);
 
   return (
     <div className="impact-map-container">
@@ -342,6 +383,11 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
           )}
           {loading && <div className="loading-indicator">Loading...</div>}
         </div>
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <div ref={mapRef} style={{ width: "100%", height: "500px" }} />
+        <div ref={tooltipRef} className="map-tooltip" />
         <div className="legend">
           <h4>Legend</h4>
           <div className="legend-items">
@@ -354,9 +400,6 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
           </div>
         </div>
       </div>
-
-      <div ref={mapRef} style={{ width: "100%", height: "500px" }} />
-      <div ref={tooltipRef} className="map-tooltip" />
     </div>
   );
 }

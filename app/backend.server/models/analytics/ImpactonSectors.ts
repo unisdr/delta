@@ -5,7 +5,7 @@ import {
   lossesTable,
   disasterRecordsTable,
 } from "~/drizzle/schema";
-import { and, eq, inArray, like } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 
 // Types
@@ -42,7 +42,7 @@ const getDisasterRecordsForSector = async (sectorId: string): Promise<string[]> 
 
   // Get all subsectors if this is a parent sector
   const subsectors = await getSectorsByParentId(numericSectorId);
-  const sectorIds = subsectors.length > 0 
+  const sectorIds = subsectors.length > 0
     ? [numericSectorId, ...subsectors.map(s => s.id)]
     : [numericSectorId];
 
@@ -50,10 +50,7 @@ const getDisasterRecordsForSector = async (sectorId: string): Promise<string[]> 
     .select({ id: disasterRecordsTable.id })
     .from(disasterRecordsTable)
     .where(
-      and(
-        inArray(disasterRecordsTable.sectorId, sectorIds),
-        sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'approved'`
-      )
+      inArray(disasterRecordsTable.sectorId, sectorIds)
     );
 
   return records.map((record) => record.id);
@@ -65,7 +62,7 @@ const aggregateDamagesData = async (recordIds: string[]) => {
 
   const damagesData = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`.as("year"),
+      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`.as("year"),
       total: sql<number>`
         SUM(
           COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
@@ -80,7 +77,7 @@ const aggregateDamagesData = async (recordIds: string[]) => {
       eq(damagesTable.recordId, disasterRecordsTable.id)
     )
     .where(inArray(damagesTable.recordId, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`);
+    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`);
 
   const totalDamage = damagesData.reduce((sum, row) => sum + (row.total || 0), 0);
   const damagesByYear = new Map(damagesData.map(row => [row.year, row.total || 0]));
@@ -94,7 +91,7 @@ const aggregateLossesData = async (recordIds: string[]) => {
 
   const lossesData = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`.as("year"),
+      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`.as("year"),
       total: sql<number>`
         SUM(
           COALESCE(${lossesTable.publicTotalCost}, 0) +
@@ -107,7 +104,7 @@ const aggregateLossesData = async (recordIds: string[]) => {
       eq(lossesTable.recordId, disasterRecordsTable.id)
     )
     .where(inArray(lossesTable.recordId, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`);
+    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`);
 
   const totalLoss = lossesData.reduce((sum, row) => sum + (row.total || 0), 0);
   const lossesByYear = new Map(lossesData.map(row => [row.year, row.total || 0]));
@@ -121,12 +118,12 @@ const getEventCountsByYear = async (recordIds: string[]) => {
 
   const eventCounts = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`.as("year"),
+      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`.as("year"),
       count: sql<number>`COUNT(*)`.as("count")
     })
     .from(disasterRecordsTable)
     .where(inArray(disasterRecordsTable.id, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::timestamp)`);
+    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`);
 
   return new Map(eventCounts.map(row => [row.year, row.count]));
 };
@@ -136,7 +133,7 @@ export const fetchSectorImpactData = async (sectorId: string) => {
   try {
     // Get all disaster records for the sector and its subsectors
     const recordIds = await getDisasterRecordsForSector(sectorId);
-    
+
     // If no records found, return empty data
     if (recordIds.length === 0) {
       return {
