@@ -273,6 +273,7 @@ export interface FormInputDef<T> {
 	tooltip?: string;
 	description?: string;
 	enumData?: readonly EnumEntry[];
+	psqlType?: string;
 }
 
 export interface FormInputDefSpecific {

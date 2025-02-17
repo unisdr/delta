@@ -27,7 +27,7 @@ export const fieldsDefCommon = [
 	approvalStatusField,
 	{key: "title", label: "Title", type: "text", required: true},
 	{key: "summary", label: "Summary", type: "textarea", required: true},
-	{key: "attachments", label: "Attachments", type: "other"},
+	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
 ] as const;
 
 export const fieldsDef: FormInputDef<ResourceRepoFields>[] = [
@@ -177,14 +177,34 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 						]}
 						data={(() => {
 							try {
-							return JSON.parse(fields.attachments || "[]");
-							} catch {
-							return []; // Default to an empty array if parsing fails
+								let attachments: any[] = []; // Ensure it's always an array
+						
+								if (fields?.attachments) {
+									if (Array.isArray(fields.attachments)) {
+										attachments = fields.attachments;
+									} else if (typeof fields.attachments === "string") {
+										try {
+											const parsed = JSON.parse(fields.attachments);
+											attachments = Array.isArray(parsed) ? parsed : [];
+										} catch (error) {
+											console.error("Invalid JSON in attachments:", error);
+											attachments = [];
+										}
+									} else {
+										console.warn("Unexpected type for attachments:", typeof fields.attachments);
+										attachments = [];
+									}
+								}
+						
+								return attachments;
+							} catch (error) {
+								console.error("Error processing attachments:", error);
+								return [];
 							}
-						})()}
+						})()}						
 						onChange={(items) => {
 							try {
-							const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+							const parsedItems = Array.isArray(items) ? items : items;
 							console.log("Updated Items:", parsedItems);
 							// Save or process `parsedItems` here, e.g., updating state or making an API call
 							} catch {
@@ -238,7 +258,18 @@ export function ResourceRepoView(props: ResourceRepoViewProps) {
 								</thead>
 								<tbody>
 									{(() => {
-										const dataAttachments = JSON.parse(item.attachments || "[]"); // Parse the attachments JSON string
+										let dataAttachments: any[] = [];
+
+										try {
+											if (typeof item.attachments === "string") {
+												dataAttachments = JSON.parse(item.attachments);
+											} else if (Array.isArray(item.attachments)) {
+												dataAttachments = item.attachments;
+											}
+										} catch (error) {
+											console.error("Invalid JSON in attachments:", error);
+											dataAttachments = [];
+										}
 										return dataAttachments.map((attachment: any) => (
 											<tr key={attachment.id}>
 												<td style={{ border: '1px solid #F2F2F2', padding: '5px' }}>{attachment.title}</td>

@@ -49,14 +49,32 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	if (!params.id) {
 		throw "Route does not have $id param";
 	}
+
+    const initializeNewTreeView = async (): Promise<any[]> => {
+        const idKey = "id";
+        const parentKey = "parentId";
+        const nameKey = "name";
+        const rawData = await dr.select().from(divisionTable);
+        return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+    };
+	
 	if (params.id === "new") {
-		return {item: null};
+        const treeData = await initializeNewTreeView();
+        return {
+            item: null,
+            recordsNonecoLosses: [],
+            recordsDisRecSectors: [],
+            recordsHummanEffects: [],
+            treeData: treeData,
+            cpDisplayName: null
+        };
 	}
+
 	const item = await disasterRecordsById(params.id);
 	if (!item) {
 		throw new Response("Not Found", {status: 404});
 	}
-
+	
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
 	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
 	const dbDisRecHummanEffects = await getHumanEffectRecordsById(params.id);
@@ -66,11 +84,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	console.log("Humman Effects: ", dbDisRecHummanEffects);
 
 	// Define Keys Mapping (Make it Adaptable)
-    const idKey = "id";
-    const parentKey = "parentId";
-    const nameKey = "name";
-    const rawData = await dr.select().from(divisionTable);
-    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+    const treeData = await initializeNewTreeView();
 
     const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
 
@@ -79,7 +93,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		recordsNonecoLosses: dbNonecoLosses, 
 		recordsDisRecSectors: dbDisRecSectors,
 		recordsHummanEffects: dbDisRecHummanEffects,
-		treeData,
+		treeData: treeData,
 		cpDisplayName: cpDisplayName
 	};
 });

@@ -183,6 +183,21 @@ export async function formSave<T>(
 		}
 	}
 
+	for (const field of args.fieldsDef) {
+		if (field.psqlType === "jsonb" && formData[field.key] && typeof formData[field.key] === "string") {
+			try {
+				formData[field.key] = JSON.parse(formData[field.key]);
+			} catch (error) {
+				console.error(`Invalid JSON for ${field.key}:`, error);
+				return {
+					ok: false,
+					data: formData as T, 
+					errors: { [field.key]: ["Invalid JSON format"] },
+				};
+			}
+		}
+	}
+
 	const validateRes = validateFromMapFull(formData, args.fieldsDef, false);
 	if (!validateRes.ok) {
 		return {

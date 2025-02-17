@@ -284,7 +284,7 @@ export const hazardEventTable = pgTable("hazard_event", {
 	chainsExplanation: zeroText("chains_explanation"),
 	duration: zeroText("duration"),
 	magnitude: zeroText("magniture"),
-	spatialFootprint: zeroText("spatial_footprint"),
+	spatialFootprint: jsonb("spatial_footprint"),
 	recordOriginator: zeroText("record_originator"),
 	dataSource: zeroText("data_source"),
 });
@@ -355,8 +355,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 	responseCostTotalUsd: ourMoney("response_cost_total"),
 	humanitarianNeedsTotalUsd: ourMoney("humanitarian_needs_total"),
 	recoveryNeedsTotalUsd: ourMoney("recovery_needs_total"),
-	attachments: zeroText("attachments"),
-	spatialFootprint: zeroText("spatial_footprint"),
+	attachments: jsonb("attachments"),
+	spatialFootprint: jsonb("spatial_footprint"),
 });
 
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
@@ -510,8 +510,8 @@ export const disruptionTable = pgTable("disruption", {
 	responseOperation: text("response_operation"),
 	responseCost: ourMoney("response_cost"),
 	responseCurrency: text("response_currency"),
-	spatialFootprint: zeroText("spatial_footprint"),
-	attachments: zeroText("attachments"),
+	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 })
 
 export type Disruption = typeof disruptionTable.$inferSelect
@@ -765,7 +765,7 @@ export const resourceRepoTable = pgTable("resource_repo", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	title: text("title").notNull(),
 	summary: text("summary").notNull(),
-	attachments: text("attachments").notNull(),
+	attachments: jsonb("attachments"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
 });
@@ -830,7 +830,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 		.references((): AnyPgColumn => sectorTable.id),
 	sectorName: text("sector_name"), // Direct name of the sector involved
 	subSector: text("sub_sector"), // Sub-sector detail
-	spatialFootprint: zeroText("spatial_footprint"),
+	spatialFootprint: jsonb("spatial_footprint"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
 });

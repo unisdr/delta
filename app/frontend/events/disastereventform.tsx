@@ -60,8 +60,8 @@ export const fieldsDefCommon = [
 	{key: "responseCostTotalUsd", label: "Response Cost (Total)", type: "number"},
 	{key: "humanitarianNeedsTotalUsd", label: "Humanitarian Needs (Total, USD)", type: "money"},
 	{key: "recoveryNeedsTotalUsd", label: "Recovery Needs (Total, USD)", type: "money"},
-	{key: "attachments", label: "Attachments", type: "other"},
-	{key: "spatialFootprint", label: "Spatial Footprint", type: "other"},
+	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
+	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
@@ -123,6 +123,139 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						<FieldErrors errors={props.errors} field="hazardEventId"></FieldErrors>
 					</Field>
 				,
+				spatialFootprint: props.edit ? (
+					<Field key="spatialFootprint" label="">
+						<ContentRepeater
+							caption="Spatial Footprint"
+							ref={contentReapeaterRef}
+							id="spatialFootprint"
+							mapper_preview={true}
+							table_columns={[
+								{type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "40%"},
+								{
+									type: "custom",
+									caption: "Option",
+									render: (item) => {
+										if (item.map_option === "Map Coordinates") {
+											return (
+												<>
+													<span>Map Coordinates</span>
+												</>
+											);
+										} else if (item.map_option === "Geographic Level") {
+											return (
+												<>
+													<span>Geographic Level</span>
+												</>
+											);
+										}
+									},
+									width: "40%",
+								},
+								{type: "action", caption: "Action", width: "20%"},
+							]}
+							dialog_fields={[
+								{id: "title", caption: "Title", type: "input", required: true},
+								{
+									id: "map_option",
+									caption: "Option",
+									type: "option",
+									options: ["Map Coordinates", "Geographic Level"], 
+									onChange: (e: any) => {
+										const value = e.target.value;
+
+										const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
+										const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
+										const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
+										const geoLevelFieldComponent = geoLevelField.closest(".dts-form-component") as HTMLElement;
+										if (value === "Map Coordinates") {
+											mapsCoordsFieldComponent.style.setProperty("display", "block");
+											geoLevelFieldComponent.style.setProperty("display", "none");
+										} else if (value === "Geographic Level") {
+											mapsCoordsFieldComponent.style.setProperty("display", "none");
+											geoLevelFieldComponent.style.setProperty("display", "block");
+										}
+									},
+									show: true
+								},
+								{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
+								{
+									id: "geographic_level", caption: "Geographic Level", type: "custom",
+									render: (data: any, handleFieldChange: any, formData: any) => {
+										return (
+											<>
+												<div className="input-group">
+													<div id="spatialFootprint_geographic_level_container" className="wrapper">
+														<span onClick={() => {previewGeoJSON(formData['geojson'])}}>{data}</span>
+														<a href="#" className="btn" onClick={(e) => {e.preventDefault(); treeViewRef.current?.treeViewOpen(e);}}><img src="/assets/icons/globe.svg" alt="Globe SVG File" title="Globe SVG File" />Select</a>
+													</div>
+													<textarea id="spatialFootprint_geographic_level" name="spatialFootprint_geographic_level" className="dts-hidden-textarea" style={{display: "none"}}></textarea>
+												</div>
+											</>
+										);
+									}
+								},
+								{id: "geojson", caption: "Map Coordinates / Geographic Level", type: "hidden", required: true},
+							]}
+							data={(() => {
+								try {
+								  const spatialFootprint = props.fields?.spatialFootprint;
+								  return Array.isArray(spatialFootprint) ? spatialFootprint : [];
+								} catch {
+								  return []; // Default to an empty array if there's an error
+								}
+							  })()}
+							onChange={(items: any) => {
+								try {
+									const parsedItems = Array.isArray(items) ? items : (items);
+								} catch {
+									console.error("Failed to process items.");
+								}
+							}}
+						/>
+						<TreeView
+							ref={treeViewRef}
+							treeData={treeData ?? []}
+							caption="Select Geographic level"
+							rootCaption="Geographic levels"
+							onApply={
+								(selectedItems: any) => {
+									if (contentReapeaterRef.current.getDialogRef()) {
+										contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
+										selectedItems.data.map((item: any) => {
+											if (item.id == selectedItems.selectedId) {
+												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
+												const setField = {id: "geojson", value: JSON.parse(item.geojson)};
+												contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
+
+												const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
+												contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
+											}
+										});
+									}
+								}
+							}
+							onRenderItemName={
+								(item: any) => {
+									return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
+								}
+							}
+							appendCss={
+								`
+									ul.tree li div[disable="true"] {
+										color: #ccc;
+									}
+									ul.tree li div[disable="true"] .btn-face.select {
+										display: none;
+									}
+								`
+							}
+							disableButtonSelect={true}
+						/>
+					</Field>
+				) : (
+					<Field key="spatialFootprint" label=""><></></Field>
+				),
 				attachments: props.edit ? (
 					<Field key="attachments" label="">
 						<ContentRepeater
@@ -130,20 +263,20 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							caption="Attachments"
 							dnd_order={true}
 							save_path_temp="/uploads/temp"
-							file_viewer_temp_url="/resource-repo/file-temp-viewer"
-							file_viewer_url="/resource-repo/file-viewer"
-							api_upload_url="/resource-repo/file-pre-upload"
+							file_viewer_temp_url="/disaster-event/file-temp-viewer"
+							file_viewer_url="/disaster-event/file-viewer"
+							api_upload_url="/disaster-event/file-pre-upload"
 							table_columns={[
 								{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
 								{ 
 									type: "custom", caption: "Tags",
-									render: (item) => {
+									render: (item: any) => {
 										try {
 											if (!item.tag) {
 												return "N/A"; // Return "N/A" if no tags exist
 											}
 											
-											const tags = JSON.parse(item.tag); // Parse the JSON string
+											const tags = (item.tag); // Parse the JSON string
 											if (Array.isArray(tags) && tags.length > 0) {
 												// Map the names and join them with commas
 												return tags.map(tag => tag.name).join(", ");
@@ -219,11 +352,12 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							]}
 							data={(() => {
 								try {
-									return props && props.fields.attachments ? JSON.parse(props.fields.attachments) : [];
+								  const attachments = props?.fields?.attachments;
+								  return Array.isArray(attachments) ? attachments : [];
 								} catch {
-									return []; // Default to an empty array if parsing fails
+								  return []; // Default to an empty array if there's an error
 								}
-							})()}
+							  })()}							  
 							onChange={(items: any) => {
 								try {
 									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
@@ -237,139 +371,6 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 					</Field>
 				) : (
 					<Field key="attachments" label=""><></></Field>
-				),
-				spatialFootprint: props.edit ? (
-						<Field key="spatialFootprint" label="">
-							<ContentRepeater
-								caption="Spatial Footprint"
-								ref={contentReapeaterRef}
-								id="spatialFootprint"
-								mapper_preview={true}
-								table_columns={[
-									{type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "40%"},
-									{
-										type: "custom",
-										caption: "Option",
-										render: (item) => {
-											if (item.map_option === "Map Coordinates") {
-												return (
-													<>
-														<span>Map Coordinates</span>
-													</>
-												);
-											} else if (item.map_option === "Geographic Level") {
-												return (
-													<>
-														<span>Geographic Level</span>
-													</>
-												);
-											}
-										},
-										width: "40%",
-									},
-									{type: "action", caption: "Action", width: "20%"},
-								]}
-								dialog_fields={[
-									{id: "title", caption: "Title", type: "input", required: true},
-									{
-										id: "map_option",
-										caption: "Option",
-										type: "option",
-										options: ["Map Coordinates", "Geographic Level"],
-										onChange: (e: any) => {
-											const value = e.target.value;
-
-											const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
-											const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
-											const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
-											const geoLevelFieldComponent = geoLevelField.closest(".dts-form-component") as HTMLElement;
-											if (value === "Map Coordinates") {
-												mapsCoordsFieldComponent.style.setProperty("display", "block");
-												geoLevelFieldComponent.style.setProperty("display", "none");
-											} else if (value === "Geographic Level") {
-												mapsCoordsFieldComponent.style.setProperty("display", "none");
-												geoLevelFieldComponent.style.setProperty("display", "block");
-											}
-										},
-									},
-									{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
-									{
-										id: "geographic_level", caption: "Geographic Level", type: "custom",
-										render: (data: any, handleFieldChange: any, formData: any) => {
-											return (
-												<>
-													<div className="input-group">
-														<div id="spatialFootprint_geographic_level_container" className="wrapper">
-															<span onClick={() => {previewGeoJSON(formData['geojson'])}}>{data}</span>
-															<a href="#" className="btn" onClick={(e) => {e.preventDefault(); treeViewRef.current?.treeViewOpen(e);}}><img src="/assets/icons/globe.svg" alt="Globe SVG File" title="Globe SVG File" />Select</a>
-														</div>
-														<textarea id="spatialFootprint_geographic_level" name="spatialFootprint_geographic_level" className="dts-hidden-textarea" style={{display: "none"}}></textarea>
-													</div>
-												</>
-											);
-										}
-									},
-									{id: "geojson", caption: "Map Coordinates / Geographic Level", type: "hidden", required: true},
-								]}
-								data={(() => {
-									try {
-										return props && props.fields.spatialFootprint ? JSON.parse(props.fields.spatialFootprint) : [];
-									} catch {
-										return []; // Default to an empty array if parsing fails
-									}
-								})()}
-								onChange={(items: any) => {
-									try {
-										const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
-										console.log("Updated Items:", parsedItems);
-										// Save or process `parsedItems` here, e.g., updating state or making an API call
-									} catch {
-										console.error("Failed to process items.");
-									}
-								}}
-							/>
-							<TreeView
-								ref={treeViewRef}
-								treeData={treeData}
-								caption="Select Geographic level"
-								rootCaption="Geographic levels"
-								onApply={
-									(selectedItems: any) => {
-										if (contentReapeaterRef.current.getDialogRef()) {
-											contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
-											selectedItems.data.map((item: any) => {
-												if (item.id == selectedItems.selectedId) {
-													contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-													const setField = {id: "geojson", value: item.geojson};
-													contentReapeaterRef.current.handleFieldChange(setField, item.geojson);
-
-													const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
-													contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
-												}
-											});
-										}
-									}
-								}
-								onRenderItemName={
-									(item: any) => {
-										return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
-									}
-								}
-								appendCss={
-									`
-									ul.tree li div[disable="true"] {
-										color: #ccc;
-									}
-									ul.tree li div[disable="true"] .btn-face.select {
-										display: none;
-									}
-								`
-								}
-								disableButtonSelect={true}
-							/>
-						</Field>
-				) : (
-					<Field key="spatialFootprint" label=""><></></Field>
 				),
 			}} />
 	)
@@ -386,7 +387,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
-		previewMap(JSON.stringify(JSON.parse(item.spatialFootprint)));
+		previewMap(JSON.stringify((item.spatialFootprint)));
 	};
 
 	return (
@@ -407,59 +408,33 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 				updatedAt: (
 					<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
 				),
-				attachments: (
-				  <>
-					{item.attachments && item.attachments !== "[]" ? (
-					<table style={{ border: '1px solid gray', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-					<thead>
-						<tr style={{ backgroundColor: '#f2f2f2' }}>
-							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Title</th>
-							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Tags</th>
-							<th style={{ border: '1px solid gray', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>File/URL</th>
-						</tr>
-					</thead>
-					  <tbody>
-						{JSON.parse(item.attachments).map((attachment: any) => {
-						  const tags = attachment.tag
-							? JSON.parse(attachment.tag).map((tag: any) => tag.name).join(", ")
-							: "N/A";
-						  const fileOrUrl =
-							attachment.file_option === "File" && attachment.file
-							  ? (
-								<a href={`/resource-repo/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
-								  {attachment.file.name.split("/").pop()}
-								</a>
-							  )
-							  : attachment.file_option === "Link"
-							  ? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
-							  : "N/A";
-			  
-						  return (
-							<tr key={attachment.id} style={{ borderBottom: '1px solid gray' }}>
-								<td style={{ border: '1px solid gray', padding: '8px' }}>{attachment.title || "N/A"}</td>
-								<td style={{ border: '1px solid gray', padding: '8px' }}>{tags}</td>
-								<td style={{ border: '1px solid gray', padding: '8px' }}>{fileOrUrl}</td>
-							</tr>
-						  );
-						})}
-					  </tbody>
-					</table>
-					) : (<></>)}
-				  </>
-				),
 				spatialFootprint: (
 					<div>
 						<p>Spatial Footprint:</p>
 						{(() => {
 							try {
-								const footprints = JSON.parse(item.spatialFootprint); // Parse JSON string
+								let footprints: any[] = []; // Ensure it's an array
+
+								if (item?.spatialFootprint) {
+								  if (typeof item.spatialFootprint === "string") {
+									try {
+									  const parsed = JSON.parse(item.spatialFootprint);
+									  footprints = Array.isArray(parsed) ? parsed : [];
+									} catch (error) {
+									  console.error("Invalid JSON in spatialFootprint:", error);
+									}
+								  } else if (Array.isArray(item.spatialFootprint)) {
+									footprints = item.spatialFootprint;
+								  }
+								}
+
 								return (
 									<>
 										<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
 											<thead>
 												<tr style={{backgroundColor: "#f4f4f4"}}>
-													<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left"}}>Title</th>
-													<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left"}}>Option</th>
+													<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Title</th>
+													<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Option</th>
 												</tr>
 											</thead>
 											<tbody>
@@ -474,7 +449,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 																	</a>
 																</td>
 																<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																	<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON((newGeoJson));}}>
+																	<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
 																		{option}
 																	</a>
 																</td>
@@ -499,7 +474,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 												backgroundColor: "#f4f4f4",
 												color: "#333",
 												fontSize: "14px",
-												fontWeight: "bold",
+												fontWeight: "normal",
 												borderRadius: "4px",
 												marginBottom: "2rem",
 												cursor: "pointer"
@@ -515,7 +490,71 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 							}
 						})()}
 					</div>
-				)
+				),
+				attachments: (
+					<>
+					{(() => {
+					try {
+						let attachments: any[] = []; // Ensure it's an array
+
+						if (item?.attachments) {
+						if (typeof item.attachments === "string") {
+							try {
+							const parsed = JSON.parse(item.attachments);
+							attachments = Array.isArray(parsed) ? parsed : [];
+							} catch (error) {
+							console.error("Invalid JSON in attachments:", error);
+							}
+						} else if (Array.isArray(item.attachments)) {
+							attachments = item.attachments;
+						}
+						}
+
+						return attachments.length > 0 ? (
+					  <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+					  <thead>
+						  <tr style={{ backgroundColor: '#f2f2f2' }}>
+							  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Title</th>
+							  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Tags</th>
+							  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>File/URL</th>
+						  </tr>
+					  </thead>
+						<tbody>
+						  {(attachments).map((attachment: any) => {
+							const tags = attachment.tag
+							  ? (attachment.tag).map((tag: any) => tag.name).join(", ")
+							  : "N/A";
+							const fileOrUrl =
+							  attachment.file_option === "File" && attachment.file
+								? (
+								  <a href={`/disaster-event/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
+									{attachment.file.name.split("/").pop()}
+								  </a>
+								)
+								: attachment.file_option === "Link"
+								? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
+								: "N/A";
+				
+							return (
+							  <tr key={attachment.id} style={{ borderBottom: '1px solid gray' }}>
+								  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{attachment.title || "N/A"}</td>
+								  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{tags}</td>
+								  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{fileOrUrl}</td>
+							  </tr>
+							);
+						  })}
+						</tbody>
+					  </table>
+					) : (
+							<p></p>
+						);
+						} catch (error) {
+						console.error("Error processing attachments:", error);
+						return <p>Error loading attachments.</p>;
+						}
+					})()}
+					</>
+				  ),
 			  }}	
 
 			

@@ -311,7 +311,7 @@ export const renderMapperDialog = (
                         const geoJSONField = document.getElementById(`${id}_${field?.mapperGeoJSONField}`) as HTMLInputElement;
                         geoJSONField.value = geoJSON;
                         const setField = { id: field?.mapperGeoJSONField, value: geoJSON };
-                        handleFieldChange(setField, geoJSON);
+                        handleFieldChange(setField, JSON.parse(geoJSON));
                       }
                     };
                   
@@ -492,7 +492,7 @@ export const renderMapperDialog = (
                     targetElement.value = updatedValue;
                   
                     // Trigger the field's onChange handler
-                    handleFieldChange(field, updatedValue);
+                    handleFieldChange(field, JSON.parse(updatedValue));
                   
                     closeMapDialog();
                   }}                       
@@ -626,14 +626,14 @@ export const previewMap = (items: any) => {
                 attribution: "&copy; OpenStreetMap contributors",
             }).addTo(map);
 
-            const items = ${items};
+            const items = \`${items}\`;
             const boundsArray = [];
             const centers = [];
 
-            items.forEach((item) => {
+            JSON.parse(items).forEach((item) => {
                 try {
-                    const geojsonData = JSON.parse(item.geojson); // Replace map_coords with geojson
-                    const map_coords = (item?.map_coords || null) ? JSON.parse(item.map_coords) : [];
+                    const geojsonData = (item.geojson); // Replace map_coords with geojson
+                    const map_coords = (item?.map_coords || null) ? (item.map_coords) : [];
 
                     const getShape = map_coords?.mode || "geographic_level";
                     

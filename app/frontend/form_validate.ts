@@ -192,13 +192,47 @@ export function validateFromMap<T>(
 ): validateRes<T> {
 	return validateShared(data, fieldsDef, allowPartial, checkUnknownFields, (field, value) => {
 		let vs = ""
-		if (value !== undefined && value !== null) {
-			if (typeof value != "string") {
-				throw "validateFromMap received value that is not string, undefined or null"
-			} else {
-				vs = value
+
+		// Handle NULL or UNDEFINED early
+		if (value === undefined || value === null) {
+			return null;
+		}
+		// Handle PostgreSQL JSONB fields properly
+		if (field.psqlType === "jsonb") {
+			try {
+				// Ensure it's a valid JSON string before parsing
+				if (typeof value === "string") {
+					vs = value;
+					if (!isValidJSONString(vs)) {
+						throw new Error("Invalid JSON format");
+					}
+				} else if (typeof value === "object") {
+					vs = JSON.stringify(value);
+				} else {
+					console.error(`Invalid JSONB value for field '${field.key}':`, value);
+					throw invalidTypeError(field, "valid JSON");
+				}
+
+				// Parse JSON & Recursively parse nested JSON
+				let parsedValue = JSON.parse(vs);
+				parsedValue = recursivelyParseJSON(parsedValue, 5); // Max depth: 5
+				return parsedValue;
+			} catch (error) {
+				console.error(`Invalid JSON format for field '${field.key}':`, error);
+				throw invalidTypeError(field, "valid JSON");
 			}
 		}
+		// If `psqlType` exists but isn't handled, return value as is
+		if (field.psqlType) {
+			return value;
+		}
+		// Handle normal form values
+		if (typeof value === "string") {
+			vs = value.trim();
+		} else {
+			throw "validateFromMap received value that is not a string, undefined, or null";
+		}
+
 		if (vs.trim() == "") {
 			return null
 		}
@@ -243,3 +277,30 @@ export function validateFromMap<T>(
 	});
 }
 
+//Helper Function to Check if a String is Valid JSON
+function isValidJSONString(str: string): boolean {
+	try {
+		const parsed = JSON.parse(str);
+		return typeof parsed === "object" && parsed !== null;
+	} catch (e) {
+		return false;
+	}
+}
+
+//Helper Function: Recursively Parse Nested JSON (Prevents Stack Overflow)
+function recursivelyParseJSON(obj: any, depth: number): any {
+	if (depth <= 0) return obj; // Stop recursion if max depth reached
+	if (Array.isArray(obj)) {
+		return obj.map((item) => recursivelyParseJSON(item, depth - 1));
+	} else if (typeof obj === "object" && obj !== null) {
+		return Object.fromEntries(
+			Object.entries(obj).map(([key, val]) => {
+				if (typeof val === "string" && isValidJSONString(val)) {
+					return [key, recursivelyParseJSON(JSON.parse(val), depth - 1)];
+				}
+				return [key, val];
+			})
+		);
+	}
+	return obj;
+}

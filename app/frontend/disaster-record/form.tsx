@@ -43,7 +43,7 @@ export const fieldsDefCommon = [
 	{key: "validatedBy", label: "Validated by", type: "text", required: true},
 	{key: "checkedBy", label: "Checked by", type: "text"},
 	{key: "dataCollector", label: "Data collector", type: "text"},
-	{key: "spatialFootprint", label: "Spatial Footprint", type: "other"},
+	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
@@ -152,10 +152,10 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 										id: "map_option",
 										caption: "Option",
 										type: "option",
-										options: ["Map Coordinates", "Geographic Level"],
+										options: ["Map Coordinates", "Geographic Level"], 
 										onChange: (e: any) => {
 											const value = e.target.value;
-
+	
 											const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
 											const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
 											const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
@@ -168,6 +168,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 												geoLevelFieldComponent.style.setProperty("display", "block");
 											}
 										},
+										show: true
 									},
 									{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 									{
@@ -190,14 +191,34 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 								]}
 								data={(() => {
 									try {
-										return fields && fields.spatialFootprint ? JSON.parse(fields.spatialFootprint) : [];
-									} catch {
-										return []; // Default to an empty array if parsing fails
+									  let footprints: any[] = [];
+								  
+									  if (props?.fields?.spatialFootprint) {
+										if (Array.isArray(props.fields.spatialFootprint)) {
+										  footprints = props.fields.spatialFootprint;
+										} else if (typeof props.fields.spatialFootprint === "string") {
+										  try {
+											const parsed = JSON.parse(props.fields.spatialFootprint);
+											footprints = Array.isArray(parsed) ? parsed : [];
+										  } catch (error) {
+											console.error("Invalid JSON in spatialFootprint:", error);
+											footprints = [];
+										  }
+										} else {
+										  console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
+										  footprints = [];
+										}
+									  }
+								  
+									  return footprints;
+									} catch (error) {
+									  console.error("Error processing spatialFootprint:", error);
+									  return [];
 									}
-								})()}
+								  })()}								  
 								onChange={(items: any) => {
 									try {
-										const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
+										const parsedItems = Array.isArray(items) ? items : (items);
 									} catch {
 										console.error("Failed to process items.");
 									}
@@ -205,7 +226,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 							/>
 							<TreeView
 								ref={treeViewRef}
-								treeData={treeData}
+								treeData={treeData ?? []}
 								caption="Select Geographic level"
 								rootCaption="Geographic levels"
 								onApply={
@@ -215,9 +236,9 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 											selectedItems.data.map((item: any) => {
 												if (item.id == selectedItems.selectedId) {
 													contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-													const setField = {id: "geojson", value: item.geojson};
-													contentReapeaterRef.current.handleFieldChange(setField, item.geojson);
-
+													const setField = {id: "geojson", value: JSON.parse(item.geojson)};
+													contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
+	
 													const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 													contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 												}
@@ -232,13 +253,13 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 								}
 								appendCss={
 									`
-									ul.tree li div[disable="true"] {
-										color: #ccc;
-									}
-									ul.tree li div[disable="true"] .btn-face.select {
-										display: none;
-									}
-								`
+										ul.tree li div[disable="true"] {
+											color: #ccc;
+										}
+										ul.tree li div[disable="true"] .btn-face.select {
+											display: none;
+										}
+									`
 								}
 								disableButtonSelect={true}
 							/>
@@ -261,7 +282,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
-		previewMap(JSON.stringify(JSON.parse(item.spatialFootprint)));
+		previewMap(JSON.stringify((props.item.spatialFootprint)));
 	};
 
 	return (
@@ -298,14 +319,31 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 							<p>Spatial Footprint:</p>
 							{(() => {
 								try {
-									const footprints = JSON.parse(item.spatialFootprint); // Parse JSON string
+									let footprints: any[] = [];
+
+									if (props?.item?.spatialFootprint) {
+									if (Array.isArray(props.item.spatialFootprint)) {
+										footprints = props.item.spatialFootprint;
+									} else if (typeof props.item.spatialFootprint === "string") {
+										try {
+										const parsed = JSON.parse(props.item.spatialFootprint);
+										footprints = Array.isArray(parsed) ? parsed : [];
+										} catch (error) {
+										console.error("Invalid JSON in spatialFootprint:", error);
+										footprints = [];
+										}
+									} else {
+										console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
+										footprints = [];
+									}
+									}
 									return (
 										<>
 											<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
 												<thead>
 													<tr style={{backgroundColor: "#f4f4f4"}}>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left"}}>Title</th>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left"}}>Option</th>
+														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Title</th>
+														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Option</th>
 													</tr>
 												</thead>
 												<tbody>
@@ -320,7 +358,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 																		</a>
 																	</td>
 																	<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON((newGeoJson));}}>
+																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
 																			{option}
 																		</a>
 																	</td>
@@ -345,7 +383,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 													backgroundColor: "#f4f4f4",
 													color: "#333",
 													fontSize: "14px",
-													fontWeight: "bold",
+													fontWeight: "normal",
 													borderRadius: "4px",
 													marginBottom: "2rem",
 													cursor: "pointer"
@@ -356,12 +394,13 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 										</>
 									);
 
-								} catch {
-									return <p>Invalid JSON format in spatialFootprint.</p>;
-								}
-							})()}
+								} catch (error) {
+									console.error("Error processing spatialFootprint:", error);
+									return <p>Error loading spatialFootprint data.</p>;
+								  }
+								})()}
 						</div>
-					)
+					),
 				}}
 			/>
 			{/* Add Audit Log History at the end */}
