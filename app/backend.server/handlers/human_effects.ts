@@ -66,7 +66,7 @@ function convertUpdatesToIdsAndData(
 }
 
 export async function saveData(req: Request, recordId: string) {
-	let d
+	let d: Req
 	try {
 		d = await req.json() as Req
 	} catch {
@@ -153,7 +153,7 @@ export async function clear(tableIdStr: string, recordId: string) {
 	}
 	try {
 		await dr.transaction(async (tx) => {
-			let res = await clearData(tx, table, recordId)
+			let res = await clearData(tx, table!, recordId)
 			if (!res.ok) {
 				throw res.error
 			}

@@ -207,7 +207,7 @@ export function HazardPicker(props: HazardPickerProps) {
 								setSelectedHazard(hazardId)
 								let matchedHazard = hazards.find((h) => h.id === hazardId)
 								if (matchedHazard) {
-									let matchedCluster = clusters.find((c) => c.id === matchedHazard.clusterId)
+									let matchedCluster = clusters.find((c) => c.id === matchedHazard!.clusterId)
 									setSelectedCluster(matchedCluster?.id || null)
 									let matchedClass = classes.find((c) => c.id === matchedCluster?.classId)
 									setSelectedClass(matchedClass?.id || null)

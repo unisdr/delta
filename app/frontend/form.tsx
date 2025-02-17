@@ -75,8 +75,10 @@ export function firstError<T>(
 	}
 	if (errors.fields) {
 		for (const field in errors.fields) {
-			if (errors.fields[field] && errors.fields[field].length > 0) {
-				return errors.fields[field][0];
+			if (errors.fields[field]) {
+				if (errors.fields[field]!.length > 0) {
+					return errors.fields[field]![0];
+				}
 			}
 		}
 	}
@@ -92,8 +94,10 @@ export function hasErrors<T>(errors: Errors<T> | undefined): boolean {
 	}
 	if (errors.fields) {
 		for (const field in errors.fields) {
-			if (errors.fields[field] && errors.fields[field]?.length > 0) {
-				return true;
+			if (errors.fields[field]) {
+				if (errors.fields[field]!.length > 0) {
+					return true;
+				}
 			}
 		}
 	}

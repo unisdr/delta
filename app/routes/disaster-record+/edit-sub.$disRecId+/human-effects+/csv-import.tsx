@@ -79,12 +79,13 @@ export const action = authActionWithPerm("EditData", async (actionArgs): Promise
 		if (!recordId) {
 			throw new Error("No record id")
 		}
-		let table: HumanEffectsTable | null = null
+		let tableOpt: HumanEffectsTable | null = null
 		try {
-			table = HumanEffectsTableFromString(tableIdStr)
+			tableOpt = HumanEffectsTableFromString(tableIdStr)
 		} catch (e) {
 			return Response.json({ok: false, error: String(e)})
 		}
+		let table = tableOpt!
 		let defs = await defsForTable(table)
 
 		let expectedHeaders = defs.map(d => d.jsName)
