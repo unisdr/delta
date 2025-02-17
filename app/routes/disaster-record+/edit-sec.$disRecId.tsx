@@ -151,8 +151,6 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			damageRecoveryCost: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' ? frmDamageRecoveryCost : null,
 			damageRecoveryCostCurrency: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' && frmDamageRecoveryCostCurrency !== '' ? frmDamageRecoveryCostCurrency : null,
 			withDisruption: frmWithDisruption === 'on' ? true : false,
-			disruptionResponseCost: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' ? frmDisruptionResponseCost : null,
-			disruptionResponseCostCurrency: frmWithDisruption === 'on' && frmDisruptionResponseCost !== '' && frmDisruptionResponseCostCurrency !== '' ? frmDisruptionResponseCostCurrency : null,
 			withLosses: frmWithLosses === 'on' ? true : false,
 		};
 	
@@ -306,33 +304,6 @@ export default function Screen() {
 										<span>Has Disruption</span>
 									</div>
 								</label>					
-							</div>
-							<div className="dts-form-component mg-grid__col">
-								<label>
-									<div className="dts-form-component__label">
-										<span>Response Cost</span>
-									</div>
-									<input type="number" name="disruption_response_cost" placeholder="enter disruption response cost" defaultValue={(loaderData.record && loaderData.record.disruptionResponseCost) ? loaderData.record.disruptionResponseCost : '' } />
-								</label>
-							</div>
-							<div className="dts-form-component mg-grid__col">
-								<label>
-									<div className="dts-form-component__label">
-										<span>Currency</span>
-									</div>
-									<select name="disruption_response_cost_currency">
-										{
-											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
-												<option key={index} 
-												selected={
-													(loaderData.record && loaderData.record.disruptionResponseCostCurrency && loaderData.record.disruptionResponseCostCurrency == item) ? 
-													true : false
-												}
-												value={item}>{item}</option>
-											))
-										}
-									</select>
-								</label>
 							</div>
 						</div>
 						<div className="dts-form__actions">

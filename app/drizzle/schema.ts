@@ -969,8 +969,6 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 		damageRecoveryCost: ourMoney("damage_recovery_cost"),
 		damageRecoveryCostCurrency: text("damage_recovery_cost_currency"),
 		withDisruption: boolean("with_disruption"),
-		disruptionResponseCost: ourMoney("disruption_response_cost"),
-		disruptionResponseCostCurrency: text("disruption_response_cost_currency"),
 		withLosses: boolean("with_losses"),
 	},
 	(table) => {
