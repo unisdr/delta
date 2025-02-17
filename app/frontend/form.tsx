@@ -370,8 +370,6 @@ export function Inputs<T>(props: InputsProps<T>) {
 				{after}
 			</React.Fragment>
 		);
-
-
 	});
 }
 

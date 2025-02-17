@@ -24,7 +24,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 		// Public damages
 		{key: "publicDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
 		{key: "publicDamageAmount", label: "Damage Amount", type: "number"},
-		//{ key: "publicDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{ key: "numbers", label: "Numbers" }, { key: "other", label: "Other" }] },
+		{ key: "publicUnit", label: "Public Unit Type", type: "enum", enumData: unitsEnum},
 		// repair when publicDamage=partial
 		{key: "publicRepairCostUnit", label: "Repair Cost Unit", type: "money"},
 		{
@@ -33,7 +33,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "publicRepairUnit", label: "Repair Unit", type: "enum", enumData: unitsEnum},
+		//{key: "publicRepairUnit", label: "Repair Unit", type: "enum", enumData: unitsEnum},
 		{key: "publicRepairUnits", label: "Repair Units", type: "number"},
 		{key: "publicRepairCostTotalOverride", label: "Repair Cost Total Override", type: "money"},
 		// replacement when publicDamage=partial
@@ -44,7 +44,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "publicReplacementUnit", label: "Replacement Unit", type: "enum", enumData: unitsEnum},
+		//{key: "publicReplacementUnit", label: "Replacement Unit", type: "enum", enumData: unitsEnum},
 		{key: "publicReplacementUnits", label: "Replacement Units", type: "number"},
 		{key: "publicReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "money"},
 		{key: "publicRecoveryCostUnit", label: "Recovery Cost Unit", type: "money"},
@@ -54,7 +54,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "publicRecoveryUnit", label: "Recovery Unit", type: "enum", enumData: unitsEnum},
+		//{key: "publicRecoveryUnit", label: "Recovery Unit", type: "enum", enumData: unitsEnum},
 		{key: "publicRecoveryUnits", label: "Recovery Units", type: "number"},
 		{key: "publicRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "money"},
 		{key: "publicDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},
@@ -66,7 +66,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 		// Private damages
 		{key: "privateDamage", label: "Damage", type: "enum", enumData: damageTypeEnumData},
 		{key: "privateDamageAmount", label: "Damage Amount", type: "number"},
-		//{ key: "privateDamageUnitType", label: "Damage Unit Type", type: "enum", enumData: [{ key: "numbers", label: "Numbers" }, { key: "other", label: "Other" }] },
+		{ key: "privateUnit", label: "Private Unit Type", type: "enum", enumData: unitsEnum},
 		// repair when publicDamage=partial
 		{key: "privateRepairCostUnit", label: "Repair Cost Unit", type: "money"},
 		{
@@ -75,7 +75,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "privateRepairUnit", label: "Repair Unit", type: "enum", enumData: unitsEnum},
+		//{key: "privateRepairUnit", label: "Repair Unit", type: "enum", enumData: unitsEnum},
 		{key: "privateRepairUnits", label: "Repair Units", type: "number"},
 		{key: "privateRepairCostTotalOverride", label: "Repair Cost Total Override", type: "money"},
 		// replacement when publicDamage=partial
@@ -86,7 +86,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "privateReplacementUnit", label: "Replacement Unit", type: "enum", enumData: unitsEnum},
+		//{key: "privateReplacementUnit", label: "Replacement Unit", type: "enum", enumData: unitsEnum},
 		{key: "privateReplacementUnits", label: "Replacement Units", type: "number"},
 		{key: "privateReplacementCostTotalOverride", label: "Replacement Cost Total Override", type: "money"},
 		{key: "privateRecoveryCostUnit", label: "Recovery Cost Unit", type: "money"},
@@ -96,7 +96,7 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: "privateRecoveryUnit", label: "Recovery Unit", type: "enum", enumData: unitsEnum},
+		//{key: "privateRecoveryUnit", label: "Recovery Unit", type: "enum", enumData: unitsEnum},
 		{key: "privateRecoveryUnits", label: "Recovery Units", type: "number"},
 		{key: "privateRecoveryCostTotalOverride", label: "Recovery Cost Total Override", type: "money"},
 		{key: "privateDisruptionDurationDays", label: "Disruption Duration (Days)", type: "number"},

@@ -45,8 +45,8 @@ export function DamagesForm(props: DamagesFormProps) {
 		let fields = [
 			"CostUnit",
 			"CostUnitCurrency",
-			"UnitType",
-			"Unit",
+			//"UnitType",
+			//"Unit",
 			"Units",
 			"CostTotalOverride",
 			"CostTotalOverrideCheckbox",
@@ -91,7 +91,6 @@ export function DamagesForm(props: DamagesFormProps) {
 			}
 		}
 		if (formRef.current) {
-
 			attach("public")
 			showBasedOnType("public", props.fields.publicDamage!)
 			attach("private")
@@ -166,8 +165,10 @@ export function DamagesForm(props: DamagesFormProps) {
 		let prefixes = [
 			"publicRepair",
 			"publicReplacement",
+			"publicRecovery",
 			"privateRepair",
-			"privateReplacement"
+			"privateReplacement",
+			"privateRecovery"
 		]
 		if (formRef.current) {
 			formRef.current.addEventListener("submit", () => {
@@ -281,14 +282,13 @@ export function DamagesForm(props: DamagesFormProps) {
 		sectorId: (
 			<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
 		),
-
-		publicRepairUnit: <UnitPicker labelPrefix="Repair" name="publicRepairUnit" defaultValue={props.fields.publicRepairUnit || undefined} />,
-		publicReplacementUnit: <UnitPicker labelPrefix="Replacement" name="publicReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
-		publicRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="publicRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
-
-		privateRepairUnit: <UnitPicker labelPrefix="Repair" name="privateRepairUnit" defaultValue={props.fields.publicRepairUnit || undefined} />,
-		privateReplacementUnit: <UnitPicker labelPrefix="Replacement" name="privateReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
-		privateRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="privateRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
+		publicUnit: <UnitPicker labelPrefix="Public" name="publicUnit" defaultValue={props.fields.publicUnit || undefined} />,
+		//publicRepairUnit: <UnitPicker labelPrefix="Repair" name="publicRepairUnit" defaultValue={props.fields.publicRepairUnit || undefined} />,
+		//publicReplacementUnit: <UnitPicker labelPrefix="Replacement" name="publicReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
+		//publicRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="publicRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
+		privateUnit: <UnitPicker labelPrefix="Private" name="privateUnit" defaultValue={props.fields.privateUnit || undefined} />,
+	//	privateReplacementUnit: <UnitPicker labelPrefix="Replacement" name="privateReplacementUnit" defaultValue={props.fields.publicReplacementUnit || undefined} />,
+		//privateRecoveryUnit: <UnitPicker labelPrefix="Recovery" name="privateRecoveryUnit" defaultValue={props.fields.publicRecoveryUnit || undefined} />,
 
 
 		publicRepairCostTotalOverride: totalCostOverride("publicRepair"),
@@ -335,8 +335,7 @@ export function DamagesView(props: DamagesViewProps) {
 		recordId: <p key="recordId">Disaster record ID: {props.item.recordId}</p>,
 		sectorId: <p key="sectorId">Sector ID: {props.item.sectorId}</p>,
 		assetId: <p key="assetId">Asset: {props.item.asset.name}</p>,
-
-
+		publicUnit: undefined,
 		publicRepairCostUnit: undefined,
 		publicRepairCostUnitCurrency: undefined,
 		publicRepairUnit: undefined,
@@ -347,6 +346,7 @@ export function DamagesView(props: DamagesViewProps) {
 		publicReplacementUnit: undefined,
 		publicReplacementUnits: undefined,
 		publicReplacementCostTotalOverride: undefined,
+		privateUnit: undefined,
 		privateRepairCostUnit: undefined,
 		privateRepairCostUnitCurrency: undefined,
 		privateRepairUnit: undefined,
