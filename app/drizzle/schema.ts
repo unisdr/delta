@@ -12,6 +12,7 @@ import {
 	index,
 	AnyPgColumn,
 	numeric,
+	integer
 } from "drizzle-orm/pg-core";
 
 import {sql, relations} from "drizzle-orm";
@@ -428,7 +429,7 @@ export const deathsTable = pgTable("deaths", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	deaths: ourBigint("deaths"),
+	deaths: integer("deaths"),
 });
 
 export type Deaths = typeof deathsTable.$inferSelect;
@@ -439,7 +440,7 @@ export const injuredTable = pgTable("injured", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	injured: ourBigint("injured"),
+	injured: integer("injured"),
 });
 
 export type Injured = typeof injuredTable.$inferSelect;
@@ -451,7 +452,7 @@ export const missingTable = pgTable("missing", {
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
 	asOf: timestamp("as_of"),
-	missing: ourBigint("missing"),
+	missing: integer("missing"),
 });
 
 export type Missing = typeof missingTable.$inferSelect;
@@ -462,8 +463,8 @@ export const affectedTable = pgTable("affected", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	direct: ourBigint("direct"),
-	indirect: ourBigint("indirect"),
+	direct: integer("direct"),
+	indirect: integer("indirect"),
 });
 export type Affected = typeof affectedTable.$inferSelect;
 export type AffectedInsert = typeof affectedTable.$inferInsert;
@@ -473,11 +474,11 @@ export const displacedTable = pgTable("displaced", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	short: ourBigint("short"), // First 10 days
-	mediumShort: ourBigint("medium_short"), // Days 10-30
-	mediumLong: ourBigint("medium_long"), // Days 30-90
-	long: ourBigint("long"), // More than 90 days
-	permanent: ourBigint("permanent"), // Permanently relocated
+	short: integer("short"), // First 10 days
+	mediumShort: integer("medium_short"), // Days 10-30
+	mediumLong: integer("medium_long"), // Days 30-90
+	long: integer("long"), // More than 90 days
+	permanent: integer("permanent"), // Permanently relocated
 });
 export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
@@ -487,8 +488,8 @@ export const displacementStocksTable = pgTable("displacement_stocks", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	preemptive: ourBigint("preemptive"), // Assisted pre-emptive displacement
-	reactive: ourBigint("reactive"), // Assisted reactive displacement
+	preemptive: integer("preemptive"), // Assisted pre-emptive displacement
+	reactive: integer("reactive"), // Assisted reactive displacement
 });
 export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
 export type DisplacementStocksInsert =
