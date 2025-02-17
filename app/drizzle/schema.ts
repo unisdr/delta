@@ -957,7 +957,7 @@ export const sectorTable = pgTable(
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
-		id: ourSerial("id").primaryKey(), // Keep using serial instead of UUID
+		id: uuid("id").primaryKey().defaultRandom(), // Unique ID for the relation
 		sectorId: ourBigint("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id),
