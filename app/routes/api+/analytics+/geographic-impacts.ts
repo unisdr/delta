@@ -7,6 +7,12 @@ export const loader = async ({ request }: { request: Request }) => {
         const url = new URL(request.url);
         const params = Object.fromEntries(url.searchParams);
 
+        // Ensure we pass subSectorId if it exists
+        const subSectorId = url.searchParams.get('subSectorId');
+        if (subSectorId) {
+            params.subSectorId = subSectorId;
+        }
+
         // Get GeoJSON data
         const geoJSON = await handleGeographicImpactQuery(params);
 

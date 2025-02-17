@@ -7,6 +7,7 @@ const GeographicImpactQuerySchema = z.object({
         required_error: "Sector ID is required",
         invalid_type_error: "Sector ID must be a string"
     }),
+    subSectorId: z.string().optional(),
     hazardTypeId: z.string().optional(),
     specificHazardId: z.string().optional(),
     geographicLevelId: z.string().optional(),
@@ -26,7 +27,8 @@ export async function handleGeographicImpactQuery(params: unknown) {
         const processedParams = {
             ...validParams,
             level: validParams.level ? parseInt(validParams.level, 10) : 1,
-            parentId: validParams.parentId ? parseInt(validParams.parentId, 10) : undefined
+            parentId: validParams.parentId ? parseInt(validParams.parentId, 10) : undefined,
+            subSectorId: validParams.subSectorId
         };
 
         // Validate numeric parameters

@@ -181,36 +181,45 @@ export interface GeographicImpactFilters {
     disasterEventId?: string;
     level?: number;
     parentId?: number;
+    subSectorId?: string;
 }
 
-// Get all disaster records for a sector including subsectors
-export async function getDisasterRecordsForSector(sectorId: string): Promise<string[]> {
-    const numericSectorId = parseInt(sectorId, 10);
+// Function to get disaster records based on sector ID
+export async function getDisasterRecordsForSector(sectorId: string, subSectorId?: string): Promise<string[]> {
+    console.log("Fetching records for sector:", sectorId, "subSector:", subSectorId);
+    
+    // If subSectorId is provided, use that instead of the parent sector
+    const targetSectorId = subSectorId || sectorId;
+    const numericSectorId = parseInt(targetSectorId, 10);
+    
     if (isNaN(numericSectorId)) {
         throw new Error("Invalid sector ID");
     }
 
-    // Get all subsectors if this is a parent sector
-    const subsectors = await getSectorsByParentId(numericSectorId);
-    const sectorIds = subsectors.length > 0
-        ? [numericSectorId, ...subsectors.map(s => s.id)]
-        : [numericSectorId];
+    // Get all subsectors only if we're using the parent sector
+    let sectorIds: number[];
+    if (!subSectorId) {
+        const subsectors = await getSectorsByParentId(numericSectorId);
+        sectorIds = subsectors.length > 0
+            ? [numericSectorId, ...subsectors.map(s => s.id)]
+            : [numericSectorId];
+    } else {
+        sectorIds = [numericSectorId];
+    }
 
-    console.log("Fetching records for sectors:", sectorIds);
+    console.log("Using sector IDs:", sectorIds);
 
     const records = await dr
         .select({ id: disasterRecordsTable.id })
         .from(disasterRecordsTable)
-        .where(
-            inArray(disasterRecordsTable.sectorId, sectorIds)
-        );
+        .where(inArray(disasterRecordsTable.sectorId, sectorIds));
 
     console.log("Found records:", records);
     return records.map(r => r.id);
 }
 
 export async function getGeographicImpact(filters: GeographicImpactFilters): Promise<{ type: "FeatureCollection", features: any[] }> {
-    console.log("Processing geographic impact for sector:", filters.sectorId);
+    console.log("Processing geographic impact for sector:", filters.sectorId, "subSector:", filters.subSectorId);
 
     try {
         // Build the base query conditions
@@ -235,18 +244,14 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             .from(divisionTable)
             .where(and(...conditions));
 
-        console.log("Found divisions:", divisions.map(d => ({
-            id: d.id,
-            name: d.name.en,
-            importId: d.importId,
-            level: d.level,
-            parentId: d.parentId
-        })));
+        // Get disaster records for the sector, considering subSectorId
+        const recordIds = await getDisasterRecordsForSector(filters.sectorId, filters.subSectorId);
+        if (recordIds.length === 0) {
+            console.log("No damage or loss values found for sector", filters.sectorId);
+            return { type: "FeatureCollection", features: [] };
+        }
 
-        // Get disaster records for the sector (including subsectors)
-        const recordIds = await getDisasterRecordsForSector(filters.sectorId);
-
-        // Get damages and losses data
+        // Get damages data
         const damagesQuery = dr
             .select({
                 locationDesc: disasterRecordsTable.locationDesc,
@@ -262,6 +267,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             .where(inArray(damagesTable.recordId, recordIds))
             .groupBy(disasterRecordsTable.locationDesc);
 
+        // Get losses data
         const lossesQuery = dr
             .select({
                 locationDesc: disasterRecordsTable.locationDesc,
@@ -284,7 +290,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         const locationValues: { [key: string]: { damage: number, loss: number } } = {};
 
         damagesResult.forEach(record => {
-            if (!record.locationDesc) return; // Skip records with no location
+            if (!record.locationDesc) return;
             const location = record.locationDesc.toLowerCase();
             if (!locationValues[location]) {
                 locationValues[location] = { damage: 0, loss: 0 };
@@ -293,7 +299,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         });
 
         lossesResult.forEach(record => {
-            if (!record.locationDesc) return; // Skip records with no location
+            if (!record.locationDesc) return;
             const location = record.locationDesc.toLowerCase();
             if (!locationValues[location]) {
                 locationValues[location] = { damage: 0, loss: 0 };
@@ -301,19 +307,11 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             locationValues[location].loss += parseFloat(record.loss || '0');
         });
 
-        console.log("Found records with values:", Object.entries(locationValues).map(([loc, val]) => ({
-            locationDesc: loc,
-            damage: val.damage.toString(),
-            loss: val.loss.toString()
-        })));
-
         // Create a map to store division values
         const divisionValues: { [key: number]: { totalDamage: number, totalLoss: number } } = {};
 
         // Process each location and find matching division
         for (const [location, values] of Object.entries(locationValues)) {
-            console.log("Processing record:", { location, damage: values.damage, loss: values.loss });
-
             const matchingDivision = await findMatchingDivision(location, divisions);
             if (matchingDivision) {
                 const divId = matchingDivision.id;
@@ -322,12 +320,8 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 }
                 divisionValues[divId].totalDamage += values.damage;
                 divisionValues[divId].totalLoss += values.loss;
-            } else {
-                console.log("No matching division found for location:", location);
             }
         }
-
-        console.log("Final division values:", divisionValues);
 
         // Create GeoJSON features with the aggregated values
         const features = divisions.map(division => {
@@ -349,12 +343,6 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 }
             };
         }).filter(f => f !== null);
-
-        console.log("Final features:", features.length);
-
-        if (features.length === 0) {
-            console.log("No features found for sector", filters.sectorId);
-        }
 
         return {
             type: "FeatureCollection",

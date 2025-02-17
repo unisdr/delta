@@ -17,7 +17,17 @@ import "./ImpactMap.css"; // Custom styles
 type ImpactMapProps = {
   geoData: any;
   selectedMetric: "totalDamage" | "totalLoss";
-  filters: any;
+  filters: {
+    sectorId: string | null;
+    subSectorId: string | null;
+    hazardTypeId: string | null;
+    hazardClusterId: string | null;
+    specificHazardId: string | null;
+    geographicLevelId: string | null;
+    fromDate: string | null;
+    toDate: string | null;
+    disasterEventId: string | null;
+  };
 };
 
 export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMapProps) {
@@ -34,7 +44,15 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     setLoading(true);
     try {
       const url = new URL('http://localhost:3000/api/analytics/geographic-impacts');
+      
+      // Always send sectorId
       url.searchParams.set('sectorId', filters.sectorId || '');
+      
+      // Send subSectorId if it exists and is not empty
+      if (filters.subSectorId) {
+        url.searchParams.set('subSectorId', filters.subSectorId);
+      }
+      
       url.searchParams.set('level', level.toString());
       if (parentId) {
         url.searchParams.set('parentId', parentId.toString());

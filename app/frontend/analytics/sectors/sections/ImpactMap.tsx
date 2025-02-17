@@ -8,7 +8,8 @@ interface Sector {
   subsectors?: Sector[];
 }
 
-type Filters = {
+// Define the filter shape
+type FilterValues = {
   sectorId: string | null;
   subSectorId: string | null;
   hazardTypeId: string | null;
@@ -18,10 +19,24 @@ type Filters = {
   fromDate: string | null;
   toDate: string | null;
   disasterEventId: string | null;
-} | null;
+};
+
+type Filters = FilterValues | null;
 
 type ImpactMapProps = {
   filters: Filters;
+};
+
+const DEFAULT_FILTERS: FilterValues = {
+  sectorId: null,
+  subSectorId: null,
+  hazardTypeId: null,
+  hazardClusterId: null,
+  specificHazardId: null,
+  geographicLevelId: null,
+  fromDate: null,
+  toDate: null,
+  disasterEventId: null,
 };
 
 export default function ImpactMap({ filters }: ImpactMapProps) {
@@ -87,8 +102,20 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
 
       try {
         const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
+        
+        // Add sectorId first
+        url.searchParams.append('sectorId', filters.sectorId);
+        
+        // Add subSectorId if it exists
+        if (filters.subSectorId) {
+          url.searchParams.append('subSectorId', filters.subSectorId);
+        }
+        
+        // Add other filters
         Object.entries(filters).forEach(([key, value]) => {
-          if (value) url.searchParams.append(key, value);
+          if (value && key !== 'sectorId' && key !== 'subSectorId') {
+            url.searchParams.append(key, value);
+          }
         });
 
         const response = await fetch(url.toString());
@@ -146,7 +173,7 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
           <ImpactMapOl
             geoData={geoData}
             selectedMetric="totalDamage"
-            filters={filters}
+            filters={filters || DEFAULT_FILTERS}
           />
         </div>
 
@@ -159,7 +186,7 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
           <ImpactMapOl
             geoData={geoData}
             selectedMetric="totalLoss"
-            filters={filters}
+            filters={filters || DEFAULT_FILTERS}
           />
         </div>
       </div>
