@@ -2,9 +2,8 @@ import {
 	pgTable,
 	text,
 	timestamp,
-	serial,
-	integer,
 	bigint,
+	bigserial,
 	check,
 	unique,
 	boolean,
@@ -40,7 +39,7 @@ function ourBigint(name: string) {
 	return bigint(name, {mode: "number"})
 }
 function ourSerial(name: string) {
-	return bigint(name, {mode: "number"}).notNull()
+	return bigserial(name, {mode: "number"})
 }
 function ourMoney(name: string) {
 	return numeric(name)
@@ -957,7 +956,7 @@ export const sectorTable = pgTable(
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
-		id: serial("id").primaryKey(), // Keep using serial instead of UUID
+		id: ourSerial("id").primaryKey(), // Keep using serial instead of UUID
 		sectorId: ourBigint("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id),
