@@ -1,5 +1,5 @@
 import { hazardEventLabel } from "~/frontend/events/hazardeventform";
-import { eq, ilike, or, asc } from "drizzle-orm";
+import { eq, ilike, or, asc, sql } from "drizzle-orm";
 import { disasterEventTable, hazardEventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
 import { formatDate, formatDateDisplay } from "~/util/date";
 
@@ -124,31 +124,27 @@ export const contentPickerConfigSector = {
         orderBy: [{ column: sectorTable.sectorname, direction: "asc" }] // Sorting
     },
     selectedDisplay: async (dr: any, id: any) => {
-        // Function to recursively get parent hierarchy
-        const getSectorPath = async (sectorId: any, path: string[] = []): Promise<string[]> => {
-            const row = await dr
-                .select()
-                .from(sectorTable)
-                .where(eq(sectorTable.id, sectorId))
-                .limit(1)
-                .execute();
+        const sectorId = Number(id);
+        if (!Number.isInteger(sectorId)) return "";
     
-            if (!row.length) return path; // Stop if no parent found
-    
-            const sector = row[0];
-            path.unshift(sector.sectorname); // Add sector name at the beginning
-    
-            if (sector.parentId) {
-                return getSectorPath(sector.parentId, path); // Recursively get parent path
-            }
-            
-            return path;
-        };
-    
-        const pathArray = await getSectorPath(id);
-        if (!pathArray.length) return "No sector found";
-    
-        return `${pathArray.join(" / ")}`; // Format the path like: "/Parent/Child/Sub-Child"
+        try {
+            const { rows } = await dr.execute(sql`SELECT get_sector_full_path(${sectorId}) AS full_path`);
+            return rows[0]?.full_path || "No sector found";
+        } catch {
+            const { rows } = await dr.execute(sql`
+                WITH RECURSIVE ParentCTE AS (
+                    SELECT id, sectorname, parent_id, sectorname AS full_path
+                    FROM sector
+                    WHERE id = ${sectorId}
+                    UNION ALL
+                    SELECT t.id, t.sectorname, t.parent_id, t.sectorname || ' > ' || p.full_path AS full_path
+                    FROM sector t
+                    INNER JOIN ParentCTE p ON t.id = p.parent_id
+                )
+                SELECT full_path FROM ParentCTE WHERE parent_id IS NULL
+            `);
+            return rows[0]?.full_path || "No sector found";
+        }
     }
 };
 
@@ -175,30 +171,26 @@ export const contentPickerConfigCategory = {
         orderBy: [{ column: categoriesTable.name, direction: "asc" }] // Sorting
     },
     selectedDisplay: async (dr: any, id: any) => {
-        // Function to recursively get parent hierarchy
-        const getCategoryPath = async (categoryId: any, path: string[] = []): Promise<string[]> => {
-            const row = await dr
-                .select()
-                .from(categoriesTable)
-                .where(eq(categoriesTable.id, categoryId))
-                .limit(1)
-                .execute();
+        const categoryId = Number(id);
+        if (!Number.isInteger(categoryId)) return "";
     
-            if (!row.length) return path; // Stop if no parent found
-    
-            const category = row[0];
-            path.unshift(category.name); // Add sector name at the beginning
-    
-            if (category.parentId) {
-                return getCategoryPath(category.parentId, path); // Recursively get parent path
-            }
-            
-            return path;
-        };
-    
-        const pathArray = await getCategoryPath(id);
-        if (!pathArray.length) return "No category found";
-    
-        return `${pathArray.join(" / ")}`; // Format the path like: "/Parent/Child/Sub-Child"
-    }
+        try {
+            const { rows } = await dr.execute(sql`SELECT get_category_full_path(${categoryId}) AS full_path`);
+            return rows[0]?.full_path || "No category found";
+        } catch {
+            const { rows } = await dr.execute(sql`
+                WITH RECURSIVE ParentCTE AS (
+                    SELECT id, name, parent_id, name AS full_path
+                    FROM categories
+                    WHERE id = ${categoryId}
+                    UNION ALL
+                    SELECT t.id, t.name, t.parent_id, t.name || ' > ' || p.full_path AS full_path
+                    FROM categories t
+                    INNER JOIN ParentCTE p ON t.id = p.parent_id
+                )
+                SELECT full_path FROM ParentCTE WHERE parent_id IS NULL
+            `);
+            return rows[0]?.full_path || "No category found";
+        }
+    }    
 }
