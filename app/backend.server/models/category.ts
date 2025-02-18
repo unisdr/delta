@@ -61,20 +61,6 @@ export async function getCategory(categoryId: number): Promise<{id: number, name
 		console.log('cat: '+res);
 
 	return res;
-
-	// return await dr.select({
-	// 		noneccoId: nonecoLossesTable.id,
-	// 		noneccoDesc: nonecoLossesTable.description,
-	// 		noneccoCatId: nonecoLossesTable.categortyId,
-	// 		catName: catTable.name,
-	// 		catNameParent1: catTableParent1.name,
-	// 		catNameParent2: catTableParent2.name,
-	// 	}).from(nonecoLossesTable)
-	// 	.leftJoin(catTable, eq(catTable.id, nonecoLossesTable.categortyId))
-	// 	.leftJoin(catTableParent1, eq(catTableParent1.id, catTable.parentId))
-	// 	.leftJoin(catTableParent2, eq(catTableParent2.id, catTableParent1.parentId))
-	// 	.where(eq(nonecoLossesTable.disasterRecordId, id))
-	// .execute();
 }
 
 

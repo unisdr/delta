@@ -11,6 +11,7 @@ import {
 import {
 	SectorType,
 	upsertRecord as upsertRecordSector,
+  sectorById,
 } from "~/backend.server/models/sector";
 
 import { 
@@ -68,45 +69,54 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
     let item = all[1];
     let formRecord:SectorType = { 
       id: parseInt(item[0]),
-      sectorname: item[1],
-      parentId: parseInt(item[2]),
+      parentId: parseInt(item[1]),
+      sectorname: item[2],
       description: item[3],
-      level: parseInt(item[4]),
     };
+    let sectorRecord:any = {};
 
-    all.forEach((item, key) => {
-      if (key !== 0) {
-        if (item[2] === '') {
-          formRecord = { 
-            id: parseInt(item[0]),
-            sectorname: item[1],
-            description: item[3],
-            level: parseInt(item[4]),
-          };
-        }
-        else {
-          formRecord = { 
-            id: parseInt(item[0]),
-            sectorname: item[1],
-            parentId: parseInt(item[2]),
-            description: item[3],
-            level: parseInt(item[4]),
-          };
-        }
+      for (const [key, item] of all.entries()) {
+        if (key !== 0) {
+          if (String(item[1]).length === 0) {
+            formRecord = {
+              id: parseInt(item[0]),
+              sectorname: item[2],
+              description: item[3],
+              level: 1,
+            };
 
-        // TODO, level 6 and up needs revision of ID it gives error saving in DB.
-        if (parseInt(item[4]) <= 5) {
-          try {
-            upsertRecordSector(formRecord).catch(console.error);
-          } catch (e) {
-            console.log(e);
-            throw e;
+            try {
+              upsertRecordSector(formRecord).catch(console.error);
+            } catch (e) {
+              console.log(e);
+              throw e;
+            }
+            // console.log(formRecord);
+          } else {
+            sectorRecord = await sectorById(parseInt(item[1]));
+            if (sectorRecord) {
+              
+              formRecord = {
+                id: parseInt(item[0]),
+                parentId: parseInt(item[1]),
+                sectorname: item[2],
+                description: item[3],
+                level: sectorRecord.level + 1,
+              };
+
+              try {
+                upsertRecordSector(formRecord).catch(console.error);
+              } catch (e) {
+                console.log(e);
+                throw e;
+              }
+              // console.log(formRecord);
+            }
+            
+            
           }
         }
-
-        
       }
-    }); 
   }
 
   if (importType === 'all' || importType === 'categories') {

@@ -91,3 +91,21 @@ export async function sectorIsAgriculture(tx: Tx, id: number, depth: number = 0)
 	}
   return await sectorIsAgriculture(tx, row.parentId, depth + 1)
 }
+
+export async function sectorById(id: number, includeParentObject:boolean = false) {
+	if (includeParentObject) {
+		const res = await dr.query.sectorTable.findFirst({
+			where: eq(sectorTable.id, id),
+			with: {
+				sectorParent: true
+			}
+		});
+		return res;
+	}
+	else {
+		const res = await dr.query.sectorTable.findFirst({
+			where: eq(sectorTable.id, id),
+		});
+		return res;
+	}
+}

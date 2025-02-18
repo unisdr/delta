@@ -9,6 +9,21 @@ import { useState } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 import { aliasedTable, eq } from "drizzle-orm";
 
+const renderContent = (level:number) => {
+	switch (level) {
+		case 1:
+			return 'Type';
+		case 2:
+			return 'Sector';
+		case 3:
+			return 'Sub-sector';
+		case 4:
+			return 'Category';
+		default:
+			return ' - ';
+	}
+};
+
 // Table Component
 const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 	<table className="dts-table">
@@ -16,6 +31,7 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 			<tr>
 				<th>ID</th>
 				<th>Sector Name</th>
+				<th>Grouping</th>
 				<th>Description</th>
 				<th>Parent</th>
 				<th>Created At</th>
@@ -26,6 +42,7 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 				<tr key={sector.id}>
 					<td>{sector.id}</td>
 					<td>{sector.sectorname}</td>
+					<td>{ renderContent (sector.level) }</td>
 					<td
 						// Replace newline characters with <br/> tags
 						dangerouslySetInnerHTML={{
@@ -52,6 +69,7 @@ export const loader = authLoader(async (loaderArgs) => {
 		.select({
 			id: sectorTable.id,
 			sectorname: sectorTable.sectorname,
+			level: sectorTable.level,
 			description: sectorTable.description,
 			parentId: sectorTable.parentId,
 			createdAt: sectorTable.createdAt,

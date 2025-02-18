@@ -955,6 +955,10 @@ export const sectorTable = pgTable(
 	// ]
 );
 
+export const sectoryParent_Rel = relations(sectorTable, ({one}) => ({
+	sectorParent: one(sectorTable, {fields: [sectorTable.parentId], references: [sectorTable.id]}),
+}));
+
 /** [SectorDisasterRecordsRelation] table links `sector` to `disaster_records` */
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
