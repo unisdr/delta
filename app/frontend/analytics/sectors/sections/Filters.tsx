@@ -274,6 +274,11 @@ const Filters: React.FC<FiltersProps> = ({
         handleSpecificHazardSelection(value);
       }
 
+      // Immediately apply filters when geographic level changes
+      if (field === "geographicLevelId") {
+        onApplyFilters(updatedFilters);
+      }
+
       return updatedFilters;
     });
     console.log(`Filter updated: ${field} = ${value}`);

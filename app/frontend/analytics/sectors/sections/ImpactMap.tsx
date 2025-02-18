@@ -113,10 +113,14 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
         
         // Add other filters
         Object.entries(filters).forEach(([key, value]) => {
-          if (value && key !== 'sectorId' && key !== 'subSectorId') {
+          if (value && key !== 'sectorId' && key !== 'subSectorId' && key !== 'geographicLevelId') {
             url.searchParams.append(key, value);
           }
         });
+
+        if (filters.geographicLevelId) {
+          url.searchParams.append('geographicLevelId', filters.geographicLevelId);
+        }
 
         const response = await fetch(url.toString());
         if (!response.ok) throw new Error("Failed to fetch geographic impact data");

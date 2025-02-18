@@ -13,6 +13,9 @@ import { pointerMove } from "ol/events/condition";
 import Select from "ol/interaction/Select";
 import Swal from "sweetalert2";
 import "./ImpactMap.css"; // Custom styles
+import { useQuery } from "@tanstack/react-query";
+import { transformExtent } from 'ol/proj';
+import { buffer } from 'ol/extent';
 
 type ImpactMapProps = {
   geoData: any;
@@ -38,6 +41,90 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentParentId, setCurrentParentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const vectorLayerRef = useRef<VectorLayer<VectorSource>>();
+
+  // Query for geographic level boundary
+  const { data: geographicBoundary } = useQuery({
+    queryKey: ['geographicBoundary', filters.geographicLevelId],
+    queryFn: async () => {
+      if (!filters.geographicLevelId) return null;
+      const response = await fetch(`/api/analytics/geographic-levels/${filters.geographicLevelId}/boundary`);
+      if (!response.ok) throw new Error('Failed to fetch geographic boundary');
+      return response.json();
+    },
+    enabled: !!filters.geographicLevelId
+  });
+
+  // Effect to handle geographic level changes
+  useEffect(() => {
+    if (!map || !geographicBoundary || !filters.geographicLevelId) return;
+
+    try {
+      // Parse the GeoJSON
+      const format = new GeoJSON();
+      const features = format.readFeatures(geographicBoundary, {
+        featureProjection: 'EPSG:3857'
+      });
+
+      // Get the extent of the features
+      const extent = features[0].getGeometry()?.getExtent();
+      if (!extent) return;
+
+      // Add some padding to the extent (10% of the width)
+      const bufferedExtent = buffer(extent, extent[2] / 10);
+
+      // Fit the view to the extent with animation
+      map.getView().fit(bufferedExtent, {
+        padding: [50, 50, 50, 50],
+        duration: 1000,
+        callback: () => {
+          // After zooming, update the vector layer
+          if (vectorLayerRef.current) {
+            const source = vectorLayerRef.current.getSource();
+            if (source) {
+              const features = format.readFeatures(geoData, {
+                featureProjection: 'EPSG:3857'
+              });
+              
+              // Filter features to only show those within the selected geographic level
+              const filteredFeatures = features.filter(feature => {
+                const properties = feature.getProperties();
+                return properties.geographicLevelId === filters.geographicLevelId;
+              });
+
+              // Update styles based on the selected metric
+              const style = new Style({
+                fill: new Fill({
+                  color: feature => {
+                    const value = feature.get(selectedMetric) || 0;
+                    return getColorForValue(value, filteredFeatures);
+                  }
+                }),
+                stroke: new Stroke({
+                  color: '#333',
+                  width: 1
+                })
+              });
+
+              filteredFeatures.forEach(feature => feature.setStyle(style));
+              source.clear();
+              source.addFeatures(filteredFeatures);
+
+              // Update legend
+              calculateColorRanges(filteredFeatures);
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error handling geographic level change:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'Failed to update map view',
+        icon: 'error'
+      });
+    }
+  }, [map, geographicBoundary, filters.geographicLevelId, selectedMetric]);
 
   // Fetch data for the current level and parent
   const fetchGeoData = async (level: number, parentId: number | null) => {
@@ -339,9 +426,11 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
         style: (feature) => getFeatureStyle(feature, false) // Wrapper function
       });
       map.addLayer(newVectorLayer);
+      vectorLayerRef.current = newVectorLayer;
     } else {
       // Update the vector layer style with a wrapper function
       vectorLayer.setStyle((feature) => getFeatureStyle(feature, false));
+      vectorLayerRef.current = vectorLayer;
     }
 
     const source = vectorLayer?.getSource();
