@@ -1,112 +1,372 @@
-id,sectorname,parent_id,description,level
-11,Social Sector,,,1
-12,Productive Sector,,,1
-13,Infrastructure Sector,,,1
-1201,Agriculture,12,,2
-120101,Crops,1201,,3
-120102,Livestock,1201,,3
-120103,Forestry & Logging,1201,,3
-120104,Aquaculture,1201,,3
-120106,Fisheries,1201,,3
-12010101,Temporary/ Annual crop,120101,"Crops which are both sown and harvested during the same agricultural year, sometimes more than once;",4
-12010102,Permanent/ Perennial,120101,Sown or planted once andnot be replanted after each annual harvest.,4
-12010201,Animal production,120102,,4
-12010202,Hunting and trapping,120102,,4
-12010301,Silviculture,120103,,4
-12010302,Logging,120103,,4
-12010303,Gathering  forest products,120103,,4
-12010401,Marine Aquaculture,120104,,4
-12010402,Freshwater aquaculture,120104,,4
-12010601,Marine Fishing,120106,,4
-12010602,Freshwater fishing,120106,,4
-1202,Tourism,12,,2
-120201,Accommodation services,1202,,3
-120202,Food and beverage services,1202,,3
-120203,Travel agency services,1202,,3
-120204,Recreation and other entertainment services,1202,,3
-1203,Commerce,12,,2
-120301,Wholesale Trade,1203,"Scope: wholesale trade on own account or on a fee or contract basis (commission trade) related to domestic wholesale trade as well as international wholesale trade (import/export).
-
-Definition: Wholesale is the resale (sale without transformation) of new and used goods to retailers, business-to-business trade, such as to industrial, commercial, institutional or professional users, or resale to other wholesalers, or involves acting as an agent or broker in buying goods for, or selling goods to, such persons or companies",3
-120302,Retail Trade,1203,,3
-120303,Sales and maintenance of vehicles,1203,,3
-1301,Information and Communications,13,,2
-130101,Publishing,1301,,3
-130102,"Motion picture, video and television program production, sound recording and music publishing",1301,,3
-130103,Programming and broadcasting,1301,,3
-130104,Telecommunications,1301,,3
-130105,"Computer programming, consultancy and related activities",1301,,3
-130106,Information services,1301,,3
-13010401,Wired telecommunication activities,130104,,4
-13010402,Wireless telecommunication activities,130104,,4
-13010403,Satellite telecommunication activities,130104,,4
-13010404,Other telecommunication,130104,,4
-1302,Energy,13,,2
-130201,Energy equipment and services,1302,,3
-130202,Consumable fuels,1302,,3
-13020101,Electricity,130201,,4
-1302010101,Electricity Sources/Generation,13020101,,5
-1302010102,Electricity storage,13020101,,5
-1302010103,Electricity transmission,13020101,,5
-1302010104,Electricity distribution,13020101,,5
-130201010101,Non Renewable,1302010101,,6
-130201010102,Renewable,1302010101,,6
-13020101010101,Fossil Fuels,130201010101,,7
-13020101010102,Nuclear,130201010101,,7
-13020101010103,Non-renewable waste,130201010101,,7
-13020101010201,Renew. Hydropower,130201010102,,7
-13020101010202,Marine energy,130201010102,,7
-13020101010203,Wave energy,130201010102,,7
-13020101010204,Solar energy,130201010102,,7
-13020101010205,Geothermal,130201010102,,7
-13020101010206,Bioenergy,130201010102,,7
-13020101010207,Non-bio renewable fuels,130201010102,,7
-130201010301,Extra/ultra/high voltage,1302010103,,6
-130201010302,Medium voltage,1302010103,,6
-130201010303,Low voltage,1302010103,,6
-130201010401,"Per usage sector (residential, commercial, industrial, agriculture, others)",1302010104,,6
-13020201,Gas,130202,,4
-13020202,Oil,130202,,4
-13020203,Coal,130202,,4
-13020204,Steam,130202,,4
-13020205,Hot water,130202,,4
-1302020101,Manufacture,13020201,,5
-1302020102,Distribution,13020201,,5
-1302020201,Manufacture,13020202,,5
-1302020202,Distribution through mains,13020202,,5
-1101,Housing,11,,2
-110101,Type of housing / structural,1101,,3
-11010101,Permanent,110101,,4
-11010102,Temporary,110101,,4
-1204,Services,12,,2
-120401,Administrative and support services,1204,,3
-120402,"Professional, scientific and technical activities",1204,,3
-120403,Real estate,1204,,3
-120404,Finance and insurance activities,1204,,3
-120405,"Public administration and defence, compulsory social security ",1204,,3
-1205,Mining and quarrying,12,,2
-1206,Manufacturing,12,,2
-1207,Construction,12,,2
-1102,Culture,11,,2
-110201,Tangible,1102,,3
-110202,Intagible cultural heritage,1102,,3
-1303,Transportation,13,,2
-130301,Road transport,1303,,3
-130302,Railroad transport,1303,,3
-130303,Pipeline transport,1303,,3
-130304,Air transport,1303,,3
-130305,"Transport support, including airports, ports, tunnels, bridges, etc. ",1303,,3
-130306,Postal services,1303,,3
-1103,Education,11,,2
-110301,Level 0 - Early childhood,1103,Early childhood (01 Early childhood educational development (below 3) & Early childhood (02 Pre-primary - 3 to start primary),3
-110302,Level 1 - Primary education,1103,,3
-110303,Level 2 - Lower secondary education ( General or vocational),1103,,3
-110304,Level 3 - Upper secondary education ( General or vocational),1103,,3
-110305,Level 4 - Post-secondary non-tertiary education ( general or vocational),1103,"Post-secondary non-tertiary education provides learning experiences building on secondary education, preparing for labour market entry as well as tertiary education. It aims at theindividual acquisition of knowledge, skills and competencies lower than the level of complexity characteristic of tertiary education",3
-110306,Level 5 - Short-cycle tertiary education ( general or vocational),1103,,3
-110307,"Level 6,7,8 - Bachelors, Master, Phd (academic or professional)",1103,,3
-1104,Health,11,,2
-110401,Service delivery; health programmes,1104,,3
-110402,"Service delivery; Organisation and management of services, incl. the health network",1104,,3
-11040201,"community,  primary, secondary, tertiary levels",110402,,4
-1104020101,"Hospitals, health centres, clinics, dispensaries, pharmacies, health posts, blood banks, laboratories",11040201,,5
+id,parent_id,sectorname,description
+1,,Productive,
+2,,Social,
+3,,Infrastructures,
+4,,Cross-cutting,
+11,1,Agriculture,
+12,1,Industry,
+13,1,Tourism,
+14,1,Commerce and Trade,
+15,1,Services,
+21,2,Health,
+22,2,Education,
+23,2,Housing,
+24,2,Culture,
+31,3,Transportation,
+32,3,Energy and Electricity,
+33,3,Information and Communication,
+34,3,Water,
+35,3,Sanitation,
+36,3,Community infrastructure,
+41,4,Environment,
+42,4,Gender,
+43,4,Governance,
+44,4,"Employment, Livelihoods and social protection",
+45,4,Disaster Risk Management,
+1101,11,Crops,
+1102,11,Livestock,
+1103,11,Forestry and logging,
+1104,11,Aquaculture,
+1105,11,Fisheries,
+1201,12,Mining and quarrying,
+1202,12,Manufacturing,
+1203,12,Construction,
+1301,13,Accommodation services for visitors,
+1302,13,Food and beverage services,
+1303,13,Travel agency and reservation services,
+1304,13,Recreation and other entertainment,
+1305,13,Passenger transport,
+1401,14,Wholesale trade,
+1402,14,Retail trade,
+1403,14,Sales and maintenance of vehicles,
+1501,15,Administrative and support services,
+1502,15,"Professional, scientific and technical activities",
+1503,15,Real estate,
+1504,15,Finance and insurance services,
+2101,21,Health care network,
+2102,21,Health programs and other services,
+2103,21,Health care systems' management,
+2201,22,0-Early childhood,
+2202,22,1-Primary education,
+2203,22,2-3- Secondary,
+2204,22,4- Post secondary,
+2205,22,5-8 Tertiary,
+2206,22,Others -Non-formal education,
+2301,23,Housing units,
+2302,23,Collective living quarters,
+2401,24,Tangible Cultural heritage,
+2402,24,Intangible cultural heritage,
+3101,31,Land Transportation,
+3102,31,Air Transportation,
+3103,31,Water transportation,
+3104,31,Transportation supppor services,
+3105,31,Postal and courier services,
+3201,32,Electricity,
+3202,32,Consumable fuels,
+3301,33,Publishing,
+3302,33,"Motion picture, video and TV program production, sound and music recording",
+3303,33,Telecommunications;,
+3304,33,"Computer programming, consultancy and related",
+3305,33,Information services,
+3306,33,Others,
+3401,34,Water sources- generation,
+3402,34,Water treatment,
+3403,34,Water distribution,
+3501,35,Large scale sanitation,
+3502,35,Small scale sanitation,
+3503,35,Urban solid waste,
+3504,35,Hazardous waste,
+3601,36,Connective infrastructure,
+3602,36,Protective infrastructure,
+3603,36,Socio-economic structures,
+3604,36,Community Water and sanitation lifelines,
+3605,36,Community energy lifelines off-grid,
+3606,36,Commnications community lifelines,
+4101,41,Biodiversity,
+4102,41,Natural Ressources,
+4103,41,Ecosystem services,
+4201,42,Gender inequalities,
+4202,42,Gender-based violence,
+4301,42,Public administration,
+4302,42,Executive power,
+4303,42,Legislative power,
+4304,42,Judiciary power,
+4401,44,Employment,
+4402,44,Livelihoods,
+4403,44,Social protection,
+4501,45,Disaster management,
+4502,45,Disaster Recovery,
+4503,45,Disaster mitigation,
+1101001,1101,Temporary - annual crops,
+1101002,1101,Permanent- perennial crops,
+1102001,1102,Animal production,
+1102002,1102,Hunting and trapping,
+1103001,1103,Silviculture,
+1103002,1103,Logging,
+1103003,1103,Gathering forest products,
+1104001,1104,Marine aquaculture,
+1104002,1104,Freshwater aquaculture,
+1105001,1105,Marine fishing,
+1105002,1105,Freshwater fishing,
+1201001,1201,Mining of coal and lignite,
+1201002,1201,Extraction of crude petroleum and natural gas,
+1201003,1201,Mining of metal ores,
+1201004,1201,Mining of iron ores,
+1201005,1201,Other mining and quarrying,
+1201006,1201,Mining support service activities,
+1202001,1202,Manufacture of food products,
+1202002,1202,Manufacture of beverages,
+1202003,1202,Manufacture of tobacco products,
+1202004,1202,Manufacture of textiles,
+1202005,1202,Manufacture of wearing apparel,
+1202006,1202,Manufacture of leather and related products,
+1202007,1202,"Manufacture of wood and of products of wood and cork, except furniture; manufacture of articles of straw and plaiting materials",
+1202008,1202,Manufacture of paper and paper products,
+1202009,1202,Printing and reproduction of recorded media,
+1202010,1202,Manufacture of coke and refined petroleum products,
+1202011,1202,Manufacture of chemicals and chemical products,
+1202012,1202,Manufacture of basic pharmaceutical products and pharmaceutical preparations,
+1202013,1202,Manufacture of rubber and plastics products,
+1202014,1202,Manufacture of other non metallic mineral products,
+1202015,1202,Manufacture of basic metals,
+1202016,1202,Manufacture of fabricated metal products,
+1202017,1202,"Manufacture of computer, electronic and optical products",
+1202018,1202,Manufacture of electrical equipment,
+1202019,1202,Manufacture of machinery and equipment,
+1202020,1202,"Manufacture of motor vehicles, trailers and semi trailers",
+1202021,1202,Manufacture of other transport equipment,
+1202022,1202,Manufacture of furniture,
+1202023,1202,Other manufacturing,
+1202024,1202,Repair and installation of machinery and equipment,
+1203001,1203,Construction of buildings,
+1203002,1203,Civil engineering,
+1203003,1203,Specialized construction activities,
+1301001,1301,"Short-term accommodation in hotels, resort hotels, suite/apartment hotels, motels, motor hotels, guest houses, pensions, bed-and-breakfast units, visitor flats and bungalows, time-share units, holiday homes, chalets, housekeeping cottages and cabins, and youth hostel and mountain refuges;",
+1301002,1301,"Accommodation in camping grounds, recreational vehicle parks and trailer parks;",
+1301003,1301,"Accommodation in student residences, school dormitories, workers’ hostels, rooming and boarding houses",
+1301004,1301,Other accomodation services,
+1302001,1302,"Provision of food service to customers in restaurants, cafeterias, fast food restaurants, pizza delivery, take out eating places, ice-cream truck vendors, mobile food carts, food preparation in market stalls;",
+1302002,1302,Event catering and other food-service activities;,
+1302003,1302,"Beverage serving activities in bars, taverns, cocktail lounges, discotheques, beer parlors and pubs, coffee shops, fruit juice bars, and mobile beverage vendors.",
+1302004,1302,Other food and beverage services,
+1303001,1303,Retail travel agencies,
+1303002,1303,Wholesale travel agencies,
+1303003,1303,Online travel agencies,
+1303004,1303,Tour operators,
+1304001,1304,Sport and recreational activities,
+1304002,1304,Cultural activities,
+1305001,1305,Road passenger transport,
+1305002,1305,Air passenger transport,
+1305003,1305,water passenger transport,
+1305004,1305,railway passenger transport,
+1401001,1401,Wholesale on a fee or contract basis,
+1401002,1401,Wholesale of agricultural raw materials and live animals,
+1401003,1401,"Wholesale of food, beverages and tobacco",
+1401004,1401,Wholesale of household goods,
+1401005,1401,"Wholesale of machinery, equipment and supplies",
+1401006,1401,Other specialized wholesale,
+1401007,1401,Non-specialized wholesale trade,
+1401008,1401,Other wholesade trade,
+1402001,1402,Retail trade in stores,
+1402002,1402,Retail trade non in stores,
+1402003,1402,Other retail trade,
+1403001,1403,Sale of motor vehicles,
+1403002,1403,Maintenance and repair of motor vehicles,
+1403003,1403,Sale of motor vehicle parts and accessories,
+1403004,1403,"Sale, maintenance and repair of motorcycles and related parts and accessories",
+1403005,1403,Others,
+1501001,1501,Rental and leasing activities,
+1501002,1501,Employment activities,
+1501003,1501,Security and investigation activities,
+1501004,1501,Services to buildings and landscape activities,
+1501005,1501,"Office administrative, office support and other business support activities",
+1502001,1502,legal and accounting activities,
+1502002,1502,Activities of head offices; management consultancy activities,
+1502003,1502,Architectural and engineering activities; technical testing and analysis,
+1502004,1502,Scientific research and development,
+1502005,1502,Scientific research and development,
+1502006,1502,"Other professional, scientific and technical activities",
+1502007,1502,Veterinary activities,
+1503001,1503,real estate with own or leased property,
+1503002,1503,Real estate activities on a fee or contract basis,
+1504001,1504,Monetary intermediation,
+1504002,1504,Holding companies,
+1504003,1504,"Trusts, funds and similar financial entities",
+1504004,1504,Other financing services,
+1504005,1504,Insurance,
+1504006,1504,Reinsurance,
+1504007,1504,Pension funding,
+1504008,1504,Activities auxiliary to financial service and insurance activities,
+1504009,1504,Fund management activities,
+2101001,2101,community-based,
+2101002,2101,primary health care,
+2101003,2101,secondary,
+2101004,2101,tertiary levels,
+2101005,2101,Other-non categorized,
+2102001,2102,Telemedicine,
+2102002,2102,Sexual and reproductive health,
+2102003,2102,Health education,
+2102004,2102,Emergency medical services,
+2102005,2102,Environmental health,
+2102006,2102,One health,
+2102007,2102,Immunization programs,
+2102008,2102,Mental health,
+2102009,2102,Communicable diseases programs,
+2102010,2102,Non-communicable diseases programs,
+2102011,2102,Nutrition,
+2102012,2102,Family planning,
+2102013,2102,Health surveillance and early warning,
+2102014,2102,Other health services,
+2103001,2103,Health information systems,
+2201001,2201,"01 Early childhood educational
+ development ( below 3)",
+2201002,2201,"Early childhood
+ (02 Pre-primary - 3 to start primary)",
+2202001,2202,Primary education,
+2203001,2203,2- Lower secondary - middle school,
+2203002,2203,3 Upper secondary / High school,
+2204001,2204,General,
+2204002,2204,Vocational,
+2205001,2205,5 -Short-cycle tertiary education ( general or vocational),
+2205002,2205,"6,7,8-Bachelors, Master, Phd ( academic or professional)",
+2206001,2206,Adult education/ literacy programs,
+2206002,2206,Community education,
+2206003,2206,Continuing professional development programs,
+2206004,2206,Others - Adult language centers,
+2206005,2206,Others -lifelong learning,
+2206006,2206,Other non-formal education,
+2301001,2301,With all basic facilities,
+2301002,2301,Conventional dwellings,
+2301003,2301,Other housing units,
+2302001,2302,Rooming houses and lodging,
+2302002,2302,Institutions,
+2302003,2302,Camps and workers quarters,
+2302004,2302,Other collectiving living quarters,
+2401001,2401,Built heritage,
+2401002,2401,Cultural sites,
+2401003,2401,Natural sites,
+2401004,2401,Movable properties and collections,
+2401005,2401,Repositories of heritage,
+2401006,2401,Urban heritage,
+2401007,2401,Other tangible heritage designations,
+2402001,2402,"landscapes,",
+2402002,2402,"traditional knowledge,",
+2402003,2402,"rituals,",
+2402004,2402,"festivals,",
+2402005,2402,language,
+2402006,2402,cultural practices,
+3101001,3101,Road transport infrastructure,
+3101002,3101,Railroad transport,
+3101003,3101,Pipeline transport,
+3101004,3101,Other land transport,
+3102001,3102,Passenger air transport,
+3102002,3102,Freight air transport,
+3103001,3103,Sea and coastal,
+3103002,3103,Inland water transport,
+3103003,3103,Other water transportation,
+3104001,3104,Warehousing and storage,
+3104002,3104,Support activities for transportation,
+3104003,3104,Other transportation support activities,
+3105001,3105,Postal activities,
+3105002,3105,Courier activities,
+3201001,3201,Non Renewable,
+3201002,3201,Renewable,
+3201003,3201,Electricity Storage,
+3201004,3201,Extra/ultra/high voltage,
+3201005,3201,Medium voltage,
+3201006,3201,Low voltage,
+3201007,3201,Residential and commercial network,
+3201008,3201,Industrial network,
+3201009,3201,Other specials network,
+3202001,3202,Natural gas- upstream,
+3202002,3202,Natural Gas processing,
+3202003,3202,Natural Gas storage,
+3202004,3202,Gas Distribution,
+3202005,3202,Oil Manufacture/ upstream,
+3202006,3202,Oil refinery,
+3202007,3202,Oil strorage,
+3202008,3202,Oil Distribution through mains,
+3202009,3202,Coal Generation,
+3202010,3202,Coal Distribution,
+3202011,3202,Steam Generation,
+3202012,3202,Steam Distribution,
+3202013,3202,Hot water Generation,
+3202014,3202,Hot water Distribution,
+3303001,3303,Wired telecommunication activities;,
+3303002,3303,Wireless telecommunication activities;,
+3303003,3303,Satellite telecommunication activities;,
+3304001,3304,Other telecommunications activities,
+3401001,3401,From Surface water,
+3401002,3401,From Ground water,
+3401003,3401,From Soil water,
+3401004,3401,Desalination,
+3401005,3401,From Reclaimed,
+3401006,3401,From Rainwater harvested,
+3401007,3401,Other water sources,
+3402001,3402,Physical water treatment,
+3402002,3402,Chemical water treatment,
+3402003,3402,Biological water treatment,
+3402004,3402,Thermal water treatment,
+3402005,3402,Other treatment system,
+3403001,3403,Piped water distribution,
+3403002,3403,Non-piped water distribution,
+3501001,3501,Urban sewage system,
+3501002,3501,Storm and runoff collection systems,
+3501003,3501,Wastewater and sewage treatment facilities,
+3501004,3501,pumping systems,
+3503001,3503,Waste collection,
+3503002,3503,Waste processing and treatment,
+3503003,3503,Waste transportation,
+3503004,3503,Waste disposal,
+3504001,3504,Waste collection,
+3504002,3504,Waste processing and treatment,
+3504003,3504,Waste transportation,
+3504004,3504,Waste disposal,
+4101001,4101,Species,
+4101002,4101,Habitats,
+4101003,4101,Ecosystems,
+4101004,4101,Landscapes,
+4102001,4102,Land ( including soils),
+4102002,4102,Agricultural land,
+4102003,4102,Primary forest,
+4102004,4102,Freshwater,
+4102005,4102,Other natural resources,
+4103001,4103,Supporting services,
+4103002,4103,Regulating Services,
+4103003,4103,Provisioning services,
+4103004,4103,Cultural services,
+4201001,4201,Time-use,
+4201002,4201,Access to ressources,
+4201003,4201,Access to services,
+4201004,4201,Livelihoods - production,
+4201005,4201,Productive Asset ownership,
+4201006,4201,Human mobility,
+4201007,4201,Gender-based discrimination,
+4202001,4202,Physical violence,
+4202002,4202,Sexual violence,
+4202003,4202,Psychological abuse,
+4202004,4202,Economic abuse,
+4202005,4202,Harmful traditional practices,
+4202006,4202,Cyber or online abuse,
+4301001,4301,Administration of the state,
+4301002,4301,Regional - Decentralized Administration,
+4301003,4301,Local administration,
+4302001,4302,Government,
+4303001,4303,Parlaments/ Congress/ Lower chamber,
+4303002,4303,Upper Chamber/Senate,
+4304001,4304,Courts,
+4304002,4304,Tribunals,
+4401001,4401,Employees,
+4401002,4401,Self-employed,
+4401003,4401,Gig workers/ Dependent contractor,
+4402001,4402,Commerce livelihoods,
+4402002,4402,Agriculture livelihoods,
+4402003,4402,Service livelihoods,
+4402004,4402,Handicraft livelihoods,
+4402005,4402,Culture livelihoods,
+4402006,4402,Tourism livelihoods,
+4402007,4402,Industry livelihoods,
+4402008,4402,Care livelihoods,
+4501001,4501,Disaster response,
+4501002,4501,Aid coordination,
+4501003,4501,Hazard monitoring,

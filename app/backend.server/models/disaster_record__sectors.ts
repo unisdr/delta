@@ -109,8 +109,6 @@ export async function sectorsFilderBydisasterRecordsId(idStr: string) {
 	let id = idStr;
 
 	const catTable = aliasedTable(sectorTable, "catTable");
-	const catTableParent1 = aliasedTable(sectorTable, "catTableParent1");
-	const catTableParent2 = aliasedTable(sectorTable, "catTableParent2");
 
 	return await dr.select({
 			disRecSectorsId: sectorDisasterRecordsRelationTable.id,
@@ -122,8 +120,6 @@ export async function sectorsFilderBydisasterRecordsId(idStr: string) {
 			disRecSectorsdisasterRecordId: sectorDisasterRecordsRelationTable.disasterRecordId,
 			disRecSectorsSectorId: sectorDisasterRecordsRelationTable.sectorId,
 			catName: catTable.sectorname,
-			catNameParent1: catTableParent1.sectorname,
-			catNameParent2: catTableParent2.sectorname,
 			sectorTreeDisplay: sql`(
 				WITH RECURSIVE ParentCTE AS (
 					SELECT id, sectorname, parent_id, sectorname AS full_path
@@ -142,8 +138,6 @@ export async function sectorsFilderBydisasterRecordsId(idStr: string) {
 			)`.as('sectorTreeDisplay'),
 		}).from(sectorDisasterRecordsRelationTable)
 		.leftJoin(catTable, eq(catTable.id, sectorDisasterRecordsRelationTable.sectorId))
-		.leftJoin(catTableParent1, eq(catTableParent1.id, catTable.parentId))
-		.leftJoin(catTableParent2, eq(catTableParent2.id, catTableParent1.parentId))
 		.where(eq(sectorDisasterRecordsRelationTable.disasterRecordId, id))
 		.orderBy(sql`(
 				WITH RECURSIVE ParentCTE AS (

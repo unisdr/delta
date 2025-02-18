@@ -123,7 +123,7 @@ export default function Screen() {
 		treeData: any[]
 		cpDisplayName: string
 	}>();
-	console.log(ld);
+	// console.log(ld);
 
 	return (
 		<>
@@ -278,9 +278,8 @@ export default function Screen() {
 												<thead>
 													<tr>
 														<th>ID</th>
-														<th>Description</th>
-														<th>Parent Category</th>
 														<th>Area</th>
+														<th>Description</th>
 														<th>Actions</th>
 													</tr>
 												</thead>
@@ -288,11 +287,10 @@ export default function Screen() {
 													{ld.recordsNonecoLosses && Array.isArray(ld.recordsNonecoLosses) && ld.recordsNonecoLosses.map((item, index) => (
 														<tr key={ index }>
 															<td>{ item.noneccoId.slice(0, 8) }</td>
-															<td>{ item.noneccoDesc.slice(0, 300) }</td>
 															<td>
-																{ item.catNameParent2 ? item.catNameParent2 + ': ' + item.catNameParent1 : item.catNameParent1 }
+																{ item.categoryTreeDisplay }
 															</td>
-															<td>{ item.catName }</td>
+															<td>{ item.noneccoDesc.slice(0, 300) }</td>
 															<td>
 																{ ld.item && ld.item.id && (
 																	<Link to={`${route}/non-economic-losses/${ld.item.id}/?id=${item.noneccoId}`}>Edit</Link>
