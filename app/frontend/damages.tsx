@@ -243,6 +243,57 @@ export function DamagesForm(props: DamagesFormProps) {
 		</>
 	}
 
+	// handle show/hide disruption
+	useEffect(() => {
+		let showHide = (publicOrPrivate: string, show: boolean) => {
+			console.log("disruption show/hide", publicOrPrivate, show)
+			if (!formRef.current) return
+			let el = formRef.current!.querySelector('.' + publicOrPrivate + "Disruption")
+			if (!el) return
+
+			let header = el.querySelector(".header") as HTMLElement
+			header.style.display = show ? "block" : "none"
+			let addEl = el.querySelector(".add") as HTMLElement
+			addEl.style.display = show ? "none" : "inline"
+			let hideEl = el.querySelector(".hide") as HTMLElement
+			hideEl.style.display = show ? "inline" : "none"
+
+			//	for each row
+			for (let elName of ["DisruptionDurationDays", "DisruptionDescription"]) {
+				let el = formRef.current.querySelector("[name=" + publicOrPrivate + elName + "]")
+				if (!el) {
+					throw new Error("el not found:" + elName)
+				}
+				let p = el.closest(".mg-grid") as HTMLElement
+				p.style.display = show ? "grid" : "none"
+			}
+		}
+		let attach = (publicOrPrivate: string) => {
+			let el = formRef.current!.querySelector('.' + publicOrPrivate + "Disruption")
+			if (!el) return
+			el.querySelector(".add")!.addEventListener("click", (e: Event) => {
+				e.preventDefault()
+				showHide(publicOrPrivate, true)
+			})
+			el.querySelector(".hide")!.addEventListener("click", (e: Event) => {
+				e.preventDefault()
+				showHide(publicOrPrivate, false)
+			})
+		}
+		if (formRef.current) {
+			attach("public")
+			showHide("public", false)
+			attach("private")
+			showHide("private", false)
+		}
+		return () => {
+			if (formRef.current) {
+				// TODO: remove event listener
+			}
+		}
+	}, [props.fields])
+
+
 	let assetDef = props.fieldDef.find(d => d.key == "assetId")
 	if (!assetDef) {
 		throw new Error("assetId def does not exist")
@@ -323,6 +374,20 @@ export function DamagesForm(props: DamagesFormProps) {
 				assetId: (
 					<h2>Public</h2>
 				),
+				publicRecoveryCostTotalOverride: (
+					<div className="publicDisruption">
+						<a className="add" href="#">Add disruption</a>
+						<a className="hide" href="#">Hide disruption</a>
+						<h3 className="header">Disruption</h3>
+					</div>
+				),
+				privateRecoveryCostTotalOverride: (
+					<div className="privateDisruption">
+						<a className="add" href="#">Add disruption</a>
+						<a className="hide" href="#">Hide disruption</a>
+						<h3 className="header">Disruption</h3>
+					</div>
+				),
 				publicDisruptionDescription: (
 					<h2>Private</h2>
 				),
@@ -343,6 +408,7 @@ export function DamagesView(props: DamagesViewProps) {
 		recordId: <p key="recordId">Disaster record ID: {props.item.recordId}</p>,
 		sectorId: <p key="sectorId">Sector ID: {props.item.sectorId}</p>,
 		assetId: <p key="assetId">Asset: {props.item.asset.name}</p>,
+
 		publicUnit: undefined,
 		publicRepairCostUnit: undefined,
 		publicRepairCostUnitCurrency: undefined,
@@ -366,6 +432,42 @@ export function DamagesView(props: DamagesViewProps) {
 		privateReplacementUnits: undefined,
 		privateReplacementCostTotalOverride: undefined,
 	}
+
+	let elementsAfter = {
+		assetId: (
+			<h2>Public</h2>
+		),
+		publicDisruptionDescription: (
+			<h2>Private</h2>
+		),
+		publicRecoveryCostTotalOverride: (
+			<h3>Disruption</h3>
+		),
+		privateRecoveryCostTotalOverride: (
+			<h3>Disruption</h3>
+		),
+	}
+
+	let hideDisruptionIfNoData = (publicOrPrivate: "public" | "private") => {
+		let fields = ["DisruptionDurationDays", "DisruptionDurationHours", "DisruptionUsersAffected", "DisruptionPeopleAffected", "DisruptionDescription"]
+		let exists = false
+		for (let f of fields) {
+			let fName = publicOrPrivate + f as keyof DamagesViewModel 
+			if (props.item[fName] !== null) {
+				exists = true
+			}
+		}
+		if (!exists) {
+			let fName = publicOrPrivate + "RecoveryCostTotalOverride" as keyof (typeof elementsAfter)
+			delete elementsAfter[fName]
+			for (let f of fields) {
+				let fName = publicOrPrivate + f
+				override[fName] = null
+			}
+		}
+	}
+	hideDisruptionIfNoData("public")
+	hideDisruptionIfNoData("private")
 
 	if (props.item.publicDamage == "total") {
 		override.publicRepairCostUnit = null
@@ -406,14 +508,7 @@ export function DamagesView(props: DamagesViewProps) {
 			<FieldsView
 				def={props.def}
 				fields={props.item}
-				elementsAfter={{
-					assetId: (
-						<h2>Public</h2>
-					),
-					publicDisruptionDescription: (
-						<h2>Private</h2>
-					),
-				}}
+				elementsAfter={elementsAfter}
 				override={override}
 			/>
 		</ViewComponent>
