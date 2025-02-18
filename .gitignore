@@ -45,3 +45,5 @@ drizzle.config.js
 # OS
 .DS_Store
 Thumbs.db
+
+readme.md
