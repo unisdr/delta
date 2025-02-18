@@ -385,7 +385,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                   <input
                                       type="text"
                                       placeholder="Search..."
-                                      value={searchQuery}
+                                      defaultValue={searchQuery}
                                       onChange={handleSearch}
                                   />
                               </div>
@@ -466,7 +466,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                         )}
                       <div className="cp-search" onClick={openPicker}>
                         <svg aria-hidden="true" focusable="false" role="img"></svg>
-                        <input type="hidden" id={id} name={id} value={selectedId} />
+                        <input type="hidden" id={id} name={id} defaultValue={selectedId} />
                       </div>
                       <div className="cp-validation-popup">⚠️ Please fill out this field.</div>
                   </div>
