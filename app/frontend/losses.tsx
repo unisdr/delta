@@ -210,6 +210,24 @@ interface LossesViewProps {
 }
 
 export function LossesView(props: LossesViewProps) {
+	// calculate totals for display only
+	for (let prefix of [
+		"public",
+		"private",
+	]) {
+		let keyTotal = prefix + "CostTotalOverride" as keyof LossesViewModel
+		let keyCostPerUnit = prefix + "CostUnit" as keyof LossesViewModel
+		let keyUnits = prefix + "Units" as keyof LossesViewModel
+		if (!props.item[keyTotal]) {
+			let costPerUnit = props.item[keyCostPerUnit]
+			let units = props.item[keyUnits]
+			if (costPerUnit && units) {
+				let res = Math.round(Number(costPerUnit) * Number(units))
+				let item = props.item as any
+				item[keyTotal] = String(res)
+			}
+		}
+	}
 
 	// select field to show based if sector is related to agriculture
 	let extra = props.item.sectorIsAgriculture ? {

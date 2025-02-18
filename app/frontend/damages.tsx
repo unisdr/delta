@@ -404,6 +404,30 @@ interface DamagesViewProps {
 
 export function DamagesView(props: DamagesViewProps) {
 
+	// calculate totals for display only
+	for (let prefix of [
+		"publicRepair",
+		"publicReplacement",
+		"publicRecovery",
+		"privateRepair",
+		"privateReplacement",
+		"privateRecovery",
+	]) {
+		let keyTotal = prefix + "CostTotalOverride" as keyof DamagesViewModel
+		let keyCostPerUnit = prefix + "CostUnit" as keyof DamagesViewModel
+		let keyUnits = prefix + "Units" as keyof DamagesViewModel
+		if (!props.item[keyTotal]) {
+			let costPerUnit = props.item[keyCostPerUnit]
+			let units = props.item[keyUnits]
+			if (costPerUnit && units) {
+				let res = Math.round(Number(costPerUnit) * Number(units))
+				let item = props.item as any
+				item[keyTotal] = String(res)
+			}
+		}
+	}
+
+
 	let override: Record<string, JSX.Element | null | undefined> = {
 		recordId: <p key="recordId">Disaster record ID: {props.item.recordId}</p>,
 		sectorId: <p key="sectorId">Sector ID: {props.item.sectorId}</p>,
@@ -452,7 +476,7 @@ export function DamagesView(props: DamagesViewProps) {
 		let fields = ["DisruptionDurationDays", "DisruptionDurationHours", "DisruptionUsersAffected", "DisruptionPeopleAffected", "DisruptionDescription"]
 		let exists = false
 		for (let f of fields) {
-			let fName = publicOrPrivate + f as keyof DamagesViewModel 
+			let fName = publicOrPrivate + f as keyof DamagesViewModel
 			if (props.item[fName] !== null) {
 				exists = true
 			}
