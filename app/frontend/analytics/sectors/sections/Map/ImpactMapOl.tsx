@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
-import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
-import { OSM } from "ol/source";
 import { fromLonLat } from "ol/proj";
 import { Fill, Stroke, Style } from "ol/style";
 import Overlay from "ol/Overlay";
@@ -13,9 +11,6 @@ import { pointerMove } from "ol/events/condition";
 import Select from "ol/interaction/Select";
 import Swal from "sweetalert2";
 import "./ImpactMap.css"; // Custom styles
-import { useQuery } from "@tanstack/react-query";
-import { transformExtent } from 'ol/proj';
-import { buffer } from 'ol/extent';
 
 type ImpactMapProps = {
   geoData: any;
@@ -41,97 +36,21 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentParentId, setCurrentParentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const vectorLayerRef = useRef<VectorLayer<VectorSource>>();
-
-  // Query for geographic level boundary
-  const { data: geographicBoundary, isLoading: isBoundaryLoading } = useQuery({
-    queryKey: ['geographicBoundary', filters.geographicLevelId],
-    queryFn: async () => {
-      if (!filters.geographicLevelId) return null;
-      const response = await fetch(`/api/analytics/geographic-levels/${filters.geographicLevelId}/boundary`);
-      if (!response.ok) {
-        console.error('Failed to fetch geographic boundary:', await response.text());
-        throw new Error('Failed to fetch geographic boundary');
-      }
-      return response.json();
-    },
-    enabled: !!filters.geographicLevelId,
-    retry: 1
-  });
-
-  // Effect to handle geographic level changes and zooming
-  useEffect(() => {
-    if (!map || !geoData || !filters.geographicLevelId) return;
-
-    try {
-      const format = new GeoJSON();
-      const features = format.readFeatures(geoData, {
-        featureProjection: 'EPSG:3857'
-      });
-
-      // Filter features for the selected geographic level
-      const selectedFeatures = features.filter(feature => {
-        const properties = feature.getProperties();
-        return properties.geographicLevelId === filters.geographicLevelId;
-      });
-
-      if (selectedFeatures.length > 0) {
-        // Calculate combined extent of all selected features
-        const extent = selectedFeatures.reduce((acc, feature) => {
-          const geometry = feature.getGeometry();
-          if (!acc && geometry) {
-            return geometry.getExtent();
-          }
-          if (geometry) {
-            return [
-              Math.min(acc[0], geometry.getExtent()[0]),
-              Math.min(acc[1], geometry.getExtent()[1]),
-              Math.max(acc[2], geometry.getExtent()[2]),
-              Math.max(acc[3], geometry.getExtent()[3])
-            ];
-          }
-          return acc;
-        }, null);
-
-        if (extent) {
-          // Add padding to the extent (10% of width)
-          const bufferedExtent = buffer(extent, extent[2] / 10);
-
-          // Zoom to the extent
-          map.getView().fit(bufferedExtent, {
-            padding: [50, 50, 50, 50],
-            duration: 1000
-          });
-        }
-      }
-
-      // Update the vector layer
-      if (vectorLayerRef.current) {
-        const source = vectorLayerRef.current.getSource();
-        if (source) {
-          source.clear();
-          source.addFeatures(selectedFeatures);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating map view:', error);
-    }
-  }, [map, geoData, filters.geographicLevelId]);
 
   // Fetch data for the current level and parent
   const fetchGeoData = async (level: number, parentId: number | null) => {
     setLoading(true);
     try {
       const url = new URL('http://localhost:3000/api/analytics/geographic-impacts');
-      
+
       // Always send sectorId
       url.searchParams.set('sectorId', filters.sectorId || '');
-      
+
       // Send subSectorId if it exists and is not empty
       if (filters.subSectorId) {
         url.searchParams.set('subSectorId', filters.subSectorId);
       }
-      
+
       url.searchParams.set('level', level.toString());
       if (parentId) {
         url.searchParams.set('parentId', parentId.toString());
@@ -203,11 +122,11 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     };
 
     const ranges = [
-      { min: 0, max: max * 0.2, color: '#E3F2FD' },
-      { min: max * 0.2, max: max * 0.4, color: '#90CAF9' },
-      { min: max * 0.4, max: max * 0.6, color: '#42A5F5' },
-      { min: max * 0.6, max: max * 0.8, color: '#1E88E5' },
-      { min: max * 0.8, max: max, color: '#1565C0' }
+      { min: 0, max: max * 0.2, color: 'rgba(227, 242, 253, 0.9)' },
+      { min: max * 0.2, max: max * 0.4, color: 'rgba(144, 202, 249, 0.9)' },
+      { min: max * 0.4, max: max * 0.6, color: 'rgba(66, 165, 245, 0.9)' },
+      { min: max * 0.6, max: max * 0.8, color: 'rgba(30, 136, 229, 0.9)' },
+      { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)' }
     ];
 
     setLegendRanges(ranges.map(r => ({
@@ -225,11 +144,12 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
 
     return new Style({
       fill: new Fill({
-        color: range ? range.color : 'rgba(255,255,255,0.5)'
+        color: range ? range.color : 'rgba(240,240,240,0.9)'
       }),
       stroke: new Stroke({
         color: isHovered ? '#000' : '#666',
-        width: isHovered ? 2 : 1
+        width: isHovered ? 3 : 1.5,
+        lineDash: isHovered ? undefined : [1, 2]
       })
     });
   };
@@ -320,16 +240,22 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     const newMap = new Map({
       target: mapRef.current,
       layers: [
-        new TileLayer({
-          source: new OSM()
+        new VectorLayer({
+          source: new VectorSource(),
+          style: (feature) => getFeatureStyle(feature, false)
         })
       ],
       view: new View({
         center: philippinesCenter,
         zoom: initialZoom,
-        constrainResolution: true // This ensures consistent zoom levels
+        constrainResolution: true
       })
     });
+
+    // Set background color on the map container
+    if (mapRef.current) {
+      mapRef.current.style.backgroundColor = '#f5f5f5';
+    }
 
     setMap(newMap);
 
@@ -418,11 +344,9 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
         style: (feature) => getFeatureStyle(feature, false) // Wrapper function
       });
       map.addLayer(newVectorLayer);
-      vectorLayerRef.current = newVectorLayer;
     } else {
       // Update the vector layer style with a wrapper function
       vectorLayer.setStyle((feature) => getFeatureStyle(feature, false));
-      vectorLayerRef.current = vectorLayer;
     }
 
     const source = vectorLayer?.getSource();
@@ -484,8 +408,8 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
         </div>
       </div>
 
-      <div style={{ position: 'relative' }}>
-        <div ref={mapRef} style={{ width: "100%", height: "500px" }} />
+      <div style={{ position: 'relative', backgroundColor: '#f5f5f5' }}>
+        <div ref={mapRef} style={{ width: "100%", height: "500px", backgroundColor: '#f5f5f5' }} />
         <div ref={tooltipRef} className="map-tooltip" />
         <div className="legend">
           <h4>Legend</h4>

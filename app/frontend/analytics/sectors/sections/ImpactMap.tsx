@@ -42,8 +42,6 @@ const DEFAULT_FILTERS: FilterValues = {
 export default function ImpactMap({ filters }: ImpactMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [selectedMetric, setSelectedMetric] = useState<"totalDamage" | "totalLoss">("totalDamage");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Add sectors query for dynamic titles
   const { data: sectorsData } = useQuery({
@@ -96,19 +94,23 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
 
   // Fetch geographic impact data when filters change
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchGeoData = async () => {
+      if (!filters?.sectorId) {
+        setGeoData(null);
+        return;
+      }
+
       try {
-        setLoading(true);
         const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
-        
-        // Add sector filters
-        if (filters.sectorId) {
-          url.searchParams.append('sectorId', filters.sectorId);
-        }
+
+        // Add sectorId first
+        url.searchParams.append('sectorId', filters.sectorId);
+
+        // Add subSectorId if it exists
         if (filters.subSectorId) {
           url.searchParams.append('subSectorId', filters.subSectorId);
         }
-        
+
         // Add other filters
         Object.entries(filters).forEach(([key, value]) => {
           if (value && key !== 'sectorId' && key !== 'subSectorId') {
@@ -122,13 +124,11 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
         setGeoData(data);
       } catch (error) {
         console.error("Error fetching geographic impact data:", error);
-        setError(error instanceof Error ? error.message : "Failed to fetch data");
-      } finally {
-        setLoading(false);
+        setGeoData(null);
       }
     };
 
-    fetchData();
+    fetchGeoData();
   }, [filters]);
 
   if (!geoData) return null;
