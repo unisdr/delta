@@ -810,8 +810,7 @@ export type disasterRecordsInsert = typeof disasterRecordsTable.$inferInsert;
 export const disasterRecordsTable = pgTable("disaster_records", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	disasterEventId: uuid("disaster_event_id")
-		.references((): AnyPgColumn => disasterEventTable.id)
-		.notNull(),
+		.references((): AnyPgColumn => disasterEventTable.id),
 	locationDesc: text("location_desc"),
 	startDate: text("start_date"),
 	endDate: text("end_date"),
