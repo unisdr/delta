@@ -51,7 +51,7 @@ export default function Screen() {
 
 	return (
 		<MainContainer title="Human Direct Effects">
-			<Link to={"/disaster-record/" + ld.recordId}>Back to disaster record</Link>
+			<Link to={"/disaster-record/edit/" + ld.recordId}>Back to disaster record</Link>
 			<p>{data.tbl.label}</p>
 			<fetcher.Form method="get" action=".">
 				<select
