@@ -1,7 +1,6 @@
-import { LoaderFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { dr } from "~/db.server";
-import { divisionTable } from "~/drizzle/schema";
+import { LoaderFunction, json } from "@remix-run/node";
+import { db } from "~/backend.server/db";
+import { division } from "~/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -41,49 +40,34 @@ import { eq } from "drizzle-orm";
  */
 export const loader: LoaderFunction = async ({ params }) => {
   try {
-    const { id } = params;
-    if (!id) throw new Error("Geographic level ID is required");
-
-    const query = dr
-      .select({
-        id: divisionTable.id,
-        name: divisionTable.name,
-        level: divisionTable.level,
-        parentId: divisionTable.parentId,
-        geojson: divisionTable.geojson,
-      })
-      .from(divisionTable)
-      .where(eq(divisionTable.id, parseInt(id, 10)));
-
-    const division = await query;
-    if (!division || division.length === 0) {
-      throw new Response("Geographic level not found", { status: 404 });
+    const id = parseInt(params.id as string);
+    if (isNaN(id)) {
+      throw new Error("Invalid geographic level ID");
     }
 
-    // Return the GeoJSON directly if it exists
-    if (division[0].geojson) {
-      return json(division[0].geojson);
+    const result = await db.select({ 
+      geojson: division.geojson 
+    })
+    .from(division)
+    .where(eq(division.id, id))
+    .limit(1);
+
+    if (!result.length || !result[0].geojson) {
+      console.error(`No boundary data found for geographic level ${id}`);
+      throw new Error("Boundary data not found");
     }
 
-    // If no GeoJSON, create a basic feature
-    const geoJSON = {
-      type: "FeatureCollection",
-      features: [{
-        type: "Feature",
-        geometry: null,
-        properties: {
-          id: division[0].id,
-          name: division[0].name,
-          level: division[0].level,
-          parentId: division[0].parentId,
-        }
-      }]
-    };
+    // Validate GeoJSON structure
+    const geojson = result[0].geojson;
+    if (!geojson.type || !geojson.coordinates) {
+      console.error(`Invalid GeoJSON structure for geographic level ${id}:`, geojson);
+      throw new Error("Invalid boundary data format");
+    }
 
-    return json(geoJSON);
+    console.log(`Successfully fetched boundary for geographic level ${id}`);
+    return json(geojson);
   } catch (error) {
-    console.error("Error fetching geographic level boundary:", error);
-    if (error instanceof Response) throw error;
-    throw new Response("Failed to fetch geographic level boundary", { status: 500 });
+    console.error("Error fetching geographic boundary:", error);
+    throw new Response("Failed to fetch geographic boundary", { status: 500 });
   }
 }

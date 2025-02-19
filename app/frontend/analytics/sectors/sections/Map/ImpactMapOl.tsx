@@ -44,87 +44,79 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   const vectorLayerRef = useRef<VectorLayer<VectorSource>>();
 
   // Query for geographic level boundary
-  const { data: geographicBoundary } = useQuery({
+  const { data: geographicBoundary, isLoading: isBoundaryLoading } = useQuery({
     queryKey: ['geographicBoundary', filters.geographicLevelId],
     queryFn: async () => {
       if (!filters.geographicLevelId) return null;
       const response = await fetch(`/api/analytics/geographic-levels/${filters.geographicLevelId}/boundary`);
-      if (!response.ok) throw new Error('Failed to fetch geographic boundary');
+      if (!response.ok) {
+        console.error('Failed to fetch geographic boundary:', await response.text());
+        throw new Error('Failed to fetch geographic boundary');
+      }
       return response.json();
     },
-    enabled: !!filters.geographicLevelId
+    enabled: !!filters.geographicLevelId,
+    retry: 1
   });
 
-  // Effect to handle geographic level changes
+  // Effect to handle geographic level changes and zooming
   useEffect(() => {
-    if (!map || !geographicBoundary || !filters.geographicLevelId) return;
+    if (!map || !geoData || !filters.geographicLevelId) return;
 
     try {
-      // Parse the GeoJSON
       const format = new GeoJSON();
-      const features = format.readFeatures(geographicBoundary, {
+      const features = format.readFeatures(geoData, {
         featureProjection: 'EPSG:3857'
       });
 
-      // Get the extent of the features
-      const extent = features[0].getGeometry()?.getExtent();
-      if (!extent) return;
+      // Filter features for the selected geographic level
+      const selectedFeatures = features.filter(feature => {
+        const properties = feature.getProperties();
+        return properties.geographicLevelId === filters.geographicLevelId;
+      });
 
-      // Add some padding to the extent (10% of the width)
-      const bufferedExtent = buffer(extent, extent[2] / 10);
-
-      // Fit the view to the extent with animation
-      map.getView().fit(bufferedExtent, {
-        padding: [50, 50, 50, 50],
-        duration: 1000,
-        callback: () => {
-          // After zooming, update the vector layer
-          if (vectorLayerRef.current) {
-            const source = vectorLayerRef.current.getSource();
-            if (source) {
-              const features = format.readFeatures(geoData, {
-                featureProjection: 'EPSG:3857'
-              });
-              
-              // Filter features to only show those within the selected geographic level
-              const filteredFeatures = features.filter(feature => {
-                const properties = feature.getProperties();
-                return properties.geographicLevelId === filters.geographicLevelId;
-              });
-
-              // Update styles based on the selected metric
-              const style = new Style({
-                fill: new Fill({
-                  color: feature => {
-                    const value = feature.get(selectedMetric) || 0;
-                    return getColorForValue(value, filteredFeatures);
-                  }
-                }),
-                stroke: new Stroke({
-                  color: '#333',
-                  width: 1
-                })
-              });
-
-              filteredFeatures.forEach(feature => feature.setStyle(style));
-              source.clear();
-              source.addFeatures(filteredFeatures);
-
-              // Update legend
-              calculateColorRanges(filteredFeatures);
-            }
+      if (selectedFeatures.length > 0) {
+        // Calculate combined extent of all selected features
+        const extent = selectedFeatures.reduce((acc, feature) => {
+          const geometry = feature.getGeometry();
+          if (!acc && geometry) {
+            return geometry.getExtent();
           }
+          if (geometry) {
+            return [
+              Math.min(acc[0], geometry.getExtent()[0]),
+              Math.min(acc[1], geometry.getExtent()[1]),
+              Math.max(acc[2], geometry.getExtent()[2]),
+              Math.max(acc[3], geometry.getExtent()[3])
+            ];
+          }
+          return acc;
+        }, null);
+
+        if (extent) {
+          // Add padding to the extent (10% of width)
+          const bufferedExtent = buffer(extent, extent[2] / 10);
+
+          // Zoom to the extent
+          map.getView().fit(bufferedExtent, {
+            padding: [50, 50, 50, 50],
+            duration: 1000
+          });
         }
-      });
+      }
+
+      // Update the vector layer
+      if (vectorLayerRef.current) {
+        const source = vectorLayerRef.current.getSource();
+        if (source) {
+          source.clear();
+          source.addFeatures(selectedFeatures);
+        }
+      }
     } catch (error) {
-      console.error('Error handling geographic level change:', error);
-      Swal.fire({
-        title: 'Error',
-        text: 'Failed to update map view',
-        icon: 'error'
-      });
+      console.error('Error updating map view:', error);
     }
-  }, [map, geographicBoundary, filters.geographicLevelId, selectedMetric]);
+  }, [map, geoData, filters.geographicLevelId]);
 
   // Fetch data for the current level and parent
   const fetchGeoData = async (level: number, parentId: number | null) => {

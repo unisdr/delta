@@ -42,6 +42,8 @@ const DEFAULT_FILTERS: FilterValues = {
 export default function ImpactMap({ filters }: ImpactMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [selectedMetric, setSelectedMetric] = useState<"totalDamage" | "totalLoss">("totalDamage");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Add sectors query for dynamic titles
   const { data: sectorsData } = useQuery({
@@ -94,33 +96,25 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
 
   // Fetch geographic impact data when filters change
   useEffect(() => {
-    const fetchGeoData = async () => {
-      if (!filters?.sectorId) {
-        setGeoData(null);
-        return;
-      }
-
+    const fetchData = async () => {
       try {
+        setLoading(true);
         const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
         
-        // Add sectorId first
-        url.searchParams.append('sectorId', filters.sectorId);
-        
-        // Add subSectorId if it exists
+        // Add sector filters
+        if (filters.sectorId) {
+          url.searchParams.append('sectorId', filters.sectorId);
+        }
         if (filters.subSectorId) {
           url.searchParams.append('subSectorId', filters.subSectorId);
         }
         
         // Add other filters
         Object.entries(filters).forEach(([key, value]) => {
-          if (value && key !== 'sectorId' && key !== 'subSectorId' && key !== 'geographicLevelId') {
+          if (value && key !== 'sectorId' && key !== 'subSectorId') {
             url.searchParams.append(key, value);
           }
         });
-
-        if (filters.geographicLevelId) {
-          url.searchParams.append('geographicLevelId', filters.geographicLevelId);
-        }
 
         const response = await fetch(url.toString());
         if (!response.ok) throw new Error("Failed to fetch geographic impact data");
@@ -128,11 +122,13 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
         setGeoData(data);
       } catch (error) {
         console.error("Error fetching geographic impact data:", error);
-        setGeoData(null);
+        setError(error instanceof Error ? error.message : "Failed to fetch data");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchGeoData();
+    fetchData();
   }, [filters]);
 
   if (!geoData) return null;
