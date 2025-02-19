@@ -50,7 +50,10 @@ const getDisasterRecordsForSector = async (sectorId: string): Promise<string[]> 
     .select({ id: disasterRecordsTable.id })
     .from(disasterRecordsTable)
     .where(
-      inArray(disasterRecordsTable.sectorId, sectorIds)
+      and(
+        inArray(disasterRecordsTable.sectorId, sectorIds),
+        sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'approved'`
+      )
     );
 
   return records.map((record) => record.id);

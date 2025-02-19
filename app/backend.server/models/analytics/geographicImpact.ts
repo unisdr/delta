@@ -1,4 +1,4 @@
-import { and, eq, sql, inArray } from "drizzle-orm";
+import { and, eq, sql, inArray, SQL } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     divisionTable,
@@ -187,11 +187,11 @@ export interface GeographicImpactFilters {
 // Function to get disaster records based on sector ID
 export async function getDisasterRecordsForSector(sectorId: string, subSectorId?: string): Promise<string[]> {
     console.log("Fetching records for sector:", sectorId, "subSector:", subSectorId);
-    
+
     // If subSectorId is provided, use that instead of the parent sector
     const targetSectorId = subSectorId || sectorId;
     const numericSectorId = parseInt(targetSectorId, 10);
-    
+
     if (isNaN(numericSectorId)) {
         throw new Error("Invalid sector ID");
     }
@@ -212,7 +212,10 @@ export async function getDisasterRecordsForSector(sectorId: string, subSectorId?
     const records = await dr
         .select({ id: disasterRecordsTable.id })
         .from(disasterRecordsTable)
-        .where(inArray(disasterRecordsTable.sectorId, sectorIds));
+        .where(and(
+            inArray(disasterRecordsTable.sectorId, sectorIds),
+            sql`${disasterRecordsTable.approvalStatus} ILIKE 'approved'`
+        ));
 
     console.log("Found records:", records);
     return records.map(r => r.id);
@@ -353,4 +356,8 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         console.error("Error in getGeographicImpact:", error);
         throw error;
     }
+}
+
+function where(arg0: SQL<unknown>) {
+    throw new Error("Function not implemented.");
 }
