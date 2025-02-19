@@ -38,7 +38,7 @@ export const fieldsDefCommon = [
 	{key: "primaryDataSource", label: "Primary data source", type: "text", required: true, uiRow: {}},
 	{key: "otherDataSource", label: "Other data sources", type: "text"},
 	{key: "fieldAssessDate", label: "Field assessment conducted", type: "date", uiRow: {}},
-	{key: "assessmentModes", label: "Assessments modes", type: "text"},
+	{key: "assessmentModes", label: "Assessments methodologies", type: "text"},
 	{key: "originatorRecorderInst", label: "Recording institution", type: "text", required: true, uiRow: {}},
 	{key: "validatedBy", label: "Validated by", type: "text", required: true},
 	{key: "checkedBy", label: "Checked by", type: "text", uiRow: {}},

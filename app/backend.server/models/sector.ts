@@ -70,7 +70,7 @@ export async function allSectors(tx: Tx) {
 	return res
 }
 
-let agricultureSectorId = 1201
+let agricultureSectorId = 11;
 
 export async function sectorIsAgriculture(tx: Tx, id: number, depth: number = 0): Promise<boolean> {
 	let maxDepth = 100
