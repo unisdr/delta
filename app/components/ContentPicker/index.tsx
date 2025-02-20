@@ -301,8 +301,8 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         document.addEventListener("keydown", handleKeyDown);
 
         if (value !== "") {
-            console.log('value:', value);
-            console.log('selectedId:', selectedId);
+            //console.log('value:', value);
+            //console.log('selectedId:', selectedId);
             setSelectedId(value);
             setSelectedName(displayName);
         }
@@ -365,7 +365,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
       const renderMultiSelect = (selectedItems: { id: number, name: string }[] = []) => {
         if (!selectedItems || selectedItems.length === 0) return null; // Handle empty state
 
-        console.log('selectedItems:', selectedItems);
+        //console.log('selectedItems:', selectedItems);
     
         return (
             <>
