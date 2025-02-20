@@ -278,7 +278,7 @@ export default function Screen() {
 												<thead>
 													<tr>
 														<th>ID</th>
-														<th>Area</th>
+														<th>Category</th>
 														<th>Description</th>
 														<th>Actions</th>
 													</tr>
