@@ -30,9 +30,17 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
         query = query.where(or(...newWhereConditions)) as any;
     }
 
-    if (config.orderBy?.length) {
-        config.orderBy.forEach((order: any) => {
-            query = query.orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column)) as any;
+    // if (config.orderBy?.length) {
+    //     config.orderBy.forEach((order: any) => {
+    //         query = query.orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column)) as any;
+    //     });
+    // }
+
+    if (config.orderByOptions?.custom) {
+        query = query.orderBy(config.orderByOptions.custom);
+    } else if (config.orderByOptions?.default) {
+        config.orderByOptions.default.forEach((order: any) => {
+            query = query.orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column));
         });
     }
 

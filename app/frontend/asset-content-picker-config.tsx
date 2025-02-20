@@ -23,7 +23,11 @@ export const contentPickerConfigSector = {
             { alias: "parentId", column: sectorTable.parentId },
             { alias: "sectorname", column: sectorTable.sectorname },
         ],
-        orderBy: [{ column: sectorTable.sectorname, direction: "asc" }] // Sorting
+        //orderBy: [{ column: sectorTable.sectorname, direction: "asc" }] // Sorting
+        orderByOptions: {
+            default: [{ column: sectorTable.sectorname, direction: "asc" }],
+            custom: sql`CASE WHEN ${sectorTable.sectorname} = 'Cross-cutting' THEN 1 ELSE 0 END, ${sectorTable.sectorname} ASC`
+        }
     },
     selectedDisplay: async (dr: any, ids: string) => {
         const sectorIds = ids.split(",").map((id) => Number(id)).filter(Number.isInteger); // Convert to numbers
