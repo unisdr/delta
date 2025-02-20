@@ -12,6 +12,7 @@ import { useQuery } from "react-query";
 import { createFloatingTooltip, FloatingTooltipProps } from "~/util/tooltip";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { formatCurrency, formatNumber, formatPercentage } from "~/frontend/utils/formatters";
+import { useLoaderData } from "@remix-run/react";
 
 // Types
 interface ApiResponse {
@@ -37,7 +38,6 @@ interface ImpactData {
 
 interface Props {
     sectorId: string | null;
-    // filters: Record<string, string | null>;
     filters: {
         disasterEventId: any;
         sectorId: string | null;
@@ -49,12 +49,30 @@ interface Props {
         toDate: string | null;
         subSectorId: string | null;
     };
+    currency: string;
 }
 
 interface Sector {
     id: number;
     sectorname: string;
     subsectors?: Sector[];
+}
+
+interface Hazard {
+    id: string | number;
+    name: string;
+}
+
+interface HazardTypesResponse {
+    hazardTypes: Hazard[];
+}
+
+interface HazardClustersResponse {
+    clusters: Hazard[];
+}
+
+interface SpecificHazardsResponse {
+    hazards: Hazard[];
 }
 
 // Utility functions
@@ -100,7 +118,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, t
     return null;
 };
 
-const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
+const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
     const eventsImpactingRef = useRef<HTMLButtonElement>(null);
     const eventsOverTimeRef = useRef<HTMLButtonElement>(null);
     const damageTooltipRef = useRef<HTMLButtonElement>(null);
@@ -224,6 +242,61 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         if (!response.ok) throw new Error("Failed to fetch sectors");
         return response.json();
     });
+
+    // Fetch hazard types data
+    const { data: hazardTypesData } = useQuery<HazardTypesResponse>(
+        ["hazardTypes", filters.hazardTypeId],
+        async () => {
+            const response = await fetch(`/api/analytics/hazard-types`);
+            if (!response.ok) throw new Error("Failed to fetch hazard types");
+            return response.json();
+        }
+    );
+
+    // Fetch hazard clusters data
+    const { data: hazardClustersData } = useQuery<HazardClustersResponse>(
+        ["hazardClusters", filters.hazardClusterId],
+        async () => {
+            if (!filters.hazardTypeId) return { clusters: [] };
+            const response = await fetch(`/api/analytics/hazard-clusters?hazardTypeId=${filters.hazardTypeId}`);
+            if (!response.ok) throw new Error("Failed to fetch hazard clusters");
+            return response.json();
+        },
+        {
+            enabled: !!filters.hazardTypeId
+        }
+    );
+
+    // Fetch specific hazards data
+    const { data: specificHazardsData } = useQuery<SpecificHazardsResponse>(
+        ["specificHazards", filters.hazardClusterId],
+        async () => {
+            if (!filters.hazardClusterId) return { hazards: [] };
+            const response = await fetch(`/api/analytics/specific-hazards?clusterId=${filters.hazardClusterId}`);
+            if (!response.ok) throw new Error("Failed to fetch specific hazards");
+            return response.json();
+        },
+        {
+            enabled: !!filters.hazardClusterId
+        }
+    );
+
+    // Get hazard type display text
+    const getHazardTypeDisplay = () => {
+        if (filters.specificHazardId && specificHazardsData?.hazards) {
+            const hazard = specificHazardsData.hazards.find(h => h.id.toString() === filters.specificHazardId);
+            return hazard?.name || 'Specific Hazards';
+        }
+        if (filters.hazardClusterId && hazardClustersData?.clusters) {
+            const cluster = hazardClustersData.clusters.find(c => c.id.toString() === filters.hazardClusterId);
+            return cluster?.name || 'Hazard Cluster';
+        }
+        if (filters.hazardTypeId && hazardTypesData?.hazardTypes) {
+            const type = hazardTypesData.hazardTypes.find(t => t.id.toString() === filters.hazardTypeId);
+            return type?.name || 'Hazard Type';
+        }
+        return 'All Hazards';
+    };
 
     console.log('Debug - Component State:', {
         sectorId,
@@ -429,11 +502,11 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                     {/* Damage Box */}
                     <div className="dts-data-box">
                         <h3 className="dts-body-label">
-                            <span id="elementId03">Damage in USD</span>
+                            <span id="elementId03">Damage in {currency} - in Thousands - due to {getHazardTypeDisplay()}</span>
                             <button
                                 ref={damageTooltipRef}
                                 className="dts-tooltip__button"
-                                onPointerEnter={() => createTooltip(damageTooltipRef, "Total monetary damage caused by events in this sector")}
+                                onPointerEnter={() => createTooltip(damageTooltipRef, `Total monetary damage in ${currency} caused by events in this sector`)}
                             >
                                 <IoInformationCircleOutline aria-hidden="true" />
                             </button>
@@ -454,7 +527,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="year" />
                                         <YAxis
-                                            tickFormatter={(value) => `$${formatNumber(value)}`}
+                                            tickFormatter={(value) => `${currency} ${formatNumber(value)}`}
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
@@ -483,11 +556,11 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                     {/* Loss Box */}
                     <div className="dts-data-box">
                         <h3 className="dts-body-label">
-                            <span id="elementId04">Losses in USD</span>
+                            <span id="elementId04">Losses in {currency}</span>
                             <button
                                 ref={lossTooltipRef}
                                 className="dts-tooltip__button"
-                                onPointerEnter={() => createTooltip(lossTooltipRef, "Total financial losses incurred in this sector")}
+                                onPointerEnter={() => createTooltip(lossTooltipRef, `Total financial losses in ${currency} incurred in this sector`)}
                             >
                                 <IoInformationCircleOutline aria-hidden="true" />
                             </button>
@@ -508,7 +581,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="year" />
                                         <YAxis
-                                            tickFormatter={(value) => `$${formatNumber(value)}`}
+                                            tickFormatter={(value) => `${currency} ${formatNumber(value)}`}
                                             domain={[0, 'auto']}
                                             width={100}
                                         />

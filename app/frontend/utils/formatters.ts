@@ -7,7 +7,7 @@ export const formatCurrency = (value: string | number, options: CurrencyOptions 
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat(options.locale || 'en-US', {
         style: 'currency',
-        currency: options.currency || 'USD',
+        currency: options.currency || 'PHP',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(numValue);
