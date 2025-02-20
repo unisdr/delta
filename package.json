@@ -1,6 +1,6 @@
 {
-  "name": "my-remix2",
-  "version": "1.0.0",
+  "name": "undrr-dts",
+  "version": "0.0.7",
   "description": "desc",
   "type": "module",
   "main": "vite.config.js",

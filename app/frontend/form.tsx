@@ -1028,7 +1028,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 			});
 			window.location.reload();
 		} catch (error) {
-			console.error("Error deleting hazard event: ", error);
+			console.error("Error deleting hazardous event: ", error);
 		}
 		//setShowConfirmDelete(false);
 		if (dialogRef.current) {
