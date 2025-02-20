@@ -971,10 +971,14 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 			.notNull()
 			.references((): AnyPgColumn => disasterRecordsTable.id),
 		withDamage: boolean("with_damage"),
+		damageCost: ourMoney("damage_cost"),
+		damageCostCurrency: text("damage_cost_currency"),
 		damageRecoveryCost: ourMoney("damage_recovery_cost"),
 		damageRecoveryCostCurrency: text("damage_recovery_cost_currency"),
 		withDisruption: boolean("with_disruption"),
 		withLosses: boolean("with_losses"),
+		lossesCost: ourMoney("losses_cost"),
+		lossesCostCurrency: text("losses_cost_currency"),
 	},
 	(table) => {
 		return [

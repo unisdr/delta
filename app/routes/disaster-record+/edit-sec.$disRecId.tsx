@@ -126,12 +126,15 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	let frmId = formData.get("id") || ''; 
 	let frmSectorId = formData.get("sectorId") || ''; 
 	let frmWithDamage = formData.get("with_damage") || ''; 
-	let frmWithLosses = formData.get("with_losses") || ''; 
-	let frmWithDisruption = formData.get("with_disruption") || ''; 
-	let frmDisruptionResponseCost = formData.get("disruption_response_cost") || ''; 
-	let frmDisruptionResponseCostCurrency = formData.get("disruption_response_cost_currency") || ''; 
+	let frmDamageCost = formData.get("damage_cost") || ''; 
+	let frmDamageCostCurrency = formData.get("damage_cost_currency") || ''; 
 	let frmDamageRecoveryCost = formData.get("damage_recovery_cost") || ''; 
 	let frmDamageRecoveryCostCurrency = formData.get("damage_recovery_cost_currency") || ''; 
+	let frmWithLosses = formData.get("with_losses") || ''; 
+	let frmLossesCost = formData.get("losses_cost") || ''; 
+	let frmLossesCostCurrency = formData.get("losses_cost_currency") || ''; 
+	let frmWithDisruption = formData.get("with_disruption") || ''; 
+
 
 	let this_showForm:boolean = false;
 	let intSectorIDforDB:number = 0;
@@ -148,10 +151,14 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			sectorId: intSectorIDforDB,
 			disasterRecordId: params.disRecId,
 			withDamage: frmWithDamage === 'on' ? true : false,
+			damageCost: frmWithDamage === 'on' && frmDamageCost !== '' ? frmDamageCost : null,
+			damageCostCurrency: frmWithDamage === 'on' && frmDamageCost !== '' && frmDamageCostCurrency !== '' ? frmDamageCostCurrency : null,
 			damageRecoveryCost: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' ? frmDamageRecoveryCost : null,
 			damageRecoveryCostCurrency: frmWithDamage === 'on' && frmDamageRecoveryCost !== '' && frmDamageRecoveryCostCurrency !== '' ? frmDamageRecoveryCostCurrency : null,
 			withDisruption: frmWithDisruption === 'on' ? true : false,
 			withLosses: frmWithLosses === 'on' ? true : false,
+			lossesCost: frmWithLosses === 'on' && frmLossesCost !== '' ? frmLossesCost : null,
+			lossesCostCurrency: frmWithLosses === 'on' && frmLossesCost !== '' && frmLossesCostCurrency !== '' ? frmLossesCostCurrency : null,
 		};
 	
 		try {
@@ -280,11 +287,47 @@ export default function Screen() {
 									</select>
 								</label>
 							</div>
-							
+						</div>
+						<div className="mg-grid mg-grid__col-3">
+							<div className="dts-form-component mg-grid__col">
+								<label aria-invalid="false">
+									<div className="dts-form-component__label"></div>
+									<div className="dts-form-component__field--horizontal">
+										&nbsp;
+									</div>
+								</label>
+							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Damage Cost</span>
+									</div>
+									<input type="number" name="damage_cost" placeholder="enter the damage cost" defaultValue={(loaderData.record && loaderData.record.damageCost) ? loaderData.record.damageCost : '' } />
+								</label>
+							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Currency</span>
+									</div>
+									<select name="damage_cost_currency">
+										{
+											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.damageCostCurrency && loaderData.record.damageCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
+											))
+										}
+									</select>
+								</label>
+							</div>
 						</div>
 						<h2 className="dts-heading-3">Losses</h2>
 						<div className="mg-grid mg-grid__col-3">
-							<div className="dts-form-component">
+							<div className="dts-form-component mg-grid__col">
 								<label aria-invalid="false">
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
@@ -292,6 +335,33 @@ export default function Screen() {
 										<span>Has Lossses</span>
 									</div>
 								</label>					
+							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Lossses Cost</span>
+									</div>
+									<input type="number" name="losses_cost" placeholder="enter the losses cost" defaultValue={(loaderData.record && loaderData.record.lossesCost) ? loaderData.record.lossesCost : '' } />
+								</label>
+							</div>
+							<div className="dts-form-component mg-grid__col">
+								<label>
+									<div className="dts-form-component__label">
+										<span>Currency</span>
+									</div>
+									<select name="losses_cost_currency">
+										{
+											Array.isArray(loaderData.arrayCurrency) && loaderData.arrayCurrency.map((item, index) => (
+												<option key={index} 
+												selected={
+													(loaderData.record && loaderData.record.lossesCostCurrency && loaderData.record.lossesCostCurrency == item) ? 
+													true : false
+												}
+												value={item}>{item}</option>
+											))
+										}
+									</select>
+								</label>
 							</div>
 						</div>
 						<h2 className="dts-heading-3">Disruption</h2>

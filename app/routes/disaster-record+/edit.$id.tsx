@@ -197,8 +197,8 @@ export default function Screen() {
 												<tr>
 													<th></th>
 													<th></th>
-													<th className="center" colSpan={2}>Damage</th>
-													<th></th>
+													<th className="center" colSpan={3}>Damage</th>
+													<th className="center" colSpan={2}>Losses</th>
 													<th></th>
 													<th></th>
 												</tr>
@@ -207,7 +207,9 @@ export default function Screen() {
 													<th>Sector</th>
 													<th>Damage</th>
 													<th>Recovery Cost</th>
+													<th>Cost</th>
 													<th>Losses</th>
+													<th>Cost</th>
 													<th>Disruption</th>
 													<th>Actions</th>
 												</tr>
@@ -235,9 +237,25 @@ export default function Screen() {
 															}
 														</td>
 														<td>
+															{ item.disRecSectorsDamageCost &&
+																<>
+																	
+																	{ item.disRecSectorsDamageCost } { item.disRecSectorsDamageCostCurrency }
+																</>
+															}
+														</td>
+														<td>
 															{ item.disRecSectorsWithLosses &&
 																<>
 																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/losses?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
+																</>
+															}
+														</td>
+														<td>
+															{ item.disRecSectorsLossesCost &&
+																<>
+																	
+																	{ item.disRecSectorsLossesCost } { item.disRecSectorsLossesCostCurrency }
 																</>
 															}
 														</td>
