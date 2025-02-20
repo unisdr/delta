@@ -630,6 +630,7 @@ export const assetTable = pgTable("asset", {
 	sectorId: ourBigint("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
+	sectorIds: text("sector_ids").notNull(),
 	measureId: uuid("measure_id")
 		.references((): AnyPgColumn => measureTable.id)
 		.notNull(),

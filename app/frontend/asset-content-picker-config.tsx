@@ -1,11 +1,12 @@
+import { hazardEventLabel } from "~/frontend/events/hazardeventform";
+import { eq, ilike, or, asc, sql } from "drizzle-orm";
 import { sectorTable } from "~/drizzle/schema";
-import { eq, sql } from "drizzle-orm";
 
-export const contentPickerConfig = {
-    id: "sector_id",
-    multiSelect: true,
+export const contentPickerConfigSector = {
+    id: "sectorIds",
     viewMode: "tree",
-    dataSources: "/examples/components/content-picker-datasource-tree",
+    multiSelect: true,
+    dataSources: "/settings/assets/content-picker-datasource",
     caption: "Sectors",
     defaultText: "Select Sector...",
     table_column_primary_key: "id",
@@ -43,5 +44,5 @@ export const contentPickerConfig = {
             id,
             name: idToNameMap.get(id) || "No sector found"
         }));
-    },       
+    },
 };

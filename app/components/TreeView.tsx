@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import { get } from "~/backend.server/models/human_effects";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
@@ -184,14 +185,32 @@ interface TreeViewProps {
     dialogMode?: boolean;
     search?: boolean;
     expanded?: boolean; 
-    onClick?: ((e: any, dialogRefCurrent: any) => void) | undefined;
+    onItemClick?: ((e: any, dialogRefCurrent: any) => void) | undefined;
+    defaultSelectedIds?: number[];
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onClick = undefined }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [] }, ref: any) => {
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
     const [isCollapseDisabled, setIsCollapseDisabled] = useState(true); // Default to true
+
+    //console.log('defaultSelectedIds:', defaultSelectedIds);
+
+    const [checkedItems, setCheckedItems] = useState<{ [key: number]: boolean }>(
+        Object.fromEntries(defaultSelectedIds.map((id) => [id, true]))
+    );
+    useEffect(() => {
+        setCheckedItems((prev) => {
+            const newCheckedItems = Object.fromEntries(defaultSelectedIds.map((id) => [id, true]));
+    
+            // Only update state if it's different from the current state
+            if (JSON.stringify(prev) !== JSON.stringify(newCheckedItems)) {
+                return newCheckedItems;
+            }
+            return prev; // Prevent unnecessary updates
+        });
+    }, [defaultSelectedIds]); // ✅ This avoids infinite re-renders
 
     const [selectedItems, setSelectedItems] = useState<{ [key: number]: boolean }>({});
 
@@ -378,7 +397,15 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     };
     
     const handleCheckboxChange = (e: any) => {
-        const checkbox = e.target;
+        e.preventDefault();
+
+
+        setCheckedItems((prev) => {
+            const newState = { ...prev, [e.target.closest("li").getAttribute("data-id")]: e.target.checked };
+            return newState;
+        });
+
+        /*const checkbox = e.target;
         const isChecked = checkbox.checked;
         const listItem = checkbox.closest("li"); // Get the <li> container
         const dataIds = listItem.getAttribute("data-ids")?.split(",") || [];
@@ -399,7 +426,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox: any) => {
                 childCheckbox.checked = false;
             });
-        }
+        }*/
     };
    
     const renderItemName = (node: any, parentIds: any) => {
@@ -424,6 +451,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                         className="tree-checkbox"
                                         type="checkbox"  
                                         onChange={(e) => handleCheckboxChange(e)}
+                                        checked={checkedItems[enrichedNode.id] || false}
                                     />
                                 )}
 
@@ -453,6 +481,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                         className="tree-checkbox"
                                         type="checkbox"  
                                         onChange={(e) => handleCheckboxChange(e)}
+                                        checked={checkedItems[enrichedNode.id] || false}
                                     />
                                 )}
 
@@ -564,16 +593,46 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             e.preventDefault();
         }
 
-        if (typeof onClick === 'function') onClick(e, dialogRef?.current || null);
+        if (multiSelect) return
+
+        if (typeof onItemClick === 'function') onItemClick(e, dialogRef?.current || null);
 
         // if (e.target.tagName === "BUTTON") {
         //     toggleExpand(e, parseInt(e.currentTarget.getAttribute("data-id")));
         // }
     }
 
+    const findNamesByIds = (nodes: any[], checkedIds: any[]): { id: number, name: string }[] => {
+        let selectedItems: { id: number, name: string }[] = [];
+    
+        const traverse = (node: any) => {
+            if (checkedIds.includes(node.id)) {
+                selectedItems.push({ id: node.id, name: node.name }); // Store both ID and name
+            }
+            if (node.children?.length) {
+                node.children.forEach(traverse);
+            }
+        };
+    
+        nodes.forEach(traverse);
+        return selectedItems; // Return array of { id, name }
+    };     
+    
     useImperativeHandle(ref, () => ({
         treeViewOpen,
         treeViewClose: treeViewDiscard,
+        treeViewClear: treeViewClear,
+        getCheckedItemIds: () => Object.keys(checkedItems)
+        .filter((key) => checkedItems[Number(key)]) // Get only checked IDs
+        .map(Number), // Convert keys back to numbers
+        getCheckedItemNames: () => {
+            const checkedIds = Object.keys(checkedItems)
+                .filter((key) => checkedItems[Number(key)]) // Filter only checked items
+                .map(Number);
+        
+            return findNamesByIds(treeData, checkedIds); // Now returns [{ id, name }, ...]
+        },
+        clearCheckedItems: () => setCheckedItems({}),
     }));
 
     const filteredTree = searchTerm ? filterTree(treeData, searchTerm, {}) : treeData;
@@ -618,14 +677,37 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         )
     }
 
-    // Auto-expand all nodes when `expanded` is true
-    useEffect(() => {
-        if (expanded) {
-            const newState: { [key: number]: boolean } = {};
-            treeData.forEach((node) => expandRecursive(node, newState));
-            setExpandedNodes(newState);
+    const findNodeById = (nodes: any[], id: number): any | null => {
+        for (const node of nodes) {
+            if (node.id === id) return node;
+            if (node.children?.length) {
+                const found = findNodeById(node.children, id);
+                if (found) return found;
+            }
         }
-    }, [expanded, treeData]);
+        return null;
+    };    
+
+// Prevent expandedNodes from resetting every checkbox update
+useEffect(() => {
+    setExpandedNodes((prev) => {
+        const newState = { ...prev }; // Preserve existing expanded nodes
+
+        // Expand parents of checked items
+        Object.keys(checkedItems).forEach((id) => {
+            if (checkedItems[Number(id)]) {
+                let node = findNodeById(treeData, Number(id));
+                while (node?.parentId) {
+                    newState[node.parentId] = true;
+                    node = findNodeById(treeData, node.parentId);
+                }
+            }
+        });
+
+        return newState; // Merge instead of replacing
+    });
+}, [expanded, checkedItems, treeData]);
+
 
     return (
         <>

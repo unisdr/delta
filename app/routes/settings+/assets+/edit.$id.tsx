@@ -23,6 +23,9 @@ import {assetTable} from "~/drizzle/schema";
 import {useLoaderData} from "@remix-run/react";
 import {authLoaderWithPerm} from "~/util/auth";
 
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { contentPickerConfigSector } from "~/frontend/asset-content-picker-config";
+
 export let action = createAction({
 	fieldsDef: fieldsDef,
 	create: assetCreate,
@@ -46,19 +49,27 @@ export let loader = authLoaderWithPerm("EditData", async (args) => {
 	if (p.id === "new") return {item: null, ...extra}
 	let it = await assetById(p.id)
 	if (!it) throw new Response("Not Found", {status: 404})
+
+	const selectedDisplay = await contentPickerConfigSector.selectedDisplay(dr, it.sectorIds || "");	
+	
+	extra = {...extra, selectedDisplay} as any;
+	//console.log('authLoaderWithPerm: ', {item: it, ...extra});
 	return {item: it, ...extra}
 })
 
 export default function Screen() {
-	let ld = useLoaderData<typeof loader>()
+	let ld: any = useLoaderData<typeof loader>() 
 	let fieldsInitial = ld.item ? {...ld.item} : {}
 	if ('sectorId' in fieldsInitial && !fieldsInitial.sectorId && ld.sectorId) {
 		fieldsInitial.sectorId = ld.sectorId
 	}
 
+	const selectedDisplay = ld?.selectedDisplay || {};
+
 	return formScreen({
 		extraData: {
 			fieldDef: ld.fieldsDef,
+			selectedDisplay,
 		},
 		fieldsInitial,
 		form: AssetForm,
