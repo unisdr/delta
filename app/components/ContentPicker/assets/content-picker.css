@@ -119,3 +119,15 @@
     border-style: solid;
     border-color: transparent transparent #ff9800 transparent;
 }
+
+.content-picker .cp-action {
+    display: flex;
+    justify-content: flex-end; /* Push buttons to the right */
+    align-items: center;
+    width: 100%;
+    padding-top: 1.5rem;
+}
+
+.content-picker .mg-button.mg-button-primary {
+    margin-right: 1rem; /* Adds spacing between the buttons */
+}

@@ -858,14 +858,19 @@ interface ViewScreenPropsWithDef<T, X> {
 
 export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{item: T, def: FormInputDef<X>[]}>();
+	const ld = useLoaderData<{ 
+		item: T; 
+		def: FormInputDef<X>[]; 
+		extraData?: any;
+	  }>();
 	if (!ld.item) {
 		throw "invalid";
 	}
 	if (!ld.def) {
 		throw "def missing"
 	}
-	return <ViewComponent item={ld.item} def={ld.def} />;
+	const extraData = ld?.extraData || {};
+	return <ViewComponent item={ld.item} def={ld.def} {...(extraData ? { extraData } : {})} />;
 }
 
 interface ViewScreenPublicApprovedProps<T> {
@@ -1023,7 +1028,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 			});
 			window.location.reload();
 		} catch (error) {
-			console.error("Error deleting hazard event: ", error);
+			console.error("Error deleting hazardous event: ", error);
 		}
 		//setShowConfirmDelete(false);
 		if (dialogRef.current) {

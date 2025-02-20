@@ -16,6 +16,11 @@ export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 	let measures = await allMeasures(dr)
 	return [
 		{
+			key: "sectorIds",
+			label: "Sector",
+			type: "other",
+		},
+		{
 			key: "sectorId",
 			label: "Sector",
 			type: "enum",

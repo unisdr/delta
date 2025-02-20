@@ -31,14 +31,16 @@ interface ContentPickerProps {
     buttonSelectEnabled?: boolean;
     appendCss?: string;
     base_path?: string;
-    displayName?: string;
+    displayName?: string | any[];
     value?: string;
     required?: boolean;
     onSelect?: ((item: any) => void) | undefined;
+    multiSelect?: boolean;
+    treeViewRootCaption?: string;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect }, ref) => {
+    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect, multiSelect = false, treeViewRootCaption = "" }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -48,12 +50,18 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
       const [totalPages, setTotalPages] = useState(1);
       const itemsPerPage = 10; // Number of items per page
       const [loading, setLoading] = useState(false);
-      const [selectedId, setSelectedId] = useState("");
-      const [selectedName, setSelectedName] = useState("");
+      const [selectedId, setSelectedId] = useState(value);
+      const [selectedName, setSelectedName] = useState<string | string[]>("");
+
+      const treeViewRef = useRef<any>(null);
   
       useEffect(() => {
           injectStyles(appendCss);
       }, []);
+
+        useEffect(() => {
+            setSelectedId(value);
+        }, [value]);
   
       // Fetch data if `dataSources` is an API URL
       const fetchTableData = async (query = "", page = 1) => {
@@ -256,11 +264,29 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         }
     };
 
-    const removeItem = (e: any) => {
+    const removeItem = (e: any, id?: number) => {
         e.preventDefault();
-        setSelectedId("");
-        setSelectedName("");
-    }
+    
+        if (!multiSelect) {
+            // Single select: Clear everything
+            setSelectedId("");
+            setSelectedName("");
+        } else {
+            // Multi-select: Remove only the clicked item from selectedId & selectedName
+            setSelectedId((prev: any) => {
+                if (typeof prev === "string") {
+                    const updatedIds = prev.split(",").filter((item) => Number(item) !== id);
+                    return updatedIds.length ? updatedIds.join(",") : "";
+                }
+                return prev.filter((item: any) => item !== id); // If array, remove ID
+            });
+    
+            setSelectedName((prev: any) => {
+                if (!Array.isArray(prev)) return ""; // Ensure it's an array
+                return prev.filter((item: any) => item.id !== id); // Remove only the selected item
+            });
+        }
+    };
     
 
       useEffect(() => {
@@ -275,6 +301,8 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         document.addEventListener("keydown", handleKeyDown);
 
         if (value !== "") {
+            console.log('value:', value);
+            console.log('selectedId:', selectedId);
             setSelectedId(value);
             setSelectedName(displayName);
         }
@@ -316,6 +344,42 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
           document.removeEventListener("keydown", handleKeyDown);
         };
       }, []);
+
+      const multiSelectApply = (e: any) => {
+        e.preventDefault();
+
+        if (treeViewRef.current) {
+            const selectedIds = treeViewRef.current.getCheckedItemIds();
+            //console.log("Selected IDs:", selectedIds);
+            const selectedNames = treeViewRef.current.getCheckedItemNames();
+            //console.log("Selected Names:", selectedNames);
+            treeViewRef.current.clearCheckedItems();
+            
+            if (dialogRef.current) dialogRef.current.close();
+
+            setSelectedId(selectedIds.length ? selectedIds.join(",") : "");
+            setSelectedName(selectedNames.length ? selectedNames : []);
+        }
+      }
+
+      const renderMultiSelect = (selectedItems: { id: number, name: string }[] = []) => {
+        if (!selectedItems || selectedItems.length === 0) return null; // Handle empty state
+
+        console.log('selectedItems:', selectedItems);
+    
+        return (
+            <>
+                {selectedItems.map((item) => (
+                    <div key={item.id} className="cp-selected" data-id={item.id}>
+                        <span>{item.name}</span>
+                        <span className="cp-remove-item" onClick={(e) => removeItem(e, item.id)}>×</span>
+                    </div>
+                ))}
+            </>
+        );
+      };
+    
+    
   
       return (
           <>
@@ -332,14 +396,22 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                           </div>
 
                           {(viewMode === "tree") && (
-                            <div className="cp-view-mode tree" style={{ display: "none" }}>
+                            <div className="cp-view-mode tree" style={{ display: "none" }} data-value={value}>
                                     <TreeView 
+                                        ref={treeViewRef}
                                         treeData={tableData} 
-                                        rootCaption="Sectors" 
+                                        rootCaption={treeViewRootCaption} 
                                         dialogMode={false}
                                         disableButtonSelect={true}
                                         noSelect={true}
+                                        multiSelect={multiSelect}
+                                        defaultSelectedIds={Array.isArray(selectedId) 
+                                            ? selectedId.map(Number) 
+                                            : typeof selectedId === "string" && selectedId !== "" 
+                                              ? selectedId.split(",").map(Number) 
+                                              : []} // Ensure it's always an array                                                                         
                                         appendCss={
+                                            (!multiSelect) ?
                                             `
                                                 ul.tree li[data-has_children="false"] span {
                                                     display: inline-block;
@@ -353,25 +425,76 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                                 ul.tree li[data-has_children="false"]:hover span {
                                                     text-decoration: underline;
                                                 }
+                                            ` : `
+                                                .content-picker .cp-input-container {
+                                                    position: relative;
+                                                    display: flex;
+                                                    flex-wrap: wrap;
+                                                    align-items: stretch;
+                                                    border: 1px solid #ccc;
+                                                    border-radius: 0.25rem;
+                                                    width: 100%;
+                                                    background-color: #fff;
+                                                    margin-top: 1rem;
+                                                    margin-bottom: 2rem;
+                                                    padding: 1.5px 2px 1.5px 1.5px;
+                                                    gap: 1px;
+                                                }
+
+                                                .content-picker .cp-selected {
+                                                    display: inline-flex;
+                                                    align-items: center;
+                                                    border-radius: 4px;
+                                                    padding: 8px 12px;
+                                                    border: 1px solid #E3E3E3;
+                                                    font-size: 100%;
+                                                    line-height: 1.15;
+                                                    color: #495057;
+                                                    background-color: #f8f9fa;
+                                                    flex: 1 1 auto; /* Auto size unless multiple items */
+                                                    max-width: calc(100% - 50px); /* Ensures it doesn't push the search icon */
+                                                }
+
+                                                .content-picker .cp-search {
+                                                    display: flex;
+                                                    align-items: center;
+                                                    justify-content: center;
+                                                    background-color: #f8f9fa;
+                                                    border-radius: 4px;
+                                                    border: 1px solid #E3E3E3;
+                                                    padding: 0 10px;
+                                                    height: auto;
+                                                    min-height: 40px;
+                                                    width: 40px;
+                                                    margin-left: auto;
+                                                    flex-shrink: 0; /* Ensures search stays at the right */
+                                                }
+
+                                                .content-picker .cp-search svg {
+                                                    width: 20px;
+                                                    height: 20px;
+                                                }
                                             `
                                         }
-                                        onClick={(e) => {
-                                            const dataHasChildren = e.target.closest("li")?.getAttribute("data-has_children") || "";
-                                            if (dataHasChildren === "false") {
-                                                const dataId = e.target.closest("li").getAttribute("data-id") || "";
-                                                const dataPath = e.target.closest("li").getAttribute("data-path") || "";
+                                        onItemClick={(e: any) => {
+                                            if (!multiSelect) {
+                                                const dataHasChildren = e.target.closest("li")?.getAttribute("data-has_children") || "";
+                                                if (dataHasChildren === "false") {
+                                                    const dataId = e.target.closest("li").getAttribute("data-id") || "";
+                                                    const dataPath = e.target.closest("li").getAttribute("data-path") || "";
 
-                                                setSelectedId(dataId);
-                                                setSelectedName(dataPath);
-                                        
-                                                if (dialogRef.current) {
-                                                    dialogRef.current.close();
-                                                }
-                                                
-                                                clearPicker();
+                                                    setSelectedId(dataId);
+                                                    setSelectedName(dataPath);
+                                            
+                                                    if (dialogRef.current) {
+                                                        dialogRef.current.close();
+                                                    }
+                                                    
+                                                    clearPicker();
 
-                                                if (typeof onSelect === "function") {
-                                                    onSelect({ value: dataId, name: dataPath, object: e.target.closest("li") });
+                                                    if (typeof onSelect === "function") {
+                                                        onSelect({ value: dataId, name: dataPath, object: e.target.closest("li") });
+                                                    }
                                                 }
                                             }
                                         }}
@@ -448,7 +571,12 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                               </div>
                           </div>
                           )}
-
+                          
+                          {(multiSelect) && (
+                          <div className="cp-action">
+                                <button className="mg-button mg-button-primary" onClick={multiSelectApply}>Apply Selection</button><button className="mg-button mg-button-outline" onClick={discardPicker}>Discard</button>
+                          </div>  
+                          )}
                       </div>
                   </dialog>
   
@@ -459,11 +587,14 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                         </div>
                         )}
 
-                        {(selectedId !== "") && (
+                        {(selectedId !== "" && !multiSelect) && (
                             <div className="cp-selected">
-                            <span>{selectedName}</span><span className="cp-remove-item" onClick={removeItem}>×</span>
+                                <span>{selectedName}</span>
+                                <span className="cp-remove-item" onClick={(e) => removeItem(e)}>×</span>
                             </div>
                         )}
+
+                        {multiSelect && renderMultiSelect(selectedName as any)}
                       <div className="cp-search" onClick={openPicker}>
                         <svg aria-hidden="true" focusable="false" role="img"></svg>
                         <input type="hidden" id={id} name={id} defaultValue={selectedId} />

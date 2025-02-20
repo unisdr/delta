@@ -729,7 +729,7 @@ export function createAction<T>(args: CreateActionArgs<T>) {
 
 interface CreateViewLoaderArgs<T, E extends Record<string, any> = {}> {
 	getById: (id: string) => Promise<T | null>;
-	extra?: () => Promise<E>
+	extra?: (item?: T) => Promise<E>;
 }
 
 export function createViewLoader<T, E extends Record<string, any> = {}>(args: CreateViewLoaderArgs<T, E>) {
@@ -739,7 +739,7 @@ export function createViewLoader<T, E extends Record<string, any> = {}>(args: Cr
 		if (!item) {
 			throw new Response("Not Found", {status: 404});
 		}
-		let extra = (await args.extra?.()) || {}
+		let extra = (await args.extra?.(item)) || {}
 		return {item, ...extra};
 	});
 }

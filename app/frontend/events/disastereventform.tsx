@@ -116,7 +116,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 			fieldsDef={fieldsDef}
 			override={{
 				hazardEventId:
-					<Field key="hazardEventId" label="Hazard Event">
+					<Field key="hazardEventId" label="Hazardous Event">
 						{selectedHazardEvent ? hazardEventLink(selectedHazardEvent) : "-"}&nbsp;
 						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
 						<input type="hidden" name="hazardEventId" value={selectedHazardEvent?.id || ""} />
