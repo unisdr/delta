@@ -154,6 +154,11 @@ const injectStyles = (appendCss?: string) => {
                 white-space: nowrap;
             }
 
+            .tree-btn {
+                color: #000;
+                text-decoration: none !important;
+            }
+
             ${appendCss}
         `
     ];
@@ -190,6 +195,7 @@ interface TreeViewProps {
 }
 
 export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [] }, ref: any) => {
+    const expandedNodesRef = useRef<{ [key: number]: boolean }>({});
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
@@ -225,12 +231,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     // Update button states based on `expandedNodes`
     useEffect(() => {
         const allNodes = treeData.flatMap((node) => getAllNodes(node)); // Get all nodes in the tree
-        const allExpanded = allNodes.every((node) => expandedNodes[node.id]);
-        const anyExpanded = allNodes.some((node) => expandedNodes[node.id]);
-
+        const allExpanded = allNodes.every((node) => expandedNodesRef.current[node.id]);
+        const anyExpanded = allNodes.some((node) => expandedNodesRef.current[node.id]);
+    
         setIsExpandDisabled(allExpanded);
         setIsCollapseDisabled(!anyExpanded);
-    }, [expandedNodes, treeData]);
+    }, [treeData]); // ✅ Removed `expandedNodes` to prevent extra re-renders
+    
 
     // Enable both buttons when searching
     useEffect(() => {
@@ -256,19 +263,18 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     const expandAll = () => {
         setIsExpandDisabled(true);
         setIsCollapseDisabled(false);
-
-        const newState: { [key: number]: boolean } = {};
-        treeData.forEach((node) => expandRecursive(node, newState));
-        setExpandedNodes(newState);
+    
+        treeData.forEach((node) => expandRecursive(node, expandedNodesRef.current));
+        setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers re-render only once
     };
-
-    // Collapse all nodes
+    
     const collapseAll = () => {
         setIsCollapseDisabled(true);
         setIsExpandDisabled(false);
-
-        setExpandedNodes({});
+        expandedNodesRef.current = {}; // ✅ Reset ref instead of triggering re-renders
+        setExpandedNodes({}); // ✅ Triggers only one re-render
     };
+    
 
     // Recursive expand function
     const expandRecursive = (node: any, state: { [key: number]: boolean }) => {
@@ -279,11 +285,28 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     // Toggle individual node expand/collapse
     const toggleExpand = (e: any, id: number) => {
         e.preventDefault();
-        setExpandedNodes((prev) => {
-            const newState = { ...prev, [id]: !prev[id] };
-            return newState;
-        });
+        expandedNodesRef.current[id] = !expandedNodesRef.current[id]; // ✅ Update ref directly
+        setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers re-render only when needed
     };
+    
+    useEffect(() => {
+        const preventFocusShift = (event: FocusEvent) => {
+          if (dialogRef.current && event.target !== dialogRef.current) {
+            event.preventDefault();
+            dialogRef.current.focus();
+          }
+        };
+      
+        if (dialogRef.current) {
+          dialogRef.current.addEventListener("focusin", preventFocusShift);
+        }
+      
+        return () => {
+          if (dialogRef.current) {
+            dialogRef.current.removeEventListener("focusin", preventFocusShift);
+          }
+        };
+      }, []);
 
     // Filter function with auto-expand logic
     const filterTree = (nodes: any[], query: string, expandedState: { [key: number]: boolean }): any[] => {
@@ -537,7 +560,14 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             e.preventDefault();
         }
         if (dialogRef.current) {
+            
             dialogRef.current.showModal();
+
+            dialogRef.current.showModal();
+
+            setTimeout(() => {
+              dialogRef.current?.focus();
+            }, 10);
 
             let contHeight = [] as number[];
             contHeight[0] = (dialogRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
@@ -641,20 +671,12 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         return (
             <div>
                 <div className="tree-filters">
-                <button
-                        className="tree-btn"
-                        onClick={expandAll}
-                        disabled={isExpandDisabled}
-                    >
+                <a className="tree-btn" role="button" onClick={expandAll} style={{ pointerEvents: isExpandDisabled ? "none" : "auto", opacity: isExpandDisabled ? 0.5 : 1 }}>
                         Expand All
-                    </button>
-                    <button
-                        className="tree-btn"
-                        onClick={collapseAll}
-                        disabled={isCollapseDisabled}
-                    >
+                    </a>
+                    <a className="tree-btn" role="button" onClick={collapseAll} style={{ pointerEvents: isCollapseDisabled ? "none" : "auto", opacity: isCollapseDisabled ? 0.5 : 1 }}>
                         Collapse All
-                    </button>
+                    </a>
                     {search && <input
                         className="tree-search input-normal"
                         type="text"
@@ -690,23 +712,19 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
 
 // Prevent expandedNodes from resetting every checkbox update
 useEffect(() => {
-    setExpandedNodes((prev) => {
-        const newState = { ...prev }; // Preserve existing expanded nodes
-
-        // Expand parents of checked items
-        Object.keys(checkedItems).forEach((id) => {
-            if (checkedItems[Number(id)]) {
-                let node = findNodeById(treeData, Number(id));
-                while (node?.parentId) {
-                    newState[node.parentId] = true;
-                    node = findNodeById(treeData, node.parentId);
-                }
+    Object.keys(checkedItems).forEach((id) => {
+        if (checkedItems[Number(id)]) {
+            let node = findNodeById(treeData, Number(id));
+            while (node?.parentId) {
+                expandedNodesRef.current[node.parentId] = true;
+                node = findNodeById(treeData, node.parentId);
             }
-        });
-
-        return newState; // Merge instead of replacing
+        }
     });
-}, [expanded, checkedItems, treeData]);
+
+    setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers minimal re-renders
+}, [checkedItems, treeData]); // ✅ Removed `expanded` dependency to prevent unnecessary updates
+
 
 
     return (
@@ -796,14 +814,14 @@ export const buildTree = (
             const parent = map.get(node.parentId);
             if (parent) {
                 parent.children.push(node);
-                parent.has_children = true; // ✅ Mark parent as having children
+                parent.has_children = true; // Mark parent as having children
             }
         }
     });
 
     // Step 3: Recursively traverse and set correct paths & IDs
     const setPathsAndIds = (node: any, parentPath: string, parentIds: string) => {
-        node.path = parentPath ? `${parentPath} / ${node.name}` : node.name; // ✅ Spaces added around '/'
+        node.path = parentPath ? `${parentPath} / ${node.name}` : node.name; // Spaces added around '/'
         node.ids = parentIds ? `${parentIds},${node.id}` : `${node.id}`; // Comma-separated hierarchy of IDs
         node.children.forEach((child: any) => setPathsAndIds(child, node.path, node.ids));
     };
