@@ -32,9 +32,9 @@ app/drizzle/out/
 backup.sh
 backups/
 utils/
-data/
-migrations/
-scripts/
+data
+migrations
+scripts
 
 # Drizzle
 app/drizzle/meta/

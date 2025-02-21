@@ -19,6 +19,8 @@ export interface HazardImpactFilters {
     geographicLevelId: string | null;
     fromDate: string | null;
     toDate: string | null;
+    disasterEventId: string | null;
+    _disasterEventId?: string | null;
 }
 
 export interface HazardImpactResponse {
