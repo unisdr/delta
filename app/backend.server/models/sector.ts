@@ -70,8 +70,7 @@ export async function allSectors(tx: Tx) {
 	return res
 }
 
-export async function getSectorsByLevel(level: number): Promise<{id: number, sectorname: string, parentId: number | null, description: string | null, updatedAt: Date, createdAt: Date, level: number}[] | never> {
-
+export async function getSectorsByLevel(level: number): Promise<{id: number, name: string}[]> {
 	const sectorParentTable = aliasedTable(sectorTable, "sectorParentTable");
 
 	return await dr.select({
@@ -86,7 +85,6 @@ export async function getSectorsByLevel(level: number): Promise<{id: number, sec
 		.where(eq(sectorTable.level, level))
 		.orderBy(sectorTable.sectorname)
 	.execute();
-
 }
 
 let agricultureSectorId = 11;
