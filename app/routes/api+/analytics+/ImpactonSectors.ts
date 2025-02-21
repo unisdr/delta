@@ -7,13 +7,13 @@ export const loader: LoaderFunction = async ({ request }) => {
     const url = new URL(request.url);
     const sectorId = url.searchParams.get("sectorId");
     const filters = {
-      startDate: url.searchParams.get("startDate"),
-      endDate: url.searchParams.get("endDate"),
-      hazardType: url.searchParams.get("hazardType"),
-      hazardCluster: url.searchParams.get("hazardCluster"),
-      specificHazard: url.searchParams.get("specificHazard"),
-      geographicLevel: url.searchParams.get("geographicLevel"),
-      disasterEvent: url.searchParams.get("disasterEvent"),
+      startDate: url.searchParams.get("fromDate"),
+      endDate: url.searchParams.get("toDate"),
+      hazardType: url.searchParams.get("hazardTypeId"),
+      hazardCluster: url.searchParams.get("hazardClusterId"),
+      specificHazard: url.searchParams.get("specificHazardId"),
+      geographicLevel: url.searchParams.get("geographicLevelId"),
+      disasterEvent: url.searchParams.get("disasterEventId"),
     };
 
     // Input validation
@@ -33,7 +33,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     }
 
     // Call the handler to fetch sector impact data
-    const result = await getImpactOnSector(sectorId);
+    const result = await getImpactOnSector(sectorId, filters);
 
     if (!result.success) {
       return json(
@@ -48,7 +48,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       {
         status: 200,
         headers: {
-          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+          'Cache-Control': 'no-store', // Disable caching to ensure fresh data
         },
       }
     );
