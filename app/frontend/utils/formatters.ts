@@ -3,14 +3,22 @@ interface CurrencyOptions {
     locale?: string;
 }
 
-export const formatCurrency = (value: string | number, options: CurrencyOptions = {}): string => {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+export const formatCurrency = (value: string | number, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' = 'thousands'): string => {
+    let numValue = typeof value === 'string' ? parseFloat(value) : value;
+    let suffix = '';
+    if (scale === 'thousands') {
+        numValue /= 1000;
+        suffix = 'K'; // K denotes thousands
+    } else if (scale === 'millions') {
+        numValue /= 1000000;
+        suffix = 'M'; // M denotes millions
+    }
     return new Intl.NumberFormat(options.locale || 'en-US', {
         style: 'currency',
         currency: options.currency || 'PHP',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
-    }).format(numValue);
+    }).format(numValue) + suffix;
 };
 
 export const formatNumber = (value: string | number, locale: string = 'en-US'): string => {

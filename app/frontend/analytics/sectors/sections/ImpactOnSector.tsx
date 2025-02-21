@@ -192,19 +192,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
 
             const params = new URLSearchParams({ sectorId: targetSectorId });
 
-            // Add all filter values that are not null or empty
-            // Object.entries(filters).forEach(([key, value]) => {
-            //     if (value !== null && value !== "") {
-            //         // Handle date format conversion for API
-            //         if (key === 'fromDate' || key === 'toDate') {
-            //             const date = new Date(value);
-            //             const formattedDate = date.toISOString().split('T')[0];
-            //             params.append(key, formattedDate);
-            //         } else {
-            //             params.append(key, value);
-            //         }
-            //     }
-            // });
+
             Object.entries(filters).forEach(([key, value]) => {
                 if (value !== null && value !== "") {
                     params.append(key, value);
@@ -467,7 +455,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                 <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="year" />
                                         <YAxis
                                             tickFormatter={(value) => Math.round(value).toString()}
@@ -485,7 +473,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                 />
                                             )}
                                         />
-                                        <Area type="monotone" dataKey="count" stroke="#8884d8" fill="url(#eventGradient)" />
+                                        <Area type="linear" dataKey="count" stroke="#8884d8" fill="url(#eventGradient)" strokeWidth={2} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             ) : (
@@ -502,7 +490,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                     {/* Damage Box */}
                     <div className="dts-data-box">
                         <h3 className="dts-body-label">
-                            <span id="elementId03">Damage in {currency} - in Thousands - due to {getHazardTypeDisplay()}</span>
+                            <span id="elementId03">Damages in {currency} - in Thousands - due to {getHazardTypeDisplay()}</span>
                             <button
                                 ref={damageTooltipRef}
                                 className="dts-tooltip__button"
@@ -524,10 +512,10 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                 <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="year" />
                                         <YAxis
-                                            tickFormatter={(value) => `${currency} ${formatNumber(value)}`}
+                                            tickFormatter={(value) => formatCurrency(value, { currency: 'PHP' }, 'thousands')}
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
@@ -542,7 +530,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                 />
                                             )}
                                         />
-                                        <Area type="monotone" dataKey="amount" stroke="#82ca9d" fill="url(#damageGradient)" />
+                                        <Area type="linear" dataKey="amount" stroke="#82ca9d" fill="url(#damageGradient)" strokeWidth={2} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             ) : (
@@ -578,10 +566,10 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                 <stop offset="95%" stopColor="#ffc658" stopOpacity={0.1} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="year" />
                                         <YAxis
-                                            tickFormatter={(value) => `${currency} ${formatNumber(value)}`}
+                                            tickFormatter={(value) => formatCurrency(value, { currency: 'PHP' }, 'thousands')}
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
@@ -596,7 +584,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                 />
                                             )}
                                         />
-                                        <Area type="monotone" dataKey="amount" stroke="#ffc658" fill="url(#lossGradient)" />
+                                        <Area type="linear" dataKey="amount" stroke="#ffc658" fill="url(#lossGradient)" strokeWidth={2} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             ) : (

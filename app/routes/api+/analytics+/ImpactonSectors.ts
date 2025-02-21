@@ -10,7 +10,10 @@ export const loader: LoaderFunction = async ({ request }) => {
       startDate: url.searchParams.get("startDate"),
       endDate: url.searchParams.get("endDate"),
       hazardType: url.searchParams.get("hazardType"),
+      hazardCluster: url.searchParams.get("hazardCluster"),
+      specificHazard: url.searchParams.get("specificHazard"),
       geographicLevel: url.searchParams.get("geographicLevel"),
+      disasterEvent: url.searchParams.get("disasterEvent"),
     };
 
     // Input validation
