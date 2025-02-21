@@ -40,7 +40,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
 	const item = await getItem2(params, hazardEventById)
 	let hip = await dataForHazardPicker();
-	
+
 	if (item!.event.ps.length > 0){
 		let parent = item!.event.ps[0].p.he;
 		// get parent of parent as well, to match what we use in new form

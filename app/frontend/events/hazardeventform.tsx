@@ -43,7 +43,9 @@ export const fieldsDefCommon = [
 
 export const fieldsDef: FormInputDef<HazardEventFields>[] = [
 	{key: "parent", label: "", type: "other"},
-	{key: "hazardId", label: "Hazard", type: "other", required: true, uiRow: {colOverride: 1}},
+	{key: "hipClassId", label: "Hazard Class", type: "other", uiRow: {colOverride: 1}},
+	{key: "hipClusterId", label: "Hazard Cluster", type: "other"},
+	{key: "hipHazardId", label: "Hazard", type: "other"},
 	...fieldsDefCommon
 ];
 
@@ -53,7 +55,7 @@ export const fieldsDefApi: FormInputDef<HazardEventFields>[] = [
 ];
 
 export const fieldsDefView: FormInputDef<HazardEventViewModel>[] = [
-	{key: "hazard", label: "", type: "other"},
+	{key: "hipHazard", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},
 	{key: "updatedAt", label: "", type: "other"},
@@ -68,12 +70,19 @@ interface HazardEventFormProps extends UserFormProps<HazardEventFields> {
 export function hazardEventLabel(args: {
 	id?: string;
 	description?: string;
-	hazard: {nameEn: string};
+	hazard?: {nameEn: string};
 }): string {
-	const hazardName = args.hazard.nameEn.slice(0, 50);
-	const desc = args.description ? " " + args.description.slice(0, 50) : "";
-	const shortId = args.id ? " " + args.id.slice(0, 5) : "";
-	return hazardName + " " + desc + " " + shortId;
+	let parts: string[] = []
+	if (args.hazard) {
+		parts.push(args.hazard.nameEn.slice(0, 50))
+	}
+	if (args.description) {
+		parts.push(args.description.slice(0, 50))
+	}
+	if (args.id) {
+		parts.push(args.id.slice(0, 5))
+	}
+	return parts.join(" ")
 }
 
 export function hazardEventLongLabel(args: {
@@ -90,7 +99,7 @@ export function hazardEventLongLabel(args: {
 export function hazardEventLink(args: {
 	id: string;
 	description: string;
-	hazard: {nameEn: string};
+	hazard?: {nameEn: string};
 }) {
 	return <Link to={`/hazard-event/${args.id}`}>
 		{hazardEventLabel(args)}
@@ -115,7 +124,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 		};
 	}, []);
 
-	const targetObject = useRef<HTMLDivElement>(null);
+	//const targetObject = useRef<HTMLDivElement>(null);
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
 
@@ -138,10 +147,12 @@ export function HazardEventForm(props: HazardEventFormProps) {
 						<FieldErrors errors={props.errors} field="parent"></FieldErrors>
 					</Field>
 				,
-				hazardId: (
+				hipClassId: null,
+				hipClusterId: null,
+				hipHazardId: (
 					<Field key="hazardId" label="Specific Hazard *">
-						<HazardPicker name="hazardId" hip={props.hip} defaultValue={fields.hazardId || ""} required={true} />
-						<FieldErrors errors={props.errors} field="hazardId"></FieldErrors>
+						<HazardPicker hip={props.hip} defaultValue={fields.hipHazardId || ""} required={true} />
+						<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
 					</Field>
 				),
 				spatialFootprint: (
@@ -181,7 +192,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 									id: "map_option",
 									caption: "Option",
 									type: "option",
-									options: ["Map Coordinates", "Geographic Level"], 
+									options: ["Map Coordinates", "Geographic Level"],
 									onChange: (e: any) => {
 										const value = e.target.value;
 
@@ -202,7 +213,7 @@ export function HazardEventForm(props: HazardEventFormProps) {
 								{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 								{
 									id: "geographic_level", caption: "Geographic Level", type: "custom",
-									render: (data: any, handleFieldChange: any, formData: any) => {
+									render: (data: any, _handleFieldChange: any, formData: any) => {
 										return (
 											<>
 												<div className="input-group">
@@ -220,32 +231,32 @@ export function HazardEventForm(props: HazardEventFormProps) {
 							]}
 							data={(() => {
 								try {
-								  // Ensure fields exist before accessing spatialFootprint
-								  if (fields?.spatialFootprint) {
-									if (Array.isArray(fields.spatialFootprint)) {
-									  return fields.spatialFootprint;
-									} else if (typeof fields.spatialFootprint === "string") {
-									  try {
-										const parsed = JSON.parse(fields.spatialFootprint);
-										return Array.isArray(parsed) ? parsed : [];
-									  } catch (error) {
-										console.error("Invalid JSON in spatialFootprint:", error);
-										return [];
-									  }
-									} else {
-									  console.warn("Unexpected type for spatialFootprint:", typeof fields.spatialFootprint);
-									  return [];
+									// Ensure fields exist before accessing spatialFootprint
+									if (fields?.spatialFootprint) {
+										if (Array.isArray(fields.spatialFootprint)) {
+											return fields.spatialFootprint;
+										} else if (typeof fields.spatialFootprint === "string") {
+											try {
+												const parsed = JSON.parse(fields.spatialFootprint);
+												return Array.isArray(parsed) ? parsed : [];
+											} catch (error) {
+												console.error("Invalid JSON in spatialFootprint:", error);
+												return [];
+											}
+										} else {
+											console.warn("Unexpected type for spatialFootprint:", typeof fields.spatialFootprint);
+											return [];
+										}
 									}
-								  }
-								  return [];
+									return [];
 								} catch (error) {
-								  console.error("Error processing spatialFootprint:", error);
-								  return [];
+									console.error("Error processing spatialFootprint:", error);
+									return [];
 								}
-							  })()}
-							onChange={(items: any) => {
+							})()}
+							onChange={(_items: any) => {
 								try {
-									const parsedItems = Array.isArray(items) ? items : (items);
+									//const parsedItems = Array.isArray(items) ? items : (items);
 								} catch {
 									console.error("Failed to process items.");
 								}
@@ -306,8 +317,6 @@ interface HazardEventViewProps {
 export function HazardEventView(props: HazardEventViewProps) {
 	const item = props.item;
 	const auditLogs = props.auditLogs;
-	let cluster = item.hazard.cluster;
-	let cls = cluster.class;
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
@@ -360,12 +369,20 @@ export function HazardEventView(props: HazardEventViewProps) {
 				def={fieldsDefView}
 				fields={item}
 				override={{
-					hazard: (
+					hipHazard: (
 						<div key="hazard">
-							<p>Class: {cls.nameEn}</p>
-							<p>Cluster: {cluster.nameEn}</p>
-							<p>Hazard ID: {item.hazard.id}</p>
-							<p>Hazard Name: {item.hazard.nameEn}</p>
+							{item.hipClass &&
+								<p>Class: {item.hipClass.nameEn}</p>
+							}
+							{item.hipCluster &&
+								<p>Cluster: {item.hipCluster.nameEn}</p>
+							}
+							{item.hipHazard &&
+								<>
+									<p>Hazard ID: {item.hipHazard.id}</p>
+									<p>Hazard Name: {item.hipHazard.nameEn}</p>
+								</>
+							}
 						</div>
 					),
 					createdAt: (
@@ -382,22 +399,22 @@ export function HazardEventView(props: HazardEventViewProps) {
 									let footprints: any[] = []; // Ensure footprints is always an array
 
 									if (item?.spatialFootprint) {
-									  if (Array.isArray(item.spatialFootprint)) {
-										footprints = item.spatialFootprint;
-									  } else if (typeof item.spatialFootprint === "string") {
-										try {
-										  const parsed = JSON.parse(item.spatialFootprint);
-										  footprints = Array.isArray(parsed) ? parsed : [];
-										} catch (error) {
-										  console.error("Invalid JSON in spatialFootprint:", error);
-										  footprints = [];
+										if (Array.isArray(item.spatialFootprint)) {
+											footprints = item.spatialFootprint;
+										} else if (typeof item.spatialFootprint === "string") {
+											try {
+												const parsed = JSON.parse(item.spatialFootprint);
+												footprints = Array.isArray(parsed) ? parsed : [];
+											} catch (error) {
+												console.error("Invalid JSON in spatialFootprint:", error);
+												footprints = [];
+											}
+										} else {
+											console.warn("Unexpected type for spatialFootprint:", typeof item.spatialFootprint);
+											footprints = [];
 										}
-									  } else {
-										console.warn("Unexpected type for spatialFootprint:", typeof item.spatialFootprint);
-										footprints = [];
-									  }
 									}
-	
+
 									return (
 										<>
 											<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
@@ -454,7 +471,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 											</button>
 										</>
 									);
-	
+
 								} catch {
 									return <p>Invalid JSON format in spatialFootprint.</p>;
 								}
@@ -464,7 +481,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 				}}
 			/>
 			{/* Add Audit Log History at the end */}
-			<br/>
+			<br />
 			{auditLogs && auditLogs.length > 0 && (
 				<>
 					<h3>Audit Log History</h3>

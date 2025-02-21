@@ -10,14 +10,14 @@ export const loader = createApiListLoader(
 			...offsetLimit,
 			columns: {
 				id: true,
-				hazardId: true,
+				hipHazardId: true,
 				startDate: true,
 				endDate: true,
 				description: true,
 			},
 			orderBy: [desc(hazardEventTable.startDate)],
 			with: {
-				hazard: {
+				hipHazard: {
 					columns: {
 						nameEn: true,
 					},

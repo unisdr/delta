@@ -50,10 +50,10 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
 
     // Add hazard type filters if provided
     if (hazardTypeId) {
-        baseConditions.push(eq(hipClassTable.id, parseInt(hazardTypeId)));
+        baseConditions.push(eq(hipClassTable.id, hazardTypeId));
     }
     if (hazardClusterId) {
-        baseConditions.push(eq(hipClusterTable.id, parseInt(hazardClusterId)));
+        baseConditions.push(eq(hipClusterTable.id, hazardClusterId));
     }
     if (specificHazardId) {
         baseConditions.push(eq(hipHazardTable.id, specificHazardId));
@@ -78,7 +78,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         )
         .innerJoin(
             hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
+            eq(hazardEventTable.hipHazardId, hipHazardTable.id)
         )
         .innerJoin(
             hipClusterTable,
@@ -112,7 +112,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         )
         .innerJoin(
             hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
+            eq(hazardEventTable.hipHazardId, hipHazardTable.id)
         )
         .innerJoin(
             hipClusterTable,
@@ -153,7 +153,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         )
         .innerJoin(
             hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
+            eq(hazardEventTable.hipHazardId, hipHazardTable.id)
         )
         .innerJoin(
             hipClusterTable,
@@ -176,7 +176,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         .limit(10);
 
     // Calculate percentages
-    const calculatePercentages = (data: { hazardId: number; hazardName: string; value: unknown }[]): HazardDataPoint[] => {
+    const calculatePercentages = (data: { hazardId: string; hazardName: string; value: unknown }[]): HazardDataPoint[] => {
         const total = data.reduce((sum, item) => sum + Number(item.value), 0);
         return data.map(item => ({
             hazardId: item.hazardId,

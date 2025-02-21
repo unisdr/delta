@@ -116,7 +116,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 			fieldsDef={fieldsDef}
 			override={{
 				hazardEventId:
-					<Field key="hazardEventId" label="Hazard Event">
+					<Field key="hazardEventId" label="Hazardous Event">
 						{selectedHazardEvent ? hazardEventLink(selectedHazardEvent) : "-"}&nbsp;
 						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
 						<input type="hidden" name="hazardEventId" value={selectedHazardEvent?.id || ""} />
@@ -181,7 +181,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 								{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 								{
 									id: "geographic_level", caption: "Geographic Level", type: "custom",
-									render: (data: any, handleFieldChange: any, formData: any) => {
+									render: (data: any, _handleFieldChange: any, formData: any) => {
 										return (
 											<>
 												<div className="input-group">
@@ -205,9 +205,9 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 								  return []; // Default to an empty array if there's an error
 								}
 							  })()}
-							onChange={(items: any) => {
+							onChange={(_items: any) => {
 								try {
-									const parsedItems = Array.isArray(items) ? items : (items);
+									//const parsedItems = Array.isArray(items) ? items : (items);
 								} catch {
 									console.error("Failed to process items.");
 								}

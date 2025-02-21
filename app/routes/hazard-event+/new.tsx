@@ -33,7 +33,7 @@ import {
 } from "~/backend.server/models/event";
 
 import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
+import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {

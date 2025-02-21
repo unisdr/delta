@@ -10,7 +10,7 @@ export async function createTestData() {
 
 	const [cls] = await dr
 		.insert(hipClassTable)
-		.values({ id: 1, nameEn: 'Test Class' })
+		.values({ id: "class1", nameEn: 'Test Class' })
 		.onConflictDoUpdate({
 			target: hipClassTable.id,
 			set: { nameEn: 'Test Class' },
@@ -21,7 +21,7 @@ export async function createTestData() {
 		const [cluster] = await dr
 			.insert(hipClusterTable)
 			.values({
-				id: i,
+				id: "cluster" + i,
 				classId: cls.id,
 				nameEn: `Test Cluster ${i}`,
 			})

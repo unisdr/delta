@@ -15,7 +15,9 @@ function testHazardFields(id: number) {
 		createdAt: new Date(),
 		updatedAt: null,
 		parent: "",
-		hazardId: "hazard1",
+		hipClassId: "class1",
+		hipClusterId: "cluster1",
+		hipHazardId: "hazard1",
 		startDate: new Date("2024-12-30"),
 		endDate: new Date("2024-12-31"),
 		otherId1: `external${id}`,
@@ -40,10 +42,13 @@ describe("hazard_event", async () => {
 	// Check that the constraint errors from create are properly handled
 	it("create contraint error", async () => {
 		let data = testHazardFields(1)
-		data.hazardId = "xxx"
+		data.hipClassId = "xxx"
+		data.hipClusterId = "xxx"
+		data.hipHazardId = "xxx"
 		let res = await hazardEventCreate(dr, data)
+		console.log(res)
 		assert(!res.ok)
-		let errs = res.errors.fields?.hazardId
+		let errs = res.errors.fields?.hipHazardId
 		assert.equal(errs?.length, 1)
 		let err = errs[0] as FormError
 		assert(err.code, "constraint")
@@ -58,6 +63,7 @@ describe("hazard_event", async () => {
 		let id: string
 		{
 			let res = await hazardEventCreate(dr, data)
+			console.log("res", JSON.stringify(res))
 			assert(res.ok)
 			id = res.id
 		}
@@ -81,10 +87,12 @@ describe("hazard_event", async () => {
 			id = res.id
 		}
 		{
-			data.hazardId = "xxx"
+			data.hipClassId = "xxx"
+			data.hipClusterId = "xxx"
+			data.hipHazardId = "xxx"
 			let res = await hazardEventUpdate(dr, id, data)
 			assert(!res.ok)
-			let errs = res.errors.fields?.hazardId
+			let errs = res.errors.fields?.hipHazardId
 			assert.equal(errs?.length, 1)
 			let err = errs[0] as FormError
 			assert(err.code, "constraint")

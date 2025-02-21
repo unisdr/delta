@@ -45,7 +45,7 @@ export const contentPickerConfig = {
         ],
         joins: [ // Define joins
             { type: "inner", table: hazardEventTable, condition: eq(disasterEventTable.hazardEventId, hazardEventTable.id) },
-            { type: "inner", table: hipHazardTable, condition: eq(hazardEventTable.hazardId, hipHazardTable.id) }
+            { type: "inner", table: hipHazardTable, condition: eq(hazardEventTable.hipHazardId, hipHazardTable.id) }
         ],
         whereIlike: [ // Define search filters
             { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },

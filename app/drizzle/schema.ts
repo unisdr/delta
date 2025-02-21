@@ -68,6 +68,17 @@ function apiImportIdField() {
 	};
 }
 
+function hipRelationColumns() {
+	return {
+		hipHazardId: text("hip_hazard_id")
+			.references((): AnyPgColumn => hipHazardTable.id),
+		hipClusterId: text("hip_cluster_id")
+			.references((): AnyPgColumn => hipClusterTable.id),
+		hipClassId: text("hip_class_id")
+			.references((): AnyPgColumn => hipClassTable.id)
+	}
+}
+
 function unitsEnum(name: string) {
 	return text(name, {
 		enum: [
@@ -270,12 +281,10 @@ export const hazardEventTable = pgTable("hazard_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
 	...apiImportIdField(),
+	...hipRelationColumns(),
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
-	hazardId: text("hazard_id")
-		.references((): AnyPgColumn => hipHazardTable.id)
-		.notNull(),
 	startDate: timestamp("start_date").notNull(),
 	endDate: timestamp("end_date").notNull(),
 	status: text("status").notNull().default("pending"),
@@ -292,7 +301,7 @@ export const hazardEventTable = pgTable("hazard_event", {
 
 export const hazardEventTableConstraits = {
 	apiImportId: "hazard_event_apiImportId_unique",
-	hazardId: "hazard_event_hazard_id_hip_hazard_id_fk",
+	hipHazardId: "hazard_event_hip_hazard_id_hip_hazard_id_fk",
 };
 
 export type HazardEvent = typeof hazardEventTable.$inferSelect;
@@ -303,9 +312,17 @@ export const hazardEventRel = relations(hazardEventTable, ({one}) => ({
 		fields: [hazardEventTable.id],
 		references: [eventTable.id],
 	}),
-	hazard: one(hipHazardTable, {
-		fields: [hazardEventTable.hazardId],
+	hipHazard: one(hipHazardTable, {
+		fields: [hazardEventTable.hipHazardId],
 		references: [hipHazardTable.id],
+	}),
+	hipCluster: one(hipClusterTable, {
+		fields: [hazardEventTable.hipClusterId],
+		references: [hipClusterTable.id],
+	}),
+	hipClass: one(hipClassTable, {
+		fields: [hazardEventTable.hipClassId],
+		references: [hipClassTable.id],
 	}),
 }));
 
@@ -574,7 +591,7 @@ export const damagesTable = pgTable("damages", {
 	// replacement when publicDamage=partial
 	privateReplacementCostUnit: ourMoney("private_replacement_cost_unit"),
 	privateReplacementCostUnitCurrency: text("private_replacement_cost_unit_currency"),
-//	privateReplacementUnit: unitsEnum("private_replacement_unit"),
+	//	privateReplacementUnit: unitsEnum("private_replacement_unit"),
 	privateReplacementUnits: ourBigint("private_replacement_units"),
 	privateReplacementCostTotalOverride: ourMoney("private_replacement_cost_total_override"),
 	privateRecoveryCostUnit: ourMoney("private_recovery_cost_unit"),
@@ -709,7 +726,7 @@ export type LossesInsert = typeof lossesTable.$inferInsert
 export const hipClassTable = pgTable(
 	"hip_class",
 	{
-		id: ourBigint("id").primaryKey(),
+		id: text("id").primaryKey(),
 		nameEn: zeroText("name_en"),
 	},
 	(table) => [check("name_en_not_empty", sql`${table.nameEn} <> ''`)]
@@ -721,8 +738,8 @@ export const hipClassTable = pgTable(
 export const hipClusterTable = pgTable(
 	"hip_cluster",
 	{
-		id: ourBigint("id").primaryKey(),
-		classId: ourBigint("class_id")
+		id: text("id").primaryKey(),
+		classId: text("class_id")
 			.references((): AnyPgColumn => hipClassTable.id)
 			.notNull(),
 		nameEn: zeroText("name_en"),
@@ -744,7 +761,8 @@ export const hipHazardTable = pgTable(
 	"hip_hazard",
 	{
 		id: text("id").primaryKey(),
-		clusterId: ourBigint("cluster_id")
+		code: zeroText("code"),
+		clusterId: text("cluster_id")
 			.references((): AnyPgColumn => hipClusterTable.id)
 			.notNull(),
 		nameEn: zeroText("name_en"),

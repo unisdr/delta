@@ -20,16 +20,29 @@ import {
 } from "drizzle-orm";
 import {isValidUUID} from "~/util/id";
 
-import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { logAudit } from "./auditLogs";
+import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
+import {logAudit} from "./auditLogs";
+import {getRequiredAndSetToNullHipFields} from "./hip_hazard_picker";
 
 export interface HazardEventFields extends Omit<EventInsert, 'id'>, Omit<HazardEventInsert, 'id'>, ObjectWithImportId {
 	parent: string
 }
 
-export function validate(_fields: Partial<HazardEventFields>): Errors<HazardEventFields> {
+export function validate(fields: Partial<HazardEventFields>): Errors<HazardEventFields> {
 	let errors: Errors<HazardEventFields> = {};
 	errors.fields = {};
+
+	let requiredHip = getRequiredAndSetToNullHipFields(fields)
+	if (requiredHip){
+		if (requiredHip == "class"){
+			errors.fields.hipHazardId = ["HIP class is required"]
+		} else if (requiredHip == "cluster"){
+			errors.fields.hipHazardId = ["HIP cluster is required"]
+		} else {
+			throw new Error("unknown field: " + requiredHip)
+		}
+	}
+
 	return errors
 }
 
@@ -61,16 +74,16 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userI
 				createdAt: new Date(),
 			}).returning();
 
-			if(userId){
-				logAudit({
-					tableName: getTableName(hazardEventTable),
-					recordId: newHazardEventRecord[0].id,
-					action: "Create hazardous event",
-					newValues: JSON.stringify(newHazardEventRecord[0]),
-					oldValues: null,
-					userId: userId,
-				})
-			}
+		if (userId) {
+			logAudit({
+				tableName: getTableName(hazardEventTable),
+				recordId: newHazardEventRecord[0].id,
+				action: "Create hazardous event",
+				newValues: JSON.stringify(newHazardEventRecord[0]),
+				oldValues: null,
+				userId: userId,
+			})
+		}
 	} catch (error: any) {
 		let res = checkConstraintError(error, hazardEventTableConstraits)
 		if (res) {
@@ -103,6 +116,7 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 		return {ok: false, errors}
 	}
 
+
 	/*
 	console.log("updating eventTable")
 	await tx
@@ -129,7 +143,7 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 			return {ok: false, errors}
 		}
 
-		if(userId){
+		if (userId) {
 			logAudit({
 				tableName: getTableName(hazardEventTable),
 				recordId: res[0].id,
@@ -208,15 +222,19 @@ SELECT pp.parent_id FROM pp
 }
 
 export const hazardBasicInfoJoin = {
-	hazard: {
+	hipHazard: {
+		/*
+		We set class and cluster directly assigned to the hazard, top levels can be set without selecting lower ones. also the links between class, cluster and hazard could have been changed in hips 
 		with: {
 			cluster: {
 				with: {
 					class: true
 				}
 			}
-		}
-	}
+		}*/
+	},
+	hipCluster: true,
+	hipClass: true,
 } as const
 
 
@@ -419,7 +437,7 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 			})
 			.where(eq(disasterEventTable.id, id))
 
-		await processAndSaveAttachments(tx, id, Array.isArray(fields?.attachments) ? fields.attachments : []);	
+		await processAndSaveAttachments(tx, id, Array.isArray(fields?.attachments) ? fields.attachments : []);
 	} catch (error: any) {
 		let res = checkConstraintError(error, disasterEventTableConstraits)
 		if (res) {
@@ -470,7 +488,7 @@ export async function disasterEventByIdTx(tx: Tx, id: any) {
 		}
 	});
 
-	if(!res){
+	if (!res) {
 		throw new Error("Id is invalid");
 	}
 	return res
@@ -497,17 +515,17 @@ export async function disasterEventDelete(id: string): Promise<DeleteResult> {
 
 async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: any[]) {
 	if (!attachmentsData) return;
-  
+
 	const save_path = `/uploads/disaster-event/${resourceId}`;
 	const save_path_temp = `/uploads/temp`;
-  
+
 	// Process the attachments data
 	const processedAttachments = ContentRepeaterUploadFile.save(attachmentsData, save_path_temp, save_path);
-  
+
 	// Update the `attachments` field in the database
 	await tx.update(disasterEventTable)
-	  .set({
-		attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
-	  })
-	  .where(eq(disasterEventTable.id, resourceId));
+		.set({
+			attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+		})
+		.where(eq(disasterEventTable.id, resourceId));
 }

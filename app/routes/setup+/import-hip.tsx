@@ -24,6 +24,7 @@ import hipsDataJson from "~/hips/hips.json"
 
 interface Hip {
 	//type: string
+	nid: number
 	title: string
 	description: string
 	notation: string
@@ -41,7 +42,10 @@ interface HipApi {
 async function upsertHip(item: Hip) {
 	const [cls] = await dr
 		.insert(hipClassTable)
-		.values({id: item.type_id, nameEn: item.type_name})
+		.values({
+			id: String(item.type_id),
+			nameEn: item.type_name
+		})
 		.onConflictDoUpdate({
 			target: hipClassTable.id,
 			set: {nameEn: item.type_name},
@@ -50,7 +54,11 @@ async function upsertHip(item: Hip) {
 
 	const [cluster] = await dr
 		.insert(hipClusterTable)
-		.values({id: item.cluster_id, classId: cls.id, nameEn: item.cluster_name})
+		.values({
+			id: String(item.cluster_id),
+			classId: cls.id,
+			nameEn: item.cluster_name
+		})
 		.onConflictDoUpdate({
 			target: hipClusterTable.id,
 			set: {classId: cls.id, nameEn: item.cluster_name},
@@ -60,15 +68,17 @@ async function upsertHip(item: Hip) {
 	await dr
 		.insert(hipHazardTable)
 		.values({
-			id: item.notation,
-			clusterId: cluster.id,
+			id: String(item.nid),
+			code: item.notation,
+			clusterId: String(cluster.id),
 			nameEn: item.title,
 			descriptionEn: item.description,
 		})
 		.onConflictDoUpdate({
 			target: hipHazardTable.id,
 			set: {
-				clusterId: cluster.id,
+				code: item.notation,
+				clusterId: String(cluster.id),
 				nameEn: item.title,
 				descriptionEn: item.description,
 			},
@@ -82,11 +92,10 @@ async function processPage(page: number) {
 	if (page > maxPages) {
 		throw "Exceeded max pages, likely infinite loop"
 	}
-
 	// const url = "https://tools.undrr.org/sso-undrr/api/integration/pw/hips?page=" + page;
 	// const resp = await fetch(url);
 	// const res = await resp.json() as HipApi;
-	const res = hipsDataJson;
+	const res = hipsDataJson as HipApi;
 	const data = res.data;
 	for (const item of data) {
 		await upsertHip(item);
@@ -139,6 +148,7 @@ function hipDevData(): Hip[] {
 			id++;
 			let type = clu.type;
 			data.push({
+				nid: id,
 				title: `Title ${id} (${type.name} - ${clu.name})`,
 				description: `Description ${id} (${type.name} - ${clu.name})`,
 				notation: `DEV${id}`,

@@ -48,7 +48,7 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 			...offsetLimit,
 			columns: {
 				id: true,
-				hazardId: true,
+				hipHazardId: true,
 				startDate: true,
 				endDate: true,
 				description: true,
@@ -56,14 +56,14 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 			},
 			orderBy: [desc(hazardEventTable.startDate)],
 			with: {
-				hazard: {
+				hipHazard: {
 					columns: {
 						nameEn: true,
 					},
 				}
 			},
 			where: and(
-				filters.hazardId ? eq(hazardEventTable.hazardId, filters.hazardId) : undefined,
+				filters.hazardId ? eq(hazardEventTable.hipHazardId, filters.hazardId) : undefined,
 				filters.approvalStatus ? eq(hazardEventTable.approvalStatus, filters.approvalStatus) : undefined,
 			),
 		})

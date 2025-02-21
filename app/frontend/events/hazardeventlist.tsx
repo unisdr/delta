@@ -137,10 +137,10 @@ export function ListView(args: ListViewArgs) {
 										{formatDate(item.endDate)}
 									</td>
 									<td>
-										{item.hazardId}
+										{item.hipHazardId}
 									</td>
 									<td>
-										{item.hazard.nameEn}
+										{item.hipHazard?.nameEn || ""}
 									</td>
 									<td>
 										{item.description}
