@@ -6,7 +6,7 @@ import {useEffect, useState, useRef} from 'react';
 
 import {DisasterEventFields, DisasterEventViewModel, HazardEventBasicInfoViewModel} from "~/backend.server/models/event"
 
-import {hazardEventLink} from "~/frontend/events/hazardeventform"
+import {hazardous_eventLink} from "~/frontend/events/hazardeventform"
 
 import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
@@ -65,7 +65,7 @@ export const fieldsDefCommon = [
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
-	{key: "hazardEventId", label: "", type: "other"},
+	{key: "hazardous_eventId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
 
@@ -81,12 +81,12 @@ export const fieldsDefView: FormInputDef<DisasterEventViewModel>[] = [
 ];
 
 interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
-	hazardEvent?: HazardEventBasicInfoViewModel
+	hazardous_event?: HazardEventBasicInfoViewModel
 	treeData: any[];
 }
 
 export function DisasterEventForm(props: DisasterEventFormProps) {
-	const [selectedHazardEvent, setSelectedHazardEvent] = useState(props.hazardEvent);
+	const [selectedHazardEvent, setSelectedHazardEvent] = useState(props.hazardous_event);
 	const treeData = props.treeData;
 
 	useEffect(() => {
@@ -115,12 +115,12 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 			fields={props.fields}
 			fieldsDef={fieldsDef}
 			override={{
-				hazardEventId:
-					<Field key="hazardEventId" label="Hazardous Event">
-						{selectedHazardEvent ? hazardEventLink(selectedHazardEvent) : "-"}&nbsp;
-						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
-						<input type="hidden" name="hazardEventId" value={selectedHazardEvent?.id || ""} />
-						<FieldErrors errors={props.errors} field="hazardEventId"></FieldErrors>
+				hazardous_eventId:
+					<Field key="hazardous_eventId" label="Hazardous Event">
+						{selectedHazardEvent ? hazardous_eventLink(selectedHazardEvent) : "-"}&nbsp;
+						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
+						<input type="hidden" name="hazardous_eventId" value={selectedHazardEvent?.id || ""} />
+						<FieldErrors errors={props.errors} field="hazardous_eventId"></FieldErrors>
 					</Field>
 				,
 				spatialFootprint: props.edit ? (
@@ -399,8 +399,8 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			singular="Disaster event"
 		>
 			<FieldsView def={fieldsDefView} fields={item} override={{
-				hazardEventId: (
-					<p key="hazardEventId">Hazardous Event: {hazardEventLink(item.hazardEvent)}</p>
+				hazardous_eventId: (
+					<p key="hazardous_eventId">Hazardous Event: {hazardous_eventLink(item.hazardous_event)}</p>
 				),
 				createdAt: (
 					<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>

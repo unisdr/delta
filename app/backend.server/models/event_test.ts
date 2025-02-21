@@ -2,10 +2,10 @@ import {describe, it} from 'node:test'
 import assert from 'node:assert/strict'
 import {dr} from '~/db.server'
 import {sql} from 'drizzle-orm'
-import {hazardEventCreate, hazardEventById, HazardEventFields, RelationCycleError, hazardEventUpdate} from './event'
+import {hazardous_eventCreate, hazardous_eventById, HazardEventFields, RelationCycleError, hazardous_eventUpdate} from './event'
 import {
 	eventTable,
-	hazardEventTable,
+	hazardous_eventTable,
 } from '~/drizzle/schema'
 import {createTestData} from '~/backend.server/models/hip_test'
 import {FormError} from '~/frontend/form'
@@ -33,19 +33,19 @@ function testHazardFields(id: number) {
 	return data
 }
 
-async function hazardEventTestData() {
+async function hazardous_eventTestData() {
 	await createTestData()
-	await dr.execute(sql`TRUNCATE ${eventTable}, ${hazardEventTable} CASCADE`)
+	await dr.execute(sql`TRUNCATE ${eventTable}, ${hazardous_eventTable} CASCADE`)
 }
 
-describe("hazard_event", async () => {
+describe("hazardous_event", async () => {
 	// Check that the constraint errors from create are properly handled
 	it("create contraint error", async () => {
 		let data = testHazardFields(1)
 		data.hipClassId = "xxx"
 		data.hipClusterId = "xxx"
 		data.hipHazardId = "xxx"
-		let res = await hazardEventCreate(dr, data)
+		let res = await hazardous_eventCreate(dr, data)
 		console.log(res)
 		assert(!res.ok)
 		let errs = res.errors.fields?.hipHazardId
@@ -57,21 +57,21 @@ describe("hazard_event", async () => {
 
 	// Check that basic update works.
 	it("update success", async () => {
-		await hazardEventTestData()
+		await hazardous_eventTestData()
 
 		let data = testHazardFields(1)
 		let id: string
 		{
-			let res = await hazardEventCreate(dr, data)
+			let res = await hazardous_eventCreate(dr, data)
 			console.log("res", JSON.stringify(res))
 			assert(res.ok)
 			id = res.id
 		}
 		{
 			data.endDate = new Date("2025-01-01")
-			let res = await hazardEventUpdate(dr, id, data)
+			let res = await hazardous_eventUpdate(dr, id, data)
 			assert(res.ok)
-			let got = await hazardEventById(id)
+			let got = await hazardous_eventById(id)
 			assert(got)
 			assert(got.endDate!.getTime() == data.endDate.getTime())
 		}
@@ -82,7 +82,7 @@ describe("hazard_event", async () => {
 		let data = testHazardFields(1)
 		let id: string = ""
 		{
-			let res = await hazardEventCreate(dr, data)
+			let res = await hazardous_eventCreate(dr, data)
 			assert(res.ok)
 			id = res.id
 		}
@@ -90,7 +90,7 @@ describe("hazard_event", async () => {
 			data.hipClassId = "xxx"
 			data.hipClusterId = "xxx"
 			data.hipHazardId = "xxx"
-			let res = await hazardEventUpdate(dr, id, data)
+			let res = await hazardous_eventUpdate(dr, id, data)
 			assert(!res.ok)
 			let errs = res.errors.fields?.hipHazardId
 			assert.equal(errs?.length, 1)
@@ -102,36 +102,36 @@ describe("hazard_event", async () => {
 
 	// Check that update that creates a relation cycle is not allowed.
 	it("update link cycle", async () => {
-		await hazardEventTestData()
+		await hazardous_eventTestData()
 
 		let data = testHazardFields(1)
 		let id: string
 		{
-			let res = await hazardEventCreate(dr, data)
+			let res = await hazardous_eventCreate(dr, data)
 			assert(res.ok)
 			id = res.id
 		}
 		{
 			data.parent = id
-			let res = await hazardEventUpdate(dr, id, data)
+			let res = await hazardous_eventUpdate(dr, id, data)
 			assert(!res.ok)
 			let err = res.errors.fields?.["parent"]?.[0] as FormError
 			assert(err?.code === RelationCycleError.code)
 
-			let got = await hazardEventById(id)
+			let got = await hazardous_eventById(id)
 			assert(got)
 		}
 	})
 
 	// Check that partial update works
 	it("partial update", async () => {
-		await hazardEventTestData()
+		await hazardous_eventTestData()
 
 		let data = testHazardFields(1)
 
 		let event1: string
 		{
-			let res = await hazardEventCreate(dr, data)
+			let res = await hazardous_eventCreate(dr, data)
 			assert(res.ok)
 			event1 = res.id
 		}
@@ -140,7 +140,7 @@ describe("hazard_event", async () => {
 		{
 			let data = testHazardFields(2)
 			data.parent = event1
-			let res = await hazardEventCreate(dr, data)
+			let res = await hazardous_eventCreate(dr, data)
 			assert(res.ok)
 			event2 = res.id
 		}
@@ -148,11 +148,11 @@ describe("hazard_event", async () => {
 		{
 			let update: Partial<HazardEventFields> = {}
 			update.description = "updated"
-			let res = await hazardEventUpdate(dr, event2, update)
+			let res = await hazardous_eventUpdate(dr, event2, update)
 			assert(res.ok)
 		}
 
-		let got = await hazardEventById(event2)
+		let got = await hazardous_eventById(event2)
 		assert.equal(got?.description, "updated", "Description should be updated")
 		assert.equal(got?.event.ps.length, 1, "Expecting 1 parent")
 		assert.equal(got?.event.ps[0].p.id, event1, "Parent ID should match event1")

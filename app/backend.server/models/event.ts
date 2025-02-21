@@ -8,7 +8,7 @@ import {
 	Errors,
 	hasErrors,
 } from "~/frontend/form";
-import {eventTable, EventInsert, hazardEventTable, HazardEventInsert, eventRelationshipTable, DisasterEventInsert, disasterEventTable, hazardEventTableConstraits, disasterEventTableConstraits} from "~/drizzle/schema";
+import {eventTable, EventInsert, hazardous_eventTable, HazardEventInsert, eventRelationshipTable, DisasterEventInsert, disasterEventTable, hazardous_eventTableConstraits, disasterEventTableConstraits} from "~/drizzle/schema";
 import {checkConstraintError} from "./common";
 
 import {dr, Tx} from "~/db.server";
@@ -46,7 +46,7 @@ export function validate(fields: Partial<HazardEventFields>): Errors<HazardEvent
 	return errors
 }
 
-export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userId?: number): Promise<CreateResult<HazardEventFields>> {
+export async function hazardous_eventCreate(tx: Tx, fields: HazardEventFields, userId?: number): Promise<CreateResult<HazardEventFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
@@ -67,7 +67,7 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userI
 	try {
 
 		let newHazardEventRecord = await tx
-			.insert(hazardEventTable)
+			.insert(hazardous_eventTable)
 			.values({
 				...values,
 				id: eventId,
@@ -76,7 +76,7 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userI
 
 		if (userId) {
 			logAudit({
-				tableName: getTableName(hazardEventTable),
+				tableName: getTableName(hazardous_eventTable),
 				recordId: newHazardEventRecord[0].id,
 				action: "Create hazardous event",
 				newValues: JSON.stringify(newHazardEventRecord[0]),
@@ -85,7 +85,7 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userI
 			})
 		}
 	} catch (error: any) {
-		let res = checkConstraintError(error, hazardEventTableConstraits)
+		let res = checkConstraintError(error, hazardous_eventTableConstraits)
 		if (res) {
 			return res
 		}
@@ -108,7 +108,7 @@ export async function hazardEventCreate(tx: Tx, fields: HazardEventFields, userI
 
 export const RelationCycleError = {code: "ErrRelationCycle", message: "Event relation cycle not allowed. This event or one of it's children, is set as the parent."}
 
-export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<HazardEventFields>, userId?: number): Promise<UpdateResult<HazardEventFields>> {
+export async function hazardous_eventUpdate(tx: Tx, id: string, fields: Partial<HazardEventFields>, userId?: number): Promise<UpdateResult<HazardEventFields>> {
 	let errors = validate(fields);
 	errors.form = errors.form || [];
 
@@ -128,15 +128,15 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 */
 
 	try {
-		let oldRecord = await tx.select().from(hazardEventTable).where(eq(hazardEventTable.id, id));
+		let oldRecord = await tx.select().from(hazardous_eventTable).where(eq(hazardous_eventTable.id, id));
 		let res = await tx
-			.update(hazardEventTable)
+			.update(hazardous_eventTable)
 			.set({
 				...fields,
 				updatedAt: new Date(),
 			})
-			.where(eq(hazardEventTable.id, id))
-			// .returning({id: hazardEventTable.id})
+			.where(eq(hazardous_eventTable.id, id))
+			// .returning({id: hazardous_eventTable.id})
 			.returning()
 		if (res.length === 0) {
 			errors.form.push(`Record with id ${id} does not exist`)
@@ -145,7 +145,7 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 
 		if (userId) {
 			logAudit({
-				tableName: getTableName(hazardEventTable),
+				tableName: getTableName(hazardous_eventTable),
 				recordId: res[0].id,
 				action: "Update hazardous event",
 				newValues: res[0],
@@ -154,7 +154,7 @@ export async function hazardEventUpdate(tx: Tx, id: string, fields: Partial<Haza
 			})
 		}
 	} catch (error: any) {
-		let res = checkConstraintError(error, hazardEventTableConstraits)
+		let res = checkConstraintError(error, hazardous_eventTableConstraits)
 		if (res) {
 			return res
 		}
@@ -238,11 +238,11 @@ export const hazardBasicInfoJoin = {
 } as const
 
 
-export async function hazardEventIdByImportId(tx: Tx, importId: string) {
+export async function hazardous_eventIdByImportId(tx: Tx, importId: string) {
 	const res = await tx.select({
-		id: hazardEventTable.id
-	}).from(hazardEventTable).where(eq(
-		hazardEventTable.apiImportId, importId
+		id: hazardous_eventTable.id
+	}).from(hazardous_eventTable).where(eq(
+		hazardous_eventTable.apiImportId, importId
 	))
 	if (res.length == 0) {
 		return null
@@ -251,7 +251,7 @@ export async function hazardEventIdByImportId(tx: Tx, importId: string) {
 }
 
 
-export type HazardEventViewModel = Exclude<Awaited<ReturnType<typeof hazardEventById>>,
+export type HazardEventViewModel = Exclude<Awaited<ReturnType<typeof hazardous_eventById>>,
 	undefined
 >;
 
@@ -288,12 +288,12 @@ const hazardParentJoin = {
 	}
 } as const
 
-export async function hazardEventById(id: any) {
+export async function hazardous_eventById(id: any) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
-	const res = await dr.query.hazardEventTable.findFirst({
-		where: eq(hazardEventTable.id, id),
+	const res = await dr.query.hazardous_eventTable.findFirst({
+		where: eq(hazardous_eventTable.id, id),
 		with: {
 			...hazardBasicInfoJoin,
 			...hazardParentJoin
@@ -302,16 +302,16 @@ export async function hazardEventById(id: any) {
 	return res
 }
 
-export type HazardEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof hazardEventBasicInfoById>>,
+export type HazardEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof hazardous_eventBasicInfoById>>,
 	undefined
 >;
 
-export async function hazardEventBasicInfoById(id: any) {
+export async function hazardous_eventBasicInfoById(id: any) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
-	const res = await dr.query.hazardEventTable.findFirst({
-		where: eq(hazardEventTable.id, id),
+	const res = await dr.query.hazardous_eventTable.findFirst({
+		where: eq(hazardous_eventTable.id, id),
 		with: {
 			...hazardBasicInfoJoin,
 		}
@@ -320,12 +320,12 @@ export async function hazardEventBasicInfoById(id: any) {
 }
 
 
-export async function hazardEventDelete(id: string): Promise<DeleteResult> {
+export async function hazardous_eventDelete(id: string): Promise<DeleteResult> {
 	try {
 		await dr.transaction(async (tx) => {
 			await tx
-				.delete(hazardEventTable)
-				.where(eq(hazardEventTable.id, String(id)));
+				.delete(hazardous_eventTable)
+				.where(eq(hazardous_eventTable.id, String(id)));
 
 			await tx
 				.delete(eventRelationshipTable)
@@ -350,17 +350,17 @@ export async function hazardEventDelete(id: string): Promise<DeleteResult> {
 }
 
 export interface DisasterEventFields extends Omit<EventInsert, 'id'>, Omit<DisasterEventInsert, 'id'> {
-	//hazardEvent: string
+	//hazardous_event: string
 }
 
 export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): Promise<CreateResult<DisasterEventFields>> {
 	let errors: Errors<DisasterEventFields> = {};
 	errors.fields = {};
 	errors.form = [];
-	if (!fields.hazardEventId) {
-		errors.fields.hazardEventId = ["Select hazardous event"]
-	} else if (!isValidUUID(fields.hazardEventId)) {
-		errors.fields.hazardEventId = ["Hazardous event invalid id format"]
+	if (!fields.hazardous_eventId) {
+		errors.fields.hazardous_eventId = ["Select hazardous event"]
+	} else if (!isValidUUID(fields.hazardous_eventId)) {
+		errors.fields.hazardous_eventId = ["Hazardous event invalid id format"]
 	}
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
@@ -476,7 +476,7 @@ export async function disasterEventByIdTx(tx: Tx, id: any) {
 	const res = await tx.query.disasterEventTable.findFirst({
 		where: eq(disasterEventTable.id, id),
 		with: {
-			hazardEvent: {
+			hazardous_event: {
 				with: hazardBasicInfoJoin
 			},
 			event: {

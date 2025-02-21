@@ -5,9 +5,9 @@ import {
 } from "~/backend.server/handlers/form";
 
 import { ViewScreenPublicApproved } from "~/frontend/form";
-import { hazardEventById } from "~/backend.server/models/event";
+import { hazardous_eventById } from "~/backend.server/models/event";
 import { getTableName } from "drizzle-orm";
-import { hazardEventTable } from "~/drizzle/schema";
+import { hazardous_eventTable } from "~/drizzle/schema";
 import { LoaderFunctionArgs } from "@remix-run/node";
 
 interface LoaderData{
@@ -28,9 +28,9 @@ export const loader = async ({
 	}
 
 	const loaderFunction =  createViewLoaderPublicApprovedWithAuditLog({
-		getById: hazardEventById,
+		getById: hazardous_eventById,
 		recordId: id,
-		tableName: getTableName(hazardEventTable),
+		tableName: getTableName(hazardous_eventTable),
 	});
 
 	const result = await loaderFunction({request, params, context});

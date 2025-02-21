@@ -51,7 +51,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 				endDate: true,
 			},
 			with: {
-				hazardEvent: {
+				hazardous_event: {
 					with: hazardBasicInfoJoin
 				},
 			},

@@ -25,7 +25,7 @@ import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/
 import {TreeView} from "~/components/TreeView";
 import AuditLogHistory from "~/components/AuditLogHistory";
 
-export const route = "/hazard-event"
+export const route = "/hazardous-event"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
@@ -67,7 +67,7 @@ interface HazardEventFormProps extends UserFormProps<HazardEventFields> {
 	treeData?: any[];
 }
 
-export function hazardEventLabel(args: {
+export function hazardous_eventLabel(args: {
 	id?: string;
 	description?: string;
 	hazard?: {nameEn: string};
@@ -85,7 +85,7 @@ export function hazardEventLabel(args: {
 	return parts.join(" ")
 }
 
-export function hazardEventLongLabel(args: {
+export function hazardous_eventLongLabel(args: {
 	id?: string;
 	description?: string;
 	hazard: {nameEn: string};
@@ -96,13 +96,13 @@ export function hazardEventLongLabel(args: {
 		<li>Hazard: {args.hazard.nameEn}</li>
 	</ul>
 }
-export function hazardEventLink(args: {
+export function hazardous_eventLink(args: {
 	id: string;
 	description: string;
 	hazard?: {nameEn: string};
 }) {
-	return <Link to={`/hazard-event/${args.id}`}>
-		{hazardEventLabel(args)}
+	return <Link to={`/hazardous-event/${args.id}`}>
+		{hazardous_eventLabel(args)}
 	</Link>
 }
 
@@ -141,8 +141,8 @@ export function HazardEventForm(props: HazardEventFormProps) {
 			override={{
 				parent:
 					<Field key="parent" label="Parent">
-						{selected ? hazardEventLink(selected) : "-"}&nbsp;
-						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
+						{selected ? hazardous_eventLink(selected) : "-"}&nbsp;
+						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
 						<input type="hidden" name="parent" value={selected?.id || ""} />
 						<FieldErrors errors={props.errors} field="parent"></FieldErrors>
 					</Field>
@@ -344,7 +344,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 						return (
 							<p>
 								Caused By:&nbsp;
-								{hazardEventLink(parent)}
+								{hazardous_eventLink(parent)}
 							</p>
 						);
 					})()}
@@ -356,7 +356,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 								const childEvent = child.c.he;
 								return (
 									<p key={child.childId}>
-										{hazardEventLink(childEvent)}
+										{hazardous_eventLink(childEvent)}
 									</p>
 								);
 							})}
