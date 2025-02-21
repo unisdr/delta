@@ -63,7 +63,7 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
             {
               title: "Events",
               lvl4: [
-                { name: "Hazardous events", link: "/hazardous-event" },
+                { name: "Hazardous events", link: "/hazard-event" },
                 { name: "Disaster events", link: "/disaster-event" },
               ],
             },
@@ -158,7 +158,7 @@ function navItemsLoggedIn(): Lvl1Item[] {
             {
               title: "Events",
               lvl4: [
-                { name: "Hazardous events", link: "/hazardous-event" },
+                { name: "Hazardous events", link: "/hazard-event" },
                 { name: "Disaster events", link: "/disaster-event" },
               ],
             },

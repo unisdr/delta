@@ -1,6 +1,6 @@
 import { DataMainLinks } from "~/frontend/data_screen"
 
-import { hazardous_eventsLoader } from "~/backend.server/handlers/events/hazardevent"
+import { hazardEventsLoader } from "~/backend.server/handlers/events/hazardevent"
 
 import { ListView } from "~/frontend/events/hazardeventlist"
 
@@ -23,7 +23,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-	return hazardous_eventsLoader({ loaderArgs })
+	return hazardEventsLoader({ loaderArgs })
 })
 
 export default function Data() {
@@ -31,10 +31,10 @@ export default function Data() {
 	return (
 		<MainContainer title="Hazardous events">
 			<>
-				<DataMainLinks relLinkToNew="/new" isPublic={ld.isPublic} baseRoute="/hazardous-event" resourceName="Hazardous Event" csvExportLinks={true} />
+				<DataMainLinks relLinkToNew="/new" isPublic={ld.isPublic} baseRoute="/hazard-event" resourceName="Hazardous Event" csvExportLinks={true} />
 				<ListView
 					isPublic={ld.isPublic}
-					basePath="/hazardous-event"
+					basePath="/hazard-event"
 				></ListView>
 			</>
 		</MainContainer>

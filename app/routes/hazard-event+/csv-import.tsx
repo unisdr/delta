@@ -3,9 +3,9 @@ import {
 } from "~/util/auth";
 
 import {
-	hazardous_eventUpdate,
-	hazardous_eventIdByImportId,
-	hazardous_eventCreate
+	hazardEventUpdate,
+	hazardEventIdByImportId,
+	hazardEventCreate
 } from "~/backend.server/models/event";
 
 import {
@@ -27,13 +27,13 @@ export const loader = authLoaderWithPerm("EditData", async () => {
 
 export const action = createAction({
 	fieldsDef: fieldsDefApi,
-	create: hazardous_eventCreate,
-	update: hazardous_eventUpdate,
-	idByImportId: hazardous_eventIdByImportId,
+	create: hazardEventCreate,
+	update: hazardEventUpdate,
+	idByImportId: hazardEventIdByImportId,
 })
 
 export default createScreen({
 	title: "Hazardous Events",
-	apiBaseUrl: "/api/hazardous-event",
-	listUrl: "/hazardous-event"
+	apiBaseUrl: "/api/hazard-event",
+	listUrl: "/hazard-event"
 }) 

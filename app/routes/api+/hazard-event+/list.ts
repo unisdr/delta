@@ -1,12 +1,12 @@
-import { hazardous_eventTable } from "~/drizzle/schema";
+import { hazardEventTable } from "~/drizzle/schema";
 import { dr } from "~/db.server";
 import { desc } from "drizzle-orm";
 import { createApiListLoader } from "~/backend.server/handlers/view";
 
 export const loader = createApiListLoader(
-	hazardous_eventTable,
+	hazardEventTable,
 	async (offsetLimit) => {
-		return await dr.query.hazardous_eventTable.findMany({
+		return await dr.query.hazardEventTable.findMany({
 			...offsetLimit,
 			columns: {
 				id: true,
@@ -15,7 +15,7 @@ export const loader = createApiListLoader(
 				endDate: true,
 				description: true,
 			},
-			orderBy: [desc(hazardous_eventTable.startDate)],
+			orderBy: [desc(hazardEventTable.startDate)],
 			with: {
 				hipHazard: {
 					columns: {
@@ -25,6 +25,6 @@ export const loader = createApiListLoader(
 			},
 		});
 	},
-	[desc(hazardous_eventTable.startDate)]
+	[desc(hazardEventTable.startDate)]
 );
 

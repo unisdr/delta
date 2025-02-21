@@ -10,7 +10,7 @@ import {
 import {
 	jsonUpdate,
 } from "~/backend.server/handlers/form";
-import {hazardous_eventUpdate} from "~/backend.server/models/event";
+import {hazardEventUpdate} from "~/backend.server/models/event";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -22,7 +22,7 @@ export const action = authActionApi(async (args) => {
 	const saveRes = await jsonUpdate({
 		data,
 		fieldsDef: fieldsDefApi,
-		update: hazardous_eventUpdate
+		update: hazardEventUpdate
 	});
 
 	return Response.json(saveRes)

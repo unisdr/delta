@@ -1,6 +1,6 @@
-import { hazardous_eventLabel } from "~/frontend/events/hazardeventform";
+import { hazardEventLabel } from "~/frontend/events/hazardeventform";
 import { eq, ilike, or, asc, sql } from "drizzle-orm";
-import { disasterEventTable, hazardous_eventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
+import { disasterEventTable, hazardEventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
 import { formatDate, formatDateDisplay } from "~/util/date";
 
 export const contentPickerConfig = {
@@ -16,13 +16,13 @@ export const contentPickerConfig = {
                 return `${displayName}`;
             }
         },
-        //{ column_type: "db", column_field: "hazardous_eventName", column_title: "Hazardous Event" },
-        { column_type: "db", column_field: "hazardous_eventName", column_title: "Hazardous Event", 
+        //{ column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event" },
+        { column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event", 
             render: (item: any) => { 
-                return hazardous_eventLabel({
-                    id: item.hazardous_eventId,
+                return hazardEventLabel({
+                    id: item.hazardEventId,
                     description: "", // Assuming there's a description field
-                    hazard: { nameEn: item.hazardous_eventName }
+                    hazard: { nameEn: item.hazardEventName }
                 })
             }
         },
@@ -40,12 +40,12 @@ export const contentPickerConfig = {
             { alias: "id", column: disasterEventTable.id },
             { alias: "startDateUTC", column: disasterEventTable.startDate },
             { alias: "endDateUTC", column: disasterEventTable.endDate },
-            { alias: "hazardous_eventId", column: hazardous_eventTable.id },
-            { alias: "hazardous_eventName", column: hipHazardTable.nameEn }
+            { alias: "hazardEventId", column: hazardEventTable.id },
+            { alias: "hazardEventName", column: hipHazardTable.nameEn }
         ],
         joins: [ // Define joins
-            { type: "inner", table: hazardous_eventTable, condition: eq(disasterEventTable.hazardous_eventId, hazardous_eventTable.id) },
-            { type: "inner", table: hipHazardTable, condition: eq(hazardous_eventTable.hipHazardId, hipHazardTable.id) }
+            { type: "inner", table: hazardEventTable, condition: eq(disasterEventTable.hazardEventId, hazardEventTable.id) },
+            { type: "inner", table: hipHazardTable, condition: eq(hazardEventTable.hipHazardId, hipHazardTable.id) }
         ],
         whereIlike: [ // Define search filters
             { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },

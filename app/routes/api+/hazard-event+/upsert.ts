@@ -11,9 +11,9 @@ import {
 	jsonUpsert,
 } from "~/backend.server/handlers/form";
 import {
-	hazardous_eventUpdate,
-	hazardous_eventIdByImportId,
-	hazardous_eventCreate
+	hazardEventUpdate,
+	hazardEventIdByImportId,
+	hazardEventCreate
 } from "~/backend.server/models/event";
 
 export const loader = authLoaderApi(async () => {
@@ -25,9 +25,9 @@ export const action = authActionApi(async (args) => {
 	const saveRes = await jsonUpsert({
 		data,
 		fieldsDef: fieldsDefApi,
-		create: hazardous_eventCreate,
-		update: hazardous_eventUpdate,
-		idByImportId: hazardous_eventIdByImportId,
+		create: hazardEventCreate,
+		update: hazardEventUpdate,
+		idByImportId: hazardEventIdByImportId,
 	});
 
 	return Response.json(saveRes)

@@ -10,7 +10,7 @@ import {
 import {
 	jsonCreate,
 } from "~/backend.server/handlers/form";
-import {hazardous_eventCreate} from "~/backend.server/models/event";
+import {hazardEventCreate} from "~/backend.server/models/event";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -22,7 +22,7 @@ export const action = authActionApi(async (args) => {
 	const saveRes = await jsonCreate({
 		data,
 		fieldsDef: fieldsDefApi,
-		create: hazardous_eventCreate,
+		create: hazardEventCreate,
 	});
 
 	return Response.json(saveRes)

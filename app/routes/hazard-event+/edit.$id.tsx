@@ -1,5 +1,6 @@
 import {
-	hazardous_eventCreate,
+	hazardEventUpdate,
+	hazardEventById
 } from "~/backend.server/models/event";
 
 import {
@@ -15,7 +16,6 @@ import {
 	formSave,
 } from "~/backend.server/handlers/form";
 
-
 import {
 	authActionGetAuth,
 	authActionWithPerm,
@@ -29,25 +29,23 @@ import {
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
 import {
-	hazardous_eventById
-} from "~/backend.server/models/event";
+	getItem2
+} from "~/backend.server/handlers/view"
 
 import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server";
+import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	let {request} = loaderArgs;
+	const {params} = loaderArgs;
+	const item = await getItem2(params, hazardEventById)
 	let hip = await dataForHazardPicker();
-	let u = new URL(request.url);
 
-	const parentId = u.searchParams.get("parent") || "";
-	if (parentId) {
-		const parent = await hazardous_eventById(parentId);
-		if (!parent){
-			throw new Response("Parent not found", {status: 404});
-		}
-		return {hip, parentId, parent, treeData: []};
+	if (item!.event.ps.length > 0){
+		let parent = item!.event.ps[0].p.he;
+		// get parent of parent as well, to match what we use in new form
+		let parent2 = await hazardEventById(parent.id);
+		return {hip, item, parent: parent2, treeData: []};
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
@@ -57,37 +55,41 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const rawData = await dr.select().from(divisionTable);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
-	return {hip: hip, treeData: treeData};
+	return {hip: hip, item: item, treeData: treeData};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
 	const user = authActionGetAuth(actionArgs);
 	return formSave({
-		isCreate: true,
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
-			if (!id) {
-				return hazardous_eventCreate(tx, data, user.user.id);
+			if (id) {
+				return hazardEventUpdate(tx, id, data,  user.user.id);
 			} else {
-				throw "not an update screen"
+				throw "not an create screen"
 			}
 		},
-		redirectTo: (id: string) => `/hazardous-event/${id}`
-
+		redirectTo: (id: string) => `/hazard-event/${id}`
 	})
 });
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>()
-
-	let fieldsInitial = {parent: ld.parentId}
-
+	if (!ld.item) {
+		throw "invalid"
+	}
+	let fieldsInitial = {
+		...ld.item,
+		...ld.item.event,
+		parent: ""
+	}
 	return formScreen({
 		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData},
 		fieldsInitial,
 		form: HazardEventForm,
-		edit: false
+		edit: true,
+		id: ld.item.id
 	});
 }
