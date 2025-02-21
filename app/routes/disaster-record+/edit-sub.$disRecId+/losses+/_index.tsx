@@ -63,7 +63,7 @@ export default function Data() {
 			<Link to={"/disaster-record/edit/"+ld.recordId}>Back to disaster record</Link>
 		),
 		plural: "Losses",
-		resourceName: "Loss",
+		resourceName: "Losses",
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", ld.sectorId]]),
 		columns: [

@@ -187,7 +187,7 @@ export function LossesForm(props: LossesFormProps) {
 			edit={props.edit}
 			id={props.id}
 			plural="Losses"
-			singular="Loss"
+			singular="Losses"
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
@@ -253,7 +253,7 @@ export function LossesView(props: LossesViewProps) {
 			listUrl={route2(props.item.recordId!) + "?sectorId=" + props.item.sectorId}
 			id={props.item.id}
 			plural="Losses"
-			singular="Loss"
+			singular="Losses"
 		>
 			<FieldsView
 				def={props.fieldDef}
