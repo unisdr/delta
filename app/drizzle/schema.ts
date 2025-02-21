@@ -398,7 +398,9 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 // Common disaggregation data (dsg) for human effects on disaster records
 export const humanDsgTable = pgTable("human_dsg", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	recordId: text("record_id").notNull(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
 	sex: text("sex", {enum: ["m", "f"]}),
 	age: text("age", {enum: ["0-20", "21-40", "41-60", "60-81", ">80"]}),
 	disability: text("disability", {
@@ -410,6 +412,7 @@ export const humanDsgTable = pgTable("human_dsg", {
 	}),
 	custom: jsonb("custom").$type<Record<string, any>>(),
 });
+
 export type HumanDsg = typeof humanDsgTable.$inferSelect;
 export type HumanDsgInsert = typeof humanDsgTable.$inferInsert;
 
@@ -422,7 +425,9 @@ export type HumanDsgConfigInsert = typeof humanDsgConfigTable.$inferInsert;
 
 export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	recordId: text("record_id").notNull(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
 	deaths: boolean("deaths"),
 	injured: boolean("injured"),
 	missing: boolean("missing"),
