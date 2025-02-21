@@ -60,7 +60,7 @@ export default function Data() {
 
 	return DataScreen({
 		headerElement: (
-			<Link to={"/disaster-record/"+ld.recordId}>Back to disaster record</Link>
+			<Link to={"/disaster-record/edit/"+ld.recordId}>Back to disaster record</Link>
 		),
 		plural: "Losses",
 		resourceName: "Loss",
