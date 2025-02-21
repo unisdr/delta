@@ -91,10 +91,10 @@ export const action = createAction({
 	redirectTo: (id) => `${route}/${id}`,
 	tableName: getTableName(disruptionTable),
 	postProcess: async (id, data) => {
-		console.log(`Post-processing record: ${id}`);
-		console.log(`data: `, data);
+		//console.log(`Post-processing record: ${id}`);
+		//console.log(`data: `, data);
 	
-		const save_path = `/uploads/disaster-record/${id}`;
+		const save_path = `/uploads/disaster-record/disruptions/${id}`;
 		const save_path_temp = `/uploads/temp`;
 	
 		// Ensure attachments is an array, even if it's undefined or empty

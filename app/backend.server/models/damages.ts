@@ -73,6 +73,9 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 		...fieldsForPubOrPriv(true),
 		// Private damages
 		...fieldsForPubOrPriv(false),
+
+		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
+		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
 	]
 }
 

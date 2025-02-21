@@ -587,6 +587,9 @@ export const damagesTable = pgTable("damages", {
 	privateDisruptionUsersAffected: ourBigint("private_disruption_users_affected"),
 	privateDisruptionPeopleAffected: ourBigint("private_disruption_people_affected"),
 	privateDisruptionDescription: text("private_disruption_description"),
+
+	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 })
 
 export const damagesRel = relations(damagesTable, ({one}) => ({
@@ -695,6 +698,8 @@ export const lossesTable = pgTable("losses", {
 	privateCostUnitCurrency: text("private_cost_unit_currency"),
 	privateCostTotalOverride: ourMoney("private_cost_total_override"),
 	//privateTotalCostCurrency: text("private_total_cost_currency")
+	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 })
 
 export type Losses = typeof lossesTable.$inferSelect

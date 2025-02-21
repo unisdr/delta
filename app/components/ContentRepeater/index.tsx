@@ -1498,7 +1498,14 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                             <a
                               id={`file-link-${field.id}`}
                               className="file-link"
-                              href={`${base_path}${(formData[field.id]?.view) ? formData[field.id]?.view : ((file_viewer_url) ? `${file_viewer_url}/?name=${formData[field.id]?.name.split("/").slice(-2).join("/")}${(field.download) ? '&download=true' : ''}` : formData[field.id]?.name)}`}
+                              href={`${base_path}${formData[field.id]?.view ?? 
+                                (file_viewer_url 
+                                  ? `${file_viewer_url}${file_viewer_url.includes("?") ? "&" : "?"}name=${
+                                      encodeURIComponent(formData[field.id]?.name.split("/").slice(-2).join("/") || "")
+                                    }${field.download ? "&download=true" : ""}`
+                                  : formData[field.id]?.name || ""
+                                )
+                              }`}
                               target={!field.download ? "_blank" : undefined}
                               rel="noopener noreferrer"
                             >

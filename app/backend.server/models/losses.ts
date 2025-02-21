@@ -66,6 +66,9 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 	...fieldsForPubOrPriv(true),
 	// Private 
 	...fieldsForPubOrPriv(false),
+
+	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
+	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
 ]
 
 export const fieldsDefApi: FormInputDef<LossesFields>[] = [...fieldsDef, {key: "apiImportId", label: "", type: "other"}]
