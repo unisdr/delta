@@ -8,8 +8,9 @@ import {
   hazardEventTable,
   hipHazardTable,
   hipClusterTable,
+  divisionTable,
 } from "~/drizzle/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, or, ilike, SQL } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 
 // Types
@@ -17,6 +18,17 @@ interface TimeSeriesData {
   year: number;
   count: number;
   amount: number;
+}
+
+interface Filters {
+  startDate?: string | null;
+  endDate?: string | null;
+  hazardType?: string | null;
+  hazardCluster?: string | null;
+  specificHazard?: string | null;
+  geographicLevel?: string | null;
+  disasterEvent?: string | null;
+  _disasterEventId?: string | null;
 }
 
 interface SectorImpactData {
@@ -27,6 +39,20 @@ interface SectorImpactData {
   damageOverTime: { [year: string]: string };
   lossOverTime: { [year: string]: string };
 }
+
+// Cache for division names
+const divisionCache = new Map<string, { name: string, normalized: string }>();
+
+// Helper function to normalize text for matching
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
 
 // Helper function to validate sector ID
 const validateSectorId = (sectorId: string): number => {
@@ -40,18 +66,44 @@ const validateSectorId = (sectorId: string): number => {
   return numericId;
 };
 
+// Helper function to get division info with caching
+const getDivisionInfo = async (geographicLevelId: string): Promise<{ name: string, normalized: string } | null> => {
+  // Check cache first
+  const cached = divisionCache.get(geographicLevelId);
+  if (cached) {
+    return cached;
+  }
+
+  // If not in cache, fetch from database
+  const division = await dr
+    .select({
+      name: divisionTable.name
+    })
+    .from(divisionTable)
+    .where(eq(divisionTable.id, parseInt(geographicLevelId)))
+    .limit(1);
+
+  if (!division || division.length === 0) {
+    return null;
+  }
+
+  // Safely convert the name to string
+  const divisionName = String(division[0].name);
+
+  const result = {
+    name: divisionName,
+    normalized: normalizeText(divisionName)
+  };
+
+  // Cache the result
+  divisionCache.set(geographicLevelId, result);
+  return result;
+};
+
 // Function to get all disaster records for a sector
 const getDisasterRecordsForSector = async (
   sectorId: string,
-  filters?: {
-    startDate?: string | null;
-    endDate?: string | null;
-    hazardType?: string | null;
-    hazardCluster?: string | null;
-    specificHazard?: string | null;
-    geographicLevel?: string | null;
-    disasterEvent?: string | null;
-  }
+  filters?: Filters
 ): Promise<string[]> => {
   const numericSectorId = validateSectorId(sectorId);
 
@@ -62,12 +114,22 @@ const getDisasterRecordsForSector = async (
     : [numericSectorId];
 
   // Build the where conditions
-  const conditions = [
+  const conditions: SQL<unknown>[] = [
     inArray(disasterRecordsTable.sectorId, sectorIds),
     sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'approved'`
   ];
 
-  // Add filter conditions
+  // Handle geographic level filtering first if present
+  if (filters?.geographicLevel) {
+    const divisionInfo = await getDivisionInfo(filters.geographicLevel);
+    if (divisionInfo) {
+      const locationFilter = ilike(disasterRecordsTable.locationDesc, `%${divisionInfo.name}%`);
+      const spatialFilter = sql<boolean>`${disasterRecordsTable.spatialFootprint}->>'regions' ILIKE ${`%${divisionInfo.name}%`}`;
+      conditions.push(sql<boolean>`(${locationFilter} OR ${spatialFilter})`);
+    }
+  }
+
+  // Add other filter conditions
   if (filters) {
     if (filters.startDate) {
       conditions.push(sql`${disasterRecordsTable.startDate} >= ${filters.startDate}`);
@@ -84,11 +146,15 @@ const getDisasterRecordsForSector = async (
     if (filters.specificHazard) {
       conditions.push(sql`${hipHazardTable.id} = ${filters.specificHazard}`);
     }
-    if (filters.geographicLevel) {
-      conditions.push(sql`${disasterRecordsTable.spatialFootprint}->>'level' = ${filters.geographicLevel}`);
-    }
     if (filters.disasterEvent) {
-      conditions.push(eq(disasterRecordsTable.disasterEventId, filters.disasterEvent));
+      // Ensure the disaster event ID is a valid UUID
+      try {
+        conditions.push(eq(disasterRecordsTable.disasterEventId, filters._disasterEventId || filters.disasterEvent));
+      } catch (error) {
+        console.error("Invalid disaster event ID format:", error);
+        // Return empty array if ID format is invalid
+        return [];
+      }
     }
   }
 
@@ -113,11 +179,11 @@ const getDisasterRecordsForSector = async (
     )
     .where(and(...conditions));
 
-  return records.map((record) => record.id);
+  return records.map(record => record.id);
 };
 
 // Function to aggregate damages data
-const aggregateDamagesData = async (recordIds: string[]) => {
+const aggregateDamagesData = async (recordIds: string[]): Promise<{ total: number, byYear: Map<number, number> }> => {
   if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
 
   const damagesData = await dr
@@ -146,7 +212,7 @@ const aggregateDamagesData = async (recordIds: string[]) => {
 };
 
 // Function to aggregate losses data
-const aggregateLossesData = async (recordIds: string[]) => {
+const aggregateLossesData = async (recordIds: string[]): Promise<{ total: number, byYear: Map<number, number> }> => {
   if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
 
   const lossesData = await dr
@@ -191,15 +257,7 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
 // Main function to fetch sector impact data
 export const fetchSectorImpactData = async (
   sectorId: string,
-  filters?: {
-    startDate?: string | null;
-    endDate?: string | null;
-    hazardType?: string | null;
-    hazardCluster?: string | null;
-    specificHazard?: string | null;
-    geographicLevel?: string | null;
-    disasterEvent?: string | null;
-  }
+  filters?: Filters
 ): Promise<SectorImpactData> => {
   try {
     // Get all relevant disaster records
