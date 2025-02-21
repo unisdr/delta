@@ -67,7 +67,7 @@ export default function Screen() {
 		  }
 		: {};
 	return formScreen({
-		extraData: { hazardEvent: ld.item?.hazardEvent, treeData: ld.treeData },
+		extraData: { hazardousEvent: ld.item?.hazardousEvent, treeData: ld.treeData },
 		fieldsInitial: fieldsInitial,
 		form: DisasterEventForm,
 		edit: !!ld.item,

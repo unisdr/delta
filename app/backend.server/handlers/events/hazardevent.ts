@@ -1,5 +1,5 @@
 import {
-	hazardEventTable,
+	hazardousEventTable,
 } from '~/drizzle/schema';
 
 import {
@@ -19,11 +19,11 @@ import {
 } from "@remix-run/node";
 import {approvalStatusIds} from '~/frontend/approval';
 
-interface hazardEventLoaderArgs {
+interface hazardousEventLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
 }
 
-export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
+export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	const {loaderArgs} = args;
 	const {request} = loaderArgs;
 
@@ -41,10 +41,10 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 		filters.approvalStatus = undefined
 	}
 
-	const count = await dr.$count(hazardEventTable)
+	const count = await dr.$count(hazardousEventTable)
 	const events = async (offsetLimit: OffsetLimit) => {
 
-		return await dr.query.hazardEventTable.findMany({
+		return await dr.query.hazardousEventTable.findMany({
 			...offsetLimit,
 			columns: {
 				id: true,
@@ -54,7 +54,7 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 				description: true,
 				approvalStatus: true,
 			},
-			orderBy: [desc(hazardEventTable.startDate)],
+			orderBy: [desc(hazardousEventTable.startDate)],
 			with: {
 				hipHazard: {
 					columns: {
@@ -63,8 +63,8 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 				}
 			},
 			where: and(
-				filters.hazardId ? eq(hazardEventTable.hipHazardId, filters.hazardId) : undefined,
-				filters.approvalStatus ? eq(hazardEventTable.approvalStatus, filters.approvalStatus) : undefined,
+				filters.hazardId ? eq(hazardousEventTable.hipHazardId, filters.hazardId) : undefined,
+				filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
 			),
 		})
 	}

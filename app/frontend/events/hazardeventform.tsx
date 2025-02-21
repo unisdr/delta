@@ -2,7 +2,7 @@ import {
 	Link
 } from "@remix-run/react";
 
-import {HazardEventFields, HazardEventViewModel} from "~/backend.server/models/event"
+import {HazardousEventFields, HazardousEventViewModel} from "~/backend.server/models/event"
 
 import {
 	Field,
@@ -25,7 +25,7 @@ import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/
 import {TreeView} from "~/components/TreeView";
 import AuditLogHistory from "~/components/AuditLogHistory";
 
-export const route = "/hazard-event"
+export const route = "/hazardous-event"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
@@ -41,7 +41,7 @@ export const fieldsDefCommon = [
 	{key: "dataSource", label: "Data Source", type: "text"},
 ] as const;
 
-export const fieldsDef: FormInputDef<HazardEventFields>[] = [
+export const fieldsDef: FormInputDef<HazardousEventFields>[] = [
 	{key: "parent", label: "", type: "other"},
 	{key: "hipClassId", label: "Hazard Class", type: "other", uiRow: {colOverride: 1}},
 	{key: "hipClusterId", label: "Hazard Cluster", type: "other"},
@@ -49,25 +49,25 @@ export const fieldsDef: FormInputDef<HazardEventFields>[] = [
 	...fieldsDefCommon
 ];
 
-export const fieldsDefApi: FormInputDef<HazardEventFields>[] = [
+export const fieldsDefApi: FormInputDef<HazardousEventFields>[] = [
 	...fieldsDef,
 	{key: "apiImportId", label: "API Import ID", type: "other"},
 ];
 
-export const fieldsDefView: FormInputDef<HazardEventViewModel>[] = [
+export const fieldsDefView: FormInputDef<HazardousEventViewModel>[] = [
 	{key: "hipHazard", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},
 	{key: "updatedAt", label: "", type: "other"},
 ];
 
-interface HazardEventFormProps extends UserFormProps<HazardEventFields> {
+interface HazardousEventFormProps extends UserFormProps<HazardousEventFields> {
 	hip: Hip;
-	parent?: HazardEventViewModel;
+	parent?: HazardousEventViewModel;
 	treeData?: any[];
 }
 
-export function hazardEventLabel(args: {
+export function hazardousEventLabel(args: {
 	id?: string;
 	description?: string;
 	hazard?: {nameEn: string};
@@ -85,7 +85,7 @@ export function hazardEventLabel(args: {
 	return parts.join(" ")
 }
 
-export function hazardEventLongLabel(args: {
+export function hazardousEventLongLabel(args: {
 	id?: string;
 	description?: string;
 	hazard: {nameEn: string};
@@ -96,17 +96,17 @@ export function hazardEventLongLabel(args: {
 		<li>Hazard: {args.hazard.nameEn}</li>
 	</ul>
 }
-export function hazardEventLink(args: {
+export function hazardousEventLink(args: {
 	id: string;
 	description: string;
 	hazard?: {nameEn: string};
 }) {
-	return <Link to={`/hazard-event/${args.id}`}>
-		{hazardEventLabel(args)}
+	return <Link to={`/hazardous-event/${args.id}`}>
+		{hazardousEventLabel(args)}
 	</Link>
 }
 
-export function HazardEventForm(props: HazardEventFormProps) {
+export function HazardousEventForm(props: HazardousEventFormProps) {
 	const fields = props.fields;
 	const treeData = props.treeData;
 
@@ -141,8 +141,8 @@ export function HazardEventForm(props: HazardEventFormProps) {
 			override={{
 				parent:
 					<Field key="parent" label="Parent">
-						{selected ? hazardEventLink(selected) : "-"}&nbsp;
-						<Link target="_blank" rel="opener" to={"/hazard-event/picker"}>Change</Link>
+						{selected ? hazardousEventLink(selected) : "-"}&nbsp;
+						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
 						<input type="hidden" name="parent" value={selected?.id || ""} />
 						<FieldErrors errors={props.errors} field="parent"></FieldErrors>
 					</Field>
@@ -308,13 +308,13 @@ export function HazardEventForm(props: HazardEventFormProps) {
 	);
 }
 
-interface HazardEventViewProps {
-	item: HazardEventViewModel;
+interface HazardousEventViewProps {
+	item: HazardousEventViewModel;
 	isPublic: boolean;
 	auditLogs?: any[];
 }
 
-export function HazardEventView(props: HazardEventViewProps) {
+export function HazardousEventView(props: HazardousEventViewProps) {
 	const item = props.item;
 	const auditLogs = props.auditLogs;
 
@@ -344,7 +344,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 						return (
 							<p>
 								Caused By:&nbsp;
-								{hazardEventLink(parent)}
+								{hazardousEventLink(parent)}
 							</p>
 						);
 					})()}
@@ -356,7 +356,7 @@ export function HazardEventView(props: HazardEventViewProps) {
 								const childEvent = child.c.he;
 								return (
 									<p key={child.childId}>
-										{hazardEventLink(childEvent)}
+										{hazardousEventLink(childEvent)}
 									</p>
 								);
 							})}

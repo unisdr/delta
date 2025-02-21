@@ -4,7 +4,7 @@ import {
     damagesTable,
     lossesTable,
     disasterRecordsTable,
-    hazardEventTable,
+    hazardousEventTable,
     hipClassTable,
     hipClusterTable,
     hipHazardTable,
@@ -73,12 +73,12 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         })
         .from(disasterRecordsTable)
         .innerJoin(
-            hazardEventTable,
-            eq(disasterRecordsTable.disasterEventId, hazardEventTable.id)
+            hazardousEventTable,
+            eq(disasterRecordsTable.disasterEventId, hazardousEventTable.id)
         )
         .innerJoin(
             hipHazardTable,
-            eq(hazardEventTable.hipHazardId, hipHazardTable.id)
+            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
         )
         .innerJoin(
             hipClusterTable,
@@ -107,12 +107,12 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         })
         .from(disasterRecordsTable)
         .innerJoin(
-            hazardEventTable,
-            eq(disasterRecordsTable.disasterEventId, hazardEventTable.id)
+            hazardousEventTable,
+            eq(disasterRecordsTable.disasterEventId, hazardousEventTable.id)
         )
         .innerJoin(
             hipHazardTable,
-            eq(hazardEventTable.hipHazardId, hipHazardTable.id)
+            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
         )
         .innerJoin(
             hipClusterTable,
@@ -148,12 +148,12 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         })
         .from(disasterRecordsTable)
         .innerJoin(
-            hazardEventTable,
-            eq(disasterRecordsTable.disasterEventId, hazardEventTable.id)
+            hazardousEventTable,
+            eq(disasterRecordsTable.disasterEventId, hazardousEventTable.id)
         )
         .innerJoin(
             hipHazardTable,
-            eq(hazardEventTable.hipHazardId, hipHazardTable.id)
+            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
         )
         .innerJoin(
             hipClusterTable,

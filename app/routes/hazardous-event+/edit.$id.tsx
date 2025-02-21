@@ -1,11 +1,11 @@
 import {
-	hazardEventUpdate,
-	hazardEventById
+	hazardousEventUpdate,
+	hazardousEventById
 } from "~/backend.server/models/event";
 
 import {
 	fieldsDef,
-	HazardEventForm,
+	HazardousEventForm,
 } from "~/frontend/events/hazardeventform";
 
 import {
@@ -38,13 +38,13 @@ import { divisionTable } from "~/drizzle/schema";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
-	const item = await getItem2(params, hazardEventById)
+	const item = await getItem2(params, hazardousEventById)
 	let hip = await dataForHazardPicker();
 
 	if (item!.event.ps.length > 0){
 		let parent = item!.event.ps[0].p.he;
 		// get parent of parent as well, to match what we use in new form
-		let parent2 = await hazardEventById(parent.id);
+		let parent2 = await hazardousEventById(parent.id);
 		return {hip, item, parent: parent2, treeData: []};
 	}
 
@@ -66,12 +66,12 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (id) {
-				return hazardEventUpdate(tx, id, data,  user.user.id);
+				return hazardousEventUpdate(tx, id, data,  user.user.id);
 			} else {
 				throw "not an create screen"
 			}
 		},
-		redirectTo: (id: string) => `/hazard-event/${id}`
+		redirectTo: (id: string) => `/hazardous-event/${id}`
 	})
 });
 
@@ -88,7 +88,7 @@ export default function Screen() {
 	return formScreen({
 		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData},
 		fieldsInitial,
-		form: HazardEventForm,
+		form: HazardousEventForm,
 		edit: true,
 		id: ld.item.id
 	});

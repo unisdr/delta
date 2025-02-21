@@ -1,10 +1,10 @@
 import {
-	hazardEventCreate,
+	hazardousEventCreate,
 } from "~/backend.server/models/event";
 
 import {
 	fieldsDef,
-	HazardEventForm,
+	HazardousEventForm,
 } from "~/frontend/events/hazardeventform";
 
 import {
@@ -29,7 +29,7 @@ import {
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
 import {
-	hazardEventById
+	hazardousEventById
 } from "~/backend.server/models/event";
 
 import { buildTree } from "~/components/TreeView";
@@ -43,7 +43,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const parentId = u.searchParams.get("parent") || "";
 	if (parentId) {
-		const parent = await hazardEventById(parentId);
+		const parent = await hazardousEventById(parentId);
 		if (!parent){
 			throw new Response("Parent not found", {status: 404});
 		}
@@ -69,12 +69,12 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (!id) {
-				return hazardEventCreate(tx, data, user.user.id);
+				return hazardousEventCreate(tx, data, user.user.id);
 			} else {
 				throw "not an update screen"
 			}
 		},
-		redirectTo: (id: string) => `/hazard-event/${id}`
+		redirectTo: (id: string) => `/hazardous-event/${id}`
 
 	})
 });
@@ -87,7 +87,7 @@ export default function Screen() {
 	return formScreen({
 		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData},
 		fieldsInitial,
-		form: HazardEventForm,
+		form: HazardousEventForm,
 		edit: false
 	});
 }

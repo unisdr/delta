@@ -13,7 +13,7 @@ import {
 	authLoaderPublicOrWithPerm,
 } from "~/util/auth";
 
-import {hazardEventLink} from "~/frontend/events/hazardeventform"
+import {hazardousEventLink} from "~/frontend/events/hazardeventform"
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 	return disasterEventsLoader({loaderArgs})
@@ -36,7 +36,7 @@ export default function Data() {
 				<td>
 					<Link to={`${route}/${item.id}`}>{item.id.slice(0, 5)}</Link>
 				</td>
-				<td>{hazardEventLink(item.hazardEvent)}</td>
+				<td>{hazardousEventLink(item.hazardousEvent)}</td>
 				<td>{formatDate(item.startDate)}</td>
 				<td>{formatDate(item.endDate)}</td>
 				<td>

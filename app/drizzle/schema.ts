@@ -234,9 +234,9 @@ export type EventInsert = typeof eventTable.$inferInsert;
 
 export const eventRel = relations(eventTable, ({one, many}) => ({
 	// hazard event
-	he: one(hazardEventTable, {
+	he: one(hazardousEventTable, {
 		fields: [eventTable.id],
-		references: [hazardEventTable.id],
+		references: [hazardousEventTable.id],
 	}),
 	// disaster event
 	de: one(disasterEventTable, {
@@ -277,7 +277,7 @@ export const eventRelationshipRel = relations(
 	})
 );
 
-export const hazardEventTable = pgTable("hazard_event", {
+export const hazardousEventTable = pgTable("hazardous_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
 	...apiImportIdField(),
@@ -299,29 +299,29 @@ export const hazardEventTable = pgTable("hazard_event", {
 	dataSource: zeroText("data_source"),
 });
 
-export const hazardEventTableConstraits = {
-	apiImportId: "hazard_event_apiImportId_unique",
-	hipHazardId: "hazard_event_hip_hazard_id_hip_hazard_id_fk",
+export const hazardousEventTableConstraits = {
+	apiImportId: "hazardous_event_apiImportId_unique",
+	hipHazardId: "hazardous_event_hip_hazard_id_hip_hazard_id_fk",
 };
 
-export type HazardEvent = typeof hazardEventTable.$inferSelect;
-export type HazardEventInsert = typeof hazardEventTable.$inferInsert;
+export type HazardousEvent = typeof hazardousEventTable.$inferSelect;
+export type HazardousEventInsert = typeof hazardousEventTable.$inferInsert;
 
-export const hazardEventRel = relations(hazardEventTable, ({one}) => ({
+export const hazardousEventRel = relations(hazardousEventTable, ({one}) => ({
 	event: one(eventTable, {
-		fields: [hazardEventTable.id],
+		fields: [hazardousEventTable.id],
 		references: [eventTable.id],
 	}),
 	hipHazard: one(hipHazardTable, {
-		fields: [hazardEventTable.hipHazardId],
+		fields: [hazardousEventTable.hipHazardId],
 		references: [hipHazardTable.id],
 	}),
 	hipCluster: one(hipClusterTable, {
-		fields: [hazardEventTable.hipClusterId],
+		fields: [hazardousEventTable.hipClusterId],
 		references: [hipClusterTable.id],
 	}),
 	hipClass: one(hipClassTable, {
-		fields: [hazardEventTable.hipClassId],
+		fields: [hazardousEventTable.hipClassId],
 		references: [hipClassTable.id],
 	}),
 }));
@@ -333,8 +333,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
-	hazardEventId: uuid("hazard_event_id")
-		.references((): AnyPgColumn => hazardEventTable.id)
+	hazardousEventId: uuid("hazardous_event_id")
+		.references((): AnyPgColumn => hazardousEventTable.id)
 		.notNull(),
 	// data fields below not used in queries directly
 	// only on form screens
@@ -381,7 +381,7 @@ export type DisasterEvent = typeof disasterEventTable.$inferSelect;
 export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
 
 export const disasterEventTableConstraits = {
-	hazardEventId: "disaster_event_hazard_event_id_hazard_event_id_fk",
+	hazardousEventId: "disaster_event_hazardous_event_id_hazardous_event_id_fk",
 };
 
 export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
@@ -389,9 +389,9 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 		fields: [disasterEventTable.id],
 		references: [eventTable.id],
 	}),
-	hazardEvent: one(hazardEventTable, {
-		fields: [disasterEventTable.hazardEventId],
-		references: [hazardEventTable.id],
+	hazardousEvent: one(hazardousEventTable, {
+		fields: [disasterEventTable.hazardousEventId],
+		references: [hazardousEventTable.id],
 	}),
 }));
 
