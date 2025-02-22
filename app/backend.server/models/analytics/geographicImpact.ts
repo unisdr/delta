@@ -13,6 +13,13 @@ import { NodePgDatabase } from "drizzle-orm/node-postgres";
 interface GeographicImpactFilters {
     sectorId: number;
     subSectorId?: number;
+    hazardTypeId?: string;
+    hazardClusterId?: string;
+    specificHazardId?: string;
+    geographicLevelId?: string;
+    fromDate?: string;
+    toDate?: string;
+    disasterEventId?: string;
 }
 
 interface DivisionValues {
@@ -356,10 +363,9 @@ function parseSectorId(sectorId: string | number | undefined): number | undefine
 }
 
 // Get disaster records for a sector and its subsectors
-async function getDisasterRecordsForSector(sectorId: string | number | undefined, subSectorId: number | undefined): Promise<any[]> {
+async function getDisasterRecordsForSector(sectorId: number | undefined, subSectorId: number | undefined): Promise<any[]> {
     try {
-        const numericSectorId = parseSectorId(sectorId);
-        console.log("Fetching records for sector:", numericSectorId, "subSector:", subSectorId);
+        console.log("Fetching records for sector:", sectorId, "subSector:", subSectorId);
 
         // Get all records directly associated with this sector
         const records = await dr
@@ -370,7 +376,7 @@ async function getDisasterRecordsForSector(sectorId: string | number | undefined
                     // Only include approved records
                     eq(disasterRecordsTable.approvalStatus, "approved"),
                     // Filter by sector if provided
-                    numericSectorId ? eq(disasterRecordsTable.sectorId, numericSectorId) : undefined,
+                    sectorId ? eq(disasterRecordsTable.sectorId, sectorId) : undefined,
                     // Filter by sub-sector if provided
                     subSectorId ? eq(disasterRecordsTable.subSector, subSectorId.toString()) : undefined
                 )
@@ -392,7 +398,7 @@ async function getDisasterRecordsForSector(sectorId: string | number | undefined
         }
 
         // Get all subsectors for this sector
-        const subsectors = await getSectorsByParentId(numericSectorId ?? null);
+        const subsectors = await getSectorsByParentId(sectorId ?? null);
 
         // Get records for each subsector
         const subsectorRecords = await Promise.all(
@@ -418,164 +424,111 @@ async function getDisasterRecordsForSector(sectorId: string | number | undefined
 }
 
 // Main function to get geographic impact
-export async function getGeographicImpact(sectorId: string | number | undefined, subSectorId?: number): Promise<GeographicImpactResult> {
+export async function getGeographicImpact(filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
     try {
-        // Get all disaster records for the sector
-        const records = await getDisasterRecordsForSector(sectorId, subSectorId);
-        console.log("Processing geographic impact for sector:", sectorId, "subSector:", subSectorId);
+        console.log("Processing geographic impact with filters:", JSON.stringify(filters, null, 2));
 
-        // Get all divisions, focusing on Admin Level 1 (regions)
-        const divisions = await dr.select({
-            id: divisionTable.id,
-            name: divisionTable.name,
-            importId: divisionTable.importId,
-            level: divisionTable.level,
-            parentId: divisionTable.parentId,
-            geojson: divisionTable.geojson
-        })
-        .from(divisionTable)
-        .where(eq(divisionTable.level, 1)); // Only get Admin Level 1 divisions
+        // Get disaster records based on sector
+        const records = await getDisasterRecordsForSector(filters.sectorId, filters.subSectorId);
+        console.log(`Found ${records.length} disaster records`);
+
+        // Build the base query for divisions
+        const divisionQuery = dr
+            .select({
+                id: divisionTable.id,
+                name: divisionTable.name,
+                importId: divisionTable.importId,
+                level: divisionTable.level,
+                parentId: divisionTable.parentId,
+                geojson: divisionTable.geojson,
+                geom: divisionTable.geom,
+                bbox: divisionTable.bbox,
+                spatial_index: divisionTable.spatial_index
+            })
+            .from(divisionTable);
+
+        // Add WHERE conditions
+        const whereConditions = [];
+        whereConditions.push(eq(divisionTable.level, 2)); // Default to level 2
+
+        // Execute the query with all conditions
+        const divisions = await divisionQuery.where(and(...whereConditions));
+        console.log(`Found ${divisions.length} divisions`);
 
         // Create a map to store aggregated values per division
         const divisionValues: { [key: string]: DivisionValues } = {};
 
         // Process each disaster record
         for (const record of records) {
-            console.log('Processing record:', record);
+            console.log(`Processing record: ${record.id}`);
 
             // Get damages and losses for this record
-            const damages = await dr.select()
-                .from(damagesTable)
-                .where(eq(damagesTable.recordId, record.id));
+            const [damages, losses] = await Promise.all([
+                dr.select()
+                    .from(damagesTable)
+                    .where(eq(damagesTable.recordId, record.id)),
+                dr.select()
+                    .from(lossesTable)
+                    .where(eq(lossesTable.recordId, record.id))
+            ]);
 
-            const losses = await dr.select()
-                .from(lossesTable)
-                .where(eq(lossesTable.recordId, record.id));
+            console.log(`Found ${damages.length} damages and ${losses.length} losses for record ${record.id}`);
 
-            // Get the disaster record details for spatial data
-            const disasterRecord = await dr.select()
-                .from(disasterRecordsTable)
-                .where(eq(disasterRecordsTable.id, record.id))
-                .limit(1);
-
-            if (!disasterRecord.length) {
-                console.warn('No disaster record found for ID:', record);
-                continue;
-            }
-
-            const spatialFootprint = disasterRecord[0].spatialFootprint as GeoJSON;
-            console.log('Spatial footprint for record:', record, JSON.stringify(spatialFootprint, null, 2));
-
-            // If we have spatial footprint data, use it to match with divisions
-            if (spatialFootprint) {
-                try {
-                    // Process the geometry
-                    let geometryToProcess: GeoJSONGeometry;
-
-                    // If it's a feature collection, use the first feature's geometry
-                    if (isFeatureCollection(spatialFootprint)) {
-                        const firstFeature = spatialFootprint.features[0];
-                        if (!firstFeature) {
-                            console.warn('Empty feature collection');
-                            continue;
-                        }
-                        geometryToProcess = firstFeature.geometry;
-                    } else if (isFeature(spatialFootprint)) {
-                        geometryToProcess = spatialFootprint.geometry;
-                    } else if (isGeometry(spatialFootprint)) {
-                        // Fix Point geometry handling
-                        if (spatialFootprint.type === 'Point' &&
-                            Array.isArray(spatialFootprint.coordinates) &&
-                            Array.isArray(spatialFootprint.coordinates[0])) {
-                            // Fix nested Point coordinates
-                            geometryToProcess = {
-                                type: 'Point',
-                                coordinates: spatialFootprint.coordinates[0]
-                            };
-                        } else {
-                            geometryToProcess = spatialFootprint;
-                        }
-                    } else {
-                        console.warn('Invalid GeoJSON format');
-                        continue;
-                    }
-
-                    // Convert the processed geometry to a PostGIS geometry
-                    const disasterGeomJson = JSON.stringify(geometryToProcess);
-
-                    // Process each division and check for intersection
-                    for (const division of divisions) {
-                        if (!division.geojson) continue;
-
-                        const divisionGeomJson = JSON.stringify(division.geojson);
-
-                        // Convert both geometries to PostGIS format and check intersection
-                        const intersectionResult = await dr.execute<{ intersects: boolean }>(sql`
-                            SELECT ST_Intersects(
-                                ST_SetSRID(ST_GeomFromGeoJSON(${disasterGeomJson}::jsonb), 4326),
-                                ST_SetSRID(ST_GeomFromGeoJSON(${divisionGeomJson}::jsonb), 4326)
-                            ) as intersects;
-                        `);
-
-                        if (intersectionResult.rows?.[0]?.intersects) {
-                            // Initialize division values if not exists
-                            if (!divisionValues[division.id]) {
-                                divisionValues[division.id] = {
-                                    totalDamage: 0,
-                                    totalLoss: 0,
-                                    sources: new Set<string>()
-                                };
-                            }
-
-                            // Add damages
-                            for (const damage of damages) {
-                                // Calculate total damage by summing repair, replacement and recovery costs
-                                const repairCost = safeMoneyToNumber(damage.publicRepairCostTotalOverride);
-                                const replacementCost = safeMoneyToNumber(damage.publicReplacementCostTotalOverride);
-                                const recoveryCost = safeMoneyToNumber(damage.publicRecoveryCostTotalOverride);
-                                divisionValues[division.id].totalDamage += repairCost + replacementCost + recoveryCost;
-                            }
-
-                            // Add losses
-                            for (const loss of losses) {
-                                // Sum both public and private costs
-                                const publicCost = safeMoneyToNumber(loss.publicCostTotalOverride);
-                                const privateCost = safeMoneyToNumber(loss.privateCostTotalOverride);
-                                divisionValues[division.id].totalLoss += publicCost + privateCost;
-                            }
-
-                            // Add record ID to sources
-                            divisionValues[division.id].sources.add(record.id);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error processing spatial data:', error);
-                    continue;
+            // Process damages and losses for each division
+            for (const division of divisions) {
+                // Initialize division values if not exists
+                if (!divisionValues[division.id]) {
+                    divisionValues[division.id] = {
+                        totalDamage: 0,
+                        totalLoss: 0,
+                        sources: new Set<string>()
+                    };
                 }
+
+                // Add damages
+                for (const damage of damages) {
+                    const repairCost = safeMoneyToNumber(damage.publicRepairCostTotalOverride);
+                    const replacementCost = safeMoneyToNumber(damage.publicReplacementCostTotalOverride);
+                    const recoveryCost = safeMoneyToNumber(damage.publicRecoveryCostTotalOverride);
+                    divisionValues[division.id].totalDamage += repairCost + replacementCost + recoveryCost;
+                }
+
+                // Add losses
+                for (const loss of losses) {
+                    const publicCost = safeMoneyToNumber(loss.publicCostTotalOverride);
+                    const privateCost = safeMoneyToNumber(loss.privateCostTotalOverride);
+                    divisionValues[division.id].totalLoss += publicCost + privateCost;
+                }
+
+                // Add record ID to sources
+                divisionValues[division.id].sources.add(record.id);
             }
         }
 
-        // Clean up the division values for output
+        // Clean up the division values for response
         const cleanValues: { [key: string]: CleanDivisionValues } = {};
-        for (const [divisionId, values] of Object.entries(divisionValues)) {
-            cleanValues[divisionId] = {
+        for (const [id, values] of Object.entries(divisionValues)) {
+            cleanValues[id] = {
                 totalDamage: values.totalDamage,
                 totalLoss: values.totalLoss
             };
         }
 
+        console.log("Successfully processed geographic impact data");
+
         return {
             success: true,
-            divisions: divisions,
+            divisions,
             values: cleanValues
         };
+
     } catch (error) {
-        console.error('Error in getGeographicImpact:', error);
+        console.error("Error in getGeographicImpact:", error);
         return {
             success: false,
             divisions: [],
             values: {},
-            error: 'Failed to get geographic impact data'
+            error: error instanceof Error ? error.message : "Unknown error occurred"
         };
     }
 }
@@ -583,8 +536,8 @@ export async function getGeographicImpact(sectorId: string | number | undefined,
 // Memoization cache for normalized divisions
 const normalizedDivisionsCache = new Map<string, NormalizedDivision>();
 
-export async function getGeographicImpactGeoJSON(filters: GeographicImpactFilters): Promise<GeoJSONFeatureCollection> {
-    const result = await getGeographicImpact(filters.sectorId, filters.subSectorId);
+export async function getGeographicImpactGeoJSON(sectorId: number, subSectorId?: number): Promise<GeoJSONFeatureCollection> {
+    const result = await getGeographicImpact({ sectorId, subSectorId });
 
     if (!result.success) {
         return {
