@@ -15,6 +15,7 @@ import {
 	integer
 } from "drizzle-orm/pg-core";
 
+import {customType} from "drizzle-orm/pg-core/columns";
 import {sql, relations} from "drizzle-orm";
 
 import {
@@ -193,19 +194,55 @@ export const divisionTable = pgTable(
 	{
 		id: ourSerial("id").primaryKey(),
 		importId: text("import_id").unique(),
-		//country: ourBigint("country"),
 		parentId: ourBigint("parent_id").references(
 			(): AnyPgColumn => divisionTable.id
 		),
 		name: zeroStrMap("name"),
 		geojson: jsonb("geojson"),
 		level: ourBigint("level"),	// value is parent level + 1 otherwise 1
+
+		// Automatically convert `geojson` to a `geometry` column for faster spatial queries.
+		// This eliminates the need for manual conversion and improves performance in map-based features.
+		// The column is generated dynamically and does not require changes to CSV uploads.
+		geom: customType({
+			dataType: () => "geometry(GEOMETRY, 4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakeValid(ST_GeomFromGeoJSON(geojson::text)), 4326)) STORED"
+		})(),
+
+		// Add bounding box for faster overlap queries
+		bbox: customType({
+			dataType: () => "geometry(GEOMETRY, 4326) GENERATED ALWAYS AS (ST_Envelope(geom)) STORED"
+		})(),
+
+		// Auto-generate a unique `spatial_index` for easy spatial joins
+		spatial_index: text("spatial_index")
+			.notNull()
+			.default(sql`
+        (CASE 
+            WHEN parent_id IS NULL THEN 'L1-' || id::TEXT
+            ELSE 'L' || level::TEXT || '-' || parent_id::TEXT || '-' || id::TEXT
+        END)::TEXT
+    `)
 	},
-	(table) => [index("parent_idx").on(table.parentId)]
+	(table) => [
+		index("parent_idx").on(table.parentId),
+
+		// Indexing `geom` column for fast spatial queries using GIST
+		// This ensures that location-based searches are optimized
+		index("division_geom_idx").on(sql`geom USING GIST`),
+
+		// Additional index on bounding box for faster overlap queries
+		index("division_bbox_idx").on(sql`bbox USING GIST`),
+
+		// Index on level for hierarchical queries
+		index("division_level_idx").on(table.level),
+
+		// Ensure all geometries are valid
+		check("valid_geom_check", sql`ST_IsValid(geom)`)
+	]
 );
 
-export const divisionParent_Rel = relations(divisionTable, ({one}) => ({
-	divisionParent: one(divisionTable, {fields: [divisionTable.parentId], references: [divisionTable.id]}),
+export const divisionParent_Rel = relations(divisionTable, ({ one }) => ({
+	divisionParent: one(divisionTable, { fields: [divisionTable.parentId], references: [divisionTable.id] }),
 }));
 
 export type Division = typeof divisionTable.$inferSelect;
