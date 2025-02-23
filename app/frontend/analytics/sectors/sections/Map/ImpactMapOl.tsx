@@ -45,6 +45,13 @@ type DivisionFeature = {
   geometry: any;
 };
 
+interface ColorRange {
+  min: number;
+  max: number;
+  color: string;
+  label: string;
+}
+
 export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -127,52 +134,39 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     }
   };
 
-  // Style function for features
-  const calculateColorRanges = (features: any[]) => {
+  // Calculate color ranges for the map
+  const calculateColorRanges = (features: any[]): ColorRange[] => {
     const values = features.map(f => f.properties[selectedMetric]);
     const nonZeroValues = values.filter(v => v > 0);
-    const max = Math.max(...nonZeroValues, 0); // Ensure at least '0' is considered if all are zero
+    const max = Math.max(...nonZeroValues, 0);
 
-    const noDataColor = 'rgba(200, 200, 200, 0.9)'; // Light grey for no impact
-    let ranges;
+    // Create ranges array starting with impact ranges
+    let ranges: ColorRange[] = [];
 
-    if (max === 0) { // If max is 0, it implies there are no non-zero values
-      ranges = [{ min: 0, max: 0, color: noDataColor, label: "No data available" }];
-    } else {
+    // Only add value ranges if we have non-zero values
+    if (max > 0) {
       ranges = [
-        { min: 0, max: 0, color: noDataColor, label: "No data available" },
-        { min: 0.1, max: max * 0.2, color: 'rgba(227, 242, 253, 0.9)', label: "0.1% - " + (max * 0.2 * 100).toFixed(2) + "%" },
-        { min: max * 0.2, max: max * 0.4, color: 'rgba(144, 202, 249, 0.9)', label: (max * 0.2 * 100).toFixed(2) + "% - " + (max * 0.4 * 100).toFixed(2) + "%" },
-        { min: max * 0.4, max: max * 0.6, color: 'rgba(66, 165, 245, 0.9)', label: (max * 0.4 * 100).toFixed(2) + "% - " + (max * 0.6 * 100).toFixed(2) + "%" },
-        { min: max * 0.6, max: max * 0.8, color: 'rgba(30, 136, 229, 0.9)', label: (max * 0.6 * 100).toFixed(2) + "% - " + (max * 0.8 * 100).toFixed(2) + "%" },
-        { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)', label: (max * 0.8 * 100).toFixed(2) + "% - " + (max * 100).toFixed(2) + "%" }
+        { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)', label: `${formatCurrency(max * 0.8, {}, 'thousands')} - ${formatCurrency(max, {}, 'thousands')}` },
+        { min: max * 0.6, max: max * 0.8, color: 'rgba(30, 136, 229, 0.9)', label: `${formatCurrency(max * 0.6, {}, 'thousands')} - ${formatCurrency(max * 0.8, {}, 'thousands')}` },
+        { min: max * 0.4, max: max * 0.6, color: 'rgba(66, 165, 245, 0.9)', label: `${formatCurrency(max * 0.4, {}, 'thousands')} - ${formatCurrency(max * 0.6, {}, 'thousands')}` },
+        { min: max * 0.2, max: max * 0.4, color: 'rgba(144, 202, 249, 0.9)', label: `${formatCurrency(max * 0.2, {}, 'thousands')} - ${formatCurrency(max * 0.4, {}, 'thousands')}` },
+        { min: 0.1, max: max * 0.2, color: 'rgba(227, 242, 253, 0.9)', label: `${formatCurrency(0.1, {}, 'thousands')} - ${formatCurrency(max * 0.2, {}, 'thousands')}` }
       ];
     }
 
-    // Ensure the range property is never undefined
+    // Add special states at the bottom
+    ranges.push(
+      { min: 0, max: 0, color: 'rgba(255, 255, 255, 0.9)', label: "Zero Impact (Confirmed)" },
+      { min: -1, max: -1, color: 'rgba(200, 200, 200, 0.9)', label: "No Data Available" }
+    );
+
+    // Set legend ranges
     setLegendRanges(ranges.map(r => ({
       color: r.color,
-      range: r.label // Always has a value now
-    })).reverse()); // Reverse to display No Data at the top when applicable
+      range: r.label
+    })));
 
     return ranges;
-  };
-
-  const getFeatureStyle = (feature: any, isHovered = false) => {
-    const value = feature.get(selectedMetric);
-    const ranges = calculateColorRanges(geoData.features);
-    const range = ranges.find(r => value >= r.min && value <= r.max);
-
-    return new Style({
-      fill: new Fill({
-        color: range ? range.color : 'rgba(240,240,240,0.9)' // Use the default color if no range matches
-      }),
-      stroke: new Stroke({
-        color: isHovered ? '#000' : '#666',
-        width: isHovered ? 3 : 1.5,
-        lineDash: isHovered ? undefined : [1, 2]
-      })
-    });
   };
 
   // Helper function to check if a feature matches the search term
@@ -275,6 +269,33 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     }
   };
 
+  const getFeatureStyle = (feature: any, isHovered = false) => {
+    const value = feature.get(selectedMetric);
+    const dataAvailability = feature.get('dataAvailability');
+    const ranges = calculateColorRanges(geoData.features);
+
+    let color;
+    if (dataAvailability === 'zero') {
+      color = 'rgba(255, 255, 255, 0.9)'; // White for confirmed zero
+    } else if (dataAvailability === 'available' && value > 0) {
+      const range = ranges.find(r => value >= r.min && value <= r.max);
+      color = range ? range.color : 'rgba(200, 200, 200, 0.9)';
+    } else {
+      color = 'rgba(200, 200, 200, 0.9)'; // Grey for no data
+    }
+
+    return new Style({
+      fill: new Fill({
+        color: color
+      }),
+      stroke: new Stroke({
+        color: isHovered ? '#000' : '#666',
+        width: isHovered ? 3 : 1.5,
+        lineDash: isHovered ? undefined : [1, 2]
+      })
+    });
+  };
+
   // Function to update tooltip content and style
   const updateTooltip = (feature: any, coordinates: number[]) => {
     if (!tooltipRef.current || !map) return;
@@ -286,40 +307,61 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
 
     const name = feature.get('name')?.en || feature.get('name') || 'Unknown';
     const value = feature.get(selectedMetric);
+    const dataAvailability = feature.get('dataAvailability');
     const metricLabel = selectedMetric === 'totalDamage' ? 'Total Damages' : 'Total Losses';
 
-    // Handle the value display logic - only two states
-    const displayValue = value === null || value === undefined
-      ? "No data available"
-      : formatCurrency(value);
+    // Handle display value based on data availability
+    let displayValue;
+    if (dataAvailability === 'zero') {
+      displayValue = "Zero Impact (Confirmed)";
+    } else if (dataAvailability === 'available' && value > 0) {
+      displayValue = formatCurrency(value, {}, 'thousands');
+    } else {
+      displayValue = "No Data Available";
+    }
 
-    // Get the feature's color from the style
+    // Get the feature's color for the background
     const featureStyle = getFeatureStyle(feature, false);
-    const fillColor = (featureStyle.getFill()?.getColor() as string) || '#FFFFFF';
-    setHoveredFeatureColor(fillColor);
+    const backgroundColor = (featureStyle.getFill()?.getColor() as string) || '#FFFFFF';
+    setHoveredFeatureColor(backgroundColor);
 
-    // Determine text color based on background brightness
-    const textColor = isLightColor(fillColor) ? '#333333' : '#FFFFFF';
-
-    tooltip.style.display = 'block';
-    tooltip.style.left = `${pixel[0]}px`;
-    tooltip.style.top = `${pixel[1]}px`;
-    tooltip.style.backgroundColor = fillColor;
-    tooltip.style.color = textColor;
-    tooltip.style.border = '1px solid rgba(0,0,0,0.1)';
-    tooltip.style.borderRadius = '4px';
-    tooltip.style.padding = '8px 12px';
-    tooltip.style.fontSize = '14px';
-    tooltip.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-    tooltip.style.zIndex = '1000';
-    tooltip.style.minWidth = '200px';
-    tooltip.style.transform = 'translate(-50%, -100%)';
-    tooltip.style.marginTop = '-8px';
+    // Determine if we should use light or dark text based on background
+    const textColor = isLightColor(backgroundColor) ? '#333333' : '#FFFFFF';
+    const subTextColor = isLightColor(backgroundColor) ? '#666666' : '#EEEEEE';
 
     tooltip.innerHTML = `
-        <div style="font-weight: 600; margin-bottom: 4px;">${name}</div>
-        <div style="opacity: 0.9">${metricLabel}: ${displayValue}</div>
+      <div style="
+        padding: 8px 12px;
+        font-size: 14px;
+        min-width: 200px;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      ">
+        <div style="
+          font-weight: 700;
+          font-size: 16px;
+          margin-bottom: 4px;
+          color: ${textColor};
+        ">${name}</div>
+        <div style="
+          color: ${subTextColor};
+          display: flex;
+          justify-content: space-between;
+        ">
+          <span>${metricLabel}:</span>
+          <span style="font-weight: 600; color: ${textColor};">${displayValue}</span>
+        </div>
+      </div>
     `;
+
+    tooltip.style.backgroundColor = backgroundColor;
+    tooltip.style.left = `${pixel[0]}px`;
+    tooltip.style.top = `${pixel[1]}px`;
+    tooltip.style.display = 'block';
+    tooltip.style.transform = 'translate(-50%, -120%)';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.zIndex = '1000';
   };
 
   useEffect(() => {
@@ -500,22 +542,28 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
           <div className="loading-spinner" />
         </div>
       )}
-      {legendRanges.length > 0 && (
-        <div className="legend">
-          <h3>Legend</h3>
-          <div className="legend-items">
-            {legendRanges.map((range, index) => (
-              <div key={index} className="legend-item">
-                <div
-                  className="legend-color"
-                  style={{ backgroundColor: range.color }}
-                />
-                <span>{range.range}</span>
-              </div>
-            ))}
+      {/* Map Legend */}
+      <div className="map-legend absolute bottom-4 right-4 bg-white p-2 rounded shadow-md">
+        <h4 className="font-bold mb-2">Legend</h4>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-red-500 opacity-70 mr-2"></div>
+            <span>High Impact</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-red-500 opacity-30 mr-2"></div>
+            <span>Low Impact</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-white border border-gray-300 mr-2"></div>
+            <span>Zero Impact</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-500 opacity-50 mr-2"></div>
+            <span>No Data Available</span>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

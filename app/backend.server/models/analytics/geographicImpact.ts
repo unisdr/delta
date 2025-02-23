@@ -35,6 +35,8 @@ import { getSectorsByParentId } from "./sectors";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
+import { formatCurrency } from "~/frontend/utils/formatters";
+import { configCurrencies } from "~/util/config";
 
 /**
  * Interface for geographic impact query filters
@@ -80,16 +82,18 @@ interface GeographicFilters {
 }
 
 interface DivisionValues {
-    totalDamage: number;
-    totalLoss: number;
+    totalDamage: number | null;
+    totalLoss: number | null;
     sources: Set<string>;
     metadata: DisasterImpactMetadata;
+    dataAvailability: 'available' | 'no_data' | 'zero';
 }
 
 interface CleanDivisionValues {
-    totalDamage: number;
-    totalLoss: number;
+    totalDamage: number | null;
+    totalLoss: number | null;
     metadata: DisasterImpactMetadata;
+    dataAvailability: 'available' | 'no_data' | 'zero';
 }
 
 interface GeographicImpactResult {
@@ -483,7 +487,7 @@ async function getDisasterRecordsForSector(sectorId: number | undefined, subSect
 }
 
 // Main function to get geographic impact
-async function getGeographicImpact(filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
+export async function getGeographicImpact(filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
     try {
         console.log("Processing geographic impact with filters:", JSON.stringify(filters, null, 2));
 
@@ -517,67 +521,66 @@ async function getGeographicImpact(filters: GeographicImpactFilters): Promise<Ge
         // Create a map to store aggregated values per division
         const divisionValues: { [key: string]: DivisionValues } = {};
 
+        const defaultCurrency = configCurrencies()[0] || 'PHP'; // Get first currency from env config
+
+        // Initialize all divisions with no data status
+        for (const division of divisions) {
+            divisionValues[division.id] = {
+                totalDamage: null,
+                totalLoss: null,
+                sources: new Set<string>(),
+                metadata: createAssessmentMetadata(
+                    filters.assessmentType || 'detailed',
+                    filters.confidenceLevel || 'high',
+                    defaultCurrency
+                ),
+                dataAvailability: 'no_data'
+            };
+        }
+
         // Process each disaster record
         for (const record of records) {
-            console.log(`Processing record: ${record.id}`);
+            const locationDesc = record.locationDesc;
+            if (!locationDesc) continue;
 
-            // Get damages and losses for this record using standardized calculations
-            const [damages, losses] = await Promise.all([
-                dr.select({
-                    value: calculateDamages(damagesTable)
-                })
-                    .from(damagesTable)
-                    .where(eq(damagesTable.recordId, record.id)),
-                dr.select({
-                    value: calculateLosses(lossesTable)
-                })
-                    .from(lossesTable)
-                    .where(eq(lossesTable.recordId, record.id))
-            ]);
+            // Find matching divisions
+            const matches = await findMatchingDivision(locationDesc, divisions, []);
 
-            console.log(`Found ${damages.length} damages and ${losses.length} losses for record ${record.id}`);
+            for (const match of matches) {
+                const divisionId = match.division.id;
+                if (!divisionValues[divisionId]) continue;
 
-            // Process damages and losses for each division
-            for (const division of divisions) {
-                // Initialize division values if not exists
-                if (!divisionValues[division.id]) {
-                    divisionValues[division.id] = {
-                        totalDamage: 0,
-                        totalLoss: 0,
-                        sources: new Set<string>(),
-                        metadata: createAssessmentMetadata(
-                            filters.assessmentType || 'rapid',
-                            filters.confidenceLevel || 'medium'
-                        )
-                    };
+                // Get damage and loss data
+                const damages = await aggregateDamagesData([record.id]);
+                const losses = await aggregateLossesData([record.id]);
+
+                const currentValues = divisionValues[divisionId];
+
+                // Update totals
+                currentValues.totalDamage = (currentValues.totalDamage || 0) + damages.total;
+                currentValues.totalLoss = (currentValues.totalLoss || 0) + losses.total;
+                currentValues.sources.add(record.id);
+
+                // Update data availability status
+                if (currentValues.sources.size > 0) {
+                    currentValues.dataAvailability =
+                        (currentValues.totalDamage === 0 && currentValues.totalLoss === 0)
+                            ? 'zero'
+                            : 'available';
                 }
-
-                // Add damages
-                if (damages.length > 0) {
-                    divisionValues[division.id].totalDamage += Number(damages[0].value || 0);
-                }
-
-                // Add losses
-                if (losses.length > 0) {
-                    divisionValues[division.id].totalLoss += Number(losses[0].value || 0);
-                }
-
-                // Add record ID to sources
-                divisionValues[division.id].sources.add(record.id);
             }
         }
 
-        // Clean up the division values for response
+        // Clean up the values for the response
         const cleanValues: { [key: string]: CleanDivisionValues } = {};
         for (const [id, values] of Object.entries(divisionValues)) {
             cleanValues[id] = {
                 totalDamage: values.totalDamage,
                 totalLoss: values.totalLoss,
-                metadata: values.metadata
+                metadata: values.metadata,
+                dataAvailability: values.dataAvailability
             };
         }
-
-        console.log("Successfully processed geographic impact data");
 
         return {
             success: true,
@@ -591,7 +594,7 @@ async function getGeographicImpact(filters: GeographicImpactFilters): Promise<Ge
             success: false,
             divisions: [],
             values: {},
-            error: error instanceof Error ? error.message : "Unknown error occurred"
+            error: "Failed to process geographic impact data"
         };
     }
 }
