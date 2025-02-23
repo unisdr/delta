@@ -33,14 +33,11 @@ export function AssetForm(props: AssetFormProps) {
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
-			elementsAfter={{
-				sectorId: (
-					<a target="_blank" href="/settings/sectors">Edit sectors</a>
-				),
-				measureId: (
-					<a target="_blank" href="/settings/measure">Edit measures/units</a>
-				),
-			}}
+			// elementsAfter={{
+			// 	sectorId: (
+			// 		<a target="_blank" href="/settings/sectors">Edit sectors</a>
+			// 	),
+			// }}
 			override={
 				{
 					sectorIds: (

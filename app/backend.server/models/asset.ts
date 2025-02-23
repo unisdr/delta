@@ -7,6 +7,7 @@ import {deleteByIdForStringId} from "./common";
 import {allMeasures} from "./measure";
 import {allSectors} from "./sector";
 import {measureLabel} from "~/frontend/measure";
+import { replace } from "lodash";
 
 
 export interface AssetFields extends Omit<AssetInsert, "id"> {}
@@ -32,17 +33,6 @@ export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 			})
 		},
 		{key: "name", label: "Name", type: "text", required: true},
-		{
-			key: "measureId",
-			label: "Measure",
-			type: "enum",
-			enumData: measures.sort((a, b) => a.name.localeCompare(b.name)).map(m => {
-				return {
-					key: m.id,
-					label: measureLabel(m)
-				}
-			})
-		},
 		{key: "nationalId", label: "National ID", type: "text"},
 		{key: "notes", label: "Notes", type: "textarea"},
 	]
@@ -169,9 +159,28 @@ export async function assetsForSector(tx: Tx, sectorId: number) {
 	let assetIds = res1.rows.map(r => r.id as string)
 	let res = await tx.query.assetTable.findMany({
 		where: inArray(assetTable.id, assetIds),
-		with: {
-			measure: true
-		},
 	})
 	return res
+}
+
+
+
+export async function upsertRecord(record: AssetInsert): Promise<void> {
+	// Perform the upsert operation
+	await dr
+		.insert(assetTable)
+		.values(record)
+		.onConflictDoUpdate({
+			target: assetTable.apiImportId,
+			set: { 
+				id: record.id,
+				name: record.name,
+				sectorId: record.sectorId,
+				sectorIds: record.sectorIds,
+				isBuiltIn: record.isBuiltIn,
+				nationalId: record.nationalId,
+				notes: record.notes,
+				other: record.other,
+			},
+		});
 }

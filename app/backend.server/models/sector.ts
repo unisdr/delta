@@ -70,7 +70,7 @@ export async function allSectors(tx: Tx) {
 	return res
 }
 
-export async function getSectorsByLevel(level: number): Promise<{id: number, name: string}[]> {
+export async function getSectorsByLevel(level: number): Promise<{id: number | never, name: string | unknown}[]> {
 	const sectorParentTable = aliasedTable(sectorTable, "sectorParentTable");
 
 	return await dr.select({
