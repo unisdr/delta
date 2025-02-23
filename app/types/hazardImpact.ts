@@ -1,26 +1,38 @@
+import type { DisasterImpactMetadata } from "./disasterCalculations";
+
 export interface HazardImpactData {
     eventsCount: HazardDataPoint[];
     damages: HazardDataPoint[];
     losses: HazardDataPoint[];
+    metadata: DisasterImpactMetadata;
 }
 
 export interface HazardDataPoint {
     hazardId: number;
     hazardName: string;
-    value: number | string;
+    value: string;
     percentage: number;
 }
 
 export interface HazardImpactFilters {
-    sectorId: string | null;
-    hazardTypeId: string | null;
-    hazardClusterId: string | null;
-    specificHazardId: string | null;
-    geographicLevelId: string | null;
-    fromDate: string | null;
-    toDate: string | null;
-    disasterEventId: string | null;
-    _disasterEventId?: string | null;
+    sectorId?: string;
+    hazardTypeId?: string;
+    hazardClusterId?: string;
+    specificHazardId?: string;
+    geographicLevelId?: string;
+    fromDate?: string;
+    toDate?: string;
+    disasterEventId?: string;
+    _disasterEventId?: string;
+    assessmentType?: 'rapid' | 'detailed';
+    confidenceLevel?: 'low' | 'medium' | 'high';
+}
+
+export interface HazardImpactResult {
+    eventsCount: HazardDataPoint[];
+    damages: HazardDataPoint[];
+    losses: HazardDataPoint[];
+    metadata: DisasterImpactMetadata;
 }
 
 export interface HazardImpactResponse {

@@ -12,6 +12,8 @@ import {
 } from "~/drizzle/schema";
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
+import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
 
 export async function fetchHazardImpactData(filters: HazardImpactFilters) {
     const {
@@ -23,20 +25,26 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         fromDate,
         toDate,
         disasterEventId,
-        _disasterEventId
+        _disasterEventId,
+        assessmentType = 'rapid',
+        confidenceLevel = 'medium'
     } = filters;
+
+    // Create assessment metadata
+    const metadata = createAssessmentMetadata(
+        assessmentType,
+        confidenceLevel
+    );
 
     // Base conditions including approval status
     const baseConditions = [
         sql`${disasterRecordsTable.approvalStatus} ILIKE 'approved'`
-        // Temporarily removed approval status check
     ];
 
     // Handle sector filtering using proper hierarchy
     if (sectorId) {
         const numericSectorId = parseInt(sectorId, 10);
         if (!isNaN(numericSectorId)) {
-            // Get all subsectors if this is a parent sector
             const subsectors = await getSectorsByParentId(numericSectorId);
             const sectorIds = subsectors.length > 0
                 ? [numericSectorId, ...subsectors.map(s => s.id)]
@@ -70,13 +78,11 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
 
     // Add disaster event filter if provided
     if (disasterEventId) {
-        // Ensure the disaster event ID is a valid UUID
         try {
             const eventId = _disasterEventId || disasterEventId;
             baseConditions.push(eq(disasterRecordsTable.disasterEventId, eventId));
         } catch (error) {
             console.error("Invalid disaster event ID format:", error);
-            // Return empty data if ID format is invalid
             return {
                 eventsCount: [],
                 damages: [],
@@ -88,138 +94,60 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
     // Query for disaster events count by hazard type
     const eventsCount = await dr
         .select({
-            hazardId: sql<number>`CAST(${hipClassTable.id} AS INTEGER)`, // Ensure non-null integer
-            hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`, // Ensure non-null string
+            hazardId: sql<number>`CAST(${hipClassTable.id} AS INTEGER)`,
+            hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`,
             value: sql<number>`COUNT(${disasterRecordsTable.id})`,
         })
         .from(disasterRecordsTable)
-        .leftJoin(
-            disasterEventTable,
-            eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-        )
-        .leftJoin(
-            hazardEventTable,
-            eq(disasterEventTable.hazardEventId, hazardEventTable.id)
-        )
-        .leftJoin(
-            hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
-        )
-        .leftJoin(
-            hipClusterTable,
-            eq(hipHazardTable.clusterId, hipClusterTable.id)
-        )
-        .leftJoin(
-            hipClassTable,
-            eq(hipClusterTable.classId, hipClassTable.id)
-        )
+        .leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+        .leftJoin(hazardEventTable, eq(disasterEventTable.hazardEventId, hazardEventTable.id))
+        .leftJoin(hipHazardTable, eq(hazardEventTable.hazardId, hipHazardTable.id))
+        .leftJoin(hipClusterTable, eq(hipHazardTable.clusterId, hipClusterTable.id))
+        .leftJoin(hipClassTable, eq(hipClusterTable.classId, hipClassTable.id))
         .where(and(...baseConditions))
         .groupBy(hipClassTable.id, hipClassTable.nameEn)
-        .orderBy(desc(sql<number>`COUNT(${disasterRecordsTable.id})`))
+        .orderBy(desc(sql`COUNT(${disasterRecordsTable.id})`))
         .limit(10);
 
-    // Calculate total events for percentage
-    const total = eventsCount.reduce((sum, item) => sum + Number(item.value), 0);
-
-    // Add percentage to each item and ensure types match HazardDataPoint
-    const eventsCountWithPercentage = eventsCount.map(item => ({
-        hazardId: Number(item.hazardId),
-        hazardName: String(item.hazardName),
-        value: String(item.value),
-        percentage: total > 0 ? (Number(item.value) / total) * 100 : 0
-    }));
-
-    // Query for damages by hazard type with the same join structure
+    // Query for damages by hazard type using standardized calculation
     const damages = await dr
         .select({
             hazardId: sql<number>`CAST(${hipClassTable.id} AS INTEGER)`,
             hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`,
-            value: sql`COALESCE(SUM(
-                COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
-                    COALESCE(${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}, 0), 0) +
-                COALESCE(${damagesTable.privateRepairCostTotalOverride},
-                    COALESCE(${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits}, 0), 0)
-            ), 0)`,
+            value: calculateDamages(damagesTable),
         })
         .from(disasterRecordsTable)
-        .leftJoin(
-            disasterEventTable,
-            eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-        )
-        .leftJoin(
-            hazardEventTable,
-            eq(disasterEventTable.hazardEventId, hazardEventTable.id)
-        )
-        .leftJoin(
-            hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
-        )
-        .leftJoin(
-            hipClusterTable,
-            eq(hipHazardTable.clusterId, hipClusterTable.id)
-        )
-        .leftJoin(
-            hipClassTable,
-            eq(hipClusterTable.classId, hipClassTable.id)
-        )
-        .leftJoin(
-            damagesTable,
-            eq(damagesTable.recordId, disasterRecordsTable.id)
-        )
+        .leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+        .leftJoin(hazardEventTable, eq(disasterEventTable.hazardEventId, hazardEventTable.id))
+        .leftJoin(hipHazardTable, eq(hazardEventTable.hazardId, hipHazardTable.id))
+        .leftJoin(hipClusterTable, eq(hipHazardTable.clusterId, hipClusterTable.id))
+        .leftJoin(hipClassTable, eq(hipClusterTable.classId, hipClassTable.id))
+        .leftJoin(damagesTable, eq(damagesTable.recordId, disasterRecordsTable.id))
         .where(and(...baseConditions))
         .groupBy(hipClassTable.id, hipClassTable.nameEn)
-        .orderBy(desc(sql`COALESCE(SUM(
-            COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
-                COALESCE(${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}, 0), 0) +
-            COALESCE(${damagesTable.privateRepairCostTotalOverride},
-                COALESCE(${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits}, 0), 0)
-        ), 0)`))
+        .orderBy(desc(calculateDamages(damagesTable)))
         .limit(10);
 
-    // Query for losses by hazard type with the same join structure
+    // Query for losses by hazard type using standardized calculation
     const losses = await dr
         .select({
             hazardId: sql<number>`CAST(${hipClassTable.id} AS INTEGER)`,
             hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`,
-            value: sql`COALESCE(SUM(
-                COALESCE(${lossesTable.publicCostTotalOverride}, 0) +
-                COALESCE(${lossesTable.privateCostTotalOverride}, 0)
-            ), 0)`,
+            value: calculateLosses(lossesTable),
         })
         .from(disasterRecordsTable)
-        .leftJoin(
-            disasterEventTable,
-            eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-        )
-        .leftJoin(
-            hazardEventTable,
-            eq(disasterEventTable.hazardEventId, hazardEventTable.id)
-        )
-        .leftJoin(
-            hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
-        )
-        .leftJoin(
-            hipClusterTable,
-            eq(hipHazardTable.clusterId, hipClusterTable.id)
-        )
-        .leftJoin(
-            hipClassTable,
-            eq(hipClusterTable.classId, hipClassTable.id)
-        )
-        .leftJoin(
-            lossesTable,
-            eq(lossesTable.recordId, disasterRecordsTable.id)
-        )
+        .leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+        .leftJoin(hazardEventTable, eq(disasterEventTable.hazardEventId, hazardEventTable.id))
+        .leftJoin(hipHazardTable, eq(hazardEventTable.hazardId, hipHazardTable.id))
+        .leftJoin(hipClusterTable, eq(hipHazardTable.clusterId, hipClusterTable.id))
+        .leftJoin(hipClassTable, eq(hipClusterTable.classId, hipClassTable.id))
+        .leftJoin(lossesTable, eq(lossesTable.recordId, disasterRecordsTable.id))
         .where(and(...baseConditions))
         .groupBy(hipClassTable.id, hipClassTable.nameEn)
-        .orderBy(desc(sql`COALESCE(SUM(
-            COALESCE(${lossesTable.publicCostTotalOverride}, 0) +
-            COALESCE(${lossesTable.privateCostTotalOverride}, 0)
-        ), 0)`))
+        .orderBy(desc(calculateLosses(lossesTable)))
         .limit(10);
 
-    // Calculate percentages
+    // Calculate percentages with metadata
     const calculatePercentages = (data: { hazardId: number | null; hazardName: string | null; value: unknown }[]): HazardDataPoint[] => {
         const total = data.reduce((sum, item) => sum + Number(item.value), 0);
         return data.map(item => ({
@@ -230,9 +158,12 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         }));
     };
 
+    const eventsCountWithPercentage = calculatePercentages(eventsCount);
+
     return {
         eventsCount: eventsCountWithPercentage,
         damages: calculatePercentages(damages),
-        losses: calculatePercentages(losses)
+        losses: calculatePercentages(losses),
+        metadata
     };
 }
