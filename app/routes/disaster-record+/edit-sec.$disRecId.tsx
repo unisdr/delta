@@ -67,6 +67,7 @@ type PropsLoader = {
 	sectorDisplayName: string;
 	record: any;
 	disRecId: string;
+	formAction?: string;
 };
 
 type PropsForm = { 
@@ -109,8 +110,10 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const queryParams = parsedUrl.searchParams;
 	const xId = queryParams.get('id') || ''; 
 	let record:any = {};
+	let formAction = 'new';
 	if (xId) {
 		record = await disRecSectorsById(xId);
+		formAction = 'edit';
 	}
 	if ( record ) {
 		sectorDisplayName = await contentPickerConfigSector.selectedDisplay(dr, record.sectorId);
@@ -123,6 +126,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		record:record, 
 		sectorDisplayName:sectorDisplayName,
 		disRecId: params.disRecId, 
+		formAction: formAction,
 	};
 });
 
@@ -199,6 +203,8 @@ export default function Screen() {
 
 	const locationUrlPath = useLocation();
 
+	const formAction = loaderData?.formAction || 'new';
+
 	//#Sector: Start
 	const [showForm, setShowForm] = useState(false);
 	useEffect(() => {
@@ -246,6 +252,7 @@ export default function Screen() {
 
 									setShowForm(true);
 								}}
+								disabledOnEdit={formAction === 'edit'}
 							 />
 							</div>
 						</label>
