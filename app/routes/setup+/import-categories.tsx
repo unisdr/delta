@@ -1,5 +1,4 @@
 import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
-import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
 import {parseCSV} from "~/util/csv"
 import fs from 'fs/promises';
 
@@ -24,11 +23,7 @@ import {
 import { 
   useLoaderData, 
   Form, 
-  redirect,
-  useSubmit, 
-  useNavigation,
   useActionData,
-  useNavigate
 } from "@remix-run/react";
 
 
@@ -45,7 +40,7 @@ type propsLoaderTypedResponse = {
   content?: string;
 };
 
-export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
+export const loader = authLoaderWithPerm("EditData", async () => {
 
   return { 
     ok:'loader',
@@ -199,7 +194,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
     let item = all[1];
     let formRecord:AssetType = { 
       apiImportId: item[0],
-      sectorId: parseInt(item[2]),
+      //sectorId: parseInt(item[2]),
       sectorIds: item[3],
       isBuiltIn: Boolean(item[4]),
       name: item[5],
@@ -212,7 +207,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
       if (key !== 0) {
         formRecord = {
           apiImportId: item[0],
-          sectorId: parseInt(item[2]),
+          //sectorId: parseInt(item[2]),
           sectorIds: item[3],
           isBuiltIn: Boolean(item[4]),
           name: item[5],
