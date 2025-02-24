@@ -17,8 +17,6 @@ export const loader = createApiListLoader(
 				id: true,
 				recordId: true,
 				sectorId: true,
-				publicDamageAmount: true,
-				privateDamageAmount: true,
 			},
 			orderBy: [desc(damagesTable.id)],
 		})
