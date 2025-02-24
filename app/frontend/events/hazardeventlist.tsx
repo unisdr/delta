@@ -18,7 +18,7 @@ import {
 	route,
 } from "~/frontend/events/hazardeventform";
 
-import { hazardEventsLoader } from "~/backend.server/handlers/events/hazardevent"
+import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent"
 
 import { createFloatingTooltip } from "~/util/tooltip";
 
@@ -32,7 +32,7 @@ interface ListViewArgs {
 }
 
 export function ListView(args: ListViewArgs) {
-	const ld = useLoaderData<Awaited<ReturnType<typeof hazardEventsLoader>>>();
+	const ld = useLoaderData<Awaited<ReturnType<typeof hazardousEventsLoader>>>();
 
 	const { hip, filters } = ld
 	const { items } = ld.data
@@ -112,7 +112,7 @@ export function ListView(args: ListViewArgs) {
 								<tr key={index}>
 									<td>
 										<Link
-											to={`/hazard-event/${item.id}`}
+											to={`/hazardous-event/${item.id}`}
 											target={args.linksNewTab ? "_blank" : undefined}
 										>
 											{item.id.slice(0, 5)}
@@ -134,10 +134,10 @@ export function ListView(args: ListViewArgs) {
 										{formatDate(item.endDate)}
 									</td>
 									<td>
-										{item.hazardId}
+										{item.hipHazardId}
 									</td>
 									<td>
-										{item.hazard.nameEn}
+										{item.hipHazard?.nameEn || ""}
 									</td>
 									<td>
 										{item.description}

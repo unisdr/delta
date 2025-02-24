@@ -8,9 +8,9 @@ import {
 } from "~/frontend/events/hazardeventform";
 
 import {
-	jsonCreate,
+	jsonUpdate,
 } from "~/backend.server/handlers/form";
-import {hazardEventCreate} from "~/backend.server/models/event";
+import {hazardousEventUpdate} from "~/backend.server/models/event";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -19,12 +19,11 @@ export const loader = authLoaderApi(async () => {
 export const action = authActionApi(async (args) => {
 	const data = await args.request.json();
 
-	const saveRes = await jsonCreate({
+	const saveRes = await jsonUpdate({
 		data,
 		fieldsDef: fieldsDefApi,
-		create: hazardEventCreate,
+		update: hazardousEventUpdate
 	});
 
 	return Response.json(saveRes)
 });
-

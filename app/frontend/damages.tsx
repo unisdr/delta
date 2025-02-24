@@ -232,7 +232,7 @@ export function DamagesForm(props: DamagesFormProps) {
 							type="text"
 							inputMode="decimal"
 							pattern="[0-9]*\.?[0-9]*"
-							defaultValue={v ?? ""}
+							defaultValue={v as string ?? ""}
 						>
 						</input>
 					</>
@@ -425,7 +425,7 @@ export function DamagesForm(props: DamagesFormProps) {
 						{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 						{
 							id: "geographic_level", caption: "Geographic Level", type: "custom",
-							render: (data: any, handleFieldChange: any, formData: any) => {
+							render: (data: any, _handleFieldChange: any, formData: any) => {
 								return (
 									<>
 										<div className="input-group">
@@ -468,9 +468,9 @@ export function DamagesForm(props: DamagesFormProps) {
 							return [];
 						}
 						})()}
-					onChange={(items: any) => {
+					onChange={(_items: any) => {
 						try {
-							const parsedItems = Array.isArray(items) ? items : (items);
+							//const parsedItems = Array.isArray(items) ? items : (items);
 						} catch {
 							console.error("Failed to process items.");
 						}
@@ -638,9 +638,9 @@ export function DamagesForm(props: DamagesFormProps) {
 							return [];
 						}
 						})()}
-					onChange={(items: any) => {
+					onChange={(_items: any) => {
 						try {
-							const parsedItems = Array.isArray(items) ? items : (items);
+							//const parsedItems = Array.isArray(items) ? items : (items);
 							//console.log("Updated Items:", parsedItems);
 							// Save or process `parsedItems` here, e.g., updating state or making an API call
 						} catch {

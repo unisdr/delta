@@ -1,6 +1,6 @@
-import { hazardEventLabel } from "~/frontend/events/hazardeventform";
+import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
 import { eq, ilike, or, asc } from "drizzle-orm";
-import { disasterEventTable, hazardEventTable, hipHazardTable } from "~/drizzle/schema";
+import { disasterEventTable, hazardousEventTable, hipHazardTable } from "~/drizzle/schema";
 import { formatDate, formatDateDisplay } from "~/util/date";
 
 export const contentPickerConfig = {
@@ -16,13 +16,13 @@ export const contentPickerConfig = {
                 return `${displayName}`;
             }
         },
-        //{ column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event" },
-        { column_type: "db", column_field: "hazardEventName", column_title: "Hazardous Event", 
+        //{ column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event" },
+        { column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event", 
             render: (item: any) => { 
-                return hazardEventLabel({
-                    id: item.hazardEventId,
+                return hazardousEventLabel({
+                    id: item.hazardousEventId,
                     description: "", // Assuming there's a description field
-                    hazard: { nameEn: item.hazardEventName }
+                    hazard: { nameEn: item.hazardousEventName }
                 })
             }
         },
@@ -40,12 +40,12 @@ export const contentPickerConfig = {
             { alias: "id", column: disasterEventTable.id },
             { alias: "startDateUTC", column: disasterEventTable.startDate },
             { alias: "endDateUTC", column: disasterEventTable.endDate },
-            { alias: "hazardEventId", column: hazardEventTable.id },
-            { alias: "hazardEventName", column: hipHazardTable.nameEn }
+            { alias: "hazardousEventId", column: hazardousEventTable.id },
+            { alias: "hazardousEventName", column: hipHazardTable.nameEn }
         ],
         joins: [ // Define joins
-            { type: "inner", table: hazardEventTable, condition: eq(disasterEventTable.hazardEventId, hazardEventTable.id) },
-            { type: "inner", table: hipHazardTable, condition: eq(hazardEventTable.hazardId, hipHazardTable.id) }
+            { type: "inner", table: hazardousEventTable, condition: eq(disasterEventTable.hazardousEventId, hazardousEventTable.id) },
+            { type: "inner", table: hipHazardTable, condition: eq(hazardousEventTable.hipHazardId, hipHazardTable.id) }
         ],
         whereIlike: [ // Define search filters
             { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },

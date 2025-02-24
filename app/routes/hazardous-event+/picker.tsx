@@ -1,4 +1,4 @@
-import {hazardEventsLoader} from "~/backend.server/handlers/events/hazardevent"
+import {hazardousEventsLoader} from "~/backend.server/handlers/events/hazardevent"
 
 import {ListView} from "~/frontend/events/hazardeventlist"
 
@@ -12,7 +12,7 @@ import {Link} from "@remix-run/react";
 import {MainContainer} from "~/frontend/container"
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
-	return hazardEventsLoader({loaderArgs})
+	return hazardousEventsLoader({loaderArgs})
 })
 
 
@@ -22,7 +22,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				{item.event.ps.length > 0 ? (
 					(() => {
 						const parent = item.event.ps[0].p.he;
-						return hazardEventLabel(parent);
+						return hazardousEventLabel(parent);
 					})()
 				) : (
 					"-"
@@ -36,7 +36,7 @@ export default function Data() {
 			{
 				ListView({
 					isPublic: false,
-					basePath: `/hazard-event/picker`,
+					basePath: `/hazardous-event/picker`,
 					linksNewTab: true,
 					actions: (item) => (
 						<Link

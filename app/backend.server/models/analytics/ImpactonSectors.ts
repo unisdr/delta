@@ -5,20 +5,21 @@ import {
   lossesTable,
   disasterRecordsTable,
   disasterEventTable,
-  hazardEventTable,
+  hazardousEventTable,
   hipHazardTable,
   hipClusterTable,
   divisionTable,
 } from "~/drizzle/schema";
-import { and, eq, inArray, or, ilike, SQL } from "drizzle-orm";
+import { and, eq, inArray, ilike, SQL } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 
 // Types
+/*
 interface TimeSeriesData {
   year: number;
   count: number;
   amount: number;
-}
+}*/
 
 interface Filters {
   startDate?: string | null;
@@ -166,12 +167,12 @@ const getDisasterRecordsForSector = async (
       eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
     )
     .leftJoin(
-      hazardEventTable,
-      eq(disasterEventTable.hazardEventId, hazardEventTable.id)
+      hazardousEventTable,
+      eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
     )
     .leftJoin(
       hipHazardTable,
-      eq(hazardEventTable.hazardId, hipHazardTable.id)
+      eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
     )
     .leftJoin(
       hipClusterTable,

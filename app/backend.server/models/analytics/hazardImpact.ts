@@ -1,11 +1,11 @@
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     damagesTable,
     lossesTable,
     disasterRecordsTable,
+    hazardousEventTable,
     disasterEventTable,
-    hazardEventTable,
     hipClassTable,
     hipClusterTable,
     hipHazardTable,
@@ -54,10 +54,10 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
 
     // Add hazard type filters if provided
     if (hazardTypeId) {
-        baseConditions.push(eq(hipClassTable.id, parseInt(hazardTypeId)));
+        baseConditions.push(eq(hipClassTable.id, hazardTypeId));
     }
     if (hazardClusterId) {
-        baseConditions.push(eq(hipClusterTable.id, parseInt(hazardClusterId)));
+        baseConditions.push(eq(hipClusterTable.id, hazardClusterId));
     }
     if (specificHazardId) {
         baseConditions.push(eq(hipHazardTable.id, specificHazardId));
@@ -88,7 +88,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
     // Query for disaster events count by hazard type
     const eventsCount = await dr
         .select({
-            hazardId: sql<number>`CAST(${hipClassTable.id} AS INTEGER)`, // Ensure non-null integer
+            hazardId: sql<string>`${hipClassTable.id}`, // Ensure non-null integer
             hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`, // Ensure non-null string
             value: sql<number>`COUNT(${disasterRecordsTable.id})`,
         })
@@ -98,12 +98,12 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
             eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
         )
         .leftJoin(
-            hazardEventTable,
-            eq(disasterEventTable.hazardEventId, hazardEventTable.id)
+            hazardousEventTable,
+            eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
         .leftJoin(
             hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
+            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
         )
         .leftJoin(
             hipClusterTable,
@@ -123,7 +123,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
 
     // Add percentage to each item and ensure types match HazardDataPoint
     const eventsCountWithPercentage = eventsCount.map(item => ({
-        hazardId: Number(item.hazardId),
+        hazardId: item.hazardId,
         hazardName: String(item.hazardName),
         value: String(item.value),
         percentage: total > 0 ? (Number(item.value) / total) * 100 : 0
@@ -132,7 +132,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
     // Query for damages by hazard type with the same join structure
     const damages = await dr
         .select({
-            hazardId: sql<number>`CAST(${hipClassTable.id} AS INTEGER)`,
+            hazardId: sql<string>`${hipClassTable.id}`,
             hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`,
             value: sql`COALESCE(SUM(
                 COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
@@ -147,12 +147,12 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
             eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
         )
         .leftJoin(
-            hazardEventTable,
-            eq(disasterEventTable.hazardEventId, hazardEventTable.id)
+            hazardousEventTable,
+            eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
         .leftJoin(
             hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
+            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
         )
         .leftJoin(
             hipClusterTable,
@@ -179,7 +179,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
     // Query for losses by hazard type with the same join structure
     const losses = await dr
         .select({
-            hazardId: sql<number>`CAST(${hipClassTable.id} AS INTEGER)`,
+            hazardId: sql<string>`${hipClassTable.id}`,
             hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`,
             value: sql`COALESCE(SUM(
                 COALESCE(${lossesTable.publicCostTotalOverride}, 0) +
@@ -192,12 +192,12 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
             eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
         )
         .leftJoin(
-            hazardEventTable,
-            eq(disasterEventTable.hazardEventId, hazardEventTable.id)
+            hazardousEventTable,
+            eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
         .leftJoin(
             hipHazardTable,
-            eq(hazardEventTable.hazardId, hipHazardTable.id)
+            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
         )
         .leftJoin(
             hipClusterTable,
@@ -220,10 +220,10 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         .limit(10);
 
     // Calculate percentages
-    const calculatePercentages = (data: { hazardId: number | null; hazardName: string | null; value: unknown }[]): HazardDataPoint[] => {
+    const calculatePercentages = (data: { hazardId: string | null; hazardName: string | null; value: unknown }[]): HazardDataPoint[] => {
         const total = data.reduce((sum, item) => sum + Number(item.value), 0);
         return data.map(item => ({
-            hazardId: Number(item.hazardId || 0),
+            hazardId: item.hazardId || "",
             hazardName: String(item.hazardName || ''),
             value: String(item.value || 0),
             percentage: total > 0 ? (Number(item.value) / total) * 100 : 0

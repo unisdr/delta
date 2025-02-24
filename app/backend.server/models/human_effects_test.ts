@@ -10,14 +10,16 @@ import {
 	categoryPresenceGet,
 	categoryPresenceSet
 } from './human_effects'
-import {injuredTable, humanDsgTable, humanCategoryPresenceTable} from '~/drizzle/schema'
+import {injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable} from '~/drizzle/schema'
 
 import {Def} from "~/frontend/editabletable/defs"
 
 import {
 	sql
 } from "drizzle-orm"
+import {createTestDisasterRecord1, testDisasterRecord1Id} from './disaster_record_test'
 
+let rid1 = testDisasterRecord1Id
 
 let defs1: Def[] = [
 	{
@@ -78,24 +80,25 @@ let defsCustom: Def[] = [
 	}
 ]
 
-async function truncateDataInjuredTable() {
-	await dr.execute(sql`TRUNCATE ${humanDsgTable}, ${injuredTable} CASCADE`)
+async function resetTestData() {
+	await dr.execute(sql`TRUNCATE ${humanDsgTable}, ${injuredTable}, ${disasterRecordsTable}, ${disasterEventTable}, ${hazardousEventTable} CASCADE`)
+	await createTestDisasterRecord1(dr)
 }
 
 describe("human_effects - number data", async () => {
 	beforeEach(async () => {
-		await truncateDataInjuredTable()
+		await resetTestData()
 	})
 
 	it("create basic", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["m", 1], ["f", 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", 1], ["f", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -104,12 +107,12 @@ describe("human_effects - number data", async () => {
 
 	it("create - validation - no duplicates", async () => {
 		let defs = defs1
-		let res1 = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [
+		let res1 = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [
 			["m", 1],
 			["m", 2]
 		], false)
 		assert(res1.ok)
-		let res = await validate(dr, "Injured", "rid1", defs)
+		let res = await validate(dr, "Injured", rid1, defs)
 		assert(!res.ok)
 		assert.equal(res.errors?.length, 2)
 		let e0 = res.errors[0]
@@ -122,12 +125,12 @@ describe("human_effects - number data", async () => {
 	it("create custom", async () => {
 		let defs = defsCustom
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["g1", 1]], false)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["g1", 1]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["g1", 1]])
@@ -156,12 +159,12 @@ describe("human_effects - number data", async () => {
 			}
 		]
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["above", 1], ["below", 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["above", 1], ["below", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["above", 1], ["below", 2]])
@@ -170,7 +173,7 @@ describe("human_effects - number data", async () => {
 	it("type mismatch", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [[1, 1], [1, 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [[1, 1], [1, 2]], false)
 			console.log(res)
 			assert(!res.ok)
 			assert.equal(res.error!.code, "invalid_value")
@@ -179,12 +182,12 @@ describe("human_effects - number data", async () => {
 	it("non string data (for json)", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["m", 1], ["f", 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", 1], ["f", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -193,12 +196,12 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv)", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -207,12 +210,12 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv) - unset", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["", ""]], true)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["", ""]], true)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [[null, null]])
@@ -221,12 +224,12 @@ describe("human_effects - number data", async () => {
 	it("non string data (for json) - date", async () => {
 		let defs = defs2
 		{
-			let res = await create(dr, "Missing", "rid1", defs, ["t1", "t2"], [["2025-01-29", 1], ["2025-01-30", 2]], false)
+			let res = await create(dr, "Missing", rid1, defs, ["t1", "t2"], [["2025-01-29", 1], ["2025-01-30", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Missing", "rid1", defs)
+			let res = await get(dr, "Missing", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [
@@ -238,12 +241,12 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv) - date", async () => {
 		let defs = defs2
 		{
-			let res = await create(dr, "Missing", "rid1", defs, ["t1", "t2"], [["2025-01-29", "1"], ["2025-01-30", "2"]], true)
+			let res = await create(dr, "Missing", rid1, defs, ["t1", "t2"], [["2025-01-29", "1"], ["2025-01-30", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Missing", "rid1", defs)
+			let res = await get(dr, "Missing", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [
@@ -255,7 +258,7 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv) - date - wrong format", async () => {
 		let defs = defs2
 		{
-			let res = await create(dr, "Missing", "rid1", defs, ["t1", "t2"], [["xxxx", "1"]], true)
+			let res = await create(dr, "Missing", rid1, defs, ["t1", "t2"], [["xxxx", "1"]], true)
 			console.log(res)
 			assert(!res.ok)
 			assert.equal(res.error!.code, "invalid_value")
@@ -265,7 +268,7 @@ describe("human_effects - number data", async () => {
 		let defs = defs1
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
@@ -276,7 +279,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 4], ["m", 3]])
@@ -286,7 +289,7 @@ describe("human_effects - number data", async () => {
 		let defs = defsCustom
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["g1", 1]], false)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["g1", 1]], false)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
@@ -297,7 +300,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["g2", 2]])
@@ -308,7 +311,7 @@ describe("human_effects - number data", async () => {
 		let defs = defs1
 		let ids = []
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
 			assert(res.ok)
 			ids = res.ids
 		}
@@ -321,7 +324,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [[null, 4], ["m", 3]])
@@ -364,7 +367,7 @@ describe("human_effects - number data", async () => {
 		let defs = defsCustom2
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2", "t3"], [["g1", "g2", 1]], false)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2", "t3"], [["g1", "g2", 1]], false)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
@@ -375,7 +378,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["g2", "g2", 2]])
@@ -387,7 +390,7 @@ describe("human_effects - number data", async () => {
 		let defs = defs1
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", "rid1", defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
@@ -398,7 +401,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", "rid1", defs)
+			let res = await get(dr, "Injured", rid1, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [])
@@ -407,13 +410,14 @@ describe("human_effects - number data", async () => {
 })
 
 
-async function truncateCategoryPresenceData() {
-	await dr.execute(sql`TRUNCATE ${humanCategoryPresenceTable} CASCADE`)
+async function resetCategoryPresenceData() {
+	await dr.execute(sql`TRUNCATE ${humanCategoryPresenceTable}, ${disasterRecordsTable}, ${disasterEventTable}, ${hazardousEventTable} CASCADE`)
+	await createTestDisasterRecord1(dr)
 }
 
 describe("human_effects - category presence data", async () => {
 	beforeEach(async () => {
-		await truncateCategoryPresenceData()
+		await resetCategoryPresenceData()
 	})
 
 	let defs: Def[] = [
@@ -427,36 +431,36 @@ describe("human_effects - category presence data", async () => {
 	]
 
 	it("no data", async () => {
-		let res = await categoryPresenceGet("r1", "Injured", defs)
+		let res = await categoryPresenceGet(rid1, "Injured", defs)
 		assert.deepEqual(res, {})
 	})
 
 	it("insert", async () => {
-		await categoryPresenceSet("r1", "Injured", defs, {
+		await categoryPresenceSet(rid1, "Injured", defs, {
 			"injured": true
 		})
-		let res = await categoryPresenceGet("r1", "Injured", defs)
+		let res = await categoryPresenceGet(rid1, "Injured", defs)
 		assert.deepEqual(res, {"injured": true})
 	})
 
 	it("update - false", async () => {
-		await categoryPresenceSet("r1", "Injured", defs, {
+		await categoryPresenceSet(rid1, "Injured", defs, {
 			"injured": true
 		})
-		await categoryPresenceSet("r1", "Injured", defs, {
+		await categoryPresenceSet(rid1, "Injured", defs, {
 			"injured": false,
 		})
-		let res = await categoryPresenceGet("r1", "Injured", defs)
+		let res = await categoryPresenceGet(rid1, "Injured", defs)
 		assert.deepEqual(res, {"injured": false})
 	})
 
 	it("update - unset", async () => {
-		await categoryPresenceSet("r1", "Injured", defs, {
+		await categoryPresenceSet(rid1, "Injured", defs, {
 			"injured": true
 		})
-		await categoryPresenceSet("r1", "Injured", defs, {
+		await categoryPresenceSet(rid1, "Injured", defs, {
 		})
-		let res = await categoryPresenceGet("r1", "Injured", defs)
+		let res = await categoryPresenceGet(rid1, "Injured", defs)
 		assert.deepEqual(res, {})
 	})
 
@@ -472,21 +476,21 @@ describe("human_effects - category presence data", async () => {
 
 	it("insert - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet("r1", "Displaced", defs, {
+		await categoryPresenceSet(rid1, "Displaced", defs, {
 			"mediumShort": true
 		})
-		let res = await categoryPresenceGet("r1", "Displaced", defs)
+		let res = await categoryPresenceGet(rid1, "Displaced", defs)
 		assert.deepEqual(res, {"mediumShort": true})
 	})
 
 	it("update - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet("r1", "Displaced", defs, {
+		await categoryPresenceSet(rid1, "Displaced", defs, {
 			"mediumShort": true
 		})
-		await categoryPresenceSet("r1", "Displaced", defs, {
+		await categoryPresenceSet(rid1, "Displaced", defs, {
 		})
-		let res = await categoryPresenceGet("r1", "Displaced", defs)
+		let res = await categoryPresenceGet(rid1, "Displaced", defs)
 		assert.deepEqual(res, {})
 	})
 

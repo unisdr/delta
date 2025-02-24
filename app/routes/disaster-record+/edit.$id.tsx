@@ -67,7 +67,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
             item: null,
             recordsNonecoLosses: [],
             recordsDisRecSectors: [],
-            recordsHummanEffects: [],
+            recordsHumanEffects: [],
             treeData: treeData,
             cpDisplayName: null
         };
@@ -80,11 +80,11 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
 	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
-	const dbDisRecHummanEffects = await getHumanEffectRecordsById(params.id);
+	const dbDisRecHumanEffects = await getHumanEffectRecordsById(params.id);
 	
 	// console.log("recordsNonecoLosses", dbNonecoLosses);
 	// console.log("recordsNonecoLosses", dbDisRecSectors);
-	console.log("Humman Effects: ", dbDisRecHummanEffects);
+	//console.log("Human Effects: ", dbDisRecHumanEffects);
 	// console.log("Sectors: ", await sectorTreeDisplayText(1302020101));
 	// console.log("Sectors: ", dbDisRecSectors);
 
@@ -97,7 +97,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		item, 
 		recordsNonecoLosses: dbNonecoLosses, 
 		recordsDisRecSectors: dbDisRecSectors,
-		recordsHummanEffects: dbDisRecHummanEffects,
+		recordsHumanEffects: dbDisRecHumanEffects,
 		treeData: treeData,
 		cpDisplayName: cpDisplayName
 	};
@@ -119,7 +119,7 @@ export default function Screen() {
 		item: DisasterRecordsViewModel | null, 
 		recordsNonecoLosses: nonecoLossesProps, 
 		recordsDisRecSectors: any | null,
-		recordsHummanEffects: any | null,
+		recordsHumanEffects: any | null,
 		treeData: any[]
 		cpDisplayName: string
 	}>();
@@ -145,30 +145,30 @@ export default function Screen() {
 								</div>
 								<div className="mg-grid mg-grid__col-1">
 									<div className="dts-form-component">
-									{ld.recordsHummanEffects && (
+									{ld.recordsHumanEffects && (
 										<>
 										<ul>
-											{ ld.recordsHummanEffects.deaths && (
+											{ ld.recordsHumanEffects.deaths && (
 												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}>Deaths</Link></li>
 											)}
-											{ ld.recordsHummanEffects.injured && (
+											{ ld.recordsHumanEffects.injured && (
 												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}>Injured</Link></li>
 											)}
-											{ ld.recordsHummanEffects.missing && (
+											{ ld.recordsHumanEffects.missing && (
 												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}>Missing</Link></li>	
 											)}
-											{ (ld.recordsHummanEffects.affectedDirect || ld.recordsHummanEffects.affectedIndirect)  && (
+											{ (ld.recordsHumanEffects.affectedDirect || ld.recordsHumanEffects.affectedIndirect)  && (
 												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Affected</Link></li>
 											)}
-											{ (ld.recordsHummanEffects.displacedShort 
-												|| ld.recordsHummanEffects.displacedMediumShort
-												|| ld.recordsHummanEffects.displacedMediumLong
-												|| ld.recordsHummanEffects.displacedLong
-												|| ld.recordsHummanEffects.displacedPermanent
+											{ (ld.recordsHumanEffects.displacedShort 
+												|| ld.recordsHumanEffects.displacedMediumShort
+												|| ld.recordsHumanEffects.displacedMediumLong
+												|| ld.recordsHumanEffects.displacedLong
+												|| ld.recordsHumanEffects.displacedPermanent
 												)  && (
 													<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>Displaced</Link></li>
 											)}
-											{ (ld.recordsHummanEffects.displacedPreemptive || ld.recordsHummanEffects.displacedReactive)  && (
+											{ (ld.recordsHumanEffects.displacedPreemptive || ld.recordsHumanEffects.displacedReactive)  && (
 												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=DisplacementStocks`}>Displacement Stocks</Link></li>
 											)}
 										</ul>

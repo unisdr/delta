@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 /**
  * Fetch hazard clusters from the database.
  */
-export async function fetchHazardClusters(classId: number | null) {
+export async function fetchHazardClusters(classId: string | null) {
   const query = dr
     .select({
       id: hipClusterTable.id,

@@ -52,7 +52,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 				approvalStatus: true
 			},
 			with: {
-				hazardEvent: {
+				hazardousEvent: {
 					with: hazardBasicInfoJoin
 				},
 			},

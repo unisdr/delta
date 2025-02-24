@@ -5,7 +5,7 @@ export interface HazardImpactData {
 }
 
 export interface HazardDataPoint {
-    hazardId: number;
+    hazardId: string;
     hazardName: string;
     value: number | string;
     percentage: number;

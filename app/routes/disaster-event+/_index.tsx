@@ -8,8 +8,7 @@ import { ActionLinks } from "~/frontend/form";
 import { route } from "~/frontend/events/disastereventform";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
-
-import { hazardEventLink } from "~/frontend/events/hazardeventform";
+import {hazardousEventLink} from "~/frontend/events/hazardeventform"
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
@@ -49,7 +48,7 @@ export default function Data() {
 						></span>
 					</td>
 				)}
-				<td>{hazardEventLink(item.hazardEvent)}</td>
+				<td>{hazardousEventLink(item.hazardousEvent)}</td>
 				<td>{formatDate(item.startDate)}</td>
 				<td>{formatDate(item.endDate)}</td>
 
