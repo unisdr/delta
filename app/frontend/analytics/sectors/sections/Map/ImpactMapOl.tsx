@@ -136,6 +136,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
 
   // Calculate color ranges for the map
   const calculateColorRanges = (features: any[]): ColorRange[] => {
+    // Extract values from the correct path in the data structure
     const values = features
       .map(f => f.properties?.values?.[selectedMetric])
       .filter(v => typeof v === 'number' && v > 0);
@@ -162,7 +163,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
       { min: -1, max: -1, color: 'rgba(200, 200, 200, 0.9)', label: "No Data Available" }
     );
 
-    // Set legend ranges
+    // Update legend ranges state
     setLegendRanges(ranges.map(r => ({
       color: r.color,
       range: r.label
@@ -523,7 +524,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   }, [filters]);
 
   return (
-    <div className="map-container">
+    <div className="impact-map-container">
       <div
         ref={mapRef}
         className="map"
@@ -549,25 +550,22 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
         </div>
       )}
       {/* Map Legend */}
-      <div className="map-legend absolute bottom-4 right-4 bg-white p-2 rounded shadow-md">
-        <h4 className="font-bold mb-2">Legend</h4>
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-red-500 opacity-70 mr-2"></div>
-            <span>High Impact</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-red-500 opacity-30 mr-2"></div>
-            <span>Low Impact</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-white border border-gray-300 mr-2"></div>
-            <span>Zero Impact</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 bg-gray-500 opacity-50 mr-2"></div>
-            <span>No Data Available</span>
-          </div>
+      <div className="legend">
+        <h4>{selectedMetric === 'totalDamage' ? 'Total Damages' : 'Total Losses'}</h4>
+        <div className="legend-items">
+          {legendRanges.map((range, index) => (
+            <div key={index} className="legend-item">
+              <div
+                className="legend-color"
+                style={{
+                  backgroundColor: range.color,
+                  border: range.color === 'rgba(255, 255, 255, 0.9)' ? '1px solid #ccc' : 'none',
+                  height: '16px'
+                }}
+              />
+              <span className="legend-label">{range.range}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
