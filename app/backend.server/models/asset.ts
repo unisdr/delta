@@ -7,7 +7,7 @@ import {deleteByIdForStringId} from "./common";
 import {allMeasures} from "./measure";
 import {allSectors} from "./sector";
 import {measureLabel} from "~/frontend/measure";
-import { replace } from "lodash";
+import {replace} from "lodash";
 
 
 export interface AssetFields extends Omit<AssetInsert, "id"> {}
@@ -155,8 +155,14 @@ export async function assetsForSector(tx: Tx, sectorId: number) {
     )
     SELECT a.id
     FROM asset a
-    JOIN sector_rec s ON a.sector_id = s.id													 
+    WHERE EXISTS (
+      SELECT 1
+      FROM sector_rec s
+			WHERE s.id::text = ANY(string_to_array(a.sector_ids, ','))
+    )
 	`)
+	// if we switch to using array
+	// WHERE s.id = ANY(a.sector_ids)
 	let assetIds = res1.rows.map(r => r.id as string)
 	let res = await tx.query.assetTable.findMany({
 		where: inArray(assetTable.id, assetIds),
@@ -173,7 +179,7 @@ export async function upsertRecord(record: AssetInsert): Promise<void> {
 		.values(record)
 		.onConflictDoUpdate({
 			target: assetTable.apiImportId,
-			set: { 
+			set: {
 				id: record.id,
 				name: record.name,
 				sectorId: record.sectorId,

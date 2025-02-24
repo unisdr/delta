@@ -656,6 +656,10 @@ export const assetTable = pgTable("asset", {
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	sectorIds: text("sector_ids").notNull(),
+	//	sectorIds: ourBigint("sector_ids")
+	//	.array()
+	//	.notNull()
+	//  .$type<number[]>(),
 	// measureId: uuid("measure_id")
 	// 	.references((): AnyPgColumn => measureTable.id)
 	// 	.notNull(),
