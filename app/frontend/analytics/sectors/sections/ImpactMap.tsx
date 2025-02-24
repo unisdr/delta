@@ -39,7 +39,7 @@ const DEFAULT_FILTERS: FilterValues = {
   disasterEventId: null,
 };
 
-export default function ImpactMap({ filters }: ImpactMapProps) {
+export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [selectedMetric, setSelectedMetric] = useState<"totalDamage" | "totalLoss">("totalDamage");
   const [selectedTab, setSelectedTab] = useState<string>('tab01');
@@ -50,18 +50,50 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
     queryFn: async () => {
       const response = await fetch("/api/analytics/sectors");
       if (!response.ok) throw new Error("Failed to fetch sectors");
-      const data = await response.json();
-      return data;
+      return response.json() as Promise<{ sectors: Sector[] }>;
     }
   });
 
+  // Function to get sector with parent
+  const findSectorWithParent = (sectors: Sector[], targetId: string): { sector: Sector | undefined; parent: Sector | undefined } => {
+    for (const sector of sectors) {
+      // Check if this is the main sector
+      if (sector.id.toString() === targetId) {
+        return { sector, parent: undefined };
+      }
+      // Check subsectors
+      if (sector.subsectors) {
+        const subsector = sector.subsectors.find(sub => sub.id.toString() === targetId);
+        if (subsector) {
+          return { sector: subsector, parent: sector };
+        }
+      }
+    }
+    return { sector: undefined, parent: undefined };
+  };
+
   // Function to get section title based on selected sector
   const sectionTitle = () => {
-    if (!filters?.sectorId) return "Geographic Impact Analysis";
+    if (!sectorsResponse?.sectors) return "Impact by Geographic Level";
 
-    const sectors = sectorsResponse?.sectors || [];
-    const sector = sectors.find((s: Sector) => s.id === parseInt(filters.sectorId || '', 10));
-    return sector ? `Geographic Impact Analysis - ${sector.sectorname}` : "Geographic Impact Analysis";
+    if (filters?.sectorId) {
+      const { sector, parent } = findSectorWithParent(sectorsResponse.sectors, filters.sectorId);
+
+      if (filters?.subSectorId && sector) {
+        // Case: Subsector is selected
+        const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsResponse.sectors, filters.subSectorId);
+        if (subsector && mainSector) {
+          return `Impact in ${subsector.sectorname} (${mainSector.sectorname} Sector) by Geographic Level`;
+        }
+      }
+
+      // Case: Only sector is selected
+      if (sector) {
+        return `Impact in ${sector.sectorname} Sector by Geographic Level`;
+      }
+    }
+
+    return "Impact by Geographic Level";
   };
 
   // Handle tab selection
