@@ -337,27 +337,11 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     const subTextColor = isLightColor(backgroundColor) ? '#666666' : '#EEEEEE';
 
     tooltip.innerHTML = `
-      <div style="
-        padding: 8px 12px;
-        font-size: 14px;
-        min-width: 200px;
-        border: 1px solid rgba(0,0,0,0.1);
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      ">
-        <div style="
-          font-weight: 700;
-          font-size: 16px;
-          margin-bottom: 4px;
-          color: ${textColor};
-        ">${name}</div>
-        <div style="
-          color: ${subTextColor};
-          display: flex;
-          justify-content: space-between;
-        ">
-          <span>${metricLabel}:</span>
-          <span style="font-weight: 600; color: ${textColor};">${displayValue}</span>
+      <div class="tooltip-container">
+        <div class="tooltip-title" style="color: ${textColor};">${name}</div>
+        <div class="tooltip-metric" style="color: ${subTextColor};">
+          <span class="tooltip-metric-label">${metricLabel}:</span>
+          <span class="tooltip-metric-value" style="color: ${textColor};">${displayValue}</span>
         </div>
       </div>
     `;
@@ -528,20 +512,12 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
       <div
         ref={mapRef}
         className="map"
-        style={{
-          width: '100%',
-          height: '100%',
-          position: 'relative'
-        }}
       />
       <div
         ref={tooltipRef}
-        className="tooltip"
+        className={`tooltip ${hoveredFeatureColor && isLightColor(hoveredFeatureColor) ? 'dark-text' : 'light-text'}`}
         style={{
-          display: 'none',
-          position: 'absolute',
-          backgroundColor: hoveredFeatureColor || 'white',
-          color: hoveredFeatureColor && isLightColor(hoveredFeatureColor) ? '#333333' : '#FFFFFF',
+          backgroundColor: hoveredFeatureColor || 'white'
         }}
       />
       {loading && (
@@ -556,11 +532,9 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
           {legendRanges.map((range, index) => (
             <div key={index} className="legend-item">
               <div
-                className="legend-color"
+                className={`legend-color ${range.color === 'rgba(255, 255, 255, 0.9)' ? 'empty' : ''}`}
                 style={{
-                  backgroundColor: range.color,
-                  border: range.color === 'rgba(255, 255, 255, 0.9)' ? '1px solid #ccc' : 'none',
-                  height: '16px'
+                  backgroundColor: range.color
                 }}
               />
               <span className="legend-label">{range.range}</span>
