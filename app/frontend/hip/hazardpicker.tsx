@@ -3,9 +3,9 @@ import {Field} from "~/frontend/form"
 
 export interface HazardPickerProps {
 	defaultValue: string
-	name: string
 	hip: Hip
 	required?: boolean
+	name?: string
 }
 
 export interface Hip {
@@ -15,19 +15,19 @@ export interface Hip {
 }
 
 export interface Class {
-	id: number
+	id: string
 	name: string
 }
 
 export interface Cluster {
-	id: number
-	classId: number
+	id: string
+	classId: string
 	name: string
 }
 
 export interface Hazard {
 	id: string
-	clusterId: number
+	clusterId: string
 	name: string
 }
 
@@ -47,8 +47,8 @@ export function HazardPicker(props: HazardPickerProps) {
 	const clusters = sortByName(props.hip.clusters)
 	const hazards = sortByName(props.hip.hazards)
 
-	const [selectedClass, setSelectedClass] = useState<number | null>(null)
-	const [selectedCluster, setSelectedCluster] = useState<number | null>(null)
+	const [selectedClass, setSelectedClass] = useState<string | null>(null)
+	const [selectedCluster, setSelectedCluster] = useState<string | null>(null)
 	const [selectedHazard, setSelectedHazard] = useState<string | null>(null)
 
 	useEffect(() => {
@@ -119,6 +119,8 @@ export function HazardPicker(props: HazardPickerProps) {
 							setSearchTerm(term)
 							setSelectedClass(null)
 							setSelectedCluster(null)
+							setSelectedHazard(null)
+							/*
 							if (term) {
 								let matchedHazards = hazards.filter((h) =>
 									h.name.toLowerCase().includes(term)
@@ -130,7 +132,7 @@ export function HazardPicker(props: HazardPickerProps) {
 								}
 							} else {
 								setSelectedHazard(null)
-							}
+							}*/
 						}}
 						placeholder="Filter by hazard name..."
 					/>
@@ -142,9 +144,10 @@ export function HazardPicker(props: HazardPickerProps) {
 					<Field label={`Hazard Class (${filteredClasses.length})`}>
 						<select
 							required={props.required}
+							name="hipClassId"
 							value={selectedClass || ""}
 							onChange={(e) => {
-								setSelectedClass(Number(e.target.value))
+								setSelectedClass(e.target.value)
 								setSelectedCluster(null)
 								setSelectedHazard("")
 							}}
@@ -170,15 +173,15 @@ export function HazardPicker(props: HazardPickerProps) {
 				<div className="dts-form-component">
 					<Field label={`Hazard Cluster (${filteredClusters.length})`}>
 						<select
-							required={props.required}
+							name="hipClusterId"
 							value={selectedCluster || ""}
 							onChange={(e) => {
-								setSelectedCluster(Number(e.target.value))
+								setSelectedCluster(e.target.value)
 								setSelectedHazard("")
 							}}
 						//disabled={!filteredClusters.length}
 						>
-							{filteredClusters.length === 1 ? (
+							{false && filteredClusters.length === 1 ? (
 								<option key={filteredClusters[0].id} value={filteredClusters[0].id}>
 									{filteredClusters[0].name}
 								</option>
@@ -199,8 +202,7 @@ export function HazardPicker(props: HazardPickerProps) {
 				<div className="dts-form-component">
 					<Field label={`Specific Hazard (${filteredHazards.length})`}>
 						<select
-							required={props.required}
-							name={props.name}
+							name={props.name || "hipHazardId"}
 							value={selectedHazard || ""}
 							onChange={(e) => {
 								let hazardId = e.target.value

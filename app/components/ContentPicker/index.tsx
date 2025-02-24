@@ -583,13 +583,13 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                   <div className="cp-input-container">
                         {(selectedId === "") && (
                         <div className="cp-unselected" tabIndex={0}>
-                          <span>{defaultText !== "" ? defaultText : caption}</span>
+                          <span className="cp-item-name">{defaultText !== "" ? defaultText : caption}</span>
                         </div>
                         )}
 
                         {(selectedId !== "" && !multiSelect) && (
                             <div className="cp-selected">
-                                <span>{selectedName}</span>
+                                <span className="cp-item-name">{selectedName}</span>
                                 <span className="cp-remove-item" onClick={(e) => removeItem(e)}>×</span>
                             </div>
                         )}

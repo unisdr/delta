@@ -40,11 +40,11 @@ form > label {
 	border-color: #004f91;
 }
 
-.dts-status--approved {
+.dts-status--open {
 	background-color: #026666;
 }
 
-.dts-status--pending {
+.dts-status--completed {
 	background-color: #F4E496;
 }
 

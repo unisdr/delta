@@ -1,4 +1,4 @@
-import { hazardEventTable } from "~/drizzle/schema";
+import { hazardousEventTable } from "~/drizzle/schema";
 
 import {dr} from "~/db.server";
 
@@ -7,10 +7,10 @@ import {asc} from "drizzle-orm";
 import {csvExportLoader} from "~/backend.server/handlers/csv_export";
 
 export const loader = csvExportLoader({
-	table: hazardEventTable,
+	table: hazardousEventTable,
 	fetchData: () => {
-		return dr.query.hazardEventTable.findMany({
-			orderBy: [asc(hazardEventTable.id)],
+		return dr.query.hazardousEventTable.findMany({
+			orderBy: [asc(hazardousEventTable.id)],
 		});
 	},
 });

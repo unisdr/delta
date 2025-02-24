@@ -1,5 +1,5 @@
 import {
-	hazardEventTable,
+	hazardousEventTable,
 } from '~/drizzle/schema';
 
 import {
@@ -19,11 +19,11 @@ import {
 } from "@remix-run/node";
 import {approvalStatusIds} from '~/frontend/approval';
 
-interface hazardEventLoaderArgs {
+interface hazardousEventLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
 }
 
-export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
+export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	const {loaderArgs} = args;
 	const {request} = loaderArgs;
 
@@ -32,7 +32,7 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 
 	const filters: {hazardId: string; approvalStatus?: approvalStatusIds} = {
 		hazardId: url.searchParams.get("hazardId") || "",
-		approvalStatus: "approved",
+		approvalStatus: "completed",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs)
@@ -41,30 +41,30 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 		filters.approvalStatus = undefined
 	}
 
-	const count = await dr.$count(hazardEventTable)
+	const count = await dr.$count(hazardousEventTable)
 	const events = async (offsetLimit: OffsetLimit) => {
 
-		return await dr.query.hazardEventTable.findMany({
+		return await dr.query.hazardousEventTable.findMany({
 			...offsetLimit,
 			columns: {
 				id: true,
-				hazardId: true,
+				hipHazardId: true,
 				startDate: true,
 				endDate: true,
 				description: true,
 				approvalStatus: true,
 			},
-			orderBy: [desc(hazardEventTable.startDate)],
+			orderBy: [desc(hazardousEventTable.startDate)],
 			with: {
-				hazard: {
+				hipHazard: {
 					columns: {
 						nameEn: true,
 					},
 				}
 			},
 			where: and(
-				filters.hazardId ? eq(hazardEventTable.hazardId, filters.hazardId) : undefined,
-				filters.approvalStatus ? eq(hazardEventTable.approvalStatus, filters.approvalStatus) : undefined,
+				filters.hazardId ? eq(hazardousEventTable.hipHazardId, filters.hazardId) : undefined,
+				filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
 			),
 		})
 	}

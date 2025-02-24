@@ -536,7 +536,7 @@ export function Input(props: InputProps) {
 	}
 	switch (props.def.type) {
 		default:
-			throw `Unknown type ${props.def.type}`;
+			throw new Error(`Unknown type ${props.def.type} for field ${props.def.key}`)
 		case "enum": {
 			let vs = props.value as string;
 			return wrapInput(
@@ -744,7 +744,7 @@ export function FieldView(props: FieldViewProps) {
 	}
 	switch (props.def.type) {
 		default:
-			throw `Unknown type ${props.def.type}`;
+			throw new Error(`Unknown type ${props.def.type} for field ${props.def.key}`)
 		case "bool":
 			let b = props.value as boolean;
 			return (

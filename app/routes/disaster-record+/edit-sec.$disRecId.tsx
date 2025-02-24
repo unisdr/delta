@@ -66,6 +66,7 @@ type PropsLoader = {
 	arrayCurrency: string[];
 	sectorDisplayName: string;
 	record: any;
+	disRecId: string;
 };
 
 type PropsForm = { 
@@ -113,10 +114,16 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	}
 	if ( record ) {
 		sectorDisplayName = await contentPickerConfigSector.selectedDisplay(dr, record.sectorId);
-		console.log( record );
+		// console.log( record );
 	}
 
-	return { ok:'loader', arrayCurrency: arrayCurrency, record:record, sectorDisplayName:sectorDisplayName };
+	return { 
+		ok:'loader', 
+		arrayCurrency: arrayCurrency, 
+		record:record, 
+		sectorDisplayName:sectorDisplayName,
+		disRecId: params.disRecId, 
+	};
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -214,6 +221,7 @@ export default function Screen() {
   return (
 	<MainContainer title="Disaster Records: Sectors">
 	  <>
+	  	<a data-discover="true" href={`/disaster-record/edit/${ loaderData.disRecId }`}>Back to disaster record</a>
 		<div className="dts-form__intro">
 			<h2 className="dts-heading-2">Sectors</h2>
 		</div>

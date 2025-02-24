@@ -492,7 +492,7 @@ export function DisruptionView(props: DisruptionViewProps) {
 								const fileOrUrl =
 								  attachment.file_option === "File" && attachment.file
 									? (
-									  <a href={`/disaster-record/file-viewer-disruptions/?name=${props.item.id}/${attachment.file.name.split("/").pop()}&loc=disruptions`} target="_blank" rel="noopener noreferrer">
+									  <a href={`/disaster-record/file-viewer/?name=${props.item.id}/${attachment.file.name.split("/").pop()}&loc=disruptions`} target="_blank" rel="noopener noreferrer">
 										{attachment.file.name.split("/").pop()}
 									  </a>
 									)

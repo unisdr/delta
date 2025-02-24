@@ -57,9 +57,9 @@ const approvalFields = {
 	// drizzle has broken postgres enum support
 	// using text column instead
 	// https://github.com/drizzle-team/drizzle-orm/issues/3485
-	approvalStatus: text({enum: ["pending", "approved", "rejected"]})
+	approvalStatus: text({enum: ["open", "completed"]})
 		.notNull()
-		.default("pending"),
+		.default("open"),
 };
 
 // need function wrapper to avoid unique relation drizzle error
@@ -67,6 +67,17 @@ function apiImportIdField() {
 	return {
 		apiImportId: text("api_import_id").unique(),
 	};
+}
+
+function hipRelationColumns() {
+	return {
+		hipHazardId: text("hip_hazard_id")
+			.references((): AnyPgColumn => hipHazardTable.id),
+		hipClusterId: text("hip_cluster_id")
+			.references((): AnyPgColumn => hipClusterTable.id),
+		hipClassId: text("hip_class_id")
+			.references((): AnyPgColumn => hipClassTable.id)
+	}
 }
 
 function unitsEnum(name: string) {
@@ -260,9 +271,9 @@ export type EventInsert = typeof eventTable.$inferInsert;
 
 export const eventRel = relations(eventTable, ({one, many}) => ({
 	// hazard event
-	he: one(hazardEventTable, {
+	he: one(hazardousEventTable, {
 		fields: [eventTable.id],
-		references: [hazardEventTable.id],
+		references: [hazardousEventTable.id],
 	}),
 	// disaster event
 	de: one(disasterEventTable, {
@@ -303,16 +314,14 @@ export const eventRelationshipRel = relations(
 	})
 );
 
-export const hazardEventTable = pgTable("hazard_event", {
+export const hazardousEventTable = pgTable("hazardous_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
 	...apiImportIdField(),
+	...hipRelationColumns(),
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
-	hazardId: text("hazard_id")
-		.references((): AnyPgColumn => hipHazardTable.id)
-		.notNull(),
 	startDate: timestamp("start_date").notNull(),
 	endDate: timestamp("end_date").notNull(),
 	status: text("status").notNull().default("pending"),
@@ -327,22 +336,30 @@ export const hazardEventTable = pgTable("hazard_event", {
 	dataSource: zeroText("data_source"),
 });
 
-export const hazardEventTableConstraits = {
-	apiImportId: "hazard_event_apiImportId_unique",
-	hazardId: "hazard_event_hazard_id_hip_hazard_id_fk",
+export const hazardousEventTableConstraits = {
+	apiImportId: "hazardous_event_apiImportId_unique",
+	hipHazardId: "hazardous_event_hip_hazard_id_hip_hazard_id_fk",
 };
 
-export type HazardEvent = typeof hazardEventTable.$inferSelect;
-export type HazardEventInsert = typeof hazardEventTable.$inferInsert;
+export type HazardousEvent = typeof hazardousEventTable.$inferSelect;
+export type HazardousEventInsert = typeof hazardousEventTable.$inferInsert;
 
-export const hazardEventRel = relations(hazardEventTable, ({one}) => ({
+export const hazardousEventRel = relations(hazardousEventTable, ({one}) => ({
 	event: one(eventTable, {
-		fields: [hazardEventTable.id],
+		fields: [hazardousEventTable.id],
 		references: [eventTable.id],
 	}),
-	hazard: one(hipHazardTable, {
-		fields: [hazardEventTable.hazardId],
+	hipHazard: one(hipHazardTable, {
+		fields: [hazardousEventTable.hipHazardId],
 		references: [hipHazardTable.id],
+	}),
+	hipCluster: one(hipClusterTable, {
+		fields: [hazardousEventTable.hipClusterId],
+		references: [hipClusterTable.id],
+	}),
+	hipClass: one(hipClassTable, {
+		fields: [hazardousEventTable.hipClassId],
+		references: [hipClassTable.id],
 	}),
 }));
 
@@ -353,8 +370,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
-	hazardEventId: uuid("hazard_event_id")
-		.references((): AnyPgColumn => hazardEventTable.id)
+	hazardousEventId: uuid("hazardous_event_id")
+		.references((): AnyPgColumn => hazardousEventTable.id)
 		.notNull(),
 	// data fields below not used in queries directly
 	// only on form screens
@@ -401,7 +418,7 @@ export type DisasterEvent = typeof disasterEventTable.$inferSelect;
 export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
 
 export const disasterEventTableConstraits = {
-	hazardEventId: "disaster_event_hazard_event_id_hazard_event_id_fk",
+	hazardousEventId: "disaster_event_hazardous_event_id_hazardous_event_id_fk",
 };
 
 export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
@@ -409,16 +426,18 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 		fields: [disasterEventTable.id],
 		references: [eventTable.id],
 	}),
-	hazardEvent: one(hazardEventTable, {
-		fields: [disasterEventTable.hazardEventId],
-		references: [hazardEventTable.id],
+	hazardousEvent: one(hazardousEventTable, {
+		fields: [disasterEventTable.hazardousEventId],
+		references: [hazardousEventTable.id],
 	}),
 }));
 
 // Common disaggregation data (dsg) for human effects on disaster records
 export const humanDsgTable = pgTable("human_dsg", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	recordId: text("record_id").notNull(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
 	sex: text("sex", {enum: ["m", "f"]}),
 	age: text("age", {enum: ["0-20", "21-40", "41-60", "60-81", ">80"]}),
 	disability: text("disability", {
@@ -430,6 +449,7 @@ export const humanDsgTable = pgTable("human_dsg", {
 	}),
 	custom: jsonb("custom").$type<Record<string, any>>(),
 });
+
 export type HumanDsg = typeof humanDsgTable.$inferSelect;
 export type HumanDsgInsert = typeof humanDsgTable.$inferInsert;
 
@@ -442,7 +462,9 @@ export type HumanDsgConfigInsert = typeof humanDsgConfigTable.$inferInsert;
 
 export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	recordId: text("record_id").notNull(),
+	recordId: uuid("record_id")
+		.references((): AnyPgColumn => disasterRecordsTable.id)
+		.notNull(),
 	deaths: boolean("deaths"),
 	injured: boolean("injured"),
 	missing: boolean("missing"),
@@ -611,7 +633,7 @@ export const damagesTable = pgTable("damages", {
 	// replacement when publicDamage=partial
 	privateReplacementCostUnit: ourMoney("private_replacement_cost_unit"),
 	privateReplacementCostUnitCurrency: text("private_replacement_cost_unit_currency"),
-//	privateReplacementUnit: unitsEnum("private_replacement_unit"),
+	//	privateReplacementUnit: unitsEnum("private_replacement_unit"),
 	privateReplacementUnits: ourBigint("private_replacement_units"),
 	privateReplacementCostTotalOverride: ourMoney("private_replacement_cost_total_override"),
 	privateRecoveryCostUnit: ourMoney("private_recovery_cost_unit"),
@@ -671,24 +693,25 @@ export const assetTable = pgTable("asset", {
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	sectorIds: text("sector_ids").notNull(),
-	measureId: uuid("measure_id")
-		.references((): AnyPgColumn => measureTable.id)
-		.notNull(),
+	// measureId: uuid("measure_id")
+	// 	.references((): AnyPgColumn => measureTable.id)
+	// 	.notNull(),
 	isBuiltIn: boolean("is_built_in").notNull(),
 	name: text("name").notNull(),
+	category: text("category"),
 	nationalId: text("national_id"),
 	notes: text("notes"),
 });
 
 export const assetRel = relations(assetTable, ({one}) => ({
-	measure: one(measureTable, {
-		fields: [assetTable.measureId],
-		references: [measureTable.id],
-	}),
+	// measure: one(measureTable, {
+	// 	fields: [assetTable.measureId],
+	// 	references: [measureTable.id],
+	// }),
 	sector: one(sectorTable, {
 		fields: [assetTable.sectorId],
 		references: [sectorTable.id],
-	})
+	}),
 }));
 
 export type Asset = typeof assetTable.$inferSelect;
@@ -752,7 +775,7 @@ export type LossesInsert = typeof lossesTable.$inferInsert
 export const hipClassTable = pgTable(
 	"hip_class",
 	{
-		id: ourBigint("id").primaryKey(),
+		id: text("id").primaryKey(),
 		nameEn: zeroText("name_en"),
 	},
 	(table) => [check("name_en_not_empty", sql`${table.nameEn} <> ''`)]
@@ -764,8 +787,8 @@ export const hipClassTable = pgTable(
 export const hipClusterTable = pgTable(
 	"hip_cluster",
 	{
-		id: ourBigint("id").primaryKey(),
-		classId: ourBigint("class_id")
+		id: text("id").primaryKey(),
+		classId: text("class_id")
 			.references((): AnyPgColumn => hipClassTable.id)
 			.notNull(),
 		nameEn: zeroText("name_en"),
@@ -787,7 +810,8 @@ export const hipHazardTable = pgTable(
 	"hip_hazard",
 	{
 		id: text("id").primaryKey(),
-		clusterId: ourBigint("cluster_id")
+		code: zeroText("code"),
+		clusterId: text("cluster_id")
 			.references((): AnyPgColumn => hipClusterTable.id)
 			.notNull(),
 		nameEn: zeroText("name_en"),

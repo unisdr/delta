@@ -31,7 +31,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 
 
 	const filters: {approvalStatus?: approvalStatusIds} = {
-		approvalStatus: "approved",
+		approvalStatus: "completed",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs)
@@ -49,9 +49,10 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 				id: true,
 				startDate: true,
 				endDate: true,
+				approvalStatus: true
 			},
 			with: {
-				hazardEvent: {
+				hazardousEvent: {
 					with: hazardBasicInfoJoin
 				},
 			},

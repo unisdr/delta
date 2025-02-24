@@ -1,4 +1,4 @@
-import { hazardEventLabel } from "~/frontend/events/hazardeventform";
+import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
 import { eq, ilike, or, asc, sql } from "drizzle-orm";
 import { sectorTable } from "~/drizzle/schema";
 

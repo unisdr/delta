@@ -9,6 +9,13 @@ import {
 } from "~/backend.server/models/category";
 
 import {
+	upsertRecord as upsertRecordAsset,
+} from "~/backend.server/models/asset";
+
+import {AssetInsert as AssetType} from "~/drizzle/schema";
+
+
+import {
 	SectorType,
 	upsertRecord as upsertRecordSector,
   sectorById,
@@ -174,13 +181,62 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
       }
     }); 
   }
+
+  if (importType === 'all' || importType === 'assets') {
+    filePath = filePath + '/app/hips/assets.csv'; // Replace with your file path
+    try {
+      fileString = await fs.readFile(filePath, 'utf8');
+    } catch (error) {
+      console.error('Error reading file:', error);
+      throw new Response('File not found', { status: 404 });
+    }
+
+
+    let all = await parseCSV(fileString);
+    // console.log( all );
+    console.log( all[1] );
+
+    let item = all[1];
+    let formRecord:AssetType = { 
+      apiImportId: item[0],
+      sectorId: parseInt(item[2]),
+      sectorIds: item[3],
+      isBuiltIn: Boolean(item[4]),
+      name: item[5],
+      category: item[6],
+      nationalId: item[7],
+      notes: item[8],
+    };
+
+    for (const [key, item] of all.entries()) {
+      if (key !== 0) {
+        formRecord = {
+          apiImportId: item[0],
+          sectorId: parseInt(item[2]),
+          sectorIds: item[3],
+          isBuiltIn: Boolean(item[4]),
+          name: item[5],
+          category: item[6],
+          nationalId: item[7],
+          notes: item[8],
+        };
+
+        try {
+          upsertRecordAsset(formRecord).catch(console.error);
+        } catch (e) {
+          console.log(e);
+          throw e;
+        }
+      }
+    }
+  }
   
 
-  console.log( formData );
+  console.log( importType );
 
   return {
     ok: 'action', 
-    message: importType == 'all' ? 'Category & sector imported' : importType == 'categories' ? 'Categories imported' : 'Sectors imported',
+    message: importType == 'all' ? 'Categories, sectors & assets imported' : importType,
   }; 
 });
 
@@ -208,6 +264,7 @@ export default function Index() {
           <option value="all">Categories and sectors</option>
           <option value="categories">Categories</option>
           <option value="sectors">Sectors</option>
+          <option value="assets">Assets</option>
         </select>
         <button className="mg-button mg-button-primary" type="submit">Import</button>
       </Form>

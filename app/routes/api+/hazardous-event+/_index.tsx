@@ -10,7 +10,7 @@ import {
 
 export const loader = authLoaderApiDocs(async () => {
 	let docs = jsonApiDocs({
-		baseUrl: "hazard-event",
+		baseUrl: "hazardous-event",
 		fieldsDef: fieldsDefApi
 	})
 

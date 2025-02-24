@@ -3,7 +3,7 @@ import { dr } from "~/db.server";
 import { hipClassTable } from "~/drizzle/schema";
 
 export interface HazardType {
-  id: number;
+  id: string;
   name: string;
 }
 

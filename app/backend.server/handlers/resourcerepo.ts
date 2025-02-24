@@ -29,7 +29,7 @@ export async function resourceRepoLoader(args: resourceRepoLoaderArgs) {
 
 
 	const filters: {approvalStatus?: approvalStatusIds} = {
-		approvalStatus: "approved",
+		approvalStatus: "completed",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs)
