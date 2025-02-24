@@ -32,7 +32,7 @@ export async function hazardEventsLoader(args: hazardEventLoaderArgs) {
 
 	const filters: {hazardId: string; approvalStatus?: approvalStatusIds} = {
 		hazardId: url.searchParams.get("hazardId") || "",
-		approvalStatus: "approved",
+		approvalStatus: "completed",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs)
