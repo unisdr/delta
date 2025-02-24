@@ -730,14 +730,15 @@ async function aggregateDamagesData(recordIds: string[]): Promise<{ total: numbe
         const damagesWithDates = await dr
             .select({
                 value: calculateDamages(damagesTable),
-                startDate: disasterRecordsTable.startDate,
+                year: sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)`.mapWith(Number)
             })
             .from(damagesTable)
             .innerJoin(
                 disasterRecordsTable,
                 eq(damagesTable.recordId, disasterRecordsTable.id)
             )
-            .where(inArray(damagesTable.recordId, recordIds));
+            .where(inArray(damagesTable.recordId, recordIds))
+            .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)`);
 
         // Calculate the total damage
         const totalDamage = damagesWithDates.reduce((total, damage) => total + Number(damage.value || 0), 0);
@@ -745,14 +746,8 @@ async function aggregateDamagesData(recordIds: string[]): Promise<{ total: numbe
         // Create a map to store the yearly breakdown
         const byYear: Map<number, number> = new Map();
         for (const damage of damagesWithDates) {
-            // Extract year from start date (format: YYYY-MM-DD)
-            const year = damage.startDate ? parseInt(damage.startDate.substring(0, 4)) : new Date().getFullYear();
-            const value = Number(damage.value || 0);
-            if (byYear.has(year)) {
-                byYear.set(year, byYear.get(year)! + value);
-            } else {
-                byYear.set(year, value);
-            }
+            const year = damage.year || new Date().getFullYear();
+            byYear.set(year, Number(damage.value || 0));
         }
 
         return { total: totalDamage, byYear };
@@ -780,14 +775,15 @@ async function aggregateLossesData(recordIds: string[]): Promise<{ total: number
         const lossesWithDates = await dr
             .select({
                 value: calculateLosses(lossesTable),
-                startDate: disasterRecordsTable.startDate,
+                year: sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)`.mapWith(Number)
             })
             .from(lossesTable)
             .innerJoin(
                 disasterRecordsTable,
                 eq(lossesTable.recordId, disasterRecordsTable.id)
             )
-            .where(inArray(lossesTable.recordId, recordIds));
+            .where(inArray(lossesTable.recordId, recordIds))
+            .groupBy(sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)`);
 
         // Calculate the total losses
         const totalLoss = lossesWithDates.reduce((total, loss) => total + Number(loss.value || 0), 0);
@@ -795,14 +791,8 @@ async function aggregateLossesData(recordIds: string[]): Promise<{ total: number
         // Create a map to store the yearly breakdown
         const byYear: Map<number, number> = new Map();
         for (const loss of lossesWithDates) {
-            // Extract year from start date (format: YYYY-MM-DD)
-            const year = loss.startDate ? parseInt(loss.startDate.substring(0, 4)) : new Date().getFullYear();
-            const value = Number(loss.value || 0);
-            if (byYear.has(year)) {
-                byYear.set(year, byYear.get(year)! + value);
-            } else {
-                byYear.set(year, value);
-            }
+            const year = loss.year || new Date().getFullYear();
+            byYear.set(year, Number(loss.value || 0));
         }
 
         return { total: totalLoss, byYear };

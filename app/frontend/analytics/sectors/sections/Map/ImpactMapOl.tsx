@@ -136,9 +136,11 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
 
   // Calculate color ranges for the map
   const calculateColorRanges = (features: any[]): ColorRange[] => {
-    const values = features.map(f => f.properties[selectedMetric]);
-    const nonZeroValues = values.filter(v => v > 0);
-    const max = Math.max(...nonZeroValues, 0);
+    const values = features
+      .map(f => f.properties?.values?.[selectedMetric])
+      .filter(v => typeof v === 'number' && v > 0);
+
+    const max = Math.max(...values, 0);
 
     // Create ranges array starting with impact ranges
     let ranges: ColorRange[] = [];
@@ -270,18 +272,21 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   };
 
   const getFeatureStyle = (feature: any, isHovered = false) => {
-    const value = feature.get(selectedMetric);
-    const dataAvailability = feature.get('dataAvailability');
+    const values = feature.get('values');
+    const value = values?.[selectedMetric];
+    const dataAvailability = values?.dataAvailability;
     const ranges = calculateColorRanges(geoData.features);
 
     let color;
-    if (dataAvailability === 'zero') {
-      color = 'rgba(255, 255, 255, 0.9)'; // White for confirmed zero
-    } else if (dataAvailability === 'available' && value > 0) {
+    if (dataAvailability === 'available' && value > 0) {
       const range = ranges.find(r => value >= r.min && value <= r.max);
       color = range ? range.color : 'rgba(200, 200, 200, 0.9)';
-    } else {
+    } else if (dataAvailability === 'available' && value === 0) {
+      color = 'rgba(255, 255, 255, 0.9)'; // White for confirmed zero
+    } else if (dataAvailability === 'no_data') {
       color = 'rgba(200, 200, 200, 0.9)'; // Grey for no data
+    } else {
+      color = 'rgba(200, 200, 200, 0.9)'; // Default to grey
     }
 
     return new Style({
@@ -306,16 +311,17 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     if (!pixel) return;
 
     const name = feature.get('name')?.en || feature.get('name') || 'Unknown';
-    const value = feature.get(selectedMetric);
-    const dataAvailability = feature.get('dataAvailability');
+    const values = feature.get('values');
+    const value = values?.[selectedMetric];
+    const dataAvailability = values?.dataAvailability;
     const metricLabel = selectedMetric === 'totalDamage' ? 'Total Damages' : 'Total Losses';
 
     // Handle display value based on data availability
     let displayValue;
-    if (dataAvailability === 'zero') {
-      displayValue = "Zero Impact (Confirmed)";
-    } else if (dataAvailability === 'available' && value > 0) {
+    if (dataAvailability === 'available' && value > 0) {
       displayValue = formatCurrency(value, {}, 'thousands');
+    } else if (dataAvailability === 'available' && value === 0) {
+      displayValue = "Zero Impact (Confirmed)";
     } else {
       displayValue = "No Data Available";
     }
