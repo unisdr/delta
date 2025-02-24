@@ -43,16 +43,12 @@ export default function Data() {
 							<div className="dts-legend">
 								<span className="dts-body-label">Status legend</span>
 								<div className="dts-legend__item">
-									<span className="dts-status dts-status--draft" aria-labelledby="legend1"></span>
-									<span id="legend1">Draft</span>
+									<span className="dts-status dts-status--open" aria-labelledby="legend1"></span>
+									<span id="legend1">Open</span>
 								</div>
 								<div className="dts-legend__item">
-									<span className="dts-status dts-status--published" aria-labelledby="legend2"></span>
-									<span id="legend2">Published</span>
-								</div>
-								<div className="dts-legend__item">
-									<span className="dts-status dts-status--rejected" aria-labelledby="legend3"></span>
-									<span id="legend3">Rejected</span>
+									<span className="dts-status dts-status--completed" aria-labelledby="legend2"></span>
+									<span id="legend2">Completed</span>
 								</div>
 							</div>
 						</>)}

@@ -61,6 +61,7 @@ type PropsLoader = {
 	record: PropRecord;
 	categoryDisplayName?: string;
 	disRecId: string;
+	formAction?: string;
 };
 
 type PropsForm = { 
@@ -98,9 +99,11 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const queryParams = parsedUrl.searchParams;
 	const xId = queryParams.get('id') || ''; 
 	let record:any = {};
+	let formAction = 'new';
 	if (xId) {
 		record = await nonecoLossesById(xId);
 		console.log( xId );
+		formAction = 'edit';
 	}
 	if ( record ) {
 		categoryDisplayName = await contentPickerConfigCategory.selectedDisplay(dr, record.categortyId);
@@ -117,6 +120,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		record: record,
 		categoryDisplayName: categoryDisplayName,
 		disRecId: params.id,
+		formAction: formAction,
 	 };
 });
 
@@ -175,6 +179,8 @@ export default function Screen() {
 
 	const locationUrlPath = useLocation();
 
+	const formAction = loaderData?.formAction || 'new';
+
 	//#Category: Start
 	const [showForm, setShowForm] = useState(false);
 	useEffect(() => {
@@ -230,6 +236,7 @@ export default function Screen() {
 
 									setShowForm(true);
 								}}
+								disabledOnEdit={formAction === 'edit'}
 							/>
 							</div>
 						</label>

@@ -37,10 +37,11 @@ interface ContentPickerProps {
     onSelect?: ((item: any) => void) | undefined;
     multiSelect?: boolean;
     treeViewRootCaption?: string;
+    disabledOnEdit?: boolean;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect, multiSelect = false, treeViewRootCaption = "" }, ref) => {
+    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect, multiSelect = false, treeViewRootCaption = "", disabledOnEdit = false }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -590,15 +591,18 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                         {(selectedId !== "" && !multiSelect) && (
                             <div className="cp-selected">
                                 <span className="cp-item-name">{selectedName}</span>
-                                <span className="cp-remove-item" onClick={(e) => removeItem(e)}>×</span>
+                                {!disabledOnEdit && <span className="cp-remove-item" onClick={(e) => removeItem(e)}>×</span>}
                             </div>
                         )}
 
                         {multiSelect && renderMultiSelect(selectedName as any)}
+
+                      {!disabledOnEdit &&   
                       <div className="cp-search" onClick={openPicker}>
                         <svg aria-hidden="true" focusable="false" role="img"></svg>
                         <input type="hidden" id={id} name={id} defaultValue={selectedId} />
                       </div>
+                      }
                       <div className="cp-validation-popup">⚠️ Please fill out this field.</div>
                   </div>
               </div>
