@@ -742,6 +742,9 @@ export function FieldView(props: FieldViewProps) {
 	if (props.value === null) {
 		return <p>{props.def.label}: -</p>;
 	}
+	if (props.value === undefined) {
+		return <p>{props.def.label}: -</p>;
+	}
 	switch (props.def.type) {
 		default:
 			throw new Error(`Unknown type ${props.def.type} for field ${props.def.key}`)
@@ -762,6 +765,9 @@ export function FieldView(props: FieldViewProps) {
 		case "textarea":
 		case "text":
 		case "money":
+			if (typeof props.value !== "string"){
+				throw new Error(`invalid data for field ${props.def.key}, not a string, got: ${props.value}`)
+			}
 			let str = props.value as string;
 			if (!str.trim()) {
 				return <p>{props.def.label}: -</p>;
