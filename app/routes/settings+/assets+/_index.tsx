@@ -46,7 +46,7 @@ export default function Data() {
     plural: "Assets",
     resourceName: "Asset",
     baseRoute: route,
-    columns: ["ID", "Name", "Sector", "Actions"],
+    columns: ["ID", "Name", "Actions"],
     items: items,
     paginationData: pagination,
     csvExportLinks: true,
@@ -56,7 +56,6 @@ export default function Data() {
           <Link to={`${route}/${item.id}`}>{item.id}</Link>
         </td>
         <td>{item.name}</td>
-        <td>{item.sector.sectorname}</td>
         <td>
           <ActionLinks route={route} id={item.id} />
         </td>

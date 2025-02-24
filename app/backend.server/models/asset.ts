@@ -4,23 +4,20 @@ import {eq, sql, inArray} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
-import {allMeasures} from "./measure";
-import {allSectors} from "./sector";
-import {measureLabel} from "~/frontend/measure";
-import {replace} from "lodash";
 
 
 export interface AssetFields extends Omit<AssetInsert, "id"> {}
 
 export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
-	let sectors = await allSectors(dr)
-	let measures = await allMeasures(dr)
+	//let sectors = await allSectors(dr)
+	//let measures = await allMeasures(dr)
 	return [
 		{
 			key: "sectorIds",
 			label: "Sector",
 			type: "other",
 		},
+		/*
 		{
 			key: "sectorId",
 			label: "Sector",
@@ -31,7 +28,7 @@ export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 					label: s.sectorname
 				}
 			})
-		},
+		},*/
 		{key: "name", label: "Name", type: "text", required: true},
 		{key: "category", label: "Category", type: "text"},
 		{key: "nationalId", label: "National ID", type: "text"},
@@ -182,7 +179,6 @@ export async function upsertRecord(record: AssetInsert): Promise<void> {
 			set: {
 				id: record.id,
 				name: record.name,
-				sectorId: record.sectorId,
 				sectorIds: record.sectorIds,
 				isBuiltIn: record.isBuiltIn,
 				nationalId: record.nationalId,

@@ -652,9 +652,9 @@ export type UnitInsert = typeof unitTable.$inferInsert
 export const assetTable = pgTable("asset", {
 	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),
-	sectorId: ourBigint("sector_id")
-		.references((): AnyPgColumn => sectorTable.id)
-		.notNull(),
+	//sectorId: ourBigint("sector_id")
+	//	.references((): AnyPgColumn => sectorTable.id)
+	//	.notNull(),
 	sectorIds: text("sector_ids").notNull(),
 	//	sectorIds: ourBigint("sector_ids")
 	//	.array()
@@ -670,16 +670,18 @@ export const assetTable = pgTable("asset", {
 	notes: text("notes"),
 });
 
+/*
 export const assetRel = relations(assetTable, ({one}) => ({
 	// measure: one(measureTable, {
 	// 	fields: [assetTable.measureId],
 	// 	references: [measureTable.id],
 	// }),
-	sector: one(sectorTable, {
-		fields: [assetTable.sectorId],
-		references: [sectorTable.id],
-	}),
+//	sector: one(sectorTable, {
+	//	fields: [assetTable.sectorId],
+		//references: [sectorTable.id],
+	//}),
 }));
+*/
 
 export type Asset = typeof assetTable.$inferSelect;
 export type AssetInsert = typeof assetTable.$inferInsert;
