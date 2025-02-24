@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 
 import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
@@ -31,9 +33,13 @@ const queryClient = new QueryClient({
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
-  // Currently, this returns the loaderArgs as is.
-  // This will be replaced with actual data fetching logic for the Sectors Analysis page.
-  return { loaderArgs };
+  // Get currency from environment variable
+  const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
+  
+  return json({
+    currency,
+    loaderArgs
+  });
 });
 
 // Meta function for page SEO
@@ -46,6 +52,8 @@ export const meta: MetaFunction = ({ data }) => {
 
 // React component for Sectors Analysis page
 function SectorsAnalysisContent() {
+  const { currency } = useLoaderData<typeof loader>();
+  
   // State declarations
   const [isMounted, setIsMounted] = useState(false);
   const [filters, setFilters] = useState<{
@@ -119,12 +127,13 @@ function SectorsAnalysisContent() {
           {/* Dashboard sections */}
           {filters && (
             <div className="sectors-content" style={{ marginTop: "2rem", maxWidth: "100%", overflow: "hidden" }}>
-              {/* Impact on Sector Section */}
+              {/* Impact on Selected Sector */}
               {filters.sectorId && (
                 <div className="space-y-8">
                   <ImpactOnSector
                     sectorId={filters.sectorId}
                     filters={filters}
+                    currency={currency}
                   />
                 </div>
               )}

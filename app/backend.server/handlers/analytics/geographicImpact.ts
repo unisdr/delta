@@ -23,47 +23,37 @@ export async function handleGeographicImpactQuery(params: unknown) {
         // Validate input parameters
         const validParams = GeographicImpactQuerySchema.parse(params);
         
-        // Convert string parameters to numbers where needed
-        const processedParams = {
-            ...validParams,
-            level: validParams.level ? parseInt(validParams.level, 10) : 1,
-            parentId: validParams.parentId ? parseInt(validParams.parentId, 10) : undefined,
-            subSectorId: validParams.subSectorId
-        };
+        // Only pass the required parameters to getGeographicImpact
+        const result = await getGeographicImpact(
+            validParams.sectorId,
+            validParams.subSectorId ? parseInt(validParams.subSectorId, 10) : undefined
+        );
 
-        // Validate numeric parameters
-        if (processedParams.level < 1 || processedParams.level > 3) {
-            throw new Error("Invalid level: must be between 1 and 3");
-        }
-
-        if (processedParams.parentId && processedParams.parentId < 1) {
-            throw new Error("Invalid parentId: must be a positive number");
-        }
-        
-        // Get geographic impact data
-        const result = await getGeographicImpact(processedParams);
-        
         // Validate response data structure
-        if (!result || !result.features) {
+        if (!result || !result.success) {
             throw new Error("Invalid response data structure");
         }
 
-        // Check if we have any features
-        if (result.features.length === 0) {
-            console.warn(`No features found for sector ${processedParams.sectorId}`);
-        }
+        // Transform the result into GeoJSON
+        const features = result.divisions.map(division => {
+            const values = result.values[division.id.toString()] || { totalDamage: 0, totalLoss: 0 };
+            return {
+                type: "Feature",
+                geometry: division.geojson,
+                properties: {
+                    id: division.id,
+                    name: division.name,
+                    totalDamage: values.totalDamage,
+                    totalLoss: values.totalLoss
+                }
+            };
+        });
 
-        // Check if we have any non-zero values
-        const hasValues = result.features.some(feature => 
-            (feature.properties?.totalDamage || 0) > 0 || 
-            (feature.properties?.totalLoss || 0) > 0
-        );
+        return {
+            type: "FeatureCollection",
+            features
+        };
 
-        if (!hasValues) {
-            console.warn(`No damage or loss values found for sector ${processedParams.sectorId}`);
-        }
-
-        return result;
     } catch (error) {
         console.error("Error in handleGeographicImpactQuery:", error);
         throw error;

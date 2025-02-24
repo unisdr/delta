@@ -19,6 +19,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     const geographicLevelId = url.searchParams.get("geographicLevelId");
     const fromDate = url.searchParams.get("fromDate");
     const toDate = url.searchParams.get("toDate");
+    const disasterEventId = url.searchParams.get("disasterEventId");
+    const _disasterEventId = url.searchParams.get("_disasterEventId");
 
     // Validate date range if provided
     if ((fromDate && !toDate) || (!fromDate && toDate)) {
@@ -35,7 +37,9 @@ export const loader: LoaderFunction = async ({ request }) => {
         specificHazardId,
         geographicLevelId,
         fromDate,
-        toDate
+        toDate,
+        disasterEventId,
+        _disasterEventId
     };
 
     const result = await getHazardImpact(filters);

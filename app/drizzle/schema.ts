@@ -609,6 +609,9 @@ export const damagesTable = pgTable("damages", {
 	privateDisruptionUsersAffected: ourBigint("private_disruption_users_affected"),
 	privateDisruptionPeopleAffected: ourBigint("private_disruption_people_affected"),
 	privateDisruptionDescription: text("private_disruption_description"),
+
+	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 })
 
 export const damagesRel = relations(damagesTable, ({one}) => ({
@@ -652,24 +655,26 @@ export const assetTable = pgTable("asset", {
 	sectorId: ourBigint("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
-	measureId: uuid("measure_id")
-		.references((): AnyPgColumn => measureTable.id)
-		.notNull(),
+	sectorIds: text("sector_ids").notNull(),
+	// measureId: uuid("measure_id")
+	// 	.references((): AnyPgColumn => measureTable.id)
+	// 	.notNull(),
 	isBuiltIn: boolean("is_built_in").notNull(),
 	name: text("name").notNull(),
+	other: text("other"),
 	nationalId: text("national_id"),
 	notes: text("notes"),
 });
 
 export const assetRel = relations(assetTable, ({one}) => ({
-	measure: one(measureTable, {
-		fields: [assetTable.measureId],
-		references: [measureTable.id],
-	}),
+	// measure: one(measureTable, {
+	// 	fields: [assetTable.measureId],
+	// 	references: [measureTable.id],
+	// }),
 	sector: one(sectorTable, {
 		fields: [assetTable.sectorId],
 		references: [sectorTable.id],
-	})
+	}),
 }));
 
 export type Asset = typeof assetTable.$inferSelect;
@@ -716,6 +721,8 @@ export const lossesTable = pgTable("losses", {
 	privateCostUnitCurrency: text("private_cost_unit_currency"),
 	privateCostTotalOverride: ourMoney("private_cost_total_override"),
 	//privateTotalCostCurrency: text("private_total_cost_currency")
+	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 })
 
 export type Losses = typeof lossesTable.$inferSelect
@@ -833,8 +840,7 @@ export type disasterRecordsInsert = typeof disasterRecordsTable.$inferInsert;
 export const disasterRecordsTable = pgTable("disaster_records", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	disasterEventId: uuid("disaster_event_id")
-		.references((): AnyPgColumn => disasterEventTable.id)
-		.notNull(),
+		.references((): AnyPgColumn => disasterEventTable.id),
 	locationDesc: text("location_desc"),
 	startDate: text("start_date"),
 	endDate: text("end_date"),
@@ -994,10 +1000,14 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 			.notNull()
 			.references((): AnyPgColumn => disasterRecordsTable.id),
 		withDamage: boolean("with_damage"),
+		damageCost: ourMoney("damage_cost"),
+		damageCostCurrency: text("damage_cost_currency"),
 		damageRecoveryCost: ourMoney("damage_recovery_cost"),
 		damageRecoveryCostCurrency: text("damage_recovery_cost_currency"),
 		withDisruption: boolean("with_disruption"),
 		withLosses: boolean("with_losses"),
+		lossesCost: ourMoney("losses_cost"),
+		lossesCostCurrency: text("losses_cost_currency"),
 	},
 	(table) => {
 		return [

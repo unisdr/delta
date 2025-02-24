@@ -1,4 +1,4 @@
-import {asc, eq, sql, isNull} from 'drizzle-orm';
+import {asc, eq, sql, isNull, aliasedTable} from 'drizzle-orm';
 
 import {
 	sectorTable
@@ -68,6 +68,23 @@ export async function upsertRecord(record: SectorType): Promise<void> {
 export async function allSectors(tx: Tx) {
 	let res = await tx.query.sectorTable.findMany()
 	return res
+}
+
+export async function getSectorsByLevel(level: number): Promise<{id: number | never, name: string | unknown}[]> {
+	const sectorParentTable = aliasedTable(sectorTable, "sectorParentTable");
+
+	return await dr.select({
+			id: sectorTable.id,
+			name: sql`(
+				CASE WHEN ${sectorParentTable.sectorname} IS NULL THEN ${sectorTable.sectorname} 
+				ELSE  ${sectorTable.sectorname} || ' (' || ${sectorParentTable.sectorname} || ')'
+				END
+			)`.as('name'),
+		}).from(sectorTable)
+		.leftJoin(sectorParentTable, eq(sectorParentTable.id, sectorTable.parentId))
+		.where(eq(sectorTable.level, level))
+		.orderBy(sectorTable.sectorname)
+	.execute();
 }
 
 let agricultureSectorId = 11;

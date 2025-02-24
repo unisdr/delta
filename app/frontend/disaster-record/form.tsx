@@ -30,7 +30,7 @@ export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
-	{key: "disasterEventId", label: "Disaster Event", type: "other", required: true},
+	{key: "disasterEventId", label: "Disaster Event", type: "other"},
 	{key: "locationDesc", label: "Location Description", type: "text"},
 	{key: "startDate", label: "Start Date (Possible to record only year, year + month, or complete year, month and days)", type: "text", uiRow: {}},
 	{key: "endDate", label: "End Date (Possible to record only year, year + month, or complete year, month and days)", type: "text"},
@@ -38,7 +38,7 @@ export const fieldsDefCommon = [
 	{key: "primaryDataSource", label: "Primary data source", type: "text", required: true, uiRow: {}},
 	{key: "otherDataSource", label: "Other data sources", type: "text"},
 	{key: "fieldAssessDate", label: "Field assessment conducted", type: "date", uiRow: {}},
-	{key: "assessmentModes", label: "Assessments methodologies", type: "text"},
+	{key: "assessmentModes", label: "Assessments methodologies", type: "textarea"},
 	{key: "originatorRecorderInst", label: "Recording institution", type: "text", required: true, uiRow: {}},
 	{key: "validatedBy", label: "Validated by", type: "text", required: true},
 	{key: "checkedBy", label: "Checked by", type: "text", uiRow: {}},
@@ -111,7 +111,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				fieldsDef={fieldsDef}
 				override={{
 					disasterEventId: (
-						<Field key="disasterEventId" label="Disaster Event *">
+						<Field key="disasterEventId" label="Disaster Event">
 							<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""}/>
 						</Field>
 					),

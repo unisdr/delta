@@ -102,15 +102,15 @@ export default function ImpactMap({ filters }: ImpactMapProps) {
 
       try {
         const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
-        
+
         // Add sectorId first
         url.searchParams.append('sectorId', filters.sectorId);
-        
+
         // Add subSectorId if it exists
         if (filters.subSectorId) {
           url.searchParams.append('subSectorId', filters.subSectorId);
         }
-        
+
         // Add other filters
         Object.entries(filters).forEach(([key, value]) => {
           if (value && key !== 'sectorId' && key !== 'subSectorId') {

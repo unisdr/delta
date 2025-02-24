@@ -23,11 +23,16 @@ import {
 import {
 	createAction
 } from "~/backend.server/handlers/form"
-import {getTableName} from "drizzle-orm"
+import {getTableName,eq} from "drizzle-orm"
 import {lossesTable} from "~/drizzle/schema"
 import {authLoaderWithPerm} from "~/util/auth"
 import {useLoaderData} from "@remix-run/react"
 import {sectorIsAgriculture} from "~/backend.server/models/sector"
+
+import { buildTree } from "~/components/TreeView";
+import { divisionTable } from "~/drizzle/schema";
+
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
 interface LoaderRes {
 	item: LossesViewModel | null
@@ -35,6 +40,7 @@ interface LoaderRes {
 	recordId: string
 	sectorId: number
 	sectorIsAgriculture?: boolean
+	treeData?: any[]
 }
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -64,11 +70,19 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!item) {
 		throw new Response("Not Found", {status: 404});
 	}
+
+	const idKey = "id";
+    const parentKey = "parentId";
+    const nameKey = "name";
+    const rawData = await dr.select().from(divisionTable);
+    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
 	let res: LoaderRes = {
 		item: item,
 		fieldDef: fieldsDef,
 		recordId: item.recordId,
 		sectorId: item.sectorId,
+		treeData: treeData || []
 	}
 	return res
 });
@@ -79,7 +93,27 @@ export const action = createAction({
 	update: lossesUpdate,
 	getById: lossesByIdTx,
 	redirectTo: (id) => `${route}/${id}`,
-	tableName: getTableName(lossesTable)
+	tableName: getTableName(lossesTable),
+	postProcess: async (id, data) => {
+		//console.log(`Post-processing record: ${id}`);
+		//console.log(`data: `, data);
+	
+		const save_path = `/uploads/disaster-record/losses/${id}`;
+		const save_path_temp = `/uploads/temp`;
+	
+		// Ensure attachments is an array, even if it's undefined or empty
+		const attachmentsArray = Array.isArray(data?.attachments) ? data.attachments : [];
+	
+		// Process the attachments data
+		const processedAttachments = ContentRepeaterUploadFile.save(attachmentsArray, save_path_temp, save_path);
+	
+		// Update the `attachments` field in the database
+		await dr.update(lossesTable)
+			.set({
+				attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+			})
+			.where(eq(lossesTable.id, id));
+	}	
 })
 
 export default function Screen() {

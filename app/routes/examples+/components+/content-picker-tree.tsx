@@ -3,9 +3,12 @@ import { contentPickerConfig } from "./content-picker-config-tree";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { useLoaderData } from "@remix-run/react";
 
+const defaultIds = "12,120405,1103,110101";
+
 // Loader to Fetch & Transform Data
 export const loader = async () => {
-    const selectedDisplay = await contentPickerConfig.selectedDisplay(dr, "1302020201");
+    const selectedDisplay = await contentPickerConfig.selectedDisplay(dr, defaultIds);
+    //console.log('selectedDisplay:', selectedDisplay);
     return { selectedDisplay };
 };
 
@@ -29,7 +32,7 @@ export default function Page() {
                             <div className="form-field">
                                 <label>
                                     <div>
-                                    <ContentPicker {...contentPickerConfig} value="1302020201" displayName={selectedDisplay} />
+                                    <ContentPicker {...contentPickerConfig} value={defaultIds} displayName={selectedDisplay} />
                                     </div>
                                 </label>
                             </div>

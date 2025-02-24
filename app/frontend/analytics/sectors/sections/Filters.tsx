@@ -60,6 +60,7 @@ const Filters: React.FC<FiltersProps> = ({
     fromDate: "",
     toDate: "",
     disasterEventId: "",
+    _disasterEventId: "", // Store UUID separately
   });
 
   // Ensure the component is mounted before running client-side code
@@ -274,6 +275,11 @@ const Filters: React.FC<FiltersProps> = ({
         handleSpecificHazardSelection(value);
       }
 
+      // Immediately apply filters when geographic level changes
+      if (field === "geographicLevelId") {
+        onApplyFilters(updatedFilters);
+      }
+
       return updatedFilters;
     });
     console.log(`Filter updated: ${field} = ${value}`);
@@ -311,7 +317,7 @@ const Filters: React.FC<FiltersProps> = ({
       geographicLevelId: filters.geographicLevelId || null,
       fromDate: filters.fromDate || null,
       toDate: filters.toDate || null,
-      disasterEventId: filters.disasterEventId || null,
+      disasterEventId: filters._disasterEventId || null,
     });
   };
 
@@ -327,7 +333,8 @@ const Filters: React.FC<FiltersProps> = ({
       geographicLevelId: "",
       fromDate: "",
       toDate: "",
-      disasterEventId: ""
+      disasterEventId: "",
+      _disasterEventId: "",
     });
     setDisplayValues({
       hazardTypeId: "",
@@ -580,9 +587,14 @@ const Filters: React.FC<FiltersProps> = ({
                       <li
                         key={event.id}
                         onClick={() => {
+                          const input = document.getElementById('event-search') as HTMLInputElement;
+                          if (input) {
+                            input.value = event.name;
+                          }
                           setFilters((prev) => ({
                             ...prev,
                             disasterEventId: event.name,
+                            _disasterEventId: event.id, // Store UUID separately
                           }));
                           setShowResults(false);
                         }}

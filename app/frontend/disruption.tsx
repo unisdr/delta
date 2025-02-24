@@ -206,7 +206,7 @@ export function DisruptionForm(props: DisruptionFormProps) {
 							dnd_order={true}
 							save_path_temp="/uploads/temp"
 							file_viewer_temp_url="/disaster-record/file-temp-viewer"
-							file_viewer_url="/disaster-record/file-viewer"
+							file_viewer_url="/disaster-record/file-viewer?loc=disruptions"
 							api_upload_url="/disaster-record/file-pre-upload"
 							table_columns={[
 								{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
@@ -264,7 +264,7 @@ export function DisruptionForm(props: DisruptionFormProps) {
 							]}
 							dialog_fields={[
 								{ id: "title", caption: "Title", type: "input" },
-								{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
+								{ id: "tag", show: false, caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
 								{
 								id: "file_option",
 								caption: "Option",
@@ -492,7 +492,7 @@ export function DisruptionView(props: DisruptionViewProps) {
 								const fileOrUrl =
 								  attachment.file_option === "File" && attachment.file
 									? (
-									  <a href={`/disaster-record/file-viewer/?name=${props.item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
+									  <a href={`/disaster-record/file-viewer/?name=${props.item.id}/${attachment.file.name.split("/").pop()}&loc=disruptions`} target="_blank" rel="noopener noreferrer">
 										{attachment.file.name.split("/").pop()}
 									  </a>
 									)

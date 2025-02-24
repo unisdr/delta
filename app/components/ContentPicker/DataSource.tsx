@@ -30,11 +30,13 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
         query = query.where(or(...newWhereConditions)) as any;
     }
 
-    if (config.orderBy?.length) {
-        config.orderBy.forEach((order: any) => {
-            query = query.orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column)) as any;
+    if (config.orderByOptions?.custom) {
+        query = (query as any).orderBy(config.orderByOptions.custom);
+    } else if (config.orderByOptions?.default) {
+        config.orderByOptions.default.forEach((order: any) => {
+            query = (query as any).orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column));
         });
-    }
+    }    
 
     return query as any;
 }
@@ -160,7 +162,13 @@ async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
 
     try {
         const countConfig = { ...pickerConfig.dataSourceDrizzle };
-        delete countConfig.orderBy;
+        //delete countConfig.orderBy;
+        if (countConfig.orderBy) {
+            delete countConfig.orderBy;
+        }
+        if (countConfig.orderByOptions) {
+            delete countConfig.orderByOptions;
+        }
 
         let query = buildDrizzleQuery(
             countConfig,

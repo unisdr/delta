@@ -20,7 +20,7 @@ import {
 import {
 	createAction
 } from "~/backend.server/handlers/form"
-import {getTableName} from "drizzle-orm"
+import {getTableName,eq} from "drizzle-orm"
 import {damagesTable} from "~/drizzle/schema"
 import {authLoaderWithPerm} from "~/util/auth"
 import {useLoaderData} from "@remix-run/react"
@@ -28,8 +28,12 @@ import {assetsForSector} from "~/backend.server/models/asset"
 
 import {dr} from "~/db.server";
 
+import { buildTree } from "~/components/TreeView";
+import { divisionTable } from "~/drizzle/schema";
 
-async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number) {
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
+
+async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number, treeData?: any[], p0?: any[]) {
 	let assets = (await assetsForSector(dr, sectorId)).map(a => {
 		return {
 			id: a.id,
@@ -49,7 +53,8 @@ async function getResponseData(item: DamagesViewModel | null, recordId: string, 
 		item,
 		recordId,
 		sectorId,
-		fieldDef: await fieldsDef()
+		fieldDef: await fieldsDef(),
+		treeData,
 	}
 }
 
@@ -73,7 +78,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!item) {
 		throw new Response("Not Found", {status: 404})
 	}
-	return await getResponseData(item, item.recordId, item.sectorId)
+
+	const idKey = "id";
+    const parentKey = "parentId";
+    const nameKey = "name";
+    const rawData = await dr.select().from(divisionTable);
+    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	return await getResponseData(item, item.recordId, item.sectorId, treeData)
 });
 
 export const action = createAction({
@@ -82,7 +94,27 @@ export const action = createAction({
 	update: damagesUpdate,
 	getById: damagesByIdTx,
 	redirectTo: (id) => `${route}/${id}`,
-	tableName: getTableName(damagesTable)
+	tableName: getTableName(damagesTable),
+	postProcess: async (id, data) => {
+		//console.log(`Post-processing record: ${id}`);
+		//console.log(`data: `, data);
+	
+		const save_path = `/uploads/disaster-record/damages/${id}`;
+		const save_path_temp = `/uploads/temp`;
+	
+		// Ensure attachments is an array, even if it's undefined or empty
+		const attachmentsArray = Array.isArray(data?.attachments) ? data.attachments : [];
+	
+		// Process the attachments data
+		const processedAttachments = ContentRepeaterUploadFile.save(attachmentsArray, save_path_temp, save_path);
+	
+		// Update the `attachments` field in the database
+		await dr.update(damagesTable)
+			.set({
+				attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+			})
+			.where(eq(damagesTable.id, id));
+	}	
 })
 
 export default function Screen() {

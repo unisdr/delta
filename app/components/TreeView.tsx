@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import { get } from "~/backend.server/models/human_effects";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
@@ -153,6 +154,11 @@ const injectStyles = (appendCss?: string) => {
                 white-space: nowrap;
             }
 
+            .tree-btn {
+                color: #000;
+                text-decoration: none !important;
+            }
+
             ${appendCss}
         `
     ];
@@ -184,14 +190,33 @@ interface TreeViewProps {
     dialogMode?: boolean;
     search?: boolean;
     expanded?: boolean; 
-    onClick?: ((e: any, dialogRefCurrent: any) => void) | undefined;
+    onItemClick?: ((e: any, dialogRefCurrent: any) => void) | undefined;
+    defaultSelectedIds?: number[];
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onClick = undefined }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [] }, ref: any) => {
+    const expandedNodesRef = useRef<{ [key: number]: boolean }>({});
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isExpandDisabled, setIsExpandDisabled] = useState(false);
     const [isCollapseDisabled, setIsCollapseDisabled] = useState(true); // Default to true
+
+    //console.log('defaultSelectedIds:', defaultSelectedIds);
+
+    const [checkedItems, setCheckedItems] = useState<{ [key: number]: boolean }>(
+        Object.fromEntries(defaultSelectedIds.map((id) => [id, true]))
+    );
+    useEffect(() => {
+        setCheckedItems((prev) => {
+            const newCheckedItems = Object.fromEntries(defaultSelectedIds.map((id) => [id, true]));
+    
+            // Only update state if it's different from the current state
+            if (JSON.stringify(prev) !== JSON.stringify(newCheckedItems)) {
+                return newCheckedItems;
+            }
+            return prev; // Prevent unnecessary updates
+        });
+    }, [defaultSelectedIds]); // ✅ This avoids infinite re-renders
 
     const [selectedItems, setSelectedItems] = useState<{ [key: number]: boolean }>({});
 
@@ -206,12 +231,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     // Update button states based on `expandedNodes`
     useEffect(() => {
         const allNodes = treeData.flatMap((node) => getAllNodes(node)); // Get all nodes in the tree
-        const allExpanded = allNodes.every((node) => expandedNodes[node.id]);
-        const anyExpanded = allNodes.some((node) => expandedNodes[node.id]);
-
+        const allExpanded = allNodes.every((node) => expandedNodesRef.current[node.id]);
+        const anyExpanded = allNodes.some((node) => expandedNodesRef.current[node.id]);
+    
         setIsExpandDisabled(allExpanded);
         setIsCollapseDisabled(!anyExpanded);
-    }, [expandedNodes, treeData]);
+    }, [treeData]); // ✅ Removed `expandedNodes` to prevent extra re-renders
+    
 
     // Enable both buttons when searching
     useEffect(() => {
@@ -237,19 +263,18 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     const expandAll = () => {
         setIsExpandDisabled(true);
         setIsCollapseDisabled(false);
-
-        const newState: { [key: number]: boolean } = {};
-        treeData.forEach((node) => expandRecursive(node, newState));
-        setExpandedNodes(newState);
+    
+        treeData.forEach((node) => expandRecursive(node, expandedNodesRef.current));
+        setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers re-render only once
     };
-
-    // Collapse all nodes
+    
     const collapseAll = () => {
         setIsCollapseDisabled(true);
         setIsExpandDisabled(false);
-
-        setExpandedNodes({});
+        expandedNodesRef.current = {}; // ✅ Reset ref instead of triggering re-renders
+        setExpandedNodes({}); // ✅ Triggers only one re-render
     };
+    
 
     // Recursive expand function
     const expandRecursive = (node: any, state: { [key: number]: boolean }) => {
@@ -260,11 +285,28 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     // Toggle individual node expand/collapse
     const toggleExpand = (e: any, id: number) => {
         e.preventDefault();
-        setExpandedNodes((prev) => {
-            const newState = { ...prev, [id]: !prev[id] };
-            return newState;
-        });
+        expandedNodesRef.current[id] = !expandedNodesRef.current[id]; // ✅ Update ref directly
+        setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers re-render only when needed
     };
+    
+    useEffect(() => {
+        const preventFocusShift = (event: FocusEvent) => {
+          if (dialogRef.current && event.target !== dialogRef.current) {
+            event.preventDefault();
+            dialogRef.current.focus();
+          }
+        };
+      
+        if (dialogRef.current) {
+          dialogRef.current.addEventListener("focusin", preventFocusShift);
+        }
+      
+        return () => {
+          if (dialogRef.current) {
+            dialogRef.current.removeEventListener("focusin", preventFocusShift);
+          }
+        };
+      }, []);
 
     // Filter function with auto-expand logic
     const filterTree = (nodes: any[], query: string, expandedState: { [key: number]: boolean }): any[] => {
@@ -378,7 +420,15 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
     };
     
     const handleCheckboxChange = (e: any) => {
-        const checkbox = e.target;
+        e.preventDefault();
+
+
+        setCheckedItems((prev) => {
+            const newState = { ...prev, [e.target.closest("li").getAttribute("data-id")]: e.target.checked };
+            return newState;
+        });
+
+        /*const checkbox = e.target;
         const isChecked = checkbox.checked;
         const listItem = checkbox.closest("li"); // Get the <li> container
         const dataIds = listItem.getAttribute("data-ids")?.split(",") || [];
@@ -399,7 +449,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox: any) => {
                 childCheckbox.checked = false;
             });
-        }
+        }*/
     };
    
     const renderItemName = (node: any, parentIds: any) => {
@@ -424,6 +474,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                         className="tree-checkbox"
                                         type="checkbox"  
                                         onChange={(e) => handleCheckboxChange(e)}
+                                        checked={checkedItems[enrichedNode.id] || false}
                                     />
                                 )}
 
@@ -453,6 +504,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                         className="tree-checkbox"
                                         type="checkbox"  
                                         onChange={(e) => handleCheckboxChange(e)}
+                                        checked={checkedItems[enrichedNode.id] || false}
                                     />
                                 )}
 
@@ -508,7 +560,14 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             e.preventDefault();
         }
         if (dialogRef.current) {
+            
             dialogRef.current.showModal();
+
+            dialogRef.current.showModal();
+
+            setTimeout(() => {
+              dialogRef.current?.focus();
+            }, 10);
 
             let contHeight = [] as number[];
             contHeight[0] = (dialogRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
@@ -564,16 +623,46 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             e.preventDefault();
         }
 
-        if (typeof onClick === 'function') onClick(e, dialogRef?.current || null);
+        if (multiSelect) return
+
+        if (typeof onItemClick === 'function') onItemClick(e, dialogRef?.current || null);
 
         // if (e.target.tagName === "BUTTON") {
         //     toggleExpand(e, parseInt(e.currentTarget.getAttribute("data-id")));
         // }
     }
 
+    const findNamesByIds = (nodes: any[], checkedIds: any[]): { id: number, name: string }[] => {
+        let selectedItems: { id: number, name: string }[] = [];
+    
+        const traverse = (node: any) => {
+            if (checkedIds.includes(node.id)) {
+                selectedItems.push({ id: node.id, name: node.name }); // Store both ID and name
+            }
+            if (node.children?.length) {
+                node.children.forEach(traverse);
+            }
+        };
+    
+        nodes.forEach(traverse);
+        return selectedItems; // Return array of { id, name }
+    };     
+    
     useImperativeHandle(ref, () => ({
         treeViewOpen,
         treeViewClose: treeViewDiscard,
+        treeViewClear: treeViewClear,
+        getCheckedItemIds: () => Object.keys(checkedItems)
+        .filter((key) => checkedItems[Number(key)]) // Get only checked IDs
+        .map(Number), // Convert keys back to numbers
+        getCheckedItemNames: () => {
+            const checkedIds = Object.keys(checkedItems)
+                .filter((key) => checkedItems[Number(key)]) // Filter only checked items
+                .map(Number);
+        
+            return findNamesByIds(treeData, checkedIds); // Now returns [{ id, name }, ...]
+        },
+        clearCheckedItems: () => setCheckedItems({}),
     }));
 
     const filteredTree = searchTerm ? filterTree(treeData, searchTerm, {}) : treeData;
@@ -582,20 +671,12 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         return (
             <div>
                 <div className="tree-filters">
-                <button
-                        className="tree-btn"
-                        onClick={expandAll}
-                        disabled={isExpandDisabled}
-                    >
+                <a className="tree-btn" role="button" onClick={expandAll} style={{ pointerEvents: isExpandDisabled ? "none" : "auto", opacity: isExpandDisabled ? 0.5 : 1 }}>
                         Expand All
-                    </button>
-                    <button
-                        className="tree-btn"
-                        onClick={collapseAll}
-                        disabled={isCollapseDisabled}
-                    >
+                    </a>
+                    <a className="tree-btn" role="button" onClick={collapseAll} style={{ pointerEvents: isCollapseDisabled ? "none" : "auto", opacity: isCollapseDisabled ? 0.5 : 1 }}>
                         Collapse All
-                    </button>
+                    </a>
                     {search && <input
                         className="tree-search input-normal"
                         type="text"
@@ -618,14 +699,33 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         )
     }
 
-    // Auto-expand all nodes when `expanded` is true
-    useEffect(() => {
-        if (expanded) {
-            const newState: { [key: number]: boolean } = {};
-            treeData.forEach((node) => expandRecursive(node, newState));
-            setExpandedNodes(newState);
+    const findNodeById = (nodes: any[], id: number): any | null => {
+        for (const node of nodes) {
+            if (node.id === id) return node;
+            if (node.children?.length) {
+                const found = findNodeById(node.children, id);
+                if (found) return found;
+            }
         }
-    }, [expanded, treeData]);
+        return null;
+    };    
+
+// Prevent expandedNodes from resetting every checkbox update
+useEffect(() => {
+    Object.keys(checkedItems).forEach((id) => {
+        if (checkedItems[Number(id)]) {
+            let node = findNodeById(treeData, Number(id));
+            while (node?.parentId) {
+                expandedNodesRef.current[node.parentId] = true;
+                node = findNodeById(treeData, node.parentId);
+            }
+        }
+    });
+
+    setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers minimal re-renders
+}, [checkedItems, treeData]); // ✅ Removed `expanded` dependency to prevent unnecessary updates
+
+
 
     return (
         <>
@@ -714,14 +814,14 @@ export const buildTree = (
             const parent = map.get(node.parentId);
             if (parent) {
                 parent.children.push(node);
-                parent.has_children = true; // ✅ Mark parent as having children
+                parent.has_children = true; // Mark parent as having children
             }
         }
     });
 
     // Step 3: Recursively traverse and set correct paths & IDs
     const setPathsAndIds = (node: any, parentPath: string, parentIds: string) => {
-        node.path = parentPath ? `${parentPath} / ${node.name}` : node.name; // ✅ Spaces added around '/'
+        node.path = parentPath ? `${parentPath} / ${node.name}` : node.name; // Spaces added around '/'
         node.ids = parentIds ? `${parentIds},${node.id}` : `${node.id}`; // Comma-separated hierarchy of IDs
         node.children.forEach((child: any) => setPathsAndIds(child, node.path, node.ids));
     };
