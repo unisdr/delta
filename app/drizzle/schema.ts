@@ -661,7 +661,7 @@ export const assetTable = pgTable("asset", {
 	// 	.notNull(),
 	isBuiltIn: boolean("is_built_in").notNull(),
 	name: text("name").notNull(),
-	other: text("other"),
+	category: text("category"),
 	nationalId: text("national_id"),
 	notes: text("notes"),
 });

@@ -1,4 +1,4 @@
-apiImportId,id,sectorId,sectorIds,isBuiltIn,name,other,nationalId,notes
+apiImportId,id,sectorId,sectorIds,isBuiltIn,name,category,nationalId,notes
 10001,4a6bb74b-26da-4bec-bc62-758d67942b08,1101001,1101001,1,Wheat,,11,Temporary - annual crops - Agriculture
 10002,5bcc0e73-d1d6-4a8e-9e8b-ff9573ca6548,1101001,1101001,1,Maize,,12,Temporary - annual crops - Agriculture
 10003,,1101001,1101001,1,Rice,,13,Temporary - annual crops - Agriculture

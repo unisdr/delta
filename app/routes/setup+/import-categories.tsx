@@ -203,7 +203,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
       sectorIds: item[3],
       isBuiltIn: Boolean(item[4]),
       name: item[5],
-      other: item[6],
+      category: item[6],
       nationalId: item[7],
       notes: item[8],
     };
@@ -216,7 +216,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
           sectorIds: item[3],
           isBuiltIn: Boolean(item[4]),
           name: item[5],
-          other: item[6],
+          category: item[6],
           nationalId: item[7],
           notes: item[8],
         };

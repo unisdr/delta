@@ -60,6 +60,7 @@ type PropsLoader = {
 	categories: PropsItem[];
 	record: PropRecord;
 	categoryDisplayName?: string;
+	disRecId: string;
 };
 
 type PropsForm = { 
@@ -115,6 +116,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		ok:'loader',
 		record: record,
 		categoryDisplayName: categoryDisplayName,
+		disRecId: params.id,
 	 };
 });
 
@@ -199,8 +201,7 @@ export default function Screen() {
 	  <>
 
 
-
-
+		  <a data-discover="true" href={`/disaster-record/edit/${ loaderData.disRecId }`}>Back to disaster record</a>
 		<div className="dts-form__intro">
 			<h2 className="dts-heading-2">Effects on Non-economic Losses</h2>
 		</div>

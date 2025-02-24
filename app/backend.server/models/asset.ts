@@ -33,6 +33,7 @@ export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 			})
 		},
 		{key: "name", label: "Name", type: "text", required: true},
+		{key: "category", label: "Category", type: "text"},
 		{key: "nationalId", label: "National ID", type: "text"},
 		{key: "notes", label: "Notes", type: "textarea"},
 	]
@@ -180,7 +181,7 @@ export async function upsertRecord(record: AssetInsert): Promise<void> {
 				isBuiltIn: record.isBuiltIn,
 				nationalId: record.nationalId,
 				notes: record.notes,
-				other: record.other,
+				category: record.category,
 			},
 		});
 }
