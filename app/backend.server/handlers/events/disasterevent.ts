@@ -49,6 +49,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 				id: true,
 				startDate: true,
 				endDate: true,
+				approvalStatus: true
 			},
 			with: {
 				hazardEvent: {

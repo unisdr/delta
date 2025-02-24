@@ -80,13 +80,10 @@ export function ListView(args: ListViewArgs) {
 				</div><div className="dts-legend">
 						<span className="dts-body-label">Status legend</span>
 						<div className="dts-legend__item">
-							<span className="dts-status dts-status--draft"></span> Draft
+							<span className="dts-status dts-status--open"></span> Open
 						</div>
 						<div className="dts-legend__item">
-							<span className="dts-status dts-status--published"></span> Published
-						</div>
-						<div className="dts-legend__item">
-							<span className="dts-status dts-status--rejected"></span> Rejected
+							<span className="dts-status dts-status--completed"></span> Completed
 						</div>
 					</div></>
 			)}

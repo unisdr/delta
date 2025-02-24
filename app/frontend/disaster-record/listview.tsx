@@ -6,8 +6,6 @@ import {
 
 import {Pagination} from "~/frontend/pagination/view"
 
-import {formatDate} from "~/util/date"
-
 import {ActionLinks} from "~/frontend/form"
 
 import {
@@ -38,10 +36,10 @@ export function ListView(args: ListViewArgs) {
 						<thead>
 							<tr>
 								<th>ID</th>
-								<th>Disaster Event ID</th>
 								{ !args.isPublic && (
 									<th>Status</th>
 								)}
+								<th>Disaster Event ID</th>
 								{ !args.isPublic && (
 									<th>Actions</th>
 								)}
@@ -58,14 +56,14 @@ export function ListView(args: ListViewArgs) {
 											{item.id.slice(0, 8)}
 										</Link>
 									</td>
-									<td>
-										{item.disasterEventId}
-									</td>
 									{ !args.isPublic && (
 										<td className="dts-table__cell-centered">
 											<span className={`dts-status dts-status--${item.approvalStatus}`}></span>
 										</td>
 									)}
+									<td>
+										{item.disasterEventId}
+									</td>
 									<td>
 										{args.actions ? args.actions(item) : (args.isPublic ? null :
 											<ActionLinks route={route} id={item.id} />)
