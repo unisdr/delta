@@ -27,9 +27,7 @@ export function attach(opts: handleOverridesOpts) {
 		els.push(getEl(opts, part))
 	}
 	els.forEach(el => {
-		console.log("override", "input el", el)
 		el.addEventListener('input', () => {
-			console.log("input changed")
 			update(opts)
 		})
 	})
@@ -61,6 +59,9 @@ function update(opts: handleOverridesOpts) {
 	console.log("override check", opts.prefix, "checkbox", checkbox.checked)
 	if (!checkbox.checked) {
 		el.value = r
+		// trigger if this result is using as input for another override
+		// used in damages form
+		el.dispatchEvent(new Event('input', { bubbles: false }))
 		el.disabled = true
 	} else {
 		el.disabled = false

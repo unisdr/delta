@@ -82,6 +82,15 @@ export function DamagesForm(props: DamagesFormProps) {
 
 	// handle total overrides
 	useEffect(() => {
+		if (!formRef.current) return
+		formRef.current.addEventListener("submit", () => {
+			if (!formRef.current) return
+			for (let el of formRef.current.querySelectorAll("input[disabled]")) {
+				let input = el as HTMLInputElement
+				input.disabled = false
+			}
+		})
+
 		let totalDamageAmountOpts = {
 			formRef,
 			prefix: "",
