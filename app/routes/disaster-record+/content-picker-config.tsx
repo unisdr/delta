@@ -1,5 +1,5 @@
 import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
-import { eq, sql } from "drizzle-orm";
+import { eq, ilike, or, asc, sql } from "drizzle-orm";
 import { disasterEventTable, hazardousEventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
 import { formatDate, formatDateDisplay } from "~/util/date";
 
@@ -13,7 +13,7 @@ export const contentPickerConfig = {
     table_column_primary_key: "id",
     table_columns: [
         { column_type: "db", column_field: "display", column_title: "Event", is_primary_id: true, is_selected_field: true,
-            render: (_item: any, displayName: string) => {
+            render: (item: any, displayName: string) => {
                 return `${displayName}`;
             }
         },
@@ -52,7 +52,7 @@ export const contentPickerConfig = {
             { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },
             { column: disasterEventTable.glide, placeholder: "[safeSearchPattern]" },
             { column: disasterEventTable.nameGlobalOrRegional, placeholder: "[safeSearchPattern]" },
-           // { column: disasterEventTable.nameNational, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.nameNational, placeholder: "[safeSearchPattern]" },
             { column: hipHazardTable.nameEn, placeholder: "[safeSearchPattern]" }
         ],
         orderBy: [{ column: disasterEventTable.startDate, direction: "desc" }] // Sorting
