@@ -310,17 +310,23 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
+	status: text("status").notNull().default("pending"),
+	// otherId1: zeroText("otherId1"),
+	//duration: zeroText("duration"),
+	nationalSpecification: zeroText("national_specification"),
 	startDate: timestamp("start_date").notNull(),
 	endDate: timestamp("end_date").notNull(),
-	status: text("status").notNull().default("pending"),
-	// otherId1 is id in some other system TODO
-	otherId1: zeroText("otherId1"),
 	description: zeroText("description"),
+	warningIssuedSummary: zeroText("warning_issued_summary"),
+	warningIssuedBy: zeroText("warning_issued_by"),
+	warningIssuedDate: timestamp("warning_issued_date"),
+	warningIssuedCoverage: zeroText("warning_issued_coverage"),
+	warningIssuedContent: zeroText("warning_issued_content"),
 	chainsExplanation: zeroText("chains_explanation"),
-	duration: zeroText("duration"),
 	magnitude: zeroText("magniture"),
 	spatialFootprint: jsonb("spatial_footprint"),
 	recordOriginator: zeroText("record_originator"),
+	hazardousEventStatus: text("hazardous_event_status", {enum: ["forecasted", "ongoing", "passed"]}),
 	dataSource: zeroText("data_source"),
 });
 
@@ -361,43 +367,56 @@ export const disasterEventTable = pgTable("disaster_event", {
 	hazardousEventId: uuid("hazardous_event_id")
 		.references((): AnyPgColumn => hazardousEventTable.id)
 		.notNull(),
-	// data fields below not used in queries directly
-	// only on form screens
-	// should be easier to change if needed
 	nationalDisasterId: zeroText("national_disaster_id"),
-	// otherId1 is id in some other system TODO
 	otherId1: zeroText("other_id1"),
+	otherId2: zeroText("other_id2"),
+	otherId3: zeroText("other_id3"),
 	glide: zeroText("glide"),
 	nameGlobalOrRegional: zeroText("name_global_or_regional"),
-	nameNational: zeroText("name_national"),
 	startDate: timestamp("start_date"),
 	endDate: timestamp("end_date"),
 	startDateLocal: text("start_date_local"),
 	endDateLocal: text("end_date_local"),
 	durationDays: ourBigint("duration_days"),
-	affectedGeographicDivisions: zeroText("affected_geographic_divisions"),
-	affectedAdministrativeRegions: zeroText("affected_administrative_regions"),
-	disasterDeclaration: zeroBool("disaster_declaration"),
-	disasterDeclarationType: zeroBool("disaster_declaration_type"),
-	disasterDeclarationEffect: zeroBool("disaster_declaration_effect"),
+	disasterDeclaration: text("disaster_declaration", {enum: ["yes", "no", "unknown"]})
+		.notNull()
+		.default("unknown"),
+	disasterDeclarationTypeAndEffect: zeroText("disaster_declaration_type_and_effect"),
 	disasterDeclarationDate: timestamp("disaster_declaration_date"),
-	warningIssuedLevelsSeverity: zeroText("warning_issued_levels_severity"),
-	warningIssuedDate: timestamp("warning_issued_date"),
+	hadOfficialWarningOrWeatherAdvisory: zeroBool("had_official_warning_or_weather_advisory"),
+	officialWarningAffectedAreas: zeroText("official_warning_affected_areas"),
+	earlyAction: zeroText("early_action"),
+	earlyActionDate: timestamp("early_action_date"),
 	preliminaryAssessmentDate: timestamp("preliminary_assesment_date"),
+	rapidAssessmentDate: timestamp("rapid_assesment_date"),
 	responseOperations: zeroText("response_oprations"),
 	postDisasterAssementDate: timestamp("post_disaster_assessment_date"),
 	reAssessmentDate: timestamp("re_assessment_date"),
 	dataSource: zeroText("data_source"),
-	originatorRecorderOfInformation: zeroText(
-		"originator_recorder_of_information"
-	),
-	effectsTotalLocalCurrency: ourMoney("effects_total_local_currency"),
+	recordingInstitution: zeroText("recording_institution"),
 	effectsTotalUsd: ourMoney("effects_total_usd"),
-	subtotaldamageUsd: ourMoney("subtotal_damage_usd"),
-	subtotalLossesUsd: ourMoney("subtotal_losses_usd"),
-	responseCostTotalUsd: ourMoney("response_cost_total"),
-	humanitarianNeedsTotalUsd: ourMoney("humanitarian_needs_total"),
-	recoveryNeedsTotalUsd: ourMoney("recovery_needs_total"),
+	nonEconomicLosses: zeroText("non_economic_losses"),
+	damagesSubtotalLocalCurrency: ourMoney("damages_subtotal_local_currency"),
+	lossesSubtotalUSD: ourMoney("losses_subtotal_usd"),
+	responseOperationsDescription: zeroText("response_operations_description"),
+	responseOperationsCostsLocalCurrency: ourMoney("response_operations_costs_local_currency"),
+	responseCostTotalLocalCurrency: ourMoney("response_cost_total_local_currency"),
+	responseCostTotalUSD: ourMoney("response_cost_total_usd"),
+	humanitarianNeedsDescription: zeroText("humanitarian_needs_description"),
+	humanitarianNeedsLocalCurrency: ourMoney("humanitarian_needs_local_currency"),
+	humanitarianNeedsUSD: ourMoney("humanitarian_needs_usd"),
+	rehabilitationCostsLocalCurrency: ourMoney("rehabilitation_costs_local_currency"),
+	rehabilitationCostsUSD: ourMoney("rehabilitation_costs_usd"),
+
+	repairCostsLocalCurrency: ourMoney("repair_costs_local_currency"),
+	repairCostsUSD: ourMoney("repair_costs_usd"),
+
+	replacementCostsLocalCurrency: ourMoney("replacement_costs_local_currency"),
+	replacementCostsUSD: ourMoney("replacement_costs_usd"),
+
+	recoveryNeedsLocalCurrency: ourMoney("recovery_needs_local_currency"),
+	recoveryNeedsUSD: ourMoney("recovery_needs_usd"),
+
 	attachments: jsonb("attachments"),
 	spatialFootprint: jsonb("spatial_footprint"),
 });

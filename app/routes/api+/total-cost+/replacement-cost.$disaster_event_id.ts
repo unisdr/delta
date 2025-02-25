@@ -8,6 +8,7 @@ import {
 	disasterRecordsTable,
 } from "~/drizzle/schema";
 import { eq, inArray } from "drizzle-orm";
+import { log } from "console";
 
 export const loader = async ({
 	params,
@@ -37,22 +38,22 @@ export const loader = async ({
 		// Fetch all damages linked to the disaster records
 		const damages = await dr
 			.select({
-				pdRepairCostTotal:
-					damagesTable.pdRepairCostTotal,
+				tdReplacementCostTotal:
+					damagesTable.tdReplacementCostTotal,
 			})
 			.from(damagesTable)
 			.where(inArray(damagesTable.recordId, recordIds));
 
 		// Calculate total repair cost
-		let totalRepairCost = 0;
+		let totalReplacementCost = 0;
 
 		for (const damage of damages) {
             // Convert values to numbers safely
-            const pdRepairCostTotal = damage.pdRepairCostTotal ? Number(damage.pdRepairCostTotal) : 0;
-            totalRepairCost += pdRepairCostTotal;
+            const tdReplacementCostTotal = damage.tdReplacementCostTotal ? Number(damage.tdReplacementCostTotal) : 0;
+            totalReplacementCost += tdReplacementCostTotal;
         }
 
-		return Response.json({ total_repair_cost: totalRepairCost });
+		return Response.json({ total_replacement_cost: totalReplacementCost });
 	} catch (error) {
 		console.error("Error fetching repair cost:", error);
 		return Response.json({ error: "Internal server error" }, { status: 500 });
