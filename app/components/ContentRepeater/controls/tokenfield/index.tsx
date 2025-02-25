@@ -212,9 +212,9 @@ export const initTokenField = (
   
     let suggestions = [];
     
-    console.log('typeof dataSource:', typeof(dataSource));
-    console.log('fetchedData:', fetchedData); 
-    console.log('isLoading:', isLoading);
+    //console.log('typeof dataSource:', typeof(dataSource));
+    //console.log('fetchedData:', fetchedData); 
+    //console.log('isLoading:', isLoading);
 
     // Show loading indicator
     if (typeof dataSource === 'string' && !fetchedData && !isLoading) {
@@ -245,11 +245,11 @@ export const initTokenField = (
     // Filter the data (either fetched or provided locally)
     if (fetchedData) {
       suggestions = fetchedData.filter((item) =>
-        item.name.toLowerCase().startsWith(query) // Matches starting with query
+        item.name.toLowerCase().includes(query) // Matches starting with query
       );
     } else {
       suggestions = dataSource.filter((item) =>
-        item.name.toLowerCase().startsWith(query) // Matches starting with query
+        item.name.toLowerCase().includes(query) // Matches starting with query
       );
     }
   
