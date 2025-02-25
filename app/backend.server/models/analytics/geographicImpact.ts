@@ -33,8 +33,19 @@ import {
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
-import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
+import { 
+    calculateDamages, 
+    calculateLosses, 
+    createAssessmentMetadata,
+    calculateFaoAgriculturalDamage,
+    calculateFaoAgriculturalLoss 
+} from "~/backend.server/utils/disasterCalculations";
+import type { 
+    DisasterImpactMetadata,
+    FaoAgriSubsector,
+    FaoAgriculturalDamage,
+    FaoAgriculturalLoss 
+} from "~/types/disasterCalculations";
 import { formatCurrency } from "~/frontend/utils/formatters";
 import { configCurrencies } from "~/util/config";
 
@@ -87,6 +98,10 @@ interface DivisionValues {
     sources: Set<string>;
     metadata: DisasterImpactMetadata;
     dataAvailability: 'available' | 'no_data' | 'zero';
+    faoAgriculturalImpact?: {
+        damage: FaoAgriculturalDamage;
+        loss: FaoAgriculturalLoss;
+    };
 }
 
 interface CleanDivisionValues {
@@ -94,6 +109,10 @@ interface CleanDivisionValues {
     totalLoss: number | null;
     metadata: DisasterImpactMetadata;
     dataAvailability: 'available' | 'no_data' | 'zero';
+    faoAgriculturalImpact?: {
+        damage: FaoAgriculturalDamage;
+        loss: FaoAgriculturalLoss;
+    };
 }
 
 interface GeographicImpactResult {
@@ -491,6 +510,9 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
     try {
         console.log("Processing geographic impact with filters:", JSON.stringify(filters, null, 2));
 
+        // Check if we need FAO agricultural calculations
+        const agriSubsector = getAgriSubsector(filters.sectorId);
+
         // Get disaster records based on sector
         const records = await getDisasterRecordsForSector(filters.sectorId, filters.subSectorId);
         console.log(`Found ${records.length} disaster records`);
@@ -521,8 +543,6 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         // Create a map to store aggregated values per division
         const divisionValues: { [key: string]: DivisionValues } = {};
 
-        const defaultCurrency = configCurrencies()[0] || 'PHP'; // Get first currency from env config
-
         // Initialize all divisions with no data status
         for (const division of divisions) {
             divisionValues[division.id] = {
@@ -531,10 +551,10 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 sources: new Set<string>(),
                 metadata: createAssessmentMetadata(
                     filters.assessmentType || 'detailed',
-                    filters.confidenceLevel || 'high',
-                    defaultCurrency
+                    filters.confidenceLevel || 'high'
                 ),
-                dataAvailability: 'no_data'
+                dataAvailability: 'no_data',
+                faoAgriculturalImpact: undefined
             };
         }
 
@@ -561,6 +581,21 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 currentValues.totalLoss = (currentValues.totalLoss || 0) + losses.total;
                 currentValues.sources.add(record.id);
 
+                // Add FAO agricultural calculations if needed
+                if (agriSubsector) {
+                    const [faoAgriDamage, faoAgriLoss] = await Promise.all([
+                        calculateFaoAgriculturalDamage(damagesTable, agriSubsector),
+                        calculateFaoAgriculturalLoss(lossesTable, agriSubsector)
+                    ]);
+
+                    if (faoAgriDamage && faoAgriLoss) {
+                        currentValues.faoAgriculturalImpact = {
+                            damage: faoAgriDamage,
+                            loss: faoAgriLoss
+                        };
+                    }
+                }
+
                 // Update data availability status
                 if (currentValues.sources.size > 0) {
                     currentValues.dataAvailability =
@@ -578,7 +613,8 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 totalDamage: values.totalDamage,
                 totalLoss: values.totalLoss,
                 metadata: values.metadata,
-                dataAvailability: values.dataAvailability
+                dataAvailability: values.dataAvailability,
+                faoAgriculturalImpact: values.faoAgriculturalImpact
             };
         }
 
@@ -849,3 +885,14 @@ export async function fetchGeographicImpactData(
         return { totalDamage: 0, totalLoss: 0, byYear: new Map() };
     }
 }
+
+const getAgriSubsector = (sectorId: number | undefined): FaoAgriSubsector | null => {
+    if (!sectorId) return null;
+    const subsectorMap: { [key: number]: FaoAgriSubsector } = {
+        101: 'crops',      // Assuming these are your agricultural sector IDs
+        102: 'livestock',  // You should adjust these based on your actual sector IDs
+        103: 'fisheries',
+        104: 'forestry'
+    };
+    return subsectorMap[sectorId] || null;
+};

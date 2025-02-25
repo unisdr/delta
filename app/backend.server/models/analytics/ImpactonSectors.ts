@@ -33,8 +33,19 @@ import {
 } from "~/drizzle/schema";
 import { and, eq, inArray, ilike, SQL } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
-import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
-import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
+import {
+  calculateDamages,
+  calculateLosses,
+  createAssessmentMetadata,
+  calculateFaoAgriculturalDamage,
+  calculateFaoAgriculturalLoss
+} from "~/backend.server/utils/disasterCalculations";
+import type {
+  DisasterImpactMetadata,
+  FaoAgriculturalDamage,
+  FaoAgriculturalLoss,
+  FaoAgriSubsector
+} from "~/types/disasterCalculations";
 
 // Types
 /*
@@ -83,6 +94,11 @@ interface SectorImpactData {
   lossOverTime: { [year: string]: string };
   /** Assessment metadata following international standards */
   metadata: DisasterImpactMetadata;
+  /** FAO-specific agricultural impact data if applicable */
+  faoAgriculturalImpact?: {
+    damage: FaoAgriculturalDamage;
+    loss: FaoAgriculturalLoss;
+  };
 }
 
 // Cache for division names
@@ -227,6 +243,16 @@ const getDisasterRecordsForSector = async (
   return records.map(record => record.id);
 };
 
+const getAgriSubsector = (sectorId: string): FaoAgriSubsector | null => {
+  const subsectorMap: { [key: string]: FaoAgriSubsector } = {
+    'agri_crops': 'crops',
+    'agri_livestock': 'livestock',
+    'agri_fisheries': 'fisheries',
+    'agri_forestry': 'forestry'
+  };
+  return subsectorMap[sectorId] || null;
+};
+
 /**
  * Aggregates damage data following international standards:
  * 
@@ -240,10 +266,14 @@ const getDisasterRecordsForSector = async (
  *    - Allows override values for validated assessments
  * 
  * @param recordIds - Array of disaster record IDs to aggregate
+ * @param sectorId - ID of the sector to analyze
  * @returns Object containing total damage and yearly breakdown
  */
-const aggregateDamagesData = async (recordIds: string[]): Promise<{ total: number, byYear: Map<number, number> }> => {
+const aggregateDamagesData = async (recordIds: string[], sectorId: string): Promise<{ total: number, byYear: Map<number, number>, faoAgriDamage?: FaoAgriculturalDamage }> => {
   if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
+
+  // Check if this is an agricultural sector
+  const agriSubsector = getAgriSubsector(sectorId);
 
   const damagesData = await dr
     .select({
@@ -261,7 +291,13 @@ const aggregateDamagesData = async (recordIds: string[]): Promise<{ total: numbe
   const totalDamage = damagesData.reduce((sum, row) => sum + Number(row.total || 0), 0);
   const damagesByYear = new Map(damagesData.map(row => [Number(row.year), Number(row.total || 0)]));
 
-  return { total: totalDamage, byYear: damagesByYear };
+  // Add FAO agricultural damage calculation if applicable
+  let faoAgriDamage: FaoAgriculturalDamage | undefined;
+  if (agriSubsector) {
+    faoAgriDamage = await calculateFaoAgriculturalDamage(damagesTable, agriSubsector);
+  }
+
+  return { total: totalDamage, byYear: damagesByYear, faoAgriDamage };
 };
 
 /**
@@ -281,10 +317,14 @@ const aggregateDamagesData = async (recordIds: string[]): Promise<{ total: numbe
  *    - Includes both direct and indirect losses
  * 
  * @param recordIds - Array of disaster record IDs to aggregate
+ * @param sectorId - ID of the sector to analyze
  * @returns Object containing total losses and yearly breakdown
  */
-const aggregateLossesData = async (recordIds: string[]): Promise<{ total: number, byYear: Map<number, number> }> => {
+const aggregateLossesData = async (recordIds: string[], sectorId: string): Promise<{ total: number, byYear: Map<number, number>, faoAgriLoss?: FaoAgriculturalLoss }> => {
   if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
+
+  // Check if this is an agricultural sector
+  const agriSubsector = getAgriSubsector(sectorId);
 
   const lossesData = await dr
     .select({
@@ -302,7 +342,13 @@ const aggregateLossesData = async (recordIds: string[]): Promise<{ total: number
   const totalLoss = lossesData.reduce((sum, row) => sum + Number(row.total || 0), 0);
   const lossesByYear = new Map(lossesData.map(row => [Number(row.year), Number(row.total || 0)]));
 
-  return { total: totalLoss, byYear: lossesByYear };
+  // Add FAO agricultural loss calculation if applicable
+  let faoAgriLoss: FaoAgriculturalLoss | undefined;
+  if (agriSubsector) {
+    faoAgriLoss = await calculateFaoAgriculturalLoss(lossesTable, agriSubsector);
+  }
+
+  return { total: totalLoss, byYear: lossesByYear, faoAgriLoss };
 };
 
 // Function to get event counts by year
@@ -348,16 +394,24 @@ export async function fetchSectorImpactData(
   try {
     const recordIds = await getDisasterRecordsForSector(sectorId, filters);
     const [damagesResult, lossesResult, eventCounts] = await Promise.all([
-      aggregateDamagesData(recordIds),
-      aggregateLossesData(recordIds),
+      aggregateDamagesData(recordIds, sectorId),
+      aggregateLossesData(recordIds, sectorId),
       getEventCountsByYear(recordIds)
     ]);
 
     // Create assessment metadata
     const metadata = createAssessmentMetadata(
-      filters?.assessmentType || 'rapid',
+      filters?.assessmentType || 'detailed',
       filters?.confidenceLevel || 'medium'
     );
+
+    // Only include FAO data if both damage and loss calculations are available
+    const faoAgriculturalImpact = damagesResult.faoAgriDamage && lossesResult.faoAgriLoss
+      ? {
+        damage: damagesResult.faoAgriDamage,
+        loss: lossesResult.faoAgriLoss
+      }
+      : undefined;
 
     return {
       eventCount: recordIds.length,
@@ -366,7 +420,8 @@ export async function fetchSectorImpactData(
       eventsOverTime: Object.fromEntries([...eventCounts].map(([year, count]) => [year.toString(), count.toString()])),
       damageOverTime: Object.fromEntries([...damagesResult.byYear].map(([year, amount]) => [year.toString(), amount.toString()])),
       lossOverTime: Object.fromEntries([...lossesResult.byYear].map(([year, amount]) => [year.toString(), amount.toString()])),
-      metadata
+      metadata,
+      faoAgriculturalImpact
     };
   } catch (error) {
     console.error("Error in fetchSectorImpactData:", error);

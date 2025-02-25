@@ -12,10 +12,43 @@ import {
 } from "~/drizzle/schema";
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
-import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
-import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
+import { 
+    calculateDamages, 
+    calculateLosses, 
+    createAssessmentMetadata,
+    calculateFaoAgriculturalDamage,
+    calculateFaoAgriculturalLoss 
+} from "~/backend.server/utils/disasterCalculations";
+import type { 
+    DisasterImpactMetadata, 
+    FaoAgriSubsector,
+    FaoAgriculturalDamage,
+    FaoAgriculturalLoss
+} from "~/types/disasterCalculations";
 
-export async function fetchHazardImpactData(filters: HazardImpactFilters) {
+const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null => {
+    if (!sectorId) return null;
+    const subsectorMap: { [key: string]: FaoAgriSubsector } = {
+        'agri_crops': 'crops',
+        'agri_livestock': 'livestock',
+        'agri_fisheries': 'fisheries',
+        'agri_forestry': 'forestry'
+    };
+    return subsectorMap[sectorId] || null;
+};
+
+export interface HazardImpactResult {
+    eventsCount: HazardDataPoint[];
+    damages: HazardDataPoint[];
+    losses: HazardDataPoint[];
+    metadata: DisasterImpactMetadata;
+    faoAgriculturalImpact?: {
+        damage: FaoAgriculturalDamage;
+        loss: FaoAgriculturalLoss;
+    };
+}
+
+export async function fetchHazardImpactData(filters: HazardImpactFilters): Promise<HazardImpactResult> {
     const {
         sectorId,
         hazardTypeId,
@@ -86,7 +119,27 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
             return {
                 eventsCount: [],
                 damages: [],
-                losses: []
+                losses: [],
+                metadata,
+                faoAgriculturalImpact: undefined
+            };
+        }
+    }
+
+    // Check if we need FAO agricultural calculations
+    const agriSubsector = getAgriSubsector(sectorId);
+    let faoAgriculturalImpact;
+    
+    if (agriSubsector) {
+        const [faoAgriDamage, faoAgriLoss] = await Promise.all([
+            calculateFaoAgriculturalDamage(damagesTable, agriSubsector),
+            calculateFaoAgriculturalLoss(lossesTable, agriSubsector)
+        ]);
+        
+        if (faoAgriDamage && faoAgriLoss) {
+            faoAgriculturalImpact = {
+                damage: faoAgriDamage,
+                loss: faoAgriLoss
             };
         }
     }
@@ -209,21 +262,25 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         .orderBy(desc(calculateLosses(lossesTable)))
         .limit(10);
 
-    // Calculate percentages
-    const calculatePercentages = (data: { hazardId: string | null; hazardName: string | null; value: unknown }[]): HazardDataPoint[] => {
-        const total = data.reduce((sum, item) => sum + Number(item.value), 0);
-        return data.map(item => ({
-            hazardId: item.hazardId || "",
-            hazardName: String(item.hazardName || ''),
-            value: String(item.value || 0),
-            percentage: total > 0 ? (Number(item.value) / total) * 100 : 0
-        }));
-    };
+    // Calculate total damages and losses for percentage
+    const totalDamages = damages.reduce((sum, item) => sum + Number(item.value), 0);
+    const totalLosses = losses.reduce((sum, item) => sum + Number(item.value), 0);
 
     return {
         eventsCount: eventsCountWithPercentage,
-        damages: calculatePercentages(damages),
-        losses: calculatePercentages(losses),
-        metadata
+        damages: damages.map(item => ({
+            hazardId: item.hazardId,
+            hazardName: String(item.hazardName),
+            value: String(item.value),
+            percentage: totalDamages > 0 ? (Number(item.value) / totalDamages) * 100 : 0
+        })),
+        losses: losses.map(item => ({
+            hazardId: item.hazardId,
+            hazardName: String(item.hazardName),
+            value: String(item.value),
+            percentage: totalLosses > 0 ? (Number(item.value) / totalLosses) * 100 : 0
+        })),
+        metadata,
+        faoAgriculturalImpact
     };
 }

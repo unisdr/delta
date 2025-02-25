@@ -13,6 +13,9 @@
  * 
  * 3. World Bank Damage and Loss Assessment (DaLA) Methodology
  *    https://openknowledge.worldbank.org/handle/10986/2403
+ * 
+ * 4. FAO Damage and Loss Assessment Methodology for Agriculture
+ *    https://www.fao.org/resilience/resources/resources-detail/en/c/1273007/
  */
 
 /**
@@ -111,6 +114,93 @@ export interface GeographicImpactLevel {
 
     /** Aggregated impact data for this level */
     impactData: DisasterImpactData;
+}
+
+/**
+ * FAO-specific agricultural sector assessment types
+ * Based on FAO's D&L methodology for agriculture
+ */
+export type FaoAgriSubsector = 'crops' | 'livestock' | 'forestry' | 'aquaculture' | 'fisheries';
+
+/**
+ * FAO-specific damage categories for agricultural assets
+ */
+export interface FaoAgriculturalDamage {
+    /** Damage to agricultural assets and infrastructure */
+    assets: {
+        machinery: number;
+        equipment: number;
+        facilities: number;
+        irrigation: number;
+        storage: number;
+    };
+    
+    /** Damage to agricultural resources */
+    resources: {
+        crops: number;
+        livestock: number;
+        fishStock: number;
+        forestResources: number;
+    };
+}
+
+/**
+ * FAO-specific loss categories for agricultural production
+ */
+export interface FaoAgriculturalLoss {
+    /** Production losses */
+    production: {
+        cropYieldDecline: number;
+        livestockProductivity: number;
+        fisheryOutput: number;
+        forestryYield: number;
+    };
+
+    /** Income losses */
+    income: {
+        marketAccess: number;
+        priceChanges: number;
+        tradingDisruption: number;
+    };
+
+    /** Additional costs */
+    additionalCosts: {
+        cleanup: number;
+        replanting: number;
+        restocking: number;
+        diseaseControl: number;
+    };
+}
+
+/**
+ * FAO-specific metadata for agricultural assessments
+ */
+export interface FaoAssessmentMetadata extends DisasterImpactMetadata {
+    /** Agricultural subsector being assessed */
+    subsector: FaoAgriSubsector;
+    
+    /** Pre-disaster baseline data reference period */
+    baselinePeriod: string;
+    
+    /** Post-disaster assessment period */
+    assessmentPeriod: string;
+    
+    /** Local agricultural season/calendar reference */
+    seasonalContext?: string;
+}
+
+/**
+ * Complete FAO agricultural disaster impact assessment
+ */
+export interface FaoAgriculturalImpact {
+    /** Detailed damage breakdown following FAO methodology */
+    damage: FaoAgriculturalDamage;
+    
+    /** Detailed loss breakdown following FAO methodology */
+    loss: FaoAgriculturalLoss;
+    
+    /** FAO-specific assessment metadata */
+    metadata: FaoAssessmentMetadata;
 }
 
 /**
