@@ -38,6 +38,7 @@ export const fieldsDefCommon = [
 	{key: "otherId2", label: "Event ID in other system (2)", type: "text"},
 	// new
 	{key: "otherId3", label: "Event ID in other system (3)", type: "text"},
+	{key: "nameNational", label: "National name", desc: "Disaster name ( if any) ( if applicable)- national", type: "text", uiRow: {}},
 	// keep
 	{key: "glide", label: "GLIDE Number", type: "text", uiRow: {}},
 	// keep
