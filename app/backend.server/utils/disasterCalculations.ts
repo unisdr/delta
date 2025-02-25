@@ -53,25 +53,21 @@ export const calculateDamages = (table: any): SQL => {
     return sql`COALESCE(SUM(
         /* Partially Damaged Assets */
         CASE 
-            WHEN CASE WHEN ${table}.pd_repair_cost_total_override THEN 1 ELSE 0 END = 1
-            THEN COALESCE(${table}.pd_repair_cost_total, 0)::numeric
+            WHEN ${table}.pd_repair_cost_total_override THEN COALESCE(${table}.pd_repair_cost_total, 0)
             ELSE COALESCE(${table}.pd_repair_cost_unit * ${table}.pd_repair_units, 0)::numeric
         END +
         CASE 
-            WHEN CASE WHEN ${table}.pd_recovery_cost_total_override THEN 1 ELSE 0 END = 1
-            THEN COALESCE(${table}.pd_recovery_cost_total, 0)::numeric
+            WHEN ${table}.pd_recovery_cost_total_override THEN COALESCE(${table}.pd_recovery_cost_total, 0)
             ELSE COALESCE(${table}.pd_recovery_cost_unit * ${table}.pd_recovery_units, 0)::numeric
         END +
             
         /* Totally Destroyed Assets */
         CASE 
-            WHEN CASE WHEN ${table}.td_replacement_cost_total_override THEN 1 ELSE 0 END = 1
-            THEN COALESCE(${table}.td_replacement_cost_total, 0)::numeric
+            WHEN ${table}.td_replacement_cost_total_override THEN COALESCE(${table}.td_replacement_cost_total, 0)
             ELSE COALESCE(${table}.td_replacement_cost_unit * ${table}.td_replacement_units, 0)::numeric
         END +
         CASE 
-            WHEN CASE WHEN ${table}.td_recovery_cost_total_override THEN 1 ELSE 0 END = 1
-            THEN COALESCE(${table}.td_recovery_cost_total, 0)::numeric
+            WHEN ${table}.td_recovery_cost_total_override THEN COALESCE(${table}.td_recovery_cost_total, 0)
             ELSE COALESCE(${table}.td_recovery_cost_unit * ${table}.td_recovery_units, 0)::numeric
         END
     ), 0)::numeric`;
@@ -90,9 +86,9 @@ export const calculateDamages = (table: any): SQL => {
  */
 export const calculateLosses = (table: any): SQL => {
     return sql`COALESCE(SUM(
-        COALESCE(${table}.public_cost_total_override, 0) +
-        COALESCE(${table}.private_cost_total_override, 0)
-    ), 0)`;
+        COALESCE(${table}.public_cost_total, 0)::numeric +
+        COALESCE(${table}.private_cost_total, 0)::numeric
+    ), 0)::numeric`;
 };
 
 /**

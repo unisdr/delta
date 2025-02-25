@@ -7,20 +7,20 @@ export const loader: LoaderFunction = async ({ request }) => {
     const url = new URL(request.url);
 
     // Required parameters
-    const sectorId = url.searchParams.get("sectorId");
+    const sectorId = url.searchParams.get("sectorId") || undefined;
     if (!sectorId) {
         return json({ success: false, error: "Sector ID is required" }, { status: 400 });
     }
 
     // Optional parameters
-    const hazardTypeId = url.searchParams.get("hazardTypeId");
-    const hazardClusterId = url.searchParams.get("hazardClusterId");
-    const specificHazardId = url.searchParams.get("specificHazardId");
-    const geographicLevelId = url.searchParams.get("geographicLevelId");
-    const fromDate = url.searchParams.get("fromDate");
-    const toDate = url.searchParams.get("toDate");
-    const disasterEventId = url.searchParams.get("disasterEventId");
-    const _disasterEventId = url.searchParams.get("_disasterEventId");
+    const hazardTypeId = url.searchParams.get("hazardTypeId") || undefined;
+    const hazardClusterId = url.searchParams.get("hazardClusterId") || undefined;
+    const specificHazardId = url.searchParams.get("specificHazardId") || undefined;
+    const geographicLevelId = url.searchParams.get("geographicLevelId") || undefined;
+    const fromDate = url.searchParams.get("fromDate") || undefined;
+    const toDate = url.searchParams.get("toDate") || undefined;
+    const disasterEventId = url.searchParams.get("disasterEventId") || undefined;
+    const _disasterEventId = url.searchParams.get("_disasterEventId") || undefined;
 
     // Validate date range if provided
     if ((fromDate && !toDate) || (!fromDate && toDate)) {
