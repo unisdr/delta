@@ -29,9 +29,6 @@ export const loader = createPaginatedLoader(
 				id: true,
 				name: true,
 			},
-			with: {
-				sector: true,
-			},
       orderBy: [desc(assetTable.name)],
     });
   },

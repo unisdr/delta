@@ -87,6 +87,7 @@ const injectStyles = (appendCss?: string) => {
                 border-radius: 5px;
                 margin-right: 1rem;
                 white-space: nowrap;
+                cursor: pointer;
             }
             .tree-btn.main-btn {
                 padding: 4px 8px 4px 8px;
