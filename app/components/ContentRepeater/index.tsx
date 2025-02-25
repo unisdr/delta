@@ -292,7 +292,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
         initTokenField(
           initialFormData[field.id] || [], // Pass current value or an empty array
           element as HTMLInputElement,
-          Array.isArray(field?.dataSource) ? field.dataSource : [],
+          typeof field.dataSource === "string" ? field.dataSource : Array.isArray(field?.dataSource) ? field.dataSource : [],
           field,
           handleFieldChange
         );
