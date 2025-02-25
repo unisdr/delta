@@ -322,7 +322,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							]}
 							dialog_fields={[
 								{ id: "title", caption: "Title", type: "input" },
-								{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
+								{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: "/api/disaster-event/tags-sectors" },
 								{
 								id: "file_option",
 								caption: "Option",

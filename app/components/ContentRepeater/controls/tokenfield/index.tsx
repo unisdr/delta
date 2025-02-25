@@ -1,10 +1,31 @@
 export const initTokenField = (
   initialValue: [] | undefined, // Existing tokenfield data
   input: HTMLInputElement, // Hidden input element
-  dataSource: { id: number; name: string }[], // dataSource for dropdown suggestions
+  dataSource: { id: number; name: string }[] | string, // dataSource for dropdown suggestions
   field: any, // Associated field metadata
   handleFieldChange: any
 ) => {
+// Initial fetch function to populate fetchedData when `dataSource` is a URL
+  const fetchInitialData = async () => {
+    if (typeof dataSource === 'string') {
+      isLoading = true;
+      try {
+        const response = await fetch(dataSource);
+        if (response.ok) {
+          fetchedData = await response.json(); // Store fetched data
+        } else {
+          console.error(`Failed to fetch initial dataSource: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('Error fetching initial dataSource:', error);
+      } finally {
+        isLoading = false;
+      }
+    }
+  };
+
+  
+
   const wrapper = input.parentElement as HTMLElement;
 
   if (!wrapper) {
@@ -191,6 +212,10 @@ export const initTokenField = (
   
     let suggestions = [];
     
+    //console.log('typeof dataSource:', typeof(dataSource));
+    //console.log('fetchedData:', fetchedData); 
+    //console.log('isLoading:', isLoading);
+
     // Show loading indicator
     if (typeof dataSource === 'string' && !fetchedData && !isLoading) {
       isLoading = true; // Set loading state
@@ -220,11 +245,11 @@ export const initTokenField = (
     // Filter the data (either fetched or provided locally)
     if (fetchedData) {
       suggestions = fetchedData.filter((item) =>
-        item.name.toLowerCase().startsWith(query) // Matches starting with query
+        item.name.toLowerCase().includes(query) // Matches starting with query
       );
     } else {
       suggestions = dataSource.filter((item) =>
-        item.name.toLowerCase().startsWith(query) // Matches starting with query
+        item.name.toLowerCase().includes(query) // Matches starting with query
       );
     }
   
@@ -296,7 +321,50 @@ export const initTokenField = (
       }
     }
   });
-   
+  
+// Prevent closing dropdown when clicking inside it
+dropdown.addEventListener('mousedown', (event) => {
+  event.preventDefault(); // Prevents blur event from firing
+});
+
+// Modify blur event to allow interactions inside dropdown
+editableInput.addEventListener('blur', () => {
+  setTimeout(() => {
+    if (!dropdown.contains(document.activeElement) && document.activeElement !== editableInput) {
+      dropdown.style.display = 'none';
+    }
+  }, 100); // Small delay to allow focus shift
+});
+
+  editableInput.addEventListener('click', () => {
+    dropdown.innerHTML = ''; // Clear any previous content
+  
+    // Get all available items (fetchedData if fetched, otherwise dataSource)
+    const suggestions = fetchedData ? fetchedData : dataSource;
+  
+    // Render all items in the dropdown
+    suggestions.forEach((item) => {
+      const isSelected = selectedItems.some((selected) => selected.id === item.id);
+      const option = document.createElement('div');
+      option.classList.add('custom-tokenfield-dropdown-item');
+      option.textContent = item.name;
+      Object.assign(option.style, {
+        padding: '8px',
+        cursor: isSelected ? 'not-allowed' : 'pointer',
+        color: isSelected ? 'gray' : 'black',
+        textDecoration: isSelected ? 'line-through' : 'none',
+      });
+  
+      if (!isSelected) {
+        option.onclick = () => addToken(item);
+      }
+  
+      dropdown.appendChild(option);
+    });
+  
+    dropdown.style.display = 'block';
+  });  
+
   editableInput.addEventListener('input', handleInput);
 
   // Add this function inside your initTokenField
@@ -355,6 +423,7 @@ export const initTokenField = (
   // Call enableDragAndDrop after renderTokens is defined
   renderTokens(); // Initialize with existing tokens
   enableDragAndDrop(); // Enable DnD
+  fetchInitialData();
 
 };
 

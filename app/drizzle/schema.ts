@@ -426,10 +426,39 @@ export const humanDsgTable = pgTable("human_dsg", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sex: text("sex", {enum: ["m", "f"]}),
-	age: text("age", {enum: ["0-20", "21-40", "41-60", "60-81", ">80"]}),
+	sex: text("sex", {
+		enum: [
+			"m",
+			"f",
+			"o"
+		]
+	}),
+	age: text("age", {
+		enum: [
+			"0-14",
+			"15-64",
+			"65+",
+		]
+	}),
 	disability: text("disability", {
-		enum: ["dis_group1", "dis_group2", "dis_group3"],
+		enum: [
+			"none",
+			"physical_dwarfism",
+			"physical_problems_in_body_functioning",
+			"physical_problems_in_body_structures",
+			"physical_other_physical_disability",
+			"sensorial_visual_impairments_blindness",
+			"sensorial_visual_impairments_partial_sight_loss",
+			"sensorial_visual_impairments_colour_blindness",
+			"sensorial_hearing_impairments_deafness_hard_of_hearing",
+			"sensorial_hearing_impairments_deafness_other_hearing_disability",
+			"sensorial_other_sensory_impairments",
+			"psychosocial",
+			"intellectual_cognitive",
+			"multiple_deaf_blindness",
+			"multiple_other_multiple",
+			"others"
+		],
 	}),
 	globalPovertyLine: text("global_poverty_line", {enum: ["below", "above"]}),
 	nationalPovertyLine: text("national_poverty_line", {
@@ -578,13 +607,13 @@ export const damagesTable = pgTable("damages", {
 	assetId: uuid("asset_id")
 		.references((): AnyPgColumn => assetTable.id)
 		.notNull(),
-		
+
 	unit: unitsEnum("unit"),
 
-	totalDamageAmount: ourBigint("total_damage_amount"), 
-	totalDamageAmountOverride: zeroBool("total_damage_amount_override"), 
-	totalRepairReplacementRecovery: ourMoney("total_repair_replacement_recovery"), 
-	totalRepairReplacementRecoveryOverride: zeroBool("total_repair_replacement_recovery_override"), 
+	totalDamageAmount: ourBigint("total_damage_amount"),
+	totalDamageAmountOverride: zeroBool("total_damage_amount_override"),
+	totalRepairReplacementRecovery: ourMoney("total_repair_replacement_recovery"),
+	totalRepairReplacementRecoveryOverride: zeroBool("total_repair_replacement_recovery_override"),
 
 	// Partially damaged
 	pdDamageAmount: ourBigint("pd_damage_amount"),
@@ -606,6 +635,7 @@ export const damagesTable = pgTable("damages", {
 
 	// Totally destroyed
 	tdDamageAmount: ourBigint("td_damage_amount"),
+	tdReplacementCostUnit: ourMoney("td_replacement_cost_unit"),
 	tdReplacementCostUnitCurrency: text("td_replacement_cost_unit_currency"),
 	tdReplacementUnits: ourBigint("td_replacement_units"),
 	tdReplacementCostTotal: ourMoney("td_replacement_cost_total"),

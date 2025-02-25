@@ -194,26 +194,24 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
     let item = all[1];
     let formRecord:AssetType = { 
       apiImportId: item[0],
-      //sectorId: parseInt(item[2]),
-      sectorIds: item[3],
-      isBuiltIn: Boolean(item[4]),
-      name: item[5],
-      category: item[6],
-      nationalId: item[7],
-      notes: item[8],
+      sectorIds: item[2],
+      isBuiltIn: Boolean(item[3]),
+      name: item[4],
+      category: item[5],
+      nationalId: item[6],
+      notes: item[7],
     };
 
     for (const [key, item] of all.entries()) {
       if (key !== 0) {
         formRecord = {
           apiImportId: item[0],
-          //sectorId: parseInt(item[2]),
-          sectorIds: item[3],
-          isBuiltIn: Boolean(item[4]),
-          name: item[5],
-          category: item[6],
-          nationalId: item[7],
-          notes: item[8],
+          sectorIds: item[2],
+          isBuiltIn: Boolean(item[3]),
+          name: item[4],
+          category: item[5],
+          nationalId: item[6],
+          notes: item[7],
         };
 
         try {

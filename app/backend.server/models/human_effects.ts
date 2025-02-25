@@ -437,12 +437,14 @@ export function sharedDefsAll(): Def[] {
 			uiName: "Sex",
 			jsName: "sex",
 			dbName: "sex",
-			uiColWidth: 50,
+			uiColWidth: 100,
 			format: "enum",
 			role: "dimension",
 			data: [
-				{key: "m", label: "M"},
-				{key: "f", label: "F"}]
+				{key: "m", label: "M-Male"},
+				{key: "f", label: "F-Female"},
+				{key: "o", label: "O-Other Non-binary"}
+			]
 		},
 		{
 			uiName: "Age",
@@ -452,11 +454,9 @@ export function sharedDefsAll(): Def[] {
 			format: "enum",
 			role: "dimension",
 			data: [
-				{key: "0-20", label: "0-20"},
-				{key: "21-40", label: "21-40"},
-				{key: "41-60", label: "41-60"},
-				{key: "60-81", label: "60-81"},
-				{key: ">80", label: ">80"},
+				{key: "0-14", label: "Children, (0-14)"},
+				{key: "15-64", label: "Adult, (15-64)"},
+				{key: "65+", label: "Elder (65-)"},
 			]
 		},
 		{
@@ -467,9 +467,22 @@ export function sharedDefsAll(): Def[] {
 			format: "enum",
 			role: "dimension",
 			data: [
-				{key: "dis_none", label: "No disabilities"},
-				{key: "dis_group1", label: "Dis. group 1"},
-				{key: "dis_group2", label: "Dis. group 2"},
+				{key: "none", label: "No disabilities"},
+				{key: "physical_dwarfism", label: "Physical, dwarfism"},
+				{key: "physical_problems_in_body_functioning", label: "Physical, Problems in body functioning"},
+				{key: "physical_problems_in_body_structures", label: "Physical, Problems in body structures"},
+				{key: "physical_other_physical_disability", label: "Physical, Other physical disability"},
+				{key: "sensorial_visual_impairments_blindness", label: "Sensorial, visual impairments, blindness"},
+				{key: "sensorial_visual_impairments_partial_sight_loss", label: "Sensorial, visual impairments, partial sight loss"},
+				{key: "sensorial_visual_impairments_colour_blindness", label: "Sensorial, visual impairments, colour blindness"},
+				{key: "sensorial_hearing_impairments_deafness_hard_of_hearing", label: "Sensorial, Hearing impairments, Deafness, hard of hearing"},
+				{key: "sensorial_hearing_impairments_deafness_other_hearing_disability", label: "Sensorial, Hearing impairments, Deafness, other hearing disability"},
+				{key: "sensorial_other_sensory_impairments", label: "Sensorial, other sensory impairments"},
+				{key: "psychosocial", label: "Psychosocial"},
+				{key: "intellectual_cognitive", label: "Intellectual/ Cognitive"},
+				{key: "multiple_deaf_blindness", label: "Multiple, Deaf blindness"},
+				{key: "multiple_other_multiple", label: "Multiple, other multiple"},
+				{key: "others", label: "Others"},
 			]
 		},
 		{
