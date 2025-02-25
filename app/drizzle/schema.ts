@@ -285,17 +285,23 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
+	status: text("status").notNull().default("pending"),
+	// otherId1: zeroText("otherId1"),
+	//duration: zeroText("duration"),
+	nationalSpecification: zeroText("national_specification"),
 	startDate: timestamp("start_date").notNull(),
 	endDate: timestamp("end_date").notNull(),
-	status: text("status").notNull().default("pending"),
-	// otherId1 is id in some other system TODO
-	otherId1: zeroText("otherId1"),
 	description: zeroText("description"),
+	warningIssuedSummary: zeroText("warning_issued_summary"),
+	warningIssuedBy: zeroText("warning_issued_by"),
+	warningIssuedDate: timestamp("warning_issued_date"),
+	warningIssuedCoverage: zeroText("warning_issued_coverage"),
+	warningIssuedContent: zeroText("warning_issued_content"),
 	chainsExplanation: zeroText("chains_explanation"),
-	duration: zeroText("duration"),
 	magnitude: zeroText("magniture"),
 	spatialFootprint: jsonb("spatial_footprint"),
 	recordOriginator: zeroText("record_originator"),
+	hazardousEventStatus: text("hazardous_event_status", {enum: ["forecasted", "ongoing", "passed"]}),
 	dataSource: zeroText("data_source"),
 });
 
