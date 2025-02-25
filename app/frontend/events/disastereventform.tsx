@@ -27,40 +27,86 @@ import AuditLogHistory from "~/components/AuditLogHistory";
 
 export const route = "/disaster-event"
 
+// 2025-02-25 - comparing to DTS Variables and baselines
 export const fieldsDefCommon = [
 	approvalStatusField,
+	// keep
 	{key: "nationalDisasterId", label: "National Disaster ID", type: "text", uiRow: {}},
-	{key: "otherId1", label: "Event ID in other system", type: "text"},
-	{key: "glide", label: "GLIDE Number", type: "text"},
-	{key: "nameGlobalOrRegional", label: "Global/Regional Name", type: "text", uiRow: {}},
-	{key: "nameNational", label: "National Name", type: "text"},
+	// keep
+	{key: "otherId1", label: "Event ID in other system (1)", type: "text", uiRow: {}},
+	// new
+	{key: "otherId2", label: "Event ID in other system (2)", type: "text"},
+	// new
+	{key: "otherId3", label: "Event ID in other system (3)", type: "text"},
+	// keep
+	{key: "glide", label: "GLIDE Number", type: "text", uiRow: {}},
+	// keep
+	{key: "nameGlobalOrRegional", label: "Global/Regional Name", desc: "Disaster event name in global or regional databases - name ( if applicable)", type: "text"},
+	// keep
 	{key: "startDate", label: "Start Date", type: "date", uiRow: {}},
+	// keep
 	{key: "endDate", label: "End Date", type: "date"},
-	{key: "startDateLocal", label: "Start Date (Local)", type: "text", uiRow: {}},
-	{key: "endDateLocal", label: "End Date (Local)", type: "text"},
-	{key: "durationDays", label: "Duration (Days)", type: "number"},
-	{key: "affectedGeographicDivisions", label: "Affected Geographic Divisions", type: "text", uiRow: {}},
-	{key: "affectedAdministrativeRegions", label: "Affected Administrative Regions", type: "text"},
-	{key: "disasterDeclaration", label: "Disaster Declaration", type: "bool", uiRow: {}},
-	{key: "disasterDeclarationType", label: "Disaster Declaration Type", type: "bool"},
-	{key: "disasterDeclarationEffect", label: "Disaster Declaration Effect", type: "bool"},
-	{key: "disasterDeclarationDate", label: "Disaster Declaration Date", type: "date", uiRow:{}},
-	{key: "warningIssuedLevelsSeverity", label: "Warning Levels Severity", type: "text", uiRow: {}},
-	{key: "warningIssuedDate", label: "Warning Issued Date", type: "date"},
-	{key: "preliminaryAssessmentDate", label: "Preliminary Assessment Date", type: "date", uiRow: {}},
-	{key: "responseOperations", label: "Response Operations", type: "text"},
+	// keep
+	{key: "startDateLocal", label: "Start Date in local format ", type: "text", uiRow: {}},
+	// keep
+	{key: "endDateLocal", label: "End Date in local format", type: "text"},
+	// keep
+	{key: "durationDays", label: "Duration (Days)", desc: "Duration (of event direct effects) - in days", type: "number", uiRow: {}},
+	// changed type
+	{
+		key: "disasterDeclaration", label: "Disaster Declaration", type: "enum", required: true, enumData: [
+			{key: "unknown", label: "Unknown"},
+			{key: "yes", label: "Yes"},
+			{key: "no", label: "No"}
+		],
+		uiRow: {label: "Disaster Declaration"}
+	},
+	// changed, this needs multiple 
+	{key: "disasterDeclarationTypeAndEffect", label: "Type and Effect", type: "textarea"},
+	// needs multiple
+	{key: "disasterDeclarationDate", label: "Date", type: "date"},
+	{key: "hadOfficialWarningOrWeatherAdvisory", label: "Was there an officially issued warning and/or weather advisory?", type: "bool", uiRow: {label: "Official Warning"}},
+	{key: "officialWarningAffectedAreas", label: "Which affected areas were covered by the warning?", type: "textarea"},
+
+	{key: "earlyAction", label: "Early Action", type: "textarea", uiRow: {label: "Early Action"}},
+	{key: "earlyActionDate", label: "Date", type: "date"},
+	{key: "preliminaryAssessmentDate", label: "Preliminary Assessment Date", type: "date", uiRow: {label: "Assesment"}},
+	{key: "rapidAssessmentDate", label: "Rapid Assessment Date", type: "date"},
+	// yes
+	{key: "responseOperations", label: "Response Operations", type: "textarea", uiRow: {}},
+	// keep
 	{key: "postDisasterAssementDate", label: "Post-Disaster Assessment Date", type: "date", uiRow: {}},
+	// keep
 	{key: "reAssessmentDate", label: "Re-Assessment Date", type: "date"},
-	{key: "dataSource", label: "Data Source", type: "text", uiRow: {}},
-	{key: "originatorRecorderOfInformation", label: "Originator/Recorder", type: "text"},
-	{key: "effectsTotalLocalCurrency", label: "Effects Total (Local Currency)", type: "money", uiRow: {}},
-	{key: "effectsTotalUsd", label: "Effects Total (USD)", type: "money"},
-	{key: "subtotaldamageUsd", label: "Subtotal Damage (USD)", type: "money", uiRow: {}},
-	{key: "subtotalLossesUsd", label: "Subtotal Losses (USD)", type: "money"},
-	{key: "responseCostTotalUsd", label: "Response Cost (Total)", type: "number", uiRow: {}},
-	{key: "humanitarianNeedsTotalUsd", label: "Humanitarian Needs (Total, USD)", type: "money"},
-	{key: "recoveryNeedsTotalUsd", label: "Recovery Needs (Total, USD)", type: "money", uiRow: {}},
+	// keep
+	{key: "dataSource", label: "Data Source", type: "text", uiRow: {label:"Data source"}},
+	// remove
+	{key: "recordingInstitution", label: "Recording institution", type: "text"},
+	{key: "effectsTotalUsd", label: "Effects ( damages+ losses) total ( in monetary terms - USD", type: "money", uiRow: {label: "Effects"}},
+	{key: "nonEconomicLosses", label: "Non-Economic losses", type: "textarea", uiRow: {}},
+	{key: "damagesSubtotalLocalCurrency", label: "Damages ( sub-total) -in monetary terms - local currency", type: "money", uiRow: {}},
+	{key: "lossesSubtotalUSD", label: "Losses ( sub-total) -  in monetary terms - USD", type: "money", uiRow: {}},
+	{key: "responseOperationsDescription", label: "(Emergency) Response operations (description)", type: "textarea", uiRow: {}},
+	{key: "responseOperationsCostsLocalCurrency", label: "Response operations costs ( total expenditure, in local currency)", type: "money", uiRow: {}},
+	{key: "responseCostTotalLocalCurrency", label: "(Emergency) Response cost - total - in local currency", type: "money", uiRow: {}},
+	{key: "responseCostTotalUSD", label: "(Emergency) Response cost - total - in USD", type: "money"},
+	{key: "humanitarianNeedsDescription", label: "Humanitarian needs - description", type: "textarea", uiRow:{}},
+
+	{key: "humanitarianNeedsLocalCurrency", label: "Humanitarian needs - total in local currency", type: "money", uiRow: {}},
+	{key: "humanitarianNeedsUSD", label: "Humanitarian needs - total in USD", type: "money"},
+
+	{key: "rehabilitationCostsLocalCurrency", label: "Rehabilitation costs - total in local currency", type: "money", uiRow: {}},
+	{key: "rehabilitationCostsUSD", label: "Rehabilitation costs - total in USD", type: "money"},
+	{key: "repairCostsLocalCurrency", label: "Repair costs - total in local currency", type: "money", uiRow: {}},
+	{key: "repairCostsUSD", label: "Repair costs - total in USD", type: "money"},
+	{key: "replacementCostsLocalCurrency", label: "Replacement costs - total in local currency", type: "money", uiRow: {}},
+	{key: "replacementCostsUSD", label: "Replacement costs - total in USD", type: "money"},
+	{key: "recoveryNeedsLocalCurrency", label: "Recovery needs - total in local currency", type: "money", uiRow: {}},
+	{key: "recoveryNeedsUSD", label: "Recovery needs - total in USD", type: "money"},
+
+	// keep
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
+	// keep
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 ] as const;
 
@@ -160,7 +206,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 									id: "map_option",
 									caption: "Option",
 									type: "option",
-									options: ["Map Coordinates", "Geographic Level"], 
+									options: ["Map Coordinates", "Geographic Level"],
 									onChange: (e: any) => {
 										const value = e.target.value;
 
@@ -199,12 +245,12 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							]}
 							data={(() => {
 								try {
-								  const spatialFootprint = props.fields?.spatialFootprint;
-								  return Array.isArray(spatialFootprint) ? spatialFootprint : [];
+									const spatialFootprint = props.fields?.spatialFootprint;
+									return Array.isArray(spatialFootprint) ? spatialFootprint : [];
 								} catch {
-								  return []; // Default to an empty array if there's an error
+									return []; // Default to an empty array if there's an error
 								}
-							  })()}
+							})()}
 							onChange={(_items: any) => {
 								try {
 									//const parsedItems = Array.isArray(items) ? items : (items);
@@ -267,15 +313,15 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							file_viewer_url="/disaster-event/file-viewer"
 							api_upload_url="/disaster-event/file-pre-upload"
 							table_columns={[
-								{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
-								{ 
+								{type: "dialog_field", dialog_field_id: "title", caption: "Title"},
+								{
 									type: "custom", caption: "Tags",
 									render: (item: any) => {
 										try {
 											if (!item.tag) {
 												return "N/A"; // Return "N/A" if no tags exist
 											}
-											
+
 											const tags = (item.tag); // Parse the JSON string
 											if (Array.isArray(tags) && tags.length > 0) {
 												// Map the names and join them with commas
@@ -286,78 +332,78 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 											console.error("Failed to parse tags:", error);
 											return "N/A"; // Return "N/A" if parsing fails
 										}
-									} 
+									}
 								},
 								{
-								type: "custom",
-								caption: "File/URL",
-								render: (item) => {
-									let strRet = "N/A"; // Default to "N/A"		
+									type: "custom",
+									caption: "File/URL",
+									render: (item) => {
+										let strRet = "N/A"; // Default to "N/A"		
 
-									const fileOption = item?.file_option || "";
+										const fileOption = item?.file_option || "";
 
-									if (fileOption === "File") {
-										// Get the file name or fallback to URL
-										const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-									
-										// Truncate long file names while preserving the file extension
-										const maxLength = 30; // Adjust to fit your design
-										strRet = fullFileName;
-									
-										if (fullFileName && fullFileName.length > maxLength) {
-											const extension = fullFileName.includes('.')
-												? fullFileName.substring(fullFileName.lastIndexOf('.'))
-												: '';
-											const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
-											strRet = `${baseName}...${extension}`;
+										if (fileOption === "File") {
+											// Get the file name or fallback to URL
+											const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
+
+											// Truncate long file names while preserving the file extension
+											const maxLength = 30; // Adjust to fit your design
+											strRet = fullFileName;
+
+											if (fullFileName && fullFileName.length > maxLength) {
+												const extension = fullFileName.includes('.')
+													? fullFileName.substring(fullFileName.lastIndexOf('.'))
+													: '';
+												const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
+												strRet = `${baseName}...${extension}`;
+											}
+										} else if (fileOption === "Link") {
+											strRet = item.url || "N/A";
 										}
-									} else if (fileOption === "Link") {
-										strRet = item.url || "N/A";
-									}
-								
-									return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
+
+										return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
+									},
 								},
-								},                        
-								{ type: "action", caption: "Action" },
+								{type: "action", caption: "Action"},
 							]}
 							dialog_fields={[
-								{ id: "title", caption: "Title", type: "input" },
-								{ id: "tag", caption: "Tags", type: "tokenfield", dataSource: "/api/disaster-event/tags-sectors" },
+								{id: "title", caption: "Title", type: "input"},
+								{id: "tag", caption: "Tags", type: "tokenfield", dataSource: "/api/disaster-event/tags-sectors"},
 								{
-								id: "file_option",
-								caption: "Option",
-								type: "option",
-								options: ["File", "Link"],
-								onChange: (e) => {
-									const value = e.target.value;
-									const fileField = document.getElementById("attachments_file") as HTMLInputElement;
-									const urlField = document.getElementById("attachments_url") as HTMLInputElement;
+									id: "file_option",
+									caption: "Option",
+									type: "option",
+									options: ["File", "Link"],
+									onChange: (e) => {
+										const value = e.target.value;
+										const fileField = document.getElementById("attachments_file") as HTMLInputElement;
+										const urlField = document.getElementById("attachments_url") as HTMLInputElement;
 
-									if (fileField && urlField) {
-										const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
-										const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
+										if (fileField && urlField) {
+											const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
+											const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
 
-										if (value === "File") {
-											fileDiv?.style.setProperty("display", "block");
-											urlDiv?.style.setProperty("display", "none");
-										} else if (value === "Link") {
-											fileDiv?.style.setProperty("display", "none");
-											urlDiv?.style.setProperty("display", "block");
+											if (value === "File") {
+												fileDiv?.style.setProperty("display", "block");
+												urlDiv?.style.setProperty("display", "none");
+											} else if (value === "Link") {
+												fileDiv?.style.setProperty("display", "none");
+												urlDiv?.style.setProperty("display", "block");
+											}
 										}
-									}
+									},
 								},
-								},
-								{ id: "file", caption: "File Upload", type: "file"  }, 
-								{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
+								{id: "file", caption: "File Upload", type: "file"},
+								{id: "url", caption: "Link", type: "input", placeholder: "Enter URL"},
 							]}
 							data={(() => {
 								try {
-								  const attachments = props?.fields?.attachments;
-								  return Array.isArray(attachments) ? attachments : [];
+									const attachments = props?.fields?.attachments;
+									return Array.isArray(attachments) ? attachments : [];
 								} catch {
-								  return []; // Default to an empty array if there's an error
+									return []; // Default to an empty array if there's an error
 								}
-							  })()}							  
+							})()}
 							onChange={(items: any) => {
 								try {
 									const parsedItems = Array.isArray(items) ? items : JSON.parse(items);
@@ -416,16 +462,16 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 								let footprints: any[] = []; // Ensure it's an array
 
 								if (item?.spatialFootprint) {
-								  if (typeof item.spatialFootprint === "string") {
-									try {
-									  const parsed = JSON.parse(item.spatialFootprint);
-									  footprints = Array.isArray(parsed) ? parsed : [];
-									} catch (error) {
-									  console.error("Invalid JSON in spatialFootprint:", error);
+									if (typeof item.spatialFootprint === "string") {
+										try {
+											const parsed = JSON.parse(item.spatialFootprint);
+											footprints = Array.isArray(parsed) ? parsed : [];
+										} catch (error) {
+											console.error("Invalid JSON in spatialFootprint:", error);
+										}
+									} else if (Array.isArray(item.spatialFootprint)) {
+										footprints = item.spatialFootprint;
 									}
-								  } else if (Array.isArray(item.spatialFootprint)) {
-									footprints = item.spatialFootprint;
-								  }
 								}
 
 								return (
@@ -493,74 +539,74 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 				),
 				attachments: (
 					<>
-					{(() => {
-					try {
-						let attachments: any[] = []; // Ensure it's an array
-
-						if (item?.attachments) {
-						if (typeof item.attachments === "string") {
+						{(() => {
 							try {
-							const parsed = JSON.parse(item.attachments);
-							attachments = Array.isArray(parsed) ? parsed : [];
+								let attachments: any[] = []; // Ensure it's an array
+
+								if (item?.attachments) {
+									if (typeof item.attachments === "string") {
+										try {
+											const parsed = JSON.parse(item.attachments);
+											attachments = Array.isArray(parsed) ? parsed : [];
+										} catch (error) {
+											console.error("Invalid JSON in attachments:", error);
+										}
+									} else if (Array.isArray(item.attachments)) {
+										attachments = item.attachments;
+									}
+								}
+
+								return attachments.length > 0 ? (
+									<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
+										<thead>
+											<tr style={{backgroundColor: '#f2f2f2'}}>
+												<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Title</th>
+												<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Tags</th>
+												<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>File/URL</th>
+											</tr>
+										</thead>
+										<tbody>
+											{(attachments).map((attachment: any) => {
+												const tags = attachment.tag
+													? (attachment.tag).map((tag: any) => tag.name).join(", ")
+													: "N/A";
+												const fileOrUrl =
+													attachment.file_option === "File" && attachment.file
+														? (
+															<a href={`/disaster-event/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
+																{attachment.file.name.split("/").pop()}
+															</a>
+														)
+														: attachment.file_option === "Link"
+															? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
+															: "N/A";
+
+												return (
+													<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
+														<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>
+														<td style={{border: '1px solid #ddd', padding: '8px'}}>{tags}</td>
+														<td style={{border: '1px solid #ddd', padding: '8px'}}>{fileOrUrl}</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								) : (
+									<p></p>
+								);
 							} catch (error) {
-							console.error("Invalid JSON in attachments:", error);
+								console.error("Error processing attachments:", error);
+								return <p>Error loading attachments.</p>;
 							}
-						} else if (Array.isArray(item.attachments)) {
-							attachments = item.attachments;
-						}
-						}
-
-						return attachments.length > 0 ? (
-					  <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-					  <thead>
-						  <tr style={{ backgroundColor: '#f2f2f2' }}>
-							  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Title</th>
-							  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Tags</th>
-							  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>File/URL</th>
-						  </tr>
-					  </thead>
-						<tbody>
-						  {(attachments).map((attachment: any) => {
-							const tags = attachment.tag
-							  ? (attachment.tag).map((tag: any) => tag.name).join(", ")
-							  : "N/A";
-							const fileOrUrl =
-							  attachment.file_option === "File" && attachment.file
-								? (
-								  <a href={`/disaster-event/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
-									{attachment.file.name.split("/").pop()}
-								  </a>
-								)
-								: attachment.file_option === "Link"
-								? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
-								: "N/A";
-				
-							return (
-							  <tr key={attachment.id} style={{ borderBottom: '1px solid gray' }}>
-								  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{attachment.title || "N/A"}</td>
-								  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{tags}</td>
-								  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{fileOrUrl}</td>
-							  </tr>
-							);
-						  })}
-						</tbody>
-					  </table>
-					) : (
-							<p></p>
-						);
-						} catch (error) {
-						console.error("Error processing attachments:", error);
-						return <p>Error loading attachments.</p>;
-						}
-					})()}
+						})()}
 					</>
-				  ),
-			  }}	
+				),
+			}}
 
-			
+
 			/>
 			{/* Add Audit Log History at the end */}
-			<br/>
+			<br />
 			{auditLogs && auditLogs.length > 0 && (
 				<>
 					<h3>Audit Log History</h3>
