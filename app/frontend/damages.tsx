@@ -10,9 +10,9 @@ import {
 } from "~/frontend/form"
 
 import {DamagesFields, DamagesViewModel} from "~/backend.server/models/damages"
-import {useEffect, useRef} from "react"
+import {useEffect, useRef, useState} from "react"
 import {Link} from "@remix-run/react"
-import {UnitPicker} from "./unit_picker"
+import {unitName, UnitPicker} from "./unit_picker"
 
 import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
@@ -49,6 +49,8 @@ export function DamagesForm(props: DamagesFormProps) {
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
 
+
+
 	// handle total overrides
 	useEffect(() => {
 		let prefixes = [
@@ -60,9 +62,9 @@ export function DamagesForm(props: DamagesFormProps) {
 		let opts = (pref: string): totaloverrides.handleOverridesOpts => {
 			return {
 				formRef,
-				prefix: pref,
-				partsNames: ["CostUnit", "Units"],
-				resName: "CostTotal",
+				prefix: "",
+				partsNames: [pref + "CostUnit", pref.slice(0, 2) + "DamageAmount"],
+				resName: pref + "CostTotal",
 				calc: (parts) => parts[0] * parts[1],
 			}
 		}
@@ -93,34 +95,32 @@ export function DamagesForm(props: DamagesFormProps) {
 
 		let totalDamageAmountOpts = {
 			formRef,
-			prefix: "",
 			partsNames: ["pdDamageAmount", "tdDamageAmount"],
 			resName: "totalDamageAmount",
-			calc: (parts: number[]) => parts[0] + parts[1],
+			calc: totaloverrides.optionalSum
 		}
-		let totalRepairReplacementRecoveryOpts = {
+		let totalRepairReplacementOpts = {
 			formRef,
-			prefix: "",
-			partsNames: ["pdRepairCostTotal", "pdRecoveryCostTotal", "tdReplacementCostTotal", "tdRecoveryCostTotal"],
-			resName: "totalRepairReplacementRecovery",
-			calc: (parts: number[]) => {
-				let sum = 0
-				for (let p of parts) {
-					if (!isNaN(p)) {
-						sum += p
-					}
-				}
-				return sum
-			},
+			partsNames: ["pdRepairCostTotal", "tdReplacementCostTotal",],
+			resName: "totalRepairReplacement",
+			calc: totaloverrides.optionalSum
+		}
+		let totalRecoveryOpts = {
+			formRef,
+			partsNames: ["pdRecoveryCostTotal", "tdRecoveryCostTotal"],
+			resName: "totalRecovery",
+			calc: totaloverrides.optionalSum
 		}
 		if (formRef.current) {
 			totaloverrides.attach(totalDamageAmountOpts)
-			totaloverrides.attach(totalRepairReplacementRecoveryOpts)
+			totaloverrides.attach(totalRepairReplacementOpts)
+			totaloverrides.attach(totalRecoveryOpts)
 		}
 		return () => {
 			if (formRef.current) {
 				totaloverrides.detach(totalDamageAmountOpts)
-				totaloverrides.detach(totalRepairReplacementRecoveryOpts)
+				totaloverrides.detach(totalRepairReplacementOpts)
+				totaloverrides.detach(totalRecoveryOpts)
 			}
 		}
 	}, [props.fields])
@@ -186,6 +186,44 @@ export function DamagesForm(props: DamagesFormProps) {
 		assetIdErrors = errorsToStrings(props.errors.fields["assetId"]);
 	}
 
+	let [assetId, setAssetId] = useState(props.fields.assetId || (props.assets.length ? props.assets[0].id : ""))
+
+	let assetName = () => {
+		const asset = props.assets.find((a) => a.id === assetId)
+		return asset ? asset.label : ""
+	}
+
+	let [unitCode, setUnitCode] = useState(props.fields.unit || "number_count")
+
+	let unitNameLocal = () => {
+		if (!unitCode) {
+			return ""
+		}
+		return unitName(unitCode)
+	}
+
+	let pdDam = props.fieldDef.find(d => d.key == "pdDamageAmount")
+	if (!pdDam) {
+		throw new Error("pdDamageAmount def does not exist")
+	}
+	pdDam.label = `Amount of units (${unitNameLocal()})`
+	let tdDam = props.fieldDef.find(d => d.key == "tdDamageAmount")
+	if (!tdDam) {
+		throw new Error("tdDamageAmount def does not exist")
+	}
+	tdDam.label = `Amount of units (${unitNameLocal()})`
+
+//	let [pdDamageAmountDef, setPdDamageAmountDef] = useState(pdDam)
+	let pdDamageAmountErrors: string[] | undefined;
+	if (props.errors && props.errors.fields) {
+		assetIdErrors = errorsToStrings(props.errors.fields.pdDamageAmount);
+	}
+	//let [tdDamageAmountDef, setTdDamageAmountDef] = useState(tdDam)
+	let tdDamageAmountErrors: string[] | undefined;
+	if (props.errors && props.errors.fields) {
+		assetIdErrors = errorsToStrings(props.errors.fields.tdDamageAmount);
+	}
+
 	let override = {
 		assetId: (
 			<>
@@ -197,7 +235,8 @@ export function DamagesForm(props: DamagesFormProps) {
 								<select
 									required={true}
 									name="assetId"
-									defaultValue={props.fields.assetId || ""}
+									value={assetId}
+									onChange={(e) => setAssetId(e.target.value)}
 								>
 									{props.assets.sort((a, b) => a.label.localeCompare(b.label)).map((a) => (
 										<option key={a.id} value={a.id}>
@@ -217,13 +256,50 @@ export function DamagesForm(props: DamagesFormProps) {
 				)}
 			</>
 		),
+		pdDamageAmount:
+			<WrapInput
+				def={pdDam}
+				child={
+					<>
+						<input
+							type="text"
+							inputMode="numeric"
+							pattern="[0-9]*"
+							name="pdDamageAmount"
+							defaultValue={props.fields.pdDamageAmount || ""}
+						/>
+					</>
+				}
+				errors={pdDamageAmountErrors}
+			/>,
+		tdDamageAmount:
+			<WrapInput
+				def={tdDam}
+				child={
+					<>
+						<input
+							type="text"
+							inputMode="numeric"
+							pattern="[0-9]*"
+							name="tdDamageAmount"
+							defaultValue={props.fields.tdDamageAmount || ""}
+						/>
+					</>
+				}
+				errors={tdDamageAmountErrors}
+			/>,
 		recordId: (
 			<input key="recordId" name="recordId" type="hidden" value={props.fields.recordId} />
 		),
 		sectorId: (
 			<input key="sectorId" name="sectorId" type="hidden" value={props.fields.sectorId} />
 		),
-		unit: <UnitPicker labelPrefix="" name="unit" defaultValue={props.fields.unit || undefined} />,
+		unit: <UnitPicker labelPrefix="" name="unit" defaultValue={props.fields.unit || undefined} onChange={
+			(key) => {
+				let k = key as any
+				setUnitCode(k)
+			}
+		} />,
 
 		spatialFootprint: (
 			<Field key="spatialFootprint" label="">
@@ -523,11 +599,11 @@ export function DamagesForm(props: DamagesFormProps) {
 			fields={props.fields}
 			fieldsDef={props.fieldDef}
 			elementsAfter={{
-				totalRepairReplacementRecoveryOverride: (
-					<h2>Partially damaged</h2>
+				totalRepairReplacementOverride: (
+					<h2 className="partially-damaged-header">Partially damaged ({assetName()})</h2>
 				),
 				pdDisruptionDescription: (
-					<h2>Totally destroyed</h2>
+					<h2 className="totally-destroyed-header">Totally destroyed ({assetName()})</h2>
 				),
 				pdRecoveryCostTotalOverride: (
 					<div className="pdDisruption">
@@ -723,35 +799,40 @@ export function DamagesView(props: DamagesViewProps) {
 	}
 
 	let elementsAfter = {
-		totalRepairReplacementRecoveryOverride: (
+		totalRepairReplacementOverride: (
 			<h2>Partially damaged</h2>
 		),
 		pdDisruptionDescription: (
 			<h2>Totally destroyed</h2>
 		),
-
+		pdRecoveryCostTotalOverride: (
+			<h3>Disruption</h3>
+		),
+		tdRecoveryCostTotalOverride: (
+			<h3>Disruption</h3>
+		),
 	}
 
-	let hideDisruptionIfNoData = (publicOrPrivate: "public" | "private") => {
+	let hideDisruptionIfNoData = (pre: "pd" | "td") => {
 		let fields = ["DisruptionDurationDays", "DisruptionDurationHours", "DisruptionUsersAffected", "DisruptionPeopleAffected", "DisruptionDescription"]
 		let exists = false
 		for (let f of fields) {
-			let fName = publicOrPrivate + f as keyof DamagesViewModel
+			let fName = pre + f as keyof DamagesViewModel
 			if (props.item[fName] !== null) {
 				exists = true
 			}
 		}
 		if (!exists) {
-			let fName = publicOrPrivate + "RecoveryCostTotalOverride" as keyof (typeof elementsAfter)
+			let fName = pre + "RecoveryCostTotalOverride" as keyof (typeof elementsAfter)
 			delete elementsAfter[fName]
 			for (let f of fields) {
-				let fName = publicOrPrivate + f
+				let fName = pre + f
 				override[fName] = null
 			}
 		}
 	}
-	hideDisruptionIfNoData("public")
-	hideDisruptionIfNoData("private")
+	hideDisruptionIfNoData("pd")
+	hideDisruptionIfNoData("td")
 
 	return (
 		<ViewComponent

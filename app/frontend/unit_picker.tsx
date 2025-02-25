@@ -3,10 +3,12 @@ import {
 	Field
 } from "~/frontend/form";
 
+
 interface UnitPickerProps {
 	labelPrefix?: string
 	name: string
 	defaultValue?: string
+	onChange?: (unitKey: string) => void
 }
 
 export const unitsEnum = [
@@ -27,6 +29,11 @@ export const unitsEnum = [
 	{key: "duration_days", label: "Days"},
 	{key: "duration_hours", label: "Hours"}
 ]
+
+export function unitName(key: string): string {
+	const unit = unitsEnum.find((u) => u.key === key);
+	return unit ? unit.label : key;
+}
 
 export function UnitPicker(props: UnitPickerProps) {
 	let unitTypes = [
@@ -78,11 +85,14 @@ export function UnitPicker(props: UnitPickerProps) {
 	let handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		let newType = e.target.value
 		setSelectedType(newType)
-		setSelectedUnit(unitsMap[newType][0].key)
+		let unit = unitsMap[newType][0]
+		setSelectedUnit(unit.key)
+		if (props.onChange) props.onChange(unit.key)
 	}
 
 	let handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		setSelectedUnit(e.target.value)
+		if (props.onChange) props.onChange(e.target.value)
 	}
 
 	let prefix = props.labelPrefix ? props.labelPrefix + " " : ""

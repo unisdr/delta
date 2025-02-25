@@ -15,7 +15,7 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 	let repairOrReplacement = pre == "pd" ? "Repair" : "Replacement"
 
 	return [
-		{key: pre + "DamageAmount" as keyof DamagesFields, label: "Amount", type: "number", uiRow: {}},
+		{key: pre + "DamageAmount" as keyof DamagesFields, label: "Amount of units", type: "number", uiRow: {}},
 		{key: pre + repairOrReplacement + "CostUnit" as keyof DamagesFields, label: `Unit ${repairOrReplacement.toLowerCase()} cost`, type: "money", uiRow: {}},
 		{
 			key: pre + repairOrReplacement + "CostUnitCurrency" as keyof DamagesFields,
@@ -23,17 +23,15 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: pre + repairOrReplacement + "Units" as keyof DamagesFields, label: "Amount of units", type: "number"},
 		{key: pre + repairOrReplacement + "CostTotal" as keyof DamagesFields, label: `Total ${repairOrReplacement.toLowerCase()} cost`, type: "money"},
 		{key: pre + repairOrReplacement + "CostTotalOverride" as keyof DamagesFields, label: "Override", type: "bool"},
-		{key: pre + "RecoveryCostUnit" as keyof DamagesFields, label: "Unit recovery cost", type: "money", uiRow: {colOverride: 5}},
+		{key: pre + "RecoveryCostUnit" as keyof DamagesFields, label: "Unit recovery cost", type: "money", uiRow:{}},
 		{
 			key: pre + "RecoveryCostUnitCurrency" as keyof DamagesFields,
 			label: "Currency",
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: pre + "RecoveryUnits" as keyof DamagesFields, label: "Amount of units", type: "number"},
 		{key: pre + "RecoveryCostTotal" as keyof DamagesFields, label: "Total recovery cost", type: "money"},
 		{key: pre + "RecoveryCostTotalOverride" as keyof DamagesFields, label: "Override", type: "bool"},
 		{key: pre + "DisruptionDurationDays" as keyof DamagesFields, label: "Duration (days)", type: "number", uiRow: {}},
@@ -45,6 +43,12 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 }
 
 export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
+	let cur = ""
+	let curs = configCurrencies()
+	if (curs.length > 0){
+		cur = curs[0]
+	}
+
 	return [
 		{key: "recordId", label: "", type: "other"},
 		{key: "sectorId", label: "", type: "other"},
@@ -53,8 +57,10 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 		{key: "unit", label: "Unit", type: "enum", enumData: unitsEnum},
 		{key: "totalDamageAmount", label: "Total number of assets affected (partially damaged + totally destroyed)", type: "number", uiRow: {}},
 		{key: "totalDamageAmountOverride", label: "Override", type: "bool"},
-		{key: "totalRepairReplacementRecovery", label: "Total damage in monetary terms", type: "money"},
-		{key: "totalRepairReplacementRecoveryOverride", label: "Override", type: "bool"},
+		{key: "totalRecovery", label: `Total recovery cost (${cur})`, type: "money"},
+		{key: "totalRecoveryOverride", label: "Override", type: "bool"},
+		{key: "totalRepairReplacement", label: `Total damage in monetary terms (total repair + replacement cost) (${cur})`, type: "money"},
+		{key: "totalRepairReplacementOverride", label: "Override", type: "bool"},
 
 		// Partially destroyed
 		...fieldsForPd("pd"),
