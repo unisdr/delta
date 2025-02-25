@@ -15,6 +15,7 @@ import {
 	integer
 } from "drizzle-orm/pg-core";
 
+import {customType} from "drizzle-orm/pg-core/columns";
 import {sql, relations} from "drizzle-orm";
 
 import {
@@ -204,19 +205,43 @@ export const divisionTable = pgTable(
 	{
 		id: ourSerial("id").primaryKey(),
 		importId: text("import_id").unique(),
-		//country: ourBigint("country"),
 		parentId: ourBigint("parent_id").references(
 			(): AnyPgColumn => divisionTable.id
 		),
 		name: zeroStrMap("name"),
 		geojson: jsonb("geojson"),
 		level: ourBigint("level"),	// value is parent level + 1 otherwise 1
+
+		// Store geometry as a regular column that will be updated via trigger
+		geom: customType({
+			dataType: () => "geometry(GEOMETRY, 4326)"
+		})(),
+
+		// Store bbox as a regular column that will be updated via trigger
+		bbox: customType({
+			dataType: () => "geometry(GEOMETRY, 4326)"
+		})(),
+
+		// Spatial index will be updated via trigger
+		spatial_index: text("spatial_index").notNull()
 	},
-	(table) => [index("parent_idx").on(table.parentId)]
+	(table) => {
+		return [
+			index("parent_idx").on(table.parentId),
+			index("division_level_idx").on(table.level),
+
+			// Create GIST indexes via raw SQL since drizzle doesn't support USING clause directly
+			sql`CREATE INDEX IF NOT EXISTS "division_geom_idx" ON "division" USING GIST ("geom")`,
+			sql`CREATE INDEX IF NOT EXISTS "division_bbox_idx" ON "division" USING GIST ("bbox")`,
+
+			// Ensure all geometries are valid
+			check("valid_geom_check", sql`ST_IsValid(geom)`)
+		];
+	}
 );
 
-export const divisionParent_Rel = relations(divisionTable, ({one}) => ({
-	divisionParent: one(divisionTable, {fields: [divisionTable.parentId], references: [divisionTable.id]}),
+export const divisionParent_Rel = relations(divisionTable, ({ one }) => ({
+	divisionParent: one(divisionTable, { fields: [divisionTable.parentId], references: [divisionTable.id] }),
 }));
 
 export type Division = typeof divisionTable.$inferSelect;

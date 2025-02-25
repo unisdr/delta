@@ -12,6 +12,8 @@ import {
 } from "~/drizzle/schema";
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
+import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
 
 export async function fetchHazardImpactData(filters: HazardImpactFilters) {
     const {
@@ -23,20 +25,26 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         fromDate,
         toDate,
         disasterEventId,
-        _disasterEventId
+        _disasterEventId,
+        assessmentType = 'rapid',
+        confidenceLevel = 'medium'
     } = filters;
+
+    // Create assessment metadata
+    const metadata = createAssessmentMetadata(
+        assessmentType,
+        confidenceLevel
+    );
 
     // Base conditions including approval status
     const baseConditions = [
         sql`${disasterRecordsTable.approvalStatus} ILIKE 'approved'`
-        // Temporarily removed approval status check
     ];
 
     // Handle sector filtering using proper hierarchy
     if (sectorId) {
         const numericSectorId = parseInt(sectorId, 10);
         if (!isNaN(numericSectorId)) {
-            // Get all subsectors if this is a parent sector
             const subsectors = await getSectorsByParentId(numericSectorId);
             const sectorIds = subsectors.length > 0
                 ? [numericSectorId, ...subsectors.map(s => s.id)]
@@ -70,13 +78,11 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
 
     // Add disaster event filter if provided
     if (disasterEventId) {
-        // Ensure the disaster event ID is a valid UUID
         try {
             const eventId = _disasterEventId || disasterEventId;
             baseConditions.push(eq(disasterRecordsTable.disasterEventId, eventId));
         } catch (error) {
             console.error("Invalid disaster event ID format:", error);
-            // Return empty data if ID format is invalid
             return {
                 eventsCount: [],
                 damages: [],
@@ -115,7 +121,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         )
         .where(and(...baseConditions))
         .groupBy(hipClassTable.id, hipClassTable.nameEn)
-        .orderBy(desc(sql<number>`COUNT(${disasterRecordsTable.id})`))
+        .orderBy(desc(sql`COUNT(${disasterRecordsTable.id})`))
         .limit(10);
 
     // Calculate total events for percentage
@@ -134,12 +140,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         .select({
             hazardId: sql<string>`${hipClassTable.id}`,
             hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`,
-            value: sql`COALESCE(SUM(
-                COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
-                    COALESCE(${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}, 0), 0) +
-                COALESCE(${damagesTable.privateRepairCostTotalOverride},
-                    COALESCE(${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits}, 0), 0)
-            ), 0)`,
+            value: calculateDamages(damagesTable),
         })
         .from(disasterRecordsTable)
         .leftJoin(
@@ -168,23 +169,15 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         )
         .where(and(...baseConditions))
         .groupBy(hipClassTable.id, hipClassTable.nameEn)
-        .orderBy(desc(sql`COALESCE(SUM(
-            COALESCE(${damagesTable.publicRepairCostTotalOverride}, 
-                COALESCE(${damagesTable.publicRepairCostUnit} * ${damagesTable.publicRepairUnits}, 0), 0) +
-            COALESCE(${damagesTable.privateRepairCostTotalOverride},
-                COALESCE(${damagesTable.privateRepairCostUnit} * ${damagesTable.privateRepairUnits}, 0), 0)
-        ), 0)`))
+        .orderBy(desc(calculateDamages(damagesTable)))
         .limit(10);
 
-    // Query for losses by hazard type with the same join structure
+    // Query for losses by hazard type using standardized calculation
     const losses = await dr
         .select({
             hazardId: sql<string>`${hipClassTable.id}`,
             hazardName: sql<string>`COALESCE(${hipClassTable.nameEn}, '')`,
-            value: sql`COALESCE(SUM(
-                COALESCE(${lossesTable.publicCostTotalOverride}, 0) +
-                COALESCE(${lossesTable.privateCostTotalOverride}, 0)
-            ), 0)`,
+            value: calculateLosses(lossesTable),
         })
         .from(disasterRecordsTable)
         .leftJoin(
@@ -213,10 +206,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
         )
         .where(and(...baseConditions))
         .groupBy(hipClassTable.id, hipClassTable.nameEn)
-        .orderBy(desc(sql`COALESCE(SUM(
-            COALESCE(${lossesTable.publicCostTotalOverride}, 0) +
-            COALESCE(${lossesTable.privateCostTotalOverride}, 0)
-        ), 0)`))
+        .orderBy(desc(calculateLosses(lossesTable)))
         .limit(10);
 
     // Calculate percentages
@@ -233,6 +223,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters) {
     return {
         eventsCount: eventsCountWithPercentage,
         damages: calculatePercentages(damages),
-        losses: calculatePercentages(losses)
+        losses: calculatePercentages(losses),
+        metadata
     };
 }

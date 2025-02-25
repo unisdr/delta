@@ -20,8 +20,8 @@ out/
 .env.*
 
 # Local database files
-/local/db-backups/
-.env.local
+# /local/db-backups/
+# .env.local
 
 # Database
 app/backend.server/db/
@@ -32,12 +32,12 @@ app/drizzle/out/
 backup.sh
 backups/
 utils/
-data
-migrations
-scripts
+data/
+scripts/
 
 # Drizzle
-app/drizzle/meta/
+# app/drizzle/meta/
+# migrations/
 *.sql
 drizzle.config.js
 *_schema_snapshot.json

@@ -36,7 +36,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         parentId: divisionTable.parentId,
       })
       .from(divisionTable)
-      .where(eq(divisionTable.level, 1));
+      .where(eq(divisionTable.level, 2));
 
     const levels = await query;
 
