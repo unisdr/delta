@@ -10,7 +10,8 @@ import {
 export let loader = authLoaderApiDocs(async () => {
     let records = await getSectorsByLevel(2);
 
-    return Response.json(
-        records
-    )
+    return new Response(JSON.stringify(records), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
 });
