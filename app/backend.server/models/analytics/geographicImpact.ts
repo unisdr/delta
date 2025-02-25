@@ -28,7 +28,7 @@ import {
     divisionTable,
     type Division,
     disasterEventTable,
-    hazardEventTable,
+    hazardousEventTable,
     hipHazardTable
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
@@ -676,12 +676,12 @@ async function getDisasterRecordsForDivision(
                     eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
                 )
                 .innerJoin(
-                    hazardEventTable,
-                    eq(disasterEventTable.hazardEventId, hazardEventTable.id)
+                    hazardousEventTable,
+                    eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
                 )
                 .innerJoin(
                     hipHazardTable,
-                    eq(hazardEventTable.hazardId, hipHazardTable.id)
+                    eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
                 );
 
             // Add hazard filters
@@ -689,13 +689,7 @@ async function getDisasterRecordsForDivision(
                 conditions.push(eq(hipHazardTable.id, filters.specificHazard));
             }
             if (filters?.hazardCluster) {
-                // Convert string cluster ID to number since it's stored as bigint
-                const clusterIdNum = parseInt(filters.hazardCluster, 10);
-                if (!isNaN(clusterIdNum)) {
-                    conditions.push(eq(hipHazardTable.clusterId, clusterIdNum));
-                } else {
-                    console.warn("Invalid hazard cluster ID:", filters.hazardCluster);
-                }
+                conditions.push(eq(hipHazardTable.clusterId, filters.hazardCluster));
             }
         }
 
