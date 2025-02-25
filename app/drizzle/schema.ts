@@ -212,44 +212,32 @@ export const divisionTable = pgTable(
 		geojson: jsonb("geojson"),
 		level: ourBigint("level"),	// value is parent level + 1 otherwise 1
 
-		// Automatically convert `geojson` to a `geometry` column for faster spatial queries.
-		// This eliminates the need for manual conversion and improves performance in map-based features.
-		// The column is generated dynamically and does not require changes to CSV uploads.
+		// Store geometry as a regular column that will be updated via trigger
 		geom: customType({
-			dataType: () => "geometry(GEOMETRY, 4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakeValid(ST_GeomFromGeoJSON(geojson::text)), 4326)) STORED"
+			dataType: () => "geometry(GEOMETRY, 4326)"
 		})(),
 
-		// Add bounding box for faster overlap queries
+		// Store bbox as a regular column that will be updated via trigger
 		bbox: customType({
-			dataType: () => "geometry(GEOMETRY, 4326) GENERATED ALWAYS AS (ST_Envelope(geom)) STORED"
+			dataType: () => "geometry(GEOMETRY, 4326)"
 		})(),
 
-		// Auto-generate a unique `spatial_index` for easy spatial joins
-		spatial_index: text("spatial_index")
-			.notNull()
-			.default(sql`
-        (CASE 
-            WHEN parent_id IS NULL THEN 'L1-' || id::TEXT
-            ELSE 'L' || level::TEXT || '-' || parent_id::TEXT || '-' || id::TEXT
-        END)::TEXT
-    `)
+		// Spatial index will be updated via trigger
+		spatial_index: text("spatial_index").notNull()
 	},
-	(table) => [
-		index("parent_idx").on(table.parentId),
+	(table) => {
+		return [
+			index("parent_idx").on(table.parentId),
+			index("division_level_idx").on(table.level),
 
-		// Indexing `geom` column for fast spatial queries using GIST
-		// This ensures that location-based searches are optimized
-		index("division_geom_idx").on(sql`geom USING GIST`),
+			// Create GIST indexes via raw SQL since drizzle doesn't support USING clause directly
+			sql`CREATE INDEX IF NOT EXISTS "division_geom_idx" ON "division" USING GIST ("geom")`,
+			sql`CREATE INDEX IF NOT EXISTS "division_bbox_idx" ON "division" USING GIST ("bbox")`,
 
-		// Additional index on bounding box for faster overlap queries
-		index("division_bbox_idx").on(sql`bbox USING GIST`),
-
-		// Index on level for hierarchical queries
-		index("division_level_idx").on(table.level),
-
-		// Ensure all geometries are valid
-		check("valid_geom_check", sql`ST_IsValid(geom)`)
-	]
+			// Ensure all geometries are valid
+			check("valid_geom_check", sql`ST_IsValid(geom)`)
+		];
+	}
 );
 
 export const divisionParent_Rel = relations(divisionTable, ({ one }) => ({

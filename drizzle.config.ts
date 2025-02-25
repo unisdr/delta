@@ -14,4 +14,7 @@ export default defineConfig({
     table: "__drizzle_migrations__",
     schema: "public",
   },
+
+  // Exclude PostGIS-related tables from being managed by drizzle-kit
+  extensionsFilters: ["postgis"],
 });
