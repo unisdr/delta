@@ -9,7 +9,7 @@ import {
 
 import {dr} from "~/db.server"
 
-import {desc} from "drizzle-orm"
+import {desc, eq} from "drizzle-orm"
 import {DataScreen} from "~/frontend/data_screen"
 
 import {ActionLinks} from "~/frontend/form"
@@ -27,11 +27,12 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		throw new Error("Route does not have disRecId param")
 	}
 	let url = new URL(request.url)
-	let sectorId = url.searchParams.get("sectorId") || ""
-	if (!sectorId) {
+	let sectorIdStr = url.searchParams.get("sectorId") || ""
+	if (!sectorIdStr) {
 		console.log("sectorId was not provided in the url")
 		throw new Response("Not Found", {status: 404});
 	}
+	let sectorId = Number(sectorIdStr)
 
 	let table = lossesTable
 	let dataFetcher = async (offsetLimit: OffsetLimit) => {
@@ -43,6 +44,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				sectorId: true,
 				type: true,
 			},
+			where: eq(lossesTable.sectorId, sectorId),
 			orderBy: [desc(lossesTable.id)],
 		})
 	}
@@ -60,12 +62,12 @@ export default function Data() {
 
 	return DataScreen({
 		headerElement: (
-			<Link to={"/disaster-record/edit/"+ld.recordId}>Back to disaster record</Link>
+			<Link to={"/disaster-record/edit/" + ld.recordId}>Back to disaster record</Link>
 		),
 		plural: "Losses",
 		resourceName: "Losses",
 		baseRoute: route2(ld.recordId),
-		searchParams: new URLSearchParams([["sectorId", ld.sectorId]]),
+		searchParams: new URLSearchParams([["sectorId", String(ld.sectorId)]]),
 		columns: [
 			"ID", "Disaster Record ID", "Sector ID", "Type", "Actions"
 		],

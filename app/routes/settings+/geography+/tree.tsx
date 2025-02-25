@@ -3,8 +3,6 @@ import {
 	authLoaderWithPerm
 } from "~/util/auth";
 
-import { TreeView } from "~/frontend/treeview/view";
-
 import {NavSettings} from "~/routes/settings/nav";
 import {Link, useLoaderData} from "@remix-run/react";
 import {divisionTable} from "~/drizzle/schema";
@@ -12,6 +10,9 @@ import {eq, isNotNull, isNull, sql} from "drizzle-orm";
 import {dr} from '~/db.server';
 
 import {executeQueryForPagination2} from "~/frontend/pagination/api.server"
+
+import { TreeView, buildTree } from "~/components/TreeView";
+import "./style.css";
 
 interface ItemRes {
 	id: number
@@ -36,13 +37,21 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
     //resultRows.forEach(row => { console.log(`ID: ${row.id}, Name: ${row.name}`); });
     //console.log(q1);
 
-	return {resultRows};
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "name";
+	const rawData = await dr.select().from(divisionTable);
+
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	return {treeData};
 });
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
     
-    console.log(loaderData.resultRows);
+	const treeData = loaderData.treeData;
+    //console.log(loaderData.treeData);
 
 	return (
 		<>
@@ -55,23 +64,26 @@ export default function Screen() {
 				<NavSettings />
 			</div>
 			<section>
-				<div className="mg-container">
-
-
-					<TreeView jsonData={{a:1}}  />
-
-					<hr />
-					
-                    TREE
-                    <ul>
-                        {loaderData.resultRows.map((row) => (
-                        <li key={row.id}>
-                            <strong>{row.id}</strong>:
-                            &nbsp;
-                            <span>Name: {row.name.ph ?? row.name.en ?? 'N/A'}</span>
-                        </li>
-                        ))}
-                    </ul>
+				<div className="mg-container tabs-container">
+					<ul className="tabs">
+						<li><Link to="/settings/geography/">Table View</Link></li>
+						<li className="active"><Link to="/settings/geography/tree">Tree View</Link></li>
+					</ul>
+				</div>
+			</section>
+			<section>
+				<div className="mg-container" style={{paddingTop: "2.5rem"}}>
+					<TreeView
+						treeData={treeData as any}
+						rootCaption="Geographic levels"
+						dialogMode={false}
+						disableButtonSelect={true}
+						noSelect={true}
+						search={true}
+						expanded={true}
+						itemLink="/settings/geography/edit/[id]?view=tree"
+						expandByDefault={true}
+					/>
 				</div>
 			</section>
 		</>

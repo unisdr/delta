@@ -22,7 +22,8 @@ export function fieldsForPubOrPriv(pub: boolean): FormInputDef<LossesFields>[] {
 			type: "enum-flex",
 			enumData: configCurrencies().map(c => ({key: c, label: c}))
 		},
-		{key: pre + "CostTotalOverride" as keyof LossesFields, label: "Total Cost", type: "money", uiRow: {}},
+		{key: pre + "CostTotal" as keyof LossesFields, label: "Total Cost", type: "money", uiRow: {}},
+		{key: pre + "CostTotalOverride" as keyof LossesFields, label: "Override", type: "bool"},
 		/*
 		{
 			key: pre + "TotalCostCurrency" as keyof LossesFields,

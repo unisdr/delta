@@ -34,6 +34,11 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!id) {
 		throw new Response("Missing item ID", {status: 400});
 	}
+
+    // Get query parameter "view"
+    const url = new URL(loaderArgs.request.url);
+    const viewParam = url.searchParams.get("view");
+
 	const res = await dr.select().from(divisionTable).where(eq(divisionTable.id, Number(id)));
 
 	if (!res || res.length === 0) {
@@ -49,7 +54,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	return {
 		data: item,
-		breadcrumbs: breadcrumbs
+		breadcrumbs: breadcrumbs,
+		view: viewParam, 
 	};
 
 });
@@ -93,7 +99,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
 export default function Screen() {
 	let fields: DivitionInsert
-	const loaderData = useLoaderData<typeof loader>();
+	const loaderData = useLoaderData<typeof loader>(); //console.log('loaderData:', loaderData);
 	fields = loaderData.data;
 	let errors = {};
 	let changed = false;
@@ -112,7 +118,8 @@ export default function Screen() {
 		edit: true,
 		fields: fields,
 		errors: errors,
-		breadcrumbs: loaderData.breadcrumbs
+		breadcrumbs: loaderData.breadcrumbs,
+		view: loaderData.view,
 	})
 
 	return (

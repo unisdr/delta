@@ -9,7 +9,7 @@ import {
 
 import {dr} from "~/db.server"
 
-import {desc} from "drizzle-orm"
+import {desc, eq} from "drizzle-orm"
 import {DataScreen} from "~/frontend/data_screen"
 
 import {ActionLinks} from "~/frontend/form"
@@ -27,11 +27,12 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		throw new Error("Route does not have disRecId param")
 	}
 	let url = new URL(request.url)
-	let sectorId = url.searchParams.get("sectorId") || ""
-	if (!sectorId) {
+	let sectorIdStr = url.searchParams.get("sectorId") || ""
+	if (!sectorIdStr) {
 		console.log("sectorId was not provided in the url")
 		throw new Response("Not Found", {status: 404});
 	}
+	let sectorId = Number(sectorIdStr)
 
 	let table = damagesTable
 	let dataFetcher = async (offsetLimit: OffsetLimit) => {
@@ -42,6 +43,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				recordId: true,
 				sectorId: true,
 			},
+			where: eq(damagesTable.sectorId, sectorId),
 			orderBy: [desc(damagesTable.id)],
 		})
 	}
@@ -64,7 +66,7 @@ export default function Data() {
 		plural: "Damages",
 		resourceName: "Damage",
 		baseRoute: route2(ld.recordId),
-		searchParams: new URLSearchParams([["sectorId", ld.sectorId]]),
+		searchParams: new URLSearchParams([["sectorId", String(ld.sectorId)]]),
 		columns: [
 			"ID", "Dis Rec ID", "Sec ID", "Actions"
 		],

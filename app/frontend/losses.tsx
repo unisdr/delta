@@ -5,9 +5,6 @@ import {
 	FieldsView,
 	ViewComponent,
 	FormView,
-	WrapInput,
-	errorsToStrings,
-	WrapInputBasic
 } from "~/frontend/form"
 
 import {useEffect, useRef} from "react"
@@ -21,6 +18,8 @@ import {TreeView} from "~/components/TreeView";
 
 export const route = "/disaster-record/edit-sub/_/losses"
 
+import * as totaloverrides from "~/frontend/components/totaloverrides"
+
 export function route2(recordId: string): string {
 	return `/disaster-record/edit-sub/${recordId}/losses`
 }
@@ -31,138 +30,41 @@ interface LossesFormProps extends UserFormProps<LossesFields> {
 }
 
 export function LossesForm(props: LossesFormProps) {
-	// handle total overrides
-	// this is duplicate code from damages
-	// TODO: abstract to have 1 copy only
-	//
 	let formRef = useRef<HTMLFormElement>(null)
-	let getEl = (prefix: string, field: string): HTMLFormElement => {
-		let f = formRef.current!.querySelector('[name="' + prefix + field + '"]') as HTMLFormElement
-		return f
-	}
 
 	const treeData = props.treeData;
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
 
+	// handle total overrides
 	useEffect(() => {
-		let attach = (prefix: string) => {
-			if (!formRef.current) return
-			update(prefix)
-			let els = [
-				getEl(prefix, "CostUnit"),
-				getEl(prefix, "Units"),
-				getEl(prefix, "CostTotalOverrideCheckbox"),
-			]
-			els.forEach(el => {
-
-				el.addEventListener('input', () => {
-					update(prefix)
-				})
-			})
-		}
-		let update = (prefix: string) => {
-			if (!formRef.current) return
-
-			let costPerUnit = Number(getEl(prefix, "CostUnit").value)
-			let qtty = Number(getEl(prefix, "Units").value)
-			let r = ""
-			if (!costPerUnit || !qtty) {
-				r = ""
-			} else {
-				r = String(costPerUnit * qtty)
-			}
-			let checkbox = getEl(prefix, "CostTotalOverrideCheckbox")
-			let el = getEl(prefix, "CostTotalOverride")
-			if (!checkbox.checked) {
-				el.value = r
-				el.disabled = true
-			} else {
-				el.disabled = false
-			}
-		}
-		let detach = (prefix: string) => {
-			let els = [
-				getEl(prefix, "CostUnit"),
-				getEl(prefix, "Units"),
-				getEl(prefix, "CostTotalOverrideCheckbox"),
-			]
-			els.forEach(_el => {
-				//el.removeEventListener('change', todo)
-			})
-		}
-
 		let prefixes = [
 			"public",
 			"private",
 		]
+		let opts = (pref: string): totaloverrides.handleOverridesOpts => {
+			return {
+				formRef,
+				prefix: pref,
+				partsNames: ["CostUnit", "Units"],
+				resName: "CostTotal",
+				calc: (parts) => parts[0] * parts[1],
+			}
+		}
 		if (formRef.current) {
-			formRef.current.addEventListener("submit", () => {
-				for (let prefix of prefixes) {
-					let c = getEl(prefix, "CostTotalOverrideCheckbox")
-					if (!c.checked) {
-						let el = getEl(prefix, "CostTotalOverride")
-						el.value = ""
-					}
-				}
-			})
 			for (let pref of prefixes) {
-				attach(pref)
+				totaloverrides.attach(opts(pref))
 			}
 		}
 		return () => {
 			if (formRef.current) {
 				for (let pref of prefixes) {
-					detach(pref)
+					totaloverrides.detach(opts(pref))
 				}
 			}
 		}
 	}, [props.fields])
 
-	let totalCostOverride = (prefix: string) => {
-		let defKey = prefix + "CostTotalOverride"
-		let def = props.fieldDef.find(d => d.key == defKey)!
-		if (!def) {
-			throw new Error("def not found: " + defKey)
-		}
-		let errors: string[] | undefined;
-		let key = (prefix + "CostTotalOverride") as keyof LossesFields
-		if (props.errors && props.errors.fields) {
-			let e1 = props.errors.fields?.[key]
-			errors = errorsToStrings(e1)
-		}
-		let v = props.fields[key] as string
-		let checked = v !== null && v !== undefined
-		return <>
-			<WrapInput
-				def={def}
-				child={
-					<>
-						<input
-							name={prefix + "CostTotalOverride"}
-							type="text"
-							inputMode="decimal"
-							pattern="[0-9]*\.?[0-9]*"
-							defaultValue={v ?? ""}
-						>
-						</input>
-					</>
-				}
-				errors={errors}
-			/>
-			<WrapInputBasic
-				label="Override total cost"
-				child={
-					<input
-						name={prefix + "CostTotalOverrideCheckbox"}
-						type="checkbox"
-						defaultChecked={checked}
-					>
-					</input>
-				}
-			/>
-		</>
-	}
 
 
 	// select dropdown to show based if sector is related to agriculture
@@ -184,8 +86,6 @@ export function LossesForm(props: LossesFormProps) {
 		publicUnit: <UnitPicker name="publicUnit" defaultValue={props.fields.publicUnit || undefined} />,
 		privateUnit: <UnitPicker name="privateUnit" defaultValue={props.fields.privateUnit || undefined} />,
 
-		publicCostTotalOverride: totalCostOverride("public"),
-		privateCostTotalOverride: totalCostOverride("private"),
 		...extra,
 		spatialFootprint: (
 			<Field key="spatialFootprint" label="">
@@ -224,7 +124,7 @@ export function LossesForm(props: LossesFormProps) {
 							id: "map_option",
 							caption: "Option",
 							type: "option",
-							options: ["Map Coordinates", "Geographic Level"], 
+							options: ["Map Coordinates", "Geographic Level"],
 							onChange: (e: any) => {
 								const value = e.target.value;
 
@@ -245,7 +145,7 @@ export function LossesForm(props: LossesFormProps) {
 						{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 						{
 							id: "geographic_level", caption: "Geographic Level", type: "custom",
-							render: (data: any, handleFieldChange: any, formData: any) => {
+							render: (data: any, _handleFieldChange: any, formData: any) => {
 								return (
 									<>
 										<div className="input-group">
@@ -264,33 +164,33 @@ export function LossesForm(props: LossesFormProps) {
 					data={(() => {
 						try {
 							let spatialFootprint: any[] = []; // Ensure it's always an array
-						
+
 							if (props?.fields?.spatialFootprint) {
-							if (Array.isArray(props.fields.spatialFootprint)) {
-								spatialFootprint = props.fields.spatialFootprint;
-							} else if (typeof props.fields.spatialFootprint === "string") {
-								try {
-								const parsed = JSON.parse(props.fields.spatialFootprint);
-								spatialFootprint = Array.isArray(parsed) ? parsed : [];
-								} catch (error) {
-								console.error("Invalid JSON in spatialFootprint:", error);
-								spatialFootprint = [];
+								if (Array.isArray(props.fields.spatialFootprint)) {
+									spatialFootprint = props.fields.spatialFootprint;
+								} else if (typeof props.fields.spatialFootprint === "string") {
+									try {
+										const parsed = JSON.parse(props.fields.spatialFootprint);
+										spatialFootprint = Array.isArray(parsed) ? parsed : [];
+									} catch (error) {
+										console.error("Invalid JSON in spatialFootprint:", error);
+										spatialFootprint = [];
+									}
+								} else {
+									console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
+									spatialFootprint = [];
 								}
-							} else {
-								console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
-								spatialFootprint = [];
 							}
-							}
-						
+
 							return spatialFootprint;
 						} catch (error) {
 							console.error("Error processing spatialFootprint:", error);
 							return [];
 						}
-						})()}
-					onChange={(items: any) => {
+					})()}
+					onChange={(_items: any) => {
 						try {
-							const parsedItems = Array.isArray(items) ? items : (items);
+							//const _parsedItems = Array.isArray(items) ? items : (items);
 						} catch {
 							console.error("Failed to process items.");
 						}
@@ -348,15 +248,15 @@ export function LossesForm(props: LossesFormProps) {
 					file_viewer_url="/disaster-record/file-viewer?loc=losses"
 					api_upload_url="/disaster-record/file-pre-upload"
 					table_columns={[
-						{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
-						{ 
+						{type: "dialog_field", dialog_field_id: "title", caption: "Title"},
+						{
 							type: "custom", caption: "Tags",
 							render: (item: any) => {
 								try {
 									if (!item.tag) {
 										return "N/A"; // Return "N/A" if no tags exist
 									}
-									
+
 									const tags = (item.tag); // Parse the JSON string
 									if (Array.isArray(tags) && tags.length > 0) {
 										// Map the names and join them with commas
@@ -367,100 +267,100 @@ export function LossesForm(props: LossesFormProps) {
 									console.error("Failed to parse tags:", error);
 									return "N/A"; // Return "N/A" if parsing fails
 								}
-							} 
+							}
 						},
 						{
-						type: "custom",
-						caption: "File/URL",
-						render: (item) => {
-							let strRet = "N/A"; // Default to "N/A"		
+							type: "custom",
+							caption: "File/URL",
+							render: (item) => {
+								let strRet = "N/A"; // Default to "N/A"		
 
-							const fileOption = item?.file_option || "";
+								const fileOption = item?.file_option || "";
 
-							if (fileOption === "File") {
-								// Get the file name or fallback to URL
-								const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-							
-								// Truncate long file names while preserving the file extension
-								const maxLength = 30; // Adjust to fit your design
-								strRet = fullFileName;
-							
-								if (fullFileName && fullFileName.length > maxLength) {
-									const extension = fullFileName.includes('.')
-										? fullFileName.substring(fullFileName.lastIndexOf('.'))
-										: '';
-									const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
-									strRet = `${baseName}...${extension}`;
+								if (fileOption === "File") {
+									// Get the file name or fallback to URL
+									const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
+
+									// Truncate long file names while preserving the file extension
+									const maxLength = 30; // Adjust to fit your design
+									strRet = fullFileName;
+
+									if (fullFileName && fullFileName.length > maxLength) {
+										const extension = fullFileName.includes('.')
+											? fullFileName.substring(fullFileName.lastIndexOf('.'))
+											: '';
+										const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
+										strRet = `${baseName}...${extension}`;
+									}
+								} else if (fileOption === "Link") {
+									strRet = item.url || "N/A";
 								}
-							} else if (fileOption === "Link") {
-								strRet = item.url || "N/A";
-							}
-						
-							return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
+
+								return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
+							},
 						},
-						},                        
-						{ type: "action", caption: "Action" },
+						{type: "action", caption: "Action"},
 					]}
 					dialog_fields={[
-						{ id: "title", caption: "Title", type: "input" },
-						{ id: "tag", show: false, caption: "Tags", type: "tokenfield", dataSource: [{ id: 1, name: "React" }, { id: 2, name: "Vue" }, { id: 3, name: "Angular" }, { id: 4, name: "Svelte" }, { id: 5, name: "SolidJS" } , { id: 6, name: "Remix" }] },
+						{id: "title", caption: "Title", type: "input"},
+						{id: "tag", show: false, caption: "Tags", type: "tokenfield", dataSource: [{id: 1, name: "React"}, {id: 2, name: "Vue"}, {id: 3, name: "Angular"}, {id: 4, name: "Svelte"}, {id: 5, name: "SolidJS"}, {id: 6, name: "Remix"}]},
 						{
-						id: "file_option",
-						caption: "Option",
-						type: "option",
-						options: ["File", "Link"],
-						onChange: (e) => {
-							const value = e.target.value;
-							const fileField = document.getElementById("attachments_file") as HTMLInputElement;
-							const urlField = document.getElementById("attachments_url") as HTMLInputElement;
+							id: "file_option",
+							caption: "Option",
+							type: "option",
+							options: ["File", "Link"],
+							onChange: (e) => {
+								const value = e.target.value;
+								const fileField = document.getElementById("attachments_file") as HTMLInputElement;
+								const urlField = document.getElementById("attachments_url") as HTMLInputElement;
 
-							if (fileField && urlField) {
-								const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
-								const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
+								if (fileField && urlField) {
+									const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
+									const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
 
-								if (value === "File") {
-									fileDiv?.style.setProperty("display", "block");
-									urlDiv?.style.setProperty("display", "none");
-								} else if (value === "Link") {
-									fileDiv?.style.setProperty("display", "none");
-									urlDiv?.style.setProperty("display", "block");
+									if (value === "File") {
+										fileDiv?.style.setProperty("display", "block");
+										urlDiv?.style.setProperty("display", "none");
+									} else if (value === "Link") {
+										fileDiv?.style.setProperty("display", "none");
+										urlDiv?.style.setProperty("display", "block");
+									}
 								}
-							}
+							},
 						},
-						},
-						{ id: "file", caption: "File Upload", type: "file"  }, 
-						{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
+						{id: "file", caption: "File Upload", type: "file"},
+						{id: "url", caption: "Link", type: "input", placeholder: "Enter URL"},
 					]}
 					data={(() => {
 						try {
 							let attachments: any[] = []; // Ensure it's always an array
-						
+
 							if (props?.fields?.attachments) {
-							if (Array.isArray(props.fields.attachments)) {
-								attachments = props.fields.attachments;
-							} else if (typeof props.fields.attachments === "string") {
-								try {
-								const parsed = JSON.parse(props.fields.attachments);
-								attachments = Array.isArray(parsed) ? parsed : [];
-								} catch (error) {
-								console.error("Invalid JSON in attachments:", error);
-								attachments = [];
+								if (Array.isArray(props.fields.attachments)) {
+									attachments = props.fields.attachments;
+								} else if (typeof props.fields.attachments === "string") {
+									try {
+										const parsed = JSON.parse(props.fields.attachments);
+										attachments = Array.isArray(parsed) ? parsed : [];
+									} catch (error) {
+										console.error("Invalid JSON in attachments:", error);
+										attachments = [];
+									}
+								} else {
+									console.warn("Unexpected type for attachments:", typeof props.fields.attachments);
+									attachments = [];
 								}
-							} else {
-								console.warn("Unexpected type for attachments:", typeof props.fields.attachments);
-								attachments = [];
 							}
-							}
-						
+
 							return attachments;
 						} catch (error) {
 							console.error("Error processing attachments:", error);
 							return [];
 						}
-						})()}
-					onChange={(items: any) => {
+					})()}
+					onChange={(_items: any) => {
 						try {
-							const parsedItems = Array.isArray(items) ? items : (items);
+							//const _parsedItems = Array.isArray(items) ? items : (items);
 							//console.log("Updated Items:", parsedItems);
 							// Save or process `parsedItems` here, e.g., updating state or making an API call
 						} catch {
@@ -503,24 +403,6 @@ interface LossesViewProps {
 }
 
 export function LossesView(props: LossesViewProps) {
-	// calculate totals for display only
-	for (let prefix of [
-		"public",
-		"private",
-	]) {
-		let keyTotal = prefix + "CostTotalOverride" as keyof LossesViewModel
-		let keyCostPerUnit = prefix + "CostUnit" as keyof LossesViewModel
-		let keyUnits = prefix + "Units" as keyof LossesViewModel
-		if (!props.item[keyTotal]) {
-			let costPerUnit = props.item[keyCostPerUnit]
-			let units = props.item[keyUnits]
-			if (costPerUnit && units) {
-				let res = Math.round(Number(costPerUnit) * Number(units))
-				let item = props.item as any
-				item[keyTotal] = String(res)
-			}
-		}
-	}
 
 	// select field to show based if sector is related to agriculture
 	let extra = props.item.sectorIsAgriculture ? {
@@ -551,21 +433,21 @@ export function LossesView(props: LossesViewProps) {
 						let footprints: any[] = []; // Ensure it's always an array
 
 						if (props?.item?.spatialFootprint) {
-						  if (Array.isArray(props.item.spatialFootprint)) {
-							footprints = props.item.spatialFootprint;
-						  } else if (typeof props.item.spatialFootprint === "string") {
-							try {
-							  const parsed = JSON.parse(props.item.spatialFootprint);
-							  footprints = Array.isArray(parsed) ? parsed : [];
-							} catch (error) {
-							  console.error("Invalid JSON in spatialFootprint:", error);
-							  footprints = [];
+							if (Array.isArray(props.item.spatialFootprint)) {
+								footprints = props.item.spatialFootprint;
+							} else if (typeof props.item.spatialFootprint === "string") {
+								try {
+									const parsed = JSON.parse(props.item.spatialFootprint);
+									footprints = Array.isArray(parsed) ? parsed : [];
+								} catch (error) {
+									console.error("Invalid JSON in spatialFootprint:", error);
+									footprints = [];
+								}
+							} else {
+								console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
+								footprints = [];
 							}
-						  } else {
-							console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
-							footprints = [];
-						  }
-						}					
+						}
 
 						return (
 							<>
@@ -632,70 +514,70 @@ export function LossesView(props: LossesViewProps) {
 		),
 		attachments: (
 			<>
-			{(() => {
-				try {
-				let attachments: any[] = []; // Ensure it's always an array
-
-				if (props?.item?.attachments) {
-					if (Array.isArray(props.item.attachments)) {
-					attachments = props.item.attachments;
-					} else if (typeof props.item.attachments === "string") {
+				{(() => {
 					try {
-						const parsed = JSON.parse(props.item.attachments);
-						attachments = Array.isArray(parsed) ? parsed : [];
-					} catch (error) {
-						console.error("Invalid JSON in attachments:", error);
-						attachments = [];
-					}
-					} else {
-					console.warn("Unexpected type for attachments:", typeof props.item.attachments);
-					attachments = [];
-					}
-				}
+						let attachments: any[] = []; // Ensure it's always an array
 
-				return attachments.length > 0 ? (
-			  <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-			  <thead>
-				  <tr style={{ backgroundColor: '#f2f2f2' }}>
-					  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Title</th>
-					  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Tags</th>
-					  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>File/URL</th>
-				  </tr>
-			  </thead>
-				<tbody>
-				  {(attachments).map((attachment: any) => {
-					const tags = attachment.tag
-					  ? (attachment.tag).map((tag: any) => tag.name).join(", ")
-					  : "N/A";
-					const fileOrUrl =
-					  attachment.file_option === "File" && attachment.file
-						? (
-						  <a href={`/disaster-record/file-viewer/?name=${props.item.id}/${attachment.file.name.split("/").pop()}&loc=losses`} target="_blank" rel="noopener noreferrer">
-							{attachment.file.name.split("/").pop()}
-						  </a>
-						)
-						: attachment.file_option === "Link"
-						? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
-						: "N/A";
-		
-					return (
-					  <tr key={attachment.id} style={{ borderBottom: '1px solid gray' }}>
-						  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{attachment.title || "N/A"}</td>
-						  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{tags}</td>
-						  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{fileOrUrl}</td>
-					  </tr>
-					);
-				  })}
-				</tbody>
-			  </table>
-				) : (<></>);
-				} catch (error) {
-				console.error("Error processing attachments:", error);
-				return <p>Error loading attachments.</p>;
-				}
-			})()}
+						if (props?.item?.attachments) {
+							if (Array.isArray(props.item.attachments)) {
+								attachments = props.item.attachments;
+							} else if (typeof props.item.attachments === "string") {
+								try {
+									const parsed = JSON.parse(props.item.attachments);
+									attachments = Array.isArray(parsed) ? parsed : [];
+								} catch (error) {
+									console.error("Invalid JSON in attachments:", error);
+									attachments = [];
+								}
+							} else {
+								console.warn("Unexpected type for attachments:", typeof props.item.attachments);
+								attachments = [];
+							}
+						}
+
+						return attachments.length > 0 ? (
+							<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
+								<thead>
+									<tr style={{backgroundColor: '#f2f2f2'}}>
+										<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Title</th>
+										<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Tags</th>
+										<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>File/URL</th>
+									</tr>
+								</thead>
+								<tbody>
+									{(attachments).map((attachment: any) => {
+										const tags = attachment.tag
+											? (attachment.tag).map((tag: any) => tag.name).join(", ")
+											: "N/A";
+										const fileOrUrl =
+											attachment.file_option === "File" && attachment.file
+												? (
+													<a href={`/disaster-record/file-viewer/?name=${props.item.id}/${attachment.file.name.split("/").pop()}&loc=losses`} target="_blank" rel="noopener noreferrer">
+														{attachment.file.name.split("/").pop()}
+													</a>
+												)
+												: attachment.file_option === "Link"
+													? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
+													: "N/A";
+
+										return (
+											<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
+												<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>
+												<td style={{border: '1px solid #ddd', padding: '8px'}}>{tags}</td>
+												<td style={{border: '1px solid #ddd', padding: '8px'}}>{fileOrUrl}</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						) : (<></>);
+					} catch (error) {
+						console.error("Error processing attachments:", error);
+						return <p>Error loading attachments.</p>;
+					}
+				})()}
 			</>
-		  ),
+		),
 	}
 
 	return (

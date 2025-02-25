@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { get } from "~/backend.server/models/human_effects";
+import { Link } from "@remix-run/react";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
@@ -192,9 +193,11 @@ interface TreeViewProps {
     expanded?: boolean; 
     onItemClick?: ((e: any, dialogRefCurrent: any) => void) | undefined;
     defaultSelectedIds?: number[];
+    itemLink?: string;
+    expandByDefault?: boolean;
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [] }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [], itemLink = "", expandByDefault = false }, ref: any) => {
     const expandedNodesRef = useRef<{ [key: number]: boolean }>({});
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
@@ -427,33 +430,26 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             const newState = { ...prev, [e.target.closest("li").getAttribute("data-id")]: e.target.checked };
             return newState;
         });
-
-        /*const checkbox = e.target;
-        const isChecked = checkbox.checked;
-        const listItem = checkbox.closest("li"); // Get the <li> container
-        const dataIds = listItem.getAttribute("data-ids")?.split(",") || [];
-        const dataId = listItem.getAttribute("data-id");
-    
-        // Auto-check parents up to the root when an item is checked
-        if (isChecked) {
-            dataIds.forEach((ancestorId: any) => {
-                const ancestorCheckbox = document.querySelector(`li[data-id="${ancestorId}"] > .tree-checkbox`) as HTMLInputElement;
-                if (ancestorCheckbox) {
-                    ancestorCheckbox.checked = true;
-                }
-            });
-        }
-    
-        // Auto-uncheck all children when an item is unchecked
-        if (!isChecked) {
-            listItem.querySelectorAll(".tree-checkbox").forEach((childCheckbox: any) => {
-                childCheckbox.checked = false;
-            });
-        }*/
     };
    
     const renderItemName = (node: any, parentIds: any) => {
         return onRenderItemName ? onRenderItemName(node) : {};
+    };
+
+    const renderItem = (node: any) => {
+        let link = itemLink ? itemLink.replace("[id]", node.id) : "";
+    
+        return (
+            <>
+                {link ? (
+                    <Link to={link}>
+                        <span>{node.name}</span>
+                    </Link>
+                ) : (
+                    <span>{node.name}</span>
+                )}
+            </>
+        );
     };
 
     // Render tree recursively
@@ -479,7 +475,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                 )}
 
                                 <div {...renderItemName(enrichedNode, parentIds)} onClick={treeViewClick}>
-                                    <span>{enrichedNode.name}</span>
+                                    {renderItem(enrichedNode)}
                                     {(!multiSelect && !noSelect) && (
                                         <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
                                     )}
@@ -509,7 +505,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
                                 )}
 
                                 <div {...renderItemName(enrichedNode, parentIds)} onClick={treeViewClick}>
-                                    <span>{enrichedNode.name}</span> 
+                                    {renderItem(enrichedNode)}
                                     {(!multiSelect && !noSelect) && (
                                         <button className="btn-face select" onClick={(e) => itemSelect(e)}> Select </button>
                                     )}
@@ -725,6 +721,14 @@ useEffect(() => {
     setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers minimal re-renders
 }, [checkedItems, treeData]); // ✅ Removed `expanded` dependency to prevent unnecessary updates
 
+useEffect(() => {
+    if (expandByDefault) {
+        const allExpandedNodes: { [key: number]: boolean } = {};
+        treeData.forEach((node) => expandRecursive(node, allExpandedNodes));
+        expandedNodesRef.current = allExpandedNodes;
+        setExpandedNodes({ ...allExpandedNodes }); // ✅ Ensures a single re-render
+    }
+}, [expandByDefault, treeData]); // ✅ Runs when `treeData` or `expandByDefault` changes
 
 
     return (

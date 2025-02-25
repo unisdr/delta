@@ -4,6 +4,7 @@ interface MainContainerProps {
 	title: string;
 	children: React.ReactNode;
 	headerExtra?: React.ReactNode;
+	headerAfter?: React.ReactNode;
 }
 
 export function MainContainer(props: MainContainerProps) {
@@ -17,6 +18,7 @@ export function MainContainer(props: MainContainerProps) {
 				</header>
 				{props.headerExtra}
 			</div>
+			{props.headerAfter}
 			<section>
 				<div className="mg-container">
 					<div>{props.children}</div>
