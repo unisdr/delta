@@ -321,7 +321,21 @@ export const initTokenField = (
       }
     }
   });
-   
+  
+// Prevent closing dropdown when clicking inside it
+dropdown.addEventListener('mousedown', (event) => {
+  event.preventDefault(); // Prevents blur event from firing
+});
+
+// Modify blur event to allow interactions inside dropdown
+editableInput.addEventListener('blur', () => {
+  setTimeout(() => {
+    if (!dropdown.contains(document.activeElement) && document.activeElement !== editableInput) {
+      dropdown.style.display = 'none';
+    }
+  }, 100); // Small delay to allow focus shift
+});
+
   editableInput.addEventListener('click', () => {
     dropdown.innerHTML = ''; // Clear any previous content
   
