@@ -371,6 +371,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	otherId1: zeroText("other_id1"),
 	otherId2: zeroText("other_id2"),
 	otherId3: zeroText("other_id3"),
+	nameNational: zeroText("name_national"),
 	glide: zeroText("glide"),
 	nameGlobalOrRegional: zeroText("name_global_or_regional"),
 	startDate: timestamp("start_date"),
