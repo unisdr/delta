@@ -581,6 +581,7 @@ export const damagesTable = pgTable("damages", {
 
 	// Totally destroyed
 	tdDamageAmount: ourBigint("td_damage_amount"),
+	tdReplacementCostUnit: ourMoney("td_replacement_cost_unit"),
 	tdReplacementCostUnitCurrency: text("td_replacement_cost_unit_currency"),
 	tdReplacementUnits: ourBigint("td_replacement_units"),
 	tdReplacementCostTotal: ourMoney("td_replacement_cost_total"),
