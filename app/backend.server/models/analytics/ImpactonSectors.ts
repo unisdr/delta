@@ -161,7 +161,7 @@ const getDisasterRecordsForSector = async (
   // Build the where conditions
   const conditions: SQL<unknown>[] = [
     inArray(disasterRecordsTable.sectorId, sectorIds),
-    sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'approved'`
+    sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'completed'`
   ];
 
   // Handle geographic level filtering first if present
