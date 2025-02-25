@@ -23,6 +23,7 @@
 
 import { SQL, sql } from "drizzle-orm";
 import { dr as db } from "~/db.server";
+import { configCurrencies } from "~/util/config";
 import type {
     DisasterImpactMetadata,
     AssessmentType,
@@ -106,10 +107,11 @@ export const createAssessmentMetadata = (
     assessmentType: AssessmentType = 'rapid',
     confidenceLevel: ConfidenceLevel = 'medium'
 ): DisasterImpactMetadata => {
+    const currencies = configCurrencies();
     return {
         assessmentType,
         confidenceLevel,
-        currency: 'USD', // Default currency, should be configurable
+        currency: currencies[0] || 'USD', // Use first configured currency or USD as fallback
         assessmentDate: new Date().toISOString(),
         assessedBy: 'DTS Analytics System',
         notes: 'Automatically generated assessment based on database records'

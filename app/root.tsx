@@ -28,7 +28,14 @@ import {
 
 import { useEffect, useState } from "react";
 
-import { configApprovedRecordsArePublic, configSiteLogo, configSiteName, configFooterURLPrivPolicy, configFooterURLTermsConds } from "~/util/config";
+import {
+	configApprovedRecordsArePublic,
+	configSiteLogo,
+	configSiteName,
+	configFooterURLPrivPolicy,
+	configFooterURLTermsConds,
+	configCurrencies
+} from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
 
@@ -62,6 +69,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		confSiteLogo: configSiteLogo(),
 		confFooterURLPrivPolicy: configFooterURLPrivPolicy(),
 		confFooterURLTermsConds: configFooterURLTermsConds(),
+		env: {
+			CURRENCY_CODES: process.env.CURRENCY_CODES || ''
+		}
 	}, {
 		headers: {
 			"Set-Cookie": await sessionCookie().commitSession(session),
@@ -169,18 +179,18 @@ function InactivityWarning(props: InactivityWarningProps) {
 
 // Create a new QueryClient instance outside of component to ensure consistent instance
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 30000,
-    },
-  },
+	defaultOptions: {
+		queries: {
+			refetchOnWindowFocus: false,
+			retry: false,
+			staleTime: 30000,
+		},
+	},
 });
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const { hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds } = loaderData
+	const { hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, env } = loaderData
 
 	// Display toast for flash messages
 	useEffect(() => {

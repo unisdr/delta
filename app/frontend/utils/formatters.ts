@@ -1,24 +1,51 @@
+import { useMatches } from "@remix-run/react";
+
+interface RootLoaderData {
+    hasPublicSite: boolean;
+    loggedIn: boolean;
+    flashMessage?: string;
+    confSiteName: string;
+    confSiteLogo: string;
+    confFooterURLPrivPolicy: string;
+    confFooterURLTermsConds: string;
+    env: {
+        CURRENCY_CODES: string;
+    };
+}
+
 interface CurrencyOptions {
     currency?: string;
     locale?: string;
 }
 
-export const formatCurrency = (value: string | number, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' = 'thousands'): string => {
+export const useDefaultCurrency = (): string => {
+    const matches = useMatches();
+    const rootData = matches[0]?.data as RootLoaderData;
+    return rootData?.env?.CURRENCY_CODES?.split(',')[0]?.trim() || 'USD';
+};
+
+export const formatCurrencyWithCode = (value: string | number, currencyCode: string, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' = 'thousands'): string => {
     let numValue = typeof value === 'string' ? parseFloat(value) : value;
     let suffix = '';
     if (scale === 'thousands') {
         numValue /= 1000;
-        suffix = 'K'; // K denotes thousands
+        suffix = 'K';
     } else if (scale === 'millions') {
         numValue /= 1000000;
-        suffix = 'M'; // M denotes millions
+        suffix = 'M';
     }
+
     return new Intl.NumberFormat(options.locale || 'en-US', {
         style: 'currency',
-        currency: options.currency || 'PHP',
+        currency: currencyCode,
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(numValue) + suffix;
+};
+
+// This is a non-hook version that uses a default currency
+export const formatCurrency = (value: string | number, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' = 'thousands'): string => {
+    return formatCurrencyWithCode(value, options.currency || 'USD', options, scale);
 };
 
 export const formatNumber = (value: string | number, locale: string = 'en-US'): string => {

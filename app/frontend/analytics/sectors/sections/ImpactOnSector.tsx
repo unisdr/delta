@@ -11,7 +11,7 @@ import {
 import { useQuery } from "react-query";
 import { createFloatingTooltip, FloatingTooltipProps } from "~/util/tooltip";
 import { IoInformationCircleOutline } from "react-icons/io5";
-import { formatCurrency, formatNumber, formatPercentage } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode, formatNumber, formatPercentage, useDefaultCurrency } from "~/frontend/utils/formatters";
 import { useLoaderData } from "@remix-run/react";
 
 // Types
@@ -118,7 +118,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, t
     return null;
 };
 
-const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
+const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     const eventsImpactingRef = useRef<HTMLButtonElement>(null);
     const eventsOverTimeRef = useRef<HTMLButtonElement>(null);
     const damageTooltipRef = useRef<HTMLButtonElement>(null);
@@ -285,6 +285,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
         }
         return 'All Hazards';
     };
+
+    const currency = useDefaultCurrency();
+    const formatMoneyValue = (value: number) => formatCurrencyWithCode(value, currency);
 
     console.log('Debug - Component State:', {
         sectorId,
@@ -500,7 +503,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-d">
-                            <span>{data?.totalDamage ? formatCurrency(totalDamage) : "No data available"}</span>
+                            <span>{data?.totalDamage ? formatMoneyValue(totalDamage) : "No data available"}</span>
                         </div>
                         <div style={{ height: "300px" }}>
                             {damageData && damageData.length > 0 ? (
@@ -515,7 +518,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="year" />
                                         <YAxis
-                                            tickFormatter={(value) => formatCurrency(value, { currency: 'PHP' }, 'thousands')}
+                                            tickFormatter={(value) => formatMoneyValue(value)}
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
@@ -526,7 +529,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                     payload={payload}
                                                     label={label}
                                                     title="Damage"
-                                                    formatter={formatCurrency}
+                                                    formatter={formatMoneyValue}
                                                 />
                                             )}
                                         />
@@ -554,7 +557,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-c">
-                            <span>{data?.totalLoss ? formatCurrency(totalLoss) : "No data available"}</span>
+                            <span>{data?.totalLoss ? formatMoneyValue(totalLoss) : "No data available"}</span>
                         </div>
                         <div style={{ height: "300px" }}>
                             {lossData && lossData.length > 0 ? (
@@ -569,7 +572,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="year" />
                                         <YAxis
-                                            tickFormatter={(value) => formatCurrency(value, { currency: 'PHP' }, 'thousands')}
+                                            tickFormatter={(value) => formatMoneyValue(value)}
                                             domain={[0, 'auto']}
                                             width={100}
                                         />
@@ -580,7 +583,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
                                                     payload={payload}
                                                     label={label}
                                                     title="Loss"
-                                                    formatter={formatCurrency}
+                                                    formatter={formatMoneyValue}
                                                 />
                                             )}
                                         />
