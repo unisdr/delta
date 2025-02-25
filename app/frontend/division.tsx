@@ -20,6 +20,7 @@ interface DivisionFormProps {
 	fields: DivitionInsert;
 	errors: any
 	breadcrumbs: DivisionBreadcrumbRow[] | null
+	view?: string | null
 }
 
 /*
@@ -35,7 +36,7 @@ export function dataFieldsFromMap(data: { [key: string]: string }): DataFields {
 */
 
 
-export function DivisionForm({edit, fields, errors, breadcrumbs}: DivisionFormProps) {
+export function DivisionForm({edit, fields, errors, breadcrumbs, view}: DivisionFormProps) {
 	return (
 		<>
 			<h2>{edit ? "Edit Division" : "Create Division"}</h2>
@@ -66,7 +67,8 @@ export function DivisionForm({edit, fields, errors, breadcrumbs}: DivisionFormPr
 				<SubmitButton className="mg-button mg-button-primary" label={edit ? "Update Division" : "Create Division"} />
 			</Form>
 
-			<Link to={"/settings/geography?parent=" + fields.parentId}>Back to List</Link>
+		    {!view && <Link to={"/settings/geography?parent=" + fields.parentId}>Back to List</Link>}
+			{view && <Link to={"/settings/geography/tree"}>Back to List</Link>}
 		</>
 	);
 }

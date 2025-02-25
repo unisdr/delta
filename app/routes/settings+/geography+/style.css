@@ -1,0 +1,30 @@
+.tabs {
+    display: flex;
+    /* border-bottom: 1px solid #ddd; */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.tabs li {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #888; /* Inactive tabs are gray */
+}
+.tabs li.active {
+    font-weight: bold;
+    color: #333; /* Active tab is black */
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    background: #fff;
+}
+.tabs li.active a {
+    color: #333;
+}
+
+.mg-container.tabs-container {
+    border-bottom: 1px solid #ddd;
+}

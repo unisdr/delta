@@ -15,7 +15,7 @@ import {executeQueryForPagination2} from "~/frontend/pagination/api.server"
 import {Breadcrumb} from "~/frontend/division";
 import {MainContainer} from "~/frontend/container";
 
-
+import "./style.css";
 
 interface ItemRes {
 	id: number
@@ -145,9 +145,19 @@ export default function Screen() {
 		<MainContainer
 			title="Geographic levels"
 			headerExtra={<NavSettings />}
+			headerAfter={
+				<section>
+					<div className="mg-container tabs-container">
+						<ul className="tabs">
+							<li className="active"><Link to="/settings/geography/">Table View</Link></li>
+							<li><Link to="/settings/geography/tree">Tree View</Link></li>
+						</ul>
+					</div>
+				</section>	
+			}
 		>
 			<>
-				<p>
+				<p style={{marginTop: "2.5rem"}}>
 					<a href="/settings/geography/upload">Upload CSV</a>
 				</p>
 				{ld.pagination.totalItems > 0 ? (
