@@ -96,12 +96,34 @@ export function disasterRecordsLink(args: {
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 	const {fields, treeData, cpDisplayName} = props;
-	const treeViewRef = useRef<any>(null);
 
 	useEffect(() => {
 	}, []);
 
+	const dialogTreeViewRef = useRef<any>(null);
+	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
+	const treeViewDiscard = (e?: any) => {
+		if (e) e.preventDefault();
+		dialogTreeViewRef.current?.close();
+		treeViewRef.current.treeViewClear();
+	}
+	const treeViewOpen = (e: any) => {
+		e.preventDefault();
+		dialogTreeViewRef.current?.showModal();
+
+		let contHeight = [] as number[];
+		contHeight[0] = (dialogTreeViewRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
+		contHeight[1] = (dialogTreeViewRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
+		contHeight[2] = (dialogTreeViewRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
+		contHeight[3] = (dialogTreeViewRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
+		let getHeight = contHeight[0] - contHeight[1] - contHeight[2];
+
+		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
+		if (dtsFormBody) {
+			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+		}
+	}
 
 	return (
 		<>
@@ -157,7 +179,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 										id: "map_option",
 										caption: "Option",
 										type: "option",
-										options: ["Map Coordinates", "Geographic Level"], 
+										options: ["Map Coordinates", "Geographic Level"],
 										onChange: (e: any) => {
 											const value = e.target.value;
 	
@@ -178,13 +200,13 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 									{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 									{
 										id: "geographic_level", caption: "Geographic Level", type: "custom",
-										render: (data: any, handleFieldChange: any, formData: any) => {
+										render: (data: any, _handleFieldChange: any, formData: any) => {
 											return (
 												<>
 													<div className="input-group">
 														<div id="spatialFootprint_geographic_level_container" className="wrapper">
 															<span onClick={() => {previewGeoJSON(formData['geojson'])}}>{data}</span>
-															<a href="#" className="btn" onClick={(e) => {e.preventDefault(); treeViewRef.current?.treeViewOpen(e);}}><img src="/assets/icons/globe.svg" alt="Globe SVG File" title="Globe SVG File" />Select</a>
+															<a href="#" className="btn" onClick={treeViewOpen}><img src="/assets/icons/globe.svg" alt="Globe SVG File" title="Globe SVG File" />Select</a>
 														</div>
 														<textarea id="spatialFootprint_geographic_level" name="spatialFootprint_geographic_level" className="dts-hidden-textarea" style={{display: "none"}}></textarea>
 													</div>
@@ -229,45 +251,60 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 									}
 								}}
 							/>
-							<TreeView
-								ref={treeViewRef}
-								treeData={treeData ?? []}
-								caption="Select Geographic level"
-								rootCaption="Geographic levels"
-								onApply={
-									(selectedItems: any) => {
-										if (contentReapeaterRef.current.getDialogRef()) {
-											contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
-											selectedItems.data.map((item: any) => {
-												if (item.id == selectedItems.selectedId) {
-													contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-													const setField = {id: "geojson", value: JSON.parse(item.geojson)};
-													contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
+							<dialog ref={dialogTreeViewRef} className="dts-dialog tree-dialog">
+								<div className="dts-dialog__content">
+									<div className="dts-dialog__header" style={{justifyContent: "space-between"}}>
+										<h2 className="dts-heading-2" style={{marginBottom: "0px"}}>Select Geographic level</h2>
+										<a type="button" aria-label="Close dialog" onClick={treeViewDiscard}>
+											<svg aria-hidden="true" focusable="false" role="img">
+												<use href={`/assets/icons/close.svg#close`}></use>
+											</svg>
+										</a>
+									</div>
+									<TreeView
+										dialogMode={false}
+										ref={treeViewRef}
+										treeData={treeData ?? []}
+										caption="Select Geographic level"
+										rootCaption="Geographic levels"
+										onApply={
+											(selectedItems: any) => {
+												if (contentReapeaterRef.current.getDialogRef()) {
+													contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
+													selectedItems.data.map((item: any) => {
+														if (item.id == selectedItems.selectedId) {
+															contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
+															const setField = {id: "geojson", value: JSON.parse(item.geojson)};
+															contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
 	
-													const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
-													contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
+															const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
+															contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
+														}
+													});
+													treeViewDiscard();
 												}
-											});
+											}
 										}
-									}
-								}
-								onRenderItemName={
-									(item: any) => {
-										return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
-									}
-								}
-								appendCss={
-									`
-										ul.tree li div[disable="true"] {
-											color: #ccc;
+										onRenderItemName={
+											(item: any) => {
+												return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
+											}
 										}
-										ul.tree li div[disable="true"] .btn-face.select {
-											display: none;
+										appendCss={
+											`
+												ul.tree li div[disable="true"] {
+													color: #ccc;
+												}
+												ul.tree li div[disable="true"] .btn-face.select {
+													display: none;
+												}
+											`
 										}
-									`
-								}
-								disableButtonSelect={true}
-							/>
+										disableButtonSelect={true}
+										showActionFooter={true}
+									/>
+								</div>
+							</dialog>
 						</Field>
 					),
 				}}
