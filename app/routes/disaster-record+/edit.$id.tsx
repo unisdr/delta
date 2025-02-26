@@ -139,7 +139,7 @@ export default function Screen() {
 							<div className="dts-form__intro">
 								<legend className="dts-heading-3">Human Direct Effects</legend>
 							</div>
-							<div className="dts-form__body">
+							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">
 									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>
 								</div>
@@ -186,7 +186,7 @@ export default function Screen() {
 							<div className="dts-form__intro">
 								<legend className="dts-heading-3">Sectors</legend>
 							</div>
-							<div className="dts-form__body">
+							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">
 									<Link to={`/disaster-record/edit-sec/${ld.item.id}`}>[ Add new record ]</Link>
 								</div>
@@ -268,7 +268,12 @@ export default function Screen() {
 														</td>
 														<td>
 															{ ld.item && ld.item.id && (
-																<Link to={`/disaster-record/edit-sec/${ld.item.id}/?id=${item.disRecSectorsId}`}>Edit</Link>
+																<>
+																	<Link to={`/disaster-record/edit-sec/${ld.item.id}/delete/?id=${item.disRecSectorsId}`}>Delete</Link>
+																	&nbsp;|&nbsp;
+																	<Link to={`/disaster-record/edit-sec/${ld.item.id}/?id=${item.disRecSectorsId}`}>Edit</Link>
+																</>
+
 															)}
 														</td>
 													</tr>
@@ -286,7 +291,7 @@ export default function Screen() {
 						<fieldset className="dts-form__section">
 							<div className="dts-form__intro">
 								<legend className="dts-heading-3">Non-economic Losses</legend>
-								<div className="dts-form__body">
+								<div className="dts-form__body no-border-bottom">
 									<div className="dts-form__section-remove">
 										<Link to={`${route}/non-economic-losses/${ld.item.id}`}>[ Add new record ]</Link>
 									</div>
@@ -311,7 +316,11 @@ export default function Screen() {
 															<td>{ item.noneccoDesc.slice(0, 300) }</td>
 															<td>
 																{ ld.item && ld.item.id && (
-																	<Link to={`${route}/non-economic-losses/${ld.item.id}/?id=${item.noneccoId}`}>Edit</Link>
+																	<>
+																		<span>Delete</span>
+																		&nbsp;|&nbsp;
+																		<Link to={`${route}/non-economic-losses/${ld.item.id}/?id=${item.noneccoId}`}>Edit</Link>
+																	</>
 																)}
 															</td>
 														</tr>
