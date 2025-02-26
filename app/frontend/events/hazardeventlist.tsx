@@ -65,7 +65,7 @@ export function ListView(args: ListViewArgs) {
 			<div className="dts-filter">
 				<h3>Filters</h3>
 				<Form className="dts-form">
-					<HazardPicker name="hazardId" hip={hip} defaultValue={filters.hazardId || ""} />
+					<HazardPicker hip={hip} hazardId={filters.hipHazardId} clusterId={filters.hipClusterId} classId={filters.hipClassId} />
 					<div className="dts-form__actions">
 						<input type="submit" value="Apply" className="mg-button mg-button-primary" />
 						<Link to={args.basePath} className="mg-button mg-button-outline">Clear filters</Link>

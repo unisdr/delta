@@ -5,10 +5,14 @@ import {
 	disasterEventTable,
 	disasterRecordsTable
 } from '~/drizzle/schema'
+import {createTestData} from './hip_test'
 
 export const testDisasterRecord1Id = "d85f02a4-5f39-45d8-9669-5089cfd49554"
 
 export async function createTestDisasterRecord1(tx: Tx) {
+
+	await createTestData()
+
 	let res1 = await tx.insert(eventTable)
 		.values({})
 		.returning({id: eventTable.id})
@@ -16,6 +20,7 @@ export async function createTestDisasterRecord1(tx: Tx) {
 	await tx.insert(hazardousEventTable)
 		.values({
 			id: id1,
+			hipClassId: "class1",
 			startDate: new Date(),
 			endDate: new Date(),
 		})
@@ -24,7 +29,7 @@ export async function createTestDisasterRecord1(tx: Tx) {
 		.values({})
 		.returning({id: eventTable.id})
 	let id2 = res2[0].id
-	 await tx.insert(disasterEventTable)
+	await tx.insert(disasterEventTable)
 		.values({
 			id: id2,
 			hazardousEventId: id1

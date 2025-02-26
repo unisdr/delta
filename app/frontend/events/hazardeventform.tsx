@@ -196,7 +196,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 				hipClusterId: null,
 				hipHazardId: (
 					<Field key="hazardId" label="Specific Hazard *">
-						<HazardPicker hip={props.hip} defaultValue={fields.hipHazardId || ""} required={true} />
+						<HazardPicker hip={props.hip} classId={fields.hipClassId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} required={true} />
 						<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
 					</Field>
 				),

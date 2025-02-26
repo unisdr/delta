@@ -2,7 +2,10 @@ import {useState, useEffect} from "react"
 import {Field} from "~/frontend/form"
 
 export interface HazardPickerProps {
-	defaultValue: string
+	// selected/default values
+	classId?: string | null
+	clusterId?: string | null
+	hazardId?: string | null
 	hip: Hip
 	required?: boolean
 	name?: string
@@ -52,26 +55,36 @@ export function HazardPicker(props: HazardPickerProps) {
 	const [selectedHazard, setSelectedHazard] = useState<string | null>(null)
 
 	useEffect(() => {
-		if (!props.defaultValue) {
-			setSelectedClass(null)
-			setSelectedCluster(null)
-			setSelectedHazard(null)
-			return
+		let clusterId = ""
+		if (props.hazardId) {
+			setSelectedHazard(props.hazardId)
+			const defaultHazard = hazards.find((h) => h.id == props.hazardId)
+			if (!defaultHazard) {
+				throw "hazard not found"
+			}
+			clusterId = defaultHazard.clusterId
 		}
-		setSelectedHazard(props.defaultValue)
-		const defaultHazard = hazards.find((h) => h.id == props.defaultValue)
-		if (!defaultHazard) {
-			throw "hazard not found"
+		if (props.clusterId) {
+			clusterId = props.clusterId
 		}
-		setSelectedCluster(defaultHazard.clusterId)
-		const defaultCluster = clusters.find(
-			(c) => c.id === defaultHazard.clusterId
-		)
-		if (!defaultCluster) {
-			throw "cluster not found"
+		let classId = ""
+		if (clusterId) {
+			setSelectedCluster(clusterId)
+			const defaultCluster = clusters.find(
+				(c) => c.id === clusterId
+			)
+			if (!defaultCluster) {
+				throw "cluster not found"
+			}
+			classId = defaultCluster.classId
 		}
-		setSelectedClass(defaultCluster.classId)
-	}, [props.defaultValue])
+		if (props.classId) {
+			classId = props.classId
+		}
+		if (classId) {
+			setSelectedClass(classId)
+		}
+	}, [props.classId, props.clusterId, props.hazardId])
 
 
 	let filteredClasses = classes
@@ -176,8 +189,12 @@ export function HazardPicker(props: HazardPickerProps) {
 							name="hipClusterId"
 							value={selectedCluster || ""}
 							onChange={(e) => {
-								setSelectedCluster(e.target.value)
+								let clusterId = e.target.value
 								setSelectedHazard("")
+								setSelectedCluster(clusterId)
+								let matchedCluster = clusters.find((c) => c.id === clusterId)
+								let matchedClass = classes.find((c) => c.id === matchedCluster?.classId)
+								setSelectedClass(matchedClass?.id || null)
 							}}
 						//disabled={!filteredClusters.length}
 						>

@@ -30,8 +30,15 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	const url = new URL(request.url);
 	let extraParams = ["hazardId"];
 
-	const filters: {hazardId: string; approvalStatus?: approvalStatusIds} = {
-		hazardId: url.searchParams.get("hazardId") || "",
+	const filters: {
+		hipHazardId: string;
+		hipClusterId: string;
+		hipClassId: string;
+		approvalStatus?: approvalStatusIds
+	} = {
+		hipHazardId: url.searchParams.get("hipHazardId") || "",
+		hipClusterId: url.searchParams.get("hipClusterId") || "",
+		hipClassId: url.searchParams.get("hipClassId") || "",
 		approvalStatus: "completed",
 	};
 
@@ -63,7 +70,9 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 				}
 			},
 			where: and(
-				filters.hazardId ? eq(hazardousEventTable.hipHazardId, filters.hazardId) : undefined,
+				filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
+				filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
+				filters.hipClassId ? eq(hazardousEventTable.hipClassId, filters.hipClassId) : undefined,
 				filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
 			),
 		})

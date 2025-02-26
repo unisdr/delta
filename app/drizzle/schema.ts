@@ -69,7 +69,7 @@ function apiImportIdField() {
 	};
 }
 
-function hipRelationColumns() {
+function hipRelationColumnsRequired() {
 	return {
 		hipHazardId: text("hip_hazard_id")
 			.references((): AnyPgColumn => hipHazardTable.id),
@@ -77,6 +77,7 @@ function hipRelationColumns() {
 			.references((): AnyPgColumn => hipClusterTable.id),
 		hipClassId: text("hip_class_id")
 			.references((): AnyPgColumn => hipClassTable.id)
+			.notNull()
 	}
 }
 
@@ -306,7 +307,7 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
 	...apiImportIdField(),
-	...hipRelationColumns(),
+	...hipRelationColumnsRequired(),
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
