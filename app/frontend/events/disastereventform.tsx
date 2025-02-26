@@ -47,9 +47,9 @@ export const fieldsDefCommon = [
 	// keep
 	{key: "nameGlobalOrRegional", label: "Global/Regional Name", desc: "Disaster event name in global or regional databases - name ( if applicable)", type: "text"},
 	// keep
-	{key: "startDate", label: "Start Date", type: "date", uiRow: {}},
+	{key: "startDate", label: "Start Date", type: "date_optional_precision", uiRow: {}},
 	// keep
-	{key: "endDate", label: "End Date", type: "date"},
+	{key: "endDate", label: "End Date", type: "date_optional_precision"},
 	// keep
 	{key: "startDateLocal", label: "Start Date in local format ", type: "text", uiRow: {}},
 	// keep

@@ -8,7 +8,6 @@ import {
 
 import { Pagination } from "~/frontend/pagination/view"
 
-import { formatDate } from "~/util/date"
 
 import { HazardPicker } from "~/frontend/hip/hazardpicker"
 
@@ -128,10 +127,10 @@ export function ListView(args: ListViewArgs) {
 										</td>
 									)}
 									<td>
-										{formatDate(item.startDate)}
+										{item.startDate}
 									</td>
 									<td>
-										{formatDate(item.endDate)}
+										{item.endDate}
 									</td>
 									<td>
 										{item.hipHazardId}

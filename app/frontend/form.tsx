@@ -3,7 +3,7 @@ import {useLoaderData} from "@remix-run/react";
 import {Link} from "@remix-run/react";
 
 import {useActionData} from "@remix-run/react";
-import {ReactElement, useRef} from "react";
+import {ReactElement, useRef, useState} from "react";
 
 import {formatDate} from "~/util/date";
 import {MainContainer} from "./container";
@@ -257,6 +257,7 @@ export type FormInputType =
 	| "text"
 	| "textarea"
 	| "date"
+	| "date_optional_precision" // yyyy,yyyy-mm,yyyy-mm-dd
 	| "number"
 	| "money"
 	| "bool"
@@ -307,15 +308,15 @@ export function fieldsFromMap<T>(
 			let k = field.key;
 			let vs = data[field.key] || "";
 			switch (field.type) {
-				case "other":
-					return [k, vs];
 				case "number":
 					return [k, Number(vs)];
+				case "other":
 				case "money":
-					return [k, vs];
 				case "text":
-					return [k, vs];
 				case "textarea":
+				case "date_optional_precision":
+				case "enum-flex":
+				case "enum":
 					return [k, vs];
 				case "date":
 					if (!vs) {
@@ -324,10 +325,6 @@ export function fieldsFromMap<T>(
 					return [k, new Date(vs)];
 				case "bool":
 					return [k, Boolean(vs)];
-				case "enum":
-					return [k, vs];
-				case "enum-flex":
-					return [k, vs];
 			}
 		})
 	) as T;
@@ -532,6 +529,7 @@ export function Input(props: InputProps) {
 				child={child}
 				errors={props.errors}
 			/>
+
 		)
 	}
 	switch (props.def.type) {
@@ -605,6 +603,68 @@ export function Input(props: InputProps) {
 					defaultValue={defaultValueTextArea}
 				/>
 			);
+		case "date_optional_precision":
+			{
+				let vsInit = (props.value || "") as string
+				let precisionInit: "yyyy-mm-dd" | "yyyy-mm" | "yyyy" = "yyyy-mm-dd"
+				// yyyy-mm-dd
+				let vsFullInit = vsInit
+				if (vsInit) {
+					if (vsInit.length == 10) {
+					} else if (vsInit.length == 7) {
+						vsFullInit += "-01"
+						precisionInit = "yyyy-mm"
+					} else if (vsInit.length == 4) {
+						vsFullInit += "-01-01"
+						precisionInit = "yyyy"
+					} else {
+					}
+				}
+				let toDB = (vs: string, prec: "yyyy-mm-dd" | "yyyy-mm" | "yyyy") => {
+					if (prec == "yyyy") {
+						return vs.slice(0, 4)
+					} else if (prec == "yyyy-mm") {
+						return vs.slice(0, 7)
+					}
+					return vs
+				}
+				let [vsDB, vsDBSet] = useState(vsInit)
+				let [vsFull, vsFullSet] = useState(vsFullInit)
+				let [precision, precisionSet] = useState(precisionInit)
+				return <div>
+					<input type="hidden" name={props.name} value={vsDB} />
+					{wrapInput(
+						<input
+							required={props.def.required}
+							type="date"
+							value={vsFull}
+							onChange={(e: any) => {
+								let v = e.target.value
+								vsFullSet(v)
+								vsDBSet(toDB(v, precision))
+							}}
+						/>)
+					}
+					<WrapInputBasic
+						label="Precision"
+						child={
+							<select
+								value={precision}
+								onChange={(e: any) => {
+									let p = e.target.value
+									precisionSet(p)
+									vsDBSet(toDB(vsFull, p))
+								}}
+							>
+								<option value="yyyy-mm-dd">Full date (yyyy-mm-dd)</option>
+								<option value="yyyy-mm">Year and month (yyyy-mm)</option>
+								<option value="yyyy">Year only (yyyy)</option>
+							</select>
+						}
+					/>
+
+				</div >
+			}
 		case "text":
 		case "date":
 		case "number":
@@ -765,7 +825,8 @@ export function FieldView(props: FieldViewProps) {
 		case "textarea":
 		case "text":
 		case "money":
-			if (typeof props.value !== "string"){
+		case "date_optional_precision":
+			if (typeof props.value !== "string") {
 				throw new Error(`invalid data for field ${props.def.key}, not a string, got: ${props.value}`)
 			}
 			let str = props.value as string;
@@ -864,11 +925,11 @@ interface ViewScreenPropsWithDef<T, X> {
 
 export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{ 
-		item: T; 
-		def: FormInputDef<X>[]; 
+	const ld = useLoaderData<{
+		item: T;
+		def: FormInputDef<X>[];
 		extraData?: any;
-	  }>();
+	}>();
 	if (!ld.item) {
 		throw "invalid";
 	}
@@ -876,7 +937,7 @@ export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 		throw "def missing"
 	}
 	const extraData = ld?.extraData || {};
-	return <ViewComponent item={ld.item} def={ld.def} {...(extraData ? { extraData } : {})} />;
+	return <ViewComponent item={ld.item} def={ld.def} {...(extraData ? {extraData} : {})} />;
 }
 
 interface ViewScreenPublicApprovedProps<T> {

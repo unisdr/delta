@@ -18,8 +18,8 @@ function testHazardFields(id: number) {
 		hipClassId: "class1",
 		hipClusterId: "cluster1",
 		hipHazardId: "hazard1",
-		startDate: new Date("2024-12-30"),
-		endDate: new Date("2024-12-31"),
+		startDate: "2024-12-30",
+		endDate: "2024-12-31",
 		description: `Test hazard event ${id}`,
 		chainsExplanation: "Test explanation",
 		magnitude: "Moderate",
@@ -66,12 +66,12 @@ describe("hazardous_event", async () => {
 			id = res.id
 		}
 		{
-			data.endDate = new Date("2025-01-01")
+			data.endDate = "2025-01-01"
 			let res = await hazardousEventUpdate(dr, id, data)
 			assert(res.ok)
 			let got = await hazardousEventById(id)
 			assert(got)
-			assert(got.endDate!.getTime() == data.endDate.getTime())
+			assert(got.endDate! == data.endDate)
 		}
 	})
 

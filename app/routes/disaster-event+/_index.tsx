@@ -2,7 +2,6 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { disasterEventsLoader } from "~/backend.server/handlers/events/disasterevent";
 
 import { DataScreen } from "~/frontend/data_screen";
-import { formatDate } from "~/util/date";
 import { ActionLinks } from "~/frontend/form";
 
 import { route } from "~/frontend/events/disastereventform";
@@ -49,8 +48,8 @@ export default function Data() {
 					</td>
 				)}
 				<td>{item.hazardousEvent && hazardousEventLink(item.hazardousEvent)}</td>
-				<td>{formatDate(item.startDate)}</td>
-				<td>{formatDate(item.endDate)}</td>
+				<td>{item.startDate}</td>
+				<td>{item.endDate}</td>
 
 				<td>
 					{ld.isPublic ? null : <ActionLinks route={route} id={item.id} />}

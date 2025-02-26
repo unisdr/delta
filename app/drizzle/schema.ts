@@ -326,8 +326,9 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	// otherId1: zeroText("otherId1"),
 	//duration: zeroText("duration"),
 	nationalSpecification: zeroText("national_specification"),
-	startDate: timestamp("start_date").notNull(),
-	endDate: timestamp("end_date").notNull(),
+	// yyyy or yyyy-mm or yyyy-mm-dd in utc
+	startDate: zeroText("start_date"),
+	endDate: zeroText("end_date"),
 	description: zeroText("description"),
 	warningIssuedSummary: zeroText("warning_issued_summary"),
 	warningIssuedBy: zeroText("warning_issued_by"),
@@ -386,8 +387,9 @@ export const disasterEventTable = pgTable("disaster_event", {
 	nameNational: zeroText("name_national"),
 	glide: zeroText("glide"),
 	nameGlobalOrRegional: zeroText("name_global_or_regional"),
-	startDate: timestamp("start_date"),
-	endDate: timestamp("end_date"),
+	// yyyy or yyyy-mm or yyyy-mm-dd in utc
+	startDate: zeroText("start_date"),
+	endDate: zeroText("end_date"),
 	startDateLocal: text("start_date_local"),
 	endDateLocal: text("end_date_local"),
 	durationDays: ourBigint("duration_days"),
@@ -938,6 +940,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	disasterEventId: uuid("disaster_event_id")
 		.references((): AnyPgColumn => disasterEventTable.id),
 	locationDesc: text("location_desc"),
+	// yyyy or yyyy-mm or yyyy-mm-dd in utc
 	startDate: text("start_date"),
 	endDate: text("end_date"),
 	localWarnInst: text("local_warn_inst"),
