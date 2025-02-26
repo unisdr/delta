@@ -146,3 +146,8 @@ export async function lossesDeleteById(id: string): Promise<DeleteResult> {
 	return {ok: true}
 }
 
+export async function lossesDeleteBySectorId(id: number): Promise<DeleteResult> {
+	await dr.delete(lossesTable).where(eq(lossesTable.sectorId, id));
+
+	return {ok: true}
+}

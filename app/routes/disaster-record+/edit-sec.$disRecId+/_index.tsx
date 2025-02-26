@@ -34,7 +34,7 @@ import { isEmpty } from "ol/extent";
 
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
-import { contentPickerConfigSector } from "./content-picker-config";
+import { contentPickerConfigSector } from "../content-picker-config";
 //#Sector: End
 
 // Meta function for page SEO
@@ -390,8 +390,6 @@ export default function Screen() {
 								<div className="dts-form-component__label">
 									<span>&nbsp;</span>
 								</div>
-								<Link className="mg-button mg-button-secondary" to={ locationUrlPath }>Clear</Link>
-								&nbsp;
 								<button name="submit_btn" value={'form'} ref={formRefSubmit}  className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
 									Save Changes
 								</button>
