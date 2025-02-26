@@ -14,8 +14,8 @@ export const loader = async ({
 			);
 		}
 
-		const totalRepairCost = await calculateTotalRecoveryCost(disaster_event_id);
-		return Response.json({ total_repair_cost: totalRepairCost });
+		const totalRecoveryCost = await calculateTotalRecoveryCost(disaster_event_id);
+		return Response.json({ total_recovery_cost: totalRecoveryCost });
 	} catch (error) {
 		console.error("Error fetching recovery cost:", error);
 		return Response.json({ error: "Internal server error" }, { status: 500 });
