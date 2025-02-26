@@ -50,6 +50,11 @@ export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
 	...fieldsDefCommon
 ];
 
+export const fieldsDefApi: FormInputDef<DisasterRecordsFields>[] = [
+	...fieldsDef,
+	{key: "apiImportId", label: "", type: "other"},
+];
+
 export const fieldsDefView: FormInputDef<DisasterRecordsViewModel>[] = [
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},

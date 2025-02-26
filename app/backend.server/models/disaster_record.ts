@@ -47,30 +47,19 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 	return {ok: true, id: res[0].id};
 }
 
-export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: DisasterRecordsFields): Promise<UpdateResult<DisasterRecordsFields>> {
-	let errors = validate(fields);
+export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Partial<DisasterRecordsFields>): Promise<UpdateResult<DisasterRecordsFields>> {
+	let errors: Errors<DisasterRecordsFields> = {};
+	errors.fields = {};
+	errors.form = [];
 	if (hasErrors(errors)) {
-		return {ok: false, errors};
+		return {ok: false, errors: errors}
 	}
+
+	
 	let id = idStr;
 	await tx.update(disasterRecordsTable)
 		.set({
-			disasterEventId: fields.disasterEventId,
-			locationDesc: fields.locationDesc,
-			startDate: fields.startDate,
-			endDate: fields.endDate,
-			localWarnInst: fields.localWarnInst,
-			primaryDataSource: fields.primaryDataSource,
-			otherDataSource: fields.otherDataSource,
-			fieldAssessDate: fields.fieldAssessDate,
-			assessmentModes: fields.assessmentModes,
-			originatorRecorderInst: fields.originatorRecorderInst,
-			validatedBy: fields.validatedBy,
-			checkedBy: fields.checkedBy,
-			dataCollector: fields.dataCollector,
-			approvalStatus: fields.approvalStatus,
-			spatialFootprint: fields.spatialFootprint,
-			updatedAt: sql`NOW()`,
+			...fields
 		})
 		.where(eq(disasterRecordsTable.id, id));
 
@@ -80,6 +69,18 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Disas
 export type DisasterRecordsViewModel = Exclude<Awaited<ReturnType<typeof disasterRecordsById>>,
 	undefined
 >;
+
+export async function disasterRecordsIdByImportId(tx: Tx, importId: string) {
+	const res = await tx.select({
+		id: disasterRecordsTable.id
+	}).from(disasterRecordsTable).where(eq(
+		disasterRecordsTable.apiImportId, importId
+	))
+	if (res.length == 0) {
+		return null
+	}
+	return res[0].id
+}
 
 export async function disasterRecordsById(idStr: string) {
 	return disasterRecordsByIdTx(dr, idStr);
