@@ -9,7 +9,7 @@ import {
 
 import {dr} from "~/db.server"
 
-import {desc, eq} from "drizzle-orm"
+import {and, desc, eq} from "drizzle-orm"
 import {DataScreen} from "~/frontend/data_screen"
 
 import {ActionLinks} from "~/frontend/form"
@@ -43,7 +43,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				recordId: true,
 				sectorId: true,
 			},
-			where: eq(damagesTable.sectorId, sectorId),
+			where: and(eq(damagesTable.sectorId, sectorId), eq(damagesTable.recordId, recordId)),
 			orderBy: [desc(damagesTable.id)],
 		})
 	}
