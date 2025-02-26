@@ -29,7 +29,7 @@ import { string } from "prop-types";
 
 //#Category: Start
 import { ContentPicker } from "~/components/ContentPicker";
-import { contentPickerConfigCategory } from "./content-picker-config";
+import { contentPickerConfigCategory } from "../content-picker-config";
 //#Category: End
 
 // Meta function for page SEO

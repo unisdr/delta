@@ -34,7 +34,7 @@ import { isEmpty } from "ol/extent";
 
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
-import { contentPickerConfigSector } from "./content-picker-config";
+import { contentPickerConfigSector } from "../content-picker-config";
 //#Sector: End
 
 // Meta function for page SEO

@@ -12,6 +12,7 @@ import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector";
 import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard";
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
+import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 
 // Types
 interface Sector {
@@ -35,7 +36,7 @@ const queryClient = new QueryClient({
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
   // Get currency from environment variable
   const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
-  
+
   return json({
     currency,
     loaderArgs
@@ -53,7 +54,7 @@ export const meta: MetaFunction = ({ data }) => {
 // React component for Sectors Analysis page
 function SectorsAnalysisContent() {
   const { currency } = useLoaderData<typeof loader>();
-  
+
   // State declarations
   const [isMounted, setIsMounted] = useState(false);
   const [filters, setFilters] = useState<{
@@ -143,6 +144,9 @@ function SectorsAnalysisContent() {
 
               {/* Impact by Geographic Level */}
               <ImpactMap filters={filters} />
+
+              {/* Effect Details Section */}
+              <EffectDetails filters={filters} currency={currency} />
             </div>
           )}
 
@@ -180,7 +184,6 @@ function SectorsAnalysisContent() {
                 color: "#555",
               }}
             >
-              <li>Effect details in sectors</li>
               <li>The most damaging events for sectors</li>
             </ul>
             <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
