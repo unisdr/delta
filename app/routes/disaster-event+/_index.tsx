@@ -48,7 +48,7 @@ export default function Data() {
 						></span>
 					</td>
 				)}
-				<td>{hazardousEventLink(item.hazardousEvent)}</td>
+				<td>{item.hazardousEvent && hazardousEventLink(item.hazardousEvent)}</td>
 				<td>{formatDate(item.startDate)}</td>
 				<td>{formatDate(item.endDate)}</td>
 

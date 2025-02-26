@@ -33,10 +33,10 @@ export function validate(fields: Partial<HazardousEventFields>): Errors<Hazardou
 	errors.fields = {};
 
 	let requiredHip = getRequiredAndSetToNullHipFields(fields)
-	if (requiredHip){
-		if (requiredHip == "class"){
+	if (requiredHip) {
+		if (requiredHip == "class") {
 			errors.fields.hipHazardId = ["HIP class is required"]
-		} else if (requiredHip == "cluster"){
+		} else if (requiredHip == "cluster") {
 			errors.fields.hipHazardId = ["HIP cluster is required"]
 		} else {
 			throw new Error("unknown field: " + requiredHip)
@@ -357,14 +357,18 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	let errors: Errors<DisasterEventFields> = {};
 	errors.fields = {};
 	errors.form = [];
-	if (!fields.hazardousEventId) {
-		errors.fields.hazardousEventId = ["Select hazardous event"]
-	} else if (!isValidUUID(fields.hazardousEventId)) {
-		errors.fields.hazardousEventId = ["Hazardous event invalid id format"]
+	/*
+	if (!fields.hazardousEventId && !fields.hipClassId) {
+		errors.fields.hazardousEventId = ["Select hazardous event or HIP class"]
+	} else {
+		if (fields.hazardousEventId && !isValidUUID(fields.hazardousEventId)) {
+			errors.fields.hazardousEventId = ["Hazardous event invalid id format"]
+		}
 	}
 	if (hasErrors(errors)) {
 		return {ok: false, errors: errors}
 	}
+ */
 
 
 	let eventId = "";
@@ -479,6 +483,9 @@ export async function disasterEventByIdTx(tx: Tx, id: any) {
 			hazardousEvent: {
 				with: hazardBasicInfoJoin
 			},
+			hipHazard: true,
+			hipCluster: true,
+			hipClass: true,
 			event: {
 				with: {
 					ps: true,

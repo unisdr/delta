@@ -19,11 +19,14 @@ import {
 	ViewComponent,
 	FormView,
 	FieldErrors,
-	Field
+	Field,
+	WrapInputBasic
 } from "~/frontend/form";
 import {approvalStatusField} from "../approval";
 import {formatDate} from "~/util/date";
 import AuditLogHistory from "~/components/AuditLogHistory";
+import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
+import {HipHazardInfo} from "~/frontend/hip/hip";
 
 export const route = "/disaster-event"
 
@@ -80,7 +83,7 @@ export const fieldsDefCommon = [
 	// keep
 	{key: "reAssessmentDate", label: "Re-Assessment Date", type: "date"},
 	// keep
-	{key: "dataSource", label: "Data Source", type: "text", uiRow: {label:"Data source"}},
+	{key: "dataSource", label: "Data Source", type: "text", uiRow: {label: "Data source"}},
 	// remove
 	{key: "recordingInstitution", label: "Recording institution", type: "text"},
 	{key: "effectsTotalUsd", label: "Effects ( damages+ losses) total ( in monetary terms - USD", type: "money", uiRow: {label: "Effects"}},
@@ -91,7 +94,7 @@ export const fieldsDefCommon = [
 	{key: "responseOperationsCostsLocalCurrency", label: "Response operations costs ( total expenditure, in local currency)", type: "money", uiRow: {}},
 	{key: "responseCostTotalLocalCurrency", label: "(Emergency) Response cost - total - in local currency", type: "money", uiRow: {}},
 	{key: "responseCostTotalUSD", label: "(Emergency) Response cost - total - in USD", type: "money"},
-	{key: "humanitarianNeedsDescription", label: "Humanitarian needs - description", type: "textarea", uiRow:{}},
+	{key: "humanitarianNeedsDescription", label: "Humanitarian needs - description", type: "textarea", uiRow: {}},
 
 	{key: "humanitarianNeedsLocalCurrency", label: "Humanitarian needs - total in local currency", type: "money", uiRow: {}},
 	{key: "humanitarianNeedsUSD", label: "Humanitarian needs - total in USD", type: "money"},
@@ -113,26 +116,35 @@ export const fieldsDefCommon = [
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 	{key: "hazardousEventId", label: "", type: "other"},
+	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
+	{key: "hipClusterId", label: "", type: "other"},
+	{key: "hipClassId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
 
 export const fieldsDefApi: FormInputDef<DisasterEventFields>[] = [
-	...fieldsDef,
+	{key: "hazardousEventId", label: "", type: "other"},
+	...fieldsDefCommon,
 	{key: "apiImportId", label: "", type: "other"},
 ];
 
 export const fieldsDefView: FormInputDef<DisasterEventViewModel>[] = [
-	...fieldsDef,
+	{key: "hazardousEventId", label: "", type: "other"},
+	{key: "hipHazard", label: "", type: "other"},
+	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},
 	{key: "updatedAt", label: "", type: "other"},
 ];
 
 interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
-	hazardousEvent?: HazardousEventBasicInfoViewModel
+	hip: Hip;
+	hazardousEvent?: HazardousEventBasicInfoViewModel | null
 	treeData: any[];
 }
 
 export function DisasterEventForm(props: DisasterEventFormProps) {
+	const fields = props.fields;
+
 	const [selectedHazardousEvent, setSelectedHazardousEvent] = useState(props.hazardousEvent);
 	const treeData = props.treeData;
 
@@ -169,9 +181,17 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
 		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+			dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
 		}
 	}
+
+	let hazardousEventLinkInitial: "none" | "hazardous_event" | "hip" = "none"
+	if (props.fields.hazardousEventId) {
+		hazardousEventLinkInitial = "hazardous_event"
+	} else if (props.fields.hipClassId) {
+		hazardousEventLinkInitial = "hip"
+	}
+	const [hazardousEventLinkType, setHazardousEventLinkType] = useState(hazardousEventLinkInitial)
 
 	return (
 		<FormView
@@ -183,15 +203,37 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 			errors={props.errors}
 			fields={props.fields}
 			fieldsDef={fieldsDef}
+			infoNodes={<>
+				<div className="mg-grid mg-grid__col-3">
+					<WrapInputBasic label="Hazardous event link" child={
+						<select defaultValue={hazardousEventLinkType} onChange={(e: any) => setHazardousEventLinkType(e.target.value)}>
+							<option value="none">No link</option>
+							<option value="hazardous_event">Hazardous event</option>
+							<option value="hip">HIP Hazard</option>
+						</select>
+					} />
+				</div>
+			</>
+			}
 			override={{
 				hazardousEventId:
-					<Field key="hazardousEventId" label="Hazardous Event">
-						{selectedHazardousEvent ? hazardousEventLink(selectedHazardousEvent) : "-"}&nbsp;
-						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
-						<input type="hidden" name="hazardousEventId" value={selectedHazardousEvent?.id || ""} />
-						<FieldErrors errors={props.errors} field="hazardousEventId"></FieldErrors>
-					</Field>
+					(hazardousEventLinkType == "hazardous_event") ?
+						<Field key="hazardousEventId" label="Hazardous Event">
+							{selectedHazardousEvent ? hazardousEventLink(selectedHazardousEvent) : "-"}&nbsp;
+							<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
+							<input type="hidden" name="hazardousEventId" value={selectedHazardousEvent?.id || ""} />
+							<FieldErrors errors={props.errors} field="hazardousEventId"></FieldErrors>
+						</Field> : null
 				,
+				hipClassId: null,
+				hipClusterId: null,
+				hipHazardId: (
+					(hazardousEventLinkType == "hip") ?
+						<Field key="hazardId" label="Specific Hazard *">
+							<HazardPicker hip={props.hip} classId={fields.hipClassId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
+							<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
+						</Field> : null
+				),
 				spatialFootprint: props.edit ? (
 					<Field key="spatialFootprint" label="">
 						<ContentRepeater
@@ -484,7 +526,11 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 		>
 			<FieldsView def={fieldsDefView} fields={item} override={{
 				hazardousEventId: (
+					item.hazardousEvent &&
 					<p key="hazardousEventId">Hazardous Event: {hazardousEventLink(item.hazardousEvent)}</p>
+				),
+				hipHazard: (
+					<HipHazardInfo key="hazard" model={item} />
 				),
 				createdAt: (
 					<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
@@ -643,15 +689,18 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 
 
 			/>
+
 			{/* Add Audit Log History at the end */}
 			<br />
-			{auditLogs && auditLogs.length > 0 && (
-				<>
-					<h3>Audit Log History</h3>
-					<AuditLogHistory auditLogs={auditLogs} />
-				</>
-			)}
-		</ViewComponent>
+			{
+				auditLogs && auditLogs.length > 0 && (
+					<>
+						<h3>Audit Log History</h3>
+						<AuditLogHistory auditLogs={auditLogs} />
+					</>
+				)
+			}
+		</ViewComponent >
 	);
 }
 

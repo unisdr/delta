@@ -81,6 +81,17 @@ function hipRelationColumnsRequired() {
 	}
 }
 
+function hipRelationColumnsOptional() {
+	return {
+		hipHazardId: text("hip_hazard_id")
+			.references((): AnyPgColumn => hipHazardTable.id),
+		hipClusterId: text("hip_cluster_id")
+			.references((): AnyPgColumn => hipClusterTable.id),
+		hipClassId: text("hip_class_id")
+			.references((): AnyPgColumn => hipClassTable.id)
+	}
+}
+
 function unitsEnum(name: string) {
 	return text(name, {
 		enum: [
@@ -241,8 +252,8 @@ export const divisionTable = pgTable(
 	}
 );
 
-export const divisionParent_Rel = relations(divisionTable, ({ one }) => ({
-	divisionParent: one(divisionTable, { fields: [divisionTable.parentId], references: [divisionTable.id] }),
+export const divisionParent_Rel = relations(divisionTable, ({one}) => ({
+	divisionParent: one(divisionTable, {fields: [divisionTable.parentId], references: [divisionTable.id]}),
 }));
 
 export type Division = typeof divisionTable.$inferSelect;
@@ -362,12 +373,12 @@ export const disasterEventTable = pgTable("disaster_event", {
 	...createdUpdatedTimestamps,
 	...approvalFields,
 	...apiImportIdField(),
+	...hipRelationColumnsOptional(),
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
 	hazardousEventId: uuid("hazardous_event_id")
-		.references((): AnyPgColumn => hazardousEventTable.id)
-		.notNull(),
+		.references((): AnyPgColumn => hazardousEventTable.id),
 	nationalDisasterId: zeroText("national_disaster_id"),
 	otherId1: zeroText("other_id1"),
 	otherId2: zeroText("other_id2"),
@@ -438,6 +449,18 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 	hazardousEvent: one(hazardousEventTable, {
 		fields: [disasterEventTable.hazardousEventId],
 		references: [hazardousEventTable.id],
+	}),
+	hipHazard: one(hipHazardTable, {
+		fields: [disasterEventTable.hipHazardId],
+		references: [hipHazardTable.id],
+	}),
+	hipCluster: one(hipClusterTable, {
+		fields: [disasterEventTable.hipClusterId],
+		references: [hipClusterTable.id],
+	}),
+	hipClass: one(hipClassTable, {
+		fields: [disasterEventTable.hipClassId],
+		references: [hipClassTable.id],
 	}),
 }));
 

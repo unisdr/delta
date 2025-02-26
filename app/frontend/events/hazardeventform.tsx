@@ -14,7 +14,6 @@ import {
 	ViewComponent
 } from "~/frontend/form";
 
-import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker"
 import {formatDate} from "~/util/date";
 
 import {useEffect, useState, useRef} from 'react';
@@ -24,6 +23,9 @@ import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
 import {TreeView} from "~/components/TreeView";
 import AuditLogHistory from "~/components/AuditLogHistory";
+import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
+import {HipHazardInfo} from "~/frontend/hip/hip";
+
 
 export const route = "/hazardous-event"
 
@@ -60,9 +62,9 @@ export const fieldsDefCommon = [
 
 export const fieldsDef: FormInputDef<HazardousEventFields>[] = [
 	{key: "parent", label: "", type: "other"},
-	{key: "hipClassId", label: "Hazard Class", type: "other", uiRow: {colOverride: 1}},
-	{key: "hipClusterId", label: "Hazard Cluster", type: "other"},
-	{key: "hipHazardId", label: "Hazard", type: "other"},
+	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
+	{key: "hipClusterId", label:"", type: "other"},
+	{key: "hipClassId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
 
@@ -437,20 +439,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 
 				override={{
 					hipHazard: (
-						<div key="hazard">
-							{item.hipClass &&
-								<p>Class: {item.hipClass.nameEn}</p>
-							}
-							{item.hipCluster &&
-								<p>Cluster: {item.hipCluster.nameEn}</p>
-							}
-							{item.hipHazard &&
-								<>
-									<p>Hazard ID: {item.hipHazard.id}</p>
-									<p>Hazard Name: {item.hipHazard.nameEn}</p>
-								</>
-							}
-						</div>
+						<HipHazardInfo key="hazard" model={item} />
 					),
 					createdAt: (
 						<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>

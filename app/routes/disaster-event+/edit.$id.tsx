@@ -1,4 +1,4 @@
-import { getTableName } from "drizzle-orm";
+import {getTableName} from "drizzle-orm";
 import {
 	disasterEventById,
 	disasterEventByIdTx,
@@ -12,19 +12,20 @@ import {
 	DisasterEventForm,
 } from "~/frontend/events/disastereventform";
 
-import { createLoader, createAction } from "~/backend.server/handlers/form";
+import {createLoader, createAction} from "~/backend.server/handlers/form";
 
-import { formScreen } from "~/frontend/form";
+import {formScreen} from "~/frontend/form";
 
-import { route } from "~/frontend/events/disastereventform";
+import {route} from "~/frontend/events/disastereventform";
 
-import { useLoaderData } from "@remix-run/react";
-import { disasterEventTable } from "~/drizzle/schema";
+import {useLoaderData} from "@remix-run/react";
+import {disasterEventTable} from "~/drizzle/schema";
 
 import {authLoaderWithPerm} from "~/util/auth";
-import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
-import { divisionTable } from "~/drizzle/schema";
+import {buildTree} from "~/components/TreeView";
+import {dr} from "~/db.server"; // Drizzle ORM instance
+import {divisionTable} from "~/drizzle/schema";
+import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
 // export const loader = createLoader({
 // 	getById: disasterEventById,
@@ -43,7 +44,7 @@ export const action = createAction({
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// ✅ Fetch existing disaster event data
-	const baseData = await createLoader({ getById: disasterEventById })(actionArgs);
+	const baseData = await createLoader({getById: disasterEventById})(actionArgs);
 
 	// ✅ Fetch division data & build tree
 	const idKey = "id";
@@ -52,10 +53,12 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const rawData = await dr.select().from(divisionTable);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
-	// ✅ Inject `treeData` into the loader response
+	let hip = await dataForHazardPicker()
+
 	return {
 		...baseData,
-		treeData, // Now available in `useLoaderData()`
+		hip,
+		treeData,
 	};
 });
 
@@ -63,11 +66,15 @@ export default function Screen() {
 	let ld = useLoaderData<typeof loader>();
 	let fieldsInitial: Partial<DisasterEventFields> = ld.item
 		? {
-				...ld.item,
-		  }
+			...ld.item,
+		}
 		: {};
 	return formScreen({
-		extraData: { hazardousEvent: ld.item?.hazardousEvent, treeData: ld.treeData },
+		extraData: {
+			hip: ld.hip,
+			hazardousEvent: ld.item?.hazardousEvent,
+			treeData: ld.treeData
+		},
 		fieldsInitial: fieldsInitial,
 		form: DisasterEventForm,
 		edit: !!ld.item,
