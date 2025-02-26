@@ -244,11 +244,15 @@ export const initTokenField = (
   
     // Filter the data (either fetched or provided locally)
     if (fetchedData) {
-      suggestions = fetchedData.filter((item) =>
+      suggestions = fetchedData.filter((item: any) =>
         item.name.toLowerCase().includes(query) // Matches starting with query
       );
     } else {
-      suggestions = dataSource.filter((item) =>
+      if (!Array.isArray(dataSource)) {
+        dataSource = []; // or set it to a default array
+      }
+
+      suggestions = dataSource.filter((item: any) =>
         item.name.toLowerCase().includes(query) // Matches starting with query
       );
     }
@@ -265,7 +269,7 @@ export const initTokenField = (
       });
       dropdown.appendChild(noResults);
     } else {
-      suggestions.forEach((item) => {
+      suggestions.forEach((item: any) => {
         const isSelected = selectedItems.some((selected) => selected.id === item.id); // Check if the item is selected
         const option = document.createElement('div');
         option.classList.add('custom-tokenfield-dropdown-item');
@@ -296,9 +300,12 @@ export const initTokenField = (
     if (e.key === 'Enter') {
       e.preventDefault();
       if (highlightedIndex >= 0 && options[highlightedIndex]) {
-        const selectedItem = fetchedData
-          ? fetchedData.find((item) => item.name === options[highlightedIndex].textContent)
-          : dataSource.find((item) => item.name === options[highlightedIndex].textContent);
+        const selectedItem = fetchedData ? (fetchedData as { id: number; name: string; }[]).find(
+            (item) => item.name === options[highlightedIndex].textContent
+          )
+        : (dataSource as { id: number; name: string; }[]).find(
+            (item) => item.name === options[highlightedIndex].textContent
+          );
         if (selectedItem) addToken(selectedItem);
       }
     } else if (e.key === 'ArrowDown') {
@@ -340,10 +347,14 @@ editableInput.addEventListener('blur', () => {
     dropdown.innerHTML = ''; // Clear any previous content
   
     // Get all available items (fetchedData if fetched, otherwise dataSource)
-    const suggestions = fetchedData ? fetchedData : dataSource;
+    let suggestions = fetchedData ? fetchedData : dataSource;
   
     // Render all items in the dropdown
-    suggestions.forEach((item) => {
+    if (!Array.isArray(suggestions)) {
+      suggestions = []; // Set default empty array
+    }    
+
+    suggestions.forEach((item: any) => {
       const isSelected = selectedItems.some((selected) => selected.id === item.id);
       const option = document.createElement('div');
       option.classList.add('custom-tokenfield-dropdown-item');
