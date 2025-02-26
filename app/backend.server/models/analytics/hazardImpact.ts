@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, exists, inArray, sql } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     damagesTable,
@@ -9,18 +9,19 @@ import {
     hipClassTable,
     hipClusterTable,
     hipHazardTable,
+    sectorDisasterRecordsRelationTable
 } from "~/drizzle/schema";
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
-import { 
-    calculateDamages, 
-    calculateLosses, 
+import {
+    calculateDamages,
+    calculateLosses,
     createAssessmentMetadata,
     calculateFaoAgriculturalDamage,
-    calculateFaoAgriculturalLoss 
+    calculateFaoAgriculturalLoss
 } from "~/backend.server/utils/disasterCalculations";
-import type { 
-    DisasterImpactMetadata, 
+import type {
+    DisasterImpactMetadata,
     FaoAgriSubsector,
     FaoAgriculturalDamage,
     FaoAgriculturalLoss
@@ -83,7 +84,16 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
                 ? [numericSectorId, ...subsectors.map(s => s.id)]
                 : [numericSectorId];
 
-            baseConditions.push(inArray(disasterRecordsTable.sectorId, sectorIds));
+            baseConditions.push(
+                exists(
+                    dr.select()
+                        .from(sectorDisasterRecordsRelationTable)
+                        .where(and(
+                            eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                            inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
+                        ))
+                )
+            );
         }
     }
 
@@ -129,13 +139,13 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     // Check if we need FAO agricultural calculations
     const agriSubsector = getAgriSubsector(sectorId);
     let faoAgriculturalImpact;
-    
+
     if (agriSubsector) {
         const [faoAgriDamage, faoAgriLoss] = await Promise.all([
             calculateFaoAgriculturalDamage(damagesTable, agriSubsector),
             calculateFaoAgriculturalLoss(lossesTable, agriSubsector)
         ]);
-        
+
         if (faoAgriDamage && faoAgriLoss) {
             faoAgriculturalImpact = {
                 damage: faoAgriDamage,

@@ -19,7 +19,7 @@
  *    - Section 5.2: Administrative Level Analysis
  */
 
-import { eq, sql, SQL, and, count, desc, inArray, gte, lte } from "drizzle-orm";
+import { eq, sql, SQL, and, count, desc, inArray, gte, lte, exists } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     disasterRecordsTable,
@@ -29,22 +29,23 @@ import {
     type Division,
     disasterEventTable,
     hazardousEventTable,
-    hipHazardTable
+    hipHazardTable,
+    sectorDisasterRecordsRelationTable
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { 
-    calculateDamages, 
-    calculateLosses, 
+import {
+    calculateDamages,
+    calculateLosses,
     createAssessmentMetadata,
     calculateFaoAgriculturalDamage,
-    calculateFaoAgriculturalLoss 
+    calculateFaoAgriculturalLoss
 } from "~/backend.server/utils/disasterCalculations";
-import type { 
+import type {
     DisasterImpactMetadata,
     FaoAgriSubsector,
     FaoAgriculturalDamage,
-    FaoAgriculturalLoss 
+    FaoAgriculturalLoss
 } from "~/types/disasterCalculations";
 import { formatCurrency } from "~/frontend/utils/formatters";
 import { configCurrencies } from "~/util/config";
@@ -458,9 +459,14 @@ async function getDisasterRecordsForSector(sectorId: number | undefined, subSect
                     // Only include approved records
                     eq(disasterRecordsTable.approvalStatus, "completed"),
                     // Filter by sector if provided
-                    sectorId ? eq(disasterRecordsTable.sectorId, sectorId) : undefined,
-                    // Filter by sub-sector if provided
-                    subSectorId ? eq(disasterRecordsTable.subSector, subSectorId.toString()) : undefined
+                    sectorId ? exists(
+                        dr.select()
+                            .from(sectorDisasterRecordsRelationTable)
+                            .where(and(
+                                eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                                eq(sectorDisasterRecordsRelationTable.sectorId, sectorId)
+                            ))
+                    ) : undefined
                 )
             );
 
@@ -472,7 +478,14 @@ async function getDisasterRecordsForSector(sectorId: number | undefined, subSect
                 .where(
                     and(
                         eq(disasterRecordsTable.approvalStatus, "completed"),
-                        eq(disasterRecordsTable.sectorId, subSectorId)
+                        exists(
+                            dr.select()
+                                .from(sectorDisasterRecordsRelationTable)
+                                .where(and(
+                                    eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                                    eq(sectorDisasterRecordsRelationTable.sectorId, subSectorId)
+                                ))
+                        )
                     )
                 );
 
@@ -491,7 +504,14 @@ async function getDisasterRecordsForSector(sectorId: number | undefined, subSect
                     .where(
                         and(
                             eq(disasterRecordsTable.approvalStatus, "completed"),
-                            eq(disasterRecordsTable.sectorId, subsector.id)
+                            exists(
+                                dr.select()
+                                    .from(sectorDisasterRecordsRelationTable)
+                                    .where(and(
+                                        eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                                        eq(sectorDisasterRecordsRelationTable.sectorId, subsector.id)
+                                    ))
+                            )
                         )
                     );
             })
