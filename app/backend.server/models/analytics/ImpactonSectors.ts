@@ -30,8 +30,9 @@ import {
   hipHazardTable,
   hipClusterTable,
   divisionTable,
+  sectorDisasterRecordsRelationTable
 } from "~/drizzle/schema";
-import { and, eq, inArray, ilike, SQL } from "drizzle-orm";
+import { and, eq, inArray, ilike, SQL, exists } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import {
   calculateDamages,
@@ -176,7 +177,14 @@ const getDisasterRecordsForSector = async (
 
   // Build the where conditions
   const conditions: SQL<unknown>[] = [
-    inArray(disasterRecordsTable.sectorId, sectorIds),
+    exists(
+      dr.select()
+        .from(sectorDisasterRecordsRelationTable)
+        .where(and(
+          eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+          inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
+        ))
+    ),
     sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'completed'`
   ];
 
