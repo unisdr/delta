@@ -51,24 +51,36 @@ import type {
  */
 export const calculateDamages = (table: any): SQL => {
     return sql`COALESCE(SUM(
-        /* Partially Damaged Assets */
+        /* Total Repair/Replacement and Recovery Costs */
         CASE 
-            WHEN ${table}.pd_repair_cost_total_override THEN COALESCE(${table}.pd_repair_cost_total, 0)
-            ELSE COALESCE(${table}.pd_repair_cost_unit * ${table}.pd_repair_units, 0)::numeric
+            WHEN ${table}.total_repair_replacement_override THEN COALESCE(${table}.total_repair_replacement, 0)
+            ELSE (
+                /* Partially Damaged Assets */
+                CASE 
+                    WHEN ${table}.pd_repair_cost_total_override THEN COALESCE(${table}.pd_repair_cost_total, 0)
+                    ELSE COALESCE(${table}.pd_repair_cost_unit, 0)::numeric
+                END +
+                /* Totally Destroyed Assets */
+                CASE 
+                    WHEN ${table}.td_replacement_cost_total_override THEN COALESCE(${table}.td_replacement_cost_total, 0)
+                    ELSE COALESCE(${table}.td_replacement_cost_unit, 0)::numeric
+                END
+            )::numeric
         END +
         CASE 
-            WHEN ${table}.pd_recovery_cost_total_override THEN COALESCE(${table}.pd_recovery_cost_total, 0)
-            ELSE COALESCE(${table}.pd_recovery_cost_unit * ${table}.pd_recovery_units, 0)::numeric
-        END +
-            
-        /* Totally Destroyed Assets */
-        CASE 
-            WHEN ${table}.td_replacement_cost_total_override THEN COALESCE(${table}.td_replacement_cost_total, 0)
-            ELSE COALESCE(${table}.td_replacement_cost_unit * ${table}.td_replacement_units, 0)::numeric
-        END +
-        CASE 
-            WHEN ${table}.td_recovery_cost_total_override THEN COALESCE(${table}.td_recovery_cost_total, 0)
-            ELSE COALESCE(${table}.td_recovery_cost_unit * ${table}.td_recovery_units, 0)::numeric
+            WHEN ${table}.total_recovery_override THEN COALESCE(${table}.total_recovery, 0)
+            ELSE (
+                /* Partially Damaged Recovery */
+                CASE 
+                    WHEN ${table}.pd_recovery_cost_total_override THEN COALESCE(${table}.pd_recovery_cost_total, 0)
+                    ELSE COALESCE(${table}.pd_recovery_cost_unit, 0)::numeric
+                END +
+                /* Totally Destroyed Recovery */
+                CASE 
+                    WHEN ${table}.td_recovery_cost_total_override THEN COALESCE(${table}.td_recovery_cost_total, 0)
+                    ELSE COALESCE(${table}.td_recovery_cost_unit, 0)::numeric
+                END
+            )::numeric
         END
     ), 0)::numeric`;
 };
