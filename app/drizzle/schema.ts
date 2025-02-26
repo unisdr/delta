@@ -223,7 +223,7 @@ export const divisionTable = pgTable(
 		})(),
 
 		// Spatial index will be updated via trigger
-		spatial_index: text("spatial_index").notNull()
+		spatial_index: text("spatial_index"),
 	},
 	(table) => {
 		return [
