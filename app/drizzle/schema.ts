@@ -677,6 +677,10 @@ export const damagesRel = relations(damagesTable, ({one}) => ({
 	asset: one(assetTable, {
 		fields: [damagesTable.assetId],
 		references: [assetTable.id],
+	}),
+	sector: one(sectorTable, {
+		fields: [damagesTable.sectorId],
+		references: [sectorTable.id],
 	})
 }));
 
@@ -905,6 +909,7 @@ export type disasterRecords = typeof disasterRecordsTable.$inferSelect;
 export type disasterRecordsInsert = typeof disasterRecordsTable.$inferInsert;
 
 export const disasterRecordsTable = pgTable("disaster_records", {
+	...apiImportIdField(),
 	id: uuid("id").primaryKey().defaultRandom(),
 	disasterEventId: uuid("disaster_event_id")
 		.references((): AnyPgColumn => disasterEventTable.id),
@@ -924,10 +929,10 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 		.default(""),
 	checkedBy: text("checked_by"),
 	dataCollector: text("data_collector"),
-	sectorId: ourBigint("sector_id") // Link to the sector involved
-		.references((): AnyPgColumn => sectorTable.id),
-	sectorName: text("sector_name"), // Direct name of the sector involved
-	subSector: text("sub_sector"), // Sub-sector detail
+	// sectorId: ourBigint("sector_id") // Link to the sector involved
+	// 	.references((): AnyPgColumn => sectorTable.id),
+	// sectorName: text("sector_name"), // Direct name of the sector involved
+	// subSector: text("sub_sector"), // Sub-sector detail
 	spatialFootprint: jsonb("spatial_footprint"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
@@ -940,12 +945,6 @@ export const disasterRecordsRel = relations(
 		disasterEvent: one(disasterEventTable, {
 			fields: [disasterRecordsTable.disasterEventId],
 			references: [disasterEventTable.id],
-		}),
-
-		//Relationship: Links disaster record to a sector (optional)
-		sector: one(sectorTable, {
-			fields: [disasterRecordsTable.sectorId],
-			references: [sectorTable.id],
 		}),
 		// Relationship: Enhances query efficiency by directly incorporating sector names
 		// without the need for joining tables during retrieval

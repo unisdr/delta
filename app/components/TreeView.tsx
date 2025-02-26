@@ -196,9 +196,10 @@ interface TreeViewProps {
     defaultSelectedIds?: number[];
     itemLink?: string;
     expandByDefault?: boolean;
+    showActionFooter?: boolean;
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [], itemLink = "", expandByDefault = false }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [], itemLink = "", expandByDefault = false, showActionFooter = null }, ref: any) => {
     const expandedNodesRef = useRef<{ [key: number]: boolean }>({});
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
@@ -224,9 +225,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
 
     const [selectedItems, setSelectedItems] = useState<{ [key: number]: boolean }>({});
 
-    const dialogRef = useRef<HTMLDialogElement>(null);
-
-    
+    const dialogRef = useRef<any>(null);
 
     useEffect(() => {
         injectStyles(appendCss); // Inject CSS when component mounts
@@ -557,10 +556,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             e.preventDefault();
         }
         if (dialogRef.current) {
-            
-            dialogRef.current.showModal();
-
-            dialogRef.current.showModal();
+            if (dialogMode) dialogRef.current.showModal();
 
             setTimeout(() => {
               dialogRef.current?.focus();
@@ -612,7 +608,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
             if (onApply) onApply(selectedItems || {});
 
             treeViewClear();
-            dialogRef.current.close();
+            if (dialogMode) dialogRef.current.close();
         }
     }
     const treeViewClick = (e?: any) => {
@@ -668,7 +664,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         return (
             <div>
                 <div className="tree-filters">
-                <a className="tree-btn" role="button" onClick={expandAll} style={{ pointerEvents: isExpandDisabled ? "none" : "auto", opacity: isExpandDisabled ? 0.5 : 1 }}>
+                    <a className="tree-btn" role="button" onClick={expandAll} style={{ pointerEvents: isExpandDisabled ? "none" : "auto", opacity: isExpandDisabled ? 0.5 : 1 }}>
                         Expand All
                     </a>
                     <a className="tree-btn" role="button" onClick={collapseAll} style={{ pointerEvents: isCollapseDisabled ? "none" : "auto", opacity: isCollapseDisabled ? 0.5 : 1 }}>
@@ -745,11 +741,11 @@ useEffect(() => {
                                 </svg>
                             </a>
                         </div>
-                        {treeViewContent(true)}
+                        {treeViewContent(showActionFooter || true)}
                     </div>
                 </dialog>
             : 
-                treeViewContent(false)
+                <div ref={dialogRef}>{treeViewContent(showActionFooter || false)}</div>
             }
             {disableButtonSelect ? null : <button className="tree-button-select" onClick={treeViewOpen}>{caption}</button>}
         </>

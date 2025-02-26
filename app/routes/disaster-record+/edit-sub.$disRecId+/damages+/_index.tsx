@@ -43,6 +43,10 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				recordId: true,
 				sectorId: true,
 			},
+			with: {
+				asset: true,
+				sector: true,
+			},
 			where: eq(damagesTable.sectorId, sectorId),
 			orderBy: [desc(damagesTable.id)],
 		})
@@ -68,16 +72,16 @@ export default function Data() {
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", String(ld.sectorId)]]),
 		columns: [
-			"ID", "Dis Rec ID", "Sec ID", "Actions"
+			"ID", "Asset", "Sector", "Actions"
 		],
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
-				<td><Link to={`${route}/${item.id}`}>{item.id}</Link></td>
-				<td>{item.recordId}</td>
-				<td>{item.sectorId}</td>
+				<td><Link to={`${route}/${item.id}`}>{item.id.slice(0,8)}</Link></td>
+				<td>{item.asset.name}</td>
+				<td>{item.sector.sectorname}</td>
 				<td><ActionLinks route={route} id={item.id} /></td>
 			</tr>
 		),
