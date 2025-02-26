@@ -31,7 +31,6 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const record = await disRecSectorsById(xId).catch(console.error);
 	if  ( record ) {
 		try {
-			record.sectorId
 			// Delete damages by sector id
 			await damagesDeleteBySectorId(record.sectorId).catch(console.error);
 	

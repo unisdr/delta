@@ -317,7 +317,7 @@ export default function Screen() {
 															<td>
 																{ ld.item && ld.item.id && (
 																	<>
-																		<span>Delete</span>
+																		<Link to={`${route}/non-economic-losses/${ld.item.id}/delete/?id=${item.noneccoId}`}>Delete</Link>
 																		&nbsp;|&nbsp;
 																		<Link to={`${route}/non-economic-losses/${ld.item.id}/?id=${item.noneccoId}`}>Edit</Link>
 																	</>
