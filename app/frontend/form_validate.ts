@@ -71,9 +71,6 @@ function validateShared<T>(
 		}
 		try {
 			fieldValue = parseValue(fieldDef, value)
-			if (fieldValue === undefined) {
-				fieldValue = null
-			}
 		} catch (error: any) {
 			if (error.code) {
 				errors.fields![key] = [error as FormError]
@@ -82,10 +79,10 @@ function validateShared<T>(
 				throw error
 			}
 		}
-		if (!allowPartial && fieldDef.required && fieldValue === null) {
+		if (!allowPartial && fieldDef.required && (fieldValue === undefined || fieldValue === null)) {
 			errors.fields![key] = [fieldRequiredError(fieldDef)]
 		} else {
-			if (fieldValue !== null) {
+			if (fieldValue !== undefined) {
 				partial.push([key, fieldValue])
 				full.push([key, fieldValue])
 			}
@@ -200,7 +197,7 @@ export function validateFromMap<T>(
 
 		// Handle NULL or UNDEFINED early
 		if (value === undefined || value === null) {
-			return null;
+			return undefined;
 		}
 		// Handle PostgreSQL JSONB fields properly
 		if (field.psqlType === "jsonb") {
@@ -237,9 +234,8 @@ export function validateFromMap<T>(
 		} else {
 			throw "validateFromMap received value that is not a string, undefined, or null";
 		}
-
-		if (vs.trim() == "") {
-			return null
+		if (field.required && vs.trim() == "") {
+			return undefined
 		}
 		let parsedValue: any;
 		switch (field.type) {
@@ -248,15 +244,23 @@ export function validateFromMap<T>(
 				if (isNaN(parsedValue)) {
 					throw invalidTypeError(field, "number");
 				}
-				return parsedValue;
+				return parsedValue
+			case "money":
+				if (vs === "") {
+					return null
+				}
+				return vs
 			case "text":
 			case "textarea":
-			case "money":
 			case "enum-flex":
+			case "date_optional_precision":
 				return vs;
 			case "date":
 			case "datetime":
-				parsedValue = vs === "" ? null : new Date(value);
+				if (vs === "") {
+					return null
+				}
+				parsedValue = new Date(value);
 				if (isNaN(parsedValue.getTime())) {
 					throw invalidDateFormatError(field);
 				}

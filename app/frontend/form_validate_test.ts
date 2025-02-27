@@ -5,7 +5,7 @@ import {validateFromMap, validateFromJson, validateRes} from "./form_validate"
 
 interface TestType {
 	k1: string
-	k2: number
+	k2: number|null
 	k3: boolean
 	k4: string
 	k5: Date
@@ -100,6 +100,22 @@ describe("validateFromMap", function () {
 		data: {},
 		expectedOk: true,
 		expectedData: {},
+	})
+
+	runTest({
+		name: "non required fields as empty strings, should be set",
+		defs: [{key: "k1", type: "text", label: ""}],
+		data: {k1: ""},
+		expectedOk: true,
+		expectedData: {k1: ""},
+	})
+
+	runTest({
+		name: "non required numbers as empty strings, should be set",
+		defs: [{key: "k2", type: "number", label: ""}],
+		data: {k2: ""},
+		expectedOk: true,
+		expectedData: {k2: null},
 	})
 
 	runTest({
