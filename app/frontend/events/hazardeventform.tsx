@@ -38,11 +38,11 @@ export const fieldsDefCommon = [
 	{key: "startDate", label: "Start Date", type: "date_optional_precision", required: true, uiRow: {}},
 	{key: "endDate", label: "End Date", type: "date_optional_precision", required: true},
 	{key: "description", label: "Description", type: "textarea", uiRowNew: true},
-	{key: "warningIssuedSummary", label: "Summary", type: "textarea", uiRowNew: true},
-	{key: "warningIssuedBy", label: "Issued By", type: "text", uiRow: {}},
-	{key: "warningIssuedDate", label: "Date", type: "date"},
-	{key: "warningIssuedCoverage", label: "Coverage", type: "textarea", uiRowNew: true},
-	{key: "warningIssuedContent", label: "Warning content", type: "textarea", uiRowNew: true},
+	//{key: "warningIssuedSummary", label: "Summary", type: "textarea", uiRowNew: true},
+	//{key: "warningIssuedBy", label: "Issued By", type: "text", uiRow: {}},
+	//{key: "warningIssuedDate", label: "Date", type: "date"},
+	//{key: "warningIssuedCoverage", label: "Coverage", type: "textarea", uiRowNew: true},
+	//{key: "warningIssuedContent", label: "Warning content", type: "textarea", uiRowNew: true},
 	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "textarea"},
 	{key: "magnitude", label: "Magnitude", type: "text"},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
@@ -180,10 +180,6 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 			fields={props.fields}
 			fieldsDef={fieldsDef}
 			elementsAfter={{
-				description:
-					<h2>Warning Issued</h2>,
-				warningIssuedContent:
-					<h2>Other fields</h2>
 			}}
 			override={{
 				parent:
@@ -431,12 +427,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 				def={fieldsDefView}
 				fields={item}
 				elementsAfter={{
-					description:
-						<h2>Warning Issued</h2>,
-					warningIssuedContent:
-						<h2>Other fields</h2>
 				}}
-
 				override={{
 					hipHazard: (
 						<HipHazardInfo key="hazard" model={item} />
