@@ -13,6 +13,7 @@ import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector
 import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard";
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
+import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
 // Types
 interface Sector {
@@ -147,10 +148,13 @@ function SectorsAnalysisContent() {
 
               {/* Effect Details Section */}
               <EffectDetails filters={filters} currency={currency} />
+
+              {/* Most Damaging Events Section */}
+              <MostDamagingEvents filters={filters} currency={currency} />
             </div>
           )}
 
-          {/* Work In Progress Message - Updated list */}
+          {/* Work In Progress Message - Updated list
           <div
             className="construction-message"
             style={{
@@ -189,7 +193,7 @@ function SectorsAnalysisContent() {
             <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
               are still under construction. Please stay tuned for future updates!
             </p>
-          </div>
+          </div> */}
 
           <p></p>
           <div className="dts-caption mt-4">
