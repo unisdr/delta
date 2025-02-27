@@ -304,19 +304,10 @@ export async function resetPassword(
   const subject = "Password change";
   const text = `
               Your password has been successfully changed. If you did not request this change, please contact your admin.
-              Copy and paste the following link into your browser URL to login to DTS:${userLoginURL} 
             `;
   const html = `
               <p>
                 Your password has been successfully changed. If you did not request this change, please contact your admin.
-              </p>
-              <p>
-                Click the link below to login to DTS:
-                <a href="${userLoginURL}" 
-                   style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
-                  background-color: #007BFF; text-decoration: none; border-radius: 5px;">
-                  Login
-                </a>
               </p>
               `;
 
