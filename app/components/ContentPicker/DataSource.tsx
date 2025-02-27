@@ -87,7 +87,7 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
             })
         );
 
-        console.log('rows:', rows);
+        //console.log('rows:', rows);
 
         const formattedRow = rows.map((row: any) => {
             let formattedRow: any = {};
@@ -121,7 +121,7 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
             return formattedRow;
         });
 
-        console.log('formattedRow:', formattedRow);
+        //console.log('formattedRow:', formattedRow);
 
         return formattedRow;
     } else if (pickerConfig.viewMode === "tree") {
