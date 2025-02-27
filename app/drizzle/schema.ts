@@ -539,13 +539,7 @@ export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	missing: boolean("missing"),
 	affectedDirect: boolean("affected_direct"),
 	affectedIndirect: boolean("affected_indirect"),
-	displacedShort: boolean("displaced_short"),
-	displacedMediumShort: boolean("displaced_medium_short"),
-	displacedMediumLong: boolean("displaced_medium_long"),
-	displacedLong: boolean("displaced_long"),
-	displacedPermanent: boolean("displaced_permanent"),
-	displacementStocksPreemptive: boolean("displacement_stocks_preemptive"),
-	displacementStocksReactive: boolean("displacement_stocks_reactive"),
+	displaced: boolean("displaced"),
 });
 
 export type HumanCategoryPresence = typeof humanDsgConfigTable.$inferSelect;
@@ -602,26 +596,27 @@ export const displacedTable = pgTable("displaced", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	short: integer("short"), // First 10 days
-	mediumShort: integer("medium_short"), // Days 10-30
-	mediumLong: integer("medium_long"), // Days 30-90
-	long: integer("long"), // More than 90 days
-	permanent: integer("permanent"), // Permanently relocated
+	assisted: text("assisted", {
+		enum: ["assisted", "not_assisted"],
+	}),
+	timing: text("timing", {
+		enum: ["pre-emptive", "reactive"],
+	}),
+	duration: text("duration", {
+		enum: [
+			"short", // First 10 days
+			"medium_short", // Days 10-30
+			"medium_long", // Days 30-90
+			"long", // More than 90 days
+			"permanent", // Permanently relocated
+		],
+	}),
+	asOf: timestamp("as_of"),
+	displaced: integer("displaced"),
 });
 export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
 
-export const displacementStocksTable = pgTable("displacement_stocks", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	dsgId: uuid("dsg_id")
-		.references((): AnyPgColumn => humanDsgTable.id)
-		.notNull(),
-	preemptive: integer("preemptive"), // Assisted pre-emptive displacement
-	reactive: integer("reactive"), // Assisted reactive displacement
-});
-export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
-export type DisplacementStocksInsert =
-	typeof displacementStocksTable.$inferInsert;
 
 export const disruptionTable = pgTable("disruption", {
 	...apiImportIdField(),
