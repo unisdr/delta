@@ -160,6 +160,7 @@ export function validateFromJson<T>(
 				}
 				return value || ""
 			case "date":
+			case "datetime":
 				if (value !== undefined && value !== null) {
 					const parsedDate = new Date(value)
 					if (isNaN(parsedDate.getTime())) {
@@ -178,8 +179,10 @@ export function validateFromJson<T>(
 					throw unknownEnumValueError(field, value, field.enumData?.map(e => e.key) || [])
 				}
 				return value
-			default:
+			case "other":
 				return value
+			default:
+				throw new Error("server error: unknown type defined: " + field.type)
 		}
 	});
 }
@@ -248,6 +251,7 @@ export function validateFromMap<T>(
 			case "textarea":
 				return vs;
 			case "date":
+			case "datetime":
 				parsedValue = vs === "" ? null : new Date(value);
 				if (isNaN(parsedValue.getTime())) {
 					throw invalidDateFormatError(field);
@@ -271,8 +275,10 @@ export function validateFromMap<T>(
 					throw unknownEnumValueError(field, vs, field.enumData?.map(e => e.key) || []);
 				}
 				return vs;
+			case "other":
+				return vs
 			default:
-				return vs;
+				throw new Error("server error: unknown type defined: " + field.type)
 		}
 	});
 }

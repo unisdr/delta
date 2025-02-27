@@ -68,20 +68,20 @@ export const fieldsDefCommon = [
 	// changed, this needs multiple 
 	{key: "disasterDeclarationTypeAndEffect", label: "Type and Effect", type: "textarea"},
 	// needs multiple
-	{key: "disasterDeclarationDate", label: "Date", type: "date"},
+	{key: "disasterDeclarationDateTime", label: "Date and time (UTC)", type: "datetime"},
 	{key: "hadOfficialWarningOrWeatherAdvisory", label: "Was there an officially issued warning and/or weather advisory?", type: "bool", uiRow: {label: "Official Warning"}},
 	{key: "officialWarningAffectedAreas", label: "Which affected areas were covered by the warning?", type: "textarea"},
 
 	{key: "earlyAction", label: "Early Action", type: "textarea", uiRow: {label: "Early Action"}},
-	{key: "earlyActionDate", label: "Date", type: "date"},
-	{key: "preliminaryAssessmentDate", label: "Preliminary Assessment Date", type: "date", uiRow: {label: "Assesment"}},
-	{key: "rapidAssessmentDate", label: "Rapid Assessment Date", type: "date"},
+	{key: "earlyActionDateTime", label: "Date and time (UTC)", type: "datetime"},
+	{key: "preliminaryAssessmentDateTime", label: "Preliminary Assessment Date and time (UTC)", type: "datetime", uiRow: {label: "Assesment"}},
+	{key: "rapidAssessmentDateTime", label: "Rapid Assessment Date and time (UTC)", type: "datetime"},
 	// yes
 	{key: "responseOperations", label: "Response Operations", type: "textarea", uiRow: {}},
 	// keep
-	{key: "postDisasterAssementDate", label: "Post-Disaster Assessment Date", type: "date", uiRow: {}},
+	{key: "postDisasterAssementDateTime", label: "Post-Disaster Assessment Date", type: "datetime", uiRow: {}},
 	// keep
-	{key: "reAssessmentDate", label: "Re-Assessment Date", type: "date"},
+	{key: "reAssessmentDateTime", label: "Re-Assessment Date", type: "datetime"},
 	// keep
 	{key: "dataSource", label: "Data Source", type: "text", uiRow: {label: "Data source"}},
 	// remove
