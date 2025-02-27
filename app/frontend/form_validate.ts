@@ -155,6 +155,8 @@ export function validateFromJson<T>(
 				return value ?? null
 			case "text":
 			case "textarea":
+			case "money":
+			case "enum-flex":
 				if (typeof value != "string" && value !== undefined && value !== null) {
 					throw invalidTypeError(field, "string")
 				}
@@ -249,6 +251,8 @@ export function validateFromMap<T>(
 				return parsedValue;
 			case "text":
 			case "textarea":
+			case "money":
+			case "enum-flex":
 				return vs;
 			case "date":
 			case "datetime":
