@@ -101,6 +101,7 @@
     "tsc": "^2.0.4",
     "tsx": "^4.19.2",
     "typescript": "5.2.2",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vite-plugin-static-copy": "^2.2.0"
   }
 }
