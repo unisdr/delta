@@ -4,7 +4,7 @@ import {
 
 import {useEffect, useState, useRef} from 'react';
 
-import {DisasterEventFields, DisasterEventViewModel, HazardousEventBasicInfoViewModel} from "~/backend.server/models/event"
+import {DisasterEventFields, DisasterEventViewModel, HazardousEventBasicInfoViewModel, DisasterEventBasicInfoViewModel} from "~/backend.server/models/event"
 
 import {hazardousEventLink} from "~/frontend/events/hazardeventform"
 
@@ -116,6 +116,7 @@ export const fieldsDefCommon = [
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 	{key: "hazardousEventId", label: "", type: "other"},
+	{key: "disasterEventId", label: "", type: "other"},
 	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
 	{key: "hipClusterId", label: "", type: "other"},
 	{key: "hipClassId", label: "", type: "other"},
@@ -124,21 +125,42 @@ export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 
 export const fieldsDefApi: FormInputDef<DisasterEventFields>[] = [
 	{key: "hazardousEventId", label: "", type: "other"},
+	{key: "disasterEventId", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "apiImportId", label: "", type: "other"},
 ];
 
 export const fieldsDefView: FormInputDef<DisasterEventViewModel>[] = [
 	{key: "hazardousEventId", label: "", type: "other"},
+	{key: "disasterEventId", label: "", type: "other"},
 	{key: "hipHazard", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},
 	{key: "updatedAt", label: "", type: "other"},
 ];
 
+export function disasterEventLabel(args: {
+	id?: string;
+}): string {
+	let parts: string[] = []
+	if (args.id) {
+		parts.push(args.id.slice(0, 5))
+	}
+	return parts.join(" ")
+}
+
+export function disasterEventLink(args: {
+	id: string;
+}) {
+	return <Link to={`/disaster-event/${args.id}`}>
+		{disasterEventLabel(args)}
+	</Link>
+}
+
 interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
 	hip: Hip;
 	hazardousEvent?: HazardousEventBasicInfoViewModel | null
+	disasterEvent?: DisasterEventBasicInfoViewModel | null
 	treeData: any[];
 }
 
@@ -146,12 +168,20 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 	const fields = props.fields;
 
 	const [selectedHazardousEvent, setSelectedHazardousEvent] = useState(props.hazardousEvent);
-	const treeData = props.treeData;
 
+	const [selectedDisasterEvent, setSelectedDisasterEvent] = useState(props.disasterEvent);
 	useEffect(() => {
 		const handleMessage = (event: any) => {
-			if (event.data?.selected) {
-				setSelectedHazardousEvent(event.data.selected);
+			console.log("got message from another window", event.data)
+			if (event.data?.type == "select_hazard") {
+				if (event.data?.selected) {
+					setSelectedHazardousEvent(event.data.selected);
+				}
+			}
+			if (event.data?.type == "select_disaster") {
+				if (event.data?.selected) {
+					setSelectedDisasterEvent(event.data.selected);
+				}
 			}
 		};
 		window.addEventListener('message', handleMessage);
@@ -159,6 +189,10 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 			window.removeEventListener('message', handleMessage);
 		};
 	}, []);
+
+
+
+	const treeData = props.treeData;
 
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
@@ -185,12 +219,17 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 		}
 	}
 
-	let hazardousEventLinkInitial: "none" | "hazardous_event" | "hip" = "none"
+	let hazardousEventLinkInitial: "none" | "hazardous_event" | "hip" | "disaster_event" = "none"
 	if (props.fields.hazardousEventId) {
 		hazardousEventLinkInitial = "hazardous_event"
 	} else if (props.fields.hipClassId) {
 		hazardousEventLinkInitial = "hip"
+	} else if (props.fields.disasterEventId){
+		hazardousEventLinkInitial = "disaster_event"
 	}
+
+	console.log("disaster: initial link:", hazardousEventLinkInitial, "fields", props.fields)
+
 	const [hazardousEventLinkType, setHazardousEventLinkType] = useState(hazardousEventLinkInitial)
 
 	return (
@@ -210,6 +249,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							<option value="none">No link</option>
 							<option value="hazardous_event">Hazardous event</option>
 							<option value="hip">HIP Hazard</option>
+							<option value="disaster_event">Disaster event</option>
 						</select>
 					} />
 				</div>
@@ -223,6 +263,15 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
 							<input type="hidden" name="hazardousEventId" value={selectedHazardousEvent?.id || ""} />
 							<FieldErrors errors={props.errors} field="hazardousEventId"></FieldErrors>
+						</Field> : null
+				,
+				disasterEventId:
+					(hazardousEventLinkType == "disaster_event") ?
+						<Field key="disasterEventId" label="Disaster Event">
+							{selectedDisasterEvent ? disasterEventLink(selectedDisasterEvent) : "-"}&nbsp;
+							<Link target="_blank" rel="opener" to={"/disaster-event/picker"}>Change</Link>
+							<input type="hidden" name="disasterEventId" value={selectedDisasterEvent?.id || ""} />
+							<FieldErrors errors={props.errors} field="disasterEventId"></FieldErrors>
 						</Field> : null
 				,
 				hipClassId: null,
@@ -528,6 +577,10 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 				hazardousEventId: (
 					item.hazardousEvent &&
 					<p key="hazardousEventId">Hazardous Event: {hazardousEventLink(item.hazardousEvent)}</p>
+				),
+				disasterEventId: (
+					item.disasterEvent &&
+					<p key="disasterEventId">Disaster Event: {disasterEventLink(item.disasterEvent)}</p>
 				),
 				hipHazard: (
 					<HipHazardInfo key="hazard" model={item} />

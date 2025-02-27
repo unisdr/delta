@@ -380,6 +380,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 		.references((): AnyPgColumn => eventTable.id),
 	hazardousEventId: uuid("hazardous_event_id")
 		.references((): AnyPgColumn => hazardousEventTable.id),
+	disasterEventId: uuid("disaster_event_id")
+		.references((): AnyPgColumn => disasterEventTable.id),
 	nationalDisasterId: zeroText("national_disaster_id"),
 	otherId1: zeroText("other_id1"),
 	otherId2: zeroText("other_id2"),
@@ -451,6 +453,10 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 	hazardousEvent: one(hazardousEventTable, {
 		fields: [disasterEventTable.hazardousEventId],
 		references: [hazardousEventTable.id],
+	}),
+	disasterEvent: one(disasterEventTable, {
+		fields: [disasterEventTable.disasterEventId],
+		references: [disasterEventTable.id],
 	}),
 	hipHazard: one(hipHazardTable, {
 		fields: [disasterEventTable.hipHazardId],

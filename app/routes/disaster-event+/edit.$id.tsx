@@ -73,6 +73,7 @@ export default function Screen() {
 		extraData: {
 			hip: ld.hip,
 			hazardousEvent: ld.item?.hazardousEvent,
+			disasterEvent: ld.item?.disasterEvent,
 			treeData: ld.treeData
 		},
 		fieldsInitial: fieldsInitial,
