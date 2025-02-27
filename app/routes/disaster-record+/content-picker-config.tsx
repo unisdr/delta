@@ -28,10 +28,10 @@ export const contentPickerConfig = {
             }
         },
         { column_type: "db", column_field: "startDateUTC", column_title: "Start Date",
-            render: (item: any) => formatDate(item.startDateUTC)
+            render: (item: any) => formatDateDisplay(item.startDateUTC, "d MMM yyyy")
          },
         { column_type: "db", column_field: "endDateUTC", column_title: "End Date",
-            render: (item: any) => formatDate(item.endDateUTC)
+            render: (item: any) => formatDateDisplay(item.endDateUTC, "d MMM yyyy")
         },
         { column_type: "custom", column_field: "action", column_title: "Action" },
     ],
