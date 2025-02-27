@@ -26,6 +26,8 @@ import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
 import AuditLogHistory from "~/components/AuditLogHistory";
 
+import SpatialFootprintMapViewer from "~/components/SpatialFootprintMapViewer";
+
 export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
@@ -321,6 +323,7 @@ interface DisasterRecordsViewProps {
 export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 	const item = props.item;
 	const auditLogs = props.auditLogs;
+	const dataSource = (item as any)?.disasterRecord || []; console.log('item', item);
 
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
@@ -417,22 +420,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 													})}
 												</tbody>
 											</table>
-											<button
-												onClick={handlePreviewMap}
-												style={{
-													padding: "10px 16px",
-													border: "1px solid #ddd",
-													backgroundColor: "#f4f4f4",
-													color: "#333",
-													fontSize: "14px",
-													fontWeight: "normal",
-													borderRadius: "4px",
-													marginBottom: "2rem",
-													cursor: "pointer"
-												}}
-											>
-												Map Preview
-											</button>
+											<SpatialFootprintMapViewer dataSource={dataSource} filterCaption="Spatial Footprint" />
 										</>
 									);
 
