@@ -47,6 +47,9 @@ function ourSerial(name: string) {
 function ourMoney(name: string) {
 	return numeric(name)
 }
+function ourRandomUUID(){
+	return uuid("id").primaryKey().default(sql`gen_random_uuid()`)
+}
 
 const createdUpdatedTimestamps = {
 	updatedAt: timestamp("updated_at"),
@@ -116,7 +119,7 @@ function unitsEnum(name: string) {
 }
 
 export const sessionTable = pgTable("session", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	userId: ourBigint("user_id")
 		.notNull()
 		.references(() => userTable.id),
@@ -260,7 +263,7 @@ export type Division = typeof divisionTable.$inferSelect;
 export type DivitionInsert = typeof divisionTable.$inferInsert;
 
 export const eventTable = pgTable("event", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	name: zeroText("name").notNull(),
 	description: zeroText("description").notNull(),
 	// parent
@@ -474,7 +477,7 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 
 // Common disaggregation data (dsg) for human effects on disaster records
 export const humanDsgTable = pgTable("human_dsg", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
@@ -530,7 +533,7 @@ export type HumanDsgConfig = typeof humanDsgConfigTable.$inferSelect;
 export type HumanDsgConfigInsert = typeof humanDsgConfigTable.$inferInsert;
 
 export const humanCategoryPresenceTable = pgTable("human_category_presence", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
@@ -547,7 +550,7 @@ export type HumanCategoryPresenceInsert =
 	typeof humanDsgConfigTable.$inferInsert;
 
 export const deathsTable = pgTable("deaths", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
@@ -558,7 +561,7 @@ export type Deaths = typeof deathsTable.$inferSelect;
 export type DeathsInsert = typeof deathsTable.$inferInsert;
 
 export const injuredTable = pgTable("injured", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
@@ -569,7 +572,7 @@ export type Injured = typeof injuredTable.$inferSelect;
 export type InjuredInsert = typeof injuredTable.$inferInsert;
 
 export const missingTable = pgTable("missing", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
@@ -581,7 +584,7 @@ export type Missing = typeof missingTable.$inferSelect;
 export type MissingInsert = typeof missingTable.$inferInsert;
 
 export const affectedTable = pgTable("affected", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
@@ -592,7 +595,7 @@ export type Affected = typeof affectedTable.$inferSelect;
 export type AffectedInsert = typeof affectedTable.$inferInsert;
 
 export const displacedTable = pgTable("displaced", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
@@ -620,7 +623,7 @@ export type DisplacedInsert = typeof displacedTable.$inferInsert;
 
 export const disruptionTable = pgTable("disruption", {
 	...apiImportIdField(),
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
@@ -644,7 +647,7 @@ export type DisruptionInsert = typeof disruptionTable.$inferInsert
 
 export const damagesTable = pgTable("damages", {
 	...apiImportIdField(),
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
@@ -716,7 +719,7 @@ export type DamagesInsert = typeof damagesTable.$inferInsert
 
 export const measureTable = pgTable("measure", {
 	...apiImportIdField(),
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	name: text("name").notNull(),
 	type: text({enum: ["number", "area", "volume", "duration"]})
 		.notNull()
@@ -729,7 +732,7 @@ export type MeasureInsert = typeof measureTable.$inferInsert
 
 export const unitTable = pgTable("unit", {
 	...apiImportIdField(),
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	type: text({enum: ["number", "area", "volume", "duration"]})
 		.notNull()
 		.default("area"),
@@ -741,7 +744,7 @@ export type UnitInsert = typeof unitTable.$inferInsert
 
 export const assetTable = pgTable("asset", {
 	...apiImportIdField(),
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	//sectorId: ourBigint("sector_id")
 	//	.references((): AnyPgColumn => sectorTable.id)
 	//	.notNull(),
@@ -778,7 +781,7 @@ export type AssetInsert = typeof assetTable.$inferInsert;
 
 export const lossesTable = pgTable("losses", {
 	...apiImportIdField(),
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
@@ -892,7 +895,7 @@ export const hipHazardRel = relations(hipHazardTable, ({one}) => ({
 }));
 
 export const resourceRepoTable = pgTable("resource_repo", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	title: text("title").notNull(),
 	summary: text("summary").notNull(),
 	attachments: jsonb("attachments"),
@@ -908,7 +911,7 @@ export const resourceRepoRel = relations(resourceRepoTable, ({many}) => ({
 }));
 
 export const rrAttachmentsTable = pgTable("rr_attachments", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	resourceRepoId: uuid("resource_repo_id")
 		.references((): AnyPgColumn => resourceRepoTable.id)
 		.notNull(),
@@ -937,7 +940,7 @@ export type disasterRecordsInsert = typeof disasterRecordsTable.$inferInsert;
 
 export const disasterRecordsTable = pgTable("disaster_records", {
 	...apiImportIdField(),
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	disasterEventId: uuid("disaster_event_id")
 		.references((): AnyPgColumn => disasterEventTable.id),
 	locationDesc: text("location_desc"),
@@ -984,7 +987,7 @@ export const disasterRecordsRel = relations(
 
 // Table to log all audit actions across the system
 export const auditLogsTable = pgTable("audit_logs", {
-	id: uuid("id").primaryKey().defaultRandom(),
+	id: ourRandomUUID(),
 	tableName: text("table_name").notNull(),
 	recordId: text("record_id").notNull(),
 	userId: ourBigint("user_id")
@@ -1022,7 +1025,7 @@ export type nonecoLossesInsert = typeof nonecoLossesTable.$inferInsert;
 export const nonecoLossesTable = pgTable(
 	"noneco_losses",
 	{
-		id: uuid("id").primaryKey().defaultRandom(),
+		id: ourRandomUUID(),
 		disasterRecordId: uuid("disaster_record_id")
 			.references((): AnyPgColumn => disasterRecordsTable.id)
 			.notNull(),
@@ -1086,7 +1089,7 @@ export const sectoryParent_Rel = relations(sectorTable, ({one}) => ({
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
-		id: uuid("id").primaryKey().defaultRandom(), // Unique ID for the relation
+		id: ourRandomUUID(),
 		sectorId: ourBigint("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id),
