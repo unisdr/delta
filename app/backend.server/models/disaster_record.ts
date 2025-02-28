@@ -25,7 +25,7 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 
 	const res = await tx.insert(disasterRecordsTable)
 		.values({
-			disasterEventId: fields.disasterEventId,
+			disasterEventId: fields.disasterEventId == "" ? null : fields.disasterEventId,
 			locationDesc: fields.locationDesc,
 			startDate: fields.startDate,
 			endDate: fields.endDate,
@@ -55,7 +55,10 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Parti
 		return {ok: false, errors: errors}
 	}
 
-	
+	if (fields.disasterEventId == "") {
+		fields.disasterEventId = null;
+	}
+
 	let id = idStr;
 	await tx.update(disasterRecordsTable)
 		.set({

@@ -1,196 +1,196 @@
 apiImportId,id,sectorIds,isBuiltIn,name,category,nationalId,notes
-10001,4a6bb74b-26da-4bec-bc62-758d67942b08,1101001,1,Wheat,,11,Temporary - annual crops - Agriculture
-10002,5bcc0e73-d1d6-4a8e-9e8b-ff9573ca6548,1101001,1,Maize,,12,Temporary - annual crops - Agriculture
-10003,,1101001,1,Rice,,13,Temporary - annual crops - Agriculture
-10004,,1101001,1,Sorghum,,14,Temporary - annual crops - Agriculture
-10005,,1101001,1,Barley,,15,Temporary - annual crops - Agriculture
-10006,,1101001,1,Rye,,16,Temporary - annual crops - Agriculture
-10007,,1101001,1,Oats,,17,Temporary - annual crops - Agriculture
-10008,,1101001,1,Millets,,18,Temporary - annual crops - Agriculture
-10009,,1101001,1,"Other cereals, n.e.c",,19,Temporary - annual crops - Agriculture
-10010,,1101001,1,Beans,,71,Temporary - annual crops - Agriculture
-10011,,1101001,1,"Broad beans, dry",,72,Temporary - annual crops - Agriculture
-10012,,1101001,1,"Chick peas, dry",,73,Temporary - annual crops - Agriculture
-10013,,1101001,1,Cow peas,,74,Temporary - annual crops - Agriculture
-10014,,1101001,1,Lentils,,75,Temporary - annual crops - Agriculture
-10015,,1101001,1,Lupins,,76,Temporary - annual crops - Agriculture
-10016,,1101001,1,Peas,,77,Temporary - annual crops - Agriculture
-10017,,1101001,1,Pigeno peas,,78,Temporary - annual crops - Agriculture
-10018,,1101001,1,Leguminous crops n.e.c.,,79,Temporary - annual crops - Agriculture
-10019,,1101001,1,Potatoes,,51,Temporary - annual crops - Agriculture
-10020,,1101001,1,Sweet potatoes,,52,Temporary - annual crops - Agriculture
-10021,,1101001,1,Cassava,,53,Temporary - annual crops - Agriculture
-10022,,1101001,1,Yams,,54,Temporary - annual crops - Agriculture
-10023,,1101001,1,"Other roots & tubers, n.e.c.",,59,Temporary - annual crops - Agriculture
-10024,,1101001,1,Sugar beet,,81,Temporary - annual crops - Agriculture
-10025,,1101001,1,Sugar cane,,82,Temporary - annual crops - Agriculture
-10026,,1101001,1,Sugar beet seeds,,83,Temporary - annual crops - Agriculture
-10027,,1101001,1,"Other sugar crops ( sugar maple, sweet sorghum)",,89,Temporary - annual crops - Agriculture
-10028,,1101001,1,Castor bean,,431,Temporary - annual crops - Agriculture
-10029,,1101001,1,Linseed,,432,Temporary - annual crops - Agriculture
-10030,,1101001,1,Mustard,,433,Temporary - annual crops - Agriculture
-10031,,1101001,1,Niger seed,,434,Temporary - annual crops - Agriculture
-10032,,1101001,1,Rapeseed,,435,Temporary - annual crops - Agriculture
-10033,,1101001,1,Safflower,,436,Temporary - annual crops - Agriculture
-10034,,1101001,1,Sesame,,437,Temporary - annual crops - Agriculture
-10035,,1101001,1,Sunflower,,438,Temporary - annual crops - Agriculture
-10036,,1101001,1,"Other temporary oilseed crops, n.e.c",,439,Temporary - annual crops - Agriculture
-10037,,1101001,1,Cotton,,9211,Temporary - annual crops - Agriculture
-10038,,1101001,1,"Jute, kenaf, and other similar",,9212,Temporary - annual crops - Agriculture
-10039,,1101001,1,Other temporary fire crops,,9219,Temporary - annual crops - Agriculture
-10040,,1101001,1,Artichokes,,211,Temporary - annual crops - Agriculture
-10041,,1101001,1,Asparagus,,212,Temporary - annual crops - Agriculture
-10042,,1101001,1,Cabbages,,213,Temporary - annual crops - Agriculture
-10043,,1101001,1,Cauliflowers & broccoli,,214,Temporary - annual crops - Agriculture
-10044,,1101001,1,Lettuce,,215,Temporary - annual crops - Agriculture
-10045,,1101001,1,Spinach,,216,Temporary - annual crops - Agriculture
-10046,,1101001,1,Chicory,,217,Temporary - annual crops - Agriculture
-10047,,1101001,1,"Other leafy or stem vegetables, n.e.c",,219,Temporary - annual crops - Agriculture
-10048,,1101001,1,Cucumbers,,221,Temporary - annual crops - Agriculture
-10049,,1101001,1,Eggplants ( aubergines),,222,Temporary - annual crops - Agriculture
-10050,,1101001,1,Tomatoes,,223,Temporary - annual crops - Agriculture
-10051,,1101001,1,Watermelons,,224,Temporary - annual crops - Agriculture
-10052,,1101001,1,Cantaloupes and other melons,,225,Temporary - annual crops - Agriculture
-10053,,1101001,1,"Pumpkin, squash and gourds",,226,Temporary - annual crops - Agriculture
-10054,,1101001,1,"Other fruit-bearing vegetables, n.e.c",,229,Temporary - annual crops - Agriculture
-10055,,1101001,1,Carrots,,231,Temporary - annual crops - Agriculture
-10056,,1101001,1,Turnips,,232,Temporary - annual crops - Agriculture
-10057,,1101001,1,Garlic,,233,Temporary - annual crops - Agriculture
-10058,,1101001,1,Onions (incl. shallots),,234,Temporary - annual crops - Agriculture
-10059,,1101001,1,Leeks & other alliaceous vegetables,,235,Temporary - annual crops - Agriculture
-10060,,1101001,1,"Other root, bulb, or tuberous vegetables, n.e.c",,239,Temporary - annual crops - Agriculture
-10061,,1101001,1,Maize for forage and silage,,1911,Temporary - annual crops - Agriculture
-10062,,1101001,1,Alfalfa for forage and silage,,1912,Temporary - annual crops - Agriculture
-10063,,1101001,1,"Cereal straw, husks, unprepared, ground, pressed, or in the form of pellets",,1913,Temporary - annual crops - Agriculture
-10064,,1101001,1,"Forage products, n.e.c.",,1919,Temporary - annual crops - Agriculture
-11001,,1101002,1,Apples 2,,351,Permanent- perennial crops - Agriculture
-11002,,1101002,1,Apricots,,352,Permanent- perennial crops - Agriculture
-11003,,1101002,1,Cherries & sour cherries,,353,Permanent- perennial crops - Agriculture
-11004,,1101002,1,Peaches & nectarines,,354,Permanent- perennial crops - Agriculture
-11005,,1101002,1,Pears & quinces,,355,Permanent- perennial crops - Agriculture
-11006,,1101002,1,Plums and sloes,,356,Permanent- perennial crops - Agriculture
-11007,,1101002,1,"Other pome fruits and stone fruits, n.e.c.",,359,Permanent- perennial crops - Agriculture
-11008,,1101002,1,Currants 2,,341,Permanent- perennial crops - Agriculture
-11009,,1101002,1,Gooseberries,,342,Permanent- perennial crops - Agriculture
-11010,,1101002,1,Kiwi fruit,,343,Permanent- perennial crops - Agriculture
-11011,,1101002,1,Raspberries,,344,Permanent- perennial crops - Agriculture
-11012,,1101002,1,Strawberries,,345,Permanent- perennial crops - Agriculture
-11013,,1101002,1,Blueberries,,346,Permanent- perennial crops - Agriculture
-11014,,1101002,1,Other berries,,349,Permanent- perennial crops - Agriculture
-11015,,1101002,1,Grapefruit & pomelo,,321,Permanent- perennial crops - Agriculture
-11016,,1101002,1,Lemons and Limes,,322,Permanent- perennial crops - Agriculture
-11017,,1101002,1,Oranges,,323,Permanent- perennial crops - Agriculture
-11018,,1101002,1,"Tangerines, mandarins, clementines",,324,Permanent- perennial crops - Agriculture
-11019,,1101002,1,"Other citrus fruit, n.e.c.",,329,Permanent- perennial crops - Agriculture
-11020,,1101002,1,Almonds,,361,Permanent- perennial crops - Agriculture
-11021,,1101002,1,Cashew nuts,,362,Permanent- perennial crops - Agriculture
-11022,,1101002,1,Chestnuts,,363,Permanent- perennial crops - Agriculture
-11023,,1101002,1,Hazelnuts,,364,Permanent- perennial crops - Agriculture
-11024,,1101002,1,Pistachios,,365,Permanent- perennial crops - Agriculture
-11025,,1101002,1,Walnuts,,366,Permanent- perennial crops - Agriculture
-11026,,1101002,1,Other nuts n.e.c,,369,Permanent- perennial crops - Agriculture
-11027,,1101002,1,Coconuts,,441,Permanent- perennial crops - Agriculture
-11028,,1101002,1,Olives,,442,Permanent- perennial crops - Agriculture
-11029,,1101002,1,Oil palms,,443,Permanent- perennial crops - Agriculture
-11030,,1101002,1,"Other oleaginous fruits, n.e.c.",,449,Permanent- perennial crops - Agriculture
-11031,,1101002,1,Pepper (piper spp.) 2,,6221,Permanent- perennial crops - Agriculture
-11032,,1101002,1,"Nutmeg, mace, cardamoms",,6222,Permanent- perennial crops - Agriculture
-11033,,1101002,1,Cinnamon (canella),,6223,Permanent- perennial crops - Agriculture
-11034,,1101002,1,Cloves,,6224,Permanent- perennial crops - Agriculture
-11035,,1101002,1,Ginger,,6225,Permanent- perennial crops - Agriculture
-11036,,1101002,1,Vanilla,,6226,Permanent- perennial crops - Agriculture
-11037,,1101002,1,"Other permanent spice crops, n.e.c-",,6229,Permanent- perennial crops - Agriculture
-11038,,1101002,1,Coffee,,611,Permanent- perennial crops - Agriculture
-11039,,1101002,1,Tea,,612,Permanent- perennial crops - Agriculture
-11040,,1101002,1,Mate,,613,Permanent- perennial crops - Agriculture
-11041,,1101002,1,Cocoa,,614,Permanent- perennial crops - Agriculture
-11042,,1101002,1,"Other beverage crops, n.e.c",,619,Permanent- perennial crops - Agriculture
-11043,,1101002,1,Pepper (piper spp.) 2,,6221,Permanent- perennial crops - Agriculture
-11044,,1101002,1,"Nutmeg, mace, cardamoms",,6222,Permanent- perennial crops - Agriculture
-11045,,1101002,1,Cinnamon (canella),,6223,Permanent- perennial crops - Agriculture
-11046,,1101002,1,Cloves,,6224,Permanent- perennial crops - Agriculture
-11047,,1101002,1,Ginger,,6225,Permanent- perennial crops - Agriculture
-11048,,1101002,1,Vanilla,,6226,Permanent- perennial crops - Agriculture
-11049,,1101002,1,"Other permanent spice crops, n.e.c",,6229,Permanent- perennial crops - Agriculture
-12001,,1104,1,hatcheries,,,Aquaculture - Agriculture
-12002,,1104,1,pumps and aerators,,,Aquaculture - Agriculture
-12003,,1104,1,"ponds, cages and pens",,,Aquaculture - Agriculture
-12004,,1104,1,storage facilities,,,Aquaculture - Agriculture
-12005,,1104,1,processing facilities,,,Aquaculture - Agriculture
-12006,,1104,1,marketing facilities,,,Aquaculture - Agriculture
-13001,,1105,1,Fishing vessels/boats,,,Fisheries - Agriculture
-13002,,1105,1,Fishing gear,,,Fisheries - Agriculture
-13003,,1105,1,Fishing engines,,,Fisheries - Agriculture
-13004,,1105,1,Storage facilities,,,Fisheries - Agriculture
-13005,,1105,1,Processing facilities,,,Fisheries - Agriculture
-13006,,1105,1,Market facilities,,,Fisheries - Agriculture
-20001,,12,1,Manufacturing plant,,,Industry
-20002,,12,1,Industrial units,,,Industry
-20003,,12,1,Storage facilities,,,Industry
-20004,,12,1,Distribution centers,,,Industry
-20005,,12,1,Mine shafts,,,Industry
-20006,,12,1,Tunnels,,,Industry
-20007,,12,1,Processing plants,,,Industry
-20008,,12,1,Workshops,,,Industry
-21001,,12,1,Vehicles,Machinery and equipments,,Industry
-21002,,12,1,Production machinery,Machinery and equipments,,Industry
-21003,,12,1,Assembly lines,Machinery and equipments,,Industry
-21004,,12,1,Specialized equipment,Machinery and equipments,,Industry
-21005,,12,1,Compressors,Machinery and equipments,,Industry
-21006,,12,1,Generators,Machinery and equipments,,Industry
-21007,,12,1,Control system,Machinery and equipments,,Industry
-21008,,12,1,Drilling machinery,Machinery and equipments,,Industry
-21009,,12,1,Excavators,Machinery and equipments,,Industry
-21010,,12,1,Loaders,Machinery and equipments,,Industry
-21011,,12,1,Bulldozers,Machinery and equipments,,Industry
-21012,,12,1,Haul tracks,Machinery and equipments,,Industry
-21013,,12,1,Crushing machinery,Machinery and equipments,,Industry
-21014,,12,1,Grinding machinery,Machinery and equipments,,Industry
-21015,,12,1,Separation equipment,Machinery and equipments,,Industry
-21016,,12,1,Conveyor system,Machinery and equipments,,Industry
-21017,,12,1,Railcars,Machinery and equipments,,Industry
-21018,,12,1,Trucks,Machinery and equipments,,Industry
-21019,,12,1,Loading and unloading equipment,Machinery and equipments,,Industry
-21020,,12,1,Backhoes,Machinery and equipments,,Industry
-21021,,12,1,Graders,Machinery and equipments,,Industry
-21022,,12,1,Forklifts,Machinery and equipments,,Industry
-21023,,12,1,Rollers,Machinery and equipments,,Industry
-21024,,12,1,Asphalt pavers,Machinery and equipments,,Industry
-21025,,12,1,Milling machines,Machinery and equipments,,Industry
-21026,,12,1,Demolition machines,Machinery and equipments,,Industry
-21027,,12,1,Pile drivers,Machinery and equipments,,Industry
-21028,,12,1,Compactors,Machinery and equipments,,Industry
-21029,,12,1,Lighting systems,Machinery and equipments,,Industry
-21030,,12,1,Cranes,Machinery and equipments,,Industry
-21031,,12,1,Scaffolding,Machinery and equipments,,Industry
-21032,,12,1,Generators,Machinery and equipments,,Industry
-21033,,12,1,Concrete mixers,Machinery and equipments,,Industry
-21034,,12,1,Batching plants,Machinery and equipments,,Industry
-21035,,12,1,Concrete pump trucks,Machinery and equipments,,Industry
-21036,,12,1,Handling machineries,Machinery and equipments,,Industry
-30001,,13,1,Buildings,,,Tourism
-30002,,13,1,Properties,,,Tourism
-30003,,13,1,On-site restaurants,,,Tourism
-30004,,13,1,Restaurants,,,Tourism
-30005,,13,1,Conference facilities,,,Tourism
-30006,,13,1,Recreational amenities,,,Tourism
-30007,,13,1,Swimming pool,,,Tourism
-30008,,13,1,Saunas,,,Tourism
-30009,,13,1,golf park,,,Tourism
-30010,,13,1,Spas,,,Tourism
-30011,,13,1,Gyms,,,Tourism
-30012,,13,1,Parking facilities,,,Tourism
-30013,,13,1,Landscaping,,,Tourism
-30014,,13,1,Generators,,,Tourism
-30015,,13,1,Vehicles,,,Tourism
-30016,,13,1,Laundry facilities,,,Tourism
-30017,,13,1,Wastewater treatment units,,,Tourism
-30018,,13,1,Water treatment units,,,Tourism
-30019,,13,1,Kitchens,,,Tourism
-30020,,13,1,Storage areas,,,Tourism
-30021,,13,1,Garage,,,Tourism
-31001,,13,1,Room furnishing,Furniture and equipment,,Tourism
-31002,,13,1,Beds,Furniture and equipment,,Tourism
-31003,,13,1,Applicance,Furniture and equipment,,Tourism
-31004,,13,1,Technological equipment,Furniture and equipment,,Tourism
-31005,,13,1,In-room appliances,Furniture and equipment,,Tourism
+10023,00d1f0d9-38af-42c0-9c05-0a2854bfee68,1101001,true,"Other roots & tubers, n.e.c.",,59,Temporary - annual crops - Agriculture
+21021,02c093f7-5d5e-4f6b-ab8b-3cd95f6aa554,12,true,Graders,Machinery and equipments,,Industry
+30014,0468a5f2-e1a6-4ebc-a55f-c866a2cb9d7d,13,true,Generators,,,Tourism
+11016,09d80ac1-fb83-4724-b44b-146193ba1fdb,1101002,true,Lemons and Limes,,322,Permanent- perennial crops - Agriculture
+30018,09f970db-332a-4821-a83c-b4c14aee496b,13,true,Water treatment units,,,Tourism
+11015,0a45eb42-0617-4755-9dbf-010d07c3dca0,1101002,true,Grapefruit & pomelo,,321,Permanent- perennial crops - Agriculture
+10048,0c70f0c1-1a04-4198-a027-6617c0de227e,1101001,true,Cucumbers,,221,Temporary - annual crops - Agriculture
+21004,0e75023a-b773-4543-b3ca-5b6284982bb2,12,true,Specialized equipment,Machinery and equipments,,Industry
+11012,13a255b2-2b17-4a8d-b051-215877ecfa3c,1101002,true,Strawberries,,345,Permanent- perennial crops - Agriculture
+10060,14b32c3f-07c1-49fa-81f2-89407b1921e2,1101001,true,"Other root, bulb, or tuberous vegetables, n.e.c",,239,Temporary - annual crops - Agriculture
+21011,182260b6-37be-4ee8-a57d-ed45f2e5b038,12,true,Bulldozers,Machinery and equipments,,Industry
+30010,18ba3340-f521-4b7c-b447-f307cc4f07cd,13,true,Spas,,,Tourism
+10054,1a875652-53ab-4c79-b0f3-db16d599ab10,1101001,true,"Other fruit-bearing vegetables, n.e.c",,229,Temporary - annual crops - Agriculture
+11029,1b46c86d-ce11-4b54-9a45-c0951b15cac6,1101002,true,Oil palms,,443,Permanent- perennial crops - Agriculture
+10047,1f0f97c2-adfc-4ea9-8d02-d4fc32c6f03f,1101001,true,"Other leafy or stem vegetables, n.e.c",,219,Temporary - annual crops - Agriculture
+10004,25184c88-2d13-4783-88f2-5d4cd45a045b,1101001,true,Sorghum,,14,Temporary - annual crops - Agriculture
+31002,25802138-528e-4496-90d0-092957368b72,13,true,Beds,Furniture and equipment,,Tourism
+21017,2614814c-f51b-4a7d-9714-0da80b53cf85,12,true,Railcars,Machinery and equipments,,Industry
+21007,2693cdbb-ced9-4ee4-b7a4-dc47e78d126f,12,true,Control system,Machinery and equipments,,Industry
+10015,27830a75-ab3b-4eb5-aab5-4c60f4e0f97c,1101001,true,Lupins,,76,Temporary - annual crops - Agriculture
+11042,281fba40-fb97-4df4-a959-5731964f3b27,1101002,true,"Other beverage crops, n.e.c",,619,Permanent- perennial crops - Agriculture
+21001,28ae9842-7bdb-4c36-934f-2a14e779a9d9,12,true,Vehicles,Machinery and equipments,,Industry
+11034,294bea44-ee31-4acd-8b4b-f3711b77a198,1101002,true,Cloves,,6224,Permanent- perennial crops - Agriculture
+21008,2a3f01c1-5e3d-4d8d-b701-6107eed88337,12,true,Drilling machinery,Machinery and equipments,,Industry
+10041,2a8128c0-8637-4adb-95fe-03785e7dff4f,1101001,true,Asparagus,,212,Temporary - annual crops - Agriculture
+21016,2b0d2414-05de-48d4-beae-7307be24dea8,12,true,Conveyor system,Machinery and equipments,,Industry
+10056,2dd927e8-3d6e-4122-91bc-0462c4e81508,1101001,true,Turnips,,232,Temporary - annual crops - Agriculture
+10058,2f0096a4-9e15-4ff2-bdbc-ef9aaba16db3,1101001,true,Onions (incl. shallots),,234,Temporary - annual crops - Agriculture
+11004,30867e26-001e-4605-a50b-8578537476f4,1101002,true,Peaches & nectarines,,354,Permanent- perennial crops - Agriculture
+21018,30e0356e-9238-4d67-9c2d-58cff39b3218,12,true,Trucks,Machinery and equipments,,Industry
+10040,313cd4af-4f1a-4065-8fe3-d03306d2853f,1101001,true,Artichokes,,211,Temporary - annual crops - Agriculture
+11006,33e739db-4cc1-4e52-86f2-de871be86af2,1101002,true,Plums and sloes,,356,Permanent- perennial crops - Agriculture
+11027,3515f327-9c2e-45ef-bf26-6a36d69c6b68,1101002,true,Coconuts,,441,Permanent- perennial crops - Agriculture
+21013,36eb213e-709c-4ad0-ab6e-e3e9f7eff9a9,12,true,Crushing machinery,Machinery and equipments,,Industry
+10051,37baa2fa-0fc2-4d71-bc93-28175ba0babf,1101001,true,Watermelons,,224,Temporary - annual crops - Agriculture
+10021,391a09fb-ec94-42f7-b143-944aafc97ce3,1101001,true,Cassava,,53,Temporary - annual crops - Agriculture
+30005,3cd27f3c-e992-4e42-b4e7-c87adf8a289a,13,true,Conference facilities,,,Tourism
+11032,3d8bc735-3790-407b-8091-485368235bce,1101002,true,"Nutmeg, mace, cardamoms",,6222,Permanent- perennial crops - Agriculture
+11013,3fd61e18-6f93-45cc-a44f-bb63cb7dc8f5,1101002,true,Blueberries,,346,Permanent- perennial crops - Agriculture
+21027,41ff479d-0357-4596-8f6b-3ffb7f54a19c,12,true,Pile drivers,Machinery and equipments,,Industry
+20005,421e99c8-9e0e-4532-ae26-875809135302,12,true,Mine shafts,,,Industry
+10001,43e4bc48-7700-4d51-8e11-0fb3ace947af,1101001,true,Wheat,,11,Temporary - annual crops - Agriculture
+21026,448fd98f-a6ff-4bfc-92cb-3316ada631fc,12,true,Demolition machines,Machinery and equipments,,Industry
+10017,455cfd32-1e1f-404b-9e49-14b0afaac038,1101001,true,Pigeno peas,,78,Temporary - annual crops - Agriculture
+10022,46c3136b-49b0-49b0-b856-af9c310192d5,1101001,true,Yams,,54,Temporary - annual crops - Agriculture
+13004,4721f2d9-e447-44d6-b2f3-0b6b261065c8,1105,true,Storage facilities,,,Fisheries - Agriculture
+10018,4801e89e-374a-4772-a40e-f75543c3f668,1101001,true,Leguminous crops n.e.c.,,79,Temporary - annual crops - Agriculture
+11008,49a3cc04-d4b7-46a5-8cf2-dea6d4d0abfb,1101002,true,Currants 2,,341,Permanent- perennial crops - Agriculture
+13006,4ad83d00-5f32-47ee-97a3-2a7ee6635452,1105,true,Market facilities,,,Fisheries - Agriculture
+31004,4aee9ace-ce22-48c0-84a3-9798c34a712c,13,true,Technological equipment,Furniture and equipment,,Tourism
+11019,4d86fc05-949c-4086-b218-2f8d3d252a00,1101002,true,"Other citrus fruit, n.e.c.",,329,Permanent- perennial crops - Agriculture
+11033,4db2e26b-e21d-46eb-9f49-107a4af2c408,1101002,true,Cinnamon (canella),,6223,Permanent- perennial crops - Agriculture
+10019,508ade0a-8088-415c-b019-2983da435218,1101001,true,Potatoes,,51,Temporary - annual crops - Agriculture
+10009,50cb4070-bbff-47d0-8f49-f1624546d9d7,1101001,true,"Other cereals, n.e.c",,19,Temporary - annual crops - Agriculture
+11026,51a9ce6f-a8c5-42fc-82c0-e173c721d612,1101002,true,Other nuts n.e.c,,369,Permanent- perennial crops - Agriculture
+11040,527dbc0d-c2dd-4d5e-bd43-c773335e769e,1101002,true,Mate,,613,Permanent- perennial crops - Agriculture
+10031,54e76c51-0276-4a5b-bc59-c91f1570a69b,1101001,true,Niger seed,,434,Temporary - annual crops - Agriculture
+21006,5518ab4f-a3ce-44d8-bd9d-48bf9845da3d,12,true,Generators,Machinery and equipments,,Industry
+11023,55e81bec-2bad-4fe7-bda8-8b0b2ef193e6,1101002,true,Hazelnuts,,364,Permanent- perennial crops - Agriculture
+11048,58b35839-fdd0-4e61-b103-02effd461d8a,1101002,true,Vanilla,,6226,Permanent- perennial crops - Agriculture
+11005,59f5ed40-fb0a-40aa-ab19-ff20cfe312f8,1101002,true,Pears & quinces,,355,Permanent- perennial crops - Agriculture
+21033,5c04f3c7-c5cc-4071-af1a-6ba90ff446aa,12,true,Concrete mixers,Machinery and equipments,,Industry
+10052,5f17cb11-f5cf-46a3-be54-885a2fcb7341,1101001,true,Cantaloupes and other melons,,225,Temporary - annual crops - Agriculture
+30017,5f7799c8-d246-4825-9b81-b23cc874cedd,13,true,Wastewater treatment units,,,Tourism
+21002,5fa6ac59-0087-4974-bf0a-b1f53bb989fc,3,true,Production machinery,Machinery and equipments,,Industry
+10008,609feae0-20c1-473c-9548-2df54a505049,1101001,true,Millets,,18,Temporary - annual crops - Agriculture
+12001,61099cf2-420e-4681-94ac-08bcf2ba61d6,1104,true,hatcheries,,,Aquaculture - Agriculture
+12005,61275f5c-aac0-4f7c-8dbf-2bd48a706933,1104,true,processing facilities,,,Aquaculture - Agriculture
+10055,61a2a82f-f852-4fc8-b45c-cfa745013db6,1101001,true,Carrots,,231,Temporary - annual crops - Agriculture
+31003,63a2e871-0ca9-4f46-bffc-feb834da0935,13,true,Applicance,Furniture and equipment,,Tourism
+11049,674d2a6d-ef36-40c2-84b4-545192682372,1101002,true,"Other permanent spice crops, n.e.c",,6229,Permanent- perennial crops - Agriculture
+10029,6b5a5df9-1402-4ee6-9aec-e47e54221bdb,1101001,true,Linseed,,432,Temporary - annual crops - Agriculture
+10044,6e6032a0-9647-47f3-a10f-6cc8e242b0f0,1101001,true,Lettuce,,215,Temporary - annual crops - Agriculture
+10013,71663046-0877-41bf-9d6a-6bfa8415b80d,1101001,true,Cow peas,,74,Temporary - annual crops - Agriculture
+30008,71d181ef-a581-4758-ae89-16e6f398bb03,13,true,Saunas,,,Tourism
+10024,74953725-7742-4532-bd35-b0f5c709a488,1101001,true,Sugar beet,,81,Temporary - annual crops - Agriculture
+10010,74dadf1e-bc16-4994-80ba-ecdd244c84b4,1101001,true,Beans,,71,Temporary - annual crops - Agriculture
+11018,75335dfb-5734-4be5-9bfe-7b2f1cfc50ce,1101002,true,"Tangerines, mandarins, clementines",,324,Permanent- perennial crops - Agriculture
+21009,779562d9-347c-4be6-9a55-dc8344282877,12,true,Excavators,Machinery and equipments,,Industry
+21005,78274c14-d0ec-4ff1-86c7-8e7819b5ad65,12,true,Compressors,Machinery and equipments,,Industry
+10016,787e27e6-ad48-4937-9e1b-0bb6a8b24ab0,1101001,true,Peas,,77,Temporary - annual crops - Agriculture
+10012,7ac8bbaf-99c2-4229-a99b-4614891703d7,1101001,true,"Chick peas, dry",,73,Temporary - annual crops - Agriculture
+11035,7b2733e5-136a-40ec-bbe0-01593965e210,1101002,true,Ginger,,6225,Permanent- perennial crops - Agriculture
+20007,7cf4f34a-7234-4031-8942-a6a967567304,12,true,Processing plants,,,Industry
+11002,7d0c9b63-2f15-4d18-bec3-884cd34ea405,1101002,true,Apricots,,352,Permanent- perennial crops - Agriculture
+11021,7dee4061-1ea9-4321-8369-c4cf3e9b8de4,1101002,true,Cashew nuts,,362,Permanent- perennial crops - Agriculture
+21022,7df15d3d-ddc7-4ae2-892e-94651ecf3dd4,12,true,Forklifts,Machinery and equipments,,Industry
+21030,7dfa0326-d22a-4bc0-b086-26aef494f25c,12,true,Cranes,Machinery and equipments,,Industry
+21035,7e9b3b49-5991-4578-abfc-2d1efbb8add3,12,true,Concrete pump trucks,Machinery and equipments,,Industry
+10025,7ee76a92-3a18-455b-af99-35b29fd7e1b5,1101001,true,Sugar cane,,82,Temporary - annual crops - Agriculture
+10032,80012e57-edb3-4e74-9200-f6cbb171b725,1101001,true,Rapeseed,,435,Temporary - annual crops - Agriculture
+20008,811c4717-849f-45f7-b20f-e036e0dc954b,12,true,Workshops,,,Industry
+10011,823e56bf-41a3-49ba-b628-e91cb59231d5,1101001,true,"Broad beans, dry",,72,Temporary - annual crops - Agriculture
+11024,82a996ac-a578-4e67-a73e-f52db91b21d2,1101002,true,Pistachios,,365,Permanent- perennial crops - Agriculture
+11044,840c3fb0-6822-47e4-8dfc-1f153727120a,1101002,true,"Nutmeg, mace, cardamoms",,6222,Permanent- perennial crops - Agriculture
+30019,84e833a7-e9f1-46ed-b3a2-dc549ce2a5c8,13,true,Kitchens,,,Tourism
+10007,85054c5a-e954-442c-998e-44ff510c26cf,1101001,true,Oats,,17,Temporary - annual crops - Agriculture
+10002,857c0722-6ff0-4ab5-a709-a0f16080962a,1101001,true,Maize,,12,Temporary - annual crops - Agriculture
+11045,8601a8b0-457d-4d50-b3c8-4017168c26ca,1101002,true,Cinnamon (canella),,6223,Permanent- perennial crops - Agriculture
+10030,8626d134-df4a-4af0-b264-458747478ec1,1101001,true,Mustard,,433,Temporary - annual crops - Agriculture
+11007,868cf501-7e0a-41ce-a8bf-559eb537d964,1101002,true,"Other pome fruits and stone fruits, n.e.c.",,359,Permanent- perennial crops - Agriculture
+10034,88a908c4-117b-4cc5-8b62-f71e61d0916e,1101001,true,Sesame,,437,Temporary - annual crops - Agriculture
+10053,89090ff2-e57d-4be8-bad2-671de871746b,1101001,true,"Pumpkin, squash and gourds",,226,Temporary - annual crops - Agriculture
+30016,8bcb0daf-cd55-498f-b4ae-2a94ca412812,13,true,Laundry facilities,,,Tourism
+30006,8dff59a8-555f-4c77-b481-2915e97265e2,13,true,Recreational amenities,,,Tourism
+10035,8e854da4-418e-4ad9-98fc-833350c18efd,1101001,true,Sunflower,,438,Temporary - annual crops - Agriculture
+30003,97a9bcdf-efea-4e4d-b995-abd697eac3ad,13,true,On-site restaurants,,,Tourism
+21019,998b7c56-b9a3-421c-9b82-77100f4846e9,12,true,Loading and unloading equipment,Machinery and equipments,,Industry
+21032,99cb1644-daf9-43a5-a875-455c710481da,12,true,Generators,Machinery and equipments,,Industry
+11043,9bb969b9-219d-402c-9cbf-2bb0e2865dfb,1101002,true,Pepper (piper spp.) 2,,6221,Permanent- perennial crops - Agriculture
+30020,9bc700f0-aa67-4bf1-8a03-89b1c3a2a8a0,13,true,Storage areas,,,Tourism
+11014,9e28e703-75cd-4460-80fb-dd462bb3e3d5,1101002,true,Other berries,,349,Permanent- perennial crops - Agriculture
+11031,9e431b88-ba3c-4216-b6e0-5ed2627f3f32,1101002,true,Pepper (piper spp.) 2,,6221,Permanent- perennial crops - Agriculture
+11039,9e6e1845-e778-4f8f-9834-6064c02684a9,1101002,true,Tea,,612,Permanent- perennial crops - Agriculture
+10050,9ee3e6da-783c-45a8-9635-785c4c299e7e,1101001,true,Tomatoes,,223,Temporary - annual crops - Agriculture
+21003,a03bd5c1-c59e-43fb-ad26-e62221a45505,12,true,Assembly lines,Machinery and equipments,,Industry
+10028,a2c122d0-f141-4d54-aa4e-26520011845a,1101001,true,Castor bean,,431,Temporary - annual crops - Agriculture
+11025,a420bf2a-a06f-40de-a852-1b95cffadcb7,1101002,true,Walnuts,,366,Permanent- perennial crops - Agriculture
+10020,a4423845-5826-470f-87b8-e9434b0c24e5,1101001,true,Sweet potatoes,,52,Temporary - annual crops - Agriculture
+10043,a7eb06b3-e5f1-4f44-afeb-05d0d6cc12df,1101001,true,Cauliflowers & broccoli,,214,Temporary - annual crops - Agriculture
+10026,a9fc7194-4263-4fb6-a22a-90eb0ba13762,1101001,true,Sugar beet seeds,,83,Temporary - annual crops - Agriculture
+12002,aa50d51b-82c4-4dd8-94c4-0a1714589a29,1104,true,pumps and aerators,,,Aquaculture - Agriculture
+30015,abe00b14-3234-4a89-8016-20ad6d39a31c,13,true,Vehicles,,,Tourism
+11003,ac4f6545-2cb8-404a-b855-a328228b1f5a,1101002,true,Cherries & sour cherries,,353,Permanent- perennial crops - Agriculture
+30011,afb6d0e2-cd0b-4990-8590-720eab8b115f,13,true,Gyms,,,Tourism
+10038,b136af9c-417e-4741-9a00-58ec57af083e,1101001,true,"Jute, kenaf, and other similar",,9212,Temporary - annual crops - Agriculture
+10057,b1b509c1-a654-47d1-a4eb-c134734fc035,1101001,true,Garlic,,233,Temporary - annual crops - Agriculture
+10062,b242e5cd-4fbb-49a5-954f-d7be683a9d23,1101001,true,Alfalfa for forage and silage,,1912,Temporary - annual crops - Agriculture
+30002,b2666498-cf34-4411-98ac-fe1f729f7c9b,13,true,Properties,,,Tourism
+21029,b3fbc6cd-9612-4538-9ac5-4381e7d4cae9,12,true,Lighting systems,Machinery and equipments,,Industry
+11020,b4746a82-5565-453e-b719-075f308bdc92,1101002,true,Almonds,,361,Permanent- perennial crops - Agriculture
+21025,b7cdbf7e-de4f-42b9-aee6-4fe078d72f90,12,true,Milling machines,Machinery and equipments,,Industry
+12003,b801d20c-fc58-4d5f-b9fd-e64b79e3a083,1104,true,"ponds, cages and pens",,,Aquaculture - Agriculture
+10006,bb4136ec-6746-4fab-bf13-33cd53dad4c1,1101001,true,Rye,,16,Temporary - annual crops - Agriculture
+21012,bca1eead-755d-45d5-b75f-5db45f8b792f,12,true,Haul tracks,Machinery and equipments,,Industry
+21036,bd6d286d-5dce-484b-9700-af2af2b49e42,12,true,Handling machineries,Machinery and equipments,,Industry
+31005,be3e645a-538f-4c11-9002-0bd4db996c9e,13,true,In-room appliances,Furniture and equipment,,Tourism
+10037,be709642-776c-4170-97d3-b780bf73ba5d,1101001,true,Cotton,,9211,Temporary - annual crops - Agriculture
+11041,be846dc3-3cc8-4b54-93e0-96f0f9698428,1101002,true,Cocoa,,614,Permanent- perennial crops - Agriculture
+11017,be9b7b2d-d0fc-45e0-8ece-198a853017dd,1101002,true,Oranges,,323,Permanent- perennial crops - Agriculture
+11009,bf731b86-f3da-4c98-901d-3d700d71b452,1101002,true,Gooseberries,,342,Permanent- perennial crops - Agriculture
+10059,c24a7f6e-a97c-47f1-8520-0d0a1fd539d3,1101001,true,Leeks & other alliaceous vegetables,,235,Temporary - annual crops - Agriculture
+10046,c2e55174-e66d-42a6-a57c-130f9a910453,1101001,true,Chicory,,217,Temporary - annual crops - Agriculture
+10039,c40474c8-1487-4364-9261-018bbf54405a,1101001,true,Other temporary fire crops,,9219,Temporary - annual crops - Agriculture
+12004,c4f8d57b-4140-4153-837b-5b2e35155f83,1104,true,storage facilities,,,Aquaculture - Agriculture
+11022,c5637e46-cade-430c-91e0-364348126f85,1101002,true,Chestnuts,,363,Permanent- perennial crops - Agriculture
+10064,c5e6dddf-298d-48cc-a640-d540317bffdd,1101001,true,"Forage products, n.e.c.",,1919,Temporary - annual crops - Agriculture
+10049,c7578fd9-5639-4322-951e-23f73f6bc004,1101001,true,Eggplants ( aubergines),,222,Temporary - annual crops - Agriculture
+10036,c94da795-3f88-4ddf-b092-b7ac0b83d469,1101001,true,"Other temporary oilseed crops, n.e.c",,439,Temporary - annual crops - Agriculture
+11028,cabaf50d-ba89-40f9-8e9e-2e9c161b6244,1101002,true,Olives,,442,Permanent- perennial crops - Agriculture
+21020,cb452886-7bc7-46c3-81f4-381eb417bc7a,12,true,Backhoes,Machinery and equipments,,Industry
+10005,cd7424d9-5317-4c03-99b1-dea9bf8d0037,1101001,true,Barley,,15,Temporary - annual crops - Agriculture
+12006,cdf24023-db56-4007-8682-1d37909ed607,1104,true,marketing facilities,,,Aquaculture - Agriculture
+11010,cfbfd2fc-515a-4236-8eb8-0010fb2e9584,1101002,true,Kiwi fruit,,343,Permanent- perennial crops - Agriculture
+30001,d02cca45-f40d-4a51-8198-3c9189c76f9e,13,true,Buildings,,,Tourism
+30021,d17c37f6-ac1a-46eb-b5ae-a6576113204e,13,true,Garage,,,Tourism
+13005,d2bc5758-8488-4f9f-8e08-d0902e357c4a,1105,true,Processing facilities,,,Fisheries - Agriculture
+30007,d423fd56-50ca-4ae7-8765-ee96f57d3457,13,true,Swimming pool,,,Tourism
+20001,d5d6a76f-2f50-4e00-b37c-f001742d74c3,12,true,Manufacturing plant,,,Industry
+13003,d6be62c8-39ab-442a-af2d-293cebca2aea,1105,true,Fishing engines,,,Fisheries - Agriculture
+10027,d8cd2674-d536-445d-9429-62f1d06527ac,1101001,true,"Other sugar crops ( sugar maple, sweet sorghum)",,89,Temporary - annual crops - Agriculture
+21024,dd3f862c-baa8-4ceb-b668-234e553dcb5e,12,true,Asphalt pavers,Machinery and equipments,,Industry
+11038,dd6cd1af-2626-4529-83c9-5d81834ea2c2,1101002,true,Coffee,,611,Permanent- perennial crops - Agriculture
+10033,dd96cc41-8603-4f22-9cf4-3020618b2c56,1101001,true,Safflower,,436,Temporary - annual crops - Agriculture
+30004,ddf3d2f5-5772-4430-9256-0c33fd6b3740,13,true,Restaurants,,,Tourism
+11037,ddfe13e9-9d67-49fa-b706-0f8a49c2d45e,1101002,true,"Other permanent spice crops, n.e.c-",,6229,Permanent- perennial crops - Agriculture
+11011,de55925a-8022-4793-aece-4fbd8c962dc1,1101002,true,Raspberries,,344,Permanent- perennial crops - Agriculture
+20002,de5a74a9-f5a8-4979-bfcf-2ab813a90351,12,true,Industrial units,,,Industry
+13002,e0275c4f-b096-4aeb-9a86-def8d62ba680,1105,true,Fishing gear,,,Fisheries - Agriculture
+21031,e0cb6601-e9d5-4c7b-bb6d-6493d80020d8,12,true,Scaffolding,Machinery and equipments,,Industry
+30009,e0cdafc6-65ca-4630-8d26-c4fc94d73ecd,13,true,golf park,,,Tourism
+21010,e3c55002-bcb6-4c5a-865d-172e5e03738e,12,true,Loaders,Machinery and equipments,,Industry
+21015,e53e6f2c-f051-4597-a167-29662d4923dc,12,true,Separation equipment,Machinery and equipments,,Industry
+20003,e5b9593a-3bfd-4c22-900c-b8800366a612,12,true,Storage facilities,,,Industry
+10042,e5d27d61-4d4d-49af-9ed9-09552f67c358,1101001,true,Cabbages,,213,Temporary - annual crops - Agriculture
+11046,e6053cdc-e993-434c-9c6b-18fecbe836f3,1101002,true,Cloves,,6224,Permanent- perennial crops - Agriculture
+13001,e7c90383-4843-47b3-a4fd-997337c1b46e,1105,true,Fishing vessels/boats,,,Fisheries - Agriculture
+11047,e95d30a9-fe5f-4285-8d6c-f21ac943dfc0,1101002,true,Ginger,,6225,Permanent- perennial crops - Agriculture
+11036,eb99f131-b2dd-4c99-a0b3-554d98034eb2,1101002,true,Vanilla,,6226,Permanent- perennial crops - Agriculture
+10061,ec708bfb-3bcc-4ca9-9b98-1de17328614b,1101001,true,Maize for forage and silage,,1911,Temporary - annual crops - Agriculture
+20004,ed626b59-2243-4d23-b2b6-26ade7335977,12,true,Distribution centers,,,Industry
+10014,edb5c41f-c496-4a85-99ad-87c147537de2,1101001,true,Lentils,,75,Temporary - annual crops - Agriculture
+21014,ee3659ac-cd8f-4c52-ae1b-be0161770cd2,12,true,Grinding machinery,Machinery and equipments,,Industry
+21034,eee6a0bc-aad2-42c9-a565-3e2d278cb1bc,12,true,Batching plants,Machinery and equipments,,Industry
+11030,f293e228-5f25-49b7-afa0-9834c4638b07,1101002,true,"Other oleaginous fruits, n.e.c.",,449,Permanent- perennial crops - Agriculture
+21028,f4150a33-52d2-4917-8f1c-c0188d80bf4e,12,true,Compactors,Machinery and equipments,,Industry
+20006,f5dc46b2-6e89-471c-b9a2-dded3c0b911c,12,true,Tunnels,,,Industry
+11001,f78d4006-e941-4f89-81aa-55a649be1ab8,1101002,true,Apples 2,,351,Permanent- perennial crops - Agriculture
+10003,f82779c8-2a56-4bd1-bf9c-8328a6cb8350,1101001,true,Rice,,13,Temporary - annual crops - Agriculture
+21023,f8ee0bc1-b85c-4ad2-b56b-7fdc56f81bd3,12,true,Rollers,Machinery and equipments,,Industry
+30013,f9365996-2633-4fb0-b727-ef715560627b,13,true,Landscaping,,,Tourism
+31001,f9c769ad-3cb5-45cf-a881-0158716fdae6,13,true,Room furnishing,Furniture and equipment,,Tourism
+10063,fc0d6fb6-eb73-4c75-aa38-4ac6772eb774,1101001,true,"Cereal straw, husks, unprepared, ground, pressed, or in the form of pellets",,1913,Temporary - annual crops - Agriculture
+30012,fd418033-4e88-4e80-b0b7-2517064eba5a,13,true,Parking facilities,,,Tourism
+10045,ff1e4f83-bd24-4bf5-bbf3-4e50eaee75a2,1101001,true,Spinach,,216,Temporary - annual crops - Agriculture

@@ -158,16 +158,8 @@ export default function Screen() {
 											{ (ld.recordsHumanEffects.affectedDirect || ld.recordsHumanEffects.affectedIndirect)  && (
 												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Affected</Link></li>
 											)}
-											{ (ld.recordsHumanEffects.displacedShort 
-												|| ld.recordsHumanEffects.displacedMediumShort
-												|| ld.recordsHumanEffects.displacedMediumLong
-												|| ld.recordsHumanEffects.displacedLong
-												|| ld.recordsHumanEffects.displacedPermanent
-												)  && (
+											{ (ld.recordsHumanEffects.displaced)  && (
 													<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>Displaced</Link></li>
-											)}
-											{ (ld.recordsHumanEffects.displacedPreemptive || ld.recordsHumanEffects.displacedReactive)  && (
-												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=DisplacementStocks`}>Displacement Stocks</Link></li>
 											)}
 										</ul>
 										</>
