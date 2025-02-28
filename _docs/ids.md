@@ -27,7 +27,7 @@ Alternatively the full description is in
 15 Setting the fields of a random-number-based UUID
 
 ## Example ID returned
-
+```
 83f61f19-9396-4083-927d-68f7863c7463
 xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx
 timelow-timemid-versionandtimehigh-variantandclockseqhigh_clocseqlow-node
@@ -40,7 +40,7 @@ Nxxx
 VariantAndClockSeqHigh 10xx
 	9 should be 8-f
 x - random
-
+```
 ## Code
 
 ```
