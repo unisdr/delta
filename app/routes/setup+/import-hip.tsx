@@ -8,7 +8,7 @@ import {
 } from "@remix-run/react";
 
 import {
-	hipClassTable,
+	hipTypeTable,
 	hipClusterTable,
 	hipHazardTable,
 } from '~/drizzle/schema';
@@ -40,28 +40,28 @@ interface HipApi {
 }
 
 async function upsertHip(item: Hip) {
-	const [cls] = await dr
-		.insert(hipClassTable)
+	const [tp] = await dr
+		.insert(hipTypeTable)
 		.values({
 			id: String(item.type_id),
 			nameEn: item.type_name
 		})
 		.onConflictDoUpdate({
-			target: hipClassTable.id,
+			target: hipTypeTable.id,
 			set: {nameEn: item.type_name},
 		})
-		.returning({id: hipClassTable.id});
+		.returning({id: hipTypeTable.id});
 
 	const [cluster] = await dr
 		.insert(hipClusterTable)
 		.values({
 			id: String(item.cluster_id),
-			classId: cls.id,
+			typeId: tp.id,
 			nameEn: item.cluster_name
 		})
 		.onConflictDoUpdate({
 			target: hipClusterTable.id,
-			set: {classId: cls.id, nameEn: item.cluster_name},
+			set: {typeId: tp.id, nameEn: item.cluster_name},
 		})
 		.returning({id: hipClusterTable.id});
 
@@ -129,7 +129,7 @@ interface HipApi {
 function hipDevData(): Hip[] {
 	const types: any = [];
 	for (let i = 1; i <= 2; i++) {
-		types.push({id: i, name: `Class ${i}`});
+		types.push({id: i, name: `Type ${i}`});
 	}
 	const clusters: any = [];
 	let id = 1;

@@ -119,7 +119,7 @@ export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 	{key: "disasterEventId", label: "", type: "other"},
 	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
 	{key: "hipClusterId", label: "", type: "other"},
-	{key: "hipClassId", label: "", type: "other"},
+	{key: "hipTypeId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
 
@@ -222,7 +222,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 	let hazardousEventLinkInitial: "none" | "hazardous_event" | "hip" | "disaster_event" = "none"
 	if (props.fields.hazardousEventId) {
 		hazardousEventLinkInitial = "hazardous_event"
-	} else if (props.fields.hipClassId) {
+	} else if (props.fields.hipTypeId) {
 		hazardousEventLinkInitial = "hip"
 	} else if (props.fields.disasterEventId){
 		hazardousEventLinkInitial = "disaster_event"
@@ -274,12 +274,12 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							<FieldErrors errors={props.errors} field="disasterEventId"></FieldErrors>
 						</Field> : null
 				,
-				hipClassId: null,
+				hipTypeId: null,
 				hipClusterId: null,
 				hipHazardId: (
 					(hazardousEventLinkType == "hip") ?
 						<Field key="hazardId" label="Specific Hazard *">
-							<HazardPicker hip={props.hip} classId={fields.hipClassId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
+							<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
 							<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
 						</Field> : null
 				),

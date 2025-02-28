@@ -1,6 +1,6 @@
 
 import { dr } from "~/db.server";
-import { hipClassTable } from "~/drizzle/schema";
+import { hipTypeTable } from "~/drizzle/schema";
 
 export interface HazardType {
   id: string;
@@ -15,10 +15,10 @@ export const fetchHazardTypes = async (): Promise<HazardType[]> => {
   try {
     const hazardTypes = await dr
       .select({
-        id: hipClassTable.id,
-        name: hipClassTable.nameEn,
+        id: hipTypeTable.id,
+        name: hipTypeTable.nameEn,
       })
-      .from(hipClassTable);
+      .from(hipTypeTable);
 
     return hazardTypes;
   } catch (error) {

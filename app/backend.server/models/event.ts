@@ -34,8 +34,8 @@ export function validate(fields: Partial<HazardousEventFields>): Errors<Hazardou
 
 	let requiredHip = getRequiredAndSetToNullHipFields(fields)
 	if (requiredHip) {
-		if (requiredHip == "class") {
-			errors.fields.hipHazardId = ["HIP class is required"]
+		if (requiredHip == "type") {
+			errors.fields.hipHazardId = ["HIP type is required"]
 		} else if (requiredHip == "cluster") {
 			errors.fields.hipHazardId = ["HIP cluster is required"]
 		} else {
@@ -234,7 +234,7 @@ export const hazardBasicInfoJoin = {
 		}*/
 	},
 	hipCluster: true,
-	hipClass: true,
+	hipType: true,
 } as const
 
 
@@ -358,7 +358,7 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	errors.fields = {};
 	errors.form = [];
 	/*
-	if (!fields.hazardousEventId && !fields.hipClassId) {
+	if (!fields.hazardousEventId && !fields.hipTypeId) {
 		errors.fields.hazardousEventId = ["Select hazardous event or HIP class"]
 	} else {
 		if (fields.hazardousEventId && !isValidUUID(fields.hazardousEventId)) {
@@ -486,7 +486,7 @@ export async function disasterEventByIdTx(tx: Tx, id: any) {
 			disasterEvent: true,
 			hipHazard: true,
 			hipCluster: true,
-			hipClass: true,
+			hipType: true,
 			event: {
 				with: {
 					ps: true,

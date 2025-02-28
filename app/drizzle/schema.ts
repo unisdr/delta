@@ -75,8 +75,8 @@ function hipRelationColumnsRequired() {
 			.references((): AnyPgColumn => hipHazardTable.id),
 		hipClusterId: text("hip_cluster_id")
 			.references((): AnyPgColumn => hipClusterTable.id),
-		hipClassId: text("hip_class_id")
-			.references((): AnyPgColumn => hipClassTable.id)
+		hipTypeId: text("hip_type_id")
+			.references((): AnyPgColumn => hipTypeTable.id)
 			.notNull()
 	}
 }
@@ -87,8 +87,8 @@ function hipRelationColumnsOptional() {
 			.references((): AnyPgColumn => hipHazardTable.id),
 		hipClusterId: text("hip_cluster_id")
 			.references((): AnyPgColumn => hipClusterTable.id),
-		hipClassId: text("hip_class_id")
-			.references((): AnyPgColumn => hipClassTable.id)
+		hipTypeId: text("hip_type_id")
+			.references((): AnyPgColumn => hipTypeTable.id)
 	}
 }
 
@@ -364,9 +364,9 @@ export const hazardousEventRel = relations(hazardousEventTable, ({one}) => ({
 		fields: [hazardousEventTable.hipClusterId],
 		references: [hipClusterTable.id],
 	}),
-	hipClass: one(hipClassTable, {
-		fields: [hazardousEventTable.hipClassId],
-		references: [hipClassTable.id],
+	hipType: one(hipTypeTable, {
+		fields: [hazardousEventTable.hipTypeId],
+		references: [hipTypeTable.id],
 	}),
 }));
 
@@ -466,9 +466,9 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 		fields: [disasterEventTable.hipClusterId],
 		references: [hipClusterTable.id],
 	}),
-	hipClass: one(hipClassTable, {
-		fields: [disasterEventTable.hipClassId],
-		references: [hipClassTable.id],
+	hipType: one(hipTypeTable, {
+		fields: [disasterEventTable.hipTypeId],
+		references: [hipTypeTable.id],
 	}),
 }));
 
@@ -833,7 +833,7 @@ export type LossesInsert = typeof lossesTable.$inferInsert
 // Meteorological and Hydrological
 // Extraterrestrial
 // Geohazards
-export const hipClassTable = pgTable(
+export const hipTypeTable = pgTable(
 	"hip_class",
 	{
 		id: text("id").primaryKey(),
@@ -849,8 +849,8 @@ export const hipClusterTable = pgTable(
 	"hip_cluster",
 	{
 		id: text("id").primaryKey(),
-		classId: text("class_id")
-			.references((): AnyPgColumn => hipClassTable.id)
+		typeId: text("type_id")
+			.references((): AnyPgColumn => hipTypeTable.id)
 			.notNull(),
 		nameEn: zeroText("name_en"),
 	},
@@ -858,9 +858,9 @@ export const hipClusterTable = pgTable(
 );
 
 export const hipClusterRel = relations(hipClusterTable, ({one}) => ({
-	class: one(hipClassTable, {
-		fields: [hipClusterTable.classId],
-		references: [hipClassTable.id],
+	class: one(hipTypeTable, {
+		fields: [hipClusterTable.typeId],
+		references: [hipTypeTable.id],
 	}),
 }));
 

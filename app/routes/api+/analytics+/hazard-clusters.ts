@@ -7,11 +7,11 @@ import { getHazardClustersHandler } from "~/backend.server/handlers/analytics/ha
  */
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const classId = url.searchParams.get("classId") || undefined; // Convert null to undefined
+  const typeId = url.searchParams.get("typeId") || undefined; // Convert null to undefined
 
   try {
     // Call the handler to fetch hazard clusters
-    const clusters = await getHazardClustersHandler(classId);
+    const clusters = await getHazardClustersHandler(typeId);
     return json({ clusters });
   } catch (error) {
     console.error("Error fetching hazard clusters:", error);

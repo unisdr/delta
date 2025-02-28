@@ -3,7 +3,7 @@ import {Field} from "~/frontend/form"
 
 export interface HazardPickerProps {
 	// selected/default values
-	classId?: string | null
+	typeId?: string | null
 	clusterId?: string | null
 	hazardId?: string | null
 	hip: Hip
@@ -24,7 +24,7 @@ export interface Class {
 
 export interface Cluster {
 	id: string
-	classId: string
+	typeId: string
 	name: string
 }
 
@@ -67,7 +67,7 @@ export function HazardPicker(props: HazardPickerProps) {
 		if (props.clusterId) {
 			clusterId = props.clusterId
 		}
-		let classId = ""
+		let typeId = ""
 		if (clusterId) {
 			setSelectedCluster(clusterId)
 			const defaultCluster = clusters.find(
@@ -76,15 +76,15 @@ export function HazardPicker(props: HazardPickerProps) {
 			if (!defaultCluster) {
 				throw "cluster not found"
 			}
-			classId = defaultCluster.classId
+			typeId = defaultCluster.typeId
 		}
-		if (props.classId) {
-			classId = props.classId
+		if (props.typeId) {
+			typeId = props.typeId
 		}
-		if (classId) {
-			setSelectedClass(classId)
+		if (typeId) {
+			setSelectedClass(typeId)
 		}
-	}, [props.classId, props.clusterId, props.hazardId])
+	}, [props.typeId, props.clusterId, props.hazardId])
 
 
 	let filteredClasses = classes
@@ -101,12 +101,12 @@ export function HazardPicker(props: HazardPickerProps) {
 		)
 
 		filteredClasses = classes.filter((c) =>
-			filteredClusters.some((cl) => cl.classId == c.id)
+			filteredClusters.some((cl) => cl.typeId == c.id)
 		)
 	}
 
 	if (selectedClass) {
-		filteredClusters = filteredClusters.filter((c) => c.classId == selectedClass)
+		filteredClusters = filteredClusters.filter((c) => c.typeId == selectedClass)
 		filteredHazards = filteredHazards.filter((h) =>
 			filteredClusters.some((c) => c.id === h.clusterId)
 		)
@@ -157,7 +157,7 @@ export function HazardPicker(props: HazardPickerProps) {
 					<Field label={`Hazard Class (${filteredClasses.length})`}>
 						<select
 							required={props.required}
-							name="hipClassId"
+							name="hipTypeId"
 							value={selectedClass || ""}
 							onChange={(e) => {
 								setSelectedClass(e.target.value)
@@ -193,7 +193,7 @@ export function HazardPicker(props: HazardPickerProps) {
 								setSelectedHazard("")
 								setSelectedCluster(clusterId)
 								let matchedCluster = clusters.find((c) => c.id === clusterId)
-								let matchedClass = classes.find((c) => c.id === matchedCluster?.classId)
+								let matchedClass = classes.find((c) => c.id === matchedCluster?.typeId)
 								setSelectedClass(matchedClass?.id || null)
 							}}
 						//disabled={!filteredClusters.length}
@@ -228,7 +228,7 @@ export function HazardPicker(props: HazardPickerProps) {
 								if (matchedHazard) {
 									let matchedCluster = clusters.find((c) => c.id === matchedHazard!.clusterId)
 									setSelectedCluster(matchedCluster?.id || null)
-									let matchedClass = classes.find((c) => c.id === matchedCluster?.classId)
+									let matchedClass = classes.find((c) => c.id === matchedCluster?.typeId)
 									setSelectedClass(matchedClass?.id || null)
 								}
 							}}

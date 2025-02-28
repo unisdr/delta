@@ -20,7 +20,7 @@ export async function createTestDisasterRecord1(tx: Tx) {
 	await tx.insert(hazardousEventTable)
 		.values({
 			id: id1,
-			hipClassId: "class1",
+			hipTypeId: "type1",
 			startDate: new Date(),
 			endDate: new Date(),
 		})

@@ -95,7 +95,7 @@ function buildFilterConditions(params: MostDamagingEventsParams): SQL[] {
   }
 
   if (params.specificHazardId) {
-    conditions.push(eq(hazardousEventTable.hipClassId, params.specificHazardId));
+    conditions.push(eq(hazardousEventTable.hipTypeId, params.specificHazardId));
   }
 
   if (params.geographicLevelId) {

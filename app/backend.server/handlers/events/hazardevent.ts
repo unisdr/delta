@@ -33,12 +33,12 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	const filters: {
 		hipHazardId: string;
 		hipClusterId: string;
-		hipClassId: string;
+		hipTypeId: string;
 		approvalStatus?: approvalStatusIds
 	} = {
 		hipHazardId: url.searchParams.get("hipHazardId") || "",
 		hipClusterId: url.searchParams.get("hipClusterId") || "",
-		hipClassId: url.searchParams.get("hipClassId") || "",
+		hipTypeId: url.searchParams.get("hipTypeId") || "",
 		approvalStatus: "completed",
 	};
 
@@ -72,7 +72,7 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 			where: and(
 				filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
 				filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
-				filters.hipClassId ? eq(hazardousEventTable.hipClassId, filters.hipClassId) : undefined,
+				filters.hipTypeId ? eq(hazardousEventTable.hipTypeId, filters.hipTypeId) : undefined,
 				filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
 			),
 		})

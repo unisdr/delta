@@ -1,15 +1,15 @@
 import {dr} from "~/db.server";
-import {hipClassTable, hipClusterTable, hipHazardTable} from "~/drizzle/schema";
+import {hipTypeTable, hipClusterTable, hipHazardTable} from "~/drizzle/schema";
 
 
-export interface Class {
+export interface Type {
 	id: string;
 	name: string;
 }
 
 export interface Cluster {
 	id: string;
-	classId: string;
+	typeId: string;
 	name: string;
 }
 
@@ -20,21 +20,21 @@ export interface Hazard {
 }
 
 export interface HipDataForHazardPicker {
-	classes: Class[]
+	classes: Type[]
 	clusters: Cluster[]
 	hazards: Hazard[]
 }
 
 export async function dataForHazardPicker(): Promise<HipDataForHazardPicker> {
-	const classes: Class[] = await dr
+	const classes: Type[] = await dr
 		.select({
-			id: hipClassTable.id,
-			name: hipClassTable.nameEn,
+			id: hipTypeTable.id,
+			name: hipTypeTable.nameEn,
 		})
-		.from(hipClassTable);
+		.from(hipTypeTable);
 	const clusters: Cluster[] = await dr.select({
 		id: hipClusterTable.id,
-		classId: hipClusterTable.classId,
+		typeId: hipClusterTable.typeId,
 		name: hipClusterTable.nameEn
 	}).from(hipClusterTable);
 	const hazards: Hazard[] = await dr.select({
@@ -50,17 +50,17 @@ export async function dataForHazardPicker(): Promise<HipDataForHazardPicker> {
 }
 
 interface HIPFields {
-	hipClassId?: null | string
+	hipTypeId?: null | string
 	hipClusterId?: null | string
 	hipHazardId?: null | string
 }
 
 
 // When updating hip fields, make sure they are all updated at the same time. So if csv,api,form sets one only on update, others will be unset. Also validates that parent is set in child is set.
-export function getRequiredAndSetToNullHipFields(fields: HIPFields): "class" | "cluster" | "" {
-	if (fields.hipClassId || fields.hipClusterId || fields.hipHazardId) {
-		if (!fields.hipClassId) {
-			fields.hipClassId = null
+export function getRequiredAndSetToNullHipFields(fields: HIPFields): "type" | "cluster" | "" {
+	if (fields.hipTypeId || fields.hipClusterId || fields.hipHazardId) {
+		if (!fields.hipTypeId) {
+			fields.hipTypeId = null
 		}
 		if (!fields.hipClusterId) {
 			fields.hipClusterId = null
@@ -75,8 +75,8 @@ export function getRequiredAndSetToNullHipFields(fields: HIPFields): "class" | "
 		}
 	}
 	if (fields.hipClusterId) {
-		if (!fields.hipClassId) {
-			return "class"
+		if (!fields.hipTypeId) {
+			return "type"
 		}
 	}
 	return ""

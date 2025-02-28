@@ -58,7 +58,7 @@ export async function getEffectDetails(filters: FilterParams) {
     baseConditions.push(eq(hazardousEventTable.hipClusterId, filters.hazardClusterId));
   }
   if (filters.specificHazardId) {
-    baseConditions.push(eq(hazardousEventTable.hipClassId, filters.specificHazardId));
+    baseConditions.push(eq(hazardousEventTable.hipTypeId, filters.specificHazardId));
   }
   if (filters.geographicLevelId) {
     baseConditions.push(eq(divisionTable.id, Number(filters.geographicLevelId)));

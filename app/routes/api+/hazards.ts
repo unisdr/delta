@@ -1,6 +1,6 @@
 import { json } from "@remix-run/node";
 import { dr } from "~/db.server";
-import { hipHazardTable, hipClusterTable, hipClassTable } from "~/drizzle/schema";
+import { hipHazardTable, hipClusterTable, hipTypeTable } from "~/drizzle/schema";
 import { sql } from "drizzle-orm";
 
 export async function loader({ request }: { request: Request }) {
@@ -52,11 +52,11 @@ export async function loader({ request }: { request: Request }) {
         // Fetch hazard classes
         data = await dr
           .select({
-            id: hipClassTable.id,
-            name: hipClassTable.nameEn,
+            id: hipTypeTable.id,
+            name: hipTypeTable.nameEn,
           })
-          .from(hipClassTable)
-          .where(sql`${hipClassTable.nameEn} ILIKE ${`%${query}%`}`)
+          .from(hipTypeTable)
+          .where(sql`${hipTypeTable.nameEn} ILIKE ${`%${query}%`}`)
           .execute();
         break;
 

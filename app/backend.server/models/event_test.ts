@@ -15,7 +15,7 @@ function testHazardFields(id: number) {
 		createdAt: new Date(),
 		updatedAt: null,
 		parent: "",
-		hipClassId: "class1",
+		hipTypeId: "type1",
 		hipClusterId: "cluster1",
 		hipHazardId: "hazard1",
 		startDate: "2024-12-30",
@@ -40,7 +40,7 @@ describe("hazardous_event", async () => {
 	// Check that the constraint errors from create are properly handled
 	it("create contraint error", async () => {
 		let data = testHazardFields(1)
-		data.hipClassId = "xxx"
+		data.hipTypeId = "xxx"
 		data.hipClusterId = "xxx"
 		data.hipHazardId = "xxx"
 		let res = await hazardousEventCreate(dr, data)
@@ -85,7 +85,7 @@ describe("hazardous_event", async () => {
 			id = res.id
 		}
 		{
-			data.hipClassId = "xxx"
+			data.hipTypeId = "xxx"
 			data.hipClusterId = "xxx"
 			data.hipHazardId = "xxx"
 			let res = await hazardousEventUpdate(dr, id, data)

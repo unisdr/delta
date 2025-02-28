@@ -2,7 +2,7 @@ import { dr } from "~/db.server";
 import {
   hipHazardTable,
   hipClusterTable,
-  hipClassTable,
+  hipTypeTable,
 } from "~/drizzle/schema";
 import { eq } from "drizzle-orm";
 
@@ -17,14 +17,14 @@ export async function fetchRelatedHazardData(specificHazardId: string) {
     const result = await dr
       .select({
         hazardClusterId: hipClusterTable.id,
-        hazardTypeId: hipClassTable.id,
+        hazardTypeId: hipTypeTable.id,
       })
       .from(hipHazardTable)
       .leftJoin(
         hipClusterTable,
         eq(hipHazardTable.clusterId, hipClusterTable.id)
       )
-      .leftJoin(hipClassTable, eq(hipClusterTable.classId, hipClassTable.id))
+      .leftJoin(hipTypeTable, eq(hipClusterTable.typeId, hipTypeTable.id))
       .where(eq(hipHazardTable.id, specificHazardId));
 
     // Return the first result (if any)

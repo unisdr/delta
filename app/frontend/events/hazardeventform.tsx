@@ -64,7 +64,7 @@ export const fieldsDef: FormInputDef<HazardousEventFields>[] = [
 	{key: "parent", label: "", type: "other"},
 	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
 	{key: "hipClusterId", label:"", type: "other"},
-	{key: "hipClassId", label: "", type: "other"},
+	{key: "hipTypeId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
 
@@ -190,11 +190,11 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 						<FieldErrors errors={props.errors} field="parent"></FieldErrors>
 					</Field>
 				,
-				hipClassId: null,
+				hipTypeId: null,
 				hipClusterId: null,
 				hipHazardId: (
 					<Field key="hazardId" label="Specific Hazard *">
-						<HazardPicker hip={props.hip} classId={fields.hipClassId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} required={true} />
+						<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} required={true} />
 						<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
 					</Field>
 				),

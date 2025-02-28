@@ -1,28 +1,28 @@
 import { dr } from '~/db.server'
 import {sql} from 'drizzle-orm'
 
-import { hipClassTable, hipClusterTable, hipHazardTable } from '~/drizzle/schema'
+import { hipTypeTable, hipClusterTable, hipHazardTable } from '~/drizzle/schema'
 
 export async function createTestData() {
-	await dr.execute(sql`TRUNCATE ${hipClassTable}, ${hipClusterTable}, ${hipHazardTable} CASCADE`)
+	await dr.execute(sql`TRUNCATE ${hipTypeTable}, ${hipClusterTable}, ${hipHazardTable} CASCADE`)
 
 	let id = 0
 
-	const [cls] = await dr
-		.insert(hipClassTable)
-		.values({ id: "class1", nameEn: 'Test Class' })
+	const [tp] = await dr
+		.insert(hipTypeTable)
+		.values({ id: "type1", nameEn: 'Test Type' })
 		.onConflictDoUpdate({
-			target: hipClassTable.id,
-			set: { nameEn: 'Test Class' },
+			target: hipTypeTable.id,
+			set: { nameEn: 'Test Type' },
 		})
-		.returning({ id: hipClassTable.id })
+		.returning({ id: hipTypeTable.id })
 
 	for (let i = 1; i <= 2; i++) {
 		const [cluster] = await dr
 			.insert(hipClusterTable)
 			.values({
 				id: "cluster" + i,
-				classId: cls.id,
+				typeId: tp.id,
 				nameEn: `Test Cluster ${i}`,
 			})
 			.returning({ id: hipClusterTable.id })

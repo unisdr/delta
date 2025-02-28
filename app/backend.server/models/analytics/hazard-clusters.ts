@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 /**
  * Fetch hazard clusters from the database.
  */
-export async function fetchHazardClusters(classId: string | null) {
+export async function fetchHazardClusters(typeId: string | null) {
   const query = dr
     .select({
       id: hipClusterTable.id,
@@ -13,8 +13,8 @@ export async function fetchHazardClusters(classId: string | null) {
     })
     .from(hipClusterTable);
 
-  if (classId !== null) {
-    query.where(eq(hipClusterTable.classId, classId));
+  if (typeId !== null) {
+    query.where(eq(hipClusterTable.typeId, typeId));
   }
 
   return await query;
