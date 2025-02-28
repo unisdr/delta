@@ -50,6 +50,9 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				responseCost: true,
 				responseCurrency: true,
 			},
+			with: {
+				sector: true
+			},
 			where: and(eq(disruptionTable.sectorId, sectorId), eq(disruptionTable.recordId,recordId)),
 			orderBy: [desc(disruptionTable.durationDays)],
 		})
@@ -75,7 +78,7 @@ export default function Data() {
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", String(ld.sectorId)]]),
 		columns: [
-			"ID", "Disaster Record ID", "Sector ID", "Duration (Days)", "Duration (Hours)", "Users Affected",
+			"ID", "Disaster Record ID", "Sector", "Duration (Days)", "Duration (Hours)", "Users Affected",
 			"Comment", "Response Operation", "Response Cost", "Response Currency", "Actions"
 		],
 		items: items,
@@ -83,9 +86,9 @@ export default function Data() {
 		csvExportLinks: true,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
-				<td><Link to={`${route}/${item.id}`}>{item.id}</Link></td>
-				<td>{item.recordId}</td>
-				<td>{item.sectorId}</td>
+				<td><Link to={`${route}/${item.id}`}>{item.id.slice(0,8)}</Link></td>
+				<td>{item.recordId.slice(0,8)}</td>
+				<td>{item.sector.sectorname}</td>
 				<td>{item.durationDays ?? "-"}</td>
 				<td>{item.durationHours ?? "-"}</td>
 				<td>{item.usersAffected ?? "-"}</td>

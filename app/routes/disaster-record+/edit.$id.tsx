@@ -39,6 +39,7 @@ import { disasterRecordsTable } from "~/drizzle/schema";
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
+import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
 import { contentPickerConfig } from "./content-picker-config";
 
@@ -58,7 +59,9 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
         const rawData = await dr.select().from(divisionTable);
         return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
     };
-	
+
+	const hip = await dataForHazardPicker();
+
 	if (params.id === "new") {
         const treeData = await initializeNewTreeView();
         return {
@@ -66,6 +69,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
             recordsNonecoLosses: [],
             recordsDisRecSectors: [],
             recordsHumanEffects: [],
+			hip: hip,
             treeData: treeData,
             cpDisplayName: null
         };
@@ -96,6 +100,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		recordsNonecoLosses: dbNonecoLosses, 
 		recordsDisRecSectors: dbDisRecSectors,
 		recordsHumanEffects: dbDisRecHumanEffects,
+		hip: hip,
 		treeData: treeData,
 		cpDisplayName: cpDisplayName
 	};
@@ -118,6 +123,7 @@ export default function Screen() {
 		recordsNonecoLosses: nonecoLossesProps, 
 		recordsDisRecSectors: any | null,
 		recordsHumanEffects: any | null,
+		hip: any,
 		treeData: any[]
 		cpDisplayName: string
 	}>();
@@ -125,9 +131,13 @@ export default function Screen() {
 
 	return (
 		<>
+            
 			<FormScreen
 				fieldsDef={fieldsDef}
-				formComponent={(props: any) => <DisasterRecordsForm {...props} treeData={ld.treeData} cpDisplayName={ld.cpDisplayName} />}
+				formComponent={(props: any) => <DisasterRecordsForm {...props}
+                    hip={ld.hip}
+                    treeData={ld.treeData}
+                    cpDisplayName={ld.cpDisplayName} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>

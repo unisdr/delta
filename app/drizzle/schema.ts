@@ -642,6 +642,13 @@ export const disruptionTable = pgTable("disruption", {
 	attachments: jsonb("attachments"),
 })
 
+export const disruptionRel = relations(disruptionTable, ({one}) => ({
+	sector: one(sectorTable, {
+		fields: [disruptionTable.sectorId],
+		references: [sectorTable.id],
+	})
+}));
+
 export type Disruption = typeof disruptionTable.$inferSelect
 export type DisruptionInsert = typeof disruptionTable.$inferInsert
 
@@ -826,6 +833,13 @@ export const lossesTable = pgTable("losses", {
 	attachments: jsonb("attachments"),
 })
 
+export const lossesRel = relations(lossesTable, ({one}) => ({
+	sector: one(sectorTable, {
+		fields: [lossesTable.sectorId],
+		references: [sectorTable.id],
+	})
+}));
+
 export type Losses = typeof lossesTable.$inferSelect
 export type LossesInsert = typeof lossesTable.$inferInsert
 
@@ -940,6 +954,7 @@ export type disasterRecordsInsert = typeof disasterRecordsTable.$inferInsert;
 
 export const disasterRecordsTable = pgTable("disaster_records", {
 	...apiImportIdField(),
+	...hipRelationColumnsOptional(),
 	id: ourRandomUUID(),
 	disasterEventId: uuid("disaster_event_id")
 		.references((): AnyPgColumn => disasterEventTable.id),
@@ -981,6 +996,19 @@ export const disasterRecordsRel = relations(
 		// without the need for joining tables during retrieval
 		relatedSectors: many(sectorDisasterRecordsRelationTable, {
 			relationName: "sector_disaster_records_relation",
+		}),
+
+		hipHazard: one(hipHazardTable, {
+			fields: [disasterRecordsTable.hipHazardId],
+			references: [hipHazardTable.id],
+		}),
+		hipCluster: one(hipClusterTable, {
+			fields: [disasterRecordsTable.hipClusterId],
+			references: [hipClusterTable.id],
+		}),
+		hipType: one(hipTypeTable, {
+			fields: [disasterRecordsTable.hipTypeId],
+			references: [hipTypeTable.id],
 		}),
 	})
 );
