@@ -466,31 +466,31 @@ describe("human_effects - category presence data", async () => {
 
 	let defs2: Def[] = [
 		{
-			uiName: "Medium Short Term",
-			jsName: "mediumShort",
-			dbName: "medium_short",
+			uiName: "Directly Affected",
+			jsName: "direct",
+			dbName: "direct",
 			format: "number",
-			role: "metric"
+			role: "metric",
 		}
 	]
 
 	it("insert - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet(rid1, "Displaced", defs, {
-			"mediumShort": true
+		await categoryPresenceSet(rid1, "Affected", defs, {
+			"direct": true
 		})
-		let res = await categoryPresenceGet(rid1, "Displaced", defs)
-		assert.deepEqual(res, {"mediumShort": true})
+		let res = await categoryPresenceGet(rid1, "Affected", defs)
+		assert.deepEqual(res, {"direct": true})
 	})
 
 	it("update - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet(rid1, "Displaced", defs, {
-			"mediumShort": true
+		await categoryPresenceSet(rid1, "Affected", defs, {
+			"direct": true
 		})
-		await categoryPresenceSet(rid1, "Displaced", defs, {
+		await categoryPresenceSet(rid1, "Affected", defs, {
 		})
-		let res = await categoryPresenceGet(rid1, "Displaced", defs)
+		let res = await categoryPresenceGet(rid1, "Affected", defs)
 		assert.deepEqual(res, {})
 	})
 
