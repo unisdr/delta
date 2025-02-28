@@ -18,7 +18,6 @@ import {
 	getTableName,
 	sql
 } from "drizzle-orm";
-import {isValidUUID} from "~/util/id";
 
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
 import {logAudit} from "./auditLogs";
@@ -483,6 +482,7 @@ export async function disasterEventByIdTx(tx: Tx, id: any) {
 			hazardousEvent: {
 				with: hazardBasicInfoJoin
 			},
+			disasterEvent: true,
 			hipHazard: true,
 			hipCluster: true,
 			hipClass: true,
@@ -498,6 +498,20 @@ export async function disasterEventByIdTx(tx: Tx, id: any) {
 	if (!res) {
 		throw new Error("Id is invalid");
 	}
+	return res
+}
+
+export type DisasterEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof disasterEventBasicInfoById>>,
+	undefined
+>;
+
+export async function disasterEventBasicInfoById(id: any) {
+	if (typeof id !== "string") {
+		throw new Error("Invalid ID: must be a string");
+	}
+	const res = await dr.query.disasterEventTable.findFirst({
+		where: eq(disasterEventTable.id, id),
+	});
 	return res
 }
 

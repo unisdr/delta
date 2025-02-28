@@ -599,8 +599,8 @@ export type DeleteResult = {ok: true} | {ok: false; error: string};
 interface FormDeleteArgs {
 	loaderArgs: LoaderFunctionArgs;
 	deleteFn: (id: string) => Promise<DeleteResult>;
-	redirectToSuccess: (id: string) => string;
-	redirectToError?: (id: string) => string;
+	redirectToSuccess: (id: string, oldRecord?: any) => string;
+	redirectToError?: (id: string, oldRecord?: any) => string;
 	tableName: string;
 	getById: (id: string) => Promise<any>;
 	postProcess?: (id: string, data: any) => Promise<void>;
@@ -618,9 +618,9 @@ export async function formDelete(args: FormDeleteArgs) {
 	if (!res.ok) {
 		let u = "";
 		if (args.redirectToError) {
-			u = args.redirectToError(id);
+			u = args.redirectToError(id, oldRecord);
 		} else {
-			u = args.redirectToSuccess(id);
+			u = args.redirectToSuccess(id, oldRecord);
 		}
 		return redirectWithMessage(request, u, {
 			type: "error",
@@ -637,7 +637,7 @@ export async function formDelete(args: FormDeleteArgs) {
 	if (args.postProcess) {
 		await args.postProcess(id, oldRecord);
 	}
-	return redirectWithMessage(request, args.redirectToSuccess(id), {
+	return redirectWithMessage(request, args.redirectToSuccess(id, oldRecord), {
 		type: "info",
 		text: "Record deleted",
 	});
@@ -844,10 +844,13 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 
 interface DeleteLoaderArgs {
 	delete: (id: string) => Promise<DeleteResult>;
-	baseRoute: string;
+	baseRoute?: string;
 	tableName: string;
 	getById: (id: string) => Promise<any>;
 	postProcess?: (id: string, data: any) => Promise<void>;
+
+	redirectToSuccess?: (id: string, oldRecord?: any) => string;
+	redirectToError?: (id: string, oldRecord?: any) => string;
 }
 
 export function createDeleteLoader(args: DeleteLoaderArgs) {
@@ -862,8 +865,8 @@ export function createDeleteLoaderWithPerm(
 		return formDelete({
 			loaderArgs,
 			deleteFn: args.delete,
-			redirectToSuccess: () => args.baseRoute,
-			redirectToError: (id: string) => `${args.baseRoute}/${id}`,
+			redirectToSuccess: args.redirectToSuccess ? args.redirectToSuccess :  () => args.baseRoute || "",
+			redirectToError: args.redirectToError ? args.redirectToError : (id: string) => `${args.baseRoute}/${id}`,
 			tableName: args.tableName,
 			getById: args.getById,
 			postProcess: args.postProcess,

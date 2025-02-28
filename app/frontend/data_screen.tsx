@@ -13,6 +13,7 @@ interface DataScreenProps<T> {
 	renderRow: (item: T, baseRoute: string) => React.ReactNode;
 	csvExportLinks?: boolean;
 	headerElement?: React.ReactNode;
+	hideMainLinks?: boolean
 }
 
 export function DataScreen<T>(props: DataScreenProps<T>) {
@@ -21,6 +22,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 		<MainContainer title={props.plural}>
 			<>
 				{props.headerElement}
+				{!props.hideMainLinks &&
 				<DataMainLinks
 					searchParams={props.searchParams}
 					isPublic={props.isPublic}
@@ -28,6 +30,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 					resourceName={props.resourceName}
 					csvExportLinks={props.csvExportLinks}
 				/>
+				}
 				{props.paginationData.totalItems ? (
 					<>
 						<div className="dts-legend">

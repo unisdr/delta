@@ -330,11 +330,11 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	startDate: zeroText("start_date"),
 	endDate: zeroText("end_date"),
 	description: zeroText("description"),
-	warningIssuedSummary: zeroText("warning_issued_summary"),
-	warningIssuedBy: zeroText("warning_issued_by"),
-	warningIssuedDate: timestamp("warning_issued_date"),
-	warningIssuedCoverage: zeroText("warning_issued_coverage"),
-	warningIssuedContent: zeroText("warning_issued_content"),
+	//warningIssuedSummary: zeroText("warning_issued_summary"),
+	//warningIssuedBy: zeroText("warning_issued_by"),
+	//warningIssuedDate: timestamp("warning_issued_date"),
+	//warningIssuedCoverage: zeroText("warning_issued_coverage"),
+	//warningIssuedContent: zeroText("warning_issued_content"),
 	chainsExplanation: zeroText("chains_explanation"),
 	magnitude: zeroText("magniture"),
 	spatialFootprint: jsonb("spatial_footprint"),
@@ -380,6 +380,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 		.references((): AnyPgColumn => eventTable.id),
 	hazardousEventId: uuid("hazardous_event_id")
 		.references((): AnyPgColumn => hazardousEventTable.id),
+	disasterEventId: uuid("disaster_event_id")
+		.references((): AnyPgColumn => disasterEventTable.id),
 	nationalDisasterId: zeroText("national_disaster_id"),
 	otherId1: zeroText("other_id1"),
 	otherId2: zeroText("other_id2"),
@@ -397,16 +399,16 @@ export const disasterEventTable = pgTable("disaster_event", {
 		.notNull()
 		.default("unknown"),
 	disasterDeclarationTypeAndEffect: zeroText("disaster_declaration_type_and_effect"),
-	disasterDeclarationDate: timestamp("disaster_declaration_date"),
+	disasterDeclarationDateTime: timestamp("disaster_declaration_datetime"),
 	hadOfficialWarningOrWeatherAdvisory: zeroBool("had_official_warning_or_weather_advisory"),
 	officialWarningAffectedAreas: zeroText("official_warning_affected_areas"),
 	earlyAction: zeroText("early_action"),
-	earlyActionDate: timestamp("early_action_date"),
-	preliminaryAssessmentDate: timestamp("preliminary_assesment_date"),
-	rapidAssessmentDate: timestamp("rapid_assesment_date"),
+	earlyActionDateTime: timestamp("early_action_datetime"),
+	preliminaryAssessmentDateTime: timestamp("preliminary_assesment_datetime"),
+	rapidAssessmentDateTime: timestamp("rapid_assesment_datetime"),
 	responseOperations: zeroText("response_oprations"),
-	postDisasterAssementDate: timestamp("post_disaster_assessment_date"),
-	reAssessmentDate: timestamp("re_assessment_date"),
+	postDisasterAssementDateTime: timestamp("post_disaster_assessment_datetime"),
+	reAssessmentDateTime: timestamp("re_assessment_datetime"),
 	dataSource: zeroText("data_source"),
 	recordingInstitution: zeroText("recording_institution"),
 	effectsTotalUsd: ourMoney("effects_total_usd"),
@@ -451,6 +453,10 @@ export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
 	hazardousEvent: one(hazardousEventTable, {
 		fields: [disasterEventTable.hazardousEventId],
 		references: [hazardousEventTable.id],
+	}),
+	disasterEvent: one(disasterEventTable, {
+		fields: [disasterEventTable.disasterEventId],
+		references: [disasterEventTable.id],
 	}),
 	hipHazard: one(hipHazardTable, {
 		fields: [disasterEventTable.hipHazardId],
@@ -533,13 +539,7 @@ export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	missing: boolean("missing"),
 	affectedDirect: boolean("affected_direct"),
 	affectedIndirect: boolean("affected_indirect"),
-	displacedShort: boolean("displaced_short"),
-	displacedMediumShort: boolean("displaced_medium_short"),
-	displacedMediumLong: boolean("displaced_medium_long"),
-	displacedLong: boolean("displaced_long"),
-	displacedPermanent: boolean("displaced_permanent"),
-	displacementStocksPreemptive: boolean("displacement_stocks_preemptive"),
-	displacementStocksReactive: boolean("displacement_stocks_reactive"),
+	displaced: boolean("displaced"),
 });
 
 export type HumanCategoryPresence = typeof humanDsgConfigTable.$inferSelect;
@@ -596,26 +596,27 @@ export const displacedTable = pgTable("displaced", {
 	dsgId: uuid("dsg_id")
 		.references((): AnyPgColumn => humanDsgTable.id)
 		.notNull(),
-	short: integer("short"), // First 10 days
-	mediumShort: integer("medium_short"), // Days 10-30
-	mediumLong: integer("medium_long"), // Days 30-90
-	long: integer("long"), // More than 90 days
-	permanent: integer("permanent"), // Permanently relocated
+	assisted: text("assisted", {
+		enum: ["assisted", "not_assisted"],
+	}),
+	timing: text("timing", {
+		enum: ["pre-emptive", "reactive"],
+	}),
+	duration: text("duration", {
+		enum: [
+			"short", // First 10 days
+			"medium_short", // Days 10-30
+			"medium_long", // Days 30-90
+			"long", // More than 90 days
+			"permanent", // Permanently relocated
+		],
+	}),
+	asOf: timestamp("as_of"),
+	displaced: integer("displaced"),
 });
 export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
 
-export const displacementStocksTable = pgTable("displacement_stocks", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	dsgId: uuid("dsg_id")
-		.references((): AnyPgColumn => humanDsgTable.id)
-		.notNull(),
-	preemptive: integer("preemptive"), // Assisted pre-emptive displacement
-	reactive: integer("reactive"), // Assisted reactive displacement
-});
-export type DisplacementStocks = typeof displacementStocksTable.$inferSelect;
-export type DisplacementStocksInsert =
-	typeof displacementStocksTable.$inferInsert;
 
 export const disruptionTable = pgTable("disruption", {
 	...apiImportIdField(),

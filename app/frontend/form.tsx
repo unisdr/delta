@@ -5,7 +5,7 @@ import {Link} from "@remix-run/react";
 import {useActionData} from "@remix-run/react";
 import {ReactElement, useRef, useState} from "react";
 
-import {formatDate} from "~/util/date";
+import {formatDate, formatDateTimeUTC, formatForDateTimeInput} from "~/util/date";
 import {MainContainer} from "./container";
 
 import {capitalizeFirstLetter} from "~/util/string";
@@ -258,6 +258,7 @@ export type FormInputType =
 	| "textarea"
 	| "date"
 	| "date_optional_precision" // yyyy,yyyy-mm,yyyy-mm-dd
+	| "datetime"
 	| "number"
 	| "money"
 	| "bool"
@@ -319,6 +320,7 @@ export function fieldsFromMap<T>(
 				case "enum":
 					return [k, vs];
 				case "date":
+				case "datetime":
 					if (!vs) {
 						return [k, null];
 					}
@@ -667,6 +669,7 @@ export function Input(props: InputProps) {
 			}
 		case "text":
 		case "date":
+		case "datetime":
 		case "number":
 		case "money":
 			let defaultValue = "";
@@ -681,6 +684,11 @@ export function Input(props: InputProps) {
 					case "date": {
 						let v = props.value as Date;
 						defaultValue = formatDate(v);
+						break
+					}
+					case "datetime": {
+						let v = props.value as Date;
+						defaultValue = formatForDateTimeInput(v);
 						break
 					}
 					case "number": {
@@ -702,6 +710,9 @@ export function Input(props: InputProps) {
 				case "text":
 				case "date":
 					inputType = props.def.type
+					break
+				case "datetime":
+					inputType = "datetime-local"
 					break
 				case "number":
 					return wrapInput(
@@ -839,12 +850,23 @@ export function FieldView(props: FieldViewProps) {
 				</p>
 			);
 		case "date":
-			let date = props.value as Date;
-			return (
-				<p>
-					{props.def.label}: {formatDate(date)}
-				</p>
-			);
+			{
+				let date = props.value as Date;
+				return (
+					<p>
+						{props.def.label}: {formatDate(date)}
+					</p>
+				);
+			}
+		case "datetime":
+			{
+				let date = props.value as Date;
+				return (
+					<p>
+						{props.def.label}: {formatDateTimeUTC(date)}
+					</p>
+				);
+			}
 		case "enum":
 		case "enum-flex": {
 			let enumId = props.value;

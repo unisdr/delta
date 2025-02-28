@@ -71,9 +71,6 @@ function validateShared<T>(
 		}
 		try {
 			fieldValue = parseValue(fieldDef, value)
-			if (fieldValue === undefined) {
-				fieldValue = null
-			}
 		} catch (error: any) {
 			if (error.code) {
 				errors.fields![key] = [error as FormError]
@@ -82,10 +79,10 @@ function validateShared<T>(
 				throw error
 			}
 		}
-		if (!allowPartial && fieldDef.required && fieldValue === null) {
+		if (!allowPartial && fieldDef.required && (fieldValue === undefined || fieldValue === null)) {
 			errors.fields![key] = [fieldRequiredError(fieldDef)]
 		} else {
-			if (fieldValue !== null) {
+			if (fieldValue !== undefined) {
 				partial.push([key, fieldValue])
 				full.push([key, fieldValue])
 			}
@@ -155,11 +152,14 @@ export function validateFromJson<T>(
 				return value ?? null
 			case "text":
 			case "textarea":
+			case "money":
+			case "enum-flex":
 				if (typeof value != "string" && value !== undefined && value !== null) {
 					throw invalidTypeError(field, "string")
 				}
 				return value || ""
 			case "date":
+			case "datetime":
 				if (value !== undefined && value !== null) {
 					const parsedDate = new Date(value)
 					if (isNaN(parsedDate.getTime())) {
@@ -178,8 +178,10 @@ export function validateFromJson<T>(
 					throw unknownEnumValueError(field, value, field.enumData?.map(e => e.key) || [])
 				}
 				return value
-			default:
+			case "other":
 				return value
+			default:
+				throw new Error("server error: unknown type defined: " + field.type)
 		}
 	});
 }
@@ -195,7 +197,7 @@ export function validateFromMap<T>(
 
 		// Handle NULL or UNDEFINED early
 		if (value === undefined || value === null) {
-			return null;
+			return undefined;
 		}
 		// Handle PostgreSQL JSONB fields properly
 		if (field.psqlType === "jsonb") {
@@ -232,9 +234,8 @@ export function validateFromMap<T>(
 		} else {
 			throw "validateFromMap received value that is not a string, undefined, or null";
 		}
-
-		if (vs.trim() == "") {
-			return null
+		if (field.required && vs.trim() == "") {
+			return undefined
 		}
 		let parsedValue: any;
 		switch (field.type) {
@@ -243,12 +244,23 @@ export function validateFromMap<T>(
 				if (isNaN(parsedValue)) {
 					throw invalidTypeError(field, "number");
 				}
-				return parsedValue;
+				return parsedValue
+			case "money":
+				if (vs === "") {
+					return null
+				}
+				return vs
 			case "text":
 			case "textarea":
+			case "enum-flex":
+			case "date_optional_precision":
 				return vs;
 			case "date":
-				parsedValue = vs === "" ? null : new Date(value);
+			case "datetime":
+				if (vs === "") {
+					return null
+				}
+				parsedValue = new Date(value);
 				if (isNaN(parsedValue.getTime())) {
 					throw invalidDateFormatError(field);
 				}
@@ -271,8 +283,10 @@ export function validateFromMap<T>(
 					throw unknownEnumValueError(field, vs, field.enumData?.map(e => e.key) || []);
 				}
 				return vs;
+			case "other":
+				return vs
 			default:
-				return vs;
+				throw new Error("server error: unknown type defined: " + field.type)
 		}
 	});
 }

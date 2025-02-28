@@ -7,7 +7,7 @@ import {
 } from "drizzle-orm"
 
 import {insertRow, updateRow, deleteRow, updateRowMergeJson} from "~/util/db"
-import {injuredTable, humanDsgTable, deathsTable, missingTable, affectedTable, displacedTable, displacementStocksTable, humanCategoryPresenceTable} from "~/drizzle/schema"
+import {injuredTable, humanDsgTable, deathsTable, missingTable, affectedTable, displacedTable, humanCategoryPresenceTable} from "~/drizzle/schema"
 
 import {Def, DefEnum} from "~/frontend/editabletable/defs"
 
@@ -50,8 +50,6 @@ function tableFromType(t: HumanEffectsTable): any {
 			return affectedTable
 		case "Displaced":
 			return displacedTable
-		case "DisplacementStocks":
-			return displacementStocksTable
 	}
 }
 
@@ -594,7 +592,8 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 					dbName: "direct",
 					format: "number",
 					role: "metric",
-				},
+				})
+			res.push(
 				{
 					uiName: "Indirectly Affected",
 					jsName: "indirect",
@@ -605,61 +604,59 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 			)
 			break
 		case "Displaced":
-			res.push(
-				{
-					uiName: "Short Term",
-					jsName: "short",
-					dbName: "short",
-					format: "number",
-					role: "metric",
-				},
-				{
-					uiName: "Medium Short Term",
-					jsName: "mediumShort",
-					dbName: "medium_short",
-					format: "number",
-					role: "metric",
-				},
-				{
-					uiName: "Medium Long Term",
-					jsName: "mediumLong",
-					dbName: "medium_long",
-					format: "number",
-					role: "metric",
-				},
-				{
-					uiName: "Long Term",
-					jsName: "long",
-					dbName: "long",
-					format: "number",
-					role: "metric",
-				},
-				{
-					uiName: "Permanent",
-					jsName: "permanent",
-					dbName: "permanent",
-					format: "number",
-					role: "metric",
-				}
-			)
-			break
-		case "DisplacementStocks":
-			res.push(
-				{
-					uiName: "Preemptive",
-					jsName: "preemptive",
-					dbName: "preemptive",
-					format: "number",
-					role: "metric",
-				},
-				{
-					uiName: "Reactive",
-					jsName: "reactive",
-					dbName: "reactive",
-					format: "number",
-					role: "metric",
-				}
-			)
+			res.push({
+				uiName: "Assisted",
+				jsName: "assisted",
+				dbName: "assisted",
+				uiColWidth: 90,
+				format: "enum",
+				role: "dimension",
+				data: [
+					{key: "assisted", label: "Assisted"},
+					{key: "not_assisted", label: "Not Assisted"},
+				]
+			})
+			res.push({
+				uiName: "Timing",
+				jsName: "timing",
+				dbName: "timing",
+				uiColWidth: 90,
+				format: "enum",
+				role: "dimension",
+				data: [
+					{key: "pre-emptive", label: "Pre-emptive"},
+					{key: "reactive", label: "Reactive"},
+				]
+			})
+			res.push({
+				uiName: "Duration",
+				jsName: "duration",
+				dbName: "duration",
+				uiColWidth: 110,
+				format: "enum",
+				role: "dimension",
+				data: [
+					{key: "short", label: "Short Term"},
+					{key: "medium_short", label: "Medium Short Term"},
+					{key: "medium_long", label: "Medium Long Term"},
+					{key: "long", label: "Long Term"},
+					{key: "permanent", label: "Permanent"},
+				]
+			})
+			res.push({
+				uiName: "As of",
+				jsName: "asOf",
+				dbName: "as_of",
+				format: "date",
+				role: "dimension",
+			})
+			res.push({
+				uiName: "Displaced",
+				jsName: "displaced",
+				dbName: "displaced",
+				format: "number",
+				role: "metric",
+			})
 			break
 		default:
 			throw new Error(`Unknown table: ${tbl}`)
@@ -678,9 +675,7 @@ function categoryPresenceTableDbNamePrefix(tbl: HumanEffectsTable) {
 		case "Affected":
 			return "affected"
 		case "Displaced":
-			return "displaced"
-		case "DisplacementStocks":
-			return "displacement_stocks"
+			return ""
 	}
 }
 

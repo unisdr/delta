@@ -44,7 +44,7 @@ export default function Data() {
 							onClick={
 								() => {
 									if (window.opener) {
-										window.opener.postMessage({selected: item}, "*");
+										window.opener.postMessage({selected: item, type:"select_hazard"}, "*");
 										window.close();
 									} else {
 										alert("Can't get window that opened this window. Close and try again.")

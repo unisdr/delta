@@ -1,6 +1,6 @@
 import {EnumEntry} from "~/frontend/editabletable/defs"
 
-export type HumanEffectsTable = "Deaths" | "Injured" | "Missing" | "Affected" | "Displaced" | "DisplacementStocks"
+export type HumanEffectsTable = "Deaths" | "Injured" | "Missing" | "Affected" | "Displaced"
 
 export function HumanEffectsTableFromString(s: string): HumanEffectsTable {
 	switch (s) {
@@ -9,12 +9,10 @@ export function HumanEffectsTableFromString(s: string): HumanEffectsTable {
 		case "Missing":
 		case "Affected":
 		case "Displaced":
-		case "DisplacementStocks":
 			return s
 	}
 	throw new Error("Unknown human effects table: " + s)
 }
-
 
 export interface HumanEffectTableDef {
 	id: HumanEffectsTable
@@ -27,7 +25,6 @@ export const HumanEffectTablesDefs: HumanEffectTableDef[] = [
 	{id: "Missing", label: "Missing"},
 	{id: "Affected", label: "Affected"},
 	{id: "Displaced", label: "Displaced"},
-	{id: "DisplacementStocks", label: "Displacement Stocks"},
 ]
 
 export interface HumanEffectsCustomDef {
