@@ -7,15 +7,17 @@ import {DisasterRecordsFields, DisasterRecordsViewModel} from "~/backend.server/
 import {formatDate} from "~/util/date";
 
 import {
-	Field,
 	UserFormProps,
 	FormInputDef,
 	FieldsView,
 	FormView,
-	ViewComponent
+	FieldErrors,
+	Field,
+	ViewComponent,
+	WrapInputBasic
 } from "~/frontend/form";
 
-import {useEffect, useRef} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
 import {ContentRepeater} from "~/components/ContentRepeater";
@@ -25,6 +27,8 @@ import {TreeView} from "~/components/TreeView";
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
 import AuditLogHistory from "~/components/AuditLogHistory";
+import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
+import {HipHazardInfo} from "~/frontend/hip/hip";
 
 import SpatialFootprintMapViewer from "~/components/SpatialFootprintMapViewer";
 
@@ -32,10 +36,9 @@ export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
-	{key: "disasterEventId", label: "Disaster Event", type: "other"},
 	{key: "locationDesc", label: "Location Description", type: "text"},
-	{key: "startDate", label: "Start Date (Possible to record only year, year + month, or complete year, month and days)", type: "date_optional_precision", uiRow: {}},
-	{key: "endDate", label: "End Date (Possible to record only year, year + month, or complete year, month and days)", type: "date_optional_precision"},
+	{key: "startDate", label: "Start Date", type: "date_optional_precision", uiRow: {}},
+	{key: "endDate", label: "End Date", type: "date_optional_precision"},
 	{key: "localWarnInst", label: "Local warning and local instructions ( recommended actions)", type: "text", uiRowNew: true},
 	{key: "primaryDataSource", label: "Primary data source", type: "text", required: true, uiRow: {}},
 	{key: "otherDataSource", label: "Other data sources", type: "text"},
@@ -49,6 +52,10 @@ export const fieldsDefCommon = [
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
+	{key: "disasterEventId", label: "", type: "other"},
+	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
+	{key: "hipClusterId", label: "", type: "other"},
+	{key: "hipTypeId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
 
@@ -58,12 +65,15 @@ export const fieldsDefApi: FormInputDef<DisasterRecordsFields>[] = [
 ];
 
 export const fieldsDefView: FormInputDef<DisasterRecordsViewModel>[] = [
+	{key: "disasterEventId", label: "", type: "other"},
+	{key: "hipHazard", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},
 	{key: "updatedAt", label: "", type: "other"},
 ];
 
 interface DisasterRecordsFormProps extends UserFormProps<DisasterRecordsFields> {
+	hip: Hip;
 	parent?: DisasterRecordsViewModel;
 	treeData: any[];
 	cpDisplayName?: string;
@@ -99,6 +109,8 @@ export function disasterRecordsLink(args: {
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 	const {fields, treeData, cpDisplayName} = props;
 
+	console.log('x:', props)
+
 	useEffect(() => {
 	}, []);
 
@@ -127,6 +139,17 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 		}
 	}
 
+	let hazardousEventLinkInitial: "none" | "hip" | "disaster_event" = "none"
+	if (props.fields.disasterEventId) {
+	        hazardousEventLinkInitial = "disaster_event"
+	} else if (props.fields.hipTypeId) {
+	        hazardousEventLinkInitial = "hip"
+	}
+
+	console.log("disaster: initial link:", hazardousEventLinkInitial, "fields", props.fields)
+
+	const [hazardousEventLinkType, setHazardousEventLinkType] = useState(hazardousEventLinkInitial)
+
 	return (
 		<>
 			<FormView
@@ -138,11 +161,31 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				errors={props.errors}
 				fields={props.fields}
 				fieldsDef={fieldsDef}
+				infoNodes={<>
+					<div className="mg-grid mg-grid__col-3">
+						<WrapInputBasic label="Hazardous event link" child={
+							<select defaultValue={hazardousEventLinkType} onChange={(e: any) => setHazardousEventLinkType(e.target.value)}>
+								<option value="none">No link</option>
+								<option value="hip">HIP Hazard</option>
+								<option value="disaster_event">Disaster event</option>
+							</select>
+						} />
+					</div>
+				</>}
 				override={{
 					disasterEventId: (
 						<Field key="disasterEventId" label="Disaster Event">
 							<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""}/>
 						</Field>
+					),
+					hipTypeId: null,
+					hipClusterId: null,
+					hipHazardId: (
+						(hazardousEventLinkType == "hip") ?
+							<Field key="hazardId" label="Specific Hazard *">
+								<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
+								<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
+							</Field> : null
 					),
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
@@ -350,6 +393,9 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 				def={fieldsDefView}
 				fields={item}
 				override={{
+					hipHazard: (
+						<HipHazardInfo key="hazard" model={item} />
+					),
 					createdAt: (
 						<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
 					),

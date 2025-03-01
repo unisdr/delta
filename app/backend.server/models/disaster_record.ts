@@ -93,6 +93,12 @@ export async function disasterRecordsByIdTx(tx: Tx, idStr: string) {
 	let id = idStr;
 	let res= await tx.query.disasterRecordsTable.findFirst({
 		where: eq(disasterRecordsTable.id, id),
+		with: {
+			disasterEvent: true,
+			hipHazard: true,
+			hipCluster: true,
+			hipType: true,
+		}
 	});
 	if(!res){
 		throw new Error("Id is invalid");
