@@ -36,11 +36,12 @@ data/
 scripts/
 
 # Drizzle
-# app/drizzle/meta/
-# migrations/
-# *.sql
+app/drizzle/meta/
+migrations/
+*.sql
 # drizzle.config.js
 # *_schema_snapshot.json
+app/utils/sync-db.ts
 
 # OS
 .DS_Store
