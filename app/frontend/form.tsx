@@ -3,7 +3,7 @@ import {useLoaderData} from "@remix-run/react";
 import {Link} from "@remix-run/react";
 
 import {useActionData} from "@remix-run/react";
-import {ReactElement, useRef, useState} from "react";
+import {ReactElement, useRef, useState, useEffect} from "react";
 
 import {formatDate, formatDateTimeUTC, formatForDateTimeInput} from "~/util/date";
 import {MainContainer} from "./container";
@@ -11,6 +11,8 @@ import {MainContainer} from "./container";
 import {capitalizeFirstLetter} from "~/util/string";
 
 import React from 'react'
+
+import * as repeatablefields from "~/frontend/components/repeatablefields"
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -288,6 +290,8 @@ export interface FormInputDef<T> {
 	psqlType?: string;
 	uiRow?: UIRow
 	uiRowNew?: boolean
+	repeatable?: {group: string, index: number}
+
 }
 
 export interface FormInputDefSpecific {
@@ -344,10 +348,11 @@ export interface InputsProps<T> {
 
 interface UIRowWithDefs<T> {
 	uiRow?: UIRow
+	uiRowDefFromKey?: string
 	defs: FormInputDef<T>[]
 }
 
-function splitDefsIntoDows<T>(defs: FormInputDef<T>[]) {
+function splitDefsIntoRows<T>(defs: FormInputDef<T>[]) {
 	let uiRows: UIRowWithDefs<T>[] = []
 	{
 		let uiRow: UIRowWithDefs<T> = {
@@ -367,6 +372,7 @@ function splitDefsIntoDows<T>(defs: FormInputDef<T>[]) {
 				if (d.uiRow) {
 					uiRow = {
 						uiRow: d.uiRow,
+						uiRowDefFromKey: d.key,
 						defs: []
 					}
 				} else {
@@ -410,7 +416,7 @@ function rowMeta<T>(uiRow: UIRowWithDefs<T>): rowMeta {
 			cols = uiRow.uiRow.colOverride
 		}
 		if (uiRow.uiRow.label) {
-			header = <h3>{uiRow.uiRow.label}</h3>
+			header = <h3 className={"row-header-" + uiRow.uiRowDefFromKey}>{uiRow.uiRow.label}</h3>
 		}
 	}
 	className = `mg-grid mg-grid__col-${cols}`
@@ -422,15 +428,33 @@ export function Inputs<T>(props: InputsProps<T>) {
 		throw new Error("props.def not passed to form/Inputs")
 	}
 
-	let uiRows = splitDefsIntoDows(props.def)
+	let uiRows = splitDefsIntoRows(props.def)
+
 
 	return uiRows.map((uiRow, rowIndex) => {
 		let meta = rowMeta(uiRow)
 		let afterRow = null;
+		let addMore: any[] = []
+
 		return <React.Fragment key={rowIndex}>
 			{meta.header}
 			<div className={meta.className}>
 				{uiRow.defs.map((def, defIndex) => {
+					if (def.repeatable) {
+						let index = props.def.findIndex((d) => d.key == def.key)
+						let shouldAdd = false
+						let g = def.repeatable.group
+						let repIndex = def.repeatable.index
+						if (index < props.def.length - 1) {
+							let next = props.def[index + 1]
+							if (next.repeatable && (next.repeatable.group != g || next.repeatable.index != repIndex)) {
+								shouldAdd = true
+							}
+						}
+						if (shouldAdd) {
+							addMore.push(<button className={"repeatable-add-" + g + "-" + repIndex}>Add</button>)
+						}
+					}
 					let after = null;
 					if (props.elementsAfter && props.elementsAfter[def.key]) {
 						if (defIndex == uiRow.defs.length - 1) {
@@ -467,6 +491,7 @@ export function Inputs<T>(props: InputsProps<T>) {
 				})
 				}
 			</div>
+			{addMore}
 			{afterRow}
 		</React.Fragment>
 	})
@@ -764,7 +789,7 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 		throw new Error("props.def not passed to view")
 	}
 
-	let uiRows = splitDefsIntoDows(props.def)
+	let uiRows = splitDefsIntoRows(props.def)
 	return uiRows.map((uiRow, rowIndex) => {
 		let meta = rowMeta(uiRow)
 		let afterRow = null;
@@ -790,11 +815,11 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 							</React.Fragment>
 						)
 					}
+
 					return (
 						<React.Fragment key={def.key}>
 							<FieldView key={def.key} def={def} value={props.fields[def.key]} />
 							{after}
-
 						</React.Fragment>
 					);
 				})
@@ -1051,6 +1076,17 @@ export function FormView(props: FormViewProps) {
 	}
 
 	const pluralCap = capitalizeFirstLetter(props.plural);
+
+	let inputsRef = useRef<HTMLDivElement>(null)
+
+	useEffect(() => {
+		let opts = {inputsRef, defs: props.fieldsDef}
+		repeatablefields.attach(opts)
+		return () => {
+			repeatablefields.detach(opts)
+		}
+	})
+
 	return (
 		<MainContainer title={pluralCap}>
 			<>
@@ -1070,13 +1106,15 @@ export function FormView(props: FormViewProps) {
 				{props.edit && props.id && <p>ID: {String(props.id)}</p>}
 				{props.infoNodes}
 				<Form ref={props.ref} errors={props.errors} className="dts-form">
-					<Inputs
-						def={props.fieldsDef}
-						fields={props.fields}
-						errors={props.errors}
-						override={props.override}
-						elementsAfter={props.elementsAfter}
-					/>
+					<div ref={inputsRef}>
+						<Inputs
+							def={props.fieldsDef}
+							fields={props.fields}
+							errors={props.errors}
+							override={props.override}
+							elementsAfter={props.elementsAfter}
+						/>
+					</div>
 					<div className="dts-form__actions">
 						<SubmitButton
 							label={

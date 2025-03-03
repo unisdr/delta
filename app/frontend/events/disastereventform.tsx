@@ -30,17 +30,49 @@ import {HipHazardInfo} from "~/frontend/hip/hip";
 
 export const route = "/disaster-event"
 
+function repeatOtherIds(n: number): FormInputDef<DisasterEventFields>[] {
+	let res = []
+	for (let i = 0; i < n; i++) {
+		res.push(
+			{key: "otherId" + (i + 1), label: `Event ID in other system (${i + 1})`, type: "text", uiRow: i == 0 ? {} : undefined, repeatable: {"group": "otherId", index: i}},
+		)
+	}
+	return res as FormInputDef<DisasterEventFields>[]
+}
+
+function repeatEarlyActions(n: number): FormInputDef<DisasterEventFields>[] {
+	let res = []
+	for (let i = 0; i < n; i++) {
+		res.push(
+			{
+				key: `earlyAction` + (i + 1),
+				label: "Early Action",
+				type: "textarea",
+				uiRow: {
+					label: `Early Action (${i + 1})`,
+				},
+				repeatable: {"group": "earlyAction", "index": i}
+			},
+			{
+				key: `earlyActionDate` + (i + 1),
+				label: "Date",
+				type: "date",
+				repeatable: {"group": "earlyAction", "index": i}
+			}
+		)
+	}
+	return res as FormInputDef<DisasterEventFields>[]
+}
+
+
 // 2025-02-25 - comparing to DTS Variables and baselines
 export const fieldsDefCommon = [
 	approvalStatusField,
 	// keep
 	{key: "nationalDisasterId", label: "National Disaster ID", type: "text", uiRow: {}},
-	// keep
-	{key: "otherId1", label: "Event ID in other system (1)", type: "text", uiRow: {}},
-	// new
-	{key: "otherId2", label: "Event ID in other system (2)", type: "text"},
-	// new
-	{key: "otherId3", label: "Event ID in other system (3)", type: "text"},
+
+	...repeatOtherIds(3),
+
 	{key: "nameNational", label: "National name", desc: "Disaster name ( if any) ( if applicable)- national", type: "text", uiRow: {}},
 	// keep
 	{key: "glide", label: "GLIDE Number", type: "text", uiRow: {}},
@@ -72,8 +104,8 @@ export const fieldsDefCommon = [
 	{key: "hadOfficialWarningOrWeatherAdvisory", label: "Was there an officially issued warning and/or weather advisory?", type: "bool", uiRow: {label: "Official Warning"}},
 	{key: "officialWarningAffectedAreas", label: "Which affected areas were covered by the warning?", type: "textarea"},
 
-	{key: "earlyAction", label: "Early Action", type: "textarea", uiRow: {label: "Early Action"}},
-	{key: "earlyActionDate", label: "Date", type: "date"},
+	...repeatEarlyActions(5),
+
 	{key: "preliminaryAssessmentDate", label: "Preliminary Assessment Date", type: "date", uiRow: {label: "Assesment"}},
 	{key: "rapidAssessmentDate", label: "Rapid Assessment Date", type: "date"},
 	// yes
@@ -224,7 +256,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 		hazardousEventLinkInitial = "hazardous_event"
 	} else if (props.fields.hipTypeId) {
 		hazardousEventLinkInitial = "hip"
-	} else if (props.fields.disasterEventId){
+	} else if (props.fields.disasterEventId) {
 		hazardousEventLinkInitial = "disaster_event"
 	}
 

@@ -8,6 +8,17 @@ import {deleteByIdForNumberId} from "./common";
 
 export interface DevExample1Fields extends Omit<DevExample1Insert, "id"> {}
 
+function repeatFields(n: number): FormInputDef<DevExample1Fields>[] {
+	let res = []
+	for (let i = 0; i<= n; i++){
+		res.push(
+			{key: "repeatableNum"+(i+1), label: "Repeatable num "+(i+1), type: "number", repeatable: {group: "r", index: i}},
+		{key: "repeatableText"+i, label: "Repeatable text "+(i+1), type: "text", repeatable: {group: "r", index: i}}
+		)
+	}
+	return res as FormInputDef<DevExample1Fields>[]
+}
+
 export async function fieldsDef(): Promise<FormInputDef<DevExample1Fields>[]> {
 	return [
 		{key: "field1", label: "Field 1", type: "text", required: true, tooltip: "Field 1 tooltip", description: "Field 1 description", uiRow: {
@@ -25,7 +36,8 @@ export async function fieldsDef(): Promise<FormInputDef<DevExample1Fields>[]> {
 				{key: "two", label: "Two"},
 				{key: "three", label: "Three"}
 			],
-		}
+		},
+		...repeatFields(3),
 	]
 }
 
