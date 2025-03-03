@@ -207,13 +207,13 @@ const getDisasterRecordsForSector = async (
       conditions.push(sql`${disasterRecordsTable.startDate} <= ${filters.endDate}`);
     }
     if (filters.hazardType) {
-      conditions.push(sql`${hipHazardTable.clusterId} = ${filters.hazardType}`);
+      conditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardType}`);
     }
     if (filters.hazardCluster) {
-      conditions.push(sql`${hipClusterTable.id} = ${filters.hazardCluster}`);
+      conditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardCluster}`);
     }
     if (filters.specificHazard) {
-      conditions.push(sql`${hipHazardTable.id} = ${filters.specificHazard}`);
+      conditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazard}`);
     }
     if (filters.disasterEvent) {
       // Ensure the disaster event ID is a valid UUID
@@ -237,14 +237,6 @@ const getDisasterRecordsForSector = async (
     .leftJoin(
       hazardousEventTable,
       eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
-    )
-    .leftJoin(
-      hipHazardTable,
-      eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
-    )
-    .leftJoin(
-      hipClusterTable,
-      eq(hipHazardTable.clusterId, hipClusterTable.id)
     )
     .where(and(...conditions));
 
