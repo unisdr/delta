@@ -7,8 +7,6 @@ import {
     hazardousEventTable,
     disasterEventTable,
     hipTypeTable,
-    hipClusterTable,
-    hipHazardTable,
     sectorDisasterRecordsRelationTable
 } from "~/drizzle/schema";
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
@@ -72,7 +70,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
 
     // Base conditions including approval status
     const baseConditions = [
-        sql`${disasterRecordsTable.approvalStatus} ILIKE 'approved'`
+        sql`${disasterRecordsTable.approvalStatus} ILIKE 'completed'`
     ];
 
     // Handle sector filtering using proper hierarchy
@@ -105,13 +103,13 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
 
     // Add hazard type filters if provided
     if (hazardTypeId) {
-        baseConditions.push(eq(hipTypeTable.id, hazardTypeId));
+        baseConditions.push(eq(hazardousEventTable.hipTypeId, hazardTypeId));
     }
     if (hazardClusterId) {
-        baseConditions.push(eq(hipClusterTable.id, hazardClusterId));
+        baseConditions.push(eq(hazardousEventTable.hipClusterId, hazardClusterId));
     }
     if (specificHazardId) {
-        baseConditions.push(eq(hipHazardTable.id, specificHazardId));
+        baseConditions.push(eq(hazardousEventTable.hipHazardId, specificHazardId));
     }
 
     // Add geographic level filter if provided
@@ -157,8 +155,8 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     // Query for disaster events count by hazard type
     const eventsCount = await dr
         .select({
-            hazardId: sql<string>`${hipTypeTable.id}`, // Ensure non-null integer
-            hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`, // Ensure non-null string
+            hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
+            hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
             value: sql<number>`COUNT(${disasterRecordsTable.id})`,
         })
         .from(disasterRecordsTable)
@@ -171,19 +169,11 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
             eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
         .leftJoin(
-            hipHazardTable,
-            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
-        )
-        .leftJoin(
-            hipClusterTable,
-            eq(hipHazardTable.clusterId, hipClusterTable.id)
-        )
-        .leftJoin(
             hipTypeTable,
-            eq(hipClusterTable.typeId, hipTypeTable.id)
+            eq(hazardousEventTable.hipTypeId, hipTypeTable.id)
         )
         .where(and(...baseConditions))
-        .groupBy(hipTypeTable.id, hipTypeTable.nameEn)
+        .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
         .orderBy(desc(sql`COUNT(${disasterRecordsTable.id})`))
         .limit(10);
 
@@ -201,11 +191,15 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     // Query for damages by hazard type with the same join structure
     const damages = await dr
         .select({
-            hazardId: sql<string>`${hipTypeTable.id}`,
+            hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
             value: calculateDamages(damagesTable),
         })
         .from(disasterRecordsTable)
+        .leftJoin(
+            damagesTable,
+            eq(damagesTable.recordId, disasterRecordsTable.id)
+        )
         .leftJoin(
             disasterEventTable,
             eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
@@ -215,34 +209,26 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
             eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
         .leftJoin(
-            hipHazardTable,
-            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
-        )
-        .leftJoin(
-            hipClusterTable,
-            eq(hipHazardTable.clusterId, hipClusterTable.id)
-        )
-        .leftJoin(
             hipTypeTable,
-            eq(hipClusterTable.typeId, hipTypeTable.id)
-        )
-        .leftJoin(
-            damagesTable,
-            eq(damagesTable.recordId, disasterRecordsTable.id)
+            eq(hazardousEventTable.hipTypeId, hipTypeTable.id)
         )
         .where(and(...baseConditions))
-        .groupBy(hipTypeTable.id, hipTypeTable.nameEn)
+        .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
         .orderBy(desc(calculateDamages(damagesTable)))
         .limit(10);
 
     // Query for losses by hazard type using standardized calculation
     const losses = await dr
         .select({
-            hazardId: sql<string>`${hipTypeTable.id}`,
+            hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
             value: calculateLosses(lossesTable),
         })
         .from(disasterRecordsTable)
+        .leftJoin(
+            lossesTable,
+            eq(lossesTable.recordId, disasterRecordsTable.id)
+        )
         .leftJoin(
             disasterEventTable,
             eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
@@ -252,23 +238,11 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
             eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
         .leftJoin(
-            hipHazardTable,
-            eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
-        )
-        .leftJoin(
-            hipClusterTable,
-            eq(hipHazardTable.clusterId, hipClusterTable.id)
-        )
-        .leftJoin(
             hipTypeTable,
-            eq(hipClusterTable.typeId, hipTypeTable.id)
-        )
-        .leftJoin(
-            lossesTable,
-            eq(lossesTable.recordId, disasterRecordsTable.id)
+            eq(hazardousEventTable.hipTypeId, hipTypeTable.id)
         )
         .where(and(...baseConditions))
-        .groupBy(hipTypeTable.id, hipTypeTable.nameEn)
+        .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
         .orderBy(desc(calculateLosses(lossesTable)))
         .limit(10);
 
@@ -276,20 +250,25 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     const totalDamages = damages.reduce((sum, item) => sum + Number(item.value), 0);
     const totalLosses = losses.reduce((sum, item) => sum + Number(item.value), 0);
 
+    // Add percentage to damages and losses
+    const damagesWithPercentage = damages.map(item => ({
+        hazardId: item.hazardId,
+        hazardName: String(item.hazardName),
+        value: String(item.value),
+        percentage: totalDamages > 0 ? (Number(item.value) / totalDamages) * 100 : 0
+    }));
+
+    const lossesWithPercentage = losses.map(item => ({
+        hazardId: item.hazardId,
+        hazardName: String(item.hazardName),
+        value: String(item.value),
+        percentage: totalLosses > 0 ? (Number(item.value) / totalLosses) * 100 : 0
+    }));
+
     return {
         eventsCount: eventsCountWithPercentage,
-        damages: damages.map(item => ({
-            hazardId: item.hazardId,
-            hazardName: String(item.hazardName),
-            value: String(item.value),
-            percentage: totalDamages > 0 ? (Number(item.value) / totalDamages) * 100 : 0
-        })),
-        losses: losses.map(item => ({
-            hazardId: item.hazardId,
-            hazardName: String(item.hazardName),
-            value: String(item.value),
-            percentage: totalLosses > 0 ? (Number(item.value) / totalLosses) * 100 : 0
-        })),
+        damages: damagesWithPercentage,
+        losses: lossesWithPercentage,
         metadata,
         faoAgriculturalImpact
     };

@@ -3,7 +3,7 @@ import { useQuery, QueryClient, QueryClientProvider, UseQueryOptions } from "@ta
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
-import { formatCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode, useDefaultCurrency, formatCurrency } from "~/frontend/utils/formatters";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -79,6 +79,8 @@ interface Sector {
 }
 
 const CustomTooltip = ({ active, payload, title }: any) => {
+    const defaultCurrency = useDefaultCurrency();
+
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         const formattedPercentage = `${Math.round(data.value)}%`;
@@ -106,7 +108,8 @@ const CustomTooltip = ({ active, payload, title }: any) => {
         if (title === "Number of Disaster Events") {
             formattedValue = `${data.rawValue}`;
         } else {
-            formattedValue = formatCurrency(data.rawValue, {}, 'thousands');
+            // Use formatCurrencyWithCode for damages and losses
+            formattedValue = formatCurrencyWithCode(data.rawValue, defaultCurrency, {}, 'thousands');
         }
 
         return (
@@ -358,7 +361,13 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     }
 
     if (error || !data?.success) {
+        console.error('Error loading hazard impact data:', error);
         return <ErrorMessage message="Failed to load hazard impact data" />;
+    }
+
+    if (!data?.data?.eventsCount || !data?.data?.damages || !data?.data?.losses) {
+        console.error('Invalid data structure:', data);
+        return <ErrorMessage message="Invalid data structure received from server" />;
     }
 
     // Find the current sector and its parent
@@ -405,9 +414,9 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
 
     const formatChartData = (rawData: any[]) => {
         return rawData.map(item => ({
-            name: item.hazardName,
-            value: item.percentage,
-            rawValue: item.value
+            name: item.hazardName || 'Unknown',
+            value: item.percentage || 0,
+            rawValue: item.value || '0'
         }));
     };
 
