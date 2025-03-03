@@ -7,6 +7,7 @@ import { MainContainer } from "~/frontend/container";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
 import HazardFilters from "~/frontend/analytics/hazards/sections/HazardFilters";
+import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -94,6 +95,22 @@ function HazardAnalysisContent() {
 								Welcome to the Hazard Dashboard! 🌟
 							</h3>
 							<p>Please select and apply filters above to view the analysis.</p>
+						</div>
+					)}
+
+					{/* Dashboard sections */}
+					{filters && (
+						<div
+							className="sectors-content"
+							style={{
+								marginTop: "2rem",
+								maxWidth: "100%",
+								overflow: "hidden",
+							}}
+						>
+							Dashboard Section
+							{/* Impact by Geographic Level */}
+							<HazardImpactMap filters={filters} />
 						</div>
 					)}
 				</div>
