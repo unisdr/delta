@@ -13,7 +13,7 @@ import { getCenter } from 'ol/extent';
 import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import Swal from "sweetalert2";
-import { formatCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
 import "./ImpactMap.css"; // Custom styles
 
 type ImpactMapProps = {
@@ -61,12 +61,13 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   const [currentParentId, setCurrentParentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [hoveredFeatureColor, setHoveredFeatureColor] = useState<string | null>(null);
+  const defaultCurrency = useDefaultCurrency();
 
   // Fetch data for the current level and parent
   const fetchGeoData = async (level: number, parentId: number | null) => {
     setLoading(true);
     try {
-      const url = new URL('http://localhost:3000/api/analytics/geographic-impacts');
+      const url = new URL('/api/analytics/geographic-impacts');
 
       // Always send sectorId
       url.searchParams.set('sectorId', filters.sectorId || '');
@@ -149,11 +150,11 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     // Only add value ranges if we have non-zero values
     if (max > 0) {
       ranges = [
-        { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)', label: `${formatCurrency(max * 0.8, {}, 'thousands')} - ${formatCurrency(max, {}, 'thousands')}` },
-        { min: max * 0.6, max: max * 0.8, color: 'rgba(30, 136, 229, 0.9)', label: `${formatCurrency(max * 0.6, {}, 'thousands')} - ${formatCurrency(max * 0.8, {}, 'thousands')}` },
-        { min: max * 0.4, max: max * 0.6, color: 'rgba(66, 165, 245, 0.9)', label: `${formatCurrency(max * 0.4, {}, 'thousands')} - ${formatCurrency(max * 0.6, {}, 'thousands')}` },
-        { min: max * 0.2, max: max * 0.4, color: 'rgba(144, 202, 249, 0.9)', label: `${formatCurrency(max * 0.2, {}, 'thousands')} - ${formatCurrency(max * 0.4, {}, 'thousands')}` },
-        { min: 0.1, max: max * 0.2, color: 'rgba(227, 242, 253, 0.9)', label: `${formatCurrency(0.1, {}, 'thousands')} - ${formatCurrency(max * 0.2, {}, 'thousands')}` }
+        { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)', label: `${formatCurrencyWithCode(max * 0.8, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max, defaultCurrency, {}, 'thousands')}` },
+        { min: max * 0.6, max: max * 0.8, color: 'rgba(30, 136, 229, 0.9)', label: `${formatCurrencyWithCode(max * 0.6, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.8, defaultCurrency, {}, 'thousands')}` },
+        { min: max * 0.4, max: max * 0.6, color: 'rgba(66, 165, 245, 0.9)', label: `${formatCurrencyWithCode(max * 0.4, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.6, defaultCurrency, {}, 'thousands')}` },
+        { min: max * 0.2, max: max * 0.4, color: 'rgba(144, 202, 249, 0.9)', label: `${formatCurrencyWithCode(max * 0.2, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.4, defaultCurrency, {}, 'thousands')}` },
+        { min: 0.1, max: max * 0.2, color: 'rgba(227, 242, 253, 0.9)', label: `${formatCurrencyWithCode(0.1, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.2, defaultCurrency, {}, 'thousands')}` }
       ];
     }
 
@@ -320,7 +321,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     // Handle display value based on data availability
     let displayValue;
     if (dataAvailability === 'available' && value > 0) {
-      displayValue = formatCurrency(value, {}, 'thousands');
+      displayValue = formatCurrencyWithCode(value, defaultCurrency, {}, 'thousands');
     } else if (dataAvailability === 'available' && value === 0) {
       displayValue = "Zero Impact (Confirmed)";
     } else {
