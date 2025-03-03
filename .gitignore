@@ -48,3 +48,5 @@ app/utils/sync-db.ts
 Thumbs.db
 
 public/uploads/
+
+schema_2025_02_24.ts
