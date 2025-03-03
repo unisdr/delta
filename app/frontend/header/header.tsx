@@ -74,12 +74,6 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
                 // { name: "PDNA resources repository", link: "/resource-repo" },
               ],
             },
-            {
-              title: "Baseline data",
-              lvl4: [
-                { name: "Baseline data (todo)", link: "#" },
-              ],
-            },
           ],
         },
       ],
@@ -167,12 +161,6 @@ function navItemsLoggedIn(): Lvl1Item[] {
               lvl4: [
                 { name: "Disaster records", link: "/disaster-record" },
                 // { name: "PDNA resources repository", link: "/resource-repo" },
-              ],
-            },
-            {
-              title: "Baseline data",
-              lvl4: [
-                { name: "Baseline data (todo)", link: "#" },
               ],
             },
           ],
