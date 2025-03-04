@@ -20,13 +20,13 @@ export interface Hazard {
 }
 
 export interface HipDataForHazardPicker {
-	classes: Type[]
+	types: Type[]
 	clusters: Cluster[]
 	hazards: Hazard[]
 }
 
 export async function dataForHazardPicker(): Promise<HipDataForHazardPicker> {
-	const classes: Type[] = await dr
+	const types: Type[] = await dr
 		.select({
 			id: hipTypeTable.id,
 			name: hipTypeTable.nameEn,
@@ -43,7 +43,7 @@ export async function dataForHazardPicker(): Promise<HipDataForHazardPicker> {
 		name: hipHazardTable.nameEn,
 	}).from(hipHazardTable);
 	return {
-		classes,
+		types,
 		clusters,
 		hazards,
 	};

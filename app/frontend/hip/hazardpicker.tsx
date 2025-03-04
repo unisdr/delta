@@ -12,12 +12,12 @@ export interface HazardPickerProps {
 }
 
 export interface Hip {
-	classes: Class[]
+	types: Type[]
 	clusters: Cluster[]
 	hazards: Hazard[]
 }
 
-export interface Class {
+export interface Type {
 	id: string
 	name: string
 }
@@ -46,11 +46,11 @@ export function HazardPicker(props: HazardPickerProps) {
 		setIsClient(true)
 	}, [])
 
-	const classes = sortByName(props.hip.classes)
+	const types = sortByName(props.hip.types)
 	const clusters = sortByName(props.hip.clusters)
 	const hazards = sortByName(props.hip.hazards)
 
-	const [selectedClass, setSelectedClass] = useState<string | null>(null)
+	const [selectedType, setSelectedType] = useState<string | null>(null)
 	const [selectedCluster, setSelectedCluster] = useState<string | null>(null)
 	const [selectedHazard, setSelectedHazard] = useState<string | null>(null)
 
@@ -82,12 +82,12 @@ export function HazardPicker(props: HazardPickerProps) {
 			typeId = props.typeId
 		}
 		if (typeId) {
-			setSelectedClass(typeId)
+			setSelectedType(typeId)
 		}
 	}, [props.typeId, props.clusterId, props.hazardId])
 
 
-	let filteredClasses = classes
+	let filteredTypes = types
 	let filteredClusters = clusters
 	let filteredHazards = hazards
 
@@ -100,13 +100,13 @@ export function HazardPicker(props: HazardPickerProps) {
 			filteredHazards.some((h) => h.clusterId == c.id)
 		)
 
-		filteredClasses = classes.filter((c) =>
+		filteredTypes = types.filter((c) =>
 			filteredClusters.some((cl) => cl.typeId == c.id)
 		)
 	}
 
-	if (selectedClass) {
-		filteredClusters = filteredClusters.filter((c) => c.typeId == selectedClass)
+	if (selectedType) {
+		filteredClusters = filteredClusters.filter((c) => c.typeId == selectedType)
 		filteredHazards = filteredHazards.filter((h) =>
 			filteredClusters.some((c) => c.id === h.clusterId)
 		)
@@ -130,7 +130,7 @@ export function HazardPicker(props: HazardPickerProps) {
 						onChange={(e) => {
 							let term = e.target.value.toLowerCase()
 							setSearchTerm(term)
-							setSelectedClass(null)
+							setSelectedType(null)
 							setSelectedCluster(null)
 							setSelectedHazard(null)
 							/*
@@ -154,25 +154,25 @@ export function HazardPicker(props: HazardPickerProps) {
 
 			<div className="mg-grid mg-grid__col-3">
 				<div className="dts-form-component">
-					<Field label={`Hazard Class (${filteredClasses.length})`}>
+					<Field label={`Hazard Type (${filteredTypes.length})`}>
 						<select
 							required={props.required}
 							name="hipTypeId"
-							value={selectedClass || ""}
+							value={selectedType || ""}
 							onChange={(e) => {
-								setSelectedClass(e.target.value)
+								setSelectedType(e.target.value)
 								setSelectedCluster(null)
 								setSelectedHazard("")
 							}}
 						>
-							{filteredClasses.length == 1 ? (
-								<option key={filteredClasses[0].id} value={filteredClasses[0].id}>
-									{filteredClasses[0].name}
+							{filteredTypes.length == 1 ? (
+								<option key={filteredTypes[0].id} value={filteredTypes[0].id}>
+									{filteredTypes[0].name}
 								</option>
 							) : (
 								<>
-									<option value="">Select Class</option>
-									{filteredClasses.map((c) => (
+									<option value="">Select Type</option>
+									{filteredTypes.map((c) => (
 										<option key={c.id} value={c.id}>
 											{c.name}
 										</option>
@@ -193,8 +193,8 @@ export function HazardPicker(props: HazardPickerProps) {
 								setSelectedHazard("")
 								setSelectedCluster(clusterId)
 								let matchedCluster = clusters.find((c) => c.id === clusterId)
-								let matchedClass = classes.find((c) => c.id === matchedCluster?.typeId)
-								setSelectedClass(matchedClass?.id || null)
+								let matchedType = types.find((c) => c.id === matchedCluster?.typeId)
+								setSelectedType(matchedType?.id || null)
 							}}
 						//disabled={!filteredClusters.length}
 						>
@@ -228,8 +228,8 @@ export function HazardPicker(props: HazardPickerProps) {
 								if (matchedHazard) {
 									let matchedCluster = clusters.find((c) => c.id === matchedHazard!.clusterId)
 									setSelectedCluster(matchedCluster?.id || null)
-									let matchedClass = classes.find((c) => c.id === matchedCluster?.typeId)
-									setSelectedClass(matchedClass?.id || null)
+									let matchedType = types.find((c) => c.id === matchedCluster?.typeId)
+									setSelectedType(matchedType?.id || null)
 								}
 							}}
 						//disabled={!filteredHazards.length}
