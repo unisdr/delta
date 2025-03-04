@@ -41,9 +41,12 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 	{key: "sectorIsAgriculture", label: "", type: "bool"},
 	{
 		key: "type", label: "Type", type: "enum", enumData: [
-			{key: "increased_expenditure", label: "Increased Expenditure"},
-			{key: "loss_revenue_forecasted", label: "Loss Revenue (Forecasted)"},
-			{key: "non_economic_losses", label: "Non Economic Losses"}
+			{"key": "infrastructure_temporary", "label": "Infrastructure- temporary for service/production continuity"},
+			{"key": "production_service_delivery_and_availability", "label": "Production,Service delivery and availability of/access to goods and services"},
+			{"key": "governance_and_decision_making", "label": "Governance and decision-making"},
+			{"key": "risk_and_vulnerabilities", "label": "Risk and vulnerabilities"},
+			{"key": "other_losses", "label": "Other losses"},
+			{"key": "employment_and_livelihoods_losses", "label": "Employment and Livelihoods losses"}
 		], uiRow: {},
 	},
 	{

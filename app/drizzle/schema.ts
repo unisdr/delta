@@ -860,9 +860,12 @@ export const lossesTable = pgTable("losses", {
 	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
 	type: text("type", {
 		enum: [
-			"increased_expenditure",
-			"loss_revenue_forecasted",
-			"non_economic_losses"
+			"infrastructure_temporary",
+"production_service_delivery_and_availability",
+"governance_and_decision_making",
+"risk_and_vulnerabilities",
+"other_losses",
+"employment_and_livelihoods_losses"
 		]
 	}).notNull(),
 	/*
