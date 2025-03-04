@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ClientOnly } from "remix-utils/client-only";
-import { formatCurrency, formatNumber } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode, formatNumber } from "~/frontend/utils/formatters";
 import "~/frontend/styles/analytics/sectors/effect-details.css";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
 
@@ -26,26 +26,71 @@ interface Sector {
   subsectors?: Sector[];
 }
 
-interface EffectDetailsData {
-  damages?: Array<{
-    assetName: string;
-    totalDamageAmount: number;
-    totalRepairReplacement: number;
-    totalRecovery: number;
-  }>;
-  losses?: Array<{
-    type: string;
-    description: string;
-    publicCostTotal: number;
-    privateCostTotal: number;
-  }>;
-  disruptions?: Array<{
-    durationDays: number;
-    durationHours: number;
-    usersAffected: number;
-    peopleAffected: number;
-    responseCost: number;
-  }>;
+interface EffectDetailsResponse {
+  success: boolean;
+  data: {
+    damages: DamageRecord[];
+    losses: LossRecord[];
+    disruptions: DisruptionRecord[];
+  };
+}
+
+interface DamageRecord {
+  id: string;
+  type: string;
+  assetName: string;
+  unit: string;
+  totalDamageAmount: number;
+  totalRepairReplacement: string;
+  totalRecovery: string;
+  sectorId: number;
+  attachments: Array<{ url: string; type: string }>;
+  spatialFootprint: any;
+}
+
+interface LossRecord {
+  id: string;
+  type: string;
+  description: string;
+  publicUnit: string | null;
+  publicUnits: number | null;
+  publicCostTotal: string | null;
+  privateUnit: string | null;
+  privateUnits: number | null;
+  privateCostTotal: string | null;
+  sectorId: number;
+  attachments: Array<{ url: string; type: string }>;
+  spatialFootprint: any;
+}
+
+interface DisruptionRecord {
+  id: string;
+  type: string;
+  durationDays: number | null;
+  durationHours: number | null;
+  usersAffected: number | null;
+  peopleAffected: number | null;
+  responseCost: number | null;
+  comment: string;
+  sectorId: number;
+  attachments: Array<{ url: string; type: string }>;
+  spatialFootprint: any;
+}
+
+interface TableColumn {
+  key: string;
+  label: string;
+}
+
+interface TableData {
+  [key: string]: string | number | null;
+}
+
+interface TableProps {
+  title: string;
+  columns: TableColumn[];
+  data: TableData[];
+  currency: string;
 }
 
 export function EffectDetails({ filters, currency }: Props) {
@@ -101,7 +146,7 @@ export function EffectDetails({ filters, currency }: Props) {
   };
 
   // Fetch effect details data
-  const { data: effectDetailsData, isLoading, error } = useQuery<EffectDetailsData>({
+  const { data: effectDetailsResponse, isLoading, error } = useQuery<EffectDetailsResponse>({
     queryKey: ["effectDetails", debouncedFilters],
     queryFn: async () => {
       try {
@@ -153,13 +198,13 @@ export function EffectDetails({ filters, currency }: Props) {
               </div>
             )}
 
-            {effectDetailsData && (
+            {effectDetailsResponse && (
               <div>
                 <div className="dts-data-box">
                   <h3 className="dts-body-label">
                     <span>Damages</span>
                   </h3>
-                  {effectDetailsData?.damages && effectDetailsData.damages.length > 0 ? (
+                  {effectDetailsResponse.data.damages && effectDetailsResponse.data.damages.length > 0 ? (
                     <SortableTable
                       title="Damages"
                       columns={[
@@ -168,7 +213,12 @@ export function EffectDetails({ filters, currency }: Props) {
                         { key: 'totalRepairReplacement', label: 'Repair/Replacement' },
                         { key: 'totalRecovery', label: 'Recovery' },
                       ]}
-                      data={effectDetailsData.damages}
+                      data={effectDetailsResponse.data.damages.map(damage => ({
+                        assetName: damage.assetName,
+                        totalDamageAmount: damage.totalDamageAmount,
+                        totalRepairReplacement: damage.totalRepairReplacement,
+                        totalRecovery: damage.totalRecovery,
+                      }))}
                       currency={currency}
                     />
                   ) : (
@@ -182,7 +232,7 @@ export function EffectDetails({ filters, currency }: Props) {
                   <h3 className="dts-body-label">
                     <span>Losses</span>
                   </h3>
-                  {effectDetailsData?.losses && effectDetailsData.losses.length > 0 ? (
+                  {effectDetailsResponse.data.losses && effectDetailsResponse.data.losses.length > 0 ? (
                     <SortableTable
                       title="Losses"
                       columns={[
@@ -191,7 +241,12 @@ export function EffectDetails({ filters, currency }: Props) {
                         { key: 'publicCostTotal', label: 'Public Cost' },
                         { key: 'privateCostTotal', label: 'Private Cost' },
                       ]}
-                      data={effectDetailsData.losses}
+                      data={effectDetailsResponse.data.losses.map(loss => ({
+                        type: loss.type,
+                        description: loss.description,
+                        publicCostTotal: loss.publicCostTotal || '-',
+                        privateCostTotal: loss.privateCostTotal || '-',
+                      }))}
                       currency={currency}
                     />
                   ) : (
@@ -205,17 +260,23 @@ export function EffectDetails({ filters, currency }: Props) {
                   <h3 className="dts-body-label">
                     <span>Disruptions</span>
                   </h3>
-                  {effectDetailsData?.disruptions && effectDetailsData.disruptions.length > 0 ? (
+                  {effectDetailsResponse.data.disruptions && effectDetailsResponse.data.disruptions.length > 0 ? (
                     <SortableTable
                       title="Disruptions"
                       columns={[
+                        { key: 'comment', label: 'Description' },
                         { key: 'durationDays', label: 'Duration (Days)' },
-                        { key: 'durationHours', label: 'Duration (Hours)' },
                         { key: 'usersAffected', label: 'Users Affected' },
                         { key: 'peopleAffected', label: 'People Affected' },
                         { key: 'responseCost', label: 'Response Cost' },
                       ]}
-                      data={effectDetailsData.disruptions}
+                      data={effectDetailsResponse.data.disruptions.map(disruption => ({
+                        comment: disruption.comment,
+                        durationDays: disruption.durationDays || '-',
+                        usersAffected: disruption.usersAffected || '-',
+                        peopleAffected: disruption.peopleAffected || '-',
+                        responseCost: disruption.responseCost || '-',
+                      }))}
                       currency={currency}
                     />
                   ) : (
@@ -232,22 +293,6 @@ export function EffectDetails({ filters, currency }: Props) {
     </ClientOnly>
   );
 };
-
-interface TableColumn {
-  key: string;
-  label: string;
-}
-
-interface TableData {
-  [key: string]: string | number;
-}
-
-interface TableProps {
-  title: string;
-  columns: TableColumn[];
-  data: TableData[];
-  currency: string;
-}
 
 const SortableTable: React.FC<TableProps> = ({ title, columns, data, currency }) => {
   const [sortConfig, setSortConfig] = React.useState<{
@@ -290,16 +335,35 @@ const SortableTable: React.FC<TableProps> = ({ title, columns, data, currency })
     setSortConfig({ key, direction });
   };
 
-  const formatValue = (value: string | number, key: string): string => {
+  const formatValue = (value: string | number | null, key: string): string => {
     if (value === null || value === undefined) return '-';
 
-    if (
-      ['totalDamageAmount', 'totalRepairReplacement', 'totalRecovery', 'publicCostTotal', 'privateCostTotal', 'responseCost'].includes(key) &&
-      typeof value === 'number'
-    ) {
-      return formatCurrency(value, { currency });
+    // Convert string numbers to actual numbers for currency fields
+    if (typeof value === 'string' && !isNaN(Number(value)) &&
+      ['totalDamage', 'repairReplacement', 'recovery', 'publicCost', 'privateCost',
+        'totalDamageAmount', 'totalRepairReplacement', 'totalRecovery', 'publicCostTotal', 'privateCostTotal', 'responseCost'].includes(key)) {
+      value = Number(value);
     }
 
+    // Format all currency fields consistently
+    if (
+      ['totalDamage', 'repairReplacement', 'recovery', 'publicCost', 'privateCost',
+        'totalDamageAmount', 'totalRepairReplacement', 'totalRecovery', 'publicCostTotal', 'privateCostTotal', 'responseCost'].includes(key) &&
+      typeof value === 'number'
+    ) {
+      // Use millions for values >= 1 billion
+      if (value >= 1_000_000_000) {
+        return formatCurrencyWithCode(value, currency, {}, 'millions');
+      }
+      // Use thousands for values >= 1 million
+      if (value >= 1_000_000) {
+        return formatCurrencyWithCode(value, currency, {}, 'thousands');
+      }
+      // Use raw values for smaller amounts
+      return formatCurrencyWithCode(value, currency);
+    }
+
+    // Format other numeric values with proper grouping
     if (typeof value === 'number') {
       return formatNumber(value);
     }
