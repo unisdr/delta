@@ -53,7 +53,34 @@ export const contentPickerConfig = {
             { column: disasterEventTable.glide, placeholder: "[safeSearchPattern]" },
             { column: disasterEventTable.nameGlobalOrRegional, placeholder: "[safeSearchPattern]" },
             { column: disasterEventTable.nameNational, placeholder: "[safeSearchPattern]" },
-            { column: hipHazardTable.nameEn, placeholder: "[safeSearchPattern]" }
+            { column: hipHazardTable.nameEn, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.startDate, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.endDate, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.approvalStatus, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.disasterDeclarationTypeAndEffect, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.officialWarningAffectedAreas, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.earlyAction1, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyAction2, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyAction3, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyAction4, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyAction5, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.responseOperations, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.dataSource, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.recordingInstitution, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.nonEconomicLosses, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.responseOperationsDescription, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.humanitarianNeedsDescription, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.humanitarianNeedsDescription, placeholder: "[safeSearchPattern]" },
+
+            { column: disasterEventTable.hazardousEventId, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.id, placeholder: "[safeSearchPattern]" },
         ],
         orderBy: [{ column: disasterEventTable.startDate, direction: "desc" }] // Sorting
     },

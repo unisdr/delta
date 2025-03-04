@@ -1,5 +1,5 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
-import { formatDate } from "~/util/date";
+import { formatDate, isDateLike, convertToISODate } from "~/util/date";
 import { sql, eq, ilike, or, asc, desc, count } from "drizzle-orm";
 import { buildTree } from "~/components/TreeView";
 
@@ -24,11 +24,32 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
     }
 
     if (config.whereIlike?.length) {
+        const newWhereConditions = config.whereIlike.map((condition: any) => {
+            let searchValue = searchPattern;
+    
+            // Detect if the searchPattern is a date-like string and convert it
+            if (isDateLike(searchPattern)) {
+                const isoDate = convertToISODate(searchPattern);
+                if (isoDate) searchValue = isoDate;
+            }
+    
+            return ilike(sql`(${condition.column})::text`, `%${searchValue}%`);
+        });
+    
+        query = query.where(or(...newWhereConditions)) as any;
+    }
+    /*if (config.whereIlike?.length) {
+        const newWhereConditions = config.whereIlike.map((condition: any) =>
+            ilike(sql`(${condition.column})::text`, `%${searchPattern}%`)
+        );
+        query = query.where(or(...newWhereConditions)) as any;
+    }*/
+    /*if (config.whereIlike?.length) {
         const newWhereConditions = config.whereIlike.map((condition: any) =>
             ilike(condition.column, `%${searchPattern}%`)
         );
         query = query.where(or(...newWhereConditions)) as any;
-    }
+    }*/
 
     if (config.orderByOptions?.custom) {
         query = (query as any).orderBy(config.orderByOptions.custom);
