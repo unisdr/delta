@@ -151,8 +151,19 @@ export function EffectDetails({ filters, currency }: Props) {
     queryFn: async () => {
       try {
         const searchParams = new URLSearchParams();
+
+        // Only use sectorId if no subsectorId is selected
+        if (debouncedFilters.subSectorId) {
+          searchParams.append('sectorId', debouncedFilters.subSectorId);
+        } else if (debouncedFilters.sectorId) {
+          searchParams.append('sectorId', debouncedFilters.sectorId);
+        }
+
+        // Add other filters
         Object.entries(debouncedFilters).forEach(([key, value]) => {
-          if (value) searchParams.append(key, value);
+          if (value && key !== 'sectorId' && key !== 'subSectorId') {
+            searchParams.append(key, value);
+          }
         });
 
         const response = await fetch(`/api/analytics/effect-details?${searchParams}`);
@@ -169,7 +180,7 @@ export function EffectDetails({ filters, currency }: Props) {
       }
     },
     retry: 1,
-    enabled: !!(filters.sectorId || filters.subSectorId),
+    enabled: !!(debouncedFilters.sectorId || debouncedFilters.subSectorId || debouncedFilters.hazardTypeId || debouncedFilters.hazardClusterId || debouncedFilters.specificHazardId || debouncedFilters.geographicLevelId || debouncedFilters.fromDate || debouncedFilters.toDate || debouncedFilters.disasterEventId),
   });
 
   return (

@@ -43,35 +43,44 @@ interface FilterParams {
  * - Date comparisons use UTC for consistency
  */
 export async function getEffectDetails(filters: FilterParams) {
+  let targetSectorIds: number[] = [];
+  if (filters.sectorId) {
+    const numericSectorId = Number(filters.sectorId);
+    if (!isNaN(numericSectorId)) {
+      const subsectors = await getSectorsByParentId(numericSectorId);
+      if (subsectors.length === 0) {
+        // This is a subsector - filter for exact match
+        targetSectorIds = [numericSectorId];
+      } else {
+        // This is a main sector - include all subsectors
+        targetSectorIds = [numericSectorId, ...subsectors.map(s => s.id)];
+      }
+    }
+  }
+
+  // Base conditions for disaster records
   const baseConditions = [
     // Only include completed records
     eq(disasterRecordsTable.approvalStatus, "completed"),
   ];
 
-  // Handle sector filtering using proper hierarchy
-  if (filters.sectorId) {
-    const numericSectorId = Number(filters.sectorId);
-    if (!isNaN(numericSectorId)) {
-      const subsectors = await getSectorsByParentId(numericSectorId);
-      const sectorIds = subsectors.length > 0
-        ? [numericSectorId, ...subsectors.map(s => s.id)]
-        : [numericSectorId];
-
-      baseConditions.push(
-        exists(
-          dr.select()
-            .from(sectorDisasterRecordsRelationTable)
-            .where(and(
-              eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-              inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
-            ))
-        )
-      );
-    }
+  // Add sector filter to disaster records if we have target sectors
+  if (targetSectorIds.length > 0) {
+    baseConditions.push(
+      exists(
+        dr.select()
+          .from(sectorDisasterRecordsRelationTable)
+          .where(and(
+            eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+            inArray(sectorDisasterRecordsRelationTable.sectorId, targetSectorIds)
+          ))
+      )
+    );
   }
 
+  // Handle hazard type filtering
   if (filters.hazardTypeId) {
-    baseConditions.push(eq(hazardousEventTable.hipHazardId, filters.hazardTypeId));
+    baseConditions.push(eq(hazardousEventTable.hipTypeId, filters.hazardTypeId));
   }
   if (filters.hazardClusterId) {
     baseConditions.push(eq(hazardousEventTable.hipClusterId, filters.hazardClusterId));
@@ -80,7 +89,9 @@ export async function getEffectDetails(filters: FilterParams) {
     baseConditions.push(eq(hazardousEventTable.hipTypeId, filters.specificHazardId));
   }
   if (filters.geographicLevelId) {
-    baseConditions.push(eq(divisionTable.id, Number(filters.geographicLevelId)));
+    baseConditions.push(
+      sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text`
+    );
   }
 
   // Handle dates in UTC for consistency across timezones
@@ -94,9 +105,7 @@ export async function getEffectDetails(filters: FilterParams) {
     baseConditions.push(eq(disasterRecordsTable.disasterEventId, filters.disasterEventId));
   }
 
-  const whereConditions = [...baseConditions];
-
-  // Fetch damages data with optimized joins to prevent duplication
+  // Fetch damages data with optimized joins and sector filtering
   const damagesData = await dr
     .select({
       id: damagesTable.id,
@@ -118,12 +127,16 @@ export async function getEffectDetails(filters: FilterParams) {
     )
     .innerJoin(
       hazardousEventTable,
-      eq(disasterEventTable.id, hazardousEventTable.id)
+      eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
     )
-    .where(and(...baseConditions))
+    .where(and(
+      ...baseConditions,
+      // Add sector filter directly to damages table
+      targetSectorIds.length > 0 ? inArray(damagesTable.sectorId, targetSectorIds) : undefined
+    ))
     .groupBy(damagesTable.id, assetTable.name);
 
-  // Fetch losses data with optimized joins
+  // Fetch losses data with optimized joins and sector filtering
   const lossesData = await dr
     .select({
       id: lossesTable.id,
@@ -147,12 +160,16 @@ export async function getEffectDetails(filters: FilterParams) {
     )
     .innerJoin(
       hazardousEventTable,
-      eq(disasterEventTable.id, hazardousEventTable.id)
+      eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
     )
-    .where(and(...baseConditions))
+    .where(and(
+      ...baseConditions,
+      // Add sector filter directly to losses table
+      targetSectorIds.length > 0 ? inArray(lossesTable.sectorId, targetSectorIds) : undefined
+    ))
     .groupBy(lossesTable.id);
 
-  // Fetch disruptions data with optimized joins
+  // Fetch disruptions data with optimized joins and sector filtering
   const disruptionsData = await dr
     .select({
       id: disruptionTable.id,
@@ -174,9 +191,13 @@ export async function getEffectDetails(filters: FilterParams) {
     )
     .innerJoin(
       hazardousEventTable,
-      eq(disasterEventTable.id, hazardousEventTable.id)
+      eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
     )
-    .where(and(...baseConditions))
+    .where(and(
+      ...baseConditions,
+      // Add sector filter directly to disruptions table
+      targetSectorIds.length > 0 ? inArray(disruptionTable.sectorId, targetSectorIds) : undefined
+    ))
     .groupBy(disruptionTable.id);
 
   return {
