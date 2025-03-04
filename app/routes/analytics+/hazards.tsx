@@ -110,7 +110,7 @@ function HazardAnalysisContent() {
 							}}
 						>
 							{/* Impact by Geographic Level */}
-							{/* <HazardImpactMap filters={filters} /> */}
+							<HazardImpactMap filters={filters} />
 
  							{/* Impact by Hazard Section */}
 							<ImpactByHazard filters={filters} />
