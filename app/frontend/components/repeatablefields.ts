@@ -21,10 +21,7 @@ function setInputVisibility(elRoot: HTMLDivElement, name: string, visible: boole
 }
 
 function getAddButton(elRoot: HTMLDivElement, g: string, index: number) {
-	if (index == 0) {
-		return null
-	}
-	let sel = ".repeatable-add-" + g + "-" + (index - 1)
+	let sel = ".repeatable-add-" + g + "-" + index
 	let prevButton = elRoot.querySelector(sel) as HTMLButtonElement
 	return prevButton
 }
@@ -46,6 +43,17 @@ export function attach(opts: repeatableFieldsOpts) {
 		}
 		groupVisible.set(g, curr)
 	}
+	let maxIndex = new Map<string, number>()
+	for (let def of opts.defs) {
+		if (!def.repeatable) continue
+		let g = def.repeatable.group
+		let index = def.repeatable.index
+		let c = maxIndex.get(g)
+		if (!c || index > c) {
+			maxIndex.set(g, index)
+		}
+	}
+
 	for (let [g, vis] of groupVisible.entries()) {
 		let maxVis = 0
 		if (vis.size) {
@@ -57,15 +65,27 @@ export function attach(opts: repeatableFieldsOpts) {
 			let index = def.repeatable.index
 			let visible = index <= maxVis
 			setInputVisibility(elRoot, def.key, visible)
+			let curButton = getAddButton(elRoot, g, index)
+			//console.log("processing button", index)
+			if (curButton) {
+				curButton.style.display = "none"
+			}
 
-			if (index == 0) continue
-			let prevButton = getAddButton(elRoot, g, index)
-			if (!prevButton) {
+			if (index == 0) {
+				//	console.log("index 0")
 				continue
 			}
-			if (maxVis + 1 != index) {
-				prevButton.style.display = "none"
+			let prevButton = getAddButton(elRoot, g, index - 1)
+			if (!prevButton) {
+				//	console.log("no prev button")
+				continue
 			}
+			let mi = maxIndex.get(g)!
+			//console.log("repetable debug", maxVis, index, mi)
+			if (maxVis == (index - 1) && index != mi + 1) {
+				prevButton.style.display = "block"
+			}
+			//console.log("attaching click event to button", index - 1)
 			prevButton.addEventListener("click", (e: any) => {
 				e.preventDefault()
 				prevButton!.style.display = "none"
@@ -77,8 +97,10 @@ export function attach(opts: repeatableFieldsOpts) {
 						setInputVisibility(elRoot, def.key, true)
 					}
 				}
-				let nextAdd = getAddButton(elRoot, g, index + 1)
-				if (nextAdd) nextAdd.style.display = "block"
+				if (index != mi) {
+					let nextAdd = getAddButton(elRoot, g, index)
+					if (nextAdd) nextAdd.style.display = "block"
+				}
 			})
 		}
 	}

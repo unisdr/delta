@@ -392,10 +392,11 @@ function splitDefsIntoRows<T>(defs: FormInputDef<T>[]) {
 
 interface rowMeta {
 	header: any
+	emptyRepeatables: boolean
 	className: string
 }
 
-function rowMeta<T>(uiRow: UIRowWithDefs<T>): rowMeta {
+function rowMeta<T>(uiRow: UIRowWithDefs<T>, allDefs: FormInputDef<T>[], fields: Partial<T>): rowMeta {
 	let cols = uiRow.defs.length
 	let className = ""
 	let header
@@ -420,7 +421,29 @@ function rowMeta<T>(uiRow: UIRowWithDefs<T>): rowMeta {
 		}
 	}
 	className = `mg-grid mg-grid__col-${cols}`
-	return {className, header}
+
+	let emptyRepeatables = true
+	for (let def of uiRow.defs) {
+		if (!def.repeatable) {
+			emptyRepeatables = false
+		} else {
+			// check if all are empty in this group and index
+			let empty = true
+			for (let d of allDefs) {
+				if (d.repeatable && d.repeatable.group == def.repeatable.group && d.repeatable.index == def.repeatable.index) {
+					let v = fields[d.key]
+					if (v !== null && v !== undefined && v !== "") {
+						empty = false
+					}
+				}
+			}
+			if (!empty) {
+				emptyRepeatables = false
+			}
+		}
+	}
+
+	return {className, emptyRepeatables, header}
 }
 
 export function Inputs<T>(props: InputsProps<T>) {
@@ -432,7 +455,7 @@ export function Inputs<T>(props: InputsProps<T>) {
 
 
 	return uiRows.map((uiRow, rowIndex) => {
-		let meta = rowMeta(uiRow)
+		let meta = rowMeta(uiRow, props.def, props.fields)
 		let afterRow = null;
 		let addMore: any[] = []
 
@@ -452,7 +475,8 @@ export function Inputs<T>(props: InputsProps<T>) {
 							}
 						}
 						if (shouldAdd) {
-							addMore.push(<button className={"repeatable-add-" + g + "-" + repIndex}>Add</button>)
+							let cla = "repeatable-add-" + g + "-" + repIndex
+							addMore.push(<button key={cla} className={cla}>Add</button>)
 						}
 					}
 					let after = null;
@@ -791,10 +815,10 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 
 	let uiRows = splitDefsIntoRows(props.def)
 	return uiRows.map((uiRow, rowIndex) => {
-		let meta = rowMeta(uiRow)
+		let meta = rowMeta(uiRow, props.def, props.fields)
 		let afterRow = null;
 		return <React.Fragment key={rowIndex}>
-			{meta.header}
+			{!meta.emptyRepeatables && meta.header}
 			<div className={meta.className}>
 				{uiRow.defs.map((def, defIndex) => {
 
@@ -815,13 +839,29 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 							</React.Fragment>
 						)
 					}
-
+					if (def.repeatable) {
+						// check if all are empty in this group and index
+						let empty = true
+						for (let d of props.def) {
+							if (d.repeatable && d.repeatable.group == def.repeatable.group && d.repeatable.index == def.repeatable.index) {
+								let v = props.fields[d.key]
+								if (v !== null && v !== undefined && v !== "") {
+									empty = false
+								}
+							}
+						}
+						if (empty) {
+							return (<React.Fragment key={def.key}>
+								{after}
+							</React.Fragment>)
+						}
+					}
 					return (
 						<React.Fragment key={def.key}>
 							<FieldView key={def.key} def={def} value={props.fields[def.key]} />
 							{after}
 						</React.Fragment>
-					);
+					)
 				})
 				}
 			</div>
@@ -835,10 +875,7 @@ export interface FieldViewProps {
 }
 
 export function FieldView(props: FieldViewProps) {
-	if (props.value === null) {
-		return <p>{props.def.label}: -</p>;
-	}
-	if (props.value === undefined) {
+	if (props.value === null || props.value === undefined) {
 		return <p>{props.def.label}: -</p>;
 	}
 	switch (props.def.type) {
@@ -1095,7 +1132,7 @@ export function FormView(props: FormViewProps) {
 				</p>
 				{props.edit && props.id && (
 					<p>
-						<Link to={props.viewUrl || `${props.path}/${String(props.id)}`}>
+						<Link to={props.viewUrl || `${props.path}/${props.id}`}>
 							View
 						</Link>
 					</p>

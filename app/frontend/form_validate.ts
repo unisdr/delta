@@ -284,6 +284,9 @@ export function validateFromMap<T>(
 				}
 				return vs;
 			case "other":
+				if (vs === "") {
+					return null
+				}
 				return vs
 			default:
 				throw new Error("server error: unknown type defined: " + field.type)

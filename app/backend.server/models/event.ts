@@ -429,6 +429,8 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 		return {ok: false, errors: errors}
 	}
 
+//	console.log("disaster event update", "fields", fields)
+
 	/*
 	console.log("updating eventTable")
 	await tx

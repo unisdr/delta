@@ -163,24 +163,24 @@ const getDivisionInfo = async (geographicLevelId: string): Promise<{ name: strin
   return result;
 };
 
-// Helper function to get all subsector IDs for a sector
+/**
+ * Gets all subsector IDs for a given sector following international standards.
+ * This implementation uses the proper hierarchical structure defined in the sector table
+ * rather than relying on ID patterns, making it suitable for all countries.
+ * 
+ * @param sectorId - The ID of the sector to get subsectors for
+ * @returns Array of sector IDs including the input sector and all its subsectors
+ */
 const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
   const numericSectorId = validateSectorId(sectorId);
 
-  // Check if this is a parent sector (2 digits)
-  if (sectorId.length === 2) {
-    // Get all subsectors that start with the parent sector ID
-    const pattern = `${sectorId}%`;
-    const subsectors = await dr
-      .select({ id: sectorTable.id })
-      .from(sectorTable)
-      .where(like(sql<string>`CAST(${sectorTable.id} AS TEXT)`, pattern));
+  // Get all subsectors if this is a parent sector
+  const subsectors = await getSectorsByParentId(numericSectorId);
 
-    return subsectors.map(s => s.id.toString());
-  }
-
-  // If not a parent sector, return just the sector ID
-  return [sectorId];
+  // Return all sector IDs (parent + subsectors if any, or just the sector ID if no subsectors)
+  return subsectors.length > 0
+    ? [sectorId, ...subsectors.map(s => s.id.toString())]
+    : [sectorId];
 };
 
 // Function to get all disaster records for a sector
