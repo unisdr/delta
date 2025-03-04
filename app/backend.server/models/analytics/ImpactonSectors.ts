@@ -30,9 +30,10 @@ import {
   hipHazardTable,
   hipClusterTable,
   divisionTable,
-  sectorDisasterRecordsRelationTable
+  sectorDisasterRecordsRelationTable,
+  sectorTable
 } from "~/drizzle/schema";
-import { and, eq, inArray, ilike, SQL, exists } from "drizzle-orm";
+import { and, eq, inArray, ilike, SQL, exists, like } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import {
   calculateDamages,
@@ -162,18 +163,34 @@ const getDivisionInfo = async (geographicLevelId: string): Promise<{ name: strin
   return result;
 };
 
+// Helper function to get all subsector IDs for a sector
+const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
+  const numericSectorId = validateSectorId(sectorId);
+
+  // Check if this is a parent sector (2 digits)
+  if (sectorId.length === 2) {
+    // Get all subsectors that start with the parent sector ID
+    const pattern = `${sectorId}%`;
+    const subsectors = await dr
+      .select({ id: sectorTable.id })
+      .from(sectorTable)
+      .where(like(sql<string>`CAST(${sectorTable.id} AS TEXT)`, pattern));
+
+    return subsectors.map(s => s.id.toString());
+  }
+
+  // If not a parent sector, return just the sector ID
+  return [sectorId];
+};
+
 // Function to get all disaster records for a sector
 const getDisasterRecordsForSector = async (
   sectorId: string,
   filters?: Filters
 ): Promise<string[]> => {
-  const numericSectorId = validateSectorId(sectorId);
-
-  // Get all subsectors if this is a parent sector
-  const subsectors = await getSectorsByParentId(numericSectorId);
-  const sectorIds = subsectors.length > 0
-    ? [numericSectorId, ...subsectors.map(s => s.id)]
-    : [numericSectorId];
+  // Get all relevant sector IDs (including subsectors if parent sector)
+  const sectorIds = await getAllSubsectorIds(sectorId);
+  const numericSectorIds = sectorIds.map(id => parseInt(id));
 
   // Build the where conditions
   const conditions: SQL<unknown>[] = [
@@ -182,7 +199,7 @@ const getDisasterRecordsForSector = async (
         .from(sectorDisasterRecordsRelationTable)
         .where(and(
           eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-          inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
+          inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
         ))
     ),
     sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'completed'`
@@ -253,102 +270,110 @@ const getAgriSubsector = (sectorId: string): FaoAgriSubsector | null => {
   return subsectorMap[sectorId] || null;
 };
 
-/**
- * Aggregates damage data following international standards:
- * 
- * 1. Sendai Framework Indicator C-2 and C-3:
- *    - Includes both direct damage to physical assets
- *    - Covers both public and private sector assets
- * 
- * 2. World Bank DaLA Methodology:
- *    - Damage = Replacement cost of destroyed assets
- *    - Uses: repair_cost_unit * repair_units for granular calculation
- *    - Allows override values for validated assessments
- * 
- * @param recordIds - Array of disaster record IDs to aggregate
- * @param sectorId - ID of the sector to analyze
- * @returns Object containing total damage and yearly breakdown
- */
-const aggregateDamagesData = async (recordIds: string[], sectorId: string): Promise<{ total: number, byYear: Map<number, number>, faoAgriDamage?: FaoAgriculturalDamage }> => {
-  if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
+// Update aggregateDamagesData function
+const aggregateDamagesData = async (
+  recordIds: string[],
+  sectorId: string
+): Promise<{ total: number; byYear: Map<number, number>; faoAgriDamage?: FaoAgriculturalDamage }> => {
+  const sectorIds = await getAllSubsectorIds(sectorId);
+  const numericSectorIds = sectorIds.map(id => parseInt(id));
 
-  // Check if this is an agricultural sector
-  const agriSubsector = getAgriSubsector(sectorId);
-
-  const damagesData = await dr
+  // Get damages for all relevant sectors
+  const damages = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year"),
-      total: sql<number>`COALESCE((${calculateDamages(damagesTable)})::numeric, 0)`.as("total")
+      totalRepairReplacement: damagesTable.totalRepairReplacement,
+      totalRecovery: damagesTable.totalRecovery,
+      recordId: damagesTable.recordId,
+      sectorId: damagesTable.sectorId
     })
     .from(damagesTable)
-    .innerJoin(
-      disasterRecordsTable,
-      eq(damagesTable.recordId, disasterRecordsTable.id)
-    )
-    .where(inArray(damagesTable.recordId, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`);
+    .where(
+      and(
+        inArray(damagesTable.recordId, recordIds),
+        inArray(damagesTable.sectorId, numericSectorIds)
+      )
+    );
 
-  const totalDamage = damagesData.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const damagesByYear = new Map(damagesData.map(row => [Number(row.year), Number(row.total || 0)]));
+  // Calculate totals and yearly breakdown
+  let total = 0;
+  const byYear = new Map<number, number>();
 
-  // Add FAO agricultural damage calculation if applicable
-  let faoAgriDamage: FaoAgriculturalDamage | undefined;
-  if (agriSubsector) {
-    faoAgriDamage = await calculateFaoAgriculturalDamage(damagesTable, agriSubsector);
+  for (const damage of damages) {
+    const damageAmount =
+      (Number(damage.totalRepairReplacement) || 0) +
+      (Number(damage.totalRecovery) || 0);
+
+    total += damageAmount;
+
+    // Get year from record and add to yearly breakdown
+    const record = await dr
+      .select({
+        year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+      })
+      .from(disasterRecordsTable)
+      .where(eq(disasterRecordsTable.id, damage.recordId))
+      .limit(1);
+
+    if (record && record[0]?.year) {
+      const year = Number(record[0].year);
+      byYear.set(year, (byYear.get(year) || 0) + damageAmount);
+    }
   }
 
-  return { total: totalDamage, byYear: damagesByYear, faoAgriDamage };
+  return { total, byYear };
 };
 
-/**
- * Aggregates loss data following international standards:
- * 
- * 1. Sendai Framework Target C:
- *    - Focuses on economic losses from business disruptions
- *    - Includes both public and private sector losses
- * 
- * 2. World Bank DaLA Methodology:
- *    - Losses = Changes in economic flows resulting from disaster
- *    - Includes: revenue loss, increased operational costs
- *    - Uses validated override values when available
- * 
- * 3. UNDRR Technical Guidance:
- *    - Section B.3: Economic Loss Calculation
- *    - Includes both direct and indirect losses
- * 
- * @param recordIds - Array of disaster record IDs to aggregate
- * @param sectorId - ID of the sector to analyze
- * @returns Object containing total losses and yearly breakdown
- */
-const aggregateLossesData = async (recordIds: string[], sectorId: string): Promise<{ total: number, byYear: Map<number, number>, faoAgriLoss?: FaoAgriculturalLoss }> => {
-  if (recordIds.length === 0) return { total: 0, byYear: new Map<number, number>() };
+// Update aggregateLossesData function
+const aggregateLossesData = async (
+  recordIds: string[],
+  sectorId: string
+): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: FaoAgriculturalLoss }> => {
+  const sectorIds = await getAllSubsectorIds(sectorId);
+  const numericSectorIds = sectorIds.map(id => parseInt(id));
 
-  // Check if this is an agricultural sector
-  const agriSubsector = getAgriSubsector(sectorId);
-
-  const lossesData = await dr
+  // Get losses for all relevant sectors
+  const losses = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year"),
-      total: sql<number>`COALESCE((${calculateLosses(lossesTable)})::numeric, 0)`.as("total")
+      publicCostTotal: lossesTable.publicCostTotal,
+      privateCostTotal: lossesTable.privateCostTotal,
+      recordId: lossesTable.recordId,
+      sectorId: lossesTable.sectorId
     })
     .from(lossesTable)
-    .innerJoin(
-      disasterRecordsTable,
-      eq(lossesTable.recordId, disasterRecordsTable.id)
-    )
-    .where(inArray(lossesTable.recordId, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`);
+    .where(
+      and(
+        inArray(lossesTable.recordId, recordIds),
+        inArray(lossesTable.sectorId, numericSectorIds)
+      )
+    );
 
-  const totalLoss = lossesData.reduce((sum, row) => sum + Number(row.total || 0), 0);
-  const lossesByYear = new Map(lossesData.map(row => [Number(row.year), Number(row.total || 0)]));
+  // Calculate totals and yearly breakdown
+  let total = 0;
+  const byYear = new Map<number, number>();
 
-  // Add FAO agricultural loss calculation if applicable
-  let faoAgriLoss: FaoAgriculturalLoss | undefined;
-  if (agriSubsector) {
-    faoAgriLoss = await calculateFaoAgriculturalLoss(lossesTable, agriSubsector);
+  for (const loss of losses) {
+    const lossAmount =
+      (Number(loss.publicCostTotal) || 0) +
+      (Number(loss.privateCostTotal) || 0);
+
+    total += lossAmount;
+
+    // Get year from record and add to yearly breakdown
+    const record = await dr
+      .select({
+        year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+      })
+      .from(disasterRecordsTable)
+      .where(eq(disasterRecordsTable.id, loss.recordId))
+      .limit(1);
+
+    if (record && record[0]?.year) {
+      const year = Number(record[0].year);
+      byYear.set(year, (byYear.get(year) || 0) + lossAmount);
+    }
   }
 
-  return { total: totalLoss, byYear: lossesByYear, faoAgriLoss };
+  return { total, byYear };
 };
 
 // Function to get event counts by year
@@ -357,12 +382,12 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
 
   const eventCounts = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`.as("year"),
+      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year"),
       count: sql<number>`COUNT(*)`.as("count")
     })
     .from(disasterRecordsTable)
     .where(inArray(disasterRecordsTable.id, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))`);
+    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`);
 
   return new Map(eventCounts.map(row => [row.year, row.count]));
 };
