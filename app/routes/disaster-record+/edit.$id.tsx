@@ -33,7 +33,7 @@ import {
 import {
 	createAction
 } from "~/backend.server/handlers/form";
-import { getTableName } from "drizzle-orm";
+import { getTableName, eq } from "drizzle-orm";
 import { disasterRecordsTable } from "~/drizzle/schema";
 
 import { buildTree } from "~/components/TreeView";
@@ -42,6 +42,8 @@ import { divisionTable } from "~/drizzle/schema";
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
 import { contentPickerConfig } from "./content-picker-config";
+
+import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("actionArgs", actionArgs.params);
@@ -115,6 +117,26 @@ export const action = createAction({
 	tableName: getTableName(disasterRecordsTable),
 	action: (isCreate) =>
 		isCreate ? "Create disaster record" : "Update disaster record",
+	postProcess: async (id, data) => {
+		//console.log(`Post-processing record: ${id}`);
+		//console.log(`data: `, data);
+	
+		const save_path = `/uploads/disaster-record/${id}`;
+		const save_path_temp = `/uploads/temp`;
+	
+		// Ensure attachments is an array, even if it's undefined or empty
+		const attachmentsArray = Array.isArray(data?.attachments) ? data.attachments : [];
+	
+		// Process the attachments data
+		const processedAttachments = ContentRepeaterUploadFile.save(attachmentsArray, save_path_temp, save_path);
+	
+		// Update the `attachments` field in the database
+		await dr.update(disasterRecordsTable)
+			.set({
+				attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+			})
+			.where(eq(disasterRecordsTable.id, id));
+	},
 });
 
 export default function Screen() {
