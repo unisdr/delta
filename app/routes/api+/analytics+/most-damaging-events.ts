@@ -8,9 +8,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!checkRateLimit(request, 100, 15 * 60 * 1000)) {
     return json({
       success: false,
-      error: "Rate limit exceeded. Please try again later."
+      error: "Rate limit exceeded. Please try again later.",
+      code: 'RATE_LIMIT_EXCEEDED'
     }, {
-      status: 429
+      status: 429,
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+        'Retry-After': '900'
+      }
     });
   }
 
@@ -34,18 +40,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const result = await handleMostDamagingEventsRequest(params);
 
-    if (!result.success) {
-      return json({ error: result.error }, { status: 400 });
-    }
-
-    return json(result.data);
+    return json({
+      success: true,
+      data: result.data
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=300',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block'
+      }
+    });
   } catch (error) {
     console.error("Error in most-damaging-events loader:", error);
     return json({
       success: false,
-      error: "Failed to process request"
+      error: "Internal server error",
+      code: 'INTERNAL_ERROR'
     }, {
-      status: 500
+      status: 500,
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff'
+      }
     });
   }
 }

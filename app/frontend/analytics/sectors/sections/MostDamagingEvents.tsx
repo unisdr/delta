@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { formatCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
 
 interface MostDamagingEventsProps {
@@ -32,6 +32,27 @@ interface Sector {
 }
 
 type SortColumn = "damages" | "losses" | "eventName" | "createdAt";
+
+interface ApiResponse {
+  success: boolean;
+  data: {
+    events: DisasterEvent[];
+    pagination: {
+      total: number;
+      page: number;
+      pageSize: number;
+      totalPages: number;
+    };
+    metadata: {
+      assessmentType: string;
+      confidenceLevel: string;
+      currency: string;
+      assessmentDate: string;
+      assessedBy: string;
+      notes: string;
+    };
+  };
+}
 
 export default function MostDamagingEvents({ filters, currency }: MostDamagingEventsProps) {
   const [page, setPage] = useState(1);
@@ -94,27 +115,47 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
   const debouncedFilters = useDebounce(filters, 300);
 
   // Fetch data using React Query
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError } = useQuery<ApiResponse>({
     queryKey: ["mostDamagingEvents", debouncedFilters, page, sortColumn, sortDirection],
     queryFn: async () => {
-      // Convert null values to empty strings for URLSearchParams
-      const searchParams = new URLSearchParams();
+      try {
+        const searchParams = new URLSearchParams();
 
-      // Add filters, converting null to empty string
-      Object.entries(debouncedFilters).forEach(([key, value]) => {
-        searchParams.append(key, value || "");
-      });
+        // Only use sectorId if no subsectorId is selected
+        if (debouncedFilters.subSectorId) {
+          searchParams.append('sectorId', debouncedFilters.subSectorId);
+        } else if (debouncedFilters.sectorId) {
+          searchParams.append('sectorId', debouncedFilters.sectorId);
+        }
 
-      // Add pagination and sorting params
-      searchParams.append("page", page.toString());
-      searchParams.append("pageSize", "20");
-      searchParams.append("sortBy", sortColumn);
-      searchParams.append("sortDirection", sortDirection);
+        // Add other filters (excluding sectorId and subSectorId since we handled them above)
+        Object.entries(debouncedFilters).forEach(([key, value]) => {
+          if (value && key !== 'sectorId' && key !== 'subSectorId') {
+            searchParams.append(key, value);
+          }
+        });
 
-      const response = await fetch(`/api/analytics/most-damaging-events?${searchParams}`);
-      if (!response.ok) throw new Error("Failed to fetch data");
-      return response.json();
+        // Add pagination and sorting params
+        searchParams.append("page", page.toString());
+        searchParams.append("pageSize", "20");
+        searchParams.append("sortBy", sortColumn);
+        searchParams.append("sortDirection", sortDirection);
+
+        const response = await fetch(`/api/analytics/most-damaging-events?${searchParams}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("No data found for the selected criteria");
+          }
+          throw new Error(`Failed to fetch data: ${response.statusText}`);
+        }
+        return response.json();
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+        throw new Error(`Error fetching data: ${errorMessage}`);
+      }
     },
+    retry: 1,
+    enabled: !!(debouncedFilters.sectorId || debouncedFilters.subSectorId || debouncedFilters.hazardTypeId || debouncedFilters.hazardClusterId || debouncedFilters.specificHazardId || debouncedFilters.geographicLevelId || debouncedFilters.fromDate || debouncedFilters.toDate),
   });
 
   const handleSort = (column: SortColumn) => {
@@ -141,7 +182,7 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
         <div className="text-center p-4 text-red-600">
           <p>Error loading data. Please try again.</p>
         </div>
-      ) : !data?.events?.length ? (
+      ) : !data?.success || !data?.data?.events?.length ? (
         <div className="text-center p-4">
           <p>No events found for the selected filters.</p>
         </div>
@@ -186,7 +227,7 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort("createdAt")}
                   >
-                    Date
+                    Created
                     {sortColumn === "createdAt" && (
                       <span className="ml-2">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
@@ -194,16 +235,16 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data.events.map((event: DisasterEvent) => (
+                {data.data.events.map((event: DisasterEvent) => (
                   <tr key={event.eventId}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {event.eventName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatCurrency(event.totalDamages, { currency })}
+                      {formatCurrencyWithCode(event.totalDamages, currency, {}, event.totalDamages >= 1_000_000_000 ? 'millions' : event.totalDamages >= 1_000_000 ? 'thousands' : undefined)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatCurrency(event.totalLosses, { currency })}
+                      {formatCurrencyWithCode(event.totalLosses, currency, {}, event.totalLosses >= 1_000_000_000 ? 'millions' : event.totalLosses >= 1_000_000 ? 'thousands' : undefined)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(event.createdAt).toLocaleDateString()}
@@ -214,29 +255,29 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
             </table>
           </div>
 
-          <div className="mt-4 flex justify-between items-center">
-            <div>
+          {data.data.pagination.totalPages > 1 && (
+            <div className="mt-4 flex justify-end items-center gap-4">
               <span className="text-sm text-gray-700">
-                Page {page} of {data?.pagination.totalPages || 1}
+                Page {page} of {data.data.pagination.totalPages}
               </span>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page >= data.data.pagination.totalPages}
+                  className="px-4 py-2 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 border rounded-md disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={page >= (data?.pagination.totalPages || 1)}
-                className="px-4 py-2 border rounded-md disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
