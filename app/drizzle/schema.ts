@@ -198,6 +198,12 @@ export const devExample1Table = pgTable("dev_example1", {
 	field6: text({enum: ["one", "two", "three"]})
 		.notNull()
 		.default("one"),
+	repeatableNum1: integer("repeatable_num1"),
+	repeatableText1: text("repeatable_text1"),
+	repeatableNum2: integer("repeatable_num2"),
+	repeatableText2: text("repeatable_text2"),
+	repeatableNum3: integer("repeatable_num3"),
+	repeatableText3: text("repeatable_text3"),
 });
 
 export type DevExample1 = typeof devExample1Table.$inferSelect;
@@ -405,8 +411,16 @@ export const disasterEventTable = pgTable("disaster_event", {
 	disasterDeclarationDate: timestamp("disaster_declaration_date"),
 	hadOfficialWarningOrWeatherAdvisory: zeroBool("had_official_warning_or_weather_advisory"),
 	officialWarningAffectedAreas: zeroText("official_warning_affected_areas"),
-	earlyAction: zeroText("early_action"),
-	earlyActionDate: timestamp("early_action_date"),
+	earlyAction1: zeroText("early_action1"),
+	earlyActionDate1: timestamp("early_action_date1"),
+	earlyAction2: zeroText("early_action2"),
+	earlyActionDate2: timestamp("early_action_date2"),
+	earlyAction3: zeroText("early_action3"),
+	earlyActionDate3: timestamp("early_action_date3"),
+	earlyAction4: zeroText("early_action4"),
+	earlyActionDate4: timestamp("early_action_date4"),
+	earlyAction5: zeroText("early_action5"),
+	earlyActionDate5: timestamp("early_action_date5"),
 	preliminaryAssessmentDate: timestamp("preliminary_assesment_date"),
 	rapidAssessmentDate: timestamp("rapid_assesment_date"),
 	responseOperations: zeroText("response_oprations"),
