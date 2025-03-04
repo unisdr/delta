@@ -859,21 +859,75 @@ export const lossesTable = pgTable("losses", {
 		.notNull(),
 	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
 	type: text("type", {
-		enum: ["increased_expenditure", "loss_revenue_forecasted", "non_economic_losses"]
+		enum: [
+			"increased_expenditure",
+			"loss_revenue_forecasted",
+			"non_economic_losses"
+		]
 	}).notNull(),
+	/*
+	typeNotAgriculture: text("type_not_agriculture", {
+		enum: [
+			"increased_expenditure",
+				"loss_revenue_forecasted",
+				"non_economic_losses"
+		]
+	}).notNull(),
+	typeAgriculture: text("type_agriculture", {
+		enum: [
+			"increased_expenditure",
+				"loss_revenue_forecasted",
+				"non_economic_losses"
+		]
+	}).notNull(),
+ */
 	relatedToNotAgriculture: text("related_to_not_agriculture", {
 		enum: [
-			"infrastructure_equipment",
-			"production_delivery_access",
-			"governance",
-			"risk_vulnerability_drr",
-			"other"
+			"increase_in_expenditure_infrastructure_temporary",
+			"decrease_in_revenues_infrastructure_temporary",
+			"cost_for_service_or_production_continuity_incurred_but_not_assessed",
+			"increase_in_expenditure_for_production_service_delivery_and_availability",
+			"decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability",
+			"access_difficultied",
+			"availability_decreased",
+			"increase_in_expenditure_governance",
+			"decrease_in_revenue_governance",
+			"governance_processes_difficulted",
+			"increase_in_expenditure_to_address_risk_and_vulnerabilities",
+			"decrease_in_revenue_from_risk_protection",
+			"risks_and_vulnerabilities_increased",
+			"increase_in_expenditure",
+			"decrease_in_revenues",
+			"non_quantified_other_losses",
+			"number_of_work_days_lost",
+			"number_of_workers_who_loss_their_jobs",
+			"number_of_persons_whose_livelihoods_related_to_sector_lost"
 		]
 	}),
 	relatedToAgriculture: text("related_to_agriculture", {
 		enum: [
-			"value1",
-			"value2",
+			"increase_in_expenditure_infrastructure_temporary",
+			"decrease_in_revenues_infrastructure_temporary",
+			"cost_for_service_or_production_continuity_incurred_but_not_assessed",
+			"production_inputs",
+			"production_outputs",
+			"increase_in_expenditure_for_production_service_delivery_and_availability",
+			"decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability",
+			"access_difficultied",
+			"availability_decreased",
+			"increase_in_expenditure_governance",
+			"decrease_in_revenue_governance",
+			"governance_processes_difficulted",
+			"increase_in_expenditure_to_address_risk_and_vulnerabilities",
+			"decrease_in_revenue_from_risk_protection",
+			"risks_and_vulnerabilities_increased",
+			"increase_in_expenditure",
+			"decrease_in_revenues",
+			"non_quantified_other_losses",
+			"number_of_work_days_lost",
+			"number_of_workers_who_loss_their_jobs",
+			"number_of_workers_who_loss_their_jobs_permanently",
+			"number_of_persons_whose_livelihoods_related_to_sector_lost",
 		]
 	}),
 	description: text("description"),
