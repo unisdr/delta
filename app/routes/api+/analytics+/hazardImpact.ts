@@ -8,9 +8,9 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     // Required parameters
     const sectorId = url.searchParams.get("sectorId") || undefined;
-    if (!sectorId) {
-        return json({ success: false, error: "Sector ID is required" }, { status: 400 });
-    }
+    // if (!sectorId) {
+    //     return json({ success: false, error: "Sector ID is required" }, { status: 400 });
+    // }
 
     // Optional parameters
     const hazardTypeId = url.searchParams.get("hazardTypeId") || undefined;

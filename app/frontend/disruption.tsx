@@ -123,7 +123,7 @@ export function DisruptionForm(props: DisruptionFormProps) {
 											geoLevelFieldComponent.style.setProperty("display", "block");
 										}
 									},
-									show: true
+									show: false
 								},
 								{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
 								{

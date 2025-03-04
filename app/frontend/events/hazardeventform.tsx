@@ -46,6 +46,7 @@ export const fieldsDefCommon = [
 	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "textarea"},
 	{key: "magnitude", label: "Magnitude", type: "text"},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
+	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
 	{key: "recordOriginator", label: "Record Originator", type: "text", required: true, uiRow: {}},
 	{
 		key: "hazardousEventStatus", label: "Hazardous Event Status", type: "enum", enumData: [
@@ -361,6 +362,139 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 						</dialog>
 					</Field>
 				),
+				attachments: (
+					<Field key="attachments" label="">
+						<ContentRepeater
+							id="attachments"
+							caption="Attachments"
+							dnd_order={true}
+							save_path_temp="/uploads/temp"
+							file_viewer_temp_url="/hazardous-event/file-temp-viewer"
+							file_viewer_url="/hazardous-event/file-viewer"
+							api_upload_url="/hazardous-event/file-pre-upload"
+							table_columns={[
+								{type: "dialog_field", dialog_field_id: "title", caption: "Title"},
+								{
+									type: "custom", caption: "Tags",
+									render: (item: any) => {
+										try {
+											if (!item.tag) {
+												return "N/A"; // Return "N/A" if no tags exist
+											}
+		
+											const tags = (item.tag); // Parse the JSON string
+											if (Array.isArray(tags) && tags.length > 0) {
+												// Map the names and join them with commas
+												return tags.map(tag => tag.name).join(", ");
+											}
+											return "N/A"; // If no tags exist
+										} catch (error) {
+											console.error("Failed to parse tags:", error);
+											return "N/A"; // Return "N/A" if parsing fails
+										}
+									}
+								},
+								{
+									type: "custom",
+									caption: "File/URL",
+									render: (item) => {
+										let strRet = "N/A"; // Default to "N/A"		
+		
+										const fileOption = item?.file_option || "";
+		
+										if (fileOption === "File") {
+											// Get the file name or fallback to URL
+											const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
+		
+											// Truncate long file names while preserving the file extension
+											const maxLength = 30; // Adjust to fit your design
+											strRet = fullFileName;
+		
+											if (fullFileName && fullFileName.length > maxLength) {
+												const extension = fullFileName.includes('.')
+													? fullFileName.substring(fullFileName.lastIndexOf('.'))
+													: '';
+												const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
+												strRet = `${baseName}...${extension}`;
+											}
+										} else if (fileOption === "Link") {
+											strRet = item.url || "N/A";
+										}
+		
+										return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
+									},
+								},
+								{type: "action", caption: "Action"},
+							]}
+							dialog_fields={[
+								{id: "title", caption: "Title", type: "input"},
+								{id: "tag", caption: "Tags", type: "tokenfield", dataSource: "/api/disaster-event/tags-sectors"},
+								{
+									id: "file_option",
+									caption: "Option",
+									type: "option",
+									options: ["File", "Link"],
+									onChange: (e) => {
+										const value = e.target.value;
+										const fileField = document.getElementById("attachments_file") as HTMLInputElement;
+										const urlField = document.getElementById("attachments_url") as HTMLInputElement;
+		
+										if (fileField && urlField) {
+											const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
+											const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
+		
+											if (value === "File") {
+												fileDiv?.style.setProperty("display", "block");
+												urlDiv?.style.setProperty("display", "none");
+											} else if (value === "Link") {
+												fileDiv?.style.setProperty("display", "none");
+												urlDiv?.style.setProperty("display", "block");
+											}
+										}
+									},
+								},
+								{id: "file", caption: "File Upload", type: "file"},
+								{id: "url", caption: "Link", type: "input", placeholder: "Enter URL"},
+							]}
+							data={(() => {
+								try {
+									let attachments: any[] = []; // Ensure it's always an array
+		
+									if (fields?.attachments) {
+										if (Array.isArray(fields.attachments)) {
+											attachments = fields.attachments;
+										} else if (typeof fields.attachments === "string") {
+											try {
+												const parsed = JSON.parse(fields.attachments);
+												attachments = Array.isArray(parsed) ? parsed : [];
+											} catch (error) {
+												console.error("Invalid JSON in attachments:", error);
+												attachments = [];
+											}
+										} else {
+											console.warn("Unexpected type for attachments:", typeof fields.attachments);
+											attachments = [];
+										}
+									}
+		
+									return attachments;
+								} catch (error) {
+									console.error("Error processing attachments:", error);
+									return [];
+								}
+							})()}
+							onChange={(_items: any) => {
+								try {
+									//const parsedItems = Array.isArray(items) ? items : (items);
+									//console.log("Updated Items:", parsedItems);
+									// Save or process `parsedItems` here, e.g., updating state or making an API call
+								} catch {
+									console.error("Failed to process items.");
+								}
+							}}
+						/>
+					</Field>
+				)
 			}}
 		/>
 	);
@@ -524,6 +658,73 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 								}
 							})()}
 						</div>
+					),
+					attachments: (
+						<>
+							<p>Attachments:</p>
+							{(() => {
+								try {
+									let attachments: any[] = []; // Ensure it's always an array
+			
+									if (item?.attachments) {
+										if (Array.isArray(item.attachments)) {
+											attachments = item.attachments;
+										} else if (typeof item.attachments === "string") {
+											try {
+												const parsed = JSON.parse(item.attachments);
+												attachments = Array.isArray(parsed) ? parsed : [];
+											} catch (error) {
+												console.error("Invalid JSON in attachments:", error);
+												attachments = [];
+											}
+										} else {
+											console.warn("Unexpected type for attachments:", typeof item.attachments);
+											attachments = [];
+										}
+									}
+			
+									return attachments.length > 0 ? (
+										<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
+											<thead>
+												<tr style={{backgroundColor: '#f2f2f2'}}>
+													<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Title</th>
+													<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Tags</th>
+													<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>File/URL</th>
+												</tr>
+											</thead>
+											<tbody>
+												{(attachments).map((attachment: any) => {
+													const tags = attachment.tag
+														? (attachment.tag).map((tag: any) => tag.name).join(", ")
+														: "N/A";
+													const fileOrUrl =
+														attachment.file_option === "File" && attachment.file
+															? (
+																<a href={`/hazardous-event/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
+																	{attachment.file.name.split("/").pop()}
+																</a>
+															)
+															: attachment.file_option === "Link"
+																? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
+																: "N/A";
+			
+													return (
+														<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
+															<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>
+															<td style={{border: '1px solid #ddd', padding: '8px'}}>{tags}</td>
+															<td style={{border: '1px solid #ddd', padding: '8px'}}>{fileOrUrl}</td>
+														</tr>
+													);
+												})}
+											</tbody>
+										</table>
+									) : (<></>);
+								} catch (error) {
+									console.error("Error processing attachments:", error);
+									return <p>Error loading attachments.</p>;
+								}
+							})()}
+						</>
 					),
 				}}
 			/>

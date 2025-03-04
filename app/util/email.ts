@@ -5,7 +5,7 @@ function emailTransportType(): string {
 	return process.env.EMAIL_TRANSPORT || 'file'
 }
 
-function createTransporter() {
+function createTransporter() {	
 	if (emailTransportType() == 'file') {
 		return nodemailer.createTransport({
 			streamTransport: true,
@@ -19,6 +19,10 @@ function createTransporter() {
 			auth: {
 				user: process.env.SMTP_USER,
 				pass: process.env.SMTP_PASS,
+			},
+			tls: {
+				minVersion: "TLSv1.2", // ✅ Enforce modern TLS
+				rejectUnauthorized: false, // Debugging, remove this if working fine
 			},
 		});
 	} else {

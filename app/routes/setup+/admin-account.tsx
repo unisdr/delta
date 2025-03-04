@@ -35,14 +35,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const res = await setupAdminAccount(data2);
     if (!res.ok) {
       //console.log('Errors in setupAdminAccount:', res.errors);
-      return Response.json({ data, errors: res.errors });
+      return ({ data, errors: res.errors });
     }
     const headers = await createUserSession(res.userId);
     //console.log('Redirecting to verify-email');
     return redirect("/user/verify-email", { headers });
   } catch (error) {
     console.error('Error during form submission:', error);
-    return Response.json({ error: 'Unexpected error occurred.' });
+    return ({ error: 'Unexpected error occurred.' });
   }
 };
 

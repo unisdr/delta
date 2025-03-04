@@ -55,7 +55,7 @@ import { configCurrencies } from "~/util/config";
  * Based on UNDRR's spatial data requirements
  */
 interface GeographicImpactFilters {
-    sectorId: number;
+    sectorId?: number;
     subSectorId?: number;
     hazardTypeId?: string;
     hazardClusterId?: string;
