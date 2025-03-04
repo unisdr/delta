@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
 import HazardFilters from "~/frontend/analytics/hazards/sections/HazardFilters";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
+import ImpactByHazard from "~/frontend/analytics/hazards/sections/ImpactByHazard";
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -108,9 +109,11 @@ function HazardAnalysisContent() {
 								overflow: "hidden",
 							}}
 						>
-							Dashboard Section
 							{/* Impact by Geographic Level */}
-							<HazardImpactMap filters={filters} />
+							{/* <HazardImpactMap filters={filters} /> */}
+
+ 							{/* Impact by Hazard Section */}
+							<ImpactByHazard filters={filters} />
 						</div>
 					)}
 				</div>
@@ -129,7 +132,6 @@ export const meta: MetaFunction = ({ data }) => {
 
 // Wrapper component that provides QueryClient
 export default function HazardAnalysis() {
-	console.log("query client = ", queryClient);
 	return (
 		<QueryClientProvider client={queryClient}>
 			<HazardAnalysisContent />

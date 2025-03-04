@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "react-query";
+import ImpactMapOl from "./Map/ImpactMapOl";
 
 // Define the filter shape
 type FilterValues = {
@@ -44,7 +45,6 @@ interface SpecificHazardsResponse {
 export default function HazardImpactMap({
 	filters = DEFAULT_FILTERS,
 }: ImpactMapProps) {
-	console.log("filters hello = ", filters);
 	const [geoData, setGeoData] = useState<any>(null);
 	const [selectedMetric, setSelectedMetric] = useState<
 		"totalDamage" | "totalLoss"
@@ -124,31 +124,35 @@ export default function HazardImpactMap({
 	};
 
 	// Fetch geographic impact data
-	/*useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
-        const activeFilters = filters || DEFAULT_FILTERS;
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const url = new URL(
+					"/api/analytics/geographic-impacts",
+					window.location.origin
+				);
+				// log("url.toString" , url.toString)
+				const activeFilters = filters || DEFAULT_FILTERS;
 
-        // Add all non-null filters to URL
-        Object.entries(activeFilters).forEach(([key, value]) => {
-          if (value !== null && value !== '') {
-            url.searchParams.append(key, value);
-          }
-        });
+				// Add all non-null filters to URL
+				Object.entries(activeFilters).forEach(([key, value]) => {
+					if (value !== null && value !== "") {
+						url.searchParams.append(key, value);
+					}
+				});
 
-        const response = await fetch(url.toString());
-        if (!response.ok) throw new Error('Failed to fetch geographic data');
-        const data = await response.json();
-        setGeoData(data);
-      } catch (error) {
-        console.error('Error fetching geographic data:', error);
-      }
-    };
+				const response = await fetch(url.toString());
+				if (!response.ok) throw new Error("Failed to fetch geographic data");
+				const data = await response.json();
+				setGeoData(data);
+			} catch (error) {
+				console.error("Error fetching geographic data:", error);
+			}
+		};
 
-    fetchData();
-  }, [filters]);
-*/
+		fetchData();
+	}, [filters]);
+
 	return (
 		<section className="dts-page-section">
 			<div className="mg-container">
@@ -200,7 +204,7 @@ export default function HazardImpactMap({
 						aria-labelledby="tab01"
 						hidden={selectedTab !== "tab01"}
 					>
-						{/* {geoData ? (
+						{geoData ? (
 							<ImpactMapOl
 								geoData={geoData}
 								selectedMetric="totalDamage"
@@ -208,7 +212,7 @@ export default function HazardImpactMap({
 							/>
 						) : (
 							<div className="map-loading">Loading map...</div>
-						)} */}
+						)}
 					</div>
 					<div
 						id="tabpanel02"
@@ -216,7 +220,7 @@ export default function HazardImpactMap({
 						aria-labelledby="tab02"
 						hidden={selectedTab !== "tab02"}
 					>
-						{/* {geoData ? (
+						{geoData ? (
 							<ImpactMapOl
 								geoData={geoData}
 								selectedMetric="totalLoss"
@@ -224,7 +228,7 @@ export default function HazardImpactMap({
 							/>
 						) : (
 							<div className="map-loading">Loading map...</div>
-						)} */}
+						)}
 					</div>
 				</div>
 			</div>

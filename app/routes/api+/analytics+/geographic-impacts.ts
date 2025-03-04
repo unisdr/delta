@@ -8,22 +8,23 @@ export const loader = async ({ request }: { request: Request }) => {
         const params = Object.fromEntries(url.searchParams);
 
         // Required parameter check
-        if (!url.searchParams.get('sectorId')) {
-            return json({
-                type: "FeatureCollection",
-                features: [],
-                error: "sectorId is required"
-            }, {
-                status: 400,
-                headers: {
-                    'Content-Type': 'application/geo+json',
-                    'Cache-Control': 'no-cache'
-                }
-            });
-        }
+        // if (!url.searchParams.get('sectorId')) {
+        //     return json({
+        //         type: "FeatureCollection",
+        //         features: [],
+        //         error: "sectorId is required"
+        //     }, {
+        //         status: 400,
+        //         headers: {
+        //             'Content-Type': 'application/geo+json',
+        //             'Cache-Control': 'no-cache'
+        //         }
+        //     });
+        // }
 
         // Collect all optional parameters
         const optionalParams = [
+            'sectorId',
             'subSectorId',
             'hazardTypeId',
             'hazardClusterId',
