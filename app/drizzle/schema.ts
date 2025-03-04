@@ -347,6 +347,7 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	chainsExplanation: zeroText("chains_explanation"),
 	magnitude: zeroText("magniture"),
 	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 	recordOriginator: zeroText("record_originator"),
 	hazardousEventStatus: text("hazardous_event_status", {enum: ["forecasted", "ongoing", "passed"]}),
 	dataSource: zeroText("data_source"),
@@ -994,6 +995,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	// sectorName: text("sector_name"), // Direct name of the sector involved
 	// subSector: text("sub_sector"), // Sub-sector detail
 	spatialFootprint: jsonb("spatial_footprint"),
+	attachments: jsonb("attachments"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
 });
