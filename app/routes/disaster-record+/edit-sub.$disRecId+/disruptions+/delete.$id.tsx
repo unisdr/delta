@@ -14,8 +14,8 @@ export const loader = createDeleteLoader({
 	tableName: getTableName(disruptionTable),
 	getById: disruptionById,
 	postProcess: async (id, data) => {
-		console.log(`Post-processing record: ${id}`);
-		console.log(`Data before deletion:`, data);
+		//console.log(`Post-processing record: ${id}`);
+		//console.log(`Data before deletion:`, data);
 
 		ContentRepeaterUploadFile.delete(data.attachments);
 	},
