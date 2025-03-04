@@ -20,6 +20,9 @@ function createTransporter() {
 				user: process.env.SMTP_USER,
 				pass: process.env.SMTP_PASS,
 			},
+			tls: {
+				minVersion: "TLSv1.2", // ✅ Enforce modern TLS
+			},
 		});
 	} else {
 		throw new Error("Invalid EMAIL_TRANSPORT value. Use 'file' or 'smtp'.");
