@@ -14,6 +14,7 @@ import {
   divisionTable,
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
+import { calculateDamages, calculateLosses } from "~/backend.server/utils/disasterCalculations";
 
 /**
  * Interface defining the filter parameters for effect details queries
@@ -111,7 +112,7 @@ export async function getEffectDetails(filters: FilterParams) {
       id: damagesTable.id,
       type: sql<string>`'damage'`.as("type"),
       assetName: assetTable.name,
-      totalDamageAmount: damagesTable.totalDamageAmount,
+      totalDamageAmount: sql<string>`${calculateDamages(damagesTable)}`.as("totalDamageAmount"),
       totalRepairReplacement: damagesTable.totalRepairReplacement,
       totalRecovery: damagesTable.totalRecovery,
       sectorId: damagesTable.sectorId,
@@ -144,7 +145,7 @@ export async function getEffectDetails(filters: FilterParams) {
       description: lossesTable.description,
       publicUnit: lossesTable.publicUnit,
       publicUnits: lossesTable.publicUnits,
-      publicCostTotal: lossesTable.publicCostTotal,
+      publicCostTotal: sql<string>`${calculateLosses(lossesTable)}`.as("publicCostTotal"),
       privateUnit: lossesTable.privateUnit,
       privateUnits: lossesTable.privateUnits,
       privateCostTotal: lossesTable.privateCostTotal,
