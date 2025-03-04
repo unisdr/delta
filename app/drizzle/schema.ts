@@ -436,7 +436,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	earlyActionDescription5: zeroText("early_action_description5"),
 	earlyActionDate5: timestamp("early_action_date5"),
 
-	// multiple rapid or preliminary assesments
+	// multiple rapid or preliminary assessments
 	rapidOrPreliminaryAssessmentDescription1: text("rapid_or_preliminary_assesment_description1"),
 	rapidOrPreliminaryAssessmentDate1: timestamp("rapid_or_preliminary_assessment_date1"),
 	rapidOrPreliminaryAssessmentDescription2: text("rapid_or_preliminary_assesment_description2"),
