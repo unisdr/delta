@@ -7,7 +7,7 @@
  * 3. World Bank DaLA methodology for impact ranking
  */
 
-import { SQL, sql, eq, and, inArray, desc, ilike } from "drizzle-orm";
+import { SQL, sql, eq, and, inArray, desc, ilike, exists, or } from "drizzle-orm";
 import { dr as db } from "~/db.server";
 import {
   disasterRecordsTable,
@@ -20,6 +20,7 @@ import {
 } from "~/drizzle/schema";
 import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import LRUCache from "lru-cache";
+import { getSectorsByParentId } from "./sectors";
 
 export type SortColumn = 'damages' | 'losses' | 'eventName' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
@@ -75,19 +76,77 @@ const resultsCache = new LRUCache<string, PaginatedResult>({
   ttl: 1000 * 60 * 15 // 15 minutes
 });
 
-function buildFilterConditions(params: MostDamagingEventsParams): SQL[] {
-  const conditions: SQL[] = [
-    ilike(disasterRecordsTable.approvalStatus, 'approved')
+// Helper function to normalize text for matching
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Helper function to get division info
+const getDivisionInfo = async (geographicLevelId: string): Promise<{ name: string, normalized: string } | null> => {
+  const division = await db
+    .select({
+      name: divisionTable.name
+    })
+    .from(divisionTable)
+    .where(eq(divisionTable.id, parseInt(geographicLevelId)))
+    .limit(1);
+
+  if (!division || division.length === 0) {
+    return null;
+  }
+
+  const divisionName = String(division[0].name);
+  return {
+    name: divisionName,
+    normalized: normalizeText(divisionName)
+  };
+};
+
+interface FilterConditions {
+  conditions: SQL<unknown>[];
+  sectorIds?: string[];
+}
+
+async function buildFilterConditions(params: MostDamagingEventsParams): Promise<FilterConditions> {
+  const conditions: SQL<unknown>[] = [
+    eq(disasterRecordsTable.approvalStatus, 'completed')
   ];
 
+  let sectorIds: string[] | undefined;
+
   if (params.sectorId) {
-    conditions.push(
-      sql`${sectorDisasterRecordsRelationTable.sectorId} = ${params.sectorId}::bigint`
-    );
+    const numericSectorId = parseInt(params.sectorId, 10);
+    if (!isNaN(numericSectorId)) {
+      // Get all subsectors for the given sector ID
+      const subsectors = await getSectorsByParentId(numericSectorId);
+      const allSectorIds = subsectors.length > 0
+        ? [numericSectorId, ...subsectors.map(s => s.id)]
+        : [numericSectorId];
+
+      // Convert numeric IDs to strings for return value
+      sectorIds = allSectorIds.map(id => id.toString());
+
+      conditions.push(
+        exists(
+          db.select()
+            .from(sectorDisasterRecordsRelationTable)
+            .where(and(
+              eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+              inArray(sectorDisasterRecordsRelationTable.sectorId, allSectorIds)
+            ))
+        )
+      );
+    }
   }
 
   if (params.hazardTypeId) {
-    conditions.push(eq(hazardousEventTable.hipHazardId, params.hazardTypeId));
+    conditions.push(eq(hazardousEventTable.hipTypeId, params.hazardTypeId));
   }
 
   if (params.hazardClusterId) {
@@ -95,26 +154,59 @@ function buildFilterConditions(params: MostDamagingEventsParams): SQL[] {
   }
 
   if (params.specificHazardId) {
-    conditions.push(eq(hazardousEventTable.hipTypeId, params.specificHazardId));
+    conditions.push(eq(hazardousEventTable.hipHazardId, params.specificHazardId));
   }
 
   if (params.geographicLevelId) {
-    conditions.push(sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${params.geographicLevelId}`);
+    const divisionInfo = await getDivisionInfo(params.geographicLevelId);
+    if (divisionInfo) {
+      // Query the division table to get the division details
+      const division = await db.select()
+        .from(divisionTable)
+        .where(eq(divisionTable.id, sql`${params.geographicLevelId}::bigint`))
+        .limit(1);
+
+      if (division.length > 0) {
+        // Base conditions that are always valid
+        const baseConditions: SQL<unknown>[] = [
+          // Match by location description
+          ilike(disasterRecordsTable.locationDesc, `%${divisionInfo.name}%`),
+          // Match by spatial footprint division_id
+          sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${params.geographicLevelId}`,
+          // Match by spatial footprint regions array
+          sql`${disasterRecordsTable.spatialFootprint}->>'regions' ILIKE ${`%${divisionInfo.name}%`}`
+        ];
+
+        // Add geometry intersection if available
+        if (division[0].geom) {
+          baseConditions.push(sql`ST_Intersects(
+            ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}->>'geometry'), 4326),
+            ${division[0].geom}
+          )`);
+        }
+
+        // Create a single OR condition combining all valid conditions
+        const orCondition = sql`(${or(...baseConditions)})`;
+        conditions.push(orCondition);
+      }
+    }
   }
 
   if (params.fromDate) {
-    conditions.push(sql`${disasterRecordsTable.startDate} >= ${params.fromDate}`);
+    const dateStr = params.fromDate.split('T')[0]; // Get just the date part
+    conditions.push(sql`${disasterRecordsTable.startDate}::date >= ${dateStr}::date`);
   }
 
   if (params.toDate) {
-    conditions.push(sql`${disasterRecordsTable.endDate} <= ${params.toDate}`);
+    const dateStr = params.toDate.split('T')[0]; // Get just the date part
+    conditions.push(sql`${disasterRecordsTable.endDate}::date <= ${dateStr}::date`);
   }
 
   if (params.disasterEventId) {
     conditions.push(eq(disasterEventTable.id, params.disasterEventId));
   }
 
-  return conditions;
+  return { conditions, sectorIds };
 }
 
 export async function getMostDamagingEvents(params: MostDamagingEventsParams): Promise<PaginatedResult> {
@@ -132,7 +224,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       return cached;
     }
 
-    const conditions = buildFilterConditions(params);
+    const { conditions, sectorIds } = await buildFilterConditions(params);
 
     // Create base query using proper table relations
     const query = db
@@ -140,14 +232,8 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         eventId: disasterEventTable.id,
         eventName: disasterEventTable.nameNational,
         createdAt: disasterEventTable.createdAt,
-        totalDamages: sql<number>`COALESCE(SUM(
-          COALESCE(${damagesTable.totalRepairReplacement}, 0) +
-          COALESCE(${damagesTable.totalRecovery}, 0)
-        ), 0)`,
-        totalLosses: sql<number>`COALESCE(SUM(
-          COALESCE(${lossesTable.publicCostTotal}, 0) +
-          COALESCE(${lossesTable.privateCostTotal}, 0)
-        ), 0)`,
+        totalDamages: sql<number>`COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)`,
+        totalLosses: sql<number>`COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)`,
         total: sql<number>`COUNT(*) OVER()`
       })
       .from(disasterEventTable)
@@ -156,34 +242,38 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
       )
       .leftJoin(
-        sectorDisasterRecordsRelationTable,
-        eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
-      )
-      .leftJoin(
         hazardousEventTable,
-        eq(disasterEventTable.id, hazardousEventTable.id)
+        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
       )
       .leftJoin(
         damagesTable,
-        eq(disasterRecordsTable.id, damagesTable.recordId)
+        and(
+          eq(disasterRecordsTable.id, damagesTable.recordId),
+          sectorIds ? inArray(damagesTable.sectorId, sectorIds.map(id => parseInt(id, 10))) : undefined
+        )
       )
       .leftJoin(
         lossesTable,
-        eq(disasterRecordsTable.id, lossesTable.recordId)
+        and(
+          eq(disasterRecordsTable.id, lossesTable.recordId),
+          sectorIds ? inArray(lossesTable.sectorId, sectorIds.map(id => parseInt(id, 10))) : undefined
+        )
       )
       .where(and(...conditions))
-      .groupBy(disasterEventTable.id, disasterEventTable.nameNational, disasterEventTable.createdAt)
+      .groupBy(
+        disasterEventTable.id,
+        disasterEventTable.nameNational,
+        disasterEventTable.createdAt,
+        damagesTable.totalRepairReplacement,
+        damagesTable.totalRecovery,
+        lossesTable.publicCostTotal,
+        lossesTable.privateCostTotal
+      )
       .orderBy(
         sortBy === 'damages'
-          ? sql`COALESCE(SUM(
-              COALESCE(${damagesTable.totalRepairReplacement}, 0) +
-              COALESCE(${damagesTable.totalRecovery}, 0)
-            ), 0)${sortDirection === 'desc' ? sql` DESC` : sql` ASC`}`
+          ? sql`(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0))${sortDirection === 'desc' ? sql` DESC` : sql` ASC`}`
           : sortBy === 'losses'
-            ? sql`COALESCE(SUM(
-              COALESCE(${lossesTable.publicCostTotal}, 0) +
-              COALESCE(${lossesTable.privateCostTotal}, 0)
-            ), 0)${sortDirection === 'desc' ? sql` DESC` : sql` ASC`}`
+            ? sql`(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0))${sortDirection === 'desc' ? sql` DESC` : sql` ASC`}`
             : sortBy === 'eventName'
               ? sortDirection === 'desc'
                 ? desc(disasterEventTable.nameNational)

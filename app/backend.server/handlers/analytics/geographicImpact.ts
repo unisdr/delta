@@ -4,11 +4,11 @@ import { getGeographicImpact } from "~/backend.server/models/analytics/geographi
 // Input validation schema
 const GeographicImpactQuerySchema = z.object({
     sectorId: z.string({
-        required_error: "Sector ID is required",
+        // required_error: "Sector ID is required",
         invalid_type_error: "Sector ID must be a string"
     }).refine((val) => !isNaN(parseInt(val, 10)), {
         message: "Sector ID must be a valid number"
-    }),
+    }).optional(),
     subSectorId: z.string()
         .refine((val) => !isNaN(parseInt(val, 10)), {
             message: "Sub-sector ID must be a valid number"
@@ -33,7 +33,7 @@ const GeographicImpactQuerySchema = z.object({
 });
 
 type GeographicImpactFilters = {
-    sectorId: number;
+    sectorId?: number;
     subSectorId?: number;
     hazardTypeId?: string;
     specificHazardId?: string;
@@ -50,7 +50,7 @@ export async function handleGeographicImpactQuery(params: unknown) {
 
         // Convert string IDs to numbers where required
         const filters: GeographicImpactFilters = {
-            sectorId: parseInt(validParams.sectorId, 10),
+            sectorId: validParams.sectorId ? parseInt(validParams.sectorId, 10) : undefined,
             subSectorId: validParams.subSectorId ? parseInt(validParams.subSectorId, 10) : undefined,
             hazardTypeId: validParams.hazardTypeId,
             specificHazardId: validParams.specificHazardId,

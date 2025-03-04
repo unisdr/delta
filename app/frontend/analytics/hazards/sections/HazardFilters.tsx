@@ -285,11 +285,11 @@ const HazardFilters: React.FC<FiltersProps> = ({
 
   // Apply filters and include the date range conditionally
   const handleApplyFilters = () => {
-    /*if (!filters.sectorId) {
+    if (!filters.hazardTypeId) {
       Swal.fire({
         icon: 'warning',
         // title: 'Missing Sector',
-        text: 'Please select a sector first.',
+        text: 'Please select a hazard type first.',
         confirmButtonText: 'OK',
         buttonsStyling: false, // Disable default button styling
         customClass: {
@@ -298,7 +298,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
         },
       });
       return;
-    }*/
+    }
 
     onApplyFilters({
       hazardTypeId: filters.hazardTypeId || null,
@@ -442,7 +442,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
     <div className="mg-grid mg-grid__col-6">
       {/* Row 2: Hazard Type, Hazard Cluster, and Specific Hazard */}
       <div className="dts-form-component mg-grid__col--span-2">
-        {renderAutocomplete(hazardTypes, "hazardTypeId", false, "Hazard Type")}
+        {renderAutocomplete(hazardTypes, "hazardTypeId", false, "Hazard Type *")}
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">

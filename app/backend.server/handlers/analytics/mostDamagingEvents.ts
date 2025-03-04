@@ -66,16 +66,6 @@ export async function handleMostDamagingEventsRequest(params: MostDamagingEvents
     // Get the data from the model
     const result = await getMostDamagingEvents(modelParams);
 
-    // If there are no events, return a specific message
-    if (result.events.length === 0) {
-      return {
-        success: true,
-        data: result,
-        metadata,
-        message: "No events found matching the specified criteria"
-      };
-    }
-
     console.log('Successfully processed most damaging events request', {
       metadata,
       resultCount: result.events.length
@@ -83,17 +73,24 @@ export async function handleMostDamagingEventsRequest(params: MostDamagingEvents
 
     return {
       success: true,
-      data: result,
-      metadata
+      data: {
+        events: result.events,
+        pagination: result.pagination,
+        metadata: {
+          ...metadata,
+          ...result.metadata
+        }
+      }
     };
   } catch (error) {
     console.error("Error in handleMostDamagingEventsRequest:", {
       error,
       params: { ...params, sectorId: params.sectorId ? '[REDACTED]' : null }
     });
-    return {
+    throw {
       success: false,
       error: "Failed to fetch most damaging events. Please try again later.",
+      code: 'QUERY_ERROR'
     };
   }
 }

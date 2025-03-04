@@ -84,6 +84,10 @@ export async function hazardousEventCreate(tx: Tx, fields: HazardousEventFields,
 				userId: userId,
 			})
 		}
+
+		if (res.length > 0) {
+			await processAndSaveAttachments(hazardousEventTable, tx, eventId, Array.isArray(fields?.attachments) ? fields.attachments : [], "hazardous-event");
+		}
 	} catch (error: any) {
 		let res = checkConstraintError(error, hazardousEventTableConstraits)
 		if (res) {
@@ -153,6 +157,8 @@ export async function hazardousEventUpdate(tx: Tx, id: string, fields: Partial<H
 				userId: userId,
 			})
 		}
+
+		await processAndSaveAttachments(hazardousEventTable, tx, id, Array.isArray(fields?.attachments) ? fields.attachments : [], "hazardous-event");
 	} catch (error: any) {
 		let res = checkConstraintError(error, hazardousEventTableConstraits)
 		if (res) {
@@ -399,7 +405,7 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	}
 
 	if (res.length > 0) {
-		await processAndSaveAttachments(tx, eventId, Array.isArray(fields?.attachments) ? fields.attachments : []);
+		await processAndSaveAttachments(disasterEventTable, tx, eventId, Array.isArray(fields?.attachments) ? fields.attachments : [], "disaster-event");
 	}
 
 	/*
@@ -441,7 +447,7 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 			})
 			.where(eq(disasterEventTable.id, id))
 
-		await processAndSaveAttachments(tx, id, Array.isArray(fields?.attachments) ? fields.attachments : []);
+		await processAndSaveAttachments(disasterEventTable, tx, id, Array.isArray(fields?.attachments) ? fields.attachments : [], "disaster-event");
 	} catch (error: any) {
 		let res = checkConstraintError(error, disasterEventTableConstraits)
 		if (res) {
@@ -540,19 +546,19 @@ export async function disasterEventDelete(id: string): Promise<DeleteResult> {
 	return {ok: true}
 }
 
-async function processAndSaveAttachments(tx: Tx, resourceId: string, attachmentsData: any[]) {
+async function processAndSaveAttachments(tableObj: any, tx: Tx, resourceId: string, attachmentsData: any[], directory: string) {
 	if (!attachmentsData) return;
 
-	const save_path = `/uploads/disaster-event/${resourceId}`;
+	const save_path = `/uploads/${directory}/${resourceId}`;
 	const save_path_temp = `/uploads/temp`;
 
 	// Process the attachments data
 	const processedAttachments = ContentRepeaterUploadFile.save(attachmentsData, save_path_temp, save_path);
 
 	// Update the `attachments` field in the database
-	await tx.update(disasterEventTable)
+	await tx.update(tableObj)
 		.set({
 			attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
 		})
-		.where(eq(disasterEventTable.id, resourceId));
+		.where(eq(tableObj.id, resourceId));
 }

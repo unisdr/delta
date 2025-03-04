@@ -44,7 +44,7 @@
     align-items: stretch; /* Ensure children stretch to the tallest */
     border: 1px solid #ccc;
     border-radius: 0.25rem;
-    width: fit-content;
+    width: 100%;
     background-color: #fff;
     margin-top: 1rem;
     margin-bottom: 2rem;

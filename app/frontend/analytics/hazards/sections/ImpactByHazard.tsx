@@ -1,0 +1,482 @@
+import { useState, useCallback } from "react";
+import {
+	QueryClient,
+	QueryClientProvider,
+} from "@tanstack/react-query";
+import { useQuery } from "react-query";
+import {
+	PieChart,
+	Pie,
+	Cell,
+	ResponsiveContainer,
+	Legend,
+	Tooltip,
+} from "recharts";
+import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
+import { ErrorMessage } from "~/frontend/components/ErrorMessage";
+import { formatCurrency } from "~/frontend/utils/formatters";
+
+// Create a client
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 0,
+			gcTime: 0,
+			refetchOnWindowFocus: false,
+		},
+	},
+});
+const COLORS = [
+	"#205375", // A dark blue from UNDRR Blue (corporate blue)
+	"#FAA635", // A vivid orange from Target C (loss)
+	"#F45D01", // A deeper orange from Target C
+	"#68B3C8", // A light blue from UNDRR Teal (secondary shades)
+	"#F7B32B", // A bright yellow from Target C
+];
+
+interface ImpactByHazardProps {
+	filters: {
+		hazardTypeId: string | null;
+		hazardClusterId: string | null;
+		specificHazardId: string | null;
+		geographicLevelId: string | null;
+		fromDate: string | null;
+		toDate: string | null;
+	};
+}
+
+interface Hazard {
+	id: string | number;
+	name: string;
+}
+
+interface HazardTypesResponse {
+	hazardTypes: Hazard[];
+}
+interface HazardClustersResponse {
+	clusters: Hazard[];
+}
+interface SpecificHazardsResponse {
+	hazards: Hazard[];
+}
+
+interface HazardImpactResponse {
+	success: boolean;
+	data: {
+		eventsCount: Array<{
+			hazardId: number;
+			hazardName: string;
+			value: number;
+			percentage: number;
+		}>;
+		damages: Array<{
+			hazardId: number;
+			hazardName: string;
+			value: string;
+			percentage: number;
+		}>;
+		losses: Array<{
+			hazardId: number;
+			hazardName: string;
+			value: string;
+			percentage: number;
+		}>;
+	};
+}
+
+const CustomTooltip = ({ active, payload, title }: any) => {
+	if (active && payload && payload.length) {
+		const data = payload[0].payload;
+		const formattedPercentage = `${Math.round(data.value)}%`;
+
+		// Get color using the payload's index
+		const segmentIndex = data.index || 0;
+		const segmentColor = COLORS[segmentIndex % COLORS.length];
+
+		const isLightColor = (color: string) => {
+			try {
+				const hex = color.replace("#", "");
+				const r = parseInt(hex.substr(0, 2), 16);
+				const g = parseInt(hex.substr(2, 2), 16);
+				const b = parseInt(hex.substr(4, 2), 16);
+				const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+				return brightness > 128;
+			} catch (error) {
+				return false;
+			}
+		};
+		const textColor = isLightColor(segmentColor) ? "#000000" : "#FFFFFF";
+
+		// Check if formatting as currency or count is needed
+		let formattedValue = data.rawValue;
+		if (title === "Number of Disaster Events") {
+			formattedValue = `${data.rawValue}`;
+		} else {
+			formattedValue = formatCurrency(data.rawValue, {}, "thousands");
+		}
+
+		return (
+			<div
+				className="custom-tooltip"
+				style={{
+					backgroundColor: segmentColor,
+					padding: "10px",
+					border: `2px solid ${segmentColor}`,
+					borderRadius: "6px",
+					boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+					color: textColor,
+					transition: "all 0.2s ease",
+					minWidth: "150px",
+				}}
+			>
+				<p
+					style={{
+						margin: "0 0 4px 0",
+						fontWeight: "bold",
+						fontSize: "14px",
+					}}
+				>{`${data.name}: ${formattedPercentage}`}</p>
+				{formattedValue && (
+					<p
+						style={{
+							margin: 0,
+							fontSize: "13px",
+							opacity: 0.9,
+						}}
+					>
+						{title === "Number of Disaster Events"
+							? `Count: ${formattedValue}`
+							: `Value: ${formattedValue}`}
+					</p>
+				)}
+			</div>
+		);
+	}
+	return null;
+};
+
+const CustomPieChart = ({ data, title }: { data: any[]; title: string }) => {
+	const [activeIndex, setActiveIndex] = useState(-1);
+
+	const onPieEnter = useCallback(
+		(_: any, index: number) => {
+			setActiveIndex(index);
+		},
+		[setActiveIndex]
+	);
+
+	const onPieLeave = useCallback(() => {
+		setActiveIndex(-1);
+	}, [setActiveIndex]);
+
+	const renderCustomizedLabel = ({
+		cx,
+		cy,
+		midAngle,
+		innerRadius,
+		outerRadius,
+		percent,
+		name,
+		value,
+		index,
+	}: any) => {
+		const RADIAN = Math.PI / 180;
+		// Increase radius to push labels further out consistently
+		const radius = outerRadius * 1.4; // Increased from 1.1 to 1.4 for more spacing
+		const x = cx + radius * Math.cos(-midAngle * RADIAN);
+		const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+		// Only show if percentage is significant enough
+		if (percent < 0.03) return null;
+
+		// Format the percentage - round to whole number
+		const formattedPercentage = `${Math.round(value)}%`;
+
+		// Get the segment color
+		const segmentColor = COLORS[index % COLORS.length];
+
+		// Handle long names by splitting into multiple lines
+		const words = name.split(" ");
+		const lines = [];
+		let currentLine = "";
+
+		for (const word of words) {
+			if (currentLine && currentLine.length + word.length + 1 > 15) {
+				lines.push(currentLine);
+				currentLine = word;
+			} else {
+				currentLine = currentLine ? `${currentLine} ${word}` : word;
+			}
+		}
+		if (currentLine) {
+			lines.push(currentLine);
+		}
+
+		// Calculate vertical offset based on number of lines
+		const lineHeight = 1.2;
+		const totalHeight = lines.length * lineHeight;
+		const initialDY = -(totalHeight / 2) + lineHeight / 2;
+
+		return (
+			<text
+				x={x}
+				y={y}
+				fill={segmentColor}
+				textAnchor={x > cx ? "start" : "end"}
+				style={{
+					fontSize: "12px",
+					fontWeight: "normal",
+				}}
+			>
+				{lines.map((line, i) => (
+					<tspan
+						key={i}
+						x={x}
+						dy={i === 0 ? `${initialDY}em` : `${lineHeight}em`}
+					>
+						{line}
+					</tspan>
+				))}
+				<tspan x={x} dy={`${lineHeight}em`}>
+					({formattedPercentage})
+				</tspan>
+			</text>
+		);
+	};
+
+	const renderLegendText = (value: string, entry: any) => {
+		const { payload } = entry;
+		return (
+			<span
+				style={{
+					color: activeIndex === entry.index ? "#000" : "#666",
+					fontWeight: activeIndex === entry.index ? "bold" : "normal",
+				}}
+			>
+				{`${value}`}
+			</span>
+		);
+	};
+
+	if (!data || data.length === 0) {
+		return (
+			<div className="dts-data-box">
+				<h3 className="dts-body-label">
+					<span>{title}</span>
+				</h3>
+				<div className="flex items-center justify-center h-[300px]">
+					<p className="text-gray-500">No data available</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Add index to the data
+	const dataWithIndex = data.map((item, index) => ({
+		...item,
+		index,
+	}));
+
+	return (
+		<div className="dts-data-box">
+			<h3 className="dts-body-label">
+				<span>{title}</span>
+			</h3>
+			<div style={{ height: "300px" }}>
+				<ResponsiveContainer width="100%" height="100%">
+					<PieChart>
+						<Pie
+							data={dataWithIndex}
+							dataKey="value"
+							nameKey="name"
+							cx="50%"
+							cy="50%"
+							outerRadius={80}
+							innerRadius={50}
+							startAngle={90}
+							endAngle={-270}
+							label={renderCustomizedLabel}
+							labelLine={true}
+							onMouseEnter={onPieEnter}
+							onMouseLeave={onPieLeave}
+							animationBegin={0}
+							animationDuration={1000}
+							animationEasing="ease-out"
+						>
+							{dataWithIndex.map((entry, index) => (
+								<Cell
+									key={index}
+									fill={COLORS[index % COLORS.length]}
+									opacity={activeIndex === index ? 1 : 0.8}
+									strokeWidth={activeIndex === index ? 2 : 0}
+									stroke={COLORS[index % COLORS.length]}
+								/>
+							))}
+						</Pie>
+						<Tooltip content={<CustomTooltip title={title} />} />
+						<Legend
+							verticalAlign="bottom"
+							align="center"
+							layout="horizontal"
+							formatter={renderLegendText}
+							onMouseEnter={(_, index) => setActiveIndex(index)}
+							onMouseLeave={() => setActiveIndex(-1)}
+						/>
+					</PieChart>
+				</ResponsiveContainer>
+			</div>
+		</div>
+	);
+};
+
+function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
+	const enabled = !!filters.hazardTypeId;
+
+	const queryParams = new URLSearchParams();
+	if (filters.hazardTypeId)
+		queryParams.set("hazardTypeId", filters.hazardTypeId);
+	if (filters.hazardClusterId)
+		queryParams.set("hazardClusterId", filters.hazardClusterId);
+	if (filters.specificHazardId)
+		queryParams.set("specificHazardId", filters.specificHazardId);
+	if (filters.fromDate) queryParams.set("fromDate", filters.fromDate);
+	if (filters.toDate) queryParams.set("toDate", filters.toDate);
+	if (filters.geographicLevelId)
+		queryParams.set("geographicLevelId", filters.geographicLevelId);
+
+	const { data, isLoading, error } = useQuery({
+	    queryKey: ["hazardImpact", filters],
+	    queryFn: async () => {
+	        console.log('Fetching hazard impact data for:', { filters });
+	        const response = await fetch(`/api/analytics/hazardImpact?${queryParams}`);
+	        if (!response.ok) {
+	            throw new Error("Failed to fetch hazard impact data");
+	        }
+	        const result = await response.json();
+	        console.log('API Response:', result);
+	        return result as HazardImpactResponse;
+	    },
+	    enabled
+	});
+
+    // Fetch hazard types data
+	const { data: hazardTypesData } = useQuery<HazardTypesResponse>(
+		["hazardTypes", filters?.hazardTypeId],
+		async () => {
+			const response = await fetch(`/api/analytics/hazard-types`);
+			if (!response.ok) throw new Error("Failed to fetch hazard types");
+			return response.json();
+		}
+	);
+
+	// Fetch hazard clusters data
+	const { data: hazardClustersData } = useQuery<HazardClustersResponse>(
+		["hazardClusters", filters?.hazardClusterId],
+		async () => {
+			// if (!filters?.hazardTypeId) return { clusters: [] };
+			const response = await fetch(
+				`/api/analytics/hazard-clusters?hazardTypeId=${filters.hazardTypeId}`
+			);
+			if (!response.ok) throw new Error("Failed to fetch hazard clusters");
+			return response.json();
+		},
+		{
+			enabled: !!filters?.hazardTypeId,
+            initialData: {clusters:[]}
+		}
+	);
+
+	// Fetch specific hazards data
+	const { data: specificHazardsData } = useQuery<SpecificHazardsResponse>(
+		["specificHazards", filters?.hazardClusterId],
+		async () => {
+			if (!filters?.hazardClusterId) return { hazards: [] };
+			const response = await fetch(
+				`/api/analytics/specific-hazards?clusterId=${filters.hazardClusterId}`
+			);
+			if (!response.ok) throw new Error("Failed to fetch specific hazards");
+			return response.json();
+		},
+		{
+			enabled: !!filters?.hazardClusterId,
+		}
+	);
+
+	if (!enabled) {
+	    return <div className="text-gray-500">Please select a hazard type to view hazard impact data.</div>;
+	}
+
+	if (isLoading) {
+	    return <LoadingSpinner />;
+	}
+
+	if (error || !data?.success) {
+	    return <ErrorMessage message="Failed to load hazard impact data" />;
+	}
+
+	// Construct title based on sector/subsector selection
+	const sectionTitle = () => {
+		if (filters?.specificHazardId && specificHazardsData?.hazards) {
+			const hazard = specificHazardsData.hazards.find(
+				(h) => h.id.toString() === filters.specificHazardId
+			);
+			return `${hazard?.name} impact summary`;
+		}
+		if (filters?.hazardClusterId && hazardClustersData?.clusters) {
+			const cluster = hazardClustersData.clusters.find(
+				(c) => c.id.toString() === filters.hazardClusterId
+			);
+
+			return `${cluster?.name} impact summary`;
+		}
+		if (filters?.hazardTypeId && hazardTypesData?.hazardTypes) {
+			const type = hazardTypesData.hazardTypes.find(
+				(t) => t.id.toString() === filters.hazardTypeId
+			);
+            return `${type?.name} impact summary`;
+		}
+	};
+
+	const formatChartData = (rawData: any[]) => {
+		return rawData.map((item) => ({
+			name: item.hazardName,
+			value: item.percentage,
+			rawValue: item.value,
+		}));
+	};
+
+	const eventsData = formatChartData(data.data.eventsCount);
+	const damagesData = formatChartData(data.data.damages);
+	const lossesData = formatChartData(data.data.losses);
+
+	return (
+		<section
+			className="dts-page-section"
+			style={{ maxWidth: "100%", overflow: "hidden" }}
+		>
+			<div
+				className="mg-container"
+				style={{ maxWidth: "100%", overflow: "hidden" }}
+			>
+				<h2 className="dts-heading-2">{sectionTitle()}</h2>
+				<p className="dts-body-text mb-6">
+					Analysis of how different hazards affect this sector
+				</p>
+
+				<div className="mg-grid mg-grid__col-3">
+					<CustomPieChart data={eventsData} title="Number of Disaster Events" />
+					<CustomPieChart data={damagesData} title="Damages by Hazard Type" />
+					<CustomPieChart data={lossesData} title="Losses by Hazard Type" />
+				</div>
+			</div>
+		</section>
+	);
+}
+
+export default function ImpactByHazard(props: ImpactByHazardProps) {
+	return (
+		<QueryClientProvider client={queryClient}>
+			<ImpactByHazardComponent {...props} />
+		</QueryClientProvider>
+	);
+}

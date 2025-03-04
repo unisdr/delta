@@ -20,3 +20,7 @@ export function checkValidCurrency(value: string): boolean {
     const currency = getCurrency();
     return currency.includes(value.toUpperCase());
 };
+
+export function formatNumber(value: number, locale: string = 'en-US', options: Intl.NumberFormatOptions = {}): string {
+    return new Intl.NumberFormat(locale, options).format(value);
+}
