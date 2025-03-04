@@ -47,7 +47,11 @@ export default function HazardImpactMap({
 }: ImpactMapProps) {
 	const [geoData, setGeoData] = useState<any>(null);
 	const [selectedMetric, setSelectedMetric] = useState<
-		"totalDamage" | "totalLoss"
+		| "totalDamage"
+		| "totalLoss"
+		| "numDisasterEvents"
+		| "affectedPeople"
+		| "numDeaths"
 	>("totalDamage");
 	const [selectedTab, setSelectedTab] = useState<string>("tab01");
 
@@ -118,9 +122,10 @@ export default function HazardImpactMap({
 	};
 
 	// Handle tab selection
-	const handleSelectTab = (tabId: string) => {
+	const handleSelectTab = (tabId: string, metric: string) => {
 		setSelectedTab(tabId);
-		setSelectedMetric(tabId === "tab01" ? "totalDamage" : "totalLoss");
+		// setSelectedMetric(tabId === "tab01" ? "totalDamage" : "totalLoss");
+		setSelectedMetric(metric as any);
 	};
 
 	// Fetch geographic impact data
@@ -131,7 +136,6 @@ export default function HazardImpactMap({
 					"/api/analytics/geographic-impacts",
 					window.location.origin
 				);
-				// log("url.toString" , url.toString)
 				const activeFilters = filters || DEFAULT_FILTERS;
 
 				// Add all non-null filters to URL
@@ -156,10 +160,7 @@ export default function HazardImpactMap({
 	return (
 		<section className="dts-page-section">
 			<div className="mg-container">
-				<h2 className="dts-heading-2">{sectionTitle()}</h2>
-				<p className="dts-body-text mb-6">
-					Distribution of impacts across different geographic levels
-				</p>
+				<h2 className="dts-heading-2">Hazard Impact Map</h2>
 				<div className="map-section">
 					<h2 className="mg-u-sr-only" id="tablist01">
 						Geographic Impact View
@@ -169,67 +170,47 @@ export default function HazardImpactMap({
 						role="tablist"
 						aria-labelledby="tablist01"
 					>
-						<li role="presentation">
-							<button
-								className="dts-tablist__button"
-								type="button"
-								role="tab"
-								id="tab01"
-								aria-controls="tabpanel01"
-								aria-selected={selectedTab === "tab01"}
-								tabIndex={selectedTab === "tab01" ? 0 : -1}
-								onClick={() => handleSelectTab("tab01")}
-							>
-								<span>Total Damages</span>
-							</button>
-						</li>
-						<li role="presentation">
-							<button
-								className="dts-tablist__button"
-								type="button"
-								role="tab"
-								id="tab02"
-								aria-controls="tabpanel02"
-								aria-selected={selectedTab === "tab02"}
-								tabIndex={selectedTab === "tab02" ? 0 : -1}
-								onClick={() => handleSelectTab("tab02")}
-							>
-								<span>Total Losses</span>
-							</button>
-						</li>
+						{[
+							{ id: "tab01", label: "Total Damages", metric: "totalDamage" },
+							{ id: "tab02", label: "Total Losses", metric: "totalLoss" },
+							{
+								id: "tab03",
+								label: "Number of Disaster Events",
+								metric: "numDisasterEvents",
+							},
+							{
+								id: "tab04",
+								label: "Affected People",
+								metric: "affectedPeople",
+							},
+							{ id: "tab05", label: "Number of Deaths", metric: "numDeaths" },
+						].map(({ id, label, metric }) => (
+							<li key={id} role="presentation">
+								<button
+									className="dts-tablist__button"
+									type="button"
+									role="tab"
+									id={id}
+									aria-controls={`tabpanel${id}`}
+									aria-selected={selectedTab === id}
+									tabIndex={selectedTab === id ? 0 : -1}
+									onClick={() => handleSelectTab(id, metric)}
+								>
+									<span>{label}</span>
+								</button>
+							</li>
+						))}
 					</ul>
-					<div
-						id="tabpanel01"
-						role="tabpanel"
-						aria-labelledby="tab01"
-						hidden={selectedTab !== "tab01"}
-					>
-						{geoData ? (
-							<ImpactMapOl
-								geoData={geoData}
-								selectedMetric="totalDamage"
-								filters={filters || DEFAULT_FILTERS}
-							/>
-						) : (
-							<div className="map-loading">Loading map...</div>
-						)}
-					</div>
-					<div
-						id="tabpanel02"
-						role="tabpanel"
-						aria-labelledby="tab02"
-						hidden={selectedTab !== "tab02"}
-					>
-						{geoData ? (
-							<ImpactMapOl
-								geoData={geoData}
-								selectedMetric="totalLoss"
-								filters={filters || DEFAULT_FILTERS}
-							/>
-						) : (
-							<div className="map-loading">Loading map...</div>
-						)}
-					</div>
+
+					{geoData ? (
+						<ImpactMapOl
+							geoData={geoData}
+							selectedMetric={selectedMetric}
+							filters={filters || DEFAULT_FILTERS}
+						/>
+					) : (
+						<div className="map-loading">Loading map...</div>
+					)}
 				</div>
 			</div>
 		</section>

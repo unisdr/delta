@@ -15,7 +15,7 @@ import "~/frontend/analytics/sectors/sections/Map/ImpactMap.css"; // Custom styl
 
 type ImpactMapProps = {
   geoData: any;
-  selectedMetric: "totalDamage" | "totalLoss";
+  selectedMetric: "totalDamage" | "totalLoss" | "numDisasterEvents" | "affectedPeople" | "numDeaths";
   filters: {
     hazardTypeId: string | null;
     hazardClusterId: string | null;
