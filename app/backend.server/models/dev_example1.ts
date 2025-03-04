@@ -10,10 +10,11 @@ export interface DevExample1Fields extends Omit<DevExample1Insert, "id"> {}
 
 function repeatFields(n: number): FormInputDef<DevExample1Fields>[] {
 	let res = []
-	for (let i = 0; i<= n; i++){
+	for (let i = 0; i< n; i++){
+		let j = i + 1
 		res.push(
-			{key: "repeatableNum"+(i+1), label: "Repeatable num "+(i+1), type: "number", repeatable: {group: "r", index: i}},
-		{key: "repeatableText"+i, label: "Repeatable text "+(i+1), type: "text", repeatable: {group: "r", index: i}}
+			{key: "repeatableNum"+j, label: "Repeatable num "+j, type: "number", repeatable: {group: "r", index: i}},
+		{key: "repeatableText"+j, label: "Repeatable text "+j, type: "text", repeatable: {group: "r", index: i}}
 		)
 	}
 	return res as FormInputDef<DevExample1Fields>[]

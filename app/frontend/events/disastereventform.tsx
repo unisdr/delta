@@ -45,8 +45,8 @@ function repeatEarlyActions(n: number): FormInputDef<DisasterEventFields>[] {
 	for (let i = 0; i < n; i++) {
 		res.push(
 			{
-				key: `earlyAction` + (i + 1),
-				label: "Early Action",
+				key: `earlyActionDescription` + (i + 1),
+				label: "Description",
 				type: "textarea",
 				uiRow: {
 					label: `Early Action (${i + 1})`,
@@ -64,31 +64,123 @@ function repeatEarlyActions(n: number): FormInputDef<DisasterEventFields>[] {
 	return res as FormInputDef<DisasterEventFields>[]
 }
 
+function repeatDisasterDeclarations(n: number): FormInputDef<DisasterEventFields>[] {
+	let res = []
+	for (let i = 0; i < n; i++) {
+		let j = i + 1
+		res.push(
+			{
+				key: "disasterDeclarationTypeAndEffect" + j,
+				label: `Type and Effect`,
+				type: "textarea",
+				uiRow: {
+					label: `Disaster declaration (${j})`
+				},
+				repeatable: {"group": "disasterDeclaration", "index": i}
+			},
+			{
+				key: "disasterDeclarationDate" + j,
+				label: `Date`,
+				type: "date",
+				repeatable: {"group": "disasterDeclaration", "index": i}
+			},
+		)
+	}
+	return res as FormInputDef<DisasterEventFields>[]
+}
 
-// 2025-02-25 - comparing to DTS Variables and baselines
+function repeatRapidOrPreliminaryAssesments(n: number): FormInputDef<DisasterEventFields>[] {
+	let res = []
+	for (let i = 0; i < n; i++) {
+
+		let j = i + 1
+
+		res.push(
+			{
+				key: "rapidOrPreliminaryAssessmentDescription" + j,
+				label: `Description`,
+				type: "textarea",
+				uiRow: {
+					label: `Rapid/Preliminary assessment (${j})`
+				},
+				repeatable: {"group": "rapidOrPreliminaryAssessment", "index": i}
+			},
+			{
+				key: "rapidOrPreliminaryAssessmentDate" + j,
+				label: `Date`,
+				type: "date",
+				repeatable: {"group": "rapidOrPreliminaryAssessment", "index": i}
+			},
+		)
+	}
+	return res as FormInputDef<DisasterEventFields>[]
+}
+
+function repeatPostDisasterAssesments(n: number): FormInputDef<DisasterEventFields>[] {
+	let res = []
+	for (let i = 0; i < n; i++) {
+		let j = i + 1
+		res.push(
+			{
+				key: "postDisasterAssessmentDescription" + j,
+				label: `Description`,
+				type: "textarea",
+				uiRow: {
+					label: `Post-disaster assessment (${j})`
+				},
+				repeatable: {"group": "postDisasterAssessment", "index": i}
+			},
+			{
+				key: "postDisasterAssessmentDate" + j,
+				label: `Date`,
+				type: "date",
+				repeatable: {"group": "postDisasterAssessment", "index": i}
+			},
+		)
+	}
+	return res as FormInputDef<DisasterEventFields>[]
+}
+
+function repeatOtherAssesments(n: number): FormInputDef<DisasterEventFields>[] {
+	let res = []
+	for (let i = 0; i < n; i++) {
+		let j = i + 1
+		res.push(
+			{
+				key: "otherAssessmentDescription" + j,
+				label: `Description`,
+				type: "textarea",
+				uiRow: {
+					label: `Other assessment (${j})`
+				},
+				repeatable: {"group": "otherAssessment", "index": i}
+			},
+			{
+				key: "otherAssessmentDate" + j,
+				label: `Date`,
+				type: "date",
+				repeatable: {"group": "otherAssessment", "index": i}
+			},
+		)
+	}
+	return res as FormInputDef<DisasterEventFields>[]
+}
+
+
 export const fieldsDefCommon = [
 	approvalStatusField,
-	// keep
 	{key: "nationalDisasterId", label: "National Disaster ID", type: "text", uiRow: {}},
 
 	...repeatOtherIds(3),
 
 	{key: "nameNational", label: "National name", desc: "Disaster name ( if any) ( if applicable)- national", type: "text", uiRow: {}},
-	// keep
 	{key: "glide", label: "GLIDE Number", type: "text", uiRow: {}},
-	// keep
 	{key: "nameGlobalOrRegional", label: "Global/Regional Name", desc: "Disaster event name in global or regional databases - name ( if applicable)", type: "text"},
-	// keep
 	{key: "startDate", label: "Start Date", type: "date_optional_precision", uiRow: {}},
-	// keep
 	{key: "endDate", label: "End Date", type: "date_optional_precision"},
-	// keep
 	{key: "startDateLocal", label: "Start Date in local format ", type: "text", uiRow: {}},
-	// keep
 	{key: "endDateLocal", label: "End Date in local format", type: "text"},
-	// keep
 	{key: "durationDays", label: "Duration (Days)", desc: "Duration (of event direct effects) - in days", type: "number", uiRow: {}},
-	// changed type
 	{
 		key: "disasterDeclaration", label: "Disaster Declaration", type: "enum", required: true, enumData: [
 			{key: "unknown", label: "Unknown"},
@@ -97,26 +189,18 @@ export const fieldsDefCommon = [
 		],
 		uiRow: {label: "Disaster Declaration"}
 	},
-	// changed, this needs multiple 
-	{key: "disasterDeclarationTypeAndEffect", label: "Type and Effect", type: "textarea"},
-	// needs multiple
-	{key: "disasterDeclarationDate", label: "Date", type: "date"},
+	...repeatDisasterDeclarations(5),
+
 	{key: "hadOfficialWarningOrWeatherAdvisory", label: "Was there an officially issued warning and/or weather advisory?", type: "bool", uiRow: {label: "Official Warning"}},
 	{key: "officialWarningAffectedAreas", label: "Which affected areas were covered by the warning?", type: "textarea"},
 
 	...repeatEarlyActions(5),
-
-	{key: "preliminaryAssessmentDate", label: "Preliminary Assessment Date", type: "date", uiRow: {label: "Assesment"}},
-	{key: "rapidAssessmentDate", label: "Rapid Assessment Date", type: "date"},
-	// yes
+	...repeatRapidOrPreliminaryAssesments(5),
 	{key: "responseOperations", label: "Response Operations", type: "textarea", uiRow: {}},
-	// keep
-	{key: "postDisasterAssementDate", label: "Post-Disaster Assessment Date", type: "date", uiRow: {}},
-	// keep
-	{key: "reAssessmentDate", label: "Re-Assessment Date", type: "date"},
-	// keep
+	...repeatPostDisasterAssesments(5),
+	...repeatOtherAssesments(5),
+
 	{key: "dataSource", label: "Data Source", type: "text", uiRow: {label: "Data source"}},
-	// remove
 	{key: "recordingInstitution", label: "Recording institution", type: "text"},
 	{key: "effectsTotalUsd", label: "Effects ( damages+ losses) total ( in monetary terms - USD", type: "money", uiRow: {label: "Effects"}},
 	{key: "nonEconomicLosses", label: "Non-Economic losses", type: "textarea", uiRow: {}},
@@ -139,10 +223,7 @@ export const fieldsDefCommon = [
 	{key: "replacementCostsUSD", label: "Replacement costs - total in USD", type: "money"},
 	{key: "recoveryNeedsLocalCurrency", label: "Recovery needs - total in local currency", type: "money", uiRow: {}},
 	{key: "recoveryNeedsUSD", label: "Recovery needs - total in USD", type: "money"},
-
-	// keep
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
-	// keep
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 ] as const;
 
