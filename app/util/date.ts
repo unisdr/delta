@@ -1,3 +1,5 @@
+import { parse, format } from 'date-fns';
+
 export function formatDate(date: Date | null): string {
 	if (!date) {
 		return ""
@@ -56,11 +58,38 @@ export function formatDateDisplay(date: Date | string | null, format: string = "
 	if (isNaN(d.getTime())) return "Invalid Date";
 
 	const day = d.getDate();
-	const month = new Intl.DateTimeFormat("en-US", {month: "short"}).format(d); // ✅ Works in all environments
+	const month = new Intl.DateTimeFormat("en-US", {month: "short"}).format(d);
 	const year = d.getFullYear();
 
 	return format
 		.replace("d", day.toString())
 		.replace("MMM", month)
 		.replace("yyyy", year.toString());
+}
+
+export function isDateLike(input: string): boolean {
+    const regex = /^(\d{1,2})\s([A-Za-z]+)\s(\d{4})$/;
+    return regex.test(input);
+}
+
+export function convertToISODate(input: string): string | null {
+    const regex = /^(\d{1,2})\s([A-Za-z]+)\s(\d{4})$/;
+    const months: { [key: string]: string } = {
+        jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
+        jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12",
+        january: "01", february: "02", march: "03", april: "04", may: "05", june: "06",
+        july: "07", august: "08", september: "09", october: "10", november: "11", december: "12"
+    };
+
+    const match = input.toLowerCase().match(regex);
+    if (match) {
+        const day = match[1].padStart(2, "0"); // Ensure two-digit day
+        const month = months[match[2].toLowerCase()]; // Convert month name to number
+        const year = match[3];
+
+        if (month) {
+            return `${year}-${month}-${day}`;
+        }
+    }
+    return null;
 }
