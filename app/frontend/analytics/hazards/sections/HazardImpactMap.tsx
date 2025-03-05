@@ -173,17 +173,17 @@ export default function HazardImpactMap({
 						{[
 							{ id: "tab01", label: "Total Damages", metric: "totalDamage" },
 							{ id: "tab02", label: "Total Losses", metric: "totalLoss" },
-							{
-								id: "tab03",
-								label: "Number of Disaster Events",
-								metric: "numDisasterEvents",
-							},
-							{
-								id: "tab04",
-								label: "Affected People",
-								metric: "affectedPeople",
-							},
-							{ id: "tab05", label: "Number of Deaths", metric: "numDeaths" },
+							// {
+							// 	id: "tab03",
+							// 	label: "Number of Disaster Events",
+							// 	metric: "numDisasterEvents",
+							// },
+							// {
+							// 	id: "tab04",
+							// 	label: "Affected People",
+							// 	metric: "affectedPeople",
+							// },
+							// { id: "tab05", label: "Number of Deaths", metric: "numDeaths" },
 						].map(({ id, label, metric }) => (
 							<li key={id} role="presentation">
 								<button

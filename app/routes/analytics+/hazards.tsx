@@ -9,6 +9,7 @@ import { useLoaderData } from "@remix-run/react";
 import HazardFilters from "~/frontend/analytics/hazards/sections/HazardFilters";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
 import ImpactByHazard from "~/frontend/analytics/hazards/sections/ImpactByHazard";
+import HumanDirectEffects from "~/frontend/analytics/hazards/sections/HumanDirectEffects";
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -114,6 +115,9 @@ function HazardAnalysisContent() {
 
  							{/* Impact by Hazard Section */}
 							<ImpactByHazard filters={filters} />
+
+							{/* Human direct effect */}
+							<HumanDirectEffects filters={filters}/>
 						</div>
 					)}
 				</div>
