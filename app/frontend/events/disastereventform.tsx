@@ -348,7 +348,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 	let calculationOverrides: Record<string, ReactElement | undefined | null> = {}
 
 	let names = ["rehabilitation", "repair", "replacement", "recovery"]
-	let initialOverrides: Record<string,boolean> = {}
+	let initialOverrides: Record<string, boolean> = {}
 	for (let name of names) {
 		let mod = name != "recovery" ? "Costs" : "Needs"
 		let nameOverride = name + mod + "LocalCurrencyOverride"
@@ -443,7 +443,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
 							<input type="hidden" name="hazardousEventId" value={selectedHazardousEvent?.id || ""} />
 							<FieldErrors errors={props.errors} field="hazardousEventId"></FieldErrors>
-						</Field> : null
+						</Field> : <input type="hidden" name="hazardousEventId" value="" />
 				,
 				disasterEventId:
 					(hazardousEventLinkType == "disaster_event") ?
@@ -452,7 +452,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							<Link target="_blank" rel="opener" to={"/disaster-event/picker"}>Change</Link>
 							<input type="hidden" name="disasterEventId" value={selectedDisasterEvent?.id || ""} />
 							<FieldErrors errors={props.errors} field="disasterEventId"></FieldErrors>
-						</Field> : null
+						</Field> : <input type="hidden" name="disasterEventId" value="" />
 				,
 				hipTypeId: null,
 				hipClusterId: null,
@@ -461,7 +461,11 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						<Field key="hazardId" label="Specific Hazard *">
 							<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
 							<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
-						</Field> : null
+						</Field> : <>
+							<input type="hidden" name="hipTypeId" value="" />
+							<input type="hidden" name="hipClusterId" value="" />
+							<input type="hidden" name="hipHazardId" value="" />
+						</>
 				),
 				spatialFootprint: props.edit ? (
 					<Field key="spatialFootprint" label="">

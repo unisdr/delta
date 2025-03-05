@@ -24,8 +24,8 @@ import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
 import {TreeView} from "~/components/TreeView";
 
-import { ContentPicker } from "~/components/ContentPicker";
-import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
+import {ContentPicker} from "~/components/ContentPicker";
+import {contentPickerConfig} from "~/routes/disaster-record+/content-picker-config.js";
 import AuditLogHistory from "~/components/AuditLogHistory";
 import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
 import {HipHazardInfo} from "~/frontend/hip/hip";
@@ -135,15 +135,15 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
 		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+			dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
 		}
 	}
 
 	let hazardousEventLinkInitial: "none" | "hip" | "disaster_event" = "none"
 	if (props.fields.disasterEventId) {
-	        hazardousEventLinkInitial = "disaster_event"
+		hazardousEventLinkInitial = "disaster_event"
 	} else if (props.fields.hipTypeId) {
-	        hazardousEventLinkInitial = "hip"
+		hazardousEventLinkInitial = "hip"
 	}
 
 	console.log("disaster: initial link:", hazardousEventLinkInitial, "fields", props.fields)
@@ -175,7 +175,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				override={{
 					disasterEventId: (
 						<Field key="disasterEventId" label="Disaster Event">
-							<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""}/>
+							<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""} />
 						</Field>
 					),
 					hipTypeId: null,
@@ -185,7 +185,11 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 							<Field key="hazardId" label="Specific Hazard *">
 								<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
 								<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
-							</Field> : null
+							</Field> : <>
+								<input type="hidden" name="hipTypeId" value="" />
+								<input type="hidden" name="hipClusterId" value="" />
+								<input type="hidden" name="hipHazardId" value="" />
+							</>
 					),
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
@@ -228,7 +232,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 										options: ["Map Coordinates", "Geographic Level"],
 										onChange: (e: any) => {
 											const value = e.target.value;
-	
+
 											const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
 											const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
 											const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
@@ -264,31 +268,31 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 								]}
 								data={(() => {
 									try {
-									  let footprints: any[] = [];
-								  
-									  if (props?.fields?.spatialFootprint) {
-										if (Array.isArray(props.fields.spatialFootprint)) {
-										  footprints = props.fields.spatialFootprint;
-										} else if (typeof props.fields.spatialFootprint === "string") {
-										  try {
-											const parsed = JSON.parse(props.fields.spatialFootprint);
-											footprints = Array.isArray(parsed) ? parsed : [];
-										  } catch (error) {
-											console.error("Invalid JSON in spatialFootprint:", error);
-											footprints = [];
-										  }
-										} else {
-										  console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
-										  footprints = [];
+										let footprints: any[] = [];
+
+										if (props?.fields?.spatialFootprint) {
+											if (Array.isArray(props.fields.spatialFootprint)) {
+												footprints = props.fields.spatialFootprint;
+											} else if (typeof props.fields.spatialFootprint === "string") {
+												try {
+													const parsed = JSON.parse(props.fields.spatialFootprint);
+													footprints = Array.isArray(parsed) ? parsed : [];
+												} catch (error) {
+													console.error("Invalid JSON in spatialFootprint:", error);
+													footprints = [];
+												}
+											} else {
+												console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
+												footprints = [];
+											}
 										}
-									  }
-								  
-									  return footprints;
+
+										return footprints;
 									} catch (error) {
-									  console.error("Error processing spatialFootprint:", error);
-									  return [];
+										console.error("Error processing spatialFootprint:", error);
+										return [];
 									}
-								  })()}								  
+								})()}
 								onChange={(items: any) => {
 									try {
 										const parsedItems = Array.isArray(items) ? items : (items);
@@ -322,7 +326,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 															contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
 															const setField = {id: "geojson", value: JSON.parse(item.geojson)};
 															contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
-	
+
 															const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 															contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 														}
@@ -372,7 +376,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 												if (!item.tag) {
 													return "N/A"; // Return "N/A" if no tags exist
 												}
-			
+
 												const tags = (item.tag); // Parse the JSON string
 												if (Array.isArray(tags) && tags.length > 0) {
 													// Map the names and join them with commas
@@ -390,17 +394,17 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 										caption: "File/URL",
 										render: (item) => {
 											let strRet = "N/A"; // Default to "N/A"		
-			
+
 											const fileOption = item?.file_option || "";
-			
+
 											if (fileOption === "File") {
 												// Get the file name or fallback to URL
 												const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-			
+
 												// Truncate long file names while preserving the file extension
 												const maxLength = 30; // Adjust to fit your design
 												strRet = fullFileName;
-			
+
 												if (fullFileName && fullFileName.length > maxLength) {
 													const extension = fullFileName.includes('.')
 														? fullFileName.substring(fullFileName.lastIndexOf('.'))
@@ -411,7 +415,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 											} else if (fileOption === "Link") {
 												strRet = item.url || "N/A";
 											}
-			
+
 											return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
 										},
 									},
@@ -429,11 +433,11 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 											const value = e.target.value;
 											const fileField = document.getElementById("attachments_file") as HTMLInputElement;
 											const urlField = document.getElementById("attachments_url") as HTMLInputElement;
-			
+
 											if (fileField && urlField) {
 												const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
 												const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
-			
+
 												if (value === "File") {
 													fileDiv?.style.setProperty("display", "block");
 													urlDiv?.style.setProperty("display", "none");
@@ -450,7 +454,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 								data={(() => {
 									try {
 										let attachments: any[] = []; // Ensure it's always an array
-			
+
 										if (props?.fields?.attachments) {
 											if (Array.isArray(props.fields.attachments)) {
 												attachments = props.fields.attachments;
@@ -467,7 +471,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 												attachments = [];
 											}
 										}
-			
+
 										return attachments;
 									} catch (error) {
 										console.error("Error processing attachments:", error);
@@ -514,14 +518,14 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 			id={item.id}
 			plural="Disaster Records"
 			singular="Disaster Record"
-			// extraActions={
-			// 	<ul>
-			// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/human-effects"}>Human Direct Effects</Link></li>
-			// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/damages?sectorId=11"}>Damages (Sector id11)</Link></li>
-			// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/losses?sectorId=11"}>Losses (Sector id11)</Link></li>
-			// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/disruptions?sectorId=11"}>Disruptions (Sector id11)</Link></li>
-			// 	</ul>
-			// }
+		// extraActions={
+		// 	<ul>
+		// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/human-effects"}>Human Direct Effects</Link></li>
+		// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/damages?sectorId=11"}>Damages (Sector id11)</Link></li>
+		// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/losses?sectorId=11"}>Losses (Sector id11)</Link></li>
+		// 		<li><Link to={"/disaster-record/edit-sub/" + item.id + "/disruptions?sectorId=11"}>Disruptions (Sector id11)</Link></li>
+		// 	</ul>
+		// }
 		>
 			<FieldsView
 				def={fieldsDefView}
@@ -547,20 +551,20 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 									let footprints: any[] = [];
 
 									if (props?.item?.spatialFootprint) {
-									if (Array.isArray(props.item.spatialFootprint)) {
-										footprints = props.item.spatialFootprint;
-									} else if (typeof props.item.spatialFootprint === "string") {
-										try {
-										const parsed = JSON.parse(props.item.spatialFootprint);
-										footprints = Array.isArray(parsed) ? parsed : [];
-										} catch (error) {
-										console.error("Invalid JSON in spatialFootprint:", error);
-										footprints = [];
+										if (Array.isArray(props.item.spatialFootprint)) {
+											footprints = props.item.spatialFootprint;
+										} else if (typeof props.item.spatialFootprint === "string") {
+											try {
+												const parsed = JSON.parse(props.item.spatialFootprint);
+												footprints = Array.isArray(parsed) ? parsed : [];
+											} catch (error) {
+												console.error("Invalid JSON in spatialFootprint:", error);
+												footprints = [];
+											}
+										} else {
+											console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
+											footprints = [];
 										}
-									} else {
-										console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
-										footprints = [];
-									}
 									}
 									return (
 										<>
@@ -607,8 +611,8 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 								} catch (error) {
 									console.error("Error processing spatialFootprint:", error);
 									return <p>Error loading spatialFootprint data.</p>;
-								  }
-								})()}
+								}
+							})()}
 						</div>
 					),
 					attachments: (
@@ -617,7 +621,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 							{(() => {
 								try {
 									let attachments: any[] = []; // Ensure it's always an array
-			
+
 									if (props?.item?.attachments) {
 										if (Array.isArray(props.item.attachments)) {
 											attachments = props.item.attachments;
@@ -634,7 +638,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 											attachments = [];
 										}
 									}
-			
+
 									return attachments.length > 0 ? (
 										<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
 											<thead>
@@ -659,7 +663,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 															: attachment.file_option === "Link"
 																? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
 																: "N/A";
-			
+
 													return (
 														<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
 															<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>
@@ -681,7 +685,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 				}}
 			/>
 			{/* Add Audit Log History at the end */}
-			<br/>
+			<br />
 			{auditLogs && auditLogs.length > 0 && (
 				<>
 					<h3>Audit Log History</h3>
