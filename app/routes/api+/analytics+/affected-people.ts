@@ -13,7 +13,6 @@ type FilterValues = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  console.log("Loader called for /api/affected-people");
   try {
     const url = new URL(request.url);
     const filters: FilterValues = {
