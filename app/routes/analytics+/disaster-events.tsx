@@ -10,7 +10,7 @@ import { MainContainer } from "~/frontend/container";
 import { Filters } from "~/frontend/analytics/disaster-events/sections/DisasterEventFilters";
 
 import { ContentPicker } from "~/components/ContentPicker";
-import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
+import { contentPickerConfig } from "./content-picker-config";
 import { getSectorFullPathById } from "~/backend.server/models/sector";
 import { 
   disasterEventSectorsById,
