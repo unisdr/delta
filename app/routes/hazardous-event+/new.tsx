@@ -47,7 +47,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		if (!parent){
 			throw new Response("Parent not found", {status: 404});
 		}
-		return {hip, parentId, parent, treeData: []};
+		return {hip, parentId, parent, treeData: [], ctryIso3: []};
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
@@ -57,7 +57,9 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const rawData = await dr.select().from(divisionTable);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
-	return {hip: hip, treeData: treeData};
+	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+
+	return {hip: hip, treeData: treeData, ctryIso3: ctryIso3};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -85,7 +87,7 @@ export default function Screen() {
 	let fieldsInitial = {parent: ld.parentId}
 
 	return formScreen({
-		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData},
+		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData, ctryIso3: ld.ctryIso3},
 		fieldsInitial,
 		form: HazardousEventForm,
 		edit: false

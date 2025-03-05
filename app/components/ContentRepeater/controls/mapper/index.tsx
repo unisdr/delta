@@ -104,7 +104,7 @@ export const renderMapperDialog = (
                             [latMax, lonMax], // Northeast corner
                           ];
                   
-                          mapRef.current.fitBounds(bounds, { padding: [50, 50] }); // Adjust padding as needed
+                          mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 }); // Adjust padding as needed
                           if (debug) console.log(`Moved to bounds: ${JSON.stringify(bounds)}`);
                         } else {
                           // If no bounding box, fall back to a default zoom level and center on the lat/lon
@@ -501,7 +501,7 @@ export const renderMapperDialog = (
               </div>
               <div className="mapper-holder">
                 <div id={`${id}_mapper_container`} 
-                style={{ flex: 1, width: "100%", height: "500px" }}
+                style={{ flex: 1, width: "100%", height: "500px", backgroundColor: "#b2d2dd" }}
                 ></div>
               </div>
             </div>

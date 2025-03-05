@@ -33,6 +33,7 @@ interface Asset {
 
 
 interface DamagesFormProps extends UserFormProps<DamagesFields> {
+	ctryIso3?: any
 	fieldDef: FormInputDef<DamagesFields>[]
 	assets: Asset[]
 	treeData?: any;
@@ -46,6 +47,7 @@ export function DamagesForm(props: DamagesFormProps) {
 	let formRef = useRef<HTMLFormElement>(null)
 
 	const treeData = props.treeData;
+	const ctryIso3 = props.ctryIso3;
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
@@ -324,6 +326,7 @@ export function DamagesForm(props: DamagesFormProps) {
 		spatialFootprint: (
 			<Field key="spatialFootprint" label="">
 				<ContentRepeater
+					ctryIso3={ctryIso3}
 					caption="Spatial Footprint"
 					ref={contentReapeaterRef}
 					id="spatialFootprint"

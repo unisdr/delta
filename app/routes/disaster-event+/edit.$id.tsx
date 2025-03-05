@@ -55,10 +55,13 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 
 	let hip = await dataForHazardPicker()
 
+	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+
 	return {
 		...baseData,
 		hip,
 		treeData,
+		ctryIso3
 	};
 });
 
@@ -74,7 +77,8 @@ export default function Screen() {
 			hip: ld.hip,
 			hazardousEvent: ld.item?.hazardousEvent,
 			disasterEvent: ld.item?.disasterEvent,
-			treeData: ld.treeData
+			treeData: ld.treeData,
+			ctryIso3: ld.ctryIso3
 		},
 		fieldsInitial: fieldsInitial,
 		form: DisasterEventForm,
