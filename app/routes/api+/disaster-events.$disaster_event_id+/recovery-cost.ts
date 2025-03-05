@@ -1,3 +1,4 @@
+import { dr } from "~/db.server";
 import { calculateTotalRecoveryCost } from "~/backend.server/models/analytics/disaster-events-cost-calculator";
 
 export const loader = async ({
@@ -14,7 +15,7 @@ export const loader = async ({
 			);
 		}
 
-		const totalRecoveryCost = await calculateTotalRecoveryCost(disaster_event_id);
+		const totalRecoveryCost = await calculateTotalRecoveryCost(dr, disaster_event_id);
 		return Response.json({ total_recovery_cost: totalRecoveryCost });
 	} catch (error) {
 		console.error("Error fetching recovery cost:", error);

@@ -1,4 +1,6 @@
 import { calculateTotalRepairCost } from "~/backend.server/models/analytics/disaster-events-cost-calculator";
+import { dr } from "~/db.server";
+
 
 
 export const loader = async ({ params }: { params: { disaster_event_id: string } }) => {
@@ -8,7 +10,7 @@ export const loader = async ({ params }: { params: { disaster_event_id: string }
             return Response.json({ error: "Missing disaster_event_id" }, { status: 400 });
         }
 
-        const totalRepairCost = await calculateTotalRepairCost(disaster_event_id);
+        const totalRepairCost = await calculateTotalRepairCost(dr, disaster_event_id);
         return Response.json({ total_repair_cost: totalRepairCost });
 
     } catch (error) {
