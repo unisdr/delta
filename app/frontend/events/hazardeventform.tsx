@@ -327,13 +327,23 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 									rootCaption="Geographic levels"
 									onApply={
 										(selectedItems: any) => {
+											//console.log('selectedItems selectedId:', selectedItems.selectedId);
+											//console.log('selectedItems dataIds:', selectedItems.dataIds);
 											if (contentReapeaterRef.current.getDialogRef()) {
 												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
 												selectedItems.data.map((item: any) => {
 													if (item.id == selectedItems.selectedId) {
 														contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-														const setField = {id: "geojson", value: JSON.parse(item.geojson)};
-														contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
+														let arrValue = JSON.parse(item.geojson);
+														arrValue = {
+															...arrValue,  // Spread existing properties (if any)
+															dts_info: {
+																division_id: selectedItems.selectedId || null, 
+																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
+															}
+														};
+														const setField = {id: "geojson", value: arrValue};
+														contentReapeaterRef.current.handleFieldChange(setField, arrValue);
 
 														const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 														contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
@@ -341,6 +351,11 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 												});
 												treeViewDiscard();
 											}
+										}
+									}
+									onClose={
+										() => {
+											treeViewDiscard();
 										}
 									}
 									onRenderItemName={
