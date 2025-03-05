@@ -47,7 +47,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 			with: {
 				sector: true
 			},
-			where: and(eq(lossesTable.sectorId, sectorId), eq(lossesTable.recordId,recordId)),
+			where: and(eq(lossesTable.sectorId, sectorId), eq(lossesTable.recordId,recordId as string)),
 			orderBy: [desc(lossesTable.id)],
 		})
 	}

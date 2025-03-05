@@ -48,7 +48,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				asset: true,
 				sector: true,
 			},
-			where: and(eq(damagesTable.sectorId, sectorId), eq(damagesTable.recordId, recordId)),
+			where: and(eq(damagesTable.sectorId, sectorId), eq(damagesTable.recordId, recordId!)),
 			orderBy: [desc(damagesTable.id)],
 		})
 	}
