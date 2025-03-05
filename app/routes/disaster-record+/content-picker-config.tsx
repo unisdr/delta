@@ -58,14 +58,18 @@ export const contentPickerConfig = {
             { column: disasterEventTable.endDate, placeholder: "[safeSearchPattern]" },
             { column: disasterEventTable.approvalStatus, placeholder: "[safeSearchPattern]" },
 
-            { column: disasterEventTable.disasterDeclarationTypeAndEffect, placeholder: "[safeSearchPattern]" },
-            { column: disasterEventTable.officialWarningAffectedAreas, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.disasterDeclarationTypeAndEffect1, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.disasterDeclarationTypeAndEffect2, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.disasterDeclarationTypeAndEffect3, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.disasterDeclarationTypeAndEffect4, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.disasterDeclarationTypeAndEffect5, placeholder: "[safeSearchPattern]" },
 
-            { column: disasterEventTable.earlyAction1, placeholder: "[safeSearchPattern]" },
-            { column: disasterEventTable.earlyAction2, placeholder: "[safeSearchPattern]" },
-            { column: disasterEventTable.earlyAction3, placeholder: "[safeSearchPattern]" },
-            { column: disasterEventTable.earlyAction4, placeholder: "[safeSearchPattern]" },
-            { column: disasterEventTable.earlyAction5, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.officialWarningAffectedAreas, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyActionDescription1, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyActionDescription2, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyActionDescription3, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyActionDescription4, placeholder: "[safeSearchPattern]" },
+            { column: disasterEventTable.earlyActionDescription5, placeholder: "[safeSearchPattern]" },
 
             { column: disasterEventTable.responseOperations, placeholder: "[safeSearchPattern]" },
 
