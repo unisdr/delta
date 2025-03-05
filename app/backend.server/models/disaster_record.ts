@@ -1,10 +1,11 @@
 import {dr, Tx} from "~/db.server";
 import {disasterRecordsTable, disasterRecords, humanCategoryPresenceTable} from "~/drizzle/schema";
-import {eq,sql} from "drizzle-orm";
+import {eq, sql} from "drizzle-orm";
 
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
+import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator";
 
 export interface DisasterRecordsFields extends Omit<disasterRecords, "id"> {}
 
@@ -66,6 +67,8 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Parti
 		})
 		.where(eq(disasterRecordsTable.id, id));
 
+	await updateTotalsUsingDisasterRecordId(tx, idStr)
+
 	return {ok: true};
 }
 
@@ -91,7 +94,7 @@ export async function disasterRecordsById(idStr: string) {
 
 export async function disasterRecordsByIdTx(tx: Tx, idStr: string) {
 	let id = idStr;
-	let res= await tx.query.disasterRecordsTable.findFirst({
+	let res = await tx.query.disasterRecordsTable.findFirst({
 		where: eq(disasterRecordsTable.id, id),
 		with: {
 			disasterEvent: true,
@@ -100,7 +103,7 @@ export async function disasterRecordsByIdTx(tx: Tx, idStr: string) {
 			hipType: true,
 		}
 	});
-	if(!res){
+	if (!res) {
 		throw new Error("Id is invalid");
 	}
 	return res;
@@ -118,9 +121,9 @@ export async function getHumanEffectRecordsById(disasterRecordidStr: string) {
 
 async function _getHumanEffectRecordsByIdTx(tx: Tx, disasterRecordidStr: string) {
 	let id = disasterRecordidStr;
-	let res= await tx.query.humanCategoryPresenceTable.findFirst({
+	let res = await tx.query.humanCategoryPresenceTable.findFirst({
 		where: eq(humanCategoryPresenceTable.recordId, id),
 	});
-	
+
 	return res;
 }

@@ -9,6 +9,7 @@ import {eq,sql,and,aliasedTable} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
+import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator";
 
 export interface DisRecSectorsFields extends Omit<disRecSectorsType, "id"> {}
 
@@ -36,6 +37,8 @@ export async function disRecSectorsCreate(tx: Tx, fields: DisRecSectorsFields): 
 			withLosses: fields.withLosses,
 		})
 		.returning({id: sectorDisasterRecordsRelationTable.id});
+	
+	await updateTotalsUsingDisasterRecordId(tx, fields.disasterRecordId)
 
 	return {ok: true, id: res[0].id};
 }
@@ -55,6 +58,8 @@ export async function disRecSectorsUpdate(tx: Tx, idStr: string, fields: DisRecS
 			withLosses: fields.withLosses,
 		})
 		.where(eq(sectorDisasterRecordsRelationTable.id, id));
+
+	await updateTotalsUsingDisasterRecordId(tx, fields.disasterRecordId)
 
 	return {ok: true};
 }

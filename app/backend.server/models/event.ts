@@ -22,7 +22,6 @@ import {
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
 import {logAudit} from "./auditLogs";
 import {getRequiredAndSetToNullHipFields} from "./hip_hazard_picker";
-import { calculateTotalRecoveryCost, calculateTotalRehabilitationCost, calculateTotalRepairCost, calculateTotalReplacementCost } from "./analytics/disaster-events-cost-calculator";
 
 export interface HazardousEventFields extends Omit<EventInsert, 'id'>, Omit<HazardousEventInsert, 'id'>, ObjectWithImportId {
 	parent: string
@@ -507,10 +506,6 @@ export async function disasterEventByIdTx(tx: Tx, id: any) {
 	if (!res) {
 		throw new Error("Id is invalid");
 	}
-	res.repairCostsLocalCurrency = (await calculateTotalRepairCost(id)).toString();
-	res.recoveryNeedsLocalCurrency = (await calculateTotalRecoveryCost(id)).toString();
-	res.rehabilitationCostsLocalCurrency = (await calculateTotalRehabilitationCost(id)).toString();
-	res.replacementCostsLocalCurrency = (await calculateTotalReplacementCost(id)).toString();
 
 	return res
 }

@@ -2,7 +2,7 @@ import {
 	Link
 } from "@remix-run/react";
 
-import {useEffect, useState, useRef} from 'react';
+import {useEffect, useState, useRef, ReactElement} from 'react';
 
 import {DisasterEventFields, DisasterEventViewModel, HazardousEventBasicInfoViewModel, DisasterEventBasicInfoViewModel} from "~/backend.server/models/event"
 
@@ -20,13 +20,15 @@ import {
 	FormView,
 	FieldErrors,
 	Field,
-	WrapInputBasic
+	WrapInputBasic,
+	WrapInput
 } from "~/frontend/form";
 import {approvalStatusField} from "../approval";
 import {formatDate} from "~/util/date";
 import AuditLogHistory from "~/components/AuditLogHistory";
 import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
 import {HipHazardInfo} from "~/frontend/hip/hip";
+import {capitalizeFirstLetter} from "~/util/string";
 
 export const route = "/disaster-event"
 
@@ -215,14 +217,14 @@ export const fieldsDefCommon = [
 	{key: "humanitarianNeedsLocalCurrency", label: "Humanitarian needs - total in local currency", type: "money", uiRow: {}},
 	{key: "humanitarianNeedsUSD", label: "Humanitarian needs - total in USD", type: "money"},
 
-	{key: "rehabilitationCostsLocalCurrency", label: "Rehabilitation costs - total in local currency", type: "money", uiRow: {}},
-	{key: "rehabilitationCostsUSD", label: "Rehabilitation costs - total in USD", type: "money"},
-	{key: "repairCostsLocalCurrency", label: "Repair costs - total in local currency", type: "money", uiRow: {}},
-	{key: "repairCostsUSD", label: "Repair costs - total in USD", type: "money"},
-	{key: "replacementCostsLocalCurrency", label: "Replacement costs - total in local currency", type: "money", uiRow: {}},
-	{key: "replacementCostsUSD", label: "Replacement costs - total in USD", type: "money"},
-	{key: "recoveryNeedsLocalCurrency", label: "Recovery needs - total in local currency", type: "money", uiRow: {}},
-	{key: "recoveryNeedsUSD", label: "Recovery needs - total in USD", type: "money"},
+	{key: "rehabilitationCostsLocalCurrencyOverride", label: "Rehabilitation costs - total in local currency (override)", type: "money", uiRow: {}},
+	//{key: "rehabilitationCostsUSD", label: "Rehabilitation costs - total in USD", type: "money"},
+	{key: "repairCostsLocalCurrencyOverride", label: "Repair costs - total in local currency (override)", type: "money", uiRow: {}},
+	//{key: "repairCostsUSD", label: "Repair costs - total in USD", type: "money"},
+	{key: "replacementCostsLocalCurrencyOverride", label: "Replacement costs - total in local currency (override)", type: "money", uiRow: {}},
+	//{key: "replacementCostsUSD", label: "Replacement costs - total in USD", type: "money"},
+	{key: "recoveryNeedsLocalCurrencyOverride", label: "Recovery needs - total in local currency (override)", type: "money", uiRow: {}},
+	//{key: "recoveryNeedsUSD", label: "Recovery needs - total in USD", type: "money"},
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 ] as const;
@@ -341,9 +343,73 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 		hazardousEventLinkInitial = "disaster_event"
 	}
 
-	console.log("disaster: initial link:", hazardousEventLinkInitial, "fields", props.fields)
-
 	const [hazardousEventLinkType, setHazardousEventLinkType] = useState(hazardousEventLinkInitial)
+
+	let calculationOverrides: Record<string, ReactElement | undefined | null> = {}
+
+	let names = ["rehabilitation", "repair", "replacement", "recovery"]
+	let initialOverrides: Record<string,boolean> = {}
+	for (let name of names) {
+		let mod = name != "recovery" ? "Costs" : "Needs"
+		let nameOverride = name + mod + "LocalCurrencyOverride"
+		let valueOverride = (props.fields as any)[nameOverride] as string
+		initialOverrides[nameOverride] = valueOverride !== "" && valueOverride !== null;
+	}
+
+	let [overrides, setOverrides] = useState(initialOverrides)
+	for (let name of names) {
+		let mod = name != "recovery" ? "Costs" : "Needs"
+		let nameOverride = name + mod + "LocalCurrencyOverride"
+		let nameCalc = name + mod + "LocalCurrencyCalc"
+		let valueOverride = (props.fields as any)[nameOverride] as string
+		let valueCalc = (props.fields as any)[nameCalc] as string
+		//	let value = (valueOverride !== "" && valueOverride !== null) ? valueOverride : valueCalc
+		//if (value === "" || value === null) {
+		//value = "0"
+		//}
+		let def = fieldsDef.find((d) => d.key == nameOverride)
+		if (!def) throw new Error("def not found for: " + nameOverride)
+
+		let errors: any = null
+		if (props.errors?.fields) {
+			let fe = props.errors.fields as any
+			errors = fe[nameOverride]
+		}
+
+		const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+			setOverrides((prevOverrides) => ({...prevOverrides, [nameOverride]: event.target.checked}));
+		}
+
+		calculationOverrides[nameOverride] = (
+			<>
+				<WrapInput
+					def={def}
+					child={
+						<>
+							{overrides[nameOverride] ? (
+								<input
+									type="text"
+									inputMode="numeric"
+									pattern="[0-9]*"
+									name={nameOverride}
+									defaultValue={valueOverride}
+								/>
+							) : (
+								<>
+									<input type="hidden" name={nameOverride} value="" />
+									<input type="text" disabled value={valueCalc} />
+								</>
+							)}
+						</>
+					}
+					errors={errors}
+				/>
+				<WrapInputBasic label="Override" child={
+					<input type="checkbox" checked={overrides[nameOverride] || false} onChange={handleCheckboxChange}></input>
+				} />
+			</>
+		)
+	}
 
 	return (
 		<FormView
@@ -369,6 +435,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 			</>
 			}
 			override={{
+				...calculationOverrides,
 				hazardousEventId:
 					(hazardousEventLinkType == "hazardous_event") ?
 						<Field key="hazardousEventId" label="Hazardous Event">
@@ -677,7 +744,193 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 	const handlePreviewMap = (e: any) => {
 		e.preventDefault();
 		previewMap(JSON.stringify((item.spatialFootprint)));
-	};
+	}
+
+	let calculationOverrides: Record<string, ReactElement | undefined | null> = {}
+
+	let names = ["rehabilitation", "repair", "replacement", "recovery"]
+	for (let name of names) {
+		let mod = name != "recovery" ? "Costs" : "Needs"
+		let nameOverride = name + mod + "LocalCurrencyOverride"
+		let nameCalc = name + mod + "LocalCurrencyCalc"
+		let valueOverride = (props.item as any)[nameOverride] as string
+		let valueCalc = (props.item as any)[nameCalc] as string
+		let value = (valueOverride !== "" && valueOverride !== null) ? valueOverride : valueCalc
+		if (value === "" || value === null) {
+			value = "0"
+		}
+		calculationOverrides[nameOverride] = (
+			<p key={nameOverride}>{capitalizeFirstLetter(name)} {mod} Local Currency: {value}</p>
+		)
+	}
+
+	let override = {
+		...calculationOverrides,
+		hazardousEventId: (
+			item.hazardousEvent &&
+			<p key="hazardousEventId">Hazardous Event: {hazardousEventLink(item.hazardousEvent)}</p>
+		),
+		disasterEventId: (
+			item.disasterEvent &&
+			<p key="disasterEventId">Disaster Event: {disasterEventLink(item.disasterEvent)}</p>
+		),
+		hipHazard: (
+			<HipHazardInfo key="hazard" model={item} />
+		),
+		createdAt: (
+			<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
+		),
+		updatedAt: (
+			<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
+		),
+		spatialFootprint: (
+			<div>
+				<p>Spatial Footprint:</p>
+				{(() => {
+					try {
+						let footprints: any[] = []; // Ensure it's an array
+
+						if (item?.spatialFootprint) {
+							if (typeof item.spatialFootprint === "string") {
+								try {
+									const parsed = JSON.parse(item.spatialFootprint);
+									footprints = Array.isArray(parsed) ? parsed : [];
+								} catch (error) {
+									console.error("Invalid JSON in spatialFootprint:", error);
+								}
+							} else if (Array.isArray(item.spatialFootprint)) {
+								footprints = item.spatialFootprint;
+							}
+						}
+
+						return (
+							<>
+								<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
+									<thead>
+										<tr style={{backgroundColor: "#f4f4f4"}}>
+											<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Title</th>
+											<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Option</th>
+										</tr>
+									</thead>
+									<tbody>
+										{footprints.map((footprint: any, index: number) => {
+											try {
+												const option = footprint.map_option || "Unknown Option";
+												return (
+													<tr key={footprint.id || index}>
+														<td style={{border: "1px solid #ddd", padding: "8px"}}>
+															<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = [{"geojson": footprint.geojson}]; previewMap(JSON.stringify(newGeoJson));}}>
+																{footprint.title}
+															</a>
+														</td>
+														<td style={{border: "1px solid #ddd", padding: "8px"}}>
+															<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
+																{option}
+															</a>
+														</td>
+													</tr>
+												);
+											} catch {
+												return (
+													<tr key={index}>
+														<td style={{border: "1px solid #ddd", padding: "8px"}}>{footprint.title}</td>
+														<td style={{border: "1px solid #ddd", padding: "8px", color: "red"}}>Invalid Data</td>
+													</tr>
+												);
+											}
+										})}
+									</tbody>
+								</table>
+								<button
+									onClick={handlePreviewMap}
+									style={{
+										padding: "10px 16px",
+										border: "1px solid #ddd",
+										backgroundColor: "#f4f4f4",
+										color: "#333",
+										fontSize: "14px",
+										fontWeight: "normal",
+										borderRadius: "4px",
+										marginBottom: "2rem",
+										cursor: "pointer"
+									}}
+								>
+									Map Preview
+								</button>
+							</>
+						);
+
+					} catch {
+						return <p>Invalid JSON format in spatialFootprint.</p>;
+					}
+				})()}
+			</div>
+		),
+		attachments: (
+			<>
+				{(() => {
+					try {
+						let attachments: any[] = []; // Ensure it's an array
+
+						if (item?.attachments) {
+							if (typeof item.attachments === "string") {
+								try {
+									const parsed = JSON.parse(item.attachments);
+									attachments = Array.isArray(parsed) ? parsed : [];
+								} catch (error) {
+									console.error("Invalid JSON in attachments:", error);
+								}
+							} else if (Array.isArray(item.attachments)) {
+								attachments = item.attachments;
+							}
+						}
+
+						return attachments.length > 0 ? (
+							<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
+								<thead>
+									<tr style={{backgroundColor: '#f2f2f2'}}>
+										<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Title</th>
+										<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Tags</th>
+										<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>File/URL</th>
+									</tr>
+								</thead>
+								<tbody>
+									{(attachments).map((attachment: any) => {
+										const tags = attachment.tag
+											? (attachment.tag).map((tag: any) => tag.name).join(", ")
+											: "N/A";
+										const fileOrUrl =
+											attachment.file_option === "File" && attachment.file
+												? (
+													<a href={`/disaster-event/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
+														{attachment.file.name.split("/").pop()}
+													</a>
+												)
+												: attachment.file_option === "Link"
+													? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
+													: "N/A";
+
+										return (
+											<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
+												<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>
+												<td style={{border: '1px solid #ddd', padding: '8px'}}>{tags}</td>
+												<td style={{border: '1px solid #ddd', padding: '8px'}}>{fileOrUrl}</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						) : (
+							<p></p>
+						);
+					} catch (error) {
+						console.error("Error processing attachments:", error);
+						return <p>Error loading attachments.</p>;
+					}
+				})()}
+			</>
+		),
+	}
 
 	return (
 		<ViewComponent
@@ -687,175 +940,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			plural="Disaster events"
 			singular="Disaster event"
 		>
-			<FieldsView def={fieldsDefView} fields={item} override={{
-				hazardousEventId: (
-					item.hazardousEvent &&
-					<p key="hazardousEventId">Hazardous Event: {hazardousEventLink(item.hazardousEvent)}</p>
-				),
-				disasterEventId: (
-					item.disasterEvent &&
-					<p key="disasterEventId">Disaster Event: {disasterEventLink(item.disasterEvent)}</p>
-				),
-				hipHazard: (
-					<HipHazardInfo key="hazard" model={item} />
-				),
-				createdAt: (
-					<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
-				),
-				updatedAt: (
-					<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
-				),
-				spatialFootprint: (
-					<div>
-						<p>Spatial Footprint:</p>
-						{(() => {
-							try {
-								let footprints: any[] = []; // Ensure it's an array
-
-								if (item?.spatialFootprint) {
-									if (typeof item.spatialFootprint === "string") {
-										try {
-											const parsed = JSON.parse(item.spatialFootprint);
-											footprints = Array.isArray(parsed) ? parsed : [];
-										} catch (error) {
-											console.error("Invalid JSON in spatialFootprint:", error);
-										}
-									} else if (Array.isArray(item.spatialFootprint)) {
-										footprints = item.spatialFootprint;
-									}
-								}
-
-								return (
-									<>
-										<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
-											<thead>
-												<tr style={{backgroundColor: "#f4f4f4"}}>
-													<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Title</th>
-													<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Option</th>
-												</tr>
-											</thead>
-											<tbody>
-												{footprints.map((footprint: any, index: number) => {
-													try {
-														const option = footprint.map_option || "Unknown Option";
-														return (
-															<tr key={footprint.id || index}>
-																<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																	<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = [{"geojson": footprint.geojson}]; previewMap(JSON.stringify(newGeoJson));}}>
-																		{footprint.title}
-																	</a>
-																</td>
-																<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																	<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
-																		{option}
-																	</a>
-																</td>
-															</tr>
-														);
-													} catch {
-														return (
-															<tr key={index}>
-																<td style={{border: "1px solid #ddd", padding: "8px"}}>{footprint.title}</td>
-																<td style={{border: "1px solid #ddd", padding: "8px", color: "red"}}>Invalid Data</td>
-															</tr>
-														);
-													}
-												})}
-											</tbody>
-										</table>
-										<button
-											onClick={handlePreviewMap}
-											style={{
-												padding: "10px 16px",
-												border: "1px solid #ddd",
-												backgroundColor: "#f4f4f4",
-												color: "#333",
-												fontSize: "14px",
-												fontWeight: "normal",
-												borderRadius: "4px",
-												marginBottom: "2rem",
-												cursor: "pointer"
-											}}
-										>
-											Map Preview
-										</button>
-									</>
-								);
-
-							} catch {
-								return <p>Invalid JSON format in spatialFootprint.</p>;
-							}
-						})()}
-					</div>
-				),
-				attachments: (
-					<>
-						{(() => {
-							try {
-								let attachments: any[] = []; // Ensure it's an array
-
-								if (item?.attachments) {
-									if (typeof item.attachments === "string") {
-										try {
-											const parsed = JSON.parse(item.attachments);
-											attachments = Array.isArray(parsed) ? parsed : [];
-										} catch (error) {
-											console.error("Invalid JSON in attachments:", error);
-										}
-									} else if (Array.isArray(item.attachments)) {
-										attachments = item.attachments;
-									}
-								}
-
-								return attachments.length > 0 ? (
-									<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
-										<thead>
-											<tr style={{backgroundColor: '#f2f2f2'}}>
-												<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Title</th>
-												<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Tags</th>
-												<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>File/URL</th>
-											</tr>
-										</thead>
-										<tbody>
-											{(attachments).map((attachment: any) => {
-												const tags = attachment.tag
-													? (attachment.tag).map((tag: any) => tag.name).join(", ")
-													: "N/A";
-												const fileOrUrl =
-													attachment.file_option === "File" && attachment.file
-														? (
-															<a href={`/disaster-event/file-viewer/?name=${item.id}/${attachment.file.name.split("/").pop()}`} target="_blank" rel="noopener noreferrer">
-																{attachment.file.name.split("/").pop()}
-															</a>
-														)
-														: attachment.file_option === "Link"
-															? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
-															: "N/A";
-
-												return (
-													<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
-														<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>
-														<td style={{border: '1px solid #ddd', padding: '8px'}}>{tags}</td>
-														<td style={{border: '1px solid #ddd', padding: '8px'}}>{fileOrUrl}</td>
-													</tr>
-												);
-											})}
-										</tbody>
-									</table>
-								) : (
-									<p></p>
-								);
-							} catch (error) {
-								console.error("Error processing attachments:", error);
-								return <p>Error loading attachments.</p>;
-							}
-						})()}
-					</>
-				),
-			}}
-
-
-			/>
+			<FieldsView def={fieldsDefView} fields={item} override={override} />
 
 			{/* Add Audit Log History at the end */}
 			<br />

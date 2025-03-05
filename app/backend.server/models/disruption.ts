@@ -6,6 +6,7 @@ import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handler
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {configCurrencies} from "~/util/config"
+import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
 
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 
@@ -74,6 +75,8 @@ export async function disruptionCreate(tx: Tx, fields: DisruptionFields): Promis
 		})
 		.returning({id: disruptionTable.id})
 
+	await updateTotalsUsingDisasterRecordId(tx, fields.recordId)
+
 	return {ok: true, id: res[0].id}
 }
 
@@ -88,8 +91,23 @@ export async function disruptionUpdate(tx: Tx, id: string, fields: Partial<Disru
 		})
 		.where(eq(disruptionTable.id, id))
 
+	let recordId = await getRecordId(tx, id)
+	await updateTotalsUsingDisasterRecordId(tx, recordId)
+
 	return {ok: true}
 }
+
+export async function getRecordId(tx: Tx, id: string) {
+	let rows = await tx.select({
+		recordId: disruptionTable.recordId
+	})
+		.from(disruptionTable)
+		.where(eq(disruptionTable.id, id)).execute()
+	if (!rows.length) throw new Error("not found by id")
+	return rows[0].recordId
+}
+
+
 
 export type DisruptionViewModel = Exclude<Awaited<ReturnType<typeof disruptionById>>, undefined>
 
