@@ -41,6 +41,7 @@ interface LoaderRes {
 	sectorId: number
 	sectorIsAgriculture?: boolean
 	treeData?: any[]
+	ctryIso3?: string
 }
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -51,6 +52,15 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!params.disRecId) {
 		throw new Error("Route does not have disRecId param")
 	}
+
+	const idKey = "id";
+    const parentKey = "parentId";
+    const nameKey = "name";
+    const rawData = await dr.select().from(divisionTable);
+    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+
 	if (params.id === "new") {
 		let url = new URL(request.url)
 		let sectorId = Number(url.searchParams.get("sectorId")) || 0
@@ -62,7 +72,9 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			fieldDef: fieldsDef,
 			recordId: params.disRecId,
 			sectorId: sectorId,
-			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId)
+			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId),
+			treeData: treeData || [],
+			ctryIso3: ctryIso3 || "",
 		}
 		return res
 	}
@@ -71,18 +83,13 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Response("Not Found", {status: 404});
 	}
 
-	const idKey = "id";
-    const parentKey = "parentId";
-    const nameKey = "name";
-    const rawData = await dr.select().from(divisionTable);
-    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
-
 	let res: LoaderRes = {
 		item: item,
 		fieldDef: fieldsDef,
 		recordId: item.recordId,
 		sectorId: item.sectorId,
-		treeData: treeData || []
+		treeData: treeData || [],
+		ctryIso3: ctryIso3 || "",
 	}
 	return res
 });
@@ -135,7 +142,8 @@ export default function Screen() {
 
 	return formScreen({
 		extraData: {
-			fieldDef: ld.fieldDef
+			fieldDef: ld.fieldDef,
+			ctryIso3: ld.ctryIso3,
 		},
 		fieldsInitial,
 		form: LossesForm,

@@ -92,6 +92,7 @@ interface ContentRepeaterProps {
   file_viewer_url?: string;
   mapper_preview?: boolean;
   caption?: string;
+  ctryIso3?: string;
 }
 
 const loadLeaflet = (() => {
@@ -184,6 +185,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
   file_viewer_url = "",
   mapper_preview = false,
   caption = "",
+  ctryIso3 = null,
 }, ref: any) => {
   const [items, setItems] = useState<Record<string, any>>(() => {
     const initialState: Record<string, any> = {};
@@ -381,7 +383,60 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
     startMarker: null, // Initialize as null
   });    
   type InitialDataType = object | null;
-  const initializeMap = (initialData: InitialDataType) => {
+  const defaultMapLocation = async (): Promise<{ coords: [number, number]; bounds?: [[number, number], [number, number]] }> => {
+    const iso3 = ctryIso3; // Default country code
+    const apiUrl = `https://data.undrr.org/api/json/gis/countries/1.0.0/?cca3=${iso3}`;
+
+    // Default location (Urumqi)
+    const defaultCoords: [number, number] = [43.833, 87.616];
+
+    try {
+        if (!iso3) throw new Error("Country ISO3 code is missing");
+
+        // Step 1: Fetch Country Data (API)
+        const responseCountry = await fetch(apiUrl);
+        if (!responseCountry.ok) throw new Error(`Failed to fetch country data: ${responseCountry.statusText}`);
+
+        const dataCountry = await responseCountry.json();
+        if (!dataCountry?.data?.length) throw new Error(`Country API returned no data for ${iso3}`);
+
+        const cca2 = dataCountry.data[0]?.cca2;
+        if (!cca2) throw new Error(`Country code not found for ${iso3}`);
+
+        // Step 2: Fetch Country Center & Bounds from Nominatim
+        const nominatimUrl = `https://nominatim.openstreetmap.org/search?country=${cca2}&format=json&limit=1&polygon_geojson=1`;
+        const responseNominatim = await fetch(nominatimUrl);
+        
+        if (!responseNominatim.ok) throw new Error(`Failed to fetch Nominatim data: ${responseNominatim.statusText}`);
+
+        // ✅ Proof-Check: Ensure valid JSON and non-empty array
+        let dataNominatim;
+        try {
+            dataNominatim = await responseNominatim.json();
+            if (!Array.isArray(dataNominatim) || dataNominatim.length === 0) {
+                throw new Error(`Nominatim returned an empty result for ${cca2}`);
+            }
+        } catch (parseError) {
+            throw new Error(`Failed to parse Nominatim JSON: ${parseError}`);
+        }
+
+        const { lat, lon, boundingbox } = dataNominatim[0];
+
+        return {
+            coords: [parseFloat(lat), parseFloat(lon)], // Extract coordinates
+            bounds: [
+                [parseFloat(boundingbox[0]), parseFloat(boundingbox[2])], // Southwest
+                [parseFloat(boundingbox[1]), parseFloat(boundingbox[3])]  // Northeast
+            ]
+        };
+
+    } catch (error) {
+        console.error("Error fetching country/location data:", error);
+        return { coords: defaultCoords }; // 🚀 Immediate fallback!
+    }
+  };
+   
+  const initializeMap = async (initialData: InitialDataType) => {
     const L = (window as any).L || null;
 
     if (!mapRef.current && L) {
@@ -413,10 +468,16 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       if (mapperSearch) mapperSearch.value = '';
   
       // Initialize the map
-      mapRef.current = L.map(`${id}_mapper_container`, { dragging: true }).setView([43.833, 87.616], 2); // Urumqi center
+      const { coords, bounds } = await defaultMapLocation();
+      mapRef.current = L.map(`${id}_mapper_container`, { dragging: true });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
       }).addTo(mapRef.current);
+      if (bounds) {
+        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      } else {
+        mapRef.current.setView(coords, 2); // Default zoom if no bounds found
+      }
   
       // Handle map click events
       mapRef.current.on("click", (e: any) => {
@@ -904,6 +965,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       mapperContainer.style.flex = "1";
       mapperContainer.style.width = "100%";
       mapperContainer.style.height = "500px";
+      mapperContainer.style.backgroundColor = "#b2d2dd";
       container.appendChild(mapperContainer);
     } else {
       console.error(`Container not found for selector: ${id}_mapper .dts-form__body`);

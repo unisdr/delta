@@ -275,6 +275,7 @@ interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
 	hazardousEvent?: HazardousEventBasicInfoViewModel | null
 	disasterEvent?: DisasterEventBasicInfoViewModel | null
 	treeData: any[];
+	ctryIso3: string;
 }
 
 export function DisasterEventForm(props: DisasterEventFormProps) {
@@ -303,9 +304,8 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 		};
 	}, []);
 
-
-
 	const treeData = props.treeData;
+	const ctryIso3 = props.ctryIso3;
 
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
@@ -399,6 +399,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 				spatialFootprint: props.edit ? (
 					<Field key="spatialFootprint" label="">
 						<ContentRepeater
+							ctryIso3={ctryIso3}
 							caption="Spatial Footprint"
 							ref={contentReapeaterRef}
 							id="spatialFootprint"

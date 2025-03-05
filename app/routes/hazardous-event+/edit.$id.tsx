@@ -55,7 +55,9 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const rawData = await dr.select().from(divisionTable);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
-	return {hip: hip, item: item, treeData: treeData};
+	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+
+	return {hip: hip, item: item, treeData: treeData, ctryIso3: ctryIso3};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -86,7 +88,7 @@ export default function Screen() {
 		parent: ""
 	}
 	return formScreen({
-		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData},
+		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData, ctryIso3: ld.ctryIso3},
 		fieldsInitial,
 		form: HazardousEventForm,
 		edit: true,
