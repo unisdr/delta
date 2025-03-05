@@ -12,6 +12,15 @@ type FilterValues = {
   toDate: string | null;
 };
 
+// Define the return type from getTotalAffectedPeople
+type AffectedPeopleTotals = {
+  missingTotal: number;
+  injuredTotal: number;
+  deathsTotal: number;
+  directTotal: number;
+  displacedTotal: number;
+};
+
 export const loader: LoaderFunction = async ({ request }) => {
   try {
     const url = new URL(request.url);
@@ -26,10 +35,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     console.log("Filters received:", filters);
 
-    const totalAffected = await getTotalAffectedPeople(filters);
+    const totals = await getTotalAffectedPeople(filters);
     return json({
       success: true,
-      data: { totalAffectedPeople: totalAffected },
+      data: totals, // Return the full object with individual totals
     });
   } catch (error) {
     console.error("Loader error:", error);
