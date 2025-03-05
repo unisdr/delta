@@ -33,7 +33,7 @@ import {
   sectorDisasterRecordsRelationTable,
   sectorTable
 } from "~/drizzle/schema";
-import { and, eq, inArray, ilike, SQL, exists, like } from "drizzle-orm";
+import { and, eq, inArray, ilike, SQL, exists, like, or } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import {
   calculateDamages,
@@ -103,19 +103,53 @@ interface SectorImpactData {
   };
 }
 
-// Cache for division names
-const divisionCache = new Map<string, { name: string, normalized: string }>();
+// Cache for division info
+const divisionCache = new Map<string, { id: number, names: Record<string, string>, geometry: any }>();
 
-// Helper function to normalize text for matching
-const normalizeText = (text: string): string => {
+const getDivisionInfo = async (geographicLevelId: string): Promise<{ id: number, names: Record<string, string>, geometry: any } | null> => {
+  // Check cache first
+  const cached = divisionCache.get(geographicLevelId);
+  if (cached) {
+    return cached;
+  }
+
+  // If not in cache, fetch from database
+  const division = await dr
+    .select({
+      id: divisionTable.id,
+      name: divisionTable.name,
+      geom: divisionTable.geom
+    })
+    .from(divisionTable)
+    .where(eq(divisionTable.id, parseInt(geographicLevelId)))
+    .limit(1);
+
+  if (!division || division.length === 0) {
+    return null;
+  }
+
+  const result = {
+    id: division[0].id,
+    names: division[0].name as Record<string, string>,
+    geometry: division[0].geom
+  };
+
+  // Cache the result
+  divisionCache.set(geographicLevelId, result);
+  return result;
+};
+
+// Helper function to normalize text for matching (same as in geographicImpact.ts)
+function normalizeText(text: string): string {
   return text
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .normalize('NFKD')                // Normalize unicode characters
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    .replace(/[^\w\s,-]/g, ' ')      // Replace special chars with space
+    .replace(/\s+/g, ' ')            // Clean up multiple spaces
+    .replace(/\b(region|province|city|municipality)\b/g, '') // Remove common geographic terms
     .trim();
-};
+}
 
 // Helper function to validate sector ID
 const validateSectorId = (sectorId: string): number => {
@@ -129,40 +163,6 @@ const validateSectorId = (sectorId: string): number => {
   return numericId;
 };
 
-// Helper function to get division info with caching
-const getDivisionInfo = async (geographicLevelId: string): Promise<{ name: string, normalized: string } | null> => {
-  // Check cache first
-  const cached = divisionCache.get(geographicLevelId);
-  if (cached) {
-    return cached;
-  }
-
-  // If not in cache, fetch from database
-  const division = await dr
-    .select({
-      name: divisionTable.name
-    })
-    .from(divisionTable)
-    .where(eq(divisionTable.id, parseInt(geographicLevelId)))
-    .limit(1);
-
-  if (!division || division.length === 0) {
-    return null;
-  }
-
-  // Safely convert the name to string
-  const divisionName = String(division[0].name);
-
-  const result = {
-    name: divisionName,
-    normalized: normalizeText(divisionName)
-  };
-
-  // Cache the result
-  divisionCache.set(geographicLevelId, result);
-  return result;
-};
-
 /**
  * Gets all subsector IDs for a given sector following international standards.
  * This implementation uses the proper hierarchical structure defined in the sector table
@@ -172,15 +172,20 @@ const getDivisionInfo = async (geographicLevelId: string): Promise<{ name: strin
  * @returns Array of sector IDs including the input sector and all its subsectors
  */
 const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
-  const numericSectorId = validateSectorId(sectorId);
+  try {
+    const numericSectorId = validateSectorId(sectorId);
 
-  // Get all subsectors if this is a parent sector
-  const subsectors = await getSectorsByParentId(numericSectorId);
+    // Get all subsectors if this is a parent sector
+    const subsectors = await getSectorsByParentId(numericSectorId);
 
-  // Return all sector IDs (parent + subsectors if any, or just the sector ID if no subsectors)
-  return subsectors.length > 0
-    ? [sectorId, ...subsectors.map(s => s.id.toString())]
-    : [sectorId];
+    // Return all sector IDs (parent + subsectors if any, or just the sector ID if no subsectors)
+    return subsectors.length > 0
+      ? [sectorId, ...subsectors.map(s => s.id.toString())]
+      : [sectorId];
+  } catch (error) {
+    console.error('Error in getAllSubsectorIds:', error);
+    throw error;
+  }
 };
 
 // Function to get all disaster records for a sector
@@ -188,76 +193,118 @@ const getDisasterRecordsForSector = async (
   sectorId: string,
   filters?: Filters
 ): Promise<string[]> => {
-  // Get all relevant sector IDs (including subsectors if parent sector)
-  const sectorIds = await getAllSubsectorIds(sectorId);
-  const numericSectorIds = sectorIds.map(id => parseInt(id));
+  try {
+    // Get all relevant sector IDs (including subsectors if parent sector)
+    const sectorIds = await getAllSubsectorIds(sectorId);
+    const numericSectorIds = sectorIds.map(id => parseInt(id));
 
-  // Build the where conditions
-  const conditions: SQL<unknown>[] = [
-    exists(
-      dr.select()
-        .from(sectorDisasterRecordsRelationTable)
-        .where(and(
-          eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-          inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
-        ))
-    ),
-    sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'completed'`
-  ];
+    // Build the where conditions
+    const conditions: SQL<unknown>[] = [
+      exists(
+        dr.select()
+          .from(sectorDisasterRecordsRelationTable)
+          .where(and(
+            eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+            inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+          ))
+      ),
+      sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'completed'`
+    ];
 
-  // Handle geographic level filtering first if present
-  if (filters?.geographicLevel) {
-    const divisionInfo = await getDivisionInfo(filters.geographicLevel);
-    if (divisionInfo) {
-      const locationFilter = ilike(disasterRecordsTable.locationDesc, `%${divisionInfo.name}%`);
-      const spatialFilter = sql<boolean>`${disasterRecordsTable.spatialFootprint}->>'regions' ILIKE ${`%${divisionInfo.name}%`}`;
-      conditions.push(sql<boolean>`(${locationFilter} OR ${spatialFilter})`);
-    }
-  }
-
-  // Add other filter conditions
-  if (filters) {
-    if (filters.startDate) {
-      conditions.push(sql`${disasterRecordsTable.startDate} >= ${filters.startDate}`);
-    }
-    if (filters.endDate) {
-      conditions.push(sql`${disasterRecordsTable.startDate} <= ${filters.endDate}`);
-    }
-    if (filters.hazardType) {
-      conditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardType}`);
-    }
-    if (filters.hazardCluster) {
-      conditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardCluster}`);
-    }
-    if (filters.specificHazard) {
-      conditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazard}`);
-    }
-    if (filters.disasterEvent) {
-      // Ensure the disaster event ID is a valid UUID
-      try {
-        conditions.push(eq(disasterRecordsTable.disasterEventId, filters._disasterEventId || filters.disasterEvent));
-      } catch (error) {
-        console.error("Invalid disaster event ID format:", error);
-        // Return empty array if ID format is invalid
+    // Handle geographic level filtering with enhanced matching
+    if (filters?.geographicLevel) {
+      const divisionInfo = await getDivisionInfo(filters.geographicLevel);
+      if (!divisionInfo) {
+        // If the geographic level doesn't exist, return no results
         return [];
       }
+
+      // 1. Spatial matching using PostGIS - only if we have spatial data
+      if (divisionInfo.geometry) {
+        conditions.push(sql`
+          ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+          ST_Intersects(
+            ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
+            ${divisionInfo.geometry}
+          )
+        `);
+      }
+
+      // 2. Text matching using normalized names
+      const normalized = normalizeText(Object.values(divisionInfo.names)[0]);
+      const alternateNames = [
+        normalized,
+        normalized.replace(/\s*\([^)]*\)/g, ''), // Remove parentheses
+        normalized.replace(/region\s*([\w-]+)/i, '$1'), // Remove 'Region'
+        'ARMM', // Special case for ARMM
+        'BARMM'  // Special case for BARMM
+      ].filter(Boolean);
+
+      conditions.push(sql`
+        ${disasterRecordsTable.locationDesc} IS NOT NULL AND
+        (${or(...alternateNames.map(name =>
+          sql`LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name.toLowerCase()}%`}`
+        ))})
+      `);
     }
+
+    // Add other filter conditions with proper error handling
+    if (filters) {
+      if (filters.startDate) {
+        try {
+          conditions.push(sql`${disasterRecordsTable.startDate} >= ${filters.startDate}`);
+        } catch (error) {
+          console.error('Invalid start date:', error);
+        }
+      }
+      if (filters.endDate) {
+        try {
+          conditions.push(sql`${disasterRecordsTable.startDate} <= ${filters.endDate}`);
+        } catch (error) {
+          console.error('Invalid end date:', error);
+        }
+      }
+
+      // Handle hazard type hierarchy
+      if (filters.hazardType) {
+        conditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardType}`);
+      }
+      if (filters.hazardCluster) {
+        conditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardCluster}`);
+      }
+      if (filters.specificHazard) {
+        conditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazard}`);
+      }
+
+      if (filters.disasterEvent) {
+        try {
+          conditions.push(eq(disasterRecordsTable.disasterEventId, filters._disasterEventId || filters.disasterEvent));
+        } catch (error) {
+          console.error("Invalid disaster event ID format:", error);
+          return [];
+        }
+      }
+    }
+
+    // Execute query with proper indexing hints
+    const records = await dr
+      .select({ id: disasterRecordsTable.id })
+      .from(disasterRecordsTable)
+      .leftJoin(
+        disasterEventTable,
+        eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+      )
+      .leftJoin(
+        hazardousEventTable,
+        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
+      )
+      .where(and(...conditions));
+
+    return records.map(record => record.id);
+  } catch (error) {
+    console.error('Error in getDisasterRecordsForSector:', error);
+    throw error;
   }
-
-  const records = await dr
-    .select({ id: disasterRecordsTable.id })
-    .from(disasterRecordsTable)
-    .leftJoin(
-      disasterEventTable,
-      eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-    )
-    .leftJoin(
-      hazardousEventTable,
-      eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
-    )
-    .where(and(...conditions));
-
-  return records.map(record => record.id);
 };
 
 const getAgriSubsector = (sectorId: string): FaoAgriSubsector | null => {

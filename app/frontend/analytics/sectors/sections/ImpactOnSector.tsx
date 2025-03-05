@@ -167,12 +167,13 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     console.log('Component Render - Props:', { sectorId, filters });
 
     // Determine which ID to use for the API call
-    // const targetSectorId = filters.subSectorId || sectorId;
-    const targetSectorId = filters.subSectorId || filters.sectorId;
+    const targetSectorId = filters.subSectorId || sectorId;
     console.log('Target Sector ID:', targetSectorId);
 
     // Track previous values for debugging
     const prevTargetSectorIdRef = useRef(targetSectorId);
+    const prevGeographicLevelRef = useRef(filters.geographicLevelId);
+
     useEffect(() => {
         if (prevTargetSectorIdRef.current !== targetSectorId) {
             console.log('Target Sector ID Changed:', {
@@ -181,7 +182,14 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
             });
             prevTargetSectorIdRef.current = targetSectorId;
         }
-    }, [targetSectorId]);
+        if (prevGeographicLevelRef.current !== filters.geographicLevelId) {
+            console.log('Geographic Level Changed:', {
+                from: prevGeographicLevelRef.current,
+                to: filters.geographicLevelId
+            });
+            prevGeographicLevelRef.current = filters.geographicLevelId;
+        }
+    }, [targetSectorId, filters.geographicLevelId]);
 
     const { data: apiResponse, error, isLoading } = useQuery<ApiResponse>(
         ["sectorImpact", targetSectorId, filters],
@@ -190,21 +198,26 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
             if (!targetSectorId) throw new Error("Sector ID is required");
 
-            const params = new URLSearchParams({ sectorId: targetSectorId });
+            const params = new URLSearchParams();
 
+            // Add sector ID first
+            params.append("sectorId", targetSectorId);
 
+            // Add other filters, but exclude sectorId and subSectorId since we handle those separately
             Object.entries(filters).forEach(([key, value]) => {
-                if (value !== null && value !== "") {
-                    params.append(key, value);
+                if (value !== null && value !== undefined && value !== "" && key !== "sectorId" && key !== "subSectorId") {
+                    params.append(key, value.toString());
+                    console.log(`Adding filter: ${key}=${value}`);
                 }
             });
-
 
             console.log('API Request URL:', `/api/analytics/ImpactonSectors?${params}`);
 
             const response = await fetch(`/api/analytics/ImpactonSectors?${params}`);
             if (!response.ok) {
                 console.error('API Error:', response.status, response.statusText);
+                const errorText = await response.text();
+                console.error('API Error Details:', errorText);
                 throw new Error("Failed to fetch sector impact data");
             }
             const data = await response.json();
@@ -213,9 +226,10 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         },
         {
             enabled: !!targetSectorId,
-            staleTime: 0, // Disable stale time to always fetch fresh data
-            cacheTime: 0, // Disable cache to force refetch
+            staleTime: 0,
+            cacheTime: 0,
             refetchOnWindowFocus: false,
+            retry: 1,
             onSuccess: (data) => {
                 console.log('Query Success - New Data:', data);
             },
@@ -327,7 +341,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     }
 
     // Empty state - no sector selected
-    if (!sectorId || !apiResponse) {
+    if (!targetSectorId) {
         console.log('Debug - No sector selected state');
         return (
             <div className="dts-data-box">
@@ -336,6 +350,20 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                 </h3>
                 <div className="flex items-center justify-center h-[300px]">
                     <p className="text-gray-500">Please select a sector to view impact data.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!apiResponse?.data) {
+        console.log('Debug - No data state');
+        return (
+            <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                    <span>No Data Available</span>
+                </h3>
+                <div className="flex items-center justify-center h-[300px]">
+                    <p className="text-gray-500">No impact data available for the selected filters.</p>
                 </div>
             </div>
         );
@@ -350,35 +378,47 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     });
 
     // Transform time series data with proper typing and logging
-    const eventsData = Object.entries(data.eventsOverTime)
+    const eventsData = Object.entries(data.eventsOverTime || {})
         .map(([year, count]) => ({
             year: parseInt(year),
-            count: parseInt(count),
+            count: parseInt(count) || 0,
         }))
-        .filter((entry) => entry.year >= parseInt(filters.fromDate?.split('-')[0] || '0') &&
-            entry.year <= parseInt(filters.toDate?.split('-')[0] || '9999'))
+        .filter((entry) => {
+            if (!filters.fromDate && !filters.toDate) return true;
+            const yearNum = entry.year;
+            const fromYear = filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) : 0;
+            const toYear = filters.toDate ? parseInt(filters.toDate.split('-')[0]) : 9999;
+            return yearNum >= fromYear && yearNum <= toYear;
+        })
         .sort((a, b) => a.year - b.year);
 
-
-    const damageData = Object.entries(data.damageOverTime)
+    const damageData = Object.entries(data.damageOverTime || {})
         .map(([year, amount]) => ({
             year: parseInt(year),
-            amount: parseFloat(amount),
+            amount: parseFloat(amount) || 0,
         }))
-        .filter((entry) => entry.year >= parseInt(filters.fromDate?.split('-')[0] || '0') &&
-            entry.year <= parseInt(filters.toDate?.split('-')[0] || '9999'))
+        .filter((entry) => {
+            if (!filters.fromDate && !filters.toDate) return true;
+            const yearNum = entry.year;
+            const fromYear = filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) : 0;
+            const toYear = filters.toDate ? parseInt(filters.toDate.split('-')[0]) : 9999;
+            return yearNum >= fromYear && yearNum <= toYear;
+        })
         .sort((a, b) => a.year - b.year);
 
-
-    const lossData = Object.entries(data.lossOverTime)
+    const lossData = Object.entries(data.lossOverTime || {})
         .map(([year, amount]) => ({
             year: parseInt(year),
-            amount: parseFloat(amount),
+            amount: parseFloat(amount) || 0,
         }))
-        .filter((entry) => entry.year >= parseInt(filters.fromDate?.split('-')[0] || '0') &&
-            entry.year <= parseInt(filters.toDate?.split('-')[0] || '9999'))
+        .filter((entry) => {
+            if (!filters.fromDate && !filters.toDate) return true;
+            const yearNum = entry.year;
+            const fromYear = filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) : 0;
+            const toYear = filters.toDate ? parseInt(filters.toDate.split('-')[0]) : 9999;
+            return yearNum >= fromYear && yearNum <= toYear;
+        })
         .sort((a, b) => a.year - b.year);
-
 
     console.log('Final transformed data:', {
         eventsData,
