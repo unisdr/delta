@@ -34,7 +34,7 @@ export async function getTotalAffectedPeople(filters: FilterValues = {}): Promis
           filters.specificHazardId ? eq(disasterRecordsTable.hipHazardId, filters.specificHazardId) : undefined,
           filters.fromDate ? sql`${disasterRecordsTable.startDate} >= ${filters.fromDate}` : undefined,
           filters.toDate ? sql`${disasterRecordsTable.endDate} <= ${filters.toDate}` : undefined,
-          eq(disasterRecordsTable.approvalStatus,'completed')
+          eq(disasterRecordsTable.approvalStatus,'published')
         )
       );
 

@@ -1,48 +1,42 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-import {
-	useLoaderData,
-	Link,
-	Form
-} from "@remix-run/react";
+import { useLoaderData, Link, Form } from "@remix-run/react";
 
-import { Pagination } from "~/frontend/pagination/view"
+import { Pagination } from "~/frontend/pagination/view";
 
+import { HazardPicker } from "~/frontend/hip/hazardpicker";
 
-import { HazardPicker } from "~/frontend/hip/hazardpicker"
+import { ActionLinks } from "~/frontend/form";
 
-import { ActionLinks } from "~/frontend/form"
+import { route } from "~/frontend/events/hazardeventform";
 
-import {
-	route,
-} from "~/frontend/events/hazardeventform";
-
-import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent"
+import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent";
 
 import { createFloatingTooltip } from "~/util/tooltip";
 
-import { EventCounter } from '~/components/EventCounter';
+import { EventCounter } from "~/components/EventCounter";
 
 interface ListViewArgs {
-	isPublic: boolean
-	basePath: string
-	linksNewTab?: boolean
-	actions?: (item: any) => React.ReactNode
+	isPublic: boolean;
+	basePath: string;
+	linksNewTab?: boolean;
+	actions?: (item: any) => React.ReactNode;
 }
 
 export function ListView(args: ListViewArgs) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof hazardousEventsLoader>>>();
 
-	const { hip, filters } = ld
-	const { items } = ld.data
+	const { hip, filters } = ld;
+	const { items } = ld.data;
 
-	const pagination = Pagination(ld.data.pagination)
+	const pagination = Pagination(ld.data.pagination);
 
 	// Refs for the status elements
 	const statusRefs = useRef(new Map<number, HTMLElement>());
 
 	useEffect(() => {
-		if (typeof window !== "undefined") { // This check ensures that DOM-related code runs only in the browser
+		if (typeof window !== "undefined") {
+			// This check ensures that DOM-related code runs only in the browser
 			items.forEach((item, index) => {
 				const element = statusRefs.current.get(index);
 				if (element) {
@@ -51,40 +45,85 @@ export function ListView(args: ListViewArgs) {
 						target: element,
 						placement: "top",
 						offsetValue: 8, // You can adjust this value based on your UI needs
-						arrowSelector: ".dts-tooltip__arrow" // Ensure you have this CSS class in your styles
+						arrowSelector: ".dts-tooltip__arrow", // Ensure you have this CSS class in your styles
 					});
 				}
 			});
 		}
 	}, [items]);
 
-
 	return (
 		<div>
 			<div className="dts-filter">
 				<h3>Filters</h3>
 				<Form className="dts-form">
-					<HazardPicker hip={hip} hazardId={filters.hipHazardId} clusterId={filters.hipClusterId} typeId={filters.hipTypeId} />
+					<HazardPicker
+						hip={hip}
+						hazardId={filters.hipHazardId}
+						clusterId={filters.hipClusterId}
+						typeId={filters.hipTypeId}
+					/>
 					<div className="dts-form__actions">
-						<input type="submit" value="Apply" className="mg-button mg-button-primary" />
-						<Link to={args.basePath} className="mg-button mg-button-outline">Clear filters</Link>
+						<input
+							type="submit"
+							value="Apply"
+							className="mg-button mg-button-primary"
+						/>
+						<Link to={args.basePath} className="mg-button mg-button-outline">
+							Clear filters
+						</Link>
 					</div>
 				</Form>
 			</div>
 			{!args.isPublic && (
-				<><div>{/* Add the EventCounter component */}
-					<span >
-						<strong><EventCounter totalEvents={items.length} /></strong>
-					</span>
-				</div><div className="dts-legend">
+				<>
+					<div>
+						{/* Add the EventCounter component */}
+						<span>
+							<strong>
+								<EventCounter totalEvents={items.length} />
+							</strong>
+						</span>
+					</div>
+					<div className="dts-legend">
 						<span className="dts-body-label">Status legend</span>
 						<div className="dts-legend__item">
-							<span className="dts-status dts-status--open"></span> Open
+							<span
+								className="dts-status dts-status--draft"
+								aria-labelledby="legend1"
+							></span>
+							<span id="legend1">Draft</span>
 						</div>
 						<div className="dts-legend__item">
-							<span className="dts-status dts-status--completed"></span> Completed
+							<span
+								className="dts-status dts-status--completed-waiting-for-approval"
+								aria-labelledby="legend2"
+							></span>
+							<span id="legend2">Completed / Waiting for approval</span>
 						</div>
-					</div></>
+						<div className="dts-legend__item">
+							<span
+								className="dts-status dts-status--approved"
+								aria-labelledby="legend2"
+							></span>
+							<span id="legend2">Approved</span>
+						</div>
+						<div className="dts-legend__item">
+							<span
+								className="dts-status dts-status--sent-for-review"
+								aria-labelledby="legend2"
+							></span>
+							<span id="legend2">Sent for review</span>
+						</div>
+						<div className="dts-legend__item">
+							<span
+								className="dts-status dts-status--published"
+								aria-labelledby="legend2"
+							></span>
+							<span id="legend2">Published</span>
+						</div>
+					</div>
+				</>
 			)}
 
 			{ld.data.pagination.totalItems ? (
@@ -93,17 +132,13 @@ export function ListView(args: ListViewArgs) {
 						<thead>
 							<tr>
 								<th>ID</th>
-								{!args.isPublic && (
-									<th>Status</th>
-								)}
+								{!args.isPublic && <th>Status</th>}
 								<th>Start Date</th>
 								<th>End Date</th>
 								<th>Hazard ID</th>
 								<th>Hazard Name</th>
 								<th>Event Description</th>
-								{ !args.isPublic && (
-									<th>Actions</th>
-								)}
+								{!args.isPublic && <th>Actions</th>}
 							</tr>
 						</thead>
 						<tbody>
@@ -116,35 +151,26 @@ export function ListView(args: ListViewArgs) {
 										>
 											{item.id.slice(0, 5)}
 										</Link>
-
 									</td>
 									{!args.isPublic && (
 										<td className="dts-table__cell-centered">
 											<span
-												ref={el => statusRefs.current.set(index, el!)}
+												ref={(el) => statusRefs.current.set(index, el!)}
 												className={`dts-status dts-status--${item.approvalStatus.toLowerCase()}`}
 											></span>
 										</td>
 									)}
+									<td>{item.startDate}</td>
+									<td>{item.endDate}</td>
+									<td>{item.hipHazardId}</td>
+									<td>{item.hipHazard?.nameEn || ""}</td>
+									<td>{item.description}</td>
 									<td>
-										{item.startDate}
-									</td>
-									<td>
-										{item.endDate}
-									</td>
-									<td>
-										{item.hipHazardId}
-									</td>
-									<td>
-										{item.hipHazard?.nameEn || ""}
-									</td>
-									<td>
-										{item.description}
-									</td>
-									<td>
-										{args.actions ? args.actions(item) : (args.isPublic ? null :
-											<ActionLinks route={route} id={item.id} />)
-										}
+										{args.actions ? (
+											args.actions(item)
+										) : args.isPublic ? null : (
+											<ActionLinks route={route} id={item.id} />
+										)}
 									</td>
 								</tr>
 							))}
@@ -152,11 +178,9 @@ export function ListView(args: ListViewArgs) {
 					</table>
 					{pagination}
 				</>
-			)
-				: "No hazardous events"
-			}
-
+			) : (
+				"No hazardous events"
+			)}
 		</div>
 	);
-
 }

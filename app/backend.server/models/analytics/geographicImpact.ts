@@ -457,7 +457,7 @@ async function getDisasterRecordsForSector(sectorId: number | undefined, subSect
             .where(
                 and(
                     // Only include approved records
-                    eq(disasterRecordsTable.approvalStatus, "completed"),
+                    eq(disasterRecordsTable.approvalStatus, "published"),
                     // Filter by sector if provided
                     sectorId ? exists(
                         dr.select()
@@ -477,7 +477,7 @@ async function getDisasterRecordsForSector(sectorId: number | undefined, subSect
                 .from(disasterRecordsTable)
                 .where(
                     and(
-                        eq(disasterRecordsTable.approvalStatus, "completed"),
+                        eq(disasterRecordsTable.approvalStatus, "published"),
                         exists(
                             dr.select()
                                 .from(sectorDisasterRecordsRelationTable)
@@ -503,7 +503,7 @@ async function getDisasterRecordsForSector(sectorId: number | undefined, subSect
                     .from(disasterRecordsTable)
                     .where(
                         and(
-                            eq(disasterRecordsTable.approvalStatus, "completed"),
+                            eq(disasterRecordsTable.approvalStatus, "published"),
                             exists(
                                 dr.select()
                                     .from(sectorDisasterRecordsRelationTable)

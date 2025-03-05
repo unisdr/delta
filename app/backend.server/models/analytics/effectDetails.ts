@@ -62,7 +62,7 @@ export async function getEffectDetails(filters: FilterParams) {
   // Base conditions for disaster records
   const baseConditions = [
     // Only include completed records
-    eq(disasterRecordsTable.approvalStatus, "completed"),
+    eq(disasterRecordsTable.approvalStatus, "published"),
   ];
 
   // Add sector filter to disaster records if we have target sectors

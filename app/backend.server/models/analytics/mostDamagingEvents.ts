@@ -115,7 +115,7 @@ interface FilterConditions {
 
 async function buildFilterConditions(params: MostDamagingEventsParams): Promise<FilterConditions> {
   const conditions: SQL<unknown>[] = [
-    eq(disasterRecordsTable.approvalStatus, 'completed')
+    eq(disasterRecordsTable.approvalStatus, 'published')
   ];
 
   let sectorIds: string[] | undefined;
