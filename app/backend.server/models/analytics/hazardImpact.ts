@@ -1,4 +1,4 @@
-import { and, desc, eq, exists, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, exists, inArray, sql, or } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     damagesTable,
@@ -7,7 +7,8 @@ import {
     hazardousEventTable,
     disasterEventTable,
     hipTypeTable,
-    sectorDisasterRecordsRelationTable
+    sectorDisasterRecordsRelationTable,
+    divisionTable
 } from "~/drizzle/schema";
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
@@ -25,6 +26,7 @@ import type {
     FaoAgriculturalLoss
 } from "~/types/disasterCalculations";
 
+
 const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null => {
     if (!sectorId) return null;
     const subsectorMap: { [key: string]: FaoAgriSubsector } = {
@@ -35,6 +37,70 @@ const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null
     };
     return subsectorMap[sectorId] || null;
 };
+
+/**
+ * Gets all subsector IDs for a given sector and its subsectors
+ * @param sectorId - The ID of the sector to get subsectors for
+ * @returns Array of sector IDs including the input sector and all its subsectors
+ */
+const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
+    const numericSectorId = parseInt(sectorId, 10);
+    if (isNaN(numericSectorId)) {
+        return []; // Return empty array if invalid ID
+    }
+    const subsectors = await getSectorsByParentId(numericSectorId);
+    return subsectors.length > 0
+        ? [numericSectorId, ...subsectors.map(s => s.id)]
+        : [numericSectorId];
+};
+
+// Cache for division info
+const divisionCache = new Map<string, { id: number, names: Record<string, string>, geometry: any }>();
+
+const getDivisionInfo = async (geographicLevelId: string): Promise<{ id: number, names: Record<string, string>, geometry: any } | null> => {
+    // Check cache first
+    const cached = divisionCache.get(geographicLevelId);
+    if (cached) {
+        return cached;
+    }
+
+    // If not in cache, fetch from database
+    const division = await dr
+        .select({
+            id: divisionTable.id,
+            name: divisionTable.name,
+            geom: divisionTable.geom
+        })
+        .from(divisionTable)
+        .where(eq(divisionTable.id, parseInt(geographicLevelId)))
+        .limit(1);
+
+    if (!division || division.length === 0) {
+        return null;
+    }
+
+    const result = {
+        id: division[0].id,
+        names: division[0].name as Record<string, string>,
+        geometry: division[0].geom
+    };
+
+    // Cache the result
+    divisionCache.set(geographicLevelId, result);
+    return result;
+};
+
+// Helper function to normalize text for matching
+function normalizeText(text: string): string {
+    return text
+        .toLowerCase()
+        .normalize('NFKD')                // Normalize unicode characters
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^\w\s,-]/g, ' ')      // Replace special chars with space
+        .replace(/\s+/g, ' ')            // Clean up multiple spaces
+        .replace(/\b(region|province|city|municipality)\b/g, '') // Remove common geographic terms
+        .trim();
+}
 
 export interface HazardImpactResult {
     eventsCount: HazardDataPoint[];
@@ -73,26 +139,22 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         sql`${disasterRecordsTable.approvalStatus} ILIKE 'completed'`
     ];
 
-    // Handle sector filtering using proper hierarchy
-    if (sectorId) {
-        const numericSectorId = parseInt(sectorId, 10);
-        if (!isNaN(numericSectorId)) {
-            const subsectors = await getSectorsByParentId(numericSectorId);
-            const sectorIds = subsectors.length > 0
-                ? [numericSectorId, ...subsectors.map(s => s.id)]
-                : [numericSectorId];
+    // Get all sector IDs (including subsectors)
+    const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : [];
 
-            baseConditions.push(
-                exists(
-                    dr.select()
-                        .from(sectorDisasterRecordsRelationTable)
-                        .where(and(
-                            eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-                            inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
-                        ))
-                )
-            );
-        }
+    // Handle sector filtering using proper hierarchy
+    if (sectorId && sectorIds.length > 0) {
+        // Add condition for sectorDisasterRecordsRelation
+        baseConditions.push(
+            exists(
+                dr.select()
+                    .from(sectorDisasterRecordsRelationTable)
+                    .where(and(
+                        eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                        inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
+                    ))
+            )
+        );
     }
 
     // Add date filters if provided
@@ -114,7 +176,45 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
 
     // Add geographic level filter if provided
     if (geographicLevelId) {
-        baseConditions.push(sql`${disasterRecordsTable.locationDesc} LIKE ${`%${geographicLevelId}%`}`);
+        const divisionInfo = await getDivisionInfo(geographicLevelId);
+        if (!divisionInfo) {
+            // If the geographic level doesn't exist, return empty results
+            return {
+                eventsCount: [],
+                damages: [],
+                losses: [],
+                metadata,
+                faoAgriculturalImpact: undefined
+            };
+        }
+
+        // 1. Spatial matching using PostGIS - only if we have spatial data
+        if (divisionInfo.geometry) {
+            baseConditions.push(sql`
+                ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+                ST_Intersects(
+                    ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
+                    ${divisionInfo.geometry}
+                )
+            `);
+        }
+
+        // 2. Text matching using normalized names
+        const normalized = normalizeText(Object.values(divisionInfo.names)[0]);
+        const alternateNames = [
+            normalized,
+            normalized.replace(/\s*\([^)]*\)/g, ''), // Remove parentheses
+            normalized.replace(/region\s*([\w-]+)/i, '$1'), // Remove 'Region'
+            'ARMM', // Special case for ARMM
+            'BARMM'  // Special case for BARMM
+        ].filter(Boolean);
+
+        baseConditions.push(sql`
+            ${disasterRecordsTable.locationDesc} IS NOT NULL AND
+            (${or(...alternateNames.map(name =>
+            sql`LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name.toLowerCase()}%`}`
+        ))})
+        `);
     }
 
     // Add disaster event filter if provided
@@ -188,17 +288,20 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         percentage: total > 0 ? (Number(item.value) / total) * 100 : 0
     }));
 
-    // Query for damages by hazard type with the same join structure
+    // Query for damages by hazard type
     const damages = await dr
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: calculateDamages(damagesTable),
+            value: sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric + COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}, 0)::numeric)`,
         })
         .from(disasterRecordsTable)
-        .leftJoin(
-            damagesTable,
-            eq(damagesTable.recordId, disasterRecordsTable.id)
+        .innerJoin(
+            sectorDisasterRecordsRelationTable,
+            and(
+                eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
+            )
         )
         .leftJoin(
             disasterEventTable,
@@ -214,20 +317,23 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(calculateDamages(damagesTable)))
+        .orderBy(desc(sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric + COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}, 0)::numeric)`))
         .limit(10);
 
-    // Query for losses by hazard type using standardized calculation
+    // Query for losses by hazard type
     const losses = await dr
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: calculateLosses(lossesTable),
+            value: sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric)`,
         })
         .from(disasterRecordsTable)
-        .leftJoin(
-            lossesTable,
-            eq(lossesTable.recordId, disasterRecordsTable.id)
+        .innerJoin(
+            sectorDisasterRecordsRelationTable,
+            and(
+                eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
+            )
         )
         .leftJoin(
             disasterEventTable,
@@ -243,7 +349,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(calculateLosses(lossesTable)))
+        .orderBy(desc(sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric)`))
         .limit(10);
 
     // Calculate total damages and losses for percentage

@@ -413,11 +413,17 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     };
 
     const formatChartData = (rawData: any[]) => {
-        return rawData.map(item => ({
-            name: item.hazardName || 'Unknown',
-            value: item.percentage || 0,
-            rawValue: item.value || '0'
-        }));
+        // Filter out zero/null values and map the remaining data
+        return rawData
+            .filter(item => {
+                const value = parseFloat(item.value);
+                return !isNaN(value) && value > 0;
+            })
+            .map(item => ({
+                name: item.hazardName || 'Unknown',
+                value: item.percentage || 0,
+                rawValue: item.value || '0'
+            }));
     };
 
     const eventsData = formatChartData(data.data.eventsCount);
@@ -431,9 +437,15 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 <p className="dts-body-text mb-6">Analysis of how different hazards affect this sector</p>
 
                 <div className="mg-grid mg-grid__col-3">
-                    <CustomPieChart data={eventsData} title="Number of Disaster Events" />
-                    <CustomPieChart data={damagesData} title="Damages by Hazard Type" />
-                    <CustomPieChart data={lossesData} title="Losses by Hazard Type" />
+                    {eventsData.length > 0 && (
+                        <CustomPieChart data={eventsData} title="Number of Disaster Events" />
+                    )}
+                    {damagesData.length > 0 && (
+                        <CustomPieChart data={damagesData} title="Damages by Hazard Type" />
+                    )}
+                    {lossesData.length > 0 && (
+                        <CustomPieChart data={lossesData} title="Losses by Hazard Type" />
+                    )}
                 </div>
             </div>
         </section>
