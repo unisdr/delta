@@ -5,9 +5,11 @@ import {
 	FieldsView,
 	ViewComponent,
 	FormView,
+	Input,
+	errorsToStrings,
 } from "~/frontend/form"
 
-import {useEffect, useRef} from "react"
+import {useEffect, useRef, useState} from "react"
 
 import {LossesFields, LossesViewModel} from "~/backend.server/models/losses"
 import {UnitPicker} from "./unit_picker"
@@ -19,6 +21,7 @@ import {TreeView} from "~/components/TreeView";
 export const route = "/disaster-record/edit-sub/_/losses"
 
 import * as totaloverrides from "~/frontend/components/totaloverrides"
+import {typeEnumAgriculture, typeEnumNotAgriculture} from "./losses_enums";
 
 export function route2(recordId: string): string {
 	return `/disaster-record/edit-sub/${recordId}/losses`
@@ -56,7 +59,7 @@ export function LossesForm(props: LossesFormProps) {
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
 		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+			dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
 		}
 	}
 
@@ -93,14 +96,79 @@ export function LossesForm(props: LossesFormProps) {
 
 	// select dropdown to show based if sector is related to agriculture
 	let extra = props.fields.sectorIsAgriculture ? {
+		typeNotAgriculture: null,
 		relatedToNotAgriculture: null
 	} : {
+		typeAgriculture: null,
 		relatedToAgriculture: null
 	}
+
+	let typeDef = (key: string) => props.fieldDef.find(d => d.key == key)!
+	let [type, setType] = useState({
+		agriculture: props.fields.typeAgriculture || "",
+		//agriculture: props.fields.typeAgriculture || typeDef("typeAgriculture").enumData![0].key,
+		notAgriculture: props.fields.typeNotAgriculture || "",
+		//notAgriculture: props.fields.typeNotAgriculture || typeDef("typeNotAgriculture").enumData![0].key,
+	})
+
+	let renderTypeInput = (suffix: "agriculture" | "notAgriculture") => {
+		let key = `type${suffix.charAt(0).toUpperCase() + suffix.slice(1)}`
+		let value = type[suffix]
+		let def = typeDef(key)
+		let f = props.errors?.fields as any
+		let e: any = []
+		if (f) {
+			e = errorsToStrings(f[key])
+		}
+		return <Input
+			def={def}
+			name={key}
+			value={value}
+			enumData={[
+				{key: "", label: "Select"},
+				...def.enumData!
+			]}
+			errors={e}
+			onChange={(e: any) => {
+				setType({...type, [suffix]: e.target.value})
+				return
+			}}
+		/>
+	}
+
+	const renderRelatedToInput = (suffix: "agriculture" | "notAgriculture") => {
+		let key = `relatedTo${suffix.charAt(0).toUpperCase() + suffix.slice(1)}`
+		let def = typeDef(key)
+		let filterValue = suffix === "notAgriculture" ? type.notAgriculture : type.agriculture
+		let enumData = suffix === "notAgriculture" ? typeEnumNotAgriculture : typeEnumAgriculture
+		let f = props.errors?.fields as any
+		let e: any = []
+		if (f) {
+			e = errorsToStrings(f[key])
+		}
+
+		return <Input
+			def={def}
+			name={key}
+			value={(props.fields as any)[key]}
+			enumData={[
+				{key: "", label: filterValue === "" ? "Select type first" : "Select"},
+				...enumData.filter(v => v.type == filterValue)
+			]}
+			disabled={filterValue === ""}
+			errors={e}
+		/>
+	}
+
+
 	let override = {
 		sectorIsAgriculture: (
 			<input key="sectorIsAgriculture" name="sectorIsAgriculture" type="hidden" value={props.fields.sectorIsAgriculture ? "on" : "off"} />
 		),
+		typeNotAgriculture: renderTypeInput("notAgriculture"),
+		relatedToNotAgriculture: renderRelatedToInput("notAgriculture"),
+		typeAgriculture: renderTypeInput("agriculture"),
+		relatedToAgriculture: renderRelatedToInput("agriculture"),
 		recordId: (
 			<input key="recordId" name="recordId" type="hidden" value={props.fields.recordId} />
 		),
@@ -446,8 +514,10 @@ export function LossesView(props: LossesViewProps) {
 
 	// select field to show based if sector is related to agriculture
 	let extra = props.item.sectorIsAgriculture ? {
+		typeNotAgriculture: null,
 		relatedToNotAgriculture: null
 	} : {
+		typeAgriculture: null,
 		relatedToAgriculture: null
 	}
 

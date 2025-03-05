@@ -279,6 +279,9 @@ export function validateFromMap<T>(
 						throw invalidTypeError(field, "bool")
 				}
 			case "enum":
+				if (!field.required && vs === "") {
+					return null
+				}
 				if (!field.enumData?.some(e => e.key === vs)) {
 					throw unknownEnumValueError(field, vs, field.enumData?.map(e => e.key) || []);
 				}
