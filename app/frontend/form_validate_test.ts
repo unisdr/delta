@@ -10,6 +10,7 @@ interface TestType {
 	k4: string
 	k5: Date
 	k6: string
+	k7: string|null
 }
 
 function runTestCommon(args: {
@@ -108,6 +109,14 @@ describe("validateFromMap", function () {
 		data: {k1: ""},
 		expectedOk: true,
 		expectedData: {k1: ""},
+	})
+
+	runTest({
+		name: "non required other fields as empty strings, should be set to null",
+		defs: [{key: "k7", type: "other", label: ""}],
+		data: {k7: ""},
+		expectedOk: true,
+		expectedData: {k7: null},
 	})
 
 	runTest({

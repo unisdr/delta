@@ -47,7 +47,7 @@ function ourSerial(name: string) {
 function ourMoney(name: string) {
 	return numeric(name)
 }
-function ourRandomUUID(){
+function ourRandomUUID() {
 	return uuid("id").primaryKey().default(sql`gen_random_uuid()`)
 }
 
@@ -393,6 +393,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	disasterEventId: uuid("disaster_event_id")
 		.references((): AnyPgColumn => disasterEventTable.id),
 	nationalDisasterId: zeroText("national_disaster_id"),
+	// multiple other ids
 	otherId1: zeroText("other_id1"),
 	otherId2: zeroText("other_id2"),
 	otherId3: zeroText("other_id3"),
@@ -408,25 +409,71 @@ export const disasterEventTable = pgTable("disaster_event", {
 	disasterDeclaration: text("disaster_declaration", {enum: ["yes", "no", "unknown"]})
 		.notNull()
 		.default("unknown"),
-	disasterDeclarationTypeAndEffect: zeroText("disaster_declaration_type_and_effect"),
-	disasterDeclarationDate: timestamp("disaster_declaration_date"),
+	// multiple disaster declartions
+	disasterDeclarationTypeAndEffect1: zeroText("disaster_declaration_type_and_effect1"),
+	disasterDeclarationDate1: timestamp("disaster_declaration_date1"),
+	disasterDeclarationTypeAndEffect2: zeroText("disaster_declaration_type_and_effect2"),
+	disasterDeclarationDate2: timestamp("disaster_declaration_date2"),
+	disasterDeclarationTypeAndEffect3: zeroText("disaster_declaration_type_and_effect3"),
+	disasterDeclarationDate3: timestamp("disaster_declaration_date3"),
+	disasterDeclarationTypeAndEffect4: zeroText("disaster_declaration_type_and_effect4"),
+	disasterDeclarationDate4: timestamp("disaster_declaration_date4"),
+	disasterDeclarationTypeAndEffect5: zeroText("disaster_declaration_type_and_effect5"),
+	disasterDeclarationDate5: timestamp("disaster_declaration_date5"),
+
 	hadOfficialWarningOrWeatherAdvisory: zeroBool("had_official_warning_or_weather_advisory"),
 	officialWarningAffectedAreas: zeroText("official_warning_affected_areas"),
-	earlyAction1: zeroText("early_action1"),
+
+	// multiple early actions fields
+	earlyActionDescription1: zeroText("early_action_description1"),
 	earlyActionDate1: timestamp("early_action_date1"),
-	earlyAction2: zeroText("early_action2"),
+	earlyActionDescription2: zeroText("early_action_description2"),
 	earlyActionDate2: timestamp("early_action_date2"),
-	earlyAction3: zeroText("early_action3"),
+	earlyActionDescription3: zeroText("early_action_description3"),
 	earlyActionDate3: timestamp("early_action_date3"),
-	earlyAction4: zeroText("early_action4"),
+	earlyActionDescription4: zeroText("early_action_description4"),
 	earlyActionDate4: timestamp("early_action_date4"),
-	earlyAction5: zeroText("early_action5"),
+	earlyActionDescription5: zeroText("early_action_description5"),
 	earlyActionDate5: timestamp("early_action_date5"),
-	preliminaryAssessmentDate: timestamp("preliminary_assesment_date"),
-	rapidAssessmentDate: timestamp("rapid_assesment_date"),
+
+	// multiple rapid or preliminary assessments
+	rapidOrPreliminaryAssessmentDescription1: text("rapid_or_preliminary_assesment_description1"),
+	rapidOrPreliminaryAssessmentDate1: timestamp("rapid_or_preliminary_assessment_date1"),
+	rapidOrPreliminaryAssessmentDescription2: text("rapid_or_preliminary_assesment_description2"),
+	rapidOrPreliminaryAssessmentDate2: timestamp("rapid_or_preliminary_assessment_date2"),
+	rapidOrPreliminaryAssessmentDescription3: text("rapid_or_preliminary_assesment_description3"),
+	rapidOrPreliminaryAssessmentDate3: timestamp("rapid_or_preliminary_assessment_date3"),
+	rapidOrPreliminaryAssessmentDescription4: text("rapid_or_preliminary_assesment_description4"),
+	rapidOrPreliminaryAssessmentDate4: timestamp("rapid_or_preliminary_assessment_date4"),
+	rapidOrPreliminaryAssessmentDescription5: text("rapid_or_preliminary_assesment_description5"),
+	rapidOrPreliminaryAssessmentDate5: timestamp("rapid_or_preliminary_assessment_date5"),
+
 	responseOperations: zeroText("response_oprations"),
-	postDisasterAssementDate: timestamp("post_disaster_assessment_date"),
-	reAssessmentDate: timestamp("re_assessment_date"),
+
+	// multiple post disaster assessments
+	postDisasterAssessmentDescription1: text("post_disaster_assessment_description1"),
+	postDisasterAssessmentDate1: timestamp("post_disaster_assessment_date1"),
+	postDisasterAssessmentDescription2: text("post_disaster_assessment_description2"),
+	postDisasterAssessmentDate2: timestamp("post_disaster_assessment_date2"),
+	postDisasterAssessmentDescription3: text("post_disaster_assessment_description3"),
+	postDisasterAssessmentDate3: timestamp("post_disaster_assessment_date3"),
+	postDisasterAssessmentDescription4: text("post_disaster_assessment_description4"),
+	postDisasterAssessmentDate4: timestamp("post_disaster_assessment_date4"),
+	postDisasterAssessmentDescription5: text("post_disaster_assessment_description5"),
+	postDisasterAssessmentDate5: timestamp("post_disaster_assessment_date5"),
+
+	// multiple other assessments
+	otherAssessmentDescription1: text("other_assessment_description1"),
+	otherAssessmentDate1: timestamp("other_assessment_date1"),
+	otherAssessmentDescription2: text("other_assessment_description2"),
+	otherAssessmentDate2: timestamp("other_assessment_date2"),
+	otherAssessmentDescription3: text("other_assessment_description3"),
+	otherAssessmentDate3: timestamp("other_assessment_date3"),
+	otherAssessmentDescription4: text("other_assessment_description4"),
+	otherAssessmentDate4: timestamp("other_assessment_date4"),
+	otherAssessmentDescription5: text("other_assessment_description5"),
+	otherAssessmentDate5: timestamp("other_assessment_date5"),
+
 	dataSource: zeroText("data_source"),
 	recordingInstitution: zeroText("recording_institution"),
 	effectsTotalUsd: ourMoney("effects_total_usd"),
@@ -812,21 +859,78 @@ export const lossesTable = pgTable("losses", {
 		.notNull(),
 	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
 	type: text("type", {
-		enum: ["increased_expenditure", "loss_revenue_forecasted", "non_economic_losses"]
+		enum: [
+			"infrastructure_temporary",
+"production_service_delivery_and_availability",
+"governance_and_decision_making",
+"risk_and_vulnerabilities",
+"other_losses",
+"employment_and_livelihoods_losses"
+		]
 	}).notNull(),
+	/*
+	typeNotAgriculture: text("type_not_agriculture", {
+		enum: [
+			"increased_expenditure",
+				"loss_revenue_forecasted",
+				"non_economic_losses"
+		]
+	}).notNull(),
+	typeAgriculture: text("type_agriculture", {
+		enum: [
+			"increased_expenditure",
+				"loss_revenue_forecasted",
+				"non_economic_losses"
+		]
+	}).notNull(),
+ */
 	relatedToNotAgriculture: text("related_to_not_agriculture", {
 		enum: [
-			"infrastructure_equipment",
-			"production_delivery_access",
-			"governance",
-			"risk_vulnerability_drr",
-			"other"
+			"increase_in_expenditure_infrastructure_temporary",
+			"decrease_in_revenues_infrastructure_temporary",
+			"cost_for_service_or_production_continuity_incurred_but_not_assessed",
+			"increase_in_expenditure_for_production_service_delivery_and_availability",
+			"decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability",
+			"access_difficultied",
+			"availability_decreased",
+			"increase_in_expenditure_governance",
+			"decrease_in_revenue_governance",
+			"governance_processes_difficulted",
+			"increase_in_expenditure_to_address_risk_and_vulnerabilities",
+			"decrease_in_revenue_from_risk_protection",
+			"risks_and_vulnerabilities_increased",
+			"increase_in_expenditure",
+			"decrease_in_revenues",
+			"non_quantified_other_losses",
+			"number_of_work_days_lost",
+			"number_of_workers_who_loss_their_jobs",
+			"number_of_persons_whose_livelihoods_related_to_sector_lost"
 		]
 	}),
 	relatedToAgriculture: text("related_to_agriculture", {
 		enum: [
-			"value1",
-			"value2",
+			"increase_in_expenditure_infrastructure_temporary",
+			"decrease_in_revenues_infrastructure_temporary",
+			"cost_for_service_or_production_continuity_incurred_but_not_assessed",
+			"production_inputs",
+			"production_outputs",
+			"increase_in_expenditure_for_production_service_delivery_and_availability",
+			"decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability",
+			"access_difficultied",
+			"availability_decreased",
+			"increase_in_expenditure_governance",
+			"decrease_in_revenue_governance",
+			"governance_processes_difficulted",
+			"increase_in_expenditure_to_address_risk_and_vulnerabilities",
+			"decrease_in_revenue_from_risk_protection",
+			"risks_and_vulnerabilities_increased",
+			"increase_in_expenditure",
+			"decrease_in_revenues",
+			"non_quantified_other_losses",
+			"number_of_work_days_lost",
+			"number_of_workers_who_loss_their_jobs",
+			"number_of_workers_who_loss_their_jobs_permanently",
+			"number_of_persons_whose_livelihoods_related_to_sector_lost",
 		]
 	}),
 	description: text("description"),
