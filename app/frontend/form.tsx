@@ -697,7 +697,7 @@ export function Input(props: InputProps) {
 						/>)
 					}
 					<WrapInputBasic
-						label="Precision"
+						label="Date Format"
 						child={
 							<select
 								value={precision}
