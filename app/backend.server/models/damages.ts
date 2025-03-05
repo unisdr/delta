@@ -7,6 +7,7 @@ import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {configCurrencies} from "~/util/config"
 import {unitsEnum} from "~/frontend/unit_picker"
+import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
 
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}
 
@@ -25,7 +26,7 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 		},
 		{key: pre + repairOrReplacement + "CostTotal" as keyof DamagesFields, label: `Total ${repairOrReplacement.toLowerCase()} cost`, type: "money"},
 		{key: pre + repairOrReplacement + "CostTotalOverride" as keyof DamagesFields, label: "Override", type: "bool"},
-		{key: pre + "RecoveryCostUnit" as keyof DamagesFields, label: "Unit recovery cost", type: "money", uiRow:{}},
+		{key: pre + "RecoveryCostUnit" as keyof DamagesFields, label: "Unit recovery cost", type: "money", uiRow: {}},
 		{
 			key: pre + "RecoveryCostUnitCurrency" as keyof DamagesFields,
 			label: "Currency",
@@ -45,7 +46,7 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 	let cur = ""
 	let curs = configCurrencies()
-	if (curs.length > 0){
+	if (curs.length > 0) {
 		cur = curs[0]
 	}
 
@@ -121,6 +122,9 @@ export async function damagesCreate(tx: Tx, fields: DamagesFields): Promise<Crea
 	if (hasErrors(errors)) return {ok: false, errors}
 
 	const res = await tx.insert(damagesTable).values({...fields}).returning({id: damagesTable.id})
+
+	await updateTotalsUsingDisasterRecordId(tx, fields.recordId)
+
 	return {ok: true, id: res[0].id}
 }
 
@@ -129,7 +133,21 @@ export async function damagesUpdate(tx: Tx, id: string, fields: Partial<DamagesF
 	if (hasErrors(errors)) return {ok: false, errors}
 
 	await tx.update(damagesTable).set({...fields}).where(eq(damagesTable.id, id))
+
+	let recordId = await getRecordId(tx, id)
+	await updateTotalsUsingDisasterRecordId(tx, recordId)
+
 	return {ok: true}
+}
+
+export async function getRecordId(tx: Tx, id: string) {
+	let rows = await tx.select({
+		recordId: damagesTable.recordId
+	})
+		.from(damagesTable)
+		.where(eq(damagesTable.id, id)).execute()
+	if (!rows.length) throw new Error("not found by id")
+	return rows[0].recordId
 }
 
 export type DamagesViewModel = Exclude<Awaited<ReturnType<typeof damagesById>>, undefined>
