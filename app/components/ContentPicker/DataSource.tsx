@@ -27,32 +27,40 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
     // Collect WHERE conditions
     const whereConditions: any[] = [];
 
-    // ✅ Apply standard WHERE conditions
+    //Apply standard WHERE conditions
     if (config.where?.length) {
         whereConditions.push(...config.where);
     }
 
-    // ✅ Apply ILIKE filters (search)
+    //Apply ILIKE filters (search)
     if (config.whereIlike?.length) {
-        const ilikeConditions = config.whereIlike.map((condition: any) =>
-            ilike(sql`(${condition.column})::text`, `%${searchPattern}%`)
-        );
+        const ilikeConditions = config.whereIlike.map((condition: any) => {
+            let searchValue = searchPattern;
+
+            //Detect if the searchPattern is a date-like string and convert it
+            if (isDateLike(searchPattern)) {
+                const isoDate = convertToISODate(searchPattern);
+                if (isoDate) searchValue = isoDate;
+            }
+
+            return ilike(sql`(${condition.column})::text`, `%${searchValue}%`);
+        });
         whereConditions.push(or(...ilikeConditions)); // Merge all ILIKE filters using OR
     }
 
-    // ✅ Apply all conditions in a single `.where()` call
+    //Apply all conditions in a single `.where()` call
     if (whereConditions.length > 0) {
         query = query.where(and(...whereConditions)) as any;
     }
 
-    // ✅ Apply ordering
+    //Apply ordering
     if (config.orderBy?.length) {
         config.orderBy.forEach((order: any) => {
             query = (query as any).orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column));
         });
     }
 
-    console.log(query.toSQL()); // Debugging: Log the final SQL query before execution
+    //console.log(query.toSQL()); // Debugging: Log the final SQL query before execution
 
     return query as any;
 }
