@@ -15,7 +15,7 @@ import { getSectorFullPathById } from "~/backend.server/models/sector";
 import { 
   disasterEventSectorsById,
   disasterEvent_DisasterRecordsCount__ById, 
-  disasterEventTotalDamages__ById,
+  disasterEventSectorTotal__ById,
 } from "~/backend.server/models/disaster-event";
 
 import {
@@ -49,7 +49,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let record:any = undefined;
   let recordsRelatedSectors:any = undefined;
   let countRelatedDisasterRecords:any = undefined;
-  let totalDamages:any = undefined;
+  let totalSectorEffects:any = undefined;
 
   if (xId) {
     record = await disasterEventById(xId).catch(console.error);
@@ -65,8 +65,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // get the count of Disaster Records linked to the disaster event
         countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(xId);
         
-        totalDamages = await disasterEventTotalDamages__ById(xId);
-        // console.log( totalDamages );
+        totalSectorEffects = await disasterEventSectorTotal__ById(xId);
       } catch (e) {
         console.log(e);
         throw e;
@@ -81,7 +80,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     record: record,
     recordsRelatedSectors: recordsRelatedSectors,
     countRelatedDisasterRecords: countRelatedDisasterRecords,
-    total: totalDamages,
+    total: totalSectorEffects,
   });
 });
 
@@ -259,15 +258,6 @@ function DisasterEventsAnalysisContent() {
             <div className="dts-data-box">
               <h3 className="dts-body-label">
                 <span id="elementId03">Damage in [{ ld.total.damages.currency }]</span>
-                <button type="button" className="dts-tooltip__button" aria-labelledby="elementId03" aria-describedby="tooltip03">
-                  <svg aria-hidden="true" focusable="false" role="img">
-                    <use href="assets/icons/information_outline.svg#information"></use>
-                  </svg>
-                </button>
-                <div id="tooltip03" role="tooltip">
-                  <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
-                  <div className="dts-tooltip__arrow"></div>
-                </div>
               </h3>
               <div className="dts-indicator dts-indicator--target-box-d">
                 <span>{ ld.total.damages.total }</span>
@@ -276,37 +266,25 @@ function DisasterEventsAnalysisContent() {
             <div className="dts-data-box">
               <h3 className="dts-body-label">
                 <span id="elementId04">Losses in [{ ld.total.losses.currency }]</span>
-                <button type="button" className="dts-tooltip__button" aria-labelledby="elementId04" aria-describedby="tooltip04">
-                  <svg aria-hidden="true" focusable="false" role="img">
-                    <use href="assets/icons/information_outline.svg#information"></use>
-                  </svg>
-                </button>
-                <div id="tooltip04" role="tooltip">
-                  <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
-                  <div className="dts-tooltip__arrow"></div>
-                </div>
               </h3>
               <div className="dts-indicator dts-indicator--target-box-c">
                 <span>{ ld.total.losses.total }</span>
               </div>
             </div>
-            <div className="dts-data-box">
-              <h3 className="dts-body-label">
-                <span id="elementId05">Recovery [currency]</span>
-                <button type="button" className="dts-tooltip__button" aria-labelledby="elementId05" aria-describedby="tooltip05">
-                  <svg aria-hidden="true" focusable="false" role="img">
-                    <use href="assets/icons/information_outline.svg#information"></use>
-                  </svg>
-                </button>
-                <div id="tooltip05" role="tooltip">
-                  <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
-                  <div className="dts-tooltip__arrow"></div>
-                </div>
-              </h3>
-              <div className="dts-indicator dts-indicator--target-box-f">
-                <span>-</span>
-              </div>
-            </div>
+            { Number(ld.total.recvery.total) > 0 && 
+                <>
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span id="elementId05">Recovery [{ ld.total.recvery.currency }]</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-f">
+                      <span>{ ld.total.recvery.total }</span>
+                    </div>
+                  </div>
+                </>
+            }
+
+
           </div>
         </div>
       </section>

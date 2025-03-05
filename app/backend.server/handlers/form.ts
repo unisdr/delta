@@ -191,8 +191,8 @@ export async function formSave<T>(
 				console.error(`Invalid JSON for ${field.key}:`, error);
 				return {
 					ok: false,
-					data: formData as T, 
-					errors: { [field.key]: ["Invalid JSON format"] },
+					data: formData as T,
+					errors: {[field.key]: ["Invalid JSON format"]},
 				};
 			}
 		}
@@ -216,9 +216,9 @@ export async function formSave<T>(
 	try {
 		await dr.transaction(async (tx) => {
 			res0 = await args.save(tx, isCreate ? null : id, validateRes.resOk!);
-            if (res0.ok) {
-                finalId = isCreate ? String(res0.id) : String(id);
-            }
+			if (res0.ok) {
+				finalId = isCreate ? String(res0.id) : String(id);
+			}
 		});
 	} catch (error) {
 		throw error;
@@ -236,9 +236,9 @@ export async function formSave<T>(
 
 	const redirectId = isCreate ? String(res.id) : String(id);
 
-    if (args.postProcess && finalId) {
-        await args.postProcess(finalId, validateRes.resOk!);
-    }
+	if (args.postProcess && finalId) {
+		await args.postProcess(finalId, validateRes.resOk!);
+	}
 
 	return redirectWithMessage(request, args.redirectTo(redirectId), {
 		type: "info",
@@ -518,7 +518,11 @@ function jsonPayloadExample<T>(
 				break;
 			case "enum":
 			case "enum-flex":
-				val = item.enumData![0].key;
+				if (item.enumData!.length) {
+					val = item.enumData![0].key;
+				} else {
+					val = ""
+				}
 				break;
 			default:
 				val = null;
@@ -865,7 +869,7 @@ export function createDeleteLoaderWithPerm(
 		return formDelete({
 			loaderArgs,
 			deleteFn: args.delete,
-			redirectToSuccess: args.redirectToSuccess ? args.redirectToSuccess :  () => args.baseRoute || "",
+			redirectToSuccess: args.redirectToSuccess ? args.redirectToSuccess : () => args.baseRoute || "",
 			redirectToError: args.redirectToError ? args.redirectToError : (id: string) => `${args.baseRoute}/${id}`,
 			tableName: args.tableName,
 			getById: args.getById,
