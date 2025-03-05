@@ -33,8 +33,8 @@ import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
-async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number, treeData?: any[], p0?: any[]) {
-	let assets = (await assetsForSector(dr, sectorId)).map(a => {
+async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number, treeData?: any[], ctryIso3?: string, p0?: any[]) {
+	let assets = (await assetsForSector(dr, sectorId)).map((a: any) => {
 		return {
 			id: a.id,
 			label: a.name
@@ -55,6 +55,7 @@ async function getResponseData(item: DamagesViewModel | null, recordId: string, 
 		sectorId,
 		fieldDef: await fieldsDef(),
 		treeData,
+		ctryIso3,
 	}
 }
 
@@ -66,18 +67,6 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!params.disRecId) {
 		throw new Error("Route does not have disRecId param")
 	}
-	if (params.id === "new") {
-		let url = new URL(request.url)
-		let sectorId = Number(url.searchParams.get("sectorId")) || 0
-		if (!sectorId) {
-			throw new Response("Not Found", {status: 404})
-		}
-		return await getResponseData(null, params.disRecId, sectorId)
-	}
-	const item = await damagesById(params.id)
-	if (!item) {
-		throw new Response("Not Found", {status: 404})
-	}
 
 	const idKey = "id";
     const parentKey = "parentId";
@@ -85,7 +74,23 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
     const rawData = await dr.select().from(divisionTable);
     const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
-	return await getResponseData(item, item.recordId, item.sectorId, treeData)
+	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+
+	if (params.id === "new") {
+		let url = new URL(request.url)
+		let sectorId = Number(url.searchParams.get("sectorId")) || 0
+		if (!sectorId) {
+			throw new Response("Not Found", {status: 404})
+		}
+		const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+		return await getResponseData(null, params.disRecId, sectorId, treeData, ctryIso3)
+	}
+	const item = await damagesById(params.id)
+	if (!item) {
+		throw new Response("Not Found", {status: 404})
+	}
+
+	return await getResponseData(item, item.recordId, item.sectorId, treeData, ctryIso3);
 });
 
 export const action = createAction({
@@ -118,7 +123,7 @@ export const action = createAction({
 })
 
 export default function Screen() {
-	const ld = useLoaderData<typeof loader>();
+	const ld = useLoaderData<typeof loader>(); //console.log(`ld: `, ld.ctryIso3);
 
 	const fieldsInitial: Partial<DamagesFields> = ld.item
 		? {...ld.item}
@@ -135,6 +140,7 @@ export default function Screen() {
 		extraData: {
 			fieldDef: ld.fieldDef,
 			assets: ld.assets,
+			ctryIso3: ld.ctryIso3,
 		},
 		fieldsInitial,
 		form: DamagesForm,

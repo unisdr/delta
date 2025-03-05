@@ -7,7 +7,7 @@ export const contentPickerConfig = {
     id: "disasterEventId",
     required: false,
     viewMode: "grid",
-    dataSources: "/disaster-record/content-picker-datasource",
+    dataSources: "/analytics/content-picker-datasource",
     caption: "Disaster Event",
     defaultText: "Select Disaster Event...",
     table_column_primary_key: "id",
@@ -47,6 +47,9 @@ export const contentPickerConfig = {
         joins: [ // Define joins
             { type: "inner", table: hazardousEventTable, condition: eq(disasterEventTable.hazardousEventId, hazardousEventTable.id) },
             { type: "inner", table: hipHazardTable, condition: eq(hazardousEventTable.hipHazardId, hipHazardTable.id) }
+        ],
+        where: [ // Define search filters
+            eq(disasterEventTable.approvalStatus, "completed"),
         ],
         whereIlike: [ // Define search filters
             { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },
@@ -132,101 +135,3 @@ export const contentPickerConfig = {
         return `${displayName} (${displayDate}) - ${displayId}`;
     },    
 };
-
-export const contentPickerConfigSector = {
-    id: "sectorId",
-    viewMode: "tree",
-    dataSources: "/disaster-record/content-picker-datasource?view=1",
-    caption: "Sectors",
-    defaultText: "Select Sector...",
-    table_column_primary_key: "id",
-    table_columns: [
-        { column_type: "db", column_field: "id", column_title: "Id", is_primary_id: true, is_selected_field: true },
-        { column_type: "db", column_field: "parentId", column_title: "Parent Id", tree_field: "parentKey" },
-        { column_type: "db", column_field: "sectorname", column_title: "Name", tree_field: "nameKey" },
-        { column_type: "custom", column_field: "action", column_title: "Action" },
-    ],
-    dataSourceDrizzle: {
-        table: sectorTable, // Store table reference
-        selects: [ // Define selected columns
-            { alias: "id", column: sectorTable.id },
-            { alias: "parentId", column: sectorTable.parentId },
-            { alias: "sectorname", column: sectorTable.sectorname },
-        ],
-        //orderBy: [{ column: sectorTable.sectorname, direction: "asc" }] // Sorting
-        orderByOptions: {
-            default: [{ column: sectorTable.sectorname, direction: "asc" }],
-            custom: sql`CASE WHEN ${sectorTable.sectorname} = 'Cross-cutting' THEN 1 ELSE 0 END, ${sectorTable.sectorname} ASC`
-        }
-    },
-    selectedDisplay: async (dr: any, id: any) => {
-        const sectorId = Number(id);
-        if (!Number.isInteger(sectorId)) return "";
-    
-        try {
-            const { rows } = await dr.execute(sql`SELECT get_sector_full_path(${sectorId}) AS full_path`);
-            return rows[0]?.full_path || "No sector found";
-        } catch {
-            const { rows } = await dr.execute(sql`
-                WITH RECURSIVE ParentCTE AS (
-                    SELECT id, sectorname, parent_id, sectorname AS full_path
-                    FROM sector
-                    WHERE id = ${sectorId}
-                    UNION ALL
-                    SELECT t.id, t.sectorname, t.parent_id, t.sectorname || ' > ' || p.full_path AS full_path
-                    FROM sector t
-                    INNER JOIN ParentCTE p ON t.id = p.parent_id
-                )
-                SELECT full_path FROM ParentCTE WHERE parent_id IS NULL
-            `);
-            return rows[0]?.full_path || "No sector found";
-        }
-    }
-};
-
-export const contentPickerConfigCategory = {
-    id: "categoryId",
-    viewMode: "tree",
-    dataSources: "/disaster-record/content-picker-datasource?view=2",
-    caption: "Category",
-    defaultText: "Select Category...",
-    table_column_primary_key: "id",
-    table_columns: [
-        { column_type: "db", column_field: "id", column_title: "Id", is_primary_id: true, is_selected_field: true },
-        { column_type: "db", column_field: "parentId", column_title: "Parent Id", tree_field: "parentKey" },
-        { column_type: "db", column_field: "name", column_title: "Name", tree_field: "nameKey" },
-        { column_type: "custom", column_field: "action", column_title: "Action" },
-    ],
-    dataSourceDrizzle: {
-        table: categoriesTable, // Store table reference
-        selects: [ // Define selected columns
-            { alias: "id", column: categoriesTable.id },
-            { alias: "parentId", column: categoriesTable.parentId },
-            { alias: "name", column: categoriesTable.name },
-        ],
-        orderBy: [{ column: categoriesTable.name, direction: "asc" }] // Sorting
-    },
-    selectedDisplay: async (dr: any, id: any) => {
-        const categoryId = Number(id);
-        if (!Number.isInteger(categoryId)) return "";
-    
-        try {
-            const { rows } = await dr.execute(sql`SELECT get_category_full_path(${categoryId}) AS full_path`);
-            return rows[0]?.full_path || "No category found";
-        } catch {
-            const { rows } = await dr.execute(sql`
-                WITH RECURSIVE ParentCTE AS (
-                    SELECT id, name, parent_id, name AS full_path
-                    FROM categories
-                    WHERE id = ${categoryId}
-                    UNION ALL
-                    SELECT t.id, t.name, t.parent_id, t.name || ' > ' || p.full_path AS full_path
-                    FROM categories t
-                    INNER JOIN ParentCTE p ON t.id = p.parent_id
-                )
-                SELECT full_path FROM ParentCTE WHERE parent_id IS NULL
-            `);
-            return rows[0]?.full_path || "No category found";
-        }
-    }    
-}

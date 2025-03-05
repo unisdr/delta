@@ -82,6 +82,7 @@ export const fieldsDefView: FormInputDef<HazardousEventViewModel>[] = [
 ];
 
 interface HazardousEventFormProps extends UserFormProps<HazardousEventFields> {
+	ctryIso3?: any;
 	hip: Hip;
 	parent?: HazardousEventViewModel;
 	treeData?: any[];
@@ -129,6 +130,7 @@ export function hazardousEventLink(args: {
 export function HazardousEventForm(props: HazardousEventFormProps) {
 	const fields = props.fields;
 	const treeData = props.treeData;
+	const ctryIso3 = props.ctryIso3;
 
 	const [selected, setSelected] = useState(props.parent);
 
@@ -202,6 +204,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 				spatialFootprint: (
 					<Field key="spatialFootprint" label="">
 						<ContentRepeater
+							ctryIso3={ctryIso3}
 							caption="Spatial Footprint"
 							ref={contentReapeaterRef}
 							id="spatialFootprint"

@@ -136,17 +136,24 @@ export async function importZip(zipBytes: Uint8Array) {
 	const importRes = await importCSV(csvStr);
 
 	for (const [_, v] of importRes) {
-		let gf = v.GeodataFileName;
+		let gf = v.GeodataFileName
+		if (!gf) continue
 		let file = zip.files["geodata/" + gf]
 		if (!file) {
-			throw new UserError(`CSV has {gf} in geodata column, but no file with the same name found in geodata folder in ZIP archive.`)
+			throw new UserError(`CSV has ${gf} in geodata column, but no file with the same name found in geodata folder in ZIP archive.`)
 		}
-		const geodataStr = await file.async("string")
-
+		let geodataStr = await file.async("string")
+		let geodataObj = null
+		try {
+			geodataObj = JSON.parse(geodataStr)
+		} catch (e) {
+			console.log("could not parse json for division geodata", "file", gf, geodataStr)
+			throw e
+		}
 		await dr
 			.update(divisionTable)
 			.set({
-				geojson: geodataStr,
+				geojson: geodataObj,
 			})
 			.where(eq(divisionTable.id, v.DBID));
 	}

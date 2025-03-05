@@ -1,6 +1,6 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { formatDate, isDateLike, convertToISODate } from "~/util/date";
-import { sql, eq, ilike, or, asc, desc, count } from "drizzle-orm";
+import { sql, eq, ilike, or, asc, desc, count, and } from "drizzle-orm";
 import { buildTree } from "~/components/TreeView";
 
 function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: any) {
@@ -13,6 +13,7 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
         Object.fromEntries(config.selects.map((s: any) => [s.alias, s.column]))
     ).from(config.table);
 
+    // Apply joins
     if (config.joins?.length) {
         config.joins.forEach((join: any) => {
             if (join.type === "inner") {
@@ -23,41 +24,43 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
         });
     }
 
+    // Collect WHERE conditions
+    const whereConditions: any[] = [];
+
+    //Apply standard WHERE conditions
+    if (config.where?.length) {
+        whereConditions.push(...config.where);
+    }
+
+    //Apply ILIKE filters (search)
     if (config.whereIlike?.length) {
-        const newWhereConditions = config.whereIlike.map((condition: any) => {
+        const ilikeConditions = config.whereIlike.map((condition: any) => {
             let searchValue = searchPattern;
-    
-            // Detect if the searchPattern is a date-like string and convert it
+
+            //Detect if the searchPattern is a date-like string and convert it
             if (isDateLike(searchPattern)) {
                 const isoDate = convertToISODate(searchPattern);
                 if (isoDate) searchValue = isoDate;
             }
-    
+
             return ilike(sql`(${condition.column})::text`, `%${searchValue}%`);
         });
-    
-        query = query.where(or(...newWhereConditions)) as any;
+        whereConditions.push(or(...ilikeConditions)); // Merge all ILIKE filters using OR
     }
-    /*if (config.whereIlike?.length) {
-        const newWhereConditions = config.whereIlike.map((condition: any) =>
-            ilike(sql`(${condition.column})::text`, `%${searchPattern}%`)
-        );
-        query = query.where(or(...newWhereConditions)) as any;
-    }*/
-    /*if (config.whereIlike?.length) {
-        const newWhereConditions = config.whereIlike.map((condition: any) =>
-            ilike(condition.column, `%${searchPattern}%`)
-        );
-        query = query.where(or(...newWhereConditions)) as any;
-    }*/
 
-    if (config.orderByOptions?.custom) {
-        query = (query as any).orderBy(config.orderByOptions.custom);
-    } else if (config.orderByOptions?.default) {
-        config.orderByOptions.default.forEach((order: any) => {
+    //Apply all conditions in a single `.where()` call
+    if (whereConditions.length > 0) {
+        query = query.where(and(...whereConditions)) as any;
+    }
+
+    //Apply ordering
+    if (config.orderBy?.length) {
+        config.orderBy.forEach((order: any) => {
             query = (query as any).orderBy(order.direction === "asc" ? asc(order.column) : desc(order.column));
         });
-    }    
+    }
+
+    //console.log(query.toSQL()); // Debugging: Log the final SQL query before execution
 
     return query as any;
 }

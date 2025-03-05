@@ -66,6 +66,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 
 	if (params.id === "new") {
         const treeData = await initializeNewTreeView();
+		const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+		//console.log("ctryIso3", ctryIso3);
         return {
             item: null,
             recordsNonecoLosses: [],
@@ -73,7 +75,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
             recordsHumanEffects: [],
 			hip: hip,
             treeData: treeData,
-            cpDisplayName: null
+            cpDisplayName: null,
+			ctryIso3: ctryIso3
         };
 	}
 
@@ -94,6 +97,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 
 	// Define Keys Mapping (Make it Adaptable)
     const treeData = await initializeNewTreeView();
+	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
     const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
 
@@ -104,7 +108,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		recordsHumanEffects: dbDisRecHumanEffects,
 		hip: hip,
 		treeData: treeData,
-		cpDisplayName: cpDisplayName
+		cpDisplayName: cpDisplayName,
+		ctryIso3: ctryIso3
 	};
 });
 
@@ -147,6 +152,7 @@ export default function Screen() {
 		recordsHumanEffects: any | null,
 		hip: any,
 		treeData: any[]
+		ctryIso3: string,
 		cpDisplayName: string
 	}>();
 	// console.log(ld);
@@ -159,6 +165,7 @@ export default function Screen() {
 				formComponent={(props: any) => <DisasterRecordsForm {...props}
                     hip={ld.hip}
                     treeData={ld.treeData}
+					ctryIso3={ld.ctryIso3}
                     cpDisplayName={ld.cpDisplayName} />}
 			/>
 			{ld.item && (<>

@@ -25,6 +25,7 @@ export function route2(recordId: string): string {
 }
 
 interface LossesFormProps extends UserFormProps<LossesFields> {
+	ctryIso3?: string;
 	treeData?: any;
 	fieldDef: FormInputDef<LossesFields>[]
 }
@@ -33,6 +34,7 @@ export function LossesForm(props: LossesFormProps) {
 	let formRef = useRef<HTMLFormElement>(null)
 
 	const treeData = props.treeData;
+	const ctryIso3 = props.ctryIso3;
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
@@ -112,6 +114,7 @@ export function LossesForm(props: LossesFormProps) {
 		spatialFootprint: (
 			<Field key="spatialFootprint" label="">
 				<ContentRepeater
+					ctryIso3={ctryIso3}
 					caption="Spatial Footprint"
 					ref={contentReapeaterRef}
 					id="spatialFootprint"

@@ -21,12 +21,14 @@ export function route2(recordId: string): string {
 }
 
 interface DisruptionFormProps extends UserFormProps<DisruptionFields> {
+	ctryIso3?: any;
 	fieldDef: FormInputDef<DisruptionFields>[]
 	treeData?: any[];
 }
 
 export function DisruptionForm(props: DisruptionFormProps) {
 	const treeData = props.treeData;
+	const ctryIso3 = props.ctryIso3;
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
@@ -73,6 +75,7 @@ export function DisruptionForm(props: DisruptionFormProps) {
 				spatialFootprint: (
 					<Field key="spatialFootprint" label="">
 						<ContentRepeater
+							ctryIso3={ctryIso3}
 							caption="Spatial Footprint"
 							ref={contentReapeaterRef}
 							id="spatialFootprint"
