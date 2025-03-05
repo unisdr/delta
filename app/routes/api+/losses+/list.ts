@@ -15,7 +15,6 @@ export const loader = createApiListLoader(
 			...offsetLimit,
 			columns: {
 				id: true,
-				type: true,
 			},
 			orderBy: [desc(lossesTable.id)],
 		})

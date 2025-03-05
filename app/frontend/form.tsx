@@ -570,6 +570,8 @@ export interface InputProps {
 	value: any;
 	errors: string[] | undefined;
 	enumData?: readonly EnumEntry[];
+	onChange?: (e: any) => void;
+	disabled?: boolean
 }
 
 export function Input(props: InputProps) {
@@ -580,7 +582,6 @@ export function Input(props: InputProps) {
 				child={child}
 				errors={props.errors}
 			/>
-
 		)
 	}
 	switch (props.def.type) {
@@ -589,17 +590,22 @@ export function Input(props: InputProps) {
 		case "enum": {
 			let vs = props.value as string;
 			return wrapInput(
-				<select
-					required={props.def.required}
-					name={props.name}
-					defaultValue={vs}
-				>
-					{props.enumData!.map((v) => (
-						<option key={v.key} value={v.key}>
-							{v.label}
-						</option>
-					))}
-				</select>
+				<>
+					<select
+						required={props.def.required}
+						name={props.name}
+						defaultValue={vs}
+						onChange={props.onChange}
+						disabled={props.disabled}
+					>
+						{props.enumData!.map((v) => (
+							<option key={v.key} value={v.key}>
+								{v.label}
+							</option>
+						))}
+					</select>
+					{props.disabled && <input type="hidden" name={props.name} value="" />}
+				</>
 			);
 		}
 		case "enum-flex": {
@@ -610,6 +616,7 @@ export function Input(props: InputProps) {
 					required={props.def.required}
 					name={props.name}
 					defaultValue={vs}
+					onChange={props.onChange}
 				>
 					{!contains && vs && (
 						<option key={vs} value={vs}>
@@ -630,14 +637,14 @@ export function Input(props: InputProps) {
 				return wrapInput(
 					<>
 						<input type="hidden" name={props.name} value="off" />
-						<input type="checkbox" name={props.name} defaultChecked />
+						<input type="checkbox" name={props.name} defaultChecked onChange={props.onChange} />
 					</>
 				)
 			} else {
 				return wrapInput(
 					<>
 						<input type="hidden" name={props.name} value="off" />
-						<input type="checkbox" name={props.name} />
+						<input type="checkbox" name={props.name} onChange={props.onChange} />
 					</>
 				)
 			}
@@ -652,6 +659,7 @@ export function Input(props: InputProps) {
 					required={props.def.required}
 					name={props.name}
 					defaultValue={defaultValueTextArea}
+					onChange={props.onChange}
 				/>
 			);
 		case "date_optional_precision":
@@ -693,6 +701,7 @@ export function Input(props: InputProps) {
 								let v = e.target.value
 								vsFullSet(v)
 								vsDBSet(toDB(v, precision))
+								if (props.onChange) props.onChange(e)
 							}}
 						/>)
 					}
@@ -705,6 +714,7 @@ export function Input(props: InputProps) {
 									let p = e.target.value
 									precisionSet(p)
 									vsDBSet(toDB(vsFull, p))
+									if (props.onChange) props.onChange(e)
 								}}
 							>
 								<option value="yyyy-mm-dd">Full date (yyyy-mm-dd)</option>
@@ -772,6 +782,7 @@ export function Input(props: InputProps) {
 							pattern="[0-9]*"
 							name={props.name}
 							defaultValue={defaultValue}
+							onChange={props.onChange}
 						/>)
 				case "money":
 					return wrapInput(
@@ -782,6 +793,7 @@ export function Input(props: InputProps) {
 							pattern="[0-9]*\.?[0-9]*"
 							name={props.name}
 							defaultValue={defaultValue}
+							onChange={props.onChange}
 						/>)
 			}
 			if (inputType == "") {
@@ -793,6 +805,7 @@ export function Input(props: InputProps) {
 					type={inputType}
 					name={props.name}
 					defaultValue={defaultValue}
+					onChange={props.onChange}
 				/>)
 	}
 }

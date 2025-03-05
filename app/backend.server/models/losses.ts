@@ -7,6 +7,7 @@ import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {configCurrencies} from "~/util/config"
 import {unitsEnum} from "~/frontend/unit_picker"
+import {typeEnumAgriculture, typeEnumNotAgriculture} from "~/frontend/losses_enums"
 
 export interface LossesFields extends Omit<LossesInsert, "id"> {}
 
@@ -34,13 +35,12 @@ export function fieldsForPubOrPriv(pub: boolean): FormInputDef<LossesFields>[] {
 	]
 }
 
-
 export const fieldsDef: FormInputDef<LossesFields>[] = [
 	{key: "recordId", label: "", type: "other"},
 	{key: "sectorId", label: "", type: "other"},
 	{key: "sectorIsAgriculture", label: "", type: "bool"},
 	{
-		key: "type", label: "Type", type: "enum", enumData: [
+		key: "typeNotAgriculture", label: "Type", type: "enum", enumData: [
 			{"key": "infrastructure_temporary", "label": "Infrastructure- temporary for service/production continuity"},
 			{"key": "production_service_delivery_and_availability", "label": "Production,Service delivery and availability of/access to goods and services"},
 			{"key": "governance_and_decision_making", "label": "Governance and decision-making"},
@@ -50,53 +50,21 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 		], uiRow: {},
 	},
 	{
-		key: "relatedToNotAgriculture", label: "Related To", type: "enum", enumData: [
-			{key: "increase_in_expenditure_infrastructure_temporary", label: "Increase in expenditure, Infrastructure temporary"},
-			{key: "decrease_in_revenues_infrastructure_temporary", label: "Decrease in revenues, Infrastructure temporary"},
-			{key: "cost_for_service_or_production_continuity_incurred_but_not_assessed", label: "Cost for service or production continuity incurred but not assessed"},
-			{key: "increase_in_expenditure_for_production_service_delivery_and_availability", label: "Increase in expenditure for Production, Service delivery and availability"},
-			{key: "decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability", label: "Decrease in revenues due to drop on Production, Service delivery and availability"},
-			{key: "access_difficultied", label: "Access difficulted"},
-			{key: "availability_decreased", label: "Availability decreased"},
-			{key: "increase_in_expenditure_governance", label: "Increase in expenditure, Governance"},
-			{key: "decrease_in_revenue_governance", label: "Decrease in revenue, Governance"},
-			{key: "governance_processes_difficulted", label: "Governance processes difficulted"},
-			{key: "increase_in_expenditure_to_address_risk_and_vulnerabilities", label: "Increase in expenditure to address risk and vulnerabilities"},
-			{key: "decrease_in_revenue_from_risk_protection", label: "Decrease in revenue from risk protection"},
-			{key: "risks_and_vulnerabilities_increased", label: "Risks and vulnerabilities increased"},
-			{key: "increase_in_expenditure", label: "Increase in expenditure"},
-			{key: "decrease_in_revenues", label: "Decrease in revenues"},
-			{key: "non_quantified_other_losses", label: "Non quantified - other losses"},
-			{key: "number_of_work_days_lost", label: "# of work days lost"},
-			{key: "number_of_workers_who_loss_their_jobs", label: "# of workers who loss their jobs"},
-			{key: "number_of_persons_whose_livelihoods_related_to_sector_lost", label: "# of persons whose livelihoods related to sector lost"}
-		]
+		key: "typeAgriculture", label: "Type", type: "enum", enumData: [
+			{"key": "infrastructure_temporary", "label": "Infrastructure- temporary for service/production continuity"},
+			{"key": "production_losses", "label": "Production losses"},
+			{"key": "production_service_delivery_and_availability", "label": "Production, Service delivery and availability of/access to goods and services"},
+			{"key": "governance_and_decision_making", "label": "Governance and decision-making"},
+			{"key": "risk_and_vulnerabilities", "label": "Risk and vulnerabilities"},
+			{"key": "other_losses", "label": "Other losses"},
+			{"key": "employment_and_livelihoods_losses", "label": "Employment and Livelihoods losses"}
+		], uiRow: {},
 	},
 	{
-		key: "relatedToAgriculture", label: "Related To", type: "enum", enumData: [
-			{"key": "increase_in_expenditure_infrastructure_temporary", "label": "Increase in expenditure, Infrastructure temporary"},
-			{"key": "decrease_in_revenues_infrastructure_temporary", "label": "Decrease in revenues, Infrastructure temporary"},
-			{"key": "cost_for_service_or_production_continuity_incurred_but_not_assessed", "label": "Cost for service or production continuity incurred but not assessed"},
-			{"key": "production_inputs", "label": "Production inputs"},
-			{"key": "production_outputs", "label": "Production outputs"},
-			{"key": "increase_in_expenditure_for_production_service_delivery_and_availability", "label": "Increase in expenditure for Production, Service delivery and availability"},
-			{"key": "decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability", "label": "Decrease in revenues due to drop on Production, Service delivery and availability"},
-			{"key": "access_difficultied", "label": "Access difficulted"},
-			{"key": "availability_decreased", "label": "Availability decreased"},
-			{"key": "increase_in_expenditure_governance", "label": "Increase in expenditure, Governance"},
-			{"key": "decrease_in_revenue_governance", "label": "Decrease in revenue, Governance"},
-			{"key": "governance_processes_difficulted", "label": "Governance processes difficulted"},
-			{"key": "increase_in_expenditure_to_address_risk_and_vulnerabilities", "label": "Increase in expenditure to address risk and vulnerabilities"},
-			{"key": "decrease_in_revenue_from_risk_protection", "label": "Decrease in revenue from risk protection"},
-			{"key": "risks_and_vulnerabilities_increased", "label": "Risks and vulnerabilities increased"},
-			{"key": "increase_in_expenditure", "label": "Increase in expenditure"},
-			{"key": "decrease_in_revenues", "label": "Decrease in revenues"},
-			{"key": "non_quantified_other_losses", "label": "Non quantified - other losses"},
-			{"key": "number_of_work_days_lost", "label": "# of work days lost"},
-			{"key": "number_of_workers_who_loss_their_jobs", "label": "# of workers who loss their jobs"},
-			{"key": "number_of_workers_who_loss_their_jobs_permanently", "label": "# of workers who loss their jobs permanently"},
-			{"key": "number_of_persons_whose_livelihoods_related_to_sector_lost", "label": "# of persons whose livelihoods related to sector lost"}
-		]
+		key: "relatedToNotAgriculture", label: "Related To", type: "enum", enumData: typeEnumNotAgriculture.map(v => ({key: v.key, label: v.label}))
+	},
+	{
+		key: "relatedToAgriculture", label: "Related To", type: "enum", enumData: typeEnumAgriculture.map(v => ({key: v.key, label: v.label}))
 	},
 	{key: "description", label: "Description", type: "textarea", uiRowNew: true},
 

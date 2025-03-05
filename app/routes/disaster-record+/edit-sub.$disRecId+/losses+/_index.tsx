@@ -42,7 +42,6 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				id: true,
 				recordId: true,
 				sectorId: true,
-				type: true,
 			},
 			with: {
 				sector: true
@@ -82,7 +81,6 @@ export default function Data() {
 				<td><Link to={`${route}/${item.id}`}>{item.id.slice(0,8)}</Link></td>
 				<td>{item.recordId.slice(0,8)}</td>
 				<td>{item.sector.sectorname}</td>
-				<td>{item.type}</td>
 				<td><ActionLinks route={route} id={item.id} /></td>
 			</tr>
 		),

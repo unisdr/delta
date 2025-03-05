@@ -5,12 +5,12 @@ import {validateFromMap, validateFromJson, validateRes} from "./form_validate"
 
 interface TestType {
 	k1: string
-	k2: number|null
+	k2: number | null
 	k3: boolean
 	k4: string
 	k5: Date
 	k6: string
-	k7: string|null
+	k7: string | null
 }
 
 function runTestCommon(args: {
@@ -221,6 +221,40 @@ describe("validateFromMap", function () {
 		data: {k6: "opt1"},
 		expectedOk: true,
 		expectedData: {k6: "opt1"},
+	})
+
+	runTest({
+		name: "handles enum field with required value not provided",
+		defs: [
+			{
+				key: "k6",
+				type: "enum",
+				required: true,
+				label: "Enum Field",
+				enumData: [
+				],
+			},
+		],
+		data: {k6: ""},
+		expectedOk: false,
+		expectedData: null,
+		expectedCodes: {k6: ["required"]},
+	})
+
+	runTest({
+		name: "handles enum field with optional value not provided",
+		defs: [
+			{
+				key: "k7",
+				type: "enum",
+				label: "Enum Field",
+				enumData: [
+				],
+			},
+		],
+		data: {k7: ""},
+		expectedOk: true,
+		expectedData: {k7: null},
 	})
 
 	runTest({
