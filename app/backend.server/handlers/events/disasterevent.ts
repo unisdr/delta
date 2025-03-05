@@ -31,7 +31,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 
 
 	const filters: {approvalStatus?: approvalStatusIds} = {
-		approvalStatus: "completed",
+		approvalStatus: "published",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs)

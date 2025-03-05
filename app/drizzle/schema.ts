@@ -60,9 +60,9 @@ const approvalFields = {
 	// drizzle has broken postgres enum support
 	// using text column instead
 	// https://github.com/drizzle-team/drizzle-orm/issues/3485
-	approvalStatus: text({enum: ["open", "completed"]})
+	approvalStatus: text({enum: ["draft", "completed / waiting for approval", "approved", "sent for review", "published"]})
 		.notNull()
-		.default("open"),
+		.default("draft"),
 };
 
 // need function wrapper to avoid unique relation drizzle error

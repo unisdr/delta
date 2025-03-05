@@ -29,7 +29,7 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 
 
 	const filters: {approvalStatus?: approvalStatusIds} = {
-		approvalStatus: "completed",
+		approvalStatus: "published",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs)

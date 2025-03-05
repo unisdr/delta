@@ -40,12 +40,27 @@ form > label {
 	border-color: #004f91;
 }
 
-.dts-status--open {
-	background-color: #026666;
+.dts-status--draft {
+	background-color: #FFA500;
 }
 
-.dts-status--completed {
-	background-color: #F4E496;
+
+.dts-status--completed-waiting-for-approval {
+	background-color: #1E90FF;
+}
+
+
+.dts-status--approved {
+	background-color: #28A745;
+}
+
+
+.dts-status--sent-for-review {
+	background-color: #FFC107;
+}
+
+.dts-status--published {
+	background-color: #6F42C1;
 }
 
 .dts-status--rejected {

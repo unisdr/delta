@@ -49,7 +49,7 @@ export const contentPickerConfig = {
             { type: "inner", table: hipHazardTable, condition: eq(hazardousEventTable.hipHazardId, hipHazardTable.id) }
         ],
         where: [ // Define search filters
-            eq(disasterEventTable.approvalStatus, "completed"),
+            eq(disasterEventTable.approvalStatus, "published"),
         ],
         whereIlike: [ // Define search filters
             { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },

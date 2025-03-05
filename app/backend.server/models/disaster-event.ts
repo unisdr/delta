@@ -40,8 +40,8 @@ export async function disasterEventSectorsById(id: any) {
 		.where(
 			and(
 				eq(disasterEventTable.id, id),
-				eq(disasterRecordsTable.approvalStatus, "completed"),
-				eq(disasterEventTable.approvalStatus, "completed"),
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
 			)
 		)
 		.orderBy(sectorTable.sectorname)
@@ -62,8 +62,8 @@ export async function disasterEvent_DisasterRecordsCount__ById(id: any) {
 		.where(
 			and(
 				eq(disasterEventTable.id, id),
-				eq(disasterRecordsTable.approvalStatus, "completed"),
-				eq(disasterEventTable.approvalStatus, "completed"),
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
 			)
 		)
 	.execute();
@@ -105,8 +105,8 @@ export async function disasterEventTotalLosses_RecordsAssets__ById(disasterEvent
 				eq(sectorDisasterRecordsRelationTable.withLosses, true),
 				eq(lossesTable.sectorId, sectorId),
 				isNull(sectorDisasterRecordsRelationTable.lossesCost),
-				eq(disasterRecordsTable.approvalStatus, "completed"),
-				eq(disasterEventTable.approvalStatus, "completed"),
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
 			)
 		);
 
@@ -140,8 +140,8 @@ export async function disasterEventTotalRecovery_RecordsAssets__ById(disasterEve
 				eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordId),
 				eq(damagesTable.recordId, disasterRecordId),
 				isNull(sectorDisasterRecordsRelationTable.damageRecoveryCost),
-				eq(disasterRecordsTable.approvalStatus, "completed"),
-				eq(disasterEventTable.approvalStatus, "completed"),
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
 			)
 		);
 
@@ -186,8 +186,8 @@ export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEven
 				eq(sectorDisasterRecordsRelationTable.withDamage, true),
 				eq(damagesTable.sectorId, sectorId),
 				isNull(sectorDisasterRecordsRelationTable.damageCost),
-				eq(disasterRecordsTable.approvalStatus, "completed"),
-				eq(disasterEventTable.approvalStatus, "completed"),
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
 			)
 		);
 
@@ -226,8 +226,8 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string) {
 		.innerJoin(damagesTable, eq(damagesTable.recordId, disasterRecordsTable.id))
 		.where(
 			and(
-				eq(disasterRecordsTable.approvalStatus, "completed"),
-				eq(disasterEventTable.approvalStatus, "completed"),
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
 				eq(disasterEventTable.id, disasterEventId),
 				or(
 					eq(sectorDisasterRecordsRelationTable.withDamage, true),
