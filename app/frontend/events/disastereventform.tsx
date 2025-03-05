@@ -353,7 +353,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 		let mod = name != "recovery" ? "Costs" : "Needs"
 		let nameOverride = name + mod + "LocalCurrencyOverride"
 		let valueOverride = (props.fields as any)[nameOverride] as string
-		initialOverrides[nameOverride] = valueOverride !== "" && valueOverride !== null;
+		initialOverrides[nameOverride] = typeof valueOverride == "string" && valueOverride != ""
 	}
 
 	let [overrides, setOverrides] = useState(initialOverrides)
