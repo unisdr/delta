@@ -140,7 +140,7 @@ export async function importZip(zipBytes: Uint8Array) {
 		if (!gf) continue
 		let file = zip.files["geodata/" + gf]
 		if (!file) {
-			throw new UserError(`CSV has {gf} in geodata column, but no file with the same name found in geodata folder in ZIP archive.`)
+			throw new UserError(`CSV has ${gf} in geodata column, but no file with the same name found in geodata folder in ZIP archive.`)
 		}
 		let geodataStr = await file.async("string")
 		let geodataObj = null
