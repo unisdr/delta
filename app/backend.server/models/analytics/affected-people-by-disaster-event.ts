@@ -72,7 +72,7 @@ async function getTotalForDisasterEvent(tx: Tx, disasterEventId: string, valTabl
 		.where(
 			and(
 				eq(de.id, disasterEventId),
-				eq(de.approvalStatus, "published"),
+				eq(dr.approvalStatus, "published"),
 				isNull(hd.sex),
 				isNull(hd.age),
 				isNull(hd.disability),
