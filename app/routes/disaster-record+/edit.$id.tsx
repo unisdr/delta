@@ -18,13 +18,11 @@ import {
 	route
 } from "~/frontend/disaster-record/form";
 
-import { DisasterRecordsViewModel } from "~/backend.server/models/disaster_record";
-import { nonecoLossesFilderBydisasterRecordsId, PropRecord as nonecoLossesProps } from "~/backend.server/models/noneco_losses";
-import { 
+import {DisasterRecordsViewModel} from "~/backend.server/models/disaster_record";
+import {nonecoLossesFilderBydisasterRecordsId, PropRecord as nonecoLossesProps} from "~/backend.server/models/noneco_losses";
+import {
 	sectorsFilderBydisasterRecordsId,
 } from "~/backend.server/models/disaster_record__sectors";
-
-
 
 import {
 	FormScreen
@@ -33,17 +31,17 @@ import {
 import {
 	createAction
 } from "~/backend.server/handlers/form";
-import { getTableName, eq } from "drizzle-orm";
-import { disasterRecordsTable } from "~/drizzle/schema";
+import {getTableName, eq} from "drizzle-orm";
+import {disasterRecordsTable} from "~/drizzle/schema";
 
-import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
-import { divisionTable } from "~/drizzle/schema";
+import {buildTree} from "~/components/TreeView";
+import {dr} from "~/db.server"; // Drizzle ORM instance
+import {divisionTable} from "~/drizzle/schema";
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
-import { contentPickerConfig } from "./content-picker-config";
+import {contentPickerConfig} from "./content-picker-config";
 
-import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
+import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("actionArgs", actionArgs.params);
@@ -54,41 +52,41 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		throw "Route does not have $id param";
 	}
 
-    const initializeNewTreeView = async (): Promise<any[]> => {
-        const idKey = "id";
-        const parentKey = "parentId";
-        const nameKey = "name";
-        const rawData = await dr.select().from(divisionTable);
-        return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
-    };
+	const initializeNewTreeView = async (): Promise<any[]> => {
+		const idKey = "id";
+		const parentKey = "parentId";
+		const nameKey = "name";
+		const rawData = await dr.select().from(divisionTable);
+		return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+	};
 
 	const hip = await dataForHazardPicker();
 
 	if (params.id === "new") {
-        const treeData = await initializeNewTreeView();
+		const treeData = await initializeNewTreeView();
 		const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 		//console.log("ctryIso3", ctryIso3);
-        return {
-            item: null,
-            recordsNonecoLosses: [],
-            recordsDisRecSectors: [],
-            recordsHumanEffects: [],
+		return {
+			item: null,
+			recordsNonecoLosses: [],
+			recordsDisRecSectors: [],
+			recordsHumanEffects: [],
 			hip: hip,
-            treeData: treeData,
-            cpDisplayName: null,
+			treeData: treeData,
+			cpDisplayName: null,
 			ctryIso3: ctryIso3
-        };
+		};
 	}
 
 	const item = await disasterRecordsById(params.id);
 	if (!item) {
 		throw new Response("Not Found", {status: 404});
 	}
-	
+
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
 	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
 	const dbDisRecHumanEffects = await getHumanEffectRecordsById(params.id);
-	
+
 	// console.log("recordsNonecoLosses", dbNonecoLosses);
 	// console.log("recordsNonecoLosses", dbDisRecSectors);
 	//console.log("Human Effects: ", dbDisRecHumanEffects);
@@ -96,14 +94,14 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	// console.log("Sectors: ", dbDisRecSectors);
 
 	// Define Keys Mapping (Make it Adaptable)
-    const treeData = await initializeNewTreeView();
+	const treeData = await initializeNewTreeView();
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
-    const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
+	const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
 
-    return {
-		item, 
-		recordsNonecoLosses: dbNonecoLosses, 
+	return {
+		item,
+		recordsNonecoLosses: dbNonecoLosses,
 		recordsDisRecSectors: dbDisRecSectors,
 		recordsHumanEffects: dbDisRecHumanEffects,
 		hip: hip,
@@ -125,16 +123,16 @@ export const action = createAction({
 	postProcess: async (id, data) => {
 		//console.log(`Post-processing record: ${id}`);
 		//console.log(`data: `, data);
-	
+
 		const save_path = `/uploads/disaster-record/${id}`;
 		const save_path_temp = `/uploads/temp`;
-	
+
 		// Ensure attachments is an array, even if it's undefined or empty
 		const attachmentsArray = Array.isArray(data?.attachments) ? data.attachments : [];
-	
+
 		// Process the attachments data
 		const processedAttachments = ContentRepeaterUploadFile.save(attachmentsArray, save_path_temp, save_path);
-	
+
 		// Update the `attachments` field in the database
 		await dr.update(disasterRecordsTable)
 			.set({
@@ -146,8 +144,8 @@ export const action = createAction({
 
 export default function Screen() {
 	const ld = useLoaderData<{
-		item: DisasterRecordsViewModel | null, 
-		recordsNonecoLosses: nonecoLossesProps, 
+		item: DisasterRecordsViewModel | null,
+		recordsNonecoLosses: nonecoLossesProps,
 		recordsDisRecSectors: any | null,
 		recordsHumanEffects: any | null,
 		hip: any,
@@ -159,14 +157,14 @@ export default function Screen() {
 
 	return (
 		<>
-            
+
 			<FormScreen
 				fieldsDef={fieldsDef}
 				formComponent={(props: any) => <DisasterRecordsForm {...props}
-                    hip={ld.hip}
-                    treeData={ld.treeData}
+					hip={ld.hip}
+					treeData={ld.treeData}
 					ctryIso3={ld.ctryIso3}
-                    cpDisplayName={ld.cpDisplayName} />}
+					cpDisplayName={ld.cpDisplayName} />}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>
@@ -182,27 +180,27 @@ export default function Screen() {
 								</div>
 								<div className="mg-grid mg-grid__col-1">
 									<div className="dts-form-component">
-									{ld.recordsHumanEffects && (
-										<>
-										<ul>
-											{ ld.recordsHumanEffects.deaths && (
-												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}>Deaths</Link></li>
-											)}
-											{ ld.recordsHumanEffects.injured && (
-												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}>Injured</Link></li>
-											)}
-											{ ld.recordsHumanEffects.missing && (
-												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}>Missing</Link></li>	
-											)}
-											{ (ld.recordsHumanEffects.affectedDirect || ld.recordsHumanEffects.affectedIndirect)  && (
-												<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Affected</Link></li>
-											)}
-											{ (ld.recordsHumanEffects.displaced)  && (
-													<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>Displaced</Link></li>
-											)}
-										</ul>
-										</>
-									)}
+										{ld.recordsHumanEffects && (
+											<>
+												<ul>
+													{ld.recordsHumanEffects.deaths && (
+														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}>Deaths</Link></li>
+													)}
+													{ld.recordsHumanEffects.injured && (
+														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}>Injured</Link></li>
+													)}
+													{ld.recordsHumanEffects.missing && (
+														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}>Missing</Link></li>
+													)}
+													{(ld.recordsHumanEffects.affectedDirect || ld.recordsHumanEffects.affectedIndirect) && (
+														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Affected</Link></li>
+													)}
+													{(ld.recordsHumanEffects.displaced) && (
+														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>Displaced</Link></li>
+													)}
+												</ul>
+											</>
+										)}
 									</div>
 								</div>
 							</div>
@@ -245,58 +243,58 @@ export default function Screen() {
 											</thead>
 											<tbody>
 												{ld.recordsDisRecSectors && Array.isArray(ld.recordsDisRecSectors) && ld.recordsDisRecSectors.map((item, index) => (
-													<tr key={ index }>
-														<td>{ item.disRecSectorsId.slice(0, 8) }</td>
+													<tr key={index}>
+														<td>{item.disRecSectorsId.slice(0, 8)}</td>
 														<td>
-															{ item.sectorTreeDisplay }
+															{item.sectorTreeDisplay}
 														</td>
 														<td>
-															{ item.disRecSectorsWithDamage &&
+															{item.disRecSectorsWithDamage &&
 																<>
 																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/damages?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
 																</>
 															}
 														</td>
 														<td>
-															{ item.disRecSectorsDamageRecoveryCost &&
+															{item.disRecSectorsDamageRecoveryCost &&
 																<>
-																	
-																	{ item.disRecSectorsDamageRecoveryCost } { item.disRecSectorsDamageRecoveryCostCurrency }
+
+																	{item.disRecSectorsDamageRecoveryCost} {item.disRecSectorsDamageRecoveryCostCurrency}
 																</>
 															}
 														</td>
 														<td>
-															{ item.disRecSectorsDamageCost &&
+															{item.disRecSectorsDamageCost &&
 																<>
-																	
-																	{ item.disRecSectorsDamageCost } { item.disRecSectorsDamageCostCurrency }
+
+																	{item.disRecSectorsDamageCost} {item.disRecSectorsDamageCostCurrency}
 																</>
 															}
 														</td>
 														<td>
-															{ item.disRecSectorsWithLosses &&
+															{item.disRecSectorsWithLosses &&
 																<>
 																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/losses?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
 																</>
 															}
 														</td>
 														<td>
-															{ item.disRecSectorsLossesCost &&
+															{item.disRecSectorsLossesCost &&
 																<>
-																	
-																	{ item.disRecSectorsLossesCost } { item.disRecSectorsLossesCostCurrency }
+
+																	{item.disRecSectorsLossesCost} {item.disRecSectorsLossesCostCurrency}
 																</>
 															}
 														</td>
 														<td>
-															{ item.disRecSectorsWithDisruption &&
+															{item.disRecSectorsWithDisruption &&
 																<>
 																	<Link to={`/disaster-record/edit-sub/${item.disRecSectorsdisasterRecordId}/disruptions?sectorId=${item.disRecSectorsSectorId}`}>Yes</Link>
 																</>
 															}
 														</td>
 														<td>
-															{ ld.item && ld.item.id && (
+															{ld.item && ld.item.id && (
 																<>
 																	<Link to={`/disaster-record/edit-sec/${ld.item.id}/delete/?id=${item.disRecSectorsId}`}>Delete</Link>
 																	&nbsp;|&nbsp;
@@ -337,14 +335,14 @@ export default function Screen() {
 												</thead>
 												<tbody>
 													{ld.recordsNonecoLosses && Array.isArray(ld.recordsNonecoLosses) && ld.recordsNonecoLosses.map((item, index) => (
-														<tr key={ index }>
-															<td>{ item.noneccoId.slice(0, 8) }</td>
+														<tr key={index}>
+															<td>{item.noneccoId.slice(0, 8)}</td>
 															<td>
-																{ item.categoryTreeDisplay }
+																{item.categoryTreeDisplay}
 															</td>
-															<td>{ item.noneccoDesc.slice(0, 300) }</td>
+															<td>{item.noneccoDesc.slice(0, 300)}</td>
 															<td>
-																{ ld.item && ld.item.id && (
+																{ld.item && ld.item.id && (
 																	<>
 																		<Link to={`${route}/non-economic-losses/${ld.item.id}/delete/?id=${item.noneccoId}`}>Delete</Link>
 																		&nbsp;|&nbsp;
@@ -364,7 +362,7 @@ export default function Screen() {
 					</div>
 				</section>
 			</>)}
-			
+
 		</>
 	);
 }

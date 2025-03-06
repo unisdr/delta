@@ -173,11 +173,11 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 					</div>
 				</>}
 				override={{
-					disasterEventId: (
-						<Field key="disasterEventId" label="Disaster Event">
-							<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""} />
-						</Field>
-					),
+					disasterEventId:
+						(hazardousEventLinkType == "disaster_event") ?
+							<Field key="disasterEventId" label="Disaster Event">
+								<ContentPicker {...contentPickerConfig} value={fields.disasterEventId || ""} displayName={cpDisplayName || ""} />
+							</Field> : <input type="hidden" name="disasterEventId" value="" />,
 					hipTypeId: null,
 					hipClusterId: null,
 					hipHazardId: (
@@ -328,13 +328,13 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 															arrValue = {
 																...arrValue,  // Spread existing properties (if any)
 																dts_info: {
-																	division_id: selectedItems.selectedId || null, 
+																	division_id: selectedItems.selectedId || null,
 																	division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
 																}
 															};
 															const setField = {id: "geojson", value: arrValue};
 															contentReapeaterRef.current.handleFieldChange(setField, arrValue);
-	
+
 															const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 															contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 														}
