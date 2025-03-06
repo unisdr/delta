@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from "react";
 
-type SpatialFootprintMapViewerProps = {
+type GeoJSONMapViewerProps = {
   id: string;
   dataSource: {
     total: number;
     name: string;
     geojson: any;
-    colorPercentage?: number; // Will be calculated dynamically
+    colorPercentage?: number;
   }[];
+  legendMaxColor: string;
 };
 
 const glbMapperJS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
 const glbMapperCSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 
 const glbColors = {
-  polygon: "#333333",
+  polygon: "#208f04",
   line: "#FF851B",
   rectangle: "#2ECC40",
   circle: "#FF4136",
@@ -32,7 +33,6 @@ const glbMarkerIcon = {
 
 const loadLeaflet = (setLeafletLoaded: (loaded: boolean) => void) => {
   if (typeof window === "undefined") return;
-
   if (!(window as any).L) {
     const leafletCSS = document.createElement("link");
     leafletCSS.rel = "stylesheet";
@@ -52,9 +52,8 @@ const loadLeaflet = (setLeafletLoaded: (loaded: boolean) => void) => {
   }
 };
 
-// ✅ Adjust zoom to fit all shapes
 const adjustZoomBasedOnDistance = (map: any, geoJsonLayers: any[]) => {
-  const L = (window as any).L;  
+  const L = (window as any).L;
   const boundsArray: any[] = [];
 
   geoJsonLayers.forEach(layer => {
@@ -74,22 +73,23 @@ const adjustZoomBasedOnDistance = (map: any, geoJsonLayers: any[]) => {
   }
 };
 
-// ✅ Get color dynamically for each geometry type
-const getColorForGeometry = (geometryType: 'Point' | 'LineString' | 'Polygon' | 'MultiPolygon' | 'Rectangle' | 'Circle') => {
-  const colors = {
-    Point: glbColors.marker,
-    LineString: glbColors.line,
-    Polygon: glbColors.polygon,
-    MultiPolygon: glbColors.polygon,
-    Rectangle: glbColors.rectangle,
-    Circle: glbColors.circle,
-  };
-  return colors[geometryType] || "#000000";
+const getOpacityForRange = (value: number, min: number, max: number) => {
+  const rangeSize = (max - min) / 6; // Divide into 6 ranges
+  if (value <= min) return 0.1;
+  if (value <= min + rangeSize) return 0.2;
+  if (value <= min + rangeSize * 2) return 0.4;
+  if (value <= min + rangeSize * 3) return 0.6;
+  if (value <= min + rangeSize * 4) return 0.8;
+  return 1.0;
 };
 
-const GeoJSONMapViewer: React.FC<SpatialFootprintMapViewerProps> = ({ id = "", dataSource = [] }) => {
+const GeoJSONMapViewer: React.FC<GeoJSONMapViewerProps> = ({ id = "", dataSource = [], legendMaxColor = "#333333" }) => {
   const [isClient, setIsClient] = useState(false);
   const [isLeafletLoaded, setLeafletLoaded] = useState(false);
+  const [updatedData, setUpdatedData] = useState(dataSource);
+  const [isMapRendered, setIsMapRendered] = useState(false);
+  const [minTotal, setMinTotal] = useState(0);
+  const [maxTotal, setMaxTotal] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
@@ -99,74 +99,117 @@ const GeoJSONMapViewer: React.FC<SpatialFootprintMapViewerProps> = ({ id = "", d
   useEffect(() => {
     if (!isClient || !isLeafletLoaded || typeof window === "undefined") return;
     if (!dataSource || dataSource.length === 0) return;
-  
+
     console.log("Initializing map with data:", dataSource);
-  
+
     const L = (window as any).L;
     if (!L) {
       console.error("Leaflet is still not available.");
       return;
     }
-  
-    // ✅ Compute distinct opacity values based on index
-    const length = dataSource.length;
-    dataSource.forEach((region, index) => {
-      if (length === 1) {
-        region.colorPercentage = 1.0; // Only one region, full opacity
-      } else {
-        region.colorPercentage = index === 0 ? 0.1 : index === length - 1 ? 1.0 : (index / (length - 1));
-      }
-      console.log(`region.colorPercentage ${region.name} - ${region.colorPercentage}`);
-    });
-  
-    // ✅ Wait until the container is mounted
+
+    const minVal = Math.min(...dataSource.map(region => region.total));
+    const maxVal = Math.max(...dataSource.map(region => region.total));
+
+    setMinTotal(minVal);
+    setMaxTotal(maxVal);
+
+    const newData = dataSource.map(region => ({
+      ...region,
+      colorPercentage: getOpacityForRange(region.total, minVal, maxVal),
+    }));
+
+    setUpdatedData(newData);
+
     setTimeout(() => {
       const container = document.getElementById(id);
       if (!container) {
         console.error("Map container not found!");
         return;
       }
-  
-      container.innerHTML = ""; // Clear the container before rendering
-  
+
+      container.innerHTML = "";
+
       const map = L.map(id, { preferCanvas: true });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-  
+
       const geoJsonLayers: any[] = [];
-  
-      dataSource.forEach((region: any) => {
+
+      newData.forEach((region: any) => {
         try {
           if (!region.geojson) {
             console.warn(`Skipping invalid GeoJSON:`, region);
             return;
           }
-  
+
           const geojsonLayer = L.geoJSON(region.geojson, {
-            style: (feature: any) => {
-              const geometryType = feature.geometry.type;
-              const color = getColorForGeometry(geometryType);
-              return {
-                color: color,
-                fillColor: color,
-                weight: 2,
-                opacity: 1,
-                fillOpacity: region.colorPercentage, // Apply improved calculated opacity
-              };
-            },
+            style: (feature: any) => ({
+              color: legendMaxColor,
+              fillColor: legendMaxColor,
+              weight: 2,
+              opacity: 1,
+              fillOpacity: region.colorPercentage,
+            }),
           });
-  
+
           geojsonLayer.addTo(map);
           geoJsonLayers.push(geojsonLayer);
         } catch (error) {
           console.error("Error parsing GeoJSON:", error);
         }
       });
-  
-      setTimeout(() => adjustZoomBasedOnDistance(map, geoJsonLayers), 500);
+
+      setTimeout(() => {
+        adjustZoomBasedOnDistance(map, geoJsonLayers);
+        setIsMapRendered(true);
+      }, 500);
     }, 500);
   }, [isClient, isLeafletLoaded, dataSource]);
-  
-  return <div id={id} style={{ position: "relative", height: "500px", width: "100%", zIndex: "0", backgroundColor: "#b2d2dd" }}></div>;
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div id={id} style={{ height: "500px", width: "100%", zIndex: "0", backgroundColor: "#b2d2dd" }}></div>
+
+      {isMapRendered && (
+        <div style={{
+          position: "absolute",
+          bottom: "10px",
+          right: "10px",
+          background: "white",
+          padding: "10px",
+          borderRadius: "5px",
+          boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.3)",
+          fontSize: "14px",
+          lineHeight: "1.5",
+        }}>
+          <strong>Legend</strong>
+          <ul style={{ listStyle: "none", padding: 0, margin: "5px 0 0 0" }}>
+            <li style={{ marginBottom: "5px" }}> 
+              <span style={{ display: "inline-block", width: "12px", height: "12px", backgroundColor: "#ffffff", marginRight: "8px", border: "1px solid #333" }}></span> No Data
+            </li>
+            {[...Array(6)].map((_, i) => {
+              const rangeMin = minTotal + (i * (maxTotal - minTotal) / 6);
+              const rangeMax = minTotal + ((i + 1) * (maxTotal - minTotal) / 6);
+              return (
+                <li key={i} style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
+                  <span style={{
+                    display: "inline-block",
+                    width: "12px",
+                    height: "12px",
+                    backgroundColor: legendMaxColor,
+                    opacity: (i + 1) / 6,
+                    marginRight: "8px",
+                    border: "1px solid #333",
+                  }}></span>
+                  {`<= ${Math.ceil(rangeMax)}`}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default GeoJSONMapViewer;
