@@ -348,12 +348,12 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 	let calculationOverrides: Record<string, ReactElement | undefined | null> = {}
 
 	let names = ["rehabilitation", "repair", "replacement", "recovery"]
-	let initialOverrides: Record<string,boolean> = {}
+	let initialOverrides: Record<string, boolean> = {}
 	for (let name of names) {
 		let mod = name != "recovery" ? "Costs" : "Needs"
 		let nameOverride = name + mod + "LocalCurrencyOverride"
 		let valueOverride = (props.fields as any)[nameOverride] as string
-		initialOverrides[nameOverride] = valueOverride !== "" && valueOverride !== null;
+		initialOverrides[nameOverride] = typeof valueOverride == "string" && valueOverride != ""
 	}
 
 	let [overrides, setOverrides] = useState(initialOverrides)
@@ -443,7 +443,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
 							<input type="hidden" name="hazardousEventId" value={selectedHazardousEvent?.id || ""} />
 							<FieldErrors errors={props.errors} field="hazardousEventId"></FieldErrors>
-						</Field> : null
+						</Field> : <input type="hidden" name="hazardousEventId" value="" />
 				,
 				disasterEventId:
 					(hazardousEventLinkType == "disaster_event") ?
@@ -452,7 +452,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 							<Link target="_blank" rel="opener" to={"/disaster-event/picker"}>Change</Link>
 							<input type="hidden" name="disasterEventId" value={selectedDisasterEvent?.id || ""} />
 							<FieldErrors errors={props.errors} field="disasterEventId"></FieldErrors>
-						</Field> : null
+						</Field> : <input type="hidden" name="disasterEventId" value="" />
 				,
 				hipTypeId: null,
 				hipClusterId: null,
@@ -461,7 +461,11 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 						<Field key="hazardId" label="Specific Hazard *">
 							<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
 							<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
-						</Field> : null
+						</Field> : <>
+							<input type="hidden" name="hipTypeId" value="" />
+							<input type="hidden" name="hipClusterId" value="" />
+							<input type="hidden" name="hipHazardId" value="" />
+						</>
 				),
 				spatialFootprint: props.edit ? (
 					<Field key="spatialFootprint" label="">
@@ -577,8 +581,16 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 												selectedItems.data.map((item: any) => {
 													if (item.id == selectedItems.selectedId) {
 														contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-														const setField = {id: "geojson", value: JSON.parse(item.geojson)};
-														contentReapeaterRef.current.handleFieldChange(setField, JSON.parse(item.geojson));
+														let arrValue = JSON.parse(item.geojson);
+														arrValue = {
+															...arrValue,  // Spread existing properties (if any)
+															dts_info: {
+																division_id: selectedItems.selectedId || null, 
+																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
+															}
+														};
+														const setField = {id: "geojson", value: arrValue};
+														contentReapeaterRef.current.handleFieldChange(setField, arrValue);
 
 														const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 														contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
@@ -586,6 +598,11 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 												});
 												treeViewDiscard();
 											}
+										}
+									}
+									onClose={
+										() => {
+											treeViewDiscard();
 										}
 									}
 									onRenderItemName={

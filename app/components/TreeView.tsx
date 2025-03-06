@@ -12,13 +12,13 @@ const injectStyles = (appendCss?: string) => {
             ul.tree {
                 margin-left: 5rem !important;
                 z-index: 1;
-                position: relative;
+                position: none;
             }
 
             p.tree,
             ul.tree,
             ul.tree ul {
-                position: relative;
+                position: none;
                 list-style: none;
                 margin: 0;
                 padding: 0;
@@ -184,6 +184,7 @@ interface TreeViewProps {
     targetObject?: any | null;
     base_path?: string;
     onApply?: (selectedItem: { [key: string]: any }) => void;
+    onClose?: (() => void) | null;
     onRenderItemName?: (node: any) => any;
     multiSelect?: boolean;
     noSelect?: boolean;
@@ -199,7 +200,7 @@ interface TreeViewProps {
     showActionFooter?: boolean;
 }
 
-export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [], itemLink = "", expandByDefault = false, showActionFooter = null }, ref: any) => {
+export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = [], caption = "", rootCaption = "Root", targetObject = null,  base_path = "", onApply = null, onClose = null, onRenderItemName = null, multiSelect = false, noSelect = false, appendCss = "", disableButtonSelect = false, dialogMode = true, search = true, expanded = false, onItemClick = undefined, defaultSelectedIds = [], itemLink = "", expandByDefault = false, showActionFooter = null }, ref: any) => {
     const expandedNodesRef = useRef<{ [key: number]: boolean }>({});
     const [expandedNodes, setExpandedNodes] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
@@ -579,8 +580,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(({ treeData = 
         if (e) {
             e.preventDefault();
         }
-        if (dialogRef.current) 
-            dialogRef.current.close();
+
+        if (onClose) onClose();
+
+        if (dialogRef.current)
+            if (typeof dialogRef.current.close === "function") 
+                dialogRef.current.close();
+        
         treeViewClear();
     };
     const treeViewApply = (e?: any) => {

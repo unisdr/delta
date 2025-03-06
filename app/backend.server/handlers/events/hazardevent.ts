@@ -39,7 +39,7 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 		hipHazardId: url.searchParams.get("hipHazardId") || "",
 		hipClusterId: url.searchParams.get("hipClusterId") || "",
 		hipTypeId: url.searchParams.get("hipTypeId") || "",
-		approvalStatus: "completed",
+		approvalStatus: "published",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs)

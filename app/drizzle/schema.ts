@@ -60,9 +60,9 @@ const approvalFields = {
 	// drizzle has broken postgres enum support
 	// using text column instead
 	// https://github.com/drizzle-team/drizzle-orm/issues/3485
-	approvalStatus: text({enum: ["open", "completed"]})
+	approvalStatus: text({enum: ["draft", "completed / waiting for approval", "approved", "sent for review", "published"]})
 		.notNull()
-		.default("open"),
+		.default("draft"),
 };
 
 // need function wrapper to avoid unique relation drizzle error
@@ -860,81 +860,10 @@ export const lossesTable = pgTable("losses", {
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
-	type: text("type", {
-		enum: [
-			"infrastructure_temporary",
-"production_service_delivery_and_availability",
-"governance_and_decision_making",
-"risk_and_vulnerabilities",
-"other_losses",
-"employment_and_livelihoods_losses"
-		]
-	}).notNull(),
-	/*
-	typeNotAgriculture: text("type_not_agriculture", {
-		enum: [
-			"increased_expenditure",
-				"loss_revenue_forecasted",
-				"non_economic_losses"
-		]
-	}).notNull(),
-	typeAgriculture: text("type_agriculture", {
-		enum: [
-			"increased_expenditure",
-				"loss_revenue_forecasted",
-				"non_economic_losses"
-		]
-	}).notNull(),
- */
-	relatedToNotAgriculture: text("related_to_not_agriculture", {
-		enum: [
-			"increase_in_expenditure_infrastructure_temporary",
-			"decrease_in_revenues_infrastructure_temporary",
-			"cost_for_service_or_production_continuity_incurred_but_not_assessed",
-			"increase_in_expenditure_for_production_service_delivery_and_availability",
-			"decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability",
-			"access_difficultied",
-			"availability_decreased",
-			"increase_in_expenditure_governance",
-			"decrease_in_revenue_governance",
-			"governance_processes_difficulted",
-			"increase_in_expenditure_to_address_risk_and_vulnerabilities",
-			"decrease_in_revenue_from_risk_protection",
-			"risks_and_vulnerabilities_increased",
-			"increase_in_expenditure",
-			"decrease_in_revenues",
-			"non_quantified_other_losses",
-			"number_of_work_days_lost",
-			"number_of_workers_who_loss_their_jobs",
-			"number_of_persons_whose_livelihoods_related_to_sector_lost"
-		]
-	}),
-	relatedToAgriculture: text("related_to_agriculture", {
-		enum: [
-			"increase_in_expenditure_infrastructure_temporary",
-			"decrease_in_revenues_infrastructure_temporary",
-			"cost_for_service_or_production_continuity_incurred_but_not_assessed",
-			"production_inputs",
-			"production_outputs",
-			"increase_in_expenditure_for_production_service_delivery_and_availability",
-			"decrease_in_revenues_due_to_drop_on_production_service_delivery_and_availability",
-			"access_difficultied",
-			"availability_decreased",
-			"increase_in_expenditure_governance",
-			"decrease_in_revenue_governance",
-			"governance_processes_difficulted",
-			"increase_in_expenditure_to_address_risk_and_vulnerabilities",
-			"decrease_in_revenue_from_risk_protection",
-			"risks_and_vulnerabilities_increased",
-			"increase_in_expenditure",
-			"decrease_in_revenues",
-			"non_quantified_other_losses",
-			"number_of_work_days_lost",
-			"number_of_workers_who_loss_their_jobs",
-			"number_of_workers_who_loss_their_jobs_permanently",
-			"number_of_persons_whose_livelihoods_related_to_sector_lost",
-		]
-	}),
+	typeNotAgriculture: text("type_not_agriculture"),
+	typeAgriculture: text("type_agriculture"),
+	relatedToNotAgriculture: text("related_to_not_agriculture"),
+	relatedToAgriculture: text("related_to_agriculture"),
 	description: text("description"),
 	publicUnit: unitsEnum("public_value_unit"),
 	publicUnits: ourBigint("public_units"),
