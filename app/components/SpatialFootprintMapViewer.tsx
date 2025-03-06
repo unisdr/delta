@@ -157,6 +157,8 @@ const SpatialFootprintMapViewer: React.FC<SpatialFootprintMapViewerProps> = ({
                 // ✅ Populate Layers
                 items.forEach((item) => {
                   try {
+                    console.log('item.type:', item.type);
+                    console.log('getColorForType:', getColorForType(item.type));
                     const type = item.type;
                     const geojsonLayer = L.geoJSON(item.geojson, {
                       style: () => ({
