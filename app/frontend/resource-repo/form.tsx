@@ -81,6 +81,7 @@ export function ResourceRepoForm(props: ResourceRepoFormProps) {
 
 	return (<>
 		<FormView
+			user={props.user}
 			path={route}
 			edit={props.edit}
 			id={props.id}

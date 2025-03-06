@@ -31,12 +31,15 @@ import {
 	authLoaderIsPublic,
 	authLoaderPublicOrWithPerm,
 	authActionGetAuth,
+	authLoaderGetAuth,
+	authLoaderGetUserForFrontend,
+	UserForFrontend,
 } from "~/util/auth";
 
 import {getItem2} from "~/backend.server/handlers/view";
 import {configApprovedRecordsArePublic, configSiteURL} from "~/util/config";
 
-import {PermissionId} from "~/frontend/user/roles";
+import {PermissionId, RoleId} from "~/frontend/user/roles";
 import {logAudit} from "../models/auditLogs";
 import {auditLogsTable, userTable} from "~/drizzle/schema";
 import {and, desc, eq} from "drizzle-orm";
@@ -170,6 +173,50 @@ interface FormSaveArgs<T> {
 	postProcess?: (id: string, data: T) => Promise<void>;
 }
 
+
+let validApprovalStatusesForDataCollector = ["draft", "completed-waiting-for-approval", "approved", "sent-for-review"]
+
+function adjustApprovalStatsBasedOnUserRole(role: RoleId, isCreate: boolean, data: any) {
+	let allow = false
+	if (role == "data-validator" || role == "admin") {
+		allow = true
+	}
+	if (allow) {
+		return null
+	}
+	if (role == "data-viewer") {
+		throw new Error("got to form save with data-viewer role, this should not happen")
+	}
+	if (role != "data-collector") {
+		throw new Error("unknown role: 	" + role)
+	}
+	if (isCreate) {
+		if (data && "approvalStatus" in data) {
+			if (validApprovalStatusesForDataCollector.includes(data.approvalStatus)) {
+				// this is allowed
+				return
+			}
+			// we already don't allow this in the frontend, so safe to throw error here	
+			throw new Error(`tried to set not allowed status: ${data.approvalStatus} role: ${role}`)
+			// not allowed, set default as draft
+			//data.approvalStatus = "draft"
+			//return
+		}
+	}
+
+	if (data && "approvalStatus" in data) {
+		if (validApprovalStatusesForDataCollector.includes(data.approvalStatus)) {
+			// this is allowed
+			return
+		}
+		// we already don't allow this in the frontend, so safe to throw error here	
+		throw new Error(`tried to set not allowed status: ${data.approvalStatus} role: ${role}`)
+		// not allowed, unset so it's not changed
+		//	delete data.approvalStatus
+		//return
+	}
+}
+
 export async function formSave<T>(
 	args: FormSaveArgs<T>
 ): Promise<FormResponse2<T> | TypedResponse<never>> {
@@ -209,6 +256,9 @@ export async function formSave<T>(
 
 	const id = params["id"] || null;
 	const isCreate = args.isCreate || id === "new";
+
+	const user = authActionGetAuth(args.actionArgs)
+	adjustApprovalStatsBasedOnUserRole(user.user.role as RoleId, isCreate, validateRes.resOk)
 
 	let res0: SaveResult<T>;
 	let finalId: string | null = null;
@@ -616,7 +666,7 @@ export async function formDelete(args: FormDeleteArgs) {
 	if (!id) {
 		throw new Response("Missing item ID", {status: 400});
 	}
-	const user = authActionGetAuth(args.loaderArgs);
+	const user = authLoaderGetAuth(args.loaderArgs);
 	const oldRecord = await args.getById(id);
 	let res = await args.deleteFn(id);
 	if (!res.ok) {
@@ -654,17 +704,19 @@ interface CreateLoaderArgs<T, E extends Record<string, any> = {}> {
 
 type LoaderData<T, E extends Record<string, any>> = {
 	item: T | null
+	user: UserForFrontend
 } & E
 
 export function createLoader<T, E extends Record<string, any> = {}>(props: CreateLoaderArgs<T, E>) {
 	return authLoaderWithPerm("EditData", async (args): Promise<LoaderData<T, E>> => {
+		let user = authLoaderGetUserForFrontend(args)
 		let p = args.params
 		if (!p.id) throw new Error("Missing id param")
 		let extra = (await props.extra?.()) || {}
-		if (p.id === "new") return {item: null, ...extra} as LoaderData<T, E>
+		if (p.id === "new") return {item: null, user, ...extra} as LoaderData<T, E>
 		let it = await props.getById(p.id)
 		if (!it) throw new Response("Not Found", {status: 404})
-		return {item: it, ...extra} as LoaderData<T, E>
+		return {item: it, user, ...extra} as LoaderData<T, E>
 	})
 }
 

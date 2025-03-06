@@ -1,4 +1,4 @@
-import {authLoaderWithPerm} from "~/util/auth";
+import {authLoaderGetUserForFrontend, authLoaderWithPerm} from "~/util/auth";
 import {
 	disasterRecordsCreate,
 	disasterRecordsUpdate,
@@ -18,8 +18,7 @@ import {
 	route
 } from "~/frontend/disaster-record/form";
 
-import {DisasterRecordsViewModel} from "~/backend.server/models/disaster_record";
-import {nonecoLossesFilderBydisasterRecordsId, PropRecord as nonecoLossesProps} from "~/backend.server/models/noneco_losses";
+import {nonecoLossesFilderBydisasterRecordsId} from "~/backend.server/models/noneco_losses";
 import {
 	sectorsFilderBydisasterRecordsId,
 } from "~/backend.server/models/disaster_record__sectors";
@@ -43,11 +42,8 @@ import {contentPickerConfig} from "./content-picker-config";
 
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
 
-export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
-	// console.log("actionArgs", actionArgs.params);
-	// return {item: null};
-
-	const {params} = actionArgs;
+export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
+	const {params} = loaderArgs;
 	if (!params.id) {
 		throw "Route does not have $id param";
 	}
@@ -62,6 +58,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 
 	const hip = await dataForHazardPicker();
 
+	let user = authLoaderGetUserForFrontend(loaderArgs)
+
 	if (params.id === "new") {
 		const treeData = await initializeNewTreeView();
 		const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
@@ -74,7 +72,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 			hip: hip,
 			treeData: treeData,
 			cpDisplayName: null,
-			ctryIso3: ctryIso3
+			ctryIso3: ctryIso3,
+			user
 		};
 	}
 
@@ -107,7 +106,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		hip: hip,
 		treeData: treeData,
 		cpDisplayName: cpDisplayName,
-		ctryIso3: ctryIso3
+		ctryIso3: ctryIso3,
+		user
 	};
 });
 
@@ -143,17 +143,7 @@ export const action = createAction({
 });
 
 export default function Screen() {
-	const ld = useLoaderData<{
-		item: DisasterRecordsViewModel | null,
-		recordsNonecoLosses: nonecoLossesProps,
-		recordsDisRecSectors: any | null,
-		recordsHumanEffects: any | null,
-		hip: any,
-		treeData: any[]
-		ctryIso3: string,
-		cpDisplayName: string
-	}>();
-	// console.log(ld);
+	const ld = useLoaderData<typeof loader>();
 
 	return (
 		<>
@@ -164,7 +154,9 @@ export default function Screen() {
 					hip={ld.hip}
 					treeData={ld.treeData}
 					ctryIso3={ld.ctryIso3}
-					cpDisplayName={ld.cpDisplayName} />}
+					cpDisplayName={ld.cpDisplayName}
+					user={ld.user}
+				/>}
 			/>
 			{ld.item && (<>
 				<div>&nbsp;</div>

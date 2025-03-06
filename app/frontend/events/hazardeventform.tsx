@@ -174,6 +174,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 
 	return (
 		<FormView
+			user={props.user}
 			path={route}
 			edit={props.edit}
 			id={props.id}

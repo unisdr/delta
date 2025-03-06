@@ -19,6 +19,8 @@ import {
 import {
 	authActionGetAuth,
 	authActionWithPerm,
+	authLoaderGetAuth,
+	authLoaderGetUserForFrontend,
 	authLoaderWithPerm,
 } from "~/util/auth";
 
@@ -32,32 +34,35 @@ import {
 	getItem2
 } from "~/backend.server/handlers/view"
 
-import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
-import { divisionTable } from "~/drizzle/schema";
+import {buildTree} from "~/components/TreeView";
+import {dr} from "~/db.server"; // Drizzle ORM instance
+import {divisionTable} from "~/drizzle/schema";
+import {RoleId} from "~/frontend/user/roles";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
 	const item = await getItem2(params, hazardousEventById)
 	let hip = await dataForHazardPicker();
 
-	if (item!.event.ps.length > 0){
+	let user = authLoaderGetUserForFrontend(loaderArgs)
+
+	if (item!.event.ps.length > 0) {
 		let parent = item!.event.ps[0].p.he;
 		// get parent of parent as well, to match what we use in new form
 		let parent2 = await hazardousEventById(parent.id);
-		return {hip, item, parent: parent2, treeData: []};
+		return {hip, item, parent: parent2, treeData: [], user};
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
-	const idKey = "id"; 
-	const parentKey = "parentId"; 
-	const nameKey = "name"; 
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "name";
 	const rawData = await dr.select().from(divisionTable);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
-	return {hip: hip, item: item, treeData: treeData, ctryIso3: ctryIso3};
+	return {hip: hip, item: item, treeData: treeData, ctryIso3: ctryIso3, user};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -68,7 +73,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (id) {
-				return hazardousEventUpdate(tx, id, data,  user.user.id);
+				return hazardousEventUpdate(tx, id, data, user.user.id);
 			} else {
 				throw "not an create screen"
 			}
@@ -88,7 +93,13 @@ export default function Screen() {
 		parent: ""
 	}
 	return formScreen({
-		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData, ctryIso3: ld.ctryIso3},
+		extraData: {
+			hip: ld.hip,
+			parent: ld.parent,
+			treeData: ld.treeData,
+			ctryIso3: ld.ctryIso3,
+			user: ld.user
+		},
 		fieldsInitial,
 		form: HazardousEventForm,
 		edit: true,

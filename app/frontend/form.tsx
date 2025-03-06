@@ -14,6 +14,8 @@ import React from 'react'
 
 import * as repeatablefields from "~/frontend/components/repeatablefields"
 
+import {UserForFrontend} from "~/util/auth"
+
 export type FormResponse<T> =
 	| {ok: true; data: T}
 	| {ok: false; data: T; errors: Errors<T>};
@@ -225,6 +227,8 @@ export interface UserFormProps<T> {
 	id: any; // only valid when edit is true
 	fields: Partial<T>;
 	errors?: Errors<T>;
+
+	user?: UserForFrontend
 }
 
 export interface FormScreenOpts<T, D> {
@@ -265,6 +269,7 @@ export type FormInputType =
 	| "money"
 	| "bool"
 	| "other"
+	| "approval_status"
 	| "enum"
 	| "enum-flex"; // enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
 
@@ -316,6 +321,7 @@ export function fieldsFromMap<T>(
 				case "number":
 					return [k, Number(vs)];
 				case "other":
+				case "approval_status":
 				case "money":
 				case "text":
 				case "textarea":
@@ -339,6 +345,7 @@ export function fieldsFromMap<T>(
 
 
 export interface InputsProps<T> {
+	user?: UserForFrontend
 	def: FormInputDef<T>[];
 	fields: Partial<T>;
 	errors?: Errors<T>;
@@ -502,6 +509,7 @@ export function Inputs<T>(props: InputsProps<T>) {
 					return (
 						<React.Fragment key={def.key}>
 							<Input
+								user={props.user}
 								key={def.key}
 								def={def}
 								name={def.key}
@@ -565,6 +573,7 @@ export function WrapInputBasic(props: WrapInputBasicProps) {
 }
 
 export interface InputProps {
+	user?: UserForFrontend
 	def: FormInputDefSpecific;
 	name: string;
 	value: any;
@@ -587,6 +596,65 @@ export function Input(props: InputProps) {
 	switch (props.def.type) {
 		default:
 			throw new Error(`Unknown type ${props.def.type} for field ${props.def.key}`)
+		case "approval_status": {
+			if (!props.user) {
+				throw new Error("userRole is required when using approvalStatus field")
+			}
+			if (props.user.role == "data-validator" || props.user.role == "admin") {
+
+				let vs = props.value as string;
+				return wrapInput(
+					<>
+						<select
+							required={props.def.required}
+							name={props.name}
+							defaultValue={vs}
+							onChange={props.onChange}
+							disabled={props.disabled}
+						>
+							{props.enumData!.map((v) => (
+								<option key={v.key} value={v.key}>
+									{v.label}
+								</option>
+							))}
+						</select>
+						{props.disabled && <input type="hidden" name={props.name} value="" />}
+					</>
+				)
+			}
+			let vs = props.value as string;
+			if (vs == "published") {
+				return wrapInput(
+					<>
+						<input
+							type="text"
+							defaultValue={props.enumData!.find(v => v.key == vs)!.label}
+							disabled={true}
+						>
+						</input>
+						{props.disabled && <input type="hidden" name={props.name} value="" />}
+					</>
+				)
+			}
+			return wrapInput(
+				<>
+					<select
+						required={props.def.required}
+						name={props.name}
+						defaultValue={vs}
+						onChange={props.onChange}
+						disabled={props.disabled}
+					>
+						{props.enumData!.filter(v => v.key != "published").map((v) => (
+							<option key={v.key} value={v.key}>
+								{v.label}
+							</option>
+						))}
+					</select>
+					{props.disabled && <input type="hidden" name={props.name} value="" />}
+				</>
+			)
+		}
 		case "enum": {
 			let vs = props.value as string;
 			return wrapInput(
@@ -942,6 +1010,7 @@ export function FieldView(props: FieldViewProps) {
 					</p>
 				);
 			}
+		case "approval_status":
 		case "enum":
 		case "enum-flex": {
 			let enumId = props.value;
@@ -966,6 +1035,7 @@ interface FormScreenProps<T> {
 	// this is not used
 	fieldsDef: FormInputDef<T>[];
 	formComponent: any;
+	extraData?: any
 }
 
 export function FormScreen<T>(props: FormScreenProps<T>) {
@@ -974,7 +1044,7 @@ export function FormScreen<T>(props: FormScreenProps<T>) {
 	const fieldsInitial = ld.item ? {...ld.item} : {};
 
 	return formScreen({
-		extraData: {},
+		extraData: props.extraData || {},
 		fieldsInitial,
 		form: props.formComponent,
 		edit: !!ld.item,
@@ -1118,6 +1188,7 @@ interface FormViewProps {
 	override?: Record<string, ReactElement | undefined | null>;
 	elementsAfter?: Record<string, ReactElement>
 	ref?: React.Ref<HTMLFormElement>;
+	user?: UserForFrontend
 }
 
 export function FormView(props: FormViewProps) {
@@ -1158,6 +1229,7 @@ export function FormView(props: FormViewProps) {
 				<Form ref={props.ref} errors={props.errors} className="dts-form">
 					<div ref={inputsRef}>
 						<Inputs
+							user={props.user}
 							def={props.fieldsDef}
 							fields={props.fields}
 							errors={props.errors}

@@ -8,8 +8,7 @@ export type approvalStatusIds =
 export const approvalStatusField = {
 	key: "approvalStatus",
 	label: "Approval Status",
-	type: "enum",
-	required: true,
+	type: "approval_status",
 	enumData: [
 		{ key: "draft", label: "Draft" },
 		{

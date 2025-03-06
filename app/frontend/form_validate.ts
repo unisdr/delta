@@ -178,6 +178,7 @@ export function validateFromJson<T>(
 					throw unknownEnumValueError(field, value, field.enumData?.map(e => e.key) || [])
 				}
 				return value
+			case "approval_status":
 			case "other":
 				return value
 			default:
@@ -287,6 +288,7 @@ export function validateFromMap<T>(
 				}
 				return vs;
 			case "other":
+			case "approval_status":
 				if (vs === "") {
 					return null
 				}

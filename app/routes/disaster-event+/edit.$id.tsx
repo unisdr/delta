@@ -21,11 +21,12 @@ import {route} from "~/frontend/events/disastereventform";
 import {useLoaderData} from "@remix-run/react";
 import {disasterEventTable} from "~/drizzle/schema";
 
-import {authLoaderWithPerm} from "~/util/auth";
+import {authLoaderGetAuth, authLoaderGetUserForFrontend, authLoaderWithPerm} from "~/util/auth";
 import {buildTree} from "~/components/TreeView";
 import {dr} from "~/db.server"; // Drizzle ORM instance
 import {divisionTable} from "~/drizzle/schema";
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
+import {RoleId} from "~/frontend/user/roles";
 
 // export const loader = createLoader({
 // 	getById: disasterEventById,
@@ -42,9 +43,9 @@ export const action = createAction({
 		isCreate ? "Create disaster event" : "Update disaster event",
 });
 
-export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
+export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	// ✅ Fetch existing disaster event data
-	const baseData = await createLoader({getById: disasterEventById})(actionArgs);
+	const baseData = await createLoader({getById: disasterEventById})(loaderArgs);
 
 	// ✅ Fetch division data & build tree
 	const idKey = "id";
@@ -53,6 +54,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const rawData = await dr.select().from(divisionTable);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
 
+	let user = authLoaderGetUserForFrontend(loaderArgs)
 	let hip = await dataForHazardPicker()
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
@@ -61,7 +63,8 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		...baseData,
 		hip,
 		treeData,
-		ctryIso3
+		ctryIso3,
+		user
 	};
 });
 
@@ -78,7 +81,8 @@ export default function Screen() {
 			hazardousEvent: ld.item?.hazardousEvent,
 			disasterEvent: ld.item?.disasterEvent,
 			treeData: ld.treeData,
-			ctryIso3: ld.ctryIso3
+			ctryIso3: ld.ctryIso3,
+			user: ld.user
 		},
 		fieldsInitial: fieldsInitial,
 		form: DisasterEventForm,

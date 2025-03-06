@@ -15,7 +15,7 @@ import {
 
 import * as user from "~/backend.server/models/user"
 import {apiAuth} from "~/backend.server/models/api_key"
-import {PermissionId, roleHasPermission} from "~/frontend/user/roles";
+import {PermissionId, roleHasPermission, RoleId} from "~/frontend/user/roles";
 import {configApprovedRecordsArePublic} from "./config";
 
 export async function login(email: string, password: string): Promise<user.LoginResult> {
@@ -183,6 +183,21 @@ export function authLoaderGetAuth(args: any): UserSession {
 		throw "Missing user session"
 	}
 	return args.userSession
+}
+
+export interface UserForFrontend {
+	role: RoleId
+	firstName: string
+	lastName: string
+}
+
+export function authLoaderGetUserForFrontend(args: any): UserForFrontend {
+	let u = authLoaderGetAuth(args)
+	return {
+		role: u.user.role as RoleId,
+		firstName: u.user.firstName,
+		lastName: u.user.lastName
+	}
 }
 
 export function authLoaderIsPublic(args: any): boolean {
