@@ -33,8 +33,8 @@ const GeographicImpactQuerySchema = z.object({
 });
 
 type GeographicImpactFilters = {
-    sectorId?: number;
-    subSectorId?: number;
+    sectorId?: string;
+    subSectorId?: string;
     hazardTypeId?: string;
     specificHazardId?: string;
     geographicLevelId?: string;
@@ -48,10 +48,10 @@ export async function handleGeographicImpactQuery(params: unknown) {
         // Validate input parameters
         const validParams = GeographicImpactQuerySchema.parse(params);
 
-        // Convert string IDs to numbers where required
+        // Convert validated params to filters
         const filters: GeographicImpactFilters = {
-            sectorId: validParams.sectorId ? parseInt(validParams.sectorId, 10) : undefined,
-            subSectorId: validParams.subSectorId ? parseInt(validParams.subSectorId, 10) : undefined,
+            sectorId: validParams.sectorId || undefined,
+            subSectorId: validParams.subSectorId || undefined,
             hazardTypeId: validParams.hazardTypeId,
             specificHazardId: validParams.specificHazardId,
             geographicLevelId: validParams.geographicLevelId,

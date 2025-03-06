@@ -1,23 +1,70 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import GeoJSON from "ol/format/GeoJSON";
 import { fromLonLat } from "ol/proj";
+import GeoJSON from "ol/format/GeoJSON";
 import { Fill, Stroke, Style } from "ol/style";
-import Overlay from "ol/Overlay";
-import { pointerMove } from "ol/events/condition";
-import Select from "ol/interaction/Select";
+import { defaults as defaultControls } from "ol/control";
+import { defaults as defaultInteractions } from "ol/interaction";
+import { unByKey } from "ol/Observable";
+import { EventsKey } from "ol/events";
+import { Feature } from "ol";
 import { getCenter } from 'ol/extent';
-import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import Swal from "sweetalert2";
 import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
 import "./ImpactMap.css"; // Custom styles
+import ErrorBoundary from "~/frontend/components/ErrorBoundary";
+import Legend from "./Legend";
+
+// Helper function to check if a color is light
+const isLightColor = (color: string): boolean => {
+  try {
+    // Remove any alpha value and convert rgba to hex
+    const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (rgbaMatch) {
+      const [_, r, g, b] = rgbaMatch;
+      const brightness = (parseInt(r) * 299 + parseInt(g) * 587 + parseInt(b) * 114) / 1000;
+      return brightness > 128;
+    }
+
+    // Handle hex colors
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128;
+  } catch (error) {
+    return false;
+  }
+};
 
 type ImpactMapProps = {
-  geoData: any;
+  geoData: {
+    type: "FeatureCollection";
+    features: Array<{
+      type: "Feature";
+      properties: {
+        id: number;
+        name: string;
+        level: number;
+        parentId: number | null;
+        values: {
+          totalDamage: number;
+          totalLoss: number;
+          metadata?: {
+            assessmentType: 'rapid' | 'detailed';
+            confidenceLevel: 'low' | 'medium' | 'high';
+          };
+          dataAvailability: 'available' | 'no_data';
+        };
+      };
+      geometry: any;
+    }>;
+  };
   selectedMetric: "totalDamage" | "totalLoss";
   filters: {
     sectorId: string | null;
@@ -29,30 +76,19 @@ type ImpactMapProps = {
     fromDate: string | null;
     toDate: string | null;
     disasterEventId: string | null;
+    assessmentType?: 'rapid' | 'detailed';
+    confidenceLevel?: 'low' | 'medium' | 'high';
   };
 };
 
-type DivisionFeature = {
-  type: "Feature";
-  properties: {
-    id: number;
-    parent_id: number | null;
-    name: { en: string };
-    level: number;
-    spatial_index: string;
-    [key: string]: any;
-  };
-  geometry: any;
-};
-
-interface ColorRange {
+type ColorRange = {
   min: number;
   max: number;
   color: string;
   label: string;
 }
 
-export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMapProps) {
+export default function ImpactMapOl({ geoData, selectedMetric, filters }: ImpactMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<Map | null>(null);
@@ -67,27 +103,62 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   const fetchGeoData = async (level: number, parentId: number | null) => {
     setLoading(true);
     try {
-      const url = new URL('/api/analytics/geographic-impacts');
+      const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
+      const params = new URLSearchParams();
 
-      // Always send sectorId
-      url.searchParams.set('sectorId', filters.sectorId || '');
-
-      // Send subSectorId if it exists and is not empty
-      if (filters.subSectorId) {
-        url.searchParams.set('subSectorId', filters.subSectorId);
+      // Required parameters
+      if (filters.sectorId) {
+        params.set('sectorId', filters.sectorId);
       }
 
-      url.searchParams.set('level', level.toString());
-      if (parentId) {
-        url.searchParams.set('parentId', parentId.toString());
+      // Optional parameters with type checking
+      const optionalParams: Array<[keyof typeof filters, string]> = [
+        ['subSectorId', 'subSectorId'],
+        ['hazardTypeId', 'hazardTypeId'],
+        ['hazardClusterId', 'hazardClusterId'],
+        ['specificHazardId', 'specificHazardId'],
+        ['geographicLevelId', 'geographicLevelId'],
+        ['fromDate', 'fromDate'],
+        ['toDate', 'toDate'],
+        ['disasterEventId', 'disasterEventId'],
+        ['assessmentType', 'assessmentType'],
+        ['confidenceLevel', 'confidenceLevel']
+      ];
+
+      // Add optional parameters if they exist
+      optionalParams.forEach(([key, paramName]) => {
+        const value = filters[key];
+        if (value) {
+          params.set(paramName, value);
+        }
+      });
+
+      // Add level and parentId parameters
+      params.set('level', level.toString());
+      if (parentId !== null) {
+        params.set('parentId', parentId.toString());
       }
 
-      const response = await fetch(url.toString());
-      if (!response.ok) throw new Error("Failed to fetch geographic impact data");
+      const response = await fetch(`${url.toString()}?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch geographic impact data: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      if (!data || !data.features) {
+        throw new Error('Invalid response format from geographic impacts API');
+      }
+
+      // Update geoData with the new response
       geoData = data;
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching geographic impact data:', error);
+      Swal.fire({
+        title: 'Error',
+        text: error instanceof Error ? error.message : 'Failed to fetch geographic impact data',
+        icon: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -135,19 +206,17 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     }
   };
 
-  // Calculate color ranges for the map
-  const calculateColorRanges = (features: any[]): ColorRange[] => {
-    // Extract values from the correct path in the data structure
-    const values = features
+  // Memoize color ranges calculation
+  const calculateColorRanges = useMemo(() => {
+    if (!geoData?.features) return [];
+
+    const values = geoData.features
       .map(f => f.properties?.values?.[selectedMetric])
       .filter(v => typeof v === 'number' && v > 0);
 
     const max = Math.max(...values, 0);
-
-    // Create ranges array starting with impact ranges
     let ranges: ColorRange[] = [];
 
-    // Only add value ranges if we have non-zero values
     if (max > 0) {
       ranges = [
         { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)', label: `${formatCurrencyWithCode(max * 0.8, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max, defaultCurrency, {}, 'thousands')}` },
@@ -158,137 +227,35 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
       ];
     }
 
-    // Add special states at the bottom
     ranges.push(
       { min: 0, max: 0, color: 'rgba(255, 255, 255, 0.9)', label: "Zero Impact (Confirmed)" },
       { min: -1, max: -1, color: 'rgba(200, 200, 200, 0.9)', label: "No Data Available" }
     );
 
-    // Update legend ranges state
     setLegendRanges(ranges.map(r => ({
       color: r.color,
       range: r.label
     })));
 
     return ranges;
-  };
+  }, [geoData?.features, selectedMetric, defaultCurrency]);
 
-  // Helper function to check if a feature matches the search term
-  const featureMatchesSearch = (feature: any, searchTerm: string | null | undefined) => {
-    if (!searchTerm || typeof searchTerm !== 'string') return true;
-
-    const featureName = feature.properties.name?.en?.toLowerCase() || '';
-    const searchLower = searchTerm.toLowerCase();
-
-    // Check exact match first
-    if (featureName === searchLower) return true;
-
-    // Check if search term is in feature name
-    if (featureName.includes(searchLower)) return true;
-
-    // Check if feature name parts match search term parts
-    const searchParts: string[] = searchLower.split(/\s+/);
-    const featureParts: string[] = featureName.split(/\s+/);
-
-    return searchParts.every((searchPart: string) =>
-      featureParts.some((featurePart: string) =>
-        featurePart.includes(searchPart) || searchPart.includes(featurePart)
-      )
-    );
-  };
-
-  // Update features and apply filtering
-  const updateMapFeatures = (map: Map, features: any[], searchTerm?: string | null) => {
-    const vectorLayer = map.getLayers().getArray().find(layer => layer instanceof VectorLayer) as VectorLayer<VectorSource>;
-    if (!vectorLayer) return;
-
-    // Update the vector layer style
-    vectorLayer.setStyle((feature) => getFeatureStyle(feature, false));
-
-    const source = vectorLayer.getSource();
-    source?.clear();
-
-    // Filter features based on search term
-    const filteredFeatures = searchTerm && typeof searchTerm === 'string'
-      ? features.filter(feature => featureMatchesSearch(feature, searchTerm))
-      : features;
-
-    if (filteredFeatures.length === 0) {
-      console.log('No features match the search term:', searchTerm);
-      return;
-    }
-
-    const geoJsonFeatures = new GeoJSON().readFeatures({
-      type: "FeatureCollection",
-      features: filteredFeatures
-    }, {
-      featureProjection: 'EPSG:3857',
-    });
-    source?.addFeatures(geoJsonFeatures);
-
-    // Only fit to extent if we have features and a valid extent
-    const extent = source?.getExtent();
-    const view = map.getView();
-
-    if (extent && !extent.some(isNaN) && extent[0] !== Infinity && extent[2] !== -Infinity) {
-      const center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
-      const resolution = view.getResolutionForExtent(extent);
-      const maxResolution = view.getResolutionForZoom(12); // maxZoom: 12
-
-      view.animate({
-        center: center,
-        resolution: Math.max(resolution, maxResolution),
-        duration: 1000
-      });
-    } else {
-      // If no valid extent, reset to default Philippines view
-      view.animate({
-        center: fromLonLat([121.774017, 12.879721]),
-        zoom: 5,
-        duration: 1000
-      });
-    }
-  };
-
-  // Helper function to check if a color is light
-  const isLightColor = (color: string) => {
-    try {
-      // Remove any alpha value and convert rgba to hex
-      const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-      if (rgbaMatch) {
-        const [_, r, g, b] = rgbaMatch;
-        const brightness = (parseInt(r) * 299 + parseInt(g) * 587 + parseInt(b) * 114) / 1000;
-        return brightness > 128;
-      }
-
-      // Handle hex colors
-      const hex = color.replace('#', '');
-      const r = parseInt(hex.substr(0, 2), 16);
-      const g = parseInt(hex.substr(2, 2), 16);
-      const b = parseInt(hex.substr(4, 2), 16);
-      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-      return brightness > 128;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const getFeatureStyle = (feature: any, isHovered = false) => {
+  // Memoize feature style function
+  const getFeatureStyle = useCallback((feature: any, isHovered = false) => {
     const values = feature.get('values');
     const value = values?.[selectedMetric];
     const dataAvailability = values?.dataAvailability;
-    const ranges = calculateColorRanges(geoData.features);
 
-    let color;
-    if (dataAvailability === 'available' && value > 0) {
-      const range = ranges.find(r => value >= r.min && value <= r.max);
-      color = range ? range.color : 'rgba(200, 200, 200, 0.9)';
-    } else if (dataAvailability === 'available' && value === 0) {
-      color = 'rgba(255, 255, 255, 0.9)'; // White for confirmed zero
-    } else if (dataAvailability === 'no_data') {
+    // Default color for no data
+    let color = 'rgba(200, 200, 200, 0.9)'; // Grey for no data
+
+    if (dataAvailability === 'no_data') {
       color = 'rgba(200, 200, 200, 0.9)'; // Grey for no data
-    } else {
-      color = 'rgba(200, 200, 200, 0.9)'; // Default to grey
+    } else if (value === 0) {
+      color = 'rgba(255, 255, 255, 0.9)'; // White for confirmed zero impact
+    } else if (value > 0) {
+      const range = calculateColorRanges.find(r => value >= r.min && value <= r.max);
+      color = range ? range.color : 'rgba(200, 200, 200, 0.9)';
     }
 
     return new Style({
@@ -301,10 +268,10 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
         lineDash: isHovered ? undefined : [1, 2]
       })
     });
-  };
+  }, [selectedMetric, calculateColorRanges]);
 
-  // Function to update tooltip content and style
-  const updateTooltip = (feature: any, coordinates: number[]) => {
+  // Memoize tooltip update function
+  const updateTooltip = useCallback((feature: any, coordinates: number[]) => {
     if (!tooltipRef.current || !map) return;
 
     const tooltip = tooltipRef.current;
@@ -318,24 +285,23 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     const dataAvailability = values?.dataAvailability;
     const metricLabel = selectedMetric === 'totalDamage' ? 'Total Damages' : 'Total Losses';
 
-    // Handle display value based on data availability
-    let displayValue;
-    if (dataAvailability === 'available' && value > 0) {
-      displayValue = formatCurrencyWithCode(value, defaultCurrency, {}, 'thousands');
-    } else if (dataAvailability === 'available' && value === 0) {
-      displayValue = "Zero Impact (Confirmed)";
-    } else {
-      displayValue = "No Data Available";
-    }
-
-    // Get the feature's color for the background
     const featureStyle = getFeatureStyle(feature, false);
     const backgroundColor = (featureStyle.getFill()?.getColor() as string) || '#FFFFFF';
     setHoveredFeatureColor(backgroundColor);
 
-    // Determine if we should use light or dark text based on background
     const textColor = isLightColor(backgroundColor) ? '#333333' : '#FFFFFF';
     const subTextColor = isLightColor(backgroundColor) ? '#666666' : '#EEEEEE';
+
+    let displayValue;
+    if (dataAvailability === 'no_data') {
+      displayValue = "No Data Available";
+    } else if (value === 0) {
+      displayValue = "Zero Impact (Confirmed)";
+    } else if (value > 0) {
+      displayValue = formatCurrencyWithCode(value, defaultCurrency, {}, 'thousands');
+    } else {
+      displayValue = "No Data Available";
+    }
 
     tooltip.innerHTML = `
       <div class="tooltip-container">
@@ -354,7 +320,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
     tooltip.style.transform = 'translate(-50%, -120%)';
     tooltip.style.pointerEvents = 'none';
     tooltip.style.zIndex = '1000';
-  };
+  }, [map, selectedMetric, defaultCurrency, getFeatureStyle]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -366,7 +332,7 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
 
     // Find the national level feature (parent_id is null) to center the map
     const nationalFeature = geoData.features.find(
-      (feature: DivisionFeature) => feature.properties.parent_id === null
+      (feature: any) => feature.properties.parentId === null
     );
 
     let initialCenter = [0, 0];
@@ -523,40 +489,17 @@ export default function ImpactMap({ geoData, selectedMetric, filters }: ImpactMa
   }
 
   return (
-    <div className="impact-map-container">
-      <div
-        ref={mapRef}
-        className="map"
-      />
-      <div
-        ref={tooltipRef}
-        className={`tooltip ${hoveredFeatureColor && isLightColor(hoveredFeatureColor) ? 'dark-text' : 'light-text'}`}
-        style={{
-          backgroundColor: hoveredFeatureColor || 'white'
-        }}
-      />
-      {loading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner" />
-        </div>
-      )}
-      {/* Map Legend */}
-      <div className="legend">
-        <h4>{selectedMetric === 'totalDamage' ? 'Total Damages' : 'Total Losses'}</h4>
-        <div className="legend-items">
-          {legendRanges.map((range, index) => (
-            <div key={index} className="legend-item">
-              <div
-                className={`legend-color ${range.color === 'rgba(255, 255, 255, 0.9)' ? 'empty' : ''}`}
-                style={{
-                  backgroundColor: range.color
-                }}
-              />
-              <span className="legend-label">{range.range}</span>
-            </div>
-          ))}
-        </div>
+    <ErrorBoundary>
+      <div className="impact-map-container">
+        <div ref={mapRef} className="map" />
+        <div ref={tooltipRef} className="map-tooltip" />
+        {loading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner" />
+          </div>
+        )}
+        <Legend ranges={legendRanges} selectedMetric={selectedMetric} />
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

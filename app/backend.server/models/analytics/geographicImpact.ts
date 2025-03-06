@@ -30,42 +30,42 @@ import {
     disasterEventTable,
     hazardousEventTable,
     hipHazardTable,
-    sectorDisasterRecordsRelationTable
+    sectorDisasterRecordsRelationTable,
+    sectorTable,
+    hipClusterTable,
+    hipTypeTable
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import {
-    calculateDamages,
-    calculateLosses,
-    createAssessmentMetadata,
-    calculateFaoAgriculturalDamage,
-    calculateFaoAgriculturalLoss
-} from "~/backend.server/utils/disasterCalculations";
-import type {
-    DisasterImpactMetadata,
-    FaoAgriSubsector,
-    FaoAgriculturalDamage,
-    FaoAgriculturalLoss
-} from "~/types/disasterCalculations";
-import { formatCurrency } from "~/frontend/utils/formatters";
-import { configCurrencies } from "~/util/config";
+import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
 
 /**
  * Interface for geographic impact query filters
  * Based on UNDRR's spatial data requirements
  */
-interface GeographicImpactFilters {
-    sectorId?: number;
-    subSectorId?: number;
+export interface GeographicImpactFilters {
+    sectorId?: string;
+    subSectorId?: string;
     hazardTypeId?: string;
     hazardClusterId?: string;
     specificHazardId?: string;
-    geographicLevelId?: string;  // Changed to string to match database type
-    fromDate?: string;           // ISO date string
-    toDate?: string;            // ISO date string
+    fromDate?: string;
+    toDate?: string;
     disasterEventId?: string;
+    /**
+     * Assessment type following UNDRR Technical Guidance:
+     * - 'rapid': Quick assessment within first 2 weeks
+     * - 'detailed': Comprehensive assessment after 2+ weeks
+     */
     assessmentType?: 'rapid' | 'detailed';
+    /**
+     * Confidence level based on World Bank DaLA methodology:
+     * - 'low': Limited data availability or rapid assessment
+     * - 'medium': Partial data with some field verification
+     * - 'high': Complete data with full field verification
+     */
     confidenceLevel?: 'low' | 'medium' | 'high';
+    geographicLevelId?: string;
 }
 
 /**
@@ -99,10 +99,6 @@ interface DivisionValues {
     sources: Set<string>;
     metadata: DisasterImpactMetadata;
     dataAvailability: 'available' | 'no_data' | 'zero';
-    faoAgriculturalImpact?: {
-        damage: FaoAgriculturalDamage;
-        loss: FaoAgriculturalLoss;
-    };
 }
 
 interface CleanDivisionValues {
@@ -110,10 +106,6 @@ interface CleanDivisionValues {
     totalLoss: number | null;
     metadata: DisasterImpactMetadata;
     dataAvailability: 'available' | 'no_data' | 'zero';
-    faoAgriculturalImpact?: {
-        damage: FaoAgriculturalDamage;
-        loss: FaoAgriculturalLoss;
-    };
 }
 
 interface GeographicImpactResult {
@@ -445,246 +437,247 @@ function parseSectorId(sectorId: string | number | undefined): number | undefine
     return isNaN(parsed) ? undefined : parsed;
 }
 
-// Get disaster records for a sector and its subsectors
-async function getDisasterRecordsForSector(sectorId: number | undefined, subSectorId: number | undefined): Promise<any[]> {
-    try {
-        console.log("Fetching records for sector:", sectorId, "subSector:", subSectorId);
+// Gets all subsector IDs for a given sector and its subsectors following international standards.
+// This implementation uses the proper hierarchical structure defined in the sector table
+// rather than relying on ID patterns, making it suitable for all countries.
+// 
+// @param sectorId - The ID of the sector to get subsectors for
+// @returns Array of sector IDs including the input sector and all its subsectors
+const getAllSubsectorIds = async (sectorId: string | undefined): Promise<number[]> => {
+    if (!sectorId) return [];
 
-        // Get all records directly associated with this sector
-        const records = await dr
-            .select()
-            .from(disasterRecordsTable)
-            .where(
-                and(
-                    // Only include approved records
-                    eq(disasterRecordsTable.approvalStatus, "completed"),
-                    // Filter by sector if provided
-                    sectorId ? exists(
-                        dr.select()
-                            .from(sectorDisasterRecordsRelationTable)
-                            .where(and(
-                                eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-                                eq(sectorDisasterRecordsRelationTable.sectorId, sectorId)
-                            ))
-                    ) : undefined
-                )
-            );
+    const parsedId = parseInt(sectorId, 10);
+    if (isNaN(parsedId)) return [];
 
-        // If a specific subsector is requested, we don't need to look for other subsectors
-        if (subSectorId) {
-            const subSectorRecords = await dr
-                .select()
-                .from(disasterRecordsTable)
-                .where(
-                    and(
-                        eq(disasterRecordsTable.approvalStatus, "completed"),
-                        exists(
-                            dr.select()
-                                .from(sectorDisasterRecordsRelationTable)
-                                .where(and(
-                                    eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-                                    eq(sectorDisasterRecordsRelationTable.sectorId, subSectorId)
-                                ))
-                        )
-                    )
-                );
+    const subsectors = await getSectorsByParentId(parsedId);
+    const subsectorIds = subsectors.map(sector => sector.id);
+    return [parsedId, ...subsectorIds];
+};
 
-            return [...records, ...subSectorRecords];
-        }
-
-        // Get all subsectors for this sector
-        const subsectors = await getSectorsByParentId(sectorId ?? null);
-
-        // Get records for each subsector
-        const subsectorRecords = await Promise.all(
-            subsectors.map(async (subsector) => {
-                return dr
-                    .select()
-                    .from(disasterRecordsTable)
-                    .where(
-                        and(
-                            eq(disasterRecordsTable.approvalStatus, "completed"),
-                            exists(
-                                dr.select()
-                                    .from(sectorDisasterRecordsRelationTable)
-                                    .where(and(
-                                        eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-                                        eq(sectorDisasterRecordsRelationTable.sectorId, subsector.id)
-                                    ))
-                            )
-                        )
-                    );
-            })
-        );
-
-        // Combine all records
-        return [...records, ...subsectorRecords.flat()];
-    } catch (error) {
-        console.error("Error fetching disaster records:", error);
-        return [];
-    }
-}
-
-// Main function to get geographic impact
+/**
+ * Main function to get geographic impact following international standards:
+ * 
+ * 1. Sendai Framework for Disaster Risk Reduction:
+ *    - Target C: Economic loss calculation by geographic area
+ *    - Target D: Critical infrastructure damage by region
+ * 
+ * 2. World Bank DaLA Methodology:
+ *    - Separate tracking of damage and losses
+ *    - Spatial analysis for impact distribution
+ * 
+ * 3. UNDRR Technical Guidance:
+ *    - Assessment types (rapid vs detailed)
+ *    - Confidence levels for data quality
+ */
 export async function getGeographicImpact(filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
     try {
-        console.log("Processing geographic impact with filters:", JSON.stringify(filters, null, 2));
+        // Get sector IDs based on selection
+        let sectorIds: number[] = [];
+        if (filters.subSectorId) {
+            // If subsector is selected, only use that ID
+            const parsedSubSectorId = parseInt(filters.subSectorId, 10);
+            sectorIds = !isNaN(parsedSubSectorId) ? [parsedSubSectorId] : [];
+        } else if (filters.sectorId) {
+            // If only parent sector is selected, get all its subsectors
+            sectorIds = await getAllSubsectorIds(filters.sectorId);
+        }
 
-        // Check if we need FAO agricultural calculations
-        const agriSubsector = getAgriSubsector(filters.sectorId);
-
-        // Get disaster records based on sector
-        const records = await getDisasterRecordsForSector(filters.sectorId, filters.subSectorId);
-        console.log(`Found ${records.length} disaster records`);
-
-        // Build the base query for divisions
-        const divisionQuery = dr
-            .select({
-                id: divisionTable.id,
-                name: divisionTable.name,
-                importId: divisionTable.importId,
-                level: divisionTable.level,
-                parentId: divisionTable.parentId,
-                geojson: divisionTable.geojson,
-                geom: divisionTable.geom,
-                bbox: divisionTable.bbox,
-                spatial_index: divisionTable.spatial_index
-            })
-            .from(divisionTable);
-
-        // Add WHERE conditions
-        const whereConditions = [];
-        whereConditions.push(eq(divisionTable.level, 2)); // Always use level 2 for regional display
-
-        // Execute the query with all conditions
-        const divisions = await divisionQuery.where(and(...whereConditions));
-        console.log(`Found ${divisions.length} divisions`);
-
-        // Create a map to store aggregated values per division
-        const divisionValues: { [key: string]: DivisionValues } = {};
-
-        // Initialize all divisions with no data status
-        for (const division of divisions) {
-            divisionValues[division.id] = {
-                totalDamage: null,
-                totalLoss: null,
-                sources: new Set<string>(),
-                metadata: createAssessmentMetadata(
-                    filters.assessmentType || 'detailed',
-                    filters.confidenceLevel || 'high'
-                ),
-                dataAvailability: 'no_data',
-                faoAgriculturalImpact: undefined
+        if (filters.sectorId && sectorIds.length === 0) {
+            return {
+                success: false,
+                divisions: [],
+                values: {},
+                error: 'Invalid sector ID'
             };
         }
 
-        // Process each disaster record
-        for (const record of records) {
-            const locationDesc = record.locationDesc;
-            if (!locationDesc) continue;
+        // Create assessment metadata with defaults following UNDRR standards
+        const metadata = createAssessmentMetadata(
+            filters.assessmentType || 'rapid',
+            filters.confidenceLevel || 'low'
+        );
 
-            // Find matching divisions
-            const matches = await findMatchingDivision(locationDesc, divisions, []);
+        // Base conditions for disaster records following DaLA methodology
+        const baseConditions: SQL[] = [
+            sql`${disasterRecordsTable.approvalStatus} = 'completed'`
+        ];
 
-            for (const match of matches) {
-                const divisionId = match.division.id;
-                if (!divisionValues[divisionId]) continue;
+        // Add sector filtering using sectorDisasterRecordsRelationTable
+        if (sectorIds.length > 0) {
+            baseConditions.push(
+                exists(
+                    dr.select()
+                        .from(sectorDisasterRecordsRelationTable)
+                        .where(and(
+                            eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                            inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
+                        ))
+                )
+            );
+        }
 
-                // Get damage and loss data
-                const damages = await aggregateDamagesData([record.id]);
-                const losses = await aggregateLossesData([record.id]);
+        // Add date range filters if provided
+        if (filters.fromDate) {
+            baseConditions.push(sql`${disasterRecordsTable.startDate} >= ${filters.fromDate}`);
+        }
+        if (filters.toDate) {
+            baseConditions.push(sql`${disasterRecordsTable.endDate} <= ${filters.toDate}`);
+        }
 
-                const currentValues = divisionValues[divisionId];
-
-                // Update totals
-                currentValues.totalDamage = (currentValues.totalDamage || 0) + damages.total;
-                currentValues.totalLoss = (currentValues.totalLoss || 0) + losses.total;
-                currentValues.sources.add(record.id);
-
-                // Add FAO agricultural calculations if needed
-                if (agriSubsector) {
-                    const [faoAgriDamage, faoAgriLoss] = await Promise.all([
-                        calculateFaoAgriculturalDamage(damagesTable, agriSubsector),
-                        calculateFaoAgriculturalLoss(lossesTable, agriSubsector)
-                    ]);
-
-                    if (faoAgriDamage && faoAgriLoss) {
-                        currentValues.faoAgriculturalImpact = {
-                            damage: faoAgriDamage,
-                            loss: faoAgriLoss
-                        };
-                    }
-                }
-
-                // Update data availability status
-                if (currentValues.sources.size > 0) {
-                    currentValues.dataAvailability =
-                        (currentValues.totalDamage === 0 && currentValues.totalLoss === 0)
-                            ? 'zero'
-                            : 'available';
-                }
+        // Add hazard type filters if provided
+        if (filters.hazardTypeId) {
+            baseConditions.push(eq(hazardousEventTable.hipTypeId, filters.hazardTypeId));
+        }
+        if (filters.hazardClusterId) {
+            baseConditions.push(eq(hazardousEventTable.hipClusterId, filters.hazardClusterId));
+            // Ensure hazard cluster matches its parent type
+            if (filters.hazardTypeId) {
+                baseConditions.push(
+                    inArray(
+                        hazardousEventTable.hipClusterId,
+                        dr.select({ id: hipClusterTable.id })
+                            .from(hipClusterTable)
+                            .where(eq(hipClusterTable.typeId, filters.hazardTypeId))
+                    )
+                );
+            }
+        }
+        if (filters.specificHazardId) {
+            baseConditions.push(eq(hazardousEventTable.hipHazardId, filters.specificHazardId));
+            // Ensure specific hazard matches its parent cluster
+            if (filters.hazardClusterId) {
+                baseConditions.push(
+                    inArray(
+                        hazardousEventTable.hipHazardId,
+                        dr.select({ id: hipHazardTable.id })
+                            .from(hipHazardTable)
+                            .where(eq(hipHazardTable.clusterId, filters.hazardClusterId))
+                    )
+                );
             }
         }
 
-        // Clean up the values for the response
-        const cleanValues: { [key: string]: CleanDivisionValues } = {};
-        for (const [id, values] of Object.entries(divisionValues)) {
-            cleanValues[id] = {
-                totalDamage: values.totalDamage,
-                totalLoss: values.totalLoss,
-                metadata: values.metadata,
-                dataAvailability: values.dataAvailability,
-                faoAgriculturalImpact: values.faoAgriculturalImpact
+        // Get divisions with complete fields and apply geographic level filter
+        const divisions = await dr
+            .select({
+                id: divisionTable.id,
+                parentId: divisionTable.parentId,
+                name: divisionTable.name,
+                level: divisionTable.level,
+                geojson: divisionTable.geojson,
+                geom: divisionTable.geom,
+                bbox: divisionTable.bbox,
+                spatial_index: divisionTable.spatial_index,
+                importId: divisionTable.importId
+            })
+            .from(divisionTable)
+            .where(
+                filters.geographicLevelId
+                    ? eq(divisionTable.id, parseInt(filters.geographicLevelId))
+                    : undefined
+            );
+
+        if (divisions.length === 0) {
+            return {
+                success: false,
+                divisions: [],
+                values: {},
+                error: 'No divisions found'
+            };
+        }
+
+        // Create a map to store values for each division
+        const values: { [key: string]: DivisionValues } = {};
+
+        for (const division of divisions) {
+            // Get disaster records that intersect with this division using PostGIS
+            const recordsInDivision = await dr
+                .select({
+                    id: disasterRecordsTable.id
+                })
+                .from(disasterRecordsTable)
+                .leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+                .leftJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
+                .where(and(
+                    ...baseConditions,
+                    sql`${disasterRecordsTable.spatialFootprint} IS NOT NULL`,
+                    sql`ST_Intersects(
+                        ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
+                        ${division.geom}
+                    )`
+                ));
+
+            if (recordsInDivision.length === 0) {
+                values[division.id.toString()] = {
+                    totalDamage: 0,
+                    totalLoss: 0,
+                    sources: new Set(),
+                    metadata,
+                    dataAvailability: 'no_data'
+                };
+                continue;
+            }
+
+            const recordIds = recordsInDivision.map(r => r.id);
+
+            // Get damages and losses from sectorDisasterRecordsRelationTable
+            const impactData = await dr
+                .select({
+                    totalDamage: sql<string>`COALESCE(SUM(CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true 
+                        THEN COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0) + COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}, 0)
+                        ELSE 0 
+                    END), 0)`,
+                    totalLoss: sql<string>`COALESCE(SUM(CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true 
+                        THEN COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)
+                        ELSE 0 
+                    END), 0)`
+                })
+                .from(sectorDisasterRecordsRelationTable)
+                .where(and(
+                    inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
+                    sectorIds.length > 0 ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
+                ));
+
+            const totalDamage = parseFloat(impactData[0]?.totalDamage || '0');
+            const totalLoss = parseFloat(impactData[0]?.totalLoss || '0');
+
+            values[division.id.toString()] = {
+                totalDamage,
+                totalLoss,
+                sources: new Set(recordIds),
+                metadata,
+                dataAvailability: totalDamage > 0 || totalLoss > 0 ? 'available' : 'zero'
+            };
+        }
+
+        // Clean up division values for response
+        const cleanDivisionValues: { [key: string]: CleanDivisionValues } = {};
+        for (const [key, value] of Object.entries(values)) {
+            cleanDivisionValues[key] = {
+                totalDamage: value.totalDamage,
+                totalLoss: value.totalLoss,
+                metadata: value.metadata,
+                dataAvailability: value.dataAvailability
             };
         }
 
         return {
             success: true,
             divisions,
-            values: cleanValues
+            values: cleanDivisionValues
         };
 
     } catch (error) {
-        console.error("Error in getGeographicImpact:", error);
+        console.error('Error in getGeographicImpact:', error);
         return {
             success: false,
             divisions: [],
             values: {},
-            error: "Failed to process geographic impact data"
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
         };
     }
-}
-
-// Memoization cache for normalized divisions
-const normalizedDivisionsCache = new Map<string, NormalizedDivision>();
-
-export async function getGeographicImpactGeoJSON(sectorId: number, subSectorId?: number): Promise<GeoJSONFeatureCollection> {
-    const result = await getGeographicImpact({ sectorId, subSectorId });
-
-    if (!result.success) {
-        return {
-            type: "FeatureCollection",
-            features: []
-        };
-    }
-
-    const features: GeoJSONFeature[] = result.divisions.map((division: Division) => ({
-        type: 'Feature' as const,
-        geometry: (typeof division.geojson === 'string' ? JSON.parse(division.geojson) : division.geojson) as GeoJSONGeometry,
-        properties: {
-            id: Number(division.id),
-            name: division.name as Record<string, string>,
-            level: division.level,
-            parentId: division.parentId,
-            totalDamage: result.values[division.id.toString()]?.totalDamage ?? 0,
-            totalLoss: result.values[division.id.toString()]?.totalLoss ?? 0
-        }
-    }));
-
-    return {
-        type: "FeatureCollection",
-        features
-    };
 }
 
 /**
@@ -738,14 +731,25 @@ async function getDisasterRecordsForDivision(
                 .innerJoin(
                     hipHazardTable,
                     eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
+                )
+                .innerJoin(
+                    hipClusterTable,
+                    eq(hipHazardTable.clusterId, hipClusterTable.id)
+                )
+                .innerJoin(
+                    hipTypeTable,
+                    eq(hipClusterTable.typeId, hipTypeTable.id)
                 );
 
-            // Add hazard filters
-            if (filters?.specificHazard) {
-                conditions.push(eq(hipHazardTable.id, filters.specificHazard));
+            // Add hazard filters in hierarchical order
+            if (filters.hazardType) {
+                conditions.push(eq(hipTypeTable.id, filters.hazardType));
             }
-            if (filters?.hazardCluster) {
-                conditions.push(eq(hipHazardTable.clusterId, filters.hazardCluster));
+            if (filters.hazardCluster) {
+                conditions.push(eq(hipClusterTable.id, filters.hazardCluster));
+            }
+            if (filters.specificHazard) {
+                conditions.push(eq(hipHazardTable.id, filters.specificHazard));
             }
         }
 
@@ -779,7 +783,7 @@ async function aggregateDamagesData(recordIds: string[]): Promise<{ total: numbe
         // Get all damages for the given records with their associated disaster record dates
         const damagesWithDates = await dr
             .select({
-                value: calculateDamages(damagesTable),
+                value: sql<string>`COALESCE(SUM(${damagesTable.totalRepairReplacement}), 0)`,
                 year: sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)`.mapWith(Number)
             })
             .from(damagesTable)
@@ -824,7 +828,7 @@ async function aggregateLossesData(recordIds: string[]): Promise<{ total: number
         // Get all losses for the given records with their associated disaster record dates
         const lossesWithDates = await dr
             .select({
-                value: calculateLosses(lossesTable),
+                value: sql<string>`COALESCE(SUM(${lossesTable.publicCostTotal} + ${lossesTable.privateCostTotal}), 0)`,
                 year: sql`EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)`.mapWith(Number)
             })
             .from(lossesTable)
@@ -906,13 +910,37 @@ export async function fetchGeographicImpactData(
     }
 }
 
-const getAgriSubsector = (sectorId: number | undefined): FaoAgriSubsector | null => {
-    if (!sectorId) return null;
-    const subsectorMap: { [key: number]: FaoAgriSubsector } = {
-        101: 'crops',      // Assuming these are your agricultural sector IDs
-        102: 'livestock',  // You should adjust these based on your actual sector IDs
-        103: 'fisheries',
-        104: 'forestry'
+/**
+ * Main function to get geographic impact following international standards
+ */
+export async function getGeographicImpactGeoJSON(sectorId: string, subSectorId?: string): Promise<GeoJSONFeatureCollection> {
+    const result = await getGeographicImpact({ sectorId, subSectorId });
+
+    if (!result.success) {
+        return {
+            type: "FeatureCollection",
+            features: []
+        };
+    }
+
+    const features: GeoJSONFeature[] = result.divisions.map((division: Division) => ({
+        type: 'Feature' as const,
+        geometry: (typeof division.geojson === 'string' ? JSON.parse(division.geojson) : division.geojson) as GeoJSONGeometry,
+        properties: {
+            id: Number(division.id),
+            name: division.name as Record<string, string>,
+            level: division.level,
+            parentId: division.parentId,
+            totalDamage: result.values[division.id.toString()]?.totalDamage ?? 0,
+            totalLoss: result.values[division.id.toString()]?.totalLoss ?? 0
+        }
+    }));
+
+    return {
+        type: "FeatureCollection",
+        features
     };
-    return subsectorMap[sectorId] || null;
-};
+}
+
+// Memoization cache for normalized divisions
+const normalizedDivisionsCache = new Map<string, NormalizedDivision>();

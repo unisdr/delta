@@ -8,7 +8,7 @@ interface Sector {
   subsectors?: Sector[];
 }
 
-// Define the filter shape
+// Define the filter shape to match ImpactMapOl props
 type FilterValues = {
   sectorId: string | null;
   subSectorId: string | null;
@@ -19,6 +19,8 @@ type FilterValues = {
   fromDate: string | null;
   toDate: string | null;
   disasterEventId: string | null;
+  assessmentType?: 'rapid' | 'detailed';
+  confidenceLevel?: 'low' | 'medium' | 'high';
 };
 
 type Filters = FilterValues | null;
@@ -37,12 +39,16 @@ const DEFAULT_FILTERS: FilterValues = {
   fromDate: null,
   toDate: null,
   disasterEventId: null,
+  assessmentType: 'rapid',
+  confidenceLevel: 'low'
 };
 
 export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [selectedMetric, setSelectedMetric] = useState<"totalDamage" | "totalLoss">("totalDamage");
   const [selectedTab, setSelectedTab] = useState<string>('tab01');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Add sectors query for dynamic titles
   const { data: sectorsResponse } = useQuery({
@@ -57,11 +63,9 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
   // Function to get sector with parent
   const findSectorWithParent = (sectors: Sector[], targetId: string): { sector: Sector | undefined; parent: Sector | undefined } => {
     for (const sector of sectors) {
-      // Check if this is the main sector
       if (sector.id.toString() === targetId) {
         return { sector, parent: undefined };
       }
-      // Check subsectors
       if (sector.subsectors) {
         const subsector = sector.subsectors.find(sub => sub.id.toString() === targetId);
         if (subsector) {
@@ -80,14 +84,12 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
       const { sector, parent } = findSectorWithParent(sectorsResponse.sectors, filters.sectorId);
 
       if (filters?.subSectorId && sector) {
-        // Case: Subsector is selected
         const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsResponse.sectors, filters.subSectorId);
         if (subsector && mainSector) {
           return `Impact in ${subsector.sectorname} (${mainSector.sectorname} Sector) by Geographic Level`;
         }
       }
 
-      // Case: Only sector is selected
       if (sector) {
         return `Impact in ${sector.sectorname} Sector by Geographic Level`;
       }
@@ -105,6 +107,8 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
   // Fetch geographic impact data
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
         const activeFilters = filters || DEFAULT_FILTERS;
@@ -119,14 +123,35 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
         const response = await fetch(url.toString());
         if (!response.ok) throw new Error('Failed to fetch geographic data');
         const data = await response.json();
+
+        // Validate response format
+        if (!data || !data.features) {
+          throw new Error('Invalid geographic data format');
+        }
+
         setGeoData(data);
       } catch (error) {
         console.error('Error fetching geographic data:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch geographic data');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
   }, [filters]);
+
+  if (error) {
+    return (
+      <section className="dts-page-section">
+        <div className="mg-container">
+          <div className="alert alert-error">
+            {error}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="dts-page-section">
@@ -138,7 +163,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
           <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
             <li role="presentation">
               <button
-                className="dts-tablist__button"
+                className={`dts-tablist__button ${selectedTab === 'tab01' ? 'active' : ''}`}
                 type="button"
                 role="tab"
                 id="tab01"
@@ -152,7 +177,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
             </li>
             <li role="presentation">
               <button
-                className="dts-tablist__button"
+                className={`dts-tablist__button ${selectedTab === 'tab02' ? 'active' : ''}`}
                 type="button"
                 role="tab"
                 id="tab02"
@@ -166,30 +191,32 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
             </li>
           </ul>
           <div id="tabpanel01" role="tabpanel" aria-labelledby="tab01" hidden={selectedTab !== 'tab01'}>
-            {geoData ? (
+            {loading ? (
+              <div className="map-loading">
+                <div className="loading-spinner"></div>
+                <p>Loading map data...</p>
+              </div>
+            ) : geoData ? (
               <ImpactMapOl
                 geoData={geoData}
                 selectedMetric="totalDamage"
                 filters={filters || DEFAULT_FILTERS}
               />
-            ) : (
-              <div className="map-loading">
-                Loading map...
-              </div>
-            )}
+            ) : null}
           </div>
           <div id="tabpanel02" role="tabpanel" aria-labelledby="tab02" hidden={selectedTab !== 'tab02'}>
-            {geoData ? (
+            {loading ? (
+              <div className="map-loading">
+                <div className="loading-spinner"></div>
+                <p>Loading map data...</p>
+              </div>
+            ) : geoData ? (
               <ImpactMapOl
                 geoData={geoData}
                 selectedMetric="totalLoss"
                 filters={filters || DEFAULT_FILTERS}
               />
-            ) : (
-              <div className="map-loading">
-                Loading map...
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
