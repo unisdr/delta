@@ -47,6 +47,7 @@ async function getTotalForDisasterEvent(tx: Tx, disasterEventId: string, valTabl
 	JOIN human_dsg hd ON dr.id = hd.record_id
 	JOIN deaths d ON hd.id = d.dsg_id
 	WHERE de.id = 'f41bd013-23cc-41ba-91d2-4e325f785171'
+		AND dr."approvalStatus" = 'published'
 		AND hd.sex IS NULL
 		AND hd.age IS NULL
 		AND hd.disability IS NULL
@@ -71,6 +72,7 @@ async function getTotalForDisasterEvent(tx: Tx, disasterEventId: string, valTabl
 		.where(
 			and(
 				eq(de.id, disasterEventId),
+				eq(de.approvalStatus, "published"),
 				isNull(hd.sex),
 				isNull(hd.age),
 				isNull(hd.disability),
