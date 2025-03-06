@@ -1,8 +1,8 @@
 export type approvalStatusIds =
 	| "draft"
-	| "completed / waiting for approval"
+	| "completed-waiting-for-approval"
 	| "approved"
-	| "sent for review"
+	| "sent-for-review"
 	| "published";
 
 export const approvalStatusField = {
@@ -13,11 +13,11 @@ export const approvalStatusField = {
 	enumData: [
 		{ key: "draft", label: "Draft" },
 		{
-			key: "completed / waiting for approval",
+			key: "completed-waiting-for-approval",
 			label: "Completed / Waiting for approval",
 		},
 		{ key: "approved", label: "Approved" },
-		{ key: "sent for review", label: "Sent for review" },
+		{ key: "sent-for-review", label: "Sent for review" },
 		{ key: "published", label: "Published" },
 	],
 	uiRowNew: true,
