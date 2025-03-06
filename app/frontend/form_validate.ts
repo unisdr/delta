@@ -179,6 +179,7 @@ export function validateFromJson<T>(
 				}
 				return value
 			case "approval_status":
+			case "date_optional_precision":
 			case "other":
 				return value
 			default:

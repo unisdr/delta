@@ -560,6 +560,9 @@ function jsonPayloadExample<T>(
 			case "date":
 				val = new Date().toISOString();
 				break;
+			case "date_optional_precision":
+				val = "2025-12-30"
+				break
 			case "number":
 				val = 123;
 				break;
@@ -574,6 +577,9 @@ function jsonPayloadExample<T>(
 					val = ""
 				}
 				break;
+			case "approval_status":
+				val = "draft"
+				break
 			default:
 				val = null;
 		}
