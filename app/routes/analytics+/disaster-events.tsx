@@ -29,7 +29,6 @@ import {
 } from "~/backend.server/models/division";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import GeoJSONMapViewer from "~/components/GeoJSONMapViewer";
-import GeoJSONMapData from "~/hips/map-analytics.json";
 import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
 
 // Create QueryClient instance
