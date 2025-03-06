@@ -26,21 +26,7 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 
 	const res = await tx.insert(disasterRecordsTable)
 		.values({
-			disasterEventId: fields.disasterEventId == "" ? null : fields.disasterEventId,
-			locationDesc: fields.locationDesc,
-			startDate: fields.startDate,
-			endDate: fields.endDate,
-			localWarnInst: fields.localWarnInst,
-			primaryDataSource: fields.primaryDataSource,
-			otherDataSource: fields.otherDataSource,
-			fieldAssessDate: fields.fieldAssessDate,
-			assessmentModes: fields.assessmentModes,
-			originatorRecorderInst: fields.originatorRecorderInst,
-			validatedBy: fields.validatedBy,
-			checkedBy: fields.checkedBy,
-			dataCollector: fields.dataCollector,
-			approvalStatus: fields.approvalStatus,
-			spatialFootprint: fields.spatialFootprint,
+			...fields,
 			updatedAt: sql`NOW()`,
 		})
 		.returning({id: disasterRecordsTable.id});
