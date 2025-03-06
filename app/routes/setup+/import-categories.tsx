@@ -194,6 +194,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
     let item = all[1];
     let formRecord:AssetType = { 
       apiImportId: item[0],
+      id: item[1],
       sectorIds: item[2],
       isBuiltIn: Boolean(item[3]),
       name: item[4],
@@ -206,6 +207,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
       if (key !== 0) {
         formRecord = {
           apiImportId: item[0],
+          id: item[1],
           sectorIds: item[2],
           isBuiltIn: Boolean(item[3]),
           name: item[4],
