@@ -587,7 +587,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 		case "Affected":
 			res.push(
 				{
-					uiName: "Directly Affected",
+					uiName: "Directly Affected (Old DesInventar)",
 					jsName: "direct",
 					dbName: "direct",
 					format: "number",
@@ -595,7 +595,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				})
 			res.push(
 				{
-					uiName: "Indirectly Affected",
+					uiName: "Indirectly Affected (Old DesInventar)",
 					jsName: "indirect",
 					dbName: "indirect",
 					format: "number",
