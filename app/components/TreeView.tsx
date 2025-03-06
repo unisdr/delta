@@ -12,13 +12,13 @@ const injectStyles = (appendCss?: string) => {
             ul.tree {
                 margin-left: 5rem !important;
                 z-index: 1;
-                position: relative;
+                position: none;
             }
 
             p.tree,
             ul.tree,
             ul.tree ul {
-                position: relative;
+                position: none;
                 list-style: none;
                 margin: 0;
                 padding: 0;
