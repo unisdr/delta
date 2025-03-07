@@ -210,7 +210,6 @@ async function byTable(tx: Tx, disasterEventId: string, dsgCol: any): Promise<By
 			total.set(k, a)
 		}
 	}
-	console.log("data by table", total, tables)
 	return {total, tables} as ByTable
 }
 
