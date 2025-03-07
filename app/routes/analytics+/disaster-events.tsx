@@ -192,8 +192,6 @@ function DisasterEventsAnalysisContent() {
       }
     }, []);
 
-
-
   return (
     <MainContainer title="Disaster Events Analysis" headerExtra={<NavSettings />}>
       <div style={{ maxWidth: "100%", overflow: "hidden" }}>
@@ -317,7 +315,7 @@ function DisasterEventsAnalysisContent() {
                 <>
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
-                      <span id="elementId05">Recovery in { ld.total.recovery.currency }]</span>
+                      <span id="elementId05">Recovery in { ld.total.recovery.currency }</span>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-d">
                       <span>{ ld.total.recovery.total }</span>
@@ -407,11 +405,16 @@ function DisasterEventsAnalysisContent() {
       </>)}
 
 
+
+
         { Number(ld.total.damages.total) > 0 && (
           <>
             <section className="dts-page-section">
               <div className="mg-container">
                 <h2 className="dts-heading-2">Affected areas/zones</h2>
+
+                
+
 
                 <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
                   <li role="presentation">
@@ -426,13 +429,13 @@ function DisasterEventsAnalysisContent() {
                   </li>
                   <li role="presentation">
                     <button type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false" disabled>
-                      <span>Total Loss</span>
+                      <span>Total Losses</span>
                     </button>
                   </li>
                 </ul>
                 <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
-                  <div className="dts-placeholder">
-                    <MapChart id="map_viewer" dataSource={ld.geoData} legendMaxColor="#208f04" />
+                  <div>
+                      <MapChart id="map_viewer" dataSource={ld.geoData} legendMaxColor="#208f04" />
                   </div>
                 </div>
                 <div className="dts-tablist__panel hidden" id="tabpanel02" role="tabpanel" aria-labelledby="tab02">
