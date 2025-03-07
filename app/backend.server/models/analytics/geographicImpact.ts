@@ -754,9 +754,12 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             })
             .from(divisionTable)
             .where(
-                filters.geographicLevelId
-                    ? eq(divisionTable.id, parseInt(filters.geographicLevelId))
-                    : undefined
+                and(
+                    eq(divisionTable.level, 2),
+                    filters.geographicLevelId
+                        ? eq(divisionTable.id, parseInt(filters.geographicLevelId))
+                        : undefined
+                )
             );
 
         if (divisions.length === 0) {
@@ -953,8 +956,8 @@ async function getDisasterRecordsForDivision(
             conditions.push(lte(disasterRecordsTable.endDate, filters.endDate));
         }
 
-        // Add approval status filter
-        conditions.push(sql`${disasterRecordsTable.approvalStatus} = 'published'`);
+        // // Add approval status filter
+        // conditions.push(sql`${disasterRecordsTable.approvalStatus} = 'completed'`);
 
         // Add disaster event filter if provided
         if (filters?.disasterEvent) {
