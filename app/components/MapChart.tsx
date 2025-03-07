@@ -260,7 +260,13 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
               opacity: 1,
               fillOpacity: region.colorPercentage,
             }),
-          }).bindPopup(
+          });
+
+          if (geojsonLayer.getPopup()) {
+            geojsonLayer.unbindPopup();
+          }
+
+          geojsonLayer.bindPopup(
             `
               <div style="
                 max-width: 300px; 
@@ -271,7 +277,7 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
                 ${region.total > 0 ? `<p>${region?.description || ""}</p>` : ""}
               </div>
             `
-          );       
+          );
   
           geojsonLayer.addTo(mapRef.current);
           geoJsonLayers.push(geojsonLayer);
