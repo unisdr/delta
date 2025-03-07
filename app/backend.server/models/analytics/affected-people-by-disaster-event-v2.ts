@@ -153,14 +153,13 @@ async function byColAndTableTotalsOnly(tx: Tx, disasterEventId: string): Promise
 	return res as ByColAndTableTotalsOnly
 }
 
-type KeyValue = {k: string, v: number}
 
 type ByColAndTableTotalsOnlyForFrontend = {
-	sex: KeyValue[],
-	age: KeyValue[],
-	disability: KeyValue[],
-	globalPovertyLine: KeyValue[],
-	nationalPovertyLine: KeyValue[],
+	sex: Record<string,number>
+	age: Record<string, number>
+	disability: Record<string, number>
+	globalPovertyLine: Record<string, number>
+	nationalPovertyLine: Record<string, number>
 }
 
 async function byColAndTableTotalsOnlyForFrontend(tx: Tx, disasterEventId: string): Promise<ByColAndTableTotalsOnlyForFrontend> {
@@ -183,7 +182,7 @@ async function byColAndTableTotalsOnlyForFrontend(tx: Tx, disasterEventId: strin
 	r.disability = dis
 
 	for (let [k, v] of Object.entries(r)) {
-		res[k] = Array.from(v.entries()).map(([k, v]) => ({k, v}))
+		res[k] = Object.fromEntries(v.entries())
 	}
 	return res as ByColAndTableTotalsOnlyForFrontend
 }
