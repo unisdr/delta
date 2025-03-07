@@ -175,8 +175,7 @@ export async function hazardousEventUpdate(tx: Tx, id: string, fields: Partial<H
 			.delete(eventRelationshipTable)
 			.where(eq(eventRelationshipTable.childId, String(id)));
 
-
-		if (fields.parent !== "") {
+		if (fields.parent) {
 
 			await tx
 				.insert(eventRelationshipTable)

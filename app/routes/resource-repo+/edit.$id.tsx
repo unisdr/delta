@@ -11,6 +11,8 @@ import {
 	route
 } from "~/frontend/resource-repo/form";
 
+import {useLoaderData} from "@remix-run/react";
+
 import {
 	FormScreen
 } from "~/frontend/form";
@@ -19,8 +21,8 @@ import {
 	createLoader,
 	createAction
 } from "~/backend.server/handlers/form";
-import { getTableName } from "drizzle-orm";
-import { resourceRepoTable } from "~/drizzle/schema";
+import {getTableName} from "drizzle-orm";
+import {resourceRepoTable} from "~/drizzle/schema";
 
 export const loader = createLoader({
 	getById: resourceRepoById
@@ -38,7 +40,9 @@ export const action = createAction({
 });
 
 export default function Screen() {
+	const ld = useLoaderData<typeof loader>();
 	return FormScreen({
+		extraData: {user: ld.user},
 		fieldsDef: fieldsDef,
 		formComponent: ResourceRepoForm,
 	})

@@ -64,7 +64,7 @@ export const fieldsDefCommon = [
 export const fieldsDef: FormInputDef<HazardousEventFields>[] = [
 	{key: "parent", label: "", type: "other"},
 	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
-	{key: "hipClusterId", label:"", type: "other"},
+	{key: "hipClusterId", label: "", type: "other"},
 	{key: "hipTypeId", label: "", type: "other"},
 	...fieldsDefCommon
 ];
@@ -168,12 +168,13 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
 		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+			dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
 		}
 	}
 
 	return (
 		<FormView
+			user={props.user}
 			path={route}
 			edit={props.edit}
 			id={props.id}
@@ -189,6 +190,10 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 					<Field key="parent" label="Parent">
 						{selected ? hazardousEventLink(selected) : "-"}&nbsp;
 						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
+						<button onClick={(e:any) => {
+							e.preventDefault()
+							setSelected(undefined)
+						}}>Unset</button>
 						<input type="hidden" name="parent" value={selected?.id || ""} />
 						<FieldErrors errors={props.errors} field="parent"></FieldErrors>
 					</Field>
@@ -338,7 +343,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 														arrValue = {
 															...arrValue,  // Spread existing properties (if any)
 															dts_info: {
-																division_id: selectedItems.selectedId || null, 
+																division_id: selectedItems.selectedId || null,
 																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
 															}
 														};
@@ -399,7 +404,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 											if (!item.tag) {
 												return "N/A"; // Return "N/A" if no tags exist
 											}
-		
+
 											const tags = (item.tag); // Parse the JSON string
 											if (Array.isArray(tags) && tags.length > 0) {
 												// Map the names and join them with commas
@@ -417,17 +422,17 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 									caption: "File/URL",
 									render: (item) => {
 										let strRet = "N/A"; // Default to "N/A"		
-		
+
 										const fileOption = item?.file_option || "";
-		
+
 										if (fileOption === "File") {
 											// Get the file name or fallback to URL
 											const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-		
+
 											// Truncate long file names while preserving the file extension
 											const maxLength = 30; // Adjust to fit your design
 											strRet = fullFileName;
-		
+
 											if (fullFileName && fullFileName.length > maxLength) {
 												const extension = fullFileName.includes('.')
 													? fullFileName.substring(fullFileName.lastIndexOf('.'))
@@ -438,7 +443,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 										} else if (fileOption === "Link") {
 											strRet = item.url || "N/A";
 										}
-		
+
 										return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
 									},
 								},
@@ -456,11 +461,11 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 										const value = e.target.value;
 										const fileField = document.getElementById("attachments_file") as HTMLInputElement;
 										const urlField = document.getElementById("attachments_url") as HTMLInputElement;
-		
+
 										if (fileField && urlField) {
 											const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
 											const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
-		
+
 											if (value === "File") {
 												fileDiv?.style.setProperty("display", "block");
 												urlDiv?.style.setProperty("display", "none");
@@ -477,7 +482,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 							data={(() => {
 								try {
 									let attachments: any[] = []; // Ensure it's always an array
-		
+
 									if (fields?.attachments) {
 										if (Array.isArray(fields.attachments)) {
 											attachments = fields.attachments;
@@ -494,7 +499,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 											attachments = [];
 										}
 									}
-		
+
 									return attachments;
 								} catch (error) {
 									console.error("Error processing attachments:", error);
@@ -683,7 +688,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 							{(() => {
 								try {
 									let attachments: any[] = []; // Ensure it's always an array
-			
+
 									if (item?.attachments) {
 										if (Array.isArray(item.attachments)) {
 											attachments = item.attachments;
@@ -700,7 +705,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 											attachments = [];
 										}
 									}
-			
+
 									return attachments.length > 0 ? (
 										<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
 											<thead>
@@ -725,7 +730,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 															: attachment.file_option === "Link"
 																? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
 																: "N/A";
-			
+
 													return (
 														<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
 															<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>

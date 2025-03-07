@@ -5,6 +5,8 @@ export const ValidRoles = [
 	{id: "admin", label: "Admin", desc: "Access and country settings."},
 ] as const;
 
+export type RoleId = typeof ValidRoles[number]["id"];
+
 export const Permissions = [
 	{id: "ViewUsers", role: "admin", label: "View users"},
 	{id: "EditUsers", role: "admin", label: "Edit other user details"},

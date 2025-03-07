@@ -19,6 +19,7 @@ import {
 import {
 	authActionGetAuth,
 	authActionWithPerm,
+	authLoaderGetUserForFrontend,
 	authLoaderWithPerm,
 } from "~/util/auth";
 
@@ -41,13 +42,15 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	let hip = await dataForHazardPicker();
 	let u = new URL(request.url);
 
+	let user = authLoaderGetUserForFrontend(loaderArgs)
+
 	const parentId = u.searchParams.get("parent") || "";
 	if (parentId) {
 		const parent = await hazardousEventById(parentId);
 		if (!parent){
 			throw new Response("Parent not found", {status: 404});
 		}
-		return {hip, parentId, parent, treeData: [], ctryIso3: []};
+		return {hip, parentId, parent, treeData: [], ctryIso3: [], user};
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
@@ -59,7 +62,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
-	return {hip: hip, treeData: treeData, ctryIso3: ctryIso3};
+	return {hip: hip, treeData: treeData, ctryIso3: ctryIso3, user};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -87,7 +90,13 @@ export default function Screen() {
 	let fieldsInitial = {parent: ld.parentId}
 
 	return formScreen({
-		extraData: {hip: ld.hip, parent: ld.parent, treeData: ld.treeData, ctryIso3: ld.ctryIso3},
+		extraData: {
+			hip: ld.hip,
+			parent: ld.parent,
+			treeData: ld.treeData,
+			ctryIso3: ld.ctryIso3,
+			user: ld.user
+		},
 		fieldsInitial,
 		form: HazardousEventForm,
 		edit: false

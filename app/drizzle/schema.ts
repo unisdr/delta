@@ -60,7 +60,7 @@ const approvalFields = {
 	// drizzle has broken postgres enum support
 	// using text column instead
 	// https://github.com/drizzle-team/drizzle-orm/issues/3485
-	approvalStatus: text({enum: ["draft", "completed / waiting for approval", "approved", "sent for review", "published"]})
+	approvalStatus: text({enum: ["draft", "completed-waiting-for-approval", "approved", "sent-for-review", "published"]})
 		.notNull()
 		.default("draft"),
 };

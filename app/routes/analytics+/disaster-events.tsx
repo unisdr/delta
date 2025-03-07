@@ -4,24 +4,32 @@ import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-quer
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
-import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import { Filters } from "~/frontend/analytics/disaster-events/sections/DisasterEventFilters";
 
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfig } from "./content-picker-config";
-import { getSectorFullPathById } from "~/backend.server/models/sector";
+
 import { 
   disasterEventSectorsById,
   disasterEvent_DisasterRecordsCount__ById, 
   disasterEventSectorTotal__ById,
-} from "~/backend.server/models/disaster-event";
+  disasterEventSectorTotal__ByDivisionId,
+} from "~/backend.server/models/analytics/disaster-events";
 
 import {
 	disasterEventById,
 	DisasterEventViewModel,
 } from "~/backend.server/models/event";
+
+import {
+	getAllChildren,
+  getDivisionByLevel,
+} from "~/backend.server/models/division";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import MapChart from "~/components/MapChart";
+import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -34,11 +42,20 @@ const queryClient = new QueryClient({
   },
 });
 
+
+// Define an interface for the structure of the JSON objects
+interface interfaceMap {
+  total: number;
+  name: string;
+  description: string;
+  colorPercentage: number;
+  geojson: any;
+}
+
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
 
   const req = loaderArgs.request;
-
   
   // Parse the request URL
   const parsedUrl = new URL(req.url);
@@ -50,11 +67,18 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let recordsRelatedSectors:any = undefined;
   let countRelatedDisasterRecords:any = undefined;
   let totalSectorEffects:any = undefined;
+  let cpDisplayName:string = '';
+  let geoData:interfaceMap[] = [];
+  let totalAffectedPeople:any = {};
+
+  
 
   if (xId) {
     record = await disasterEventById(xId).catch(console.error);
     if  ( record ) {
       try {
+        cpDisplayName = await contentPickerConfig.selectedDisplay(dr, xId);
+
         // console.log( xId );
         // console.log( typeof xId );
         // console.log( record );
@@ -64,8 +88,26 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         recordsRelatedSectors = await disasterEventSectorsById(xId);
         // get the count of Disaster Records linked to the disaster event
         countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(xId);
-        
+
         totalSectorEffects = await disasterEventSectorTotal__ById(xId);
+
+        totalAffectedPeople = await getAffectedByDisasterEvent(dr, xId);
+        // console.log( totalAffectedPeople );
+
+        const divisionLevel1 = await getDivisionByLevel(1);
+        for (const item of divisionLevel1) {
+          const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(xId, [item.id]);
+          // scores[item.id] = {};
+          geoData.push({
+            total: totalPerDivision.damages.total,
+            name: String(item.name['en']),
+            description: 'Total Damage: ' + totalPerDivision.damages.currency + ' ' + totalPerDivision.damages.total,
+            colorPercentage: 1,
+            geojson: item.geojson,
+          });
+          // console.log( item );
+        }
+        // console.log( geoData );
       } catch (e) {
         console.log(e);
         throw e;
@@ -81,6 +123,9 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     recordsRelatedSectors: recordsRelatedSectors,
     countRelatedDisasterRecords: countRelatedDisasterRecords,
     total: totalSectorEffects,
+    cpDisplayName: cpDisplayName,
+    geoData: geoData,
+    totalAffectedPeople: totalAffectedPeople,
   });
 });
 
@@ -102,27 +147,33 @@ function DisasterEventsAnalysisContent() {
     recordsRelatedSectors: any,
     countRelatedDisasterRecords: number | null,
     total: any | null,
-    cpDisplayName: string
+    cpDisplayName: string,
+    geoData: any,
+    totalAffectedPeople: any,
   }>();
 
-  // State declarations
-  const [filters, setFilters] = useState<{
-    disasterEventId: string | null;
-  } | null>(null);
+  // // State declarations
+  // const [filters, setFilters] = useState<{
+  //   disasterEventId: string | null;
+  // } | null>(null);
 
-  // Event handlers for Filters component
-  const handleApplyFilters = (newFilters: typeof filters) => {
-    setFilters(newFilters);
-  };
+  // // Event handlers for Filters component
+  // const handleApplyFilters = (newFilters: typeof filters) => {
+  //   setFilters(newFilters);
+  // };
 
   const handleAdvancedSearch = () => {
     // TODO: Implement advanced search functionality
     console.log("Advanced search clicked");
   };
 
-  const handleClearFilters = () => {
+
+  // Define the handleClearFilters function
+  const handleClearFilters = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault(); // Prevent the default form submission
     window.location.href = '/analytics/disaster-events';
   };
+  
 
 
   useEffect(() => {
@@ -135,15 +186,11 @@ function DisasterEventsAnalysisContent() {
         if (btnSubmitRef.current) {
           btnSubmitRef.current.disabled = false;
         }
+        if (btnCancelRef.current) {
+          btnCancelRef.current.disabled = true;
+        }
       }
     }, []);
-
-
-
-  
-
-  console.log( ld.record?.startDate );
-  console.log( ld.record?.endDate );
 
   return (
     <MainContainer title="Disaster Events Analysis" headerExtra={<NavSettings />}>
@@ -162,8 +209,8 @@ function DisasterEventsAnalysisContent() {
                                   </div>
                                   <ContentPicker 
                                     {...contentPickerConfig} 
-                                    value={""} 
-                                    displayName={""} 
+                                    value={ ld.record ? ld.record.id : '' } 
+                                    displayName={ ld.cpDisplayName } 
                                     onSelect={
                                         (item) => {
                                           if (btnCancelRef.current) {
@@ -174,13 +221,14 @@ function DisasterEventsAnalysisContent() {
                                           }
                                         }
                                     }
+                                    disabledOnEdit={ld.record ? true : false}
                                   />
                               </label>
                           </div>
                       </div>
                       <div className="dts-form__actions">
                           <button ref={btnSubmitRef} type="submit" className="mg-button mg-button--small mg-button-primary" disabled>Apply filters</button>
-                          <button ref={btnCancelRef} onClick={handleClearFilters} type="button" className="mg-button mg-button--small mg-button-outline" disabled>Clear</button>
+                          <button ref={btnCancelRef} onClick={handleClearFilters} type="button" className="mg-button mg-button--small mg-button-outline">Clear</button>
                       </div>
                   </div>
               </form>
@@ -214,21 +262,13 @@ function DisasterEventsAnalysisContent() {
               </p>
             </div>
           )}
-
-          {/* Dashboard sections */}
-          {filters && (
-            <div className="disaster-events-content" style={{ marginTop: "2rem", maxWidth: "100%", overflow: "hidden" }}>
-              {/* TODO: Add dashboard sections here */}
-
-            </div>
-          )}
         </div>
 
         {ld.record && (<>
         
         <section className="dts-page-section">
         <div className="mg-container">
-          <h2 className="dts-heading-2">[Name of the disaster event]</h2>
+          <h2 className="dts-heading-2">{ ld.cpDisplayName }</h2>
           <p>Affiliated record(s): { ld.countRelatedDisasterRecords }</p>
 
           {
@@ -257,105 +297,162 @@ function DisasterEventsAnalysisContent() {
           <div className="mg-grid mg-grid__col-3">
             <div className="dts-data-box">
               <h3 className="dts-body-label">
-                <span id="elementId03">Damage in [{ ld.total.damages.currency }]</span>
+                <span id="elementId03">Damage in { ld.total.damages.currency }</span>
               </h3>
-              <div className="dts-indicator dts-indicator--target-box-d">
+              <div className="dts-indicator dts-indicator--target-box-b">
                 <span>{ ld.total.damages.total }</span>
               </div>
             </div>
             <div className="dts-data-box">
               <h3 className="dts-body-label">
-                <span id="elementId04">Losses in [{ ld.total.losses.currency }]</span>
+                <span id="elementId04">Losses in { ld.total.losses.currency }</span>
               </h3>
               <div className="dts-indicator dts-indicator--target-box-c">
                 <span>{ ld.total.losses.total }</span>
               </div>
             </div>
-            { Number(ld.total.recvery.total) > 0 && 
+            { Number(ld.total.recovery.total) > 0 && (
                 <>
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
-                      <span id="elementId05">Recovery [{ ld.total.recvery.currency }]</span>
+                      <span id="elementId05">Recovery in { ld.total.recovery.currency }</span>
                     </h3>
-                    <div className="dts-indicator dts-indicator--target-box-f">
-                      <span>{ ld.total.recvery.total }</span>
+                    <div className="dts-indicator dts-indicator--target-box-d">
+                      <span>{ ld.total.recovery.total }</span>
                     </div>
                   </div>
                 </>
-            }
+            )}
 
 
           </div>
         </div>
       </section>
 
-      <section className="dts-page-section">
-        <div className="mg-container">
-          <h2 className="dts-heading-2">Human direct effects</h2>
+      { Number(ld.totalAffectedPeople.total) > 0 && (<>
+        <section className="dts-page-section">
+          <div className="mg-container">
+            <h2 className="dts-heading-2">Human direct effects</h2>
 
-          <div className="mg-grid mg-grid__col-3">
-            <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span id="elementId04">Total people affected</span>
-                  <button type="button" className="dts-tooltip__button" aria-labelledby="elementId04" aria-describedby="tooltip04">
-                    <svg aria-hidden="true" focusable="false" role="img">
-                      <use href="assets/icons/information_outline.svg#information"></use>
-                    </svg>
-                  </button>
-                  <div id="tooltip04" role="tooltip">
-                    <span>Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.</span>
-                    <div className="dts-tooltip__arrow"></div>
+            <div className="mg-grid mg-grid__col-3">
+              <div className="dts-data-box">
+                  <h3 className="dts-body-label">
+                    <span>Total people affected</span>
+                  </h3>
+                  <div className="dts-indicator dts-indicator--target-box-f">
+                    <span>{ ld.totalAffectedPeople.total }</span>
                   </div>
+                </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="dts-page-section">
+          <div className="mg-container">
+            <div className="mg-grid mg-grid__col-3">
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span>Death</span>
                 </h3>
-                <div className="dts-indicator dts-indicator--target-box-c">
-                  <span>-</span>
+                <div className="dts-indicator dts-indicator--target-box-g">
+                  <span>{ ld.totalAffectedPeople.deaths }</span>
                 </div>
               </div>
-          </div>
-
-        </div>
-      </section>
-
-
-
-      <section className="dts-page-section">
-        <div className="mg-container">
-          <h2 className="dts-heading-2">Affected areas/zones</h2>
-
-          <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
-            <li role="presentation">
-              <button type="button" className="dts-tablist__button" role="tab" id="tab01" aria-selected="true" aria-controls="tabpanel01">
-                <span>Total Damage</span>
-              </button>
-            </li>
-            <li role="presentation">
-              <button type="button" className="dts-tablist__button" role="tab" id="tab02" aria-controls="tabpanel02" aria-selected="false">
-                <span>Total Affected</span>
-              </button>
-            </li>
-            <li role="presentation">
-              <button type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false">
-                <span>Total Loss</span>
-              </button>
-            </li>
-          </ul>
-          <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
-            <div className="dts-placeholder">
-              <span>Placeholder map 1</span>
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span>Injured</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-g">
+                  <span>{ ld.totalAffectedPeople.injured }</span>
+                </div>
+              </div>
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span>Missing</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-g">
+                  <span>{ ld.totalAffectedPeople.missing }</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="dts-tablist__panel hidden" id="tabpanel02" role="tabpanel" aria-labelledby="tab02">
-            <div className="dts-placeholder">
-              <span>Placeholder map 2</span>
+        </section>
+
+        <section className="dts-page-section">
+          <div className="mg-container">
+            <div className="mg-grid mg-grid__col-3">
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span>People directly affected (old DesInventar)</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-g">
+                  <span>{ ld.totalAffectedPeople.directlyAffected }</span>
+                </div>
+              </div>
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span>Displaced</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-g">
+                  <span>{ ld.totalAffectedPeople.displaced }</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="dts-tablist__panel hidden" id="tabpanel03" role="tabpanel" aria-labelledby="tab03">
-            <div className="dts-placeholder">
-              <span>Placeholder map 3</span>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+
+
+      </>)}
+
+
+
+
+        { Number(ld.total.damages.total) > 0 && (
+          <>
+            <section className="dts-page-section">
+              <div className="mg-container">
+                <h2 className="dts-heading-2">Affected areas/zones</h2>
+
+                
+
+
+                <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
+                  <li role="presentation">
+                    <button type="button" className="dts-tablist__button" role="tab" id="tab01" aria-selected="true" aria-controls="tabpanel01">
+                      <span>Total Damage</span>
+                    </button>
+                  </li>
+                  <li role="presentation">
+                    <button type="button" className="dts-tablist__button" role="tab" id="tab02" aria-controls="tabpanel02" aria-selected="false" disabled>
+                      <span>Total Affected</span>
+                    </button>
+                  </li>
+                  <li role="presentation">
+                    <button type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false" disabled>
+                      <span>Total Losses</span>
+                    </button>
+                  </li>
+                </ul>
+                <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
+                  <div>
+                      <MapChart id="map_viewer" dataSource={ld.geoData} legendMaxColor="#208f04" />
+                  </div>
+                </div>
+                <div className="dts-tablist__panel hidden" id="tabpanel02" role="tabpanel" aria-labelledby="tab02">
+                  <div className="dts-placeholder">
+                    <span>Placeholder map 2</span>
+                  </div>
+                </div>
+                <div className="dts-tablist__panel hidden" id="tabpanel03" role="tabpanel" aria-labelledby="tab03">
+                  <div className="dts-placeholder">
+                    <span>Placeholder map 3</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+      
 
       </>)}
 

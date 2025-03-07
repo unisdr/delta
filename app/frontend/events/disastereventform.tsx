@@ -413,6 +413,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 
 	return (
 		<FormView
+			user={props.user}
 			path={route}
 			edit={props.edit}
 			id={props.id}

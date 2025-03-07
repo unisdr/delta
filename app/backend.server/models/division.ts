@@ -1,4 +1,6 @@
-import {SQL, sql, eq, isNull} from 'drizzle-orm';
+import {
+	SQL, sql, eq, isNull, aliasedTable
+} from 'drizzle-orm';
 
 import {selectTranslated} from './common';
 
@@ -361,6 +363,38 @@ export async function update(id: number, data: DivitionInsert): Promise<{ok: boo
 export async function divisionById(id: number) {
 	const res = await dr.query.divisionTable.findFirst({
 		where: eq(divisionTable.id, id),
+		with: {
+			divisionParent: true
+		}
+	});
+	return res
+}
+
+export async function getAllChildren(divisionId: number) {
+	const res = await dr.execute(sql`
+		WITH RECURSIVE DivisionChildren AS (
+			SELECT id, parent_id
+			FROM division
+			WHERE id = ${divisionId}
+
+			UNION ALL
+
+			SELECT t.id, t.parent_id
+			FROM division t
+			INNER JOIN DivisionChildren c ON t.parent_id = c.id
+		)
+
+		SELECT id
+		FROM DivisionChildren;
+	`);
+
+	return res
+}
+
+
+export async function getDivisionByLevel(level: number) {
+	const res = await dr.query.divisionTable.findMany({
+		where: eq(divisionTable.level, level),
 		with: {
 			divisionParent: true
 		}
