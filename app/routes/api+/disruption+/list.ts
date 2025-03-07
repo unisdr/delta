@@ -25,6 +25,5 @@ export const loader = createApiListLoader(
 			orderBy: [desc(disruptionTable.durationDays)],
 		})
 	},
-	[desc(disruptionTable.durationDays)]
 )
 

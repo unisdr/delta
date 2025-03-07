@@ -22,6 +22,5 @@ export const loader = createApiListLoader(
 			orderBy: [desc(disasterEventTable.startDate)],
 		});
 	},
-	[desc(disasterEventTable.startDate)]
 );
 

@@ -1,5 +1,5 @@
 import {
-	devExample1Table,
+	disasterRecordsTable,
 } from "~/drizzle/schema";
 
 import {dr} from "~/db.server";
@@ -9,12 +9,18 @@ import {desc} from "drizzle-orm";
 import {createApiListLoader} from "~/backend.server/handlers/view";
 
 export const loader = createApiListLoader(
-	devExample1Table,
+	disasterRecordsTable,
 	async (offsetLimit) => {
-		return dr.query.devExample1Table.findMany({
+		return dr.query.disasterRecordsTable.findMany({
 			...offsetLimit,
-			columns: {id: true, field1: true},
-			orderBy: [desc(devExample1Table.field1)],
+			columns: {
+				id: true,
+				approvalStatus: true,
+				disasterEventId: true,
+				startDate: true,
+				endDate: true
+			},
+			orderBy: [desc(disasterRecordsTable.id)],
 		});
 	},
 );

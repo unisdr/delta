@@ -17,6 +17,5 @@ export const loader = createApiListLoader(
 			orderBy: [desc(measureTable.name)],
 		});
 	},
-	[desc(measureTable.name)]
 );
 

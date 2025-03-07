@@ -17,5 +17,4 @@ export let loader = createApiListLoader(
       orderBy: [desc(unitTable.name)],
     });
   },
-  [desc(unitTable.name)]
 )
