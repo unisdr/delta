@@ -1,7 +1,7 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
-import GeoJSONMapViewer from "~/components/GeoJSONMapViewer";
+import MapChart from "~/components/MapChart";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const geoData = [
@@ -40280,7 +40280,7 @@ export default function SpatialFootprintsMap() {
             <div className="dts-page-header">
                 <header className="dts-page-title">
                     <div className="mg-container">
-                        <h1 className="dts-heading-1">GeoJSON Map Viewer Example</h1>
+                        <h1 className="dts-heading-1">MapChart Component Example</h1>
                     </div>
                 </header>
             </div>
@@ -40291,7 +40291,7 @@ export default function SpatialFootprintsMap() {
                             <div className="form-field">
                                 <label>
                                     <div>
-                                        <GeoJSONMapViewer id="map_viewer" dataSource={geoData} legendMaxColor="#208f04" />
+                                        <MapChart id="map_viewer" dataSource={geoData} legendMaxColor="#208f04" />
                                     </div>
                                 </label>
                             </div>

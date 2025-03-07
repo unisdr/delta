@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-type GeoJSONMapViewerProps = {
+type MapChartProps = {
   id: string;
   dataSource: {
     total: number;
@@ -84,7 +84,7 @@ const getOpacityForRange = (value: number, min: number, max: number) => {
     return 0.1 + normalizedValue * 0.9;
 };
 
-const GeoJSONMapViewer: React.FC<GeoJSONMapViewerProps> = ({ id = "", dataSource = [], legendMaxColor = "#333333" }) => {
+const MapChart: React.FC<MapChartProps> = ({ id = "", dataSource = [], legendMaxColor = "#333333" }) => {
   const [isClient, setIsClient] = useState(false);
   const [isLeafletLoaded, setLeafletLoaded] = useState(false);
   const [updatedData, setUpdatedData] = useState(dataSource);
@@ -227,4 +227,4 @@ const GeoJSONMapViewer: React.FC<GeoJSONMapViewerProps> = ({ id = "", dataSource
   );
 };
 
-export default GeoJSONMapViewer;
+export default MapChart;

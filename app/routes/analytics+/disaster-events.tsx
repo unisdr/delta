@@ -28,7 +28,7 @@ import {
   getDivisionByLevel,
 } from "~/backend.server/models/division";
 import { dr } from "~/db.server"; // Drizzle ORM instance
-import GeoJSONMapViewer from "~/components/GeoJSONMapViewer";
+import MapChart from "~/components/MapChart";
 import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
 
 // Create QueryClient instance
@@ -432,7 +432,7 @@ function DisasterEventsAnalysisContent() {
                 </ul>
                 <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
                   <div className="dts-placeholder">
-                    <GeoJSONMapViewer id="map_viewer" dataSource={ld.geoData} legendMaxColor="#208f04" />
+                    <MapChart id="map_viewer" dataSource={ld.geoData} legendMaxColor="#208f04" />
                   </div>
                 </div>
                 <div className="dts-tablist__panel hidden" id="tabpanel02" role="tabpanel" aria-labelledby="tab02">
