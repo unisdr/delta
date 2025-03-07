@@ -356,19 +356,41 @@ const getDisasterRecordsForSector = async (
         }
       }
 
-      if (filters.disasterEvent) {
+      // Improved disaster event filtering logic - using the same approach as in hazardImpact.ts
+      if (filters.disasterEvent || filters._disasterEventId) {
         try {
-          conditions.push(sql`${disasterEventTable.nameNational} = ${filters.disasterEvent}`);
+          const eventId = filters._disasterEventId || filters.disasterEvent;
+          if (eventId) {
+            // Check if it's a UUID (for direct ID matching)
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (uuidRegex.test(eventId)) {
+              // Direct ID match for UUID format
+              conditions.push(eq(disasterEventTable.id, eventId));
+            } else {
+              // Text search across multiple fields for non-UUID format
+              const searchConditions: SQL<unknown>[] = [];
+              searchConditions.push(sql`LOWER(${disasterEventTable.nameNational}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
+              searchConditions.push(sql`LOWER(${disasterEventTable.id}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
+              searchConditions.push(sql`
+                CASE WHEN ${disasterEventTable.glide} IS NOT NULL 
+                THEN LOWER(${disasterEventTable.glide}) LIKE ${`%${eventId.toLowerCase()}%`}
+                ELSE FALSE END
+              `);
+              searchConditions.push(sql`
+                CASE WHEN ${disasterEventTable.nationalDisasterId} IS NOT NULL 
+                THEN LOWER(${disasterEventTable.nationalDisasterId}) LIKE ${`%${eventId.toLowerCase()}%`}
+                ELSE FALSE END
+              `);
+              searchConditions.push(sql`
+                CASE WHEN ${disasterEventTable.otherId1} IS NOT NULL 
+                THEN LOWER(${disasterEventTable.otherId1}) LIKE ${`%${eventId.toLowerCase()}%`}
+                ELSE FALSE END
+              `);
+              
+            }
+          }
         } catch (error) {
-          console.error('Error filtering by disaster event name:', error);
-        }
-      }
-
-      if (filters._disasterEventId) {
-        try {
-          conditions.push(sql`${disasterEventTable.id} = ${filters._disasterEventId}`);
-        } catch (error) {
-          console.error('Error filtering by disaster event ID:', error);
+          console.error('Error filtering by disaster event:', error);
         }
       }
     }
@@ -389,7 +411,7 @@ const getDisasterRecordsForSector = async (
           hazardousEventTable,
           eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
-        .where(and(...conditions));
+        .where(conditions.length > 0 ? and(...conditions) : sql`TRUE`);
 
       // Execute the query and map results
       const results = await query;

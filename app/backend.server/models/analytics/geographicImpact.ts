@@ -422,17 +422,17 @@ function isGeometry(json: any): json is GeoJSONGeometry {
 function safeMoneyToNumber(value: string | number | null): number {
     try {
         if (value === null || value === undefined) return 0;
-        
+
         // Handle string values (most common from SQL queries)
         if (typeof value === 'string') {
             // Remove any currency symbols or commas
             const cleanValue = value.replace(/[$,]/g, '').trim();
             if (!cleanValue) return 0;
-            
+
             const parsed = parseFloat(cleanValue);
             return isNaN(parsed) ? 0 : parsed;
         }
-        
+
         // Handle numeric values
         return typeof value === 'number' ? value : 0;
     } catch (error) {
@@ -477,7 +477,7 @@ const getAllSubsectorIds = async (sectorId: string | undefined): Promise<number[
 function isValidGeoJSON(value: any): boolean {
     try {
         if (!value || typeof value !== 'object') return false;
-        
+
         // If it's already parsed JSON, check for required properties
         if (typeof value === 'object') {
             // Check for required GeoJSON properties
@@ -558,10 +558,50 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
 
         // Add date range filters if provided
         if (filters.fromDate) {
-            baseConditions.push(sql`${disasterRecordsTable.startDate} >= ${filters.fromDate}`);
+            baseConditions.push(gte(disasterRecordsTable.startDate, filters.fromDate));
         }
         if (filters.toDate) {
-            baseConditions.push(sql`${disasterRecordsTable.endDate} <= ${filters.toDate}`);
+            baseConditions.push(lte(disasterRecordsTable.endDate, filters.toDate));
+        }
+
+        // Add disaster event filter if provided
+        if (filters.disasterEventId) {
+            try {
+                const eventId = filters.disasterEventId;
+                if (eventId) {
+                    // Check if it's a UUID (for direct ID matching)
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    if (uuidRegex.test(eventId)) {
+                        // Direct ID match for UUID format
+                        baseConditions.push(eq(disasterEventTable.id, eventId));
+                    } else {
+                        // Text search across multiple fields for non-UUID format
+                        const searchConditions: SQL<unknown>[] = [];
+                        searchConditions.push(sql`LOWER(${disasterEventTable.nameNational}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
+                        searchConditions.push(sql`LOWER(${disasterEventTable.id}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
+                        searchConditions.push(sql`
+                            CASE WHEN ${disasterEventTable.glide} IS NOT NULL 
+                            THEN LOWER(${disasterEventTable.glide}) LIKE ${`%${eventId.toLowerCase()}%`}
+                            ELSE FALSE END
+                        `);
+                        searchConditions.push(sql`
+                            CASE WHEN ${disasterEventTable.nationalDisasterId} IS NOT NULL 
+                            THEN LOWER(${disasterEventTable.nationalDisasterId}) LIKE ${`%${eventId.toLowerCase()}%`}
+                            ELSE FALSE END
+                        `);
+                        searchConditions.push(sql`
+                            CASE WHEN ${disasterEventTable.otherId1} IS NOT NULL 
+                            THEN LOWER(${disasterEventTable.otherId1}) LIKE ${`%${eventId.toLowerCase()}%`}
+                            ELSE FALSE END
+                        `);
+
+                        // Add the OR condition for text search
+                        // baseConditions.push(or(...searchConditions));
+                    }
+                }
+            } catch (error) {
+                console.error('Error filtering by disaster event:', error);
+            }
         }
 
         // Hazard filtering with improved hierarchical structure handling
@@ -575,7 +615,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                         .from(hipTypeTable)
                         .where(eq(hipTypeTable.id, filters.hazardTypeId))
                         .then(result => result[0]?.exists || false);
-                    
+
                     if (typeExists) {
                         baseConditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardTypeId}`);
                     } else {
@@ -602,18 +642,18 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                         .from(hipClusterTable)
                         .where(eq(hipClusterTable.id, filters.hazardClusterId))
                         .limit(1);
-                    
+
                     const clusterResult = await clusterQuery;
                     const clusterExists = clusterResult[0]?.exists || false;
-                    
+
                     if (clusterExists) {
                         // Add condition for the cluster ID
                         baseConditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardClusterId}`);
-                        
+
                         // If hazardTypeId is also provided, ensure the cluster belongs to that type
                         if (filters.hazardTypeId) {
                             const clusterTypeId = clusterResult[0]?.typeId;
-                            
+
                             if (clusterTypeId !== filters.hazardTypeId) {
                                 console.warn(`Hazard cluster ${filters.hazardClusterId} does not belong to type ${filters.hazardTypeId}`);
                                 // Add a condition to ensure proper hierarchy is maintained
@@ -651,18 +691,18 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                         .from(hipHazardTable)
                         .where(eq(hipHazardTable.id, filters.specificHazardId))
                         .limit(1);
-                    
+
                     const hazardResult = await hazardQuery;
                     const hazardExists = hazardResult[0]?.exists || false;
-                    
+
                     if (hazardExists) {
                         // Add condition for the specific hazard ID
                         baseConditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazardId}`);
-                        
+
                         // If hazardClusterId is also provided, ensure the hazard belongs to that cluster
                         if (filters.hazardClusterId) {
                             const hazardClusterId = hazardResult[0]?.clusterId;
-                            
+
                             if (hazardClusterId !== filters.hazardClusterId) {
                                 console.warn(`Specific hazard ${filters.specificHazardId} does not belong to cluster ${filters.hazardClusterId}`);
                                 // Add a condition to ensure proper hierarchy is maintained
@@ -676,7 +716,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                                 );
                             }
                         }
-                        
+
                         // If hazardTypeId is provided but hazardClusterId is not, ensure the hazard's cluster belongs to that type
                         if (filters.hazardTypeId && !filters.hazardClusterId) {
                             baseConditions.push(
@@ -914,7 +954,47 @@ async function getDisasterRecordsForDivision(
         }
 
         // Add approval status filter
-        conditions.push(sql`${disasterRecordsTable.approvalStatus} = 'completed'`);
+        conditions.push(sql`${disasterRecordsTable.approvalStatus} = 'published'`);
+
+        // Add disaster event filter if provided
+        if (filters?.disasterEvent) {
+            try {
+                const eventId = filters.disasterEvent;
+                if (eventId) {
+                    // Check if it's a UUID (for direct ID matching)
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    if (uuidRegex.test(eventId)) {
+                        // Direct ID match for UUID format
+                        conditions.push(eq(disasterEventTable.id, eventId));
+                    } else {
+                        // Text search across multiple fields for non-UUID format
+                        const searchConditions: SQL<unknown>[] = [];
+                        searchConditions.push(sql`LOWER(${disasterEventTable.nameNational}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
+                        searchConditions.push(sql`LOWER(${disasterEventTable.id}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
+                        searchConditions.push(sql`
+                            CASE WHEN ${disasterEventTable.glide} IS NOT NULL 
+                            THEN LOWER(${disasterEventTable.glide}) LIKE ${`%${eventId.toLowerCase()}%`}
+                            ELSE FALSE END
+                        `);
+                        searchConditions.push(sql`
+                            CASE WHEN ${disasterEventTable.nationalDisasterId} IS NOT NULL 
+                            THEN LOWER(${disasterEventTable.nationalDisasterId}) LIKE ${`%${eventId.toLowerCase()}%`}
+                            ELSE FALSE END
+                        `);
+                        searchConditions.push(sql`
+                            CASE WHEN ${disasterEventTable.otherId1} IS NOT NULL 
+                            THEN LOWER(${disasterEventTable.otherId1}) LIKE ${`%${eventId.toLowerCase()}%`}
+                            ELSE FALSE END
+                        `);
+
+                        // Add the OR condition for text search
+                        // conditions.push(or(...searchConditions));
+                    }
+                }
+            } catch (error) {
+                console.error('Error filtering by disaster event:', error);
+            }
+        }
 
         // Build base query
         const query = dr
@@ -965,18 +1045,18 @@ async function getDisasterRecordsForDivision(
 
         // Execute query to get initial results
         const records = await query;
-        
+
         // Process spatial filtering separately to handle potential GeoJSON issues
         const recordsWithValidSpatial: string[] = [];
         const recordsWithoutSpatial: string[] = [];
-        
+
         for (const record of records) {
             if (!record.spatialFootprint) {
                 // Keep records without spatial data based on text matching only
                 recordsWithoutSpatial.push(record.id);
                 continue;
             }
-            
+
             try {
                 // Validate GeoJSON structure before attempting spatial operations
                 if (!isValidGeoJSON(record.spatialFootprint)) {
@@ -984,7 +1064,7 @@ async function getDisasterRecordsForDivision(
                     recordsWithoutSpatial.push(record.id);
                     continue;
                 }
-                
+
                 // Execute spatial intersection test with improved error handling
                 try {
                     const intersectionResult = await dr.execute(
@@ -993,7 +1073,7 @@ async function getDisasterRecordsForDivision(
                             ${division[0].geom}
                         ) as intersects`
                     );
-                    
+
                     // Type-safe result access with proper null checking
                     if (intersectionResult && Array.isArray(intersectionResult) && intersectionResult.length > 0) {
                         const resultRow = intersectionResult[0] as { intersects: boolean } | null;
@@ -1018,7 +1098,7 @@ async function getDisasterRecordsForDivision(
                 recordsWithoutSpatial.push(record.id);
             }
         }
-        
+
         // Combine results, prioritizing spatial matches
         return [...recordsWithValidSpatial, ...recordsWithoutSpatial];
     } catch (error) {
@@ -1057,9 +1137,9 @@ export async function fetchGeographicImpactData(
         // Validate division ID
         if (!divisionId || isNaN(parseInt(divisionId))) {
             console.error("Invalid division ID:", divisionId);
-            return { 
-                totalDamage: 0, 
-                totalLoss: 0, 
+            return {
+                totalDamage: 0,
+                totalLoss: 0,
                 byYear: new Map(),
                 metadata: createAssessmentMetadata('rapid', 'low')
             };
@@ -1070,9 +1150,9 @@ export async function fetchGeographicImpactData(
 
         if (recordIds.length === 0) {
             console.log(`No disaster records found for division ${divisionId}`);
-            return { 
-                totalDamage: 0, 
-                totalLoss: 0, 
+            return {
+                totalDamage: 0,
+                totalLoss: 0,
                 byYear: new Map(),
                 metadata: createAssessmentMetadata('rapid', 'low')
             };
@@ -1101,17 +1181,17 @@ export async function fetchGeographicImpactData(
             filters?.confidenceLevel || 'low'
         );
 
-        return { 
-            totalDamage, 
-            totalLoss, 
+        return {
+            totalDamage,
+            totalLoss,
             byYear,
             metadata
         };
     } catch (error) {
         console.error("Error fetching geographic impact data:", error);
-        return { 
-            totalDamage: 0, 
-            totalLoss: 0, 
+        return {
+            totalDamage: 0,
+            totalLoss: 0,
             byYear: new Map(),
             metadata: createAssessmentMetadata('rapid', 'low')
         };
@@ -1161,7 +1241,7 @@ async function aggregateDamagesData(recordIds: string[]): Promise<{ total: numbe
         for (const row of damageData) {
             const year = parseInt(row.year);
             if (isNaN(year)) continue;
-            
+
             const damage = safeMoneyToNumber(row.totalDamage);
             total += damage;
             byYear.set(year, damage);
@@ -1216,7 +1296,7 @@ async function aggregateLossesData(recordIds: string[]): Promise<{ total: number
         for (const row of lossData) {
             const year = parseInt(row.year);
             if (isNaN(year)) continue;
-            
+
             const loss = safeMoneyToNumber(row.totalLoss);
             total += loss;
             byYear.set(year, loss);
