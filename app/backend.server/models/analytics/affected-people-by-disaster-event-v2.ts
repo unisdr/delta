@@ -13,10 +13,11 @@ import {
 
 
 export async function getAffected(tx: Tx, disasterEventId: string) {
-	return {
+	let res = {
 		noDisaggregations: await totalsForEachTable(tx, disasterEventId),
 		disaggregations: await byColAndTableTotalsOnlyForFrontend(tx, disasterEventId)
 	}
+	return res
 }
 
 type Total = {
@@ -165,6 +166,22 @@ type ByColAndTableTotalsOnlyForFrontend = {
 async function byColAndTableTotalsOnlyForFrontend(tx: Tx, disasterEventId: string): Promise<ByColAndTableTotalsOnlyForFrontend> {
 	let res: any = {}
 	let r = await byColAndTableTotalsOnly(tx, disasterEventId)
+
+	// adjust results for disabilities to only group by no/has disabilities
+	let dis = new Map<string, number>()
+	for (let [k, v] of r.disability.entries()) {
+		let k2 = ""
+		if (k == "none") {
+			k2 = "none"
+		} else {
+			k2 = "disability"
+		}
+		let a = dis.get(k2) || 0
+		a += v
+		dis.set(k2, a)
+	}
+	r.disability = dis
+
 	for (let [k, v] of Object.entries(r)) {
 		res[k] = Array.from(v.entries()).map(([k, v]) => ({k, v}))
 	}
@@ -194,6 +211,7 @@ async function byTable(tx: Tx, disasterEventId: string, dsgCol: any): Promise<By
 			total.set(k, a)
 		}
 	}
+	console.log("data by table", total, tables)
 	return {total, tables} as ByTable
 }
 
@@ -227,6 +245,11 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 	let hd = humanDsgTable
 	let vt = valTable
 
+	if (![hd.sex, hd.age, hd.disability, hd.globalPovertyLine, hd.nationalPovertyLine].includes(groupBy)){
+		console.log("groupBy", groupBy)
+		throw new Error("unknown group by column")
+	}
+
 	const res = await tx
 		.select({
 			key: groupBy,
@@ -243,7 +266,7 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				groupBy == hd.sex ? isNotNull(hd.sex) : isNull(hd.sex),
 				groupBy == hd.age ? isNotNull(hd.age) : isNull(hd.age),
 				groupBy == hd.disability ? isNotNull(hd.disability) : isNull(hd.disability),
-				groupBy == hd.globalPovertyLine ? isNotNull(hd.globalPovertyLine) : isNull(hd.disability),
+				groupBy == hd.globalPovertyLine ? isNotNull(hd.globalPovertyLine) : isNull(hd.globalPovertyLine),
 				groupBy == hd.nationalPovertyLine ? isNotNull(hd.nationalPovertyLine) : isNull(hd.nationalPovertyLine),
 				sql`(
 					${hd.custom} IS NULL
