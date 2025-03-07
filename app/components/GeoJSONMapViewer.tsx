@@ -74,13 +74,14 @@ const adjustZoomBasedOnDistance = (map: any, geoJsonLayers: any[]) => {
 };
 
 const getOpacityForRange = (value: number, min: number, max: number) => {
-  const rangeSize = (max - min) / 6; // Divide into 6 ranges
-  if (value <= min) return 0.1;
-  if (value <= min + rangeSize) return 0.2;
-  if (value <= min + rangeSize * 2) return 0.4;
-  if (value <= min + rangeSize * 3) return 0.6;
-  if (value <= min + rangeSize * 4) return 0.8;
-  return 1.0;
+    if (value === 0) return 0; // Completely transparent if total is 0
+    if (max === min) return 1.0; // Avoid division by zero
+
+    // Normalize value between 0 and 1
+    const normalizedValue = (value - min) / (max - min);
+    
+    // Convert to opacity scale from 0.1 to 1.0
+    return 0.1 + normalizedValue * 0.9;
 };
 
 const GeoJSONMapViewer: React.FC<GeoJSONMapViewerProps> = ({ id = "", dataSource = [], legendMaxColor = "#333333" }) => {
@@ -131,7 +132,11 @@ const GeoJSONMapViewer: React.FC<GeoJSONMapViewerProps> = ({ id = "", dataSource
       container.innerHTML = "";
 
       const map = L.map(id, { preferCanvas: true });
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">Carto</a>',
+        subdomains: "abcd",
+        maxZoom: 20,
+      }).addTo(map);
 
       const geoJsonLayers: any[] = [];
 
@@ -142,15 +147,25 @@ const GeoJSONMapViewer: React.FC<GeoJSONMapViewerProps> = ({ id = "", dataSource
             return;
           }
 
+          console.log('Region:', region.name, 'Region.total:', region.total, 'Region.colorPercentage:', region.colorPercentage);
+
           const geojsonLayer = L.geoJSON(region.geojson, {
             style: (feature: any) => ({
               color: legendMaxColor,
               fillColor: legendMaxColor,
-              weight: 2,
+              weight: 1.2,
               opacity: 1,
               fillOpacity: region.colorPercentage,
             }),
-          });
+          }).bindPopup(`
+            <div style="
+              max-width: 300px; 
+              padding: 10px; 
+              font-size: 1.2em; 
+              text-align: center;">
+              <strong style="font-size: 1.5em; display: block;">${region.name}</strong>
+            </div>
+          `);          
 
           geojsonLayer.addTo(map);
           geoJsonLayers.push(geojsonLayer);
