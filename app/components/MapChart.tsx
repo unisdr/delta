@@ -123,9 +123,9 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
 
   useEffect(() => {
     if (!id) {
-      setGeneratedId(crypto.randomUUID()); // Generate UUID only after mount
+      setGeneratedId(`id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
     }
-  }, [id]);
+  }, [id]);  
 
   const componentId = (id || generatedId) as string;
 
