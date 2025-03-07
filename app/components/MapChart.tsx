@@ -1,15 +1,33 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useImperativeHandle, forwardRef, useRef, useCallback } from "react";
+
+export type MapChartRef = {
+  getDataSource: () => DataSourceType; // Get current dataSource
+  setDataSource: (newData: DataSourceType) => void; // Dynamically update dataSource
+  setLegendTitle: (newTitle: string) => void; // Dynamically update legend title
+  setLegendMaxColor: (newColor: string) => void; // Dynamically update legend max color
+};
 
 type MapChartProps = {
-  id: string;
+  id?: string;
   dataSource: {
     total: number;
     name: string;
     geojson: any;
     colorPercentage?: number;
+    description?: string;
   }[];
-  legendMaxColor: string;
+  legendMaxColor?: string;
+  legendTitle?: string;
+  mapMode?: "default" | "light" | "dark";
 };
+
+type DataSourceType = {
+  total: number;
+  name: string;
+  geojson: any;
+  colorPercentage?: number;
+  description?: string;
+}[];
 
 const glbMapperJS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
 const glbMapperCSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
@@ -84,7 +102,46 @@ const getOpacityForRange = (value: number, min: number, max: number) => {
     return 0.1 + normalizedValue * 0.9;
 };
 
-const MapChart: React.FC<MapChartProps> = ({ id = "", dataSource = [], legendMaxColor = "#333333" }) => {
+const getTileLayer = (mapMode: string) => {
+  switch (mapMode) {
+    case "light":
+      return "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    case "dark":
+      return "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+    default:
+      return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  }
+};
+
+const MapChart = forwardRef<MapChartRef, MapChartProps>(
+  ({ id = null, dataSource = [], legendMaxColor = "#333333", legendTitle = "Legend", mapMode = "light" }, ref) => {
+
+  const [generatedId, setGeneratedId] = useState<string | null>(null);
+  const [updatedDataSource, setUpdatedDataSource] = useState(dataSource);
+  const [currentLegendTitle, setCurrentLegendTitle] = useState(legendTitle);
+  const [currentLegendMaxColor, setCurrentLegendMaxColor] = useState(legendMaxColor);
+
+  useEffect(() => {
+    if (!id) {
+      setGeneratedId(crypto.randomUUID()); // Generate UUID only after mount
+    }
+  }, [id]);
+
+  const componentId = (id || generatedId) as string;
+
+  useImperativeHandle(ref, () => ({
+    getDataSource: () => updatedDataSource,
+    setDataSource: (newData: DataSourceType) => {
+      setUpdatedDataSource(newData);
+    },
+    setLegendTitle: (newTitle: string) => {
+      setCurrentLegendTitle(newTitle);
+    },
+    setLegendMaxColor: (newColor: string) => {
+      setCurrentLegendMaxColor(newColor);
+    }
+  }));  
+  
   const [isClient, setIsClient] = useState(false);
   const [isLeafletLoaded, setLeafletLoaded] = useState(false);
   const [updatedData, setUpdatedData] = useState(dataSource);
@@ -92,101 +149,174 @@ const MapChart: React.FC<MapChartProps> = ({ id = "", dataSource = [], legendMax
   const [minTotal, setMinTotal] = useState(0);
   const [maxTotal, setMaxTotal] = useState(0);
 
+  const mapRef = useRef<any>(null);
+  const layersRef = useState<any[]>([]);
+
+  const makeLegendDraggable = () => {
+    const legend = document.getElementById(`${componentId}_map-legend`);
+    if (!legend) return;
+  
+    let offsetX = 0, offsetY = 0, isDragging = false;
+  
+    legend.style.position = "absolute"; // Ensure absolute positioning
+    legend.style.width = `${legend.offsetWidth}px`; // Fix width to prevent squeezing
+    legend.style.top = legend.offsetTop + "px";
+    legend.style.left = legend.offsetLeft + "px";
+    legend.style.right = "auto"; // Override inset properties
+    legend.style.bottom = "auto";
+  
+    legend.onmousedown = (e) => {
+      isDragging = true;
+      offsetX = e.clientX - legend.offsetLeft;
+      offsetY = e.clientY - legend.offsetTop;
+  
+      document.onmousemove = (e) => {
+        if (!isDragging) return;
+  
+        let newLeft = e.clientX - offsetX;
+        let newTop = e.clientY - offsetY;
+  
+        // **Prevent dragging out of viewport**
+        const maxLeft = window.innerWidth - legend.offsetWidth;
+        const maxTop = window.innerHeight - legend.offsetHeight;
+  
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+  
+        legend.style.left = `${newLeft}px`;
+        legend.style.top = `${newTop}px`;
+      };
+  
+      document.onmouseup = () => {
+        isDragging = false;
+        document.onmousemove = null;
+        document.onmouseup = null;
+      };
+    };
+  };
+
   useEffect(() => {
     setIsClient(true);
     loadLeaflet(setLeafletLoaded);
   }, []);
 
-  useEffect(() => {
+  const updateMapLayers = useCallback((dataSource: DataSourceType) => {
     if (!isClient || !isLeafletLoaded || typeof window === "undefined") return;
     if (!dataSource || dataSource.length === 0) return;
-
-    console.log("Initializing map with data:", dataSource);
-
+  
+    console.log("Updating map with new data:", dataSource);
+  
     const L = (window as any).L;
     if (!L) {
       console.error("Leaflet is still not available.");
       return;
     }
-
+  
     const minVal = Math.min(...dataSource.map(region => region.total));
     const maxVal = Math.max(...dataSource.map(region => region.total));
-
+  
     setMinTotal(minVal);
     setMaxTotal(maxVal);
-
+  
     const newData = dataSource.map(region => ({
       ...region,
       colorPercentage: getOpacityForRange(region.total, minVal, maxVal),
     }));
-
+  
     setUpdatedData(newData);
-
+  
     setTimeout(() => {
-      const container = document.getElementById(id);
-      if (!container) {
-        console.error("Map container not found!");
-        return;
+      if (!mapRef.current) {
+        console.log("Creating new Leaflet map...");
+        mapRef.current = L.map(componentId, { preferCanvas: true });
+        L.tileLayer(getTileLayer(mapMode), {
+          attribution: '',
+          subdomains: "abcd",
+          maxZoom: 20,
+        }).addTo(mapRef.current);
+      } else {
+        console.log("Clearing previous layers...");
+        mapRef.current.eachLayer((layer: any) => {
+          if (layer instanceof L.GeoJSON) {
+            mapRef.current.removeLayer(layer);
+          }
+        });
       }
-
-      container.innerHTML = "";
-
-      const map = L.map(id, { preferCanvas: true });
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">Carto</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
-      }).addTo(map);
-
+  
       const geoJsonLayers: any[] = [];
-
+  
       newData.forEach((region: any) => {
         try {
           if (!region.geojson) {
-            console.warn(`Skipping invalid GeoJSON:`, region);
+            console.warn(`⚠️ Skipping invalid GeoJSON:`, region);
             return;
           }
-
-          console.log('Region:', region.name, 'Region.total:', region.total, 'Region.colorPercentage:', region.colorPercentage);
-
+  
           const geojsonLayer = L.geoJSON(region.geojson, {
-            style: (feature: any) => ({
-              color: legendMaxColor,
-              fillColor: legendMaxColor,
+            style: () => ({
+              color: currentLegendMaxColor,
+              fillColor: currentLegendMaxColor,
               weight: 1.2,
               opacity: 1,
               fillOpacity: region.colorPercentage,
             }),
-          }).bindPopup(`
-            <div style="
-              max-width: 300px; 
-              padding: 10px; 
-              font-size: 1.2em; 
-              text-align: center;">
-              <strong style="font-size: 1.5em; display: block;">${region.name}</strong>
-            </div>
-          `);          
-
-          geojsonLayer.addTo(map);
+          }).bindPopup(
+            `
+              <div style="
+                max-width: 300px; 
+                padding: 10px; 
+                font-size: 1.2em; 
+                text-align: left;">
+                <strong style="font-size: 1.2em; display: block;">${region.name}</strong>
+                ${region.total > 0 ? `<p>${region?.description || ""}</p>` : ""}
+              </div>
+            `
+          );       
+  
+          geojsonLayer.addTo(mapRef.current);
           geoJsonLayers.push(geojsonLayer);
         } catch (error) {
           console.error("Error parsing GeoJSON:", error);
         }
       });
-
+  
       setTimeout(() => {
-        adjustZoomBasedOnDistance(map, geoJsonLayers);
+        adjustZoomBasedOnDistance(mapRef.current, geoJsonLayers);
         setIsMapRendered(true);
+        setTimeout(() => { makeLegendDraggable(); }, 1000);
+  
+        // Remove attribution links
+        const attributionElement = document.querySelector(".leaflet-control-attribution.leaflet-control a");
+        if (attributionElement) {
+          attributionElement.remove();
+        }
       }, 500);
     }, 500);
-  }, [isClient, isLeafletLoaded, dataSource]);
-
+  }, [isClient, isLeafletLoaded, dataSource]);  
+  
+  // Ensure map updates when dataSource changes
+  useEffect(() => {
+    updateMapLayers(dataSource);
+  }, [isClient, isLeafletLoaded, dataSource, updateMapLayers]);
+  
+  const setLegendTitle = (newTitle: string) => {
+    const legend = document.getElementById(`${componentId}_map-legend`) as HTMLElement;
+    if (legend) {
+      const strongElement = legend.querySelector("strong");
+      if (strongElement) {
+        strongElement.textContent = newTitle;
+      }
+    } 
+  };
+  
   return (
     <div style={{ position: "relative" }}>
-      <div id={id} style={{ height: "500px", width: "100%", zIndex: "0", backgroundColor: "#b2d2dd" }}></div>
+      <div id={componentId} style={{ height: "500px", width: "100%", zIndex: "0", backgroundColor: "#b2d2dd" }}></div>
 
       {isMapRendered && (
-        <div style={{
+        <div
+          id={`${componentId}_map-legend`}
+          style={{
           position: "absolute",
           bottom: "10px",
           right: "10px",
@@ -196,11 +326,27 @@ const MapChart: React.FC<MapChartProps> = ({ id = "", dataSource = [], legendMax
           boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.3)",
           fontSize: "14px",
           lineHeight: "1.5",
+          whiteSpace: "nowrap", // Prevent text wrapping that causes shrink
         }}>
-          <strong>Legend</strong>
+          <strong>{currentLegendTitle}</strong>
           <ul style={{ listStyle: "none", padding: 0, margin: "5px 0 0 0" }}>
-            <li style={{ marginBottom: "5px" }}> 
-              <span style={{ display: "inline-block", width: "12px", height: "12px", backgroundColor: "#ffffff", marginRight: "8px", border: "1px solid #333" }}></span> No Data
+            <li style={{ marginBottom: "5px", display: "flex", alignItems: "center" }}> 
+              <span style={{
+                display: "inline-flex",
+                width: "14px",
+                height: "14px",
+                justifyContent: "center",
+                alignItems: "center",
+                border: `1px solid ${currentLegendMaxColor}`, // Keeps the border
+                marginRight: "8px",
+              }}>
+                <div style={{
+                  width: "12px",
+                  height: "12px",
+                  backgroundColor: "#ffffff", // White fill for "No Data"
+                }}></div>
+              </span>
+              No Data
             </li>
             {[...Array(6)].map((_, i) => {
               const rangeMin = minTotal + (i * (maxTotal - minTotal) / 6);
@@ -208,16 +354,24 @@ const MapChart: React.FC<MapChartProps> = ({ id = "", dataSource = [], legendMax
               return (
                 <li key={i} style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
                   <span style={{
-                    display: "inline-block",
-                    width: "12px",
-                    height: "12px",
-                    backgroundColor: legendMaxColor,
-                    opacity: (i + 1) / 6,
+                    display: "inline-flex",
+                    width: "14px",  // Slightly larger for better spacing
+                    height: "14px",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    border: `1px solid ${currentLegendMaxColor}`, // Border remains visible
                     marginRight: "8px",
-                    border: "1px solid #333",
-                  }}></span>
+                  }}>
+                    <div style={{
+                      width: "12px",
+                      height: "12px",
+                      backgroundColor: currentLegendMaxColor,
+                      opacity: (i + 1) / 6, // Opacity applied only to inner div
+                    }}></div>
+                  </span>
                   {`<= ${Math.ceil(rangeMax)}`}
                 </li>
+
               );
             })}
           </ul>
@@ -225,6 +379,6 @@ const MapChart: React.FC<MapChartProps> = ({ id = "", dataSource = [], legendMax
       )}
     </div>
   );
-};
+});
 
 export default MapChart;
