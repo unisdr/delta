@@ -136,7 +136,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
 
     // Base conditions including approval status
     const baseConditions = [
-        sql`${disasterRecordsTable.approvalStatus} ILIKE 'completed'`
+        sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`
     ];
 
     // Get all sector IDs (including subsectors)
@@ -190,13 +190,28 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
 
         // 1. Spatial matching using PostGIS - only if we have spatial data
         if (divisionInfo.geometry) {
-            baseConditions.push(sql`
-                ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-                ST_Intersects(
-                    ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
-                    ${divisionInfo.geometry}
-                )
-            `);
+            try {
+                // Add robust spatial condition with proper validation of GeoJSON format
+                baseConditions.push(sql`
+                    ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+                    jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
+                    (${disasterRecordsTable.spatialFootprint}->>'type') IS NOT NULL AND
+                    ST_Intersects(
+                        CASE 
+                            WHEN ST_IsValid(ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326)) 
+                            THEN ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326)
+                            ELSE NULL 
+                        END,
+                        ${divisionInfo.geometry}
+                    )
+                `);
+            } catch (error) {
+                // Log error but don't fail the entire query
+                console.error('Error in spatial filtering for hazard impact:', error);
+
+                // We don't add any spatial condition if there's an error
+                // The text-based location matching below will serve as fallback
+            }
         }
 
         // 2. Text matching using normalized names

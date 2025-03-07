@@ -197,7 +197,7 @@ function SectorsAnalysisContent() {
 
           <p></p>
           <div className="dts-caption mt-4">
-            * Data shown is based on approved or published records
+            * Data shown is based on published records
           </div>
         </div>
       </div>

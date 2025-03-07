@@ -208,7 +208,7 @@ const getDisasterRecordsForSector = async (
             inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
           ))
       ),
-      sql<boolean>`LOWER(${disasterRecordsTable.approvalStatus}) = 'completed'`
+      sql`${disasterRecordsTable.approvalStatus} = 'published'`
     ];
 
     // Handle geographic level filtering with enhanced matching
@@ -221,13 +221,43 @@ const getDisasterRecordsForSector = async (
 
       // 1. Spatial matching using PostGIS - only if we have spatial data
       if (divisionInfo.geometry) {
-        conditions.push(sql`
-          ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-          ST_Intersects(
-            ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
-            ${divisionInfo.geometry}
-          )
-        `);
+        try {
+          conditions.push(sql`
+            ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+            jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
+            (${disasterRecordsTable.spatialFootprint}->>'type') IS NOT NULL AND
+            ST_IsValid(ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326)) AND
+            ST_Intersects(
+              ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
+              ${divisionInfo.geometry}
+            )
+          `);
+        } catch (error) {
+          // Log error but don't fail the entire query
+          console.error('Error in spatial filtering:', error);
+
+          // Add a fallback condition that will still filter by division name if possible
+          // This ensures we get some results even if spatial operations fail
+          if (divisionInfo.names) {
+            const normalizedDivisionNames = Object.values(divisionInfo.names)
+              .map(name => normalizeText(name || ''))
+              .filter(Boolean);
+
+            if (normalizedDivisionNames.length > 0) {
+              // Create an array of SQL conditions for each division name
+              const likeConditions: SQL<unknown>[] = normalizedDivisionNames.map(name =>
+                sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name}%`}`
+              );
+
+              // Handle the case where we have a single condition vs multiple conditions
+              if (likeConditions.length === 1) {
+                conditions.push(likeConditions[0]);
+              } else if (likeConditions.length > 1) {
+                conditions.push(sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND (${or(...likeConditions)})`);
+              }
+            }
+          }
+        }
       }
 
       // 2. Text matching using normalized names
@@ -240,26 +270,64 @@ const getDisasterRecordsForSector = async (
         'BARMM'  // Special case for BARMM
       ].filter(Boolean);
 
-      conditions.push(sql`
-        ${disasterRecordsTable.locationDesc} IS NOT NULL AND
-        (${or(...alternateNames.map(name =>
+      if (alternateNames.length > 0) {
+        const nameConditions: SQL<unknown>[] = alternateNames.map(name =>
           sql`LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name.toLowerCase()}%`}`
-        ))})
-      `);
+        );
+
+        // Handle the case where we have a single condition vs multiple conditions
+        if (nameConditions.length === 1) {
+          conditions.push(sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND ${nameConditions[0]}`);
+        } else if (nameConditions.length > 1) {
+          conditions.push(sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND (${or(...nameConditions)})`);
+        }
+      }
     }
 
     // Add other filter conditions with proper error handling
     if (filters) {
       if (filters.startDate) {
         try {
-          conditions.push(sql`${disasterRecordsTable.startDate} >= ${filters.startDate}`);
+          const startDate = new Date(filters.startDate);
+          if (!isNaN(startDate.getTime())) {
+            conditions.push(sql`
+              ${disasterRecordsTable.startDate} IS NOT NULL AND 
+              CASE 
+                WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' 
+                THEN ${disasterRecordsTable.startDate}::date >= ${filters.startDate}::date
+                WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}' 
+                THEN ${disasterRecordsTable.startDate}::date >= date_trunc('month', ${filters.startDate}::date)
+                WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}' 
+                THEN ${disasterRecordsTable.startDate}::date >= date_trunc('year', ${filters.startDate}::date)
+                ELSE false
+              END
+            `);
+          } else {
+            console.error('Invalid start date format:', filters.startDate);
+          }
         } catch (error) {
           console.error('Invalid start date:', error);
         }
       }
       if (filters.endDate) {
         try {
-          conditions.push(sql`${disasterRecordsTable.startDate} <= ${filters.endDate}`);
+          const endDate = new Date(filters.endDate);
+          if (!isNaN(endDate.getTime())) {
+            conditions.push(sql`
+              ${disasterRecordsTable.endDate} IS NOT NULL AND 
+              CASE 
+                WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' 
+                THEN ${disasterRecordsTable.endDate}::date <= ${filters.endDate}::date
+                WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{2}' 
+                THEN ${disasterRecordsTable.endDate}::date <= (date_trunc('month', ${filters.endDate}::date) + interval '1 month - 1 day')
+                WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}' 
+                THEN ${disasterRecordsTable.endDate}::date <= (date_trunc('year', ${filters.endDate}::date) + interval '1 year - 1 day')
+                ELSE false
+              END
+            `);
+          } else {
+            console.error('Invalid end date format:', filters.endDate);
+          }
         } catch (error) {
           console.error('Invalid end date:', error);
         }
@@ -267,40 +335,70 @@ const getDisasterRecordsForSector = async (
 
       // Handle hazard type hierarchy
       if (filters.hazardType) {
-        conditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardType}`);
+        try {
+          conditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardType}`);
+        } catch (error) {
+          console.error('Invalid hazard type ID:', error);
+        }
       }
       if (filters.hazardCluster) {
-        conditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardCluster}`);
+        try {
+          conditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardCluster}`);
+        } catch (error) {
+          console.error('Invalid hazard cluster ID:', error);
+        }
       }
       if (filters.specificHazard) {
-        conditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazard}`);
+        try {
+          conditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazard}`);
+        } catch (error) {
+          console.error('Invalid specific hazard ID:', error);
+        }
       }
 
       if (filters.disasterEvent) {
         try {
-          conditions.push(eq(disasterRecordsTable.disasterEventId, filters._disasterEventId || filters.disasterEvent));
+          conditions.push(sql`${disasterEventTable.nameNational} = ${filters.disasterEvent}`);
         } catch (error) {
-          console.error("Invalid disaster event ID format:", error);
-          return [];
+          console.error('Error filtering by disaster event name:', error);
+        }
+      }
+
+      if (filters._disasterEventId) {
+        try {
+          conditions.push(sql`${disasterEventTable.id} = ${filters._disasterEventId}`);
+        } catch (error) {
+          console.error('Error filtering by disaster event ID:', error);
         }
       }
     }
 
-    // Execute query with proper indexing hints
-    const records = await dr
-      .select({ id: disasterRecordsTable.id })
-      .from(disasterRecordsTable)
-      .leftJoin(
-        disasterEventTable,
-        eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-      )
-      .leftJoin(
-        hazardousEventTable,
-        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
-      )
-      .where(and(...conditions));
+    // Execute the query with robust error handling
+    try {
+      // Build the final query with all conditions
+      const query = dr
+        .select({
+          id: disasterRecordsTable.id
+        })
+        .from(disasterRecordsTable)
+        .leftJoin(
+          disasterEventTable,
+          eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+        )
+        .leftJoin(
+          hazardousEventTable,
+          eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
+        )
+        .where(and(...conditions));
 
-    return records.map(record => record.id);
+      // Execute the query and map results
+      const results = await query;
+      return results.map(r => r.id.toString());
+    } catch (error) {
+      console.error('Error executing getDisasterRecordsForSector query:', error);
+      // Return empty array instead of throwing to prevent cascading failures
+      return [];
+    }
   } catch (error) {
     console.error('Error in getDisasterRecordsForSector:', error);
     throw error;

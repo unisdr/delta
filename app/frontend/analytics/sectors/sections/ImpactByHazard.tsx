@@ -437,15 +437,10 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 <p className="dts-body-text mb-6">Analysis of how different hazards affect this sector</p>
 
                 <div className="mg-grid mg-grid__col-3">
-                    {eventsData.length > 0 && (
-                        <CustomPieChart data={eventsData} title="Number of Disaster Events" />
-                    )}
-                    {damagesData.length > 0 && (
-                        <CustomPieChart data={damagesData} title="Damages by Hazard Type" />
-                    )}
-                    {lossesData.length > 0 && (
-                        <CustomPieChart data={lossesData} title="Losses by Hazard Type" />
-                    )}
+                    {/* Always render CustomPieChart for each category, regardless of data availability */}
+                    <CustomPieChart data={eventsData} title="Number of Disaster Events" />
+                    <CustomPieChart data={damagesData} title="Damages by Hazard Type" />
+                    <CustomPieChart data={lossesData} title="Losses by Hazard Type" />
                 </div>
             </div>
         </section>

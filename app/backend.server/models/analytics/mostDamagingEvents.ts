@@ -115,7 +115,7 @@ interface FilterConditions {
 
 async function buildFilterConditions(params: MostDamagingEventsParams): Promise<FilterConditions> {
   const conditions: SQL<unknown>[] = [
-    eq(disasterRecordsTable.approvalStatus, 'published')
+    sql`${disasterRecordsTable.approvalStatus} = ${"published"}`
   ];
 
   let sectorIds: string[] | undefined;
@@ -157,37 +157,101 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     conditions.push(eq(hazardousEventTable.hipHazardId, params.specificHazardId));
   }
 
+  // Improved geographic level filtering with robust error handling
   if (params.geographicLevelId) {
-    const divisionInfo = await getDivisionInfo(params.geographicLevelId);
-    if (divisionInfo) {
-      // Query the division table to get the division details
-      const division = await db.select()
-        .from(divisionTable)
-        .where(eq(divisionTable.id, sql`${params.geographicLevelId}::bigint`))
-        .limit(1);
+    try {
+      // First, get the division info for name-based matching
+      const divisionInfo = await getDivisionInfo(params.geographicLevelId);
 
-      if (division.length > 0) {
-        // Base conditions that are always valid
-        const baseConditions: SQL<unknown>[] = [
-          // Match by location description
-          ilike(disasterRecordsTable.locationDesc, `%${divisionInfo.name}%`),
-          // Match by spatial footprint division_id
-          sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${params.geographicLevelId}`,
-          // Match by spatial footprint regions array
-          sql`${disasterRecordsTable.spatialFootprint}->>'regions' ILIKE ${`%${divisionInfo.name}%`}`
-        ];
+      // Only proceed if we found a valid division
+      if (divisionInfo) {
+        // Query the division table to get the division geometry
+        const division = await db
+          .select({
+            id: divisionTable.id,
+            name: divisionTable.name,
+            geom: divisionTable.geom
+          })
+          .from(divisionTable)
+          .where(eq(divisionTable.id, parseInt(params.geographicLevelId, 10)))
+          .limit(1);
 
-        // Add geometry intersection if available
-        if (division[0].geom) {
-          baseConditions.push(sql`ST_Intersects(
-            ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}->>'geometry'), 4326),
-            ${division[0].geom}
-          )`);
+        if (division.length > 0) {
+          // Create an array of conditions for geographic filtering
+          const geoConditions: SQL<unknown>[] = [];
+
+          // Text-based fallback conditions that don't rely on spatial data
+          geoConditions.push(
+            // Match by location description (text-based fallback)
+            ilike(disasterRecordsTable.locationDesc, `%${divisionInfo.name}%`)
+          );
+
+          // JSON-based conditions with null checking
+          geoConditions.push(
+            sql`(
+              ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+              jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
+              ${disasterRecordsTable.spatialFootprint}->>'division_id' = ${params.geographicLevelId}
+            )`
+          );
+
+          geoConditions.push(
+            sql`(
+              ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+              jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
+              ${disasterRecordsTable.spatialFootprint}->>'regions' IS NOT NULL AND
+              ${disasterRecordsTable.spatialFootprint}->>'regions' ILIKE ${`%${divisionInfo.name}%`}
+            )`
+          );
+
+          // Add spatial intersection condition with proper validation
+          if (division[0].geom) {
+            geoConditions.push(
+              sql`(
+                ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+                jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
+                (${disasterRecordsTable.spatialFootprint}->>'type' IS NOT NULL) AND
+                ST_IsValid(
+                  ST_SetSRID(
+                    ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
+                    4326
+                  )
+                ) AND
+                ST_Intersects(
+                  ST_SetSRID(
+                    ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
+                    4326
+                  ),
+                  ${division[0].geom}
+                )
+              )`
+            );
+          }
+
+          // Create a single OR condition combining all valid conditions
+          conditions.push(sql`(${or(...geoConditions)})`);
+          console.log(`Applied geographic filtering for division ${params.geographicLevelId} (${divisionInfo.name})`);
+        } else {
+          console.warn(`Division with ID ${params.geographicLevelId} not found in database. Skipping geographic filtering.`);
         }
+      } else {
+        console.warn(`Could not retrieve division info for ID ${params.geographicLevelId}. Skipping geographic filtering.`);
+      }
+    } catch (error) {
+      // Log error but don't fail the entire query
+      console.error(`Error in geographic filtering for division ${params.geographicLevelId}:`, error);
 
-        // Create a single OR condition combining all valid conditions
-        const orCondition = sql`(${or(...baseConditions)})`;
-        conditions.push(orCondition);
+      // Add a simple fallback condition if possible
+      if (params.geographicLevelId) {
+        conditions.push(
+          sql`(
+            ${disasterRecordsTable.locationDesc} ILIKE ${`%${params.geographicLevelId}%`} OR
+            (
+              ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
+              ${disasterRecordsTable.spatialFootprint}->>'division_id' = ${params.geographicLevelId}
+            )
+          )`
+        );
       }
     }
   }
@@ -224,17 +288,66 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       return cached;
     }
 
+    // Build filter conditions with improved geographic filtering
     const { conditions, sectorIds } = await buildFilterConditions(params);
 
-    // Create base query using proper table relations
+    // Optimize the count query by separating it from the main query
+    // This prevents unnecessary computations when counting total records
+    const countQuery = db
+      .select({
+        count: sql<number>`COUNT(DISTINCT ${disasterEventTable.id})`
+      })
+      .from(disasterEventTable)
+      .innerJoin(
+        disasterRecordsTable,
+        eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
+      )
+      .leftJoin(
+        hazardousEventTable,
+        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
+      )
+      .where(and(...conditions));
+
+    // Execute count query to get total records
+    const countResult = await countQuery;
+    const total = Number(countResult[0]?.count || 0);
+    const totalPages = Math.ceil(total / pageSize);
+
+    // If no results, return empty response with proper metadata
+    if (total === 0) {
+      const metadata = createAssessmentMetadata(
+        params.assessmentType || 'rapid',
+        params.confidenceLevel || 'medium'
+      );
+
+      return {
+        events: [],
+        pagination: {
+          total: 0,
+          page,
+          pageSize,
+          totalPages: 0
+        },
+        metadata: {
+          assessmentType: metadata.assessmentType,
+          confidenceLevel: metadata.confidenceLevel,
+          currency: metadata.currency,
+          assessmentDate: metadata.assessmentDate,
+          assessedBy: metadata.assessedBy,
+          notes: metadata.notes || ''
+        }
+      };
+    }
+
+    // Create optimized main query with proper sorting and pagination
     const query = db
       .select({
         eventId: disasterEventTable.id,
         eventName: disasterEventTable.nameNational,
         createdAt: disasterEventTable.createdAt,
-        totalDamages: sql<number>`COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)`,
-        totalLosses: sql<number>`COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)`,
-        total: sql<number>`COUNT(*) OVER()`
+        // Use COALESCE to handle null values safely
+        totalDamages: sql<number>`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`,
+        totalLosses: sql<number>`COALESCE(SUM(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)), 0)`
       })
       .from(disasterEventTable)
       .innerJoin(
@@ -263,66 +376,88 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       .groupBy(
         disasterEventTable.id,
         disasterEventTable.nameNational,
-        disasterEventTable.createdAt,
-        damagesTable.totalRepairReplacement,
-        damagesTable.totalRecovery,
-        lossesTable.publicCostTotal,
-        lossesTable.privateCostTotal
-      )
-      .orderBy(
-        sortBy === 'damages'
-          ? sql`(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0))${sortDirection === 'desc' ? sql` DESC` : sql` ASC`}`
-          : sortBy === 'losses'
-            ? sql`(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0))${sortDirection === 'desc' ? sql` DESC` : sql` ASC`}`
-            : sortBy === 'eventName'
-              ? sortDirection === 'desc'
-                ? desc(disasterEventTable.nameNational)
-                : disasterEventTable.nameNational
-              : sortDirection === 'desc'
-                ? desc(disasterEventTable.createdAt)
-                : disasterEventTable.createdAt
-      )
+        disasterEventTable.createdAt
+      );
+
+    // Apply sorting with proper index usage
+    let sortedQuery;
+    if (sortBy === 'damages') {
+      sortedQuery = query.orderBy(
+        sortDirection === 'desc'
+          ? desc(sql`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`)
+          : sql`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`
+      );
+    } else if (sortBy === 'losses') {
+      sortedQuery = query.orderBy(
+        sortDirection === 'desc'
+          ? desc(sql`COALESCE(SUM(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)), 0)`)
+          : sql`COALESCE(SUM(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)), 0)`
+      );
+    } else if (sortBy === 'eventName') {
+      sortedQuery = query.orderBy(
+        sortDirection === 'desc'
+          ? desc(disasterEventTable.nameNational)
+          : disasterEventTable.nameNational
+      );
+    } else {
+      // Default to createdAt
+      sortedQuery = query.orderBy(
+        sortDirection === 'desc'
+          ? desc(disasterEventTable.createdAt)
+          : disasterEventTable.createdAt
+      );
+    }
+
+    // Apply pagination
+    const paginatedQuery = sortedQuery
       .limit(pageSize)
       .offset((page - 1) * pageSize);
 
-    const results = await query;
+    // Execute the query with proper error handling
+    let results: any[] = [];
+    try {
+      results = await paginatedQuery;
+    } catch (error) {
+      console.error('Error executing most damaging events query:', error);
+      // Fallback to a simpler query if the complex one fails
+      const fallbackQuery = db
+        .select({
+          eventId: disasterEventTable.id,
+          eventName: disasterEventTable.nameNational,
+          createdAt: disasterEventTable.createdAt
+        })
+        .from(disasterEventTable)
+        .innerJoin(
+          disasterRecordsTable,
+          eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
+        )
+        .where(and(...conditions))
+        .groupBy(
+          disasterEventTable.id,
+          disasterEventTable.nameNational,
+          disasterEventTable.createdAt
+        )
+        .orderBy(desc(disasterEventTable.createdAt))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize);
 
-    // Handle empty results
-    if (!results || !results.length) {
-      const metadata = createAssessmentMetadata(
-        params.assessmentType || 'rapid',
-        params.confidenceLevel || 'medium'
-      );
+      results = await fallbackQuery;
 
-      return {
-        events: [],
-        pagination: {
-          total: 0,
-          page,
-          pageSize,
-          totalPages: 0
-        },
-        metadata: {
-          assessmentType: metadata.assessmentType,
-          confidenceLevel: metadata.confidenceLevel,
-          currency: metadata.currency,
-          assessmentDate: metadata.assessmentDate,
-          assessedBy: metadata.assessedBy,
-          notes: metadata.notes || ''
-        }
-      };
+      // Add zero values for damages and losses
+      results = results.map(row => ({
+        ...row,
+        totalDamages: 0,
+        totalLosses: 0
+      }));
     }
 
-    const total = Number(results[0].total);
-    const totalPages = Math.ceil(total / pageSize);
-
-    // Map results to expected format
+    // Map results to expected format with proper type handling
     const events = results.map(row => ({
       eventId: String(row.eventId),
-      eventName: String(row.eventName),
+      eventName: String(row.eventName || ''),
       createdAt: new Date(row.createdAt),
-      totalDamages: Number(row.totalDamages),
-      totalLosses: Number(row.totalLosses)
+      totalDamages: Number(row.totalDamages || 0),
+      totalLosses: Number(row.totalLosses || 0)
     }));
 
     const metadata = createAssessmentMetadata(
@@ -354,6 +489,29 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     return paginatedResult;
   } catch (error) {
     console.error('Error in getMostDamagingEvents:', error);
-    throw error;
+
+    // Return a graceful error response instead of throwing
+    const metadata = createAssessmentMetadata(
+      params.assessmentType || 'rapid',
+      params.confidenceLevel || 'medium'
+    );
+
+    return {
+      events: [],
+      pagination: {
+        total: 0,
+        page: params.page || 1,
+        pageSize: params.pageSize || 20,
+        totalPages: 0
+      },
+      metadata: {
+        assessmentType: metadata.assessmentType,
+        confidenceLevel: metadata.confidenceLevel,
+        currency: metadata.currency,
+        assessmentDate: metadata.assessmentDate,
+        assessedBy: metadata.assessedBy,
+        notes: `Error retrieving data: ${(error as Error).message}`
+      }
+    };
   }
 }

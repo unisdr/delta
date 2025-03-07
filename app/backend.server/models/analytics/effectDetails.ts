@@ -42,6 +42,7 @@ interface FilterParams {
  * - Indexes should exist on: sectorId, hazardTypeId, disasterEventId, startDate, endDate
  * - Joins are optimized to use indexed columns
  * - Date comparisons use UTC for consistency
+ * - Spatial queries use PostGIS functions with proper error handling
  */
 export async function getEffectDetails(filters: FilterParams) {
   let targetSectorIds: number[] = [];
@@ -61,8 +62,7 @@ export async function getEffectDetails(filters: FilterParams) {
 
   // Base conditions for disaster records
   const baseConditions = [
-    // Only include completed records
-    eq(disasterRecordsTable.approvalStatus, "published"),
+    sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`
   ];
 
   // Add sector filter to disaster records if we have target sectors
@@ -89,10 +89,58 @@ export async function getEffectDetails(filters: FilterParams) {
   if (filters.specificHazardId) {
     baseConditions.push(eq(hazardousEventTable.hipTypeId, filters.specificHazardId));
   }
+
+  // Improved geographic level filtering with PostGIS
   if (filters.geographicLevelId) {
-    baseConditions.push(
-      sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text`
-    );
+    try {
+      // First, get the division geometry for the specified geographic level
+      const division = await dr
+        .select({
+          id: divisionTable.id,
+          geom: divisionTable.geom
+        })
+        .from(divisionTable)
+        .where(eq(divisionTable.id, Number(filters.geographicLevelId)))
+        .limit(1);
+
+      if (division.length > 0) {
+        // Use PostGIS for spatial filtering with proper error handling
+        baseConditions.push(
+          sql`(
+            (${disasterRecordsTable.spatialFootprint} IS NOT NULL AND 
+             jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
+             (${disasterRecordsTable.spatialFootprint}->>'type' IS NOT NULL) AND
+             ST_IsValid(
+               ST_SetSRID(
+                 ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
+                 4326
+               )
+             ) AND
+             ST_Intersects(
+               ST_SetSRID(
+                 ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
+                 4326
+               ),
+               ${division[0].geom}
+             )
+            ) OR
+            (${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text)
+          )`
+        );
+      } else {
+        // Fallback to text-based filtering if division not found
+        console.warn(`Division with ID ${filters.geographicLevelId} not found. Falling back to text-based filtering.`);
+        baseConditions.push(
+          sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text`
+        );
+      }
+    } catch (error) {
+      // Log error and fall back to text-based filtering
+      console.error(`Error in spatial filtering for division ${filters.geographicLevelId}:`, error);
+      baseConditions.push(
+        sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text`
+      );
+    }
   }
 
   // Handle dates in UTC for consistency across timezones
@@ -141,7 +189,7 @@ export async function getEffectDetails(filters: FilterParams) {
   const lossesData = await dr
     .select({
       id: lossesTable.id,
-      type: lossesTable.type,
+      type: sql<string>`COALESCE(${lossesTable.typeNotAgriculture}, ${lossesTable.typeAgriculture})`.as("type"),
       description: lossesTable.description,
       publicUnit: lossesTable.publicUnit,
       publicUnits: lossesTable.publicUnits,
