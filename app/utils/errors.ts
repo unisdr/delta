@@ -22,7 +22,7 @@ export class AppError extends Error {
     this.details = options.details;
     this.userMessage = options.userMessage || options.message;
     this.isUserVisible = options.isUserVisible !== undefined ? options.isUserVisible : true;
-    
+
     // Capture stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);

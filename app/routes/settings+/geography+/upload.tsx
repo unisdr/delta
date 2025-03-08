@@ -51,8 +51,11 @@ export const action = authActionWithPerm("EditData", async ({request}: ActionFun
 		if (!fileBytes) {
 			throw "File was not set"
 		}
-		let res = await importZip(fileBytes)
-		return {ok: true, imported: res.size};
+		const res = await importZip(fileBytes)
+		if (!res.success) {
+			throw new UserError(res.error || "Import failed");
+		}
+		return {ok: true, imported: res.data.imported, failed: res.data.failed};
 	} catch (err) {
 		if (err instanceof UserError) {
 			return {ok: false, error: err.message};
@@ -69,12 +72,14 @@ export default function Screen() {
 	const actionData = useActionData<typeof action>();
 	let submitted = false
 	let imported = 0
+	let failed = 0
 	if (actionData) {
 		submitted = true
 		if (!actionData.ok) {
 			error = actionData.error || "Server error"
 		} else {
 			imported = actionData.imported
+			failed = actionData.failed
 		}
 	}
 
@@ -85,7 +90,12 @@ export default function Screen() {
 		>
 			<>
 				<form method="post" encType="multipart/form-data">
-					{submitted && <p>Imported or updated {imported} records</p>}
+					{submitted && (
+						<p>
+							Successfully imported {imported} records
+							{failed > 0 && ` (${failed} records failed)`}
+						</p>
+					)}
 					{error ? (
 						<p>{error}</p>
 					) : null}

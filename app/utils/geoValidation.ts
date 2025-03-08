@@ -52,7 +52,7 @@ const geometryMultiPolygonSchema = z.object({
 
 // Forward declaration of geometry schema type
 type GeometrySchema = z.ZodDiscriminatedUnion<"type", [
-  typeof geometryPointSchema, 
+  typeof geometryPointSchema,
   typeof geometryLineStringSchema,
   typeof geometryPolygonSchema,
   typeof geometryMultiPointSchema,
@@ -108,8 +108,8 @@ export const geoJSONSchema = z.union([
  * @param data - The GeoJSON data to validate
  * @returns Validation result with success flag and error message if failed
  */
-export function validateGeoJSON(data: unknown): { 
-  valid: boolean; 
+export function validateGeoJSON(data: unknown): {
+  valid: boolean;
   error?: string;
   data?: any;
 } {
@@ -123,25 +123,25 @@ export function validateGeoJSON(data: unknown): {
         return { valid: false, error: 'Invalid JSON format: ' + (e as Error).message };
       }
     }
-    
+
     // Validate against GeoJSON schema
     const result = geoJSONSchema.safeParse(jsonData);
-    
+
     if (!result.success) {
-      return { 
-        valid: false, 
-        error: 'Invalid GeoJSON structure: ' + result.error.errors.map(e => 
+      return {
+        valid: false,
+        error: 'Invalid GeoJSON structure: ' + result.error.errors.map(e =>
           `${e.path.join('.')}: ${e.message}`
         ).join('; ')
       };
     }
-    
+
     // Additional validation for coordinate ranges
     const validationResult = validateCoordinateRanges(jsonData);
     if (!validationResult.valid) {
       return validationResult;
     }
-    
+
     return { valid: true, data: jsonData };
   } catch (e) {
     return { valid: false, error: 'GeoJSON validation error: ' + (e as Error).message };
@@ -159,21 +159,21 @@ function validateCoordinateRanges(geoJson: any): { valid: boolean; error?: strin
     const validateCoord = (coord: number[], path: string): string | null => {
       if (coord.length < 2) return `${path}: Coordinate must have at least 2 values`;
       const [lon, lat] = coord;
-      
+
       if (lon < -180 || lon > 180) return `${path}: Longitude ${lon} out of range (-180 to 180)`;
       if (lat < -90 || lat > 90) return `${path}: Latitude ${lat} out of range (-90 to 90)`;
-      
+
       return null;
     };
-    
+
     // Recursively process coordinates based on geometry type
     const processGeometry = (geometry: any, path: string): string | null => {
       if (!geometry) return null;
-      
+
       switch (geometry.type) {
         case 'Point':
           return validateCoord(geometry.coordinates, `${path}.coordinates`);
-          
+
         case 'LineString':
         case 'MultiPoint':
           for (let i = 0; i < geometry.coordinates.length; i++) {
@@ -181,7 +181,7 @@ function validateCoordinateRanges(geoJson: any): { valid: boolean; error?: strin
             if (error) return error;
           }
           return null;
-          
+
         case 'Polygon':
         case 'MultiLineString':
           for (let i = 0; i < geometry.coordinates.length; i++) {
@@ -191,7 +191,7 @@ function validateCoordinateRanges(geoJson: any): { valid: boolean; error?: strin
             }
           }
           return null;
-          
+
         case 'MultiPolygon':
           for (let i = 0; i < geometry.coordinates.length; i++) {
             for (let j = 0; j < geometry.coordinates[i].length; j++) {
@@ -202,22 +202,22 @@ function validateCoordinateRanges(geoJson: any): { valid: boolean; error?: strin
             }
           }
           return null;
-          
+
         case 'GeometryCollection':
           for (let i = 0; i < geometry.geometries.length; i++) {
             const error = processGeometry(geometry.geometries[i], `${path}.geometries[${i}]`);
             if (error) return error;
           }
           return null;
-          
+
         default:
           return `${path}: Unknown geometry type: ${geometry.type}`;
       }
     };
-    
+
     // Process based on GeoJSON type
     let error: string | null = null;
-    
+
     if (geoJson.type === 'Feature') {
       error = processGeometry(geoJson.geometry, 'geometry');
     } else if (geoJson.type === 'FeatureCollection') {
@@ -229,11 +229,11 @@ function validateCoordinateRanges(geoJson: any): { valid: boolean; error?: strin
       // Assume it's a geometry object
       error = processGeometry(geoJson, '');
     }
-    
+
     if (error) {
       return { valid: false, error };
     }
-    
+
     return { valid: true };
   } catch (e) {
     return { valid: false, error: 'Coordinate validation error: ' + (e as Error).message };
@@ -247,52 +247,83 @@ function validateCoordinateRanges(geoJson: any): { valid: boolean; error?: strin
  * @returns Validation result with success flag and error message if failed
  */
 export function validateCSVStructure(
-  headers: string[], 
+  headers: string[],
   rows: string[][]
 ): { valid: boolean; error?: string } {
   try {
-    // Check required columns
-    const requiredColumns = ['id', 'parent', 'geodata'];
-    for (const col of requiredColumns) {
-      if (!headers.includes(col)) {
-        return { valid: false, error: `Required column '${col}' is missing` };
-      }
+    // Ensure we have headers and rows
+    if (!headers?.length) {
+      return { valid: false, error: 'CSV has no headers' };
     }
-    
-    // Validate language columns (all columns after the first 3)
-    const languageColumns = headers.slice(3);
-    const invalidLangs = languageColumns.filter(lang => !SUPPORTED_LANGUAGES.includes(lang));
-    
-    if (invalidLangs.length > 0) {
-      return { 
-        valid: false, 
-        error: `Invalid language code(s): ${invalidLangs.join(', ')}. Supported languages are: ${SUPPORTED_LANGUAGES.join(', ')}` 
+    if (!rows?.length) {
+      return { valid: false, error: 'CSV has no data rows' };
+    }
+
+    // Check required columns case-insensitively
+    const headerMap = new Map(headers.map(h => [h.toLowerCase(), h]));
+    const requiredColumns = ['id', 'parent', 'geodata'];
+    const missingColumns = requiredColumns.filter(col => !headerMap.has(col));
+
+    if (missingColumns.length > 0) {
+      return {
+        valid: false,
+        error: `Required column(s) missing: ${missingColumns.join(', ')}`
       };
     }
-    
+
+    // Get indices for required columns
+    const idIndex = headers.findIndex(h => h.toLowerCase() === 'id');
+    const parentIndex = headers.findIndex(h => h.toLowerCase() === 'parent');
+    const geodataIndex = headers.findIndex(h => h.toLowerCase() === 'geodata');
+
+    // Validate language columns (all columns after the required ones)
+    const languageColumns = headers.filter((_, i) =>
+      ![idIndex, parentIndex, geodataIndex].includes(i)
+    );
+
+    const invalidLangs = languageColumns.filter(lang =>
+      !SUPPORTED_LANGUAGES.includes(lang.toLowerCase())
+    );
+
+    if (invalidLangs.length > 0) {
+      return {
+        valid: false,
+        error: `Invalid language code(s): ${invalidLangs.join(', ')}. Supported languages are: ${SUPPORTED_LANGUAGES.join(', ')}`
+      };
+    }
+
     // Check if at least one language column exists
     if (languageColumns.length === 0) {
       return { valid: false, error: 'At least one language column is required' };
     }
-    
+
     // Validate row structure
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      
+
       // Check row length
       if (row.length !== headers.length) {
-        return { 
-          valid: false, 
-          error: `Row ${i + 1} has ${row.length} columns, but ${headers.length} were expected` 
+        return {
+          valid: false,
+          error: `Row ${i + 1} has ${row.length} columns, but ${headers.length} were expected`
         };
       }
-      
+
       // Check for empty required fields
-      const id = row[headers.indexOf('id')].trim();
+      const id = row[idIndex]?.trim();
       if (!id) {
         return { valid: false, error: `Row ${i + 1} has an empty 'id' field` };
       }
-      
+
+      // Validate geodata filename
+      const geodata = row[geodataIndex]?.trim();
+      if (!geodata) {
+        return { valid: false, error: `Row ${i + 1} (id: ${id}) has an empty 'geodata' field` };
+      }
+      if (!geodata.toLowerCase().endsWith('.geojson')) {
+        return { valid: false, error: `Row ${i + 1} (id: ${id}) has invalid geodata filename. Must end with .geojson` };
+      }
+
       // Ensure at least one language name is provided
       let hasLanguageName = false;
       for (const lang of languageColumns) {
@@ -302,15 +333,15 @@ export function validateCSVStructure(
           break;
         }
       }
-      
+
       if (!hasLanguageName) {
-        return { 
-          valid: false, 
-          error: `Row ${i + 1} (id: ${id}) does not have a name in any language` 
+        return {
+          valid: false,
+          error: `Row ${i + 1} (id: ${id}) does not have a name in any language`
         };
       }
     }
-    
+
     return { valid: true };
   } catch (e) {
     return { valid: false, error: 'CSV validation error: ' + (e as Error).message };
@@ -329,7 +360,7 @@ export function detectCircularReferences(
   for (const id of Object.keys(divisions)) {
     const visited = new Set<string>();
     let currentId = id;
-    
+
     while (currentId) {
       // If we've seen this ID before, we have a cycle
       if (visited.has(currentId)) {
@@ -340,32 +371,32 @@ export function detectCircularReferences(
           cycle.push(cycleId);
           cycleId = divisions[cycleId]?.parent;
         } while (cycleId !== currentId);
-        
+
         cycle.push(currentId); // Complete the cycle
-        
-        return { 
-          valid: false, 
-          error: `Circular reference detected: ${cycle.join(' → ')}` 
+
+        return {
+          valid: false,
+          error: `Circular reference detected: ${cycle.join(' → ')}`
         };
       }
-      
+
       visited.add(currentId);
-      
+
       // Move to parent (if exists)
       const parent = divisions[currentId]?.parent;
       if (!parent) break;
-      
+
       // Check if parent exists in our divisions
       if (!divisions[parent]) {
         // Not a circular reference, but parent is missing
         // This will be handled by parent-child validation
         break;
       }
-      
+
       currentId = parent;
     }
   }
-  
+
   return { valid: true };
 }
 
@@ -376,35 +407,35 @@ export function detectCircularReferences(
  */
 export function validateParentChildRelationships(
   divisions: Record<string, { parent: string; name: Record<string, string>; geodata: string }>
-): { 
-  valid: boolean; 
+): {
+  valid: boolean;
   error?: string;
   missingParents?: Array<{ id: string; parent: string }>;
 } {
   const missingParents: Array<{ id: string; parent: string }> = [];
-  
+
   // Check that all referenced parents exist
   for (const [id, division] of Object.entries(divisions)) {
     if (division.parent && !divisions[division.parent]) {
       missingParents.push({ id, parent: division.parent });
     }
   }
-  
+
   if (missingParents.length > 0) {
-    const examples = missingParents.slice(0, 3).map(item => 
+    const examples = missingParents.slice(0, 3).map(item =>
       `Division '${item.id}' references non-existent parent '${item.parent}'`
     ).join('; ');
-    
-    const additional = missingParents.length > 3 
-      ? ` and ${missingParents.length - 3} more` 
+
+    const additional = missingParents.length > 3
+      ? ` and ${missingParents.length - 3} more`
       : '';
-    
-    return { 
-      valid: false, 
+
+    return {
+      valid: false,
       error: `Missing parent references: ${examples}${additional}`,
       missingParents
     };
   }
-  
+
   return { valid: true };
 }

@@ -266,7 +266,7 @@ export const divisionParent_Rel = relations(divisionTable, ({one}) => ({
 }));
 
 export type Division = typeof divisionTable.$inferSelect;
-export type DivitionInsert = typeof divisionTable.$inferInsert;
+export type DivisionInsert = typeof divisionTable.$inferInsert;
 
 export const eventTable = pgTable("event", {
 	id: ourRandomUUID(),
