@@ -61,7 +61,7 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 				description: true,
 				approvalStatus: true,
 			},
-			orderBy: [desc(hazardousEventTable.startDate)],
+			orderBy: [desc(hazardousEventTable.updatedAt)],
 			with: {
 				hipHazard: {
 					columns: {

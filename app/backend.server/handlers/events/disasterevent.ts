@@ -56,7 +56,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 					with: hazardBasicInfoJoin
 				},
 			},
-			orderBy: [desc(disasterEventTable.startDate)],
+			orderBy: [desc(disasterEventTable.updatedAt)],
 			where: and(
 				filters.approvalStatus ? eq(disasterEventTable.approvalStatus, filters.approvalStatus) : undefined,
 			),
