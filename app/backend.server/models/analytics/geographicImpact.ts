@@ -755,7 +755,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             .from(divisionTable)
             .where(
                 and(
-                    eq(divisionTable.level, 2),
+                    eq(divisionTable.level, 1),
                     filters.geographicLevelId
                         ? eq(divisionTable.id, parseInt(filters.geographicLevelId))
                         : undefined
