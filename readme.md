@@ -28,6 +28,8 @@ Licensed under MIT License
 * [Figma Design System] https://www.figma.com/design/noegprarmNGSsk4BQlMVtY/DLDTS-Design-System-and-Screens?node-id=1569-5938&node-type=canvas&t=13qOkaBV7VQnRkzY-0
 * [DTS Variables] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7BEC43CA17-E8FF-44E6-9B1C-5DC0B386DF2A%7D&file=DTS%20Variables%20and%20baselines.xlsx&action=default&mobileredirect=true
 * [All Sectors Taxonomy and Assets] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7BD2395365-1B2D-4E11-BAE8-F40D0C6C8838%7D&file=All%20sectors_%20Taxonomies.xlsx&action=default&mobileredirect=true
+* [Excel master file to manage sectors] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/Shared%20Documents/Technology%20Track/Data%20Model/Entities%20DTS%20Database.xlsx?d=w544fc777f3994d2ea18389925503cbd7&csf=1&web=1&e=nE3pWa
+* [Excel master file to manage assets] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/Shared%20Documents/Technology%20Track/Data%20Model/assets.xlsx?d=w9655344ddd85470fb2e2a0e945f8aa31&csf=1&web=1&e=dx2QpX
 
 ## Running locally
 
