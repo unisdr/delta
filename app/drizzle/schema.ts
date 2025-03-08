@@ -52,7 +52,7 @@ function ourRandomUUID() {
 }
 
 const createdUpdatedTimestamps = {
-	updatedAt: timestamp("updated_at"),
+	updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
 	createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 };
 

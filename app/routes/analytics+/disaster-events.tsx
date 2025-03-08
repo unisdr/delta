@@ -30,6 +30,9 @@ import {
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import MapChart from "~/components/MapChart";
 import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
+import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
+
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Rectangle, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -52,6 +55,7 @@ interface interfaceMap {
   geojson: any;
 }
 
+
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
 
@@ -70,6 +74,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let cpDisplayName:string = '';
   let geoData:interfaceMap[] = [];
   let totalAffectedPeople:any = {};
+  let totalAffectedPeople2:any = {};
 
   
 
@@ -91,8 +96,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
         totalSectorEffects = await disasterEventSectorTotal__ById(xId);
 
-        totalAffectedPeople = await getAffectedByDisasterEvent(dr, xId);
+        //retired, system is now using version 2
+        // totalAffectedPeople = await getAffectedByDisasterEvent(dr, xId); 
+        totalAffectedPeople2 = await getAffected(dr, xId);
         // console.log( totalAffectedPeople );
+        // console.log( totalAffectedPeople, totalAffectedPeople2 );
 
         const divisionLevel1 = await getDivisionByLevel(1);
         for (const item of divisionLevel1) {
@@ -126,6 +134,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     cpDisplayName: cpDisplayName,
     geoData: geoData,
     totalAffectedPeople: totalAffectedPeople,
+    totalAffectedPeople2: totalAffectedPeople2,
   });
 });
 
@@ -150,7 +159,11 @@ function DisasterEventsAnalysisContent() {
     cpDisplayName: string,
     geoData: any,
     totalAffectedPeople: any,
+    totalAffectedPeople2: any,
   }>();
+  let disaggregationsAge2:{
+    children:number|undefined, adult: number|undefined, senior: number|undefined
+  } | undefined = undefined;
 
   // // State declarations
   // const [filters, setFilters] = useState<{
@@ -162,13 +175,7 @@ function DisasterEventsAnalysisContent() {
   //   setFilters(newFilters);
   // };
 
-  const handleAdvancedSearch = () => {
-    // TODO: Implement advanced search functionality
-    console.log("Advanced search clicked");
-  };
-
-
-  // Define the handleClearFilters function
+    // Define the handleClearFilters function
   const handleClearFilters = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault(); // Prevent the default form submission
     window.location.href = '/analytics/disaster-events';
@@ -191,6 +198,18 @@ function DisasterEventsAnalysisContent() {
         }
       }
     }, []);
+
+  // console.log(ld.geoData);
+
+  // TODO: apply mapping of data, ask to revise key
+  if (ld.record && ld.totalAffectedPeople2.disaggregations.age) {
+    const ageData = ld.totalAffectedPeople2.disaggregations.age;
+    disaggregationsAge2 = {
+      children: ageData["0-14"],
+      adult: ageData["15-64"], 
+      senior: ageData["65+"]
+    }
+  }
 
   return (
     <MainContainer title="Disaster Events Analysis" headerExtra={<NavSettings />}>
@@ -276,8 +295,10 @@ function DisasterEventsAnalysisContent() {
                 <p>
                 {
                   Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.map((sector, index) => (<>
-                      {sector.sectorname}
-                      {ld.recordsRelatedSectors.length == (index + 1) ? ' ' : ', '}
+                      <span key={index}>
+                        {sector.sectorname}
+                        {ld.recordsRelatedSectors.length == (index + 1) ? ' ' : ', '}
+                      </span>
                   </>))
                 }
                 </p>
@@ -292,6 +313,14 @@ function DisasterEventsAnalysisContent() {
               </p>
               </>
           }
+
+          {
+            (ld.record && ld.record.dataSource) && <>
+              <p>
+                Data Source: { ld.record.dataSource }
+              </p>
+            </>   
+          }
           
           
           <div className="mg-grid mg-grid__col-3">
@@ -300,7 +329,7 @@ function DisasterEventsAnalysisContent() {
                 <span id="elementId03">Damage in { ld.total.damages.currency }</span>
               </h3>
               <div className="dts-indicator dts-indicator--target-box-b">
-                <span>{ ld.total.damages.total }</span>
+                <span>{ ld.total.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
               </div>
             </div>
             <div className="dts-data-box">
@@ -308,7 +337,7 @@ function DisasterEventsAnalysisContent() {
                 <span id="elementId04">Losses in { ld.total.losses.currency }</span>
               </h3>
               <div className="dts-indicator dts-indicator--target-box-c">
-                <span>{ ld.total.losses.total }</span>
+                <span>{ ld.total.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
               </div>
             </div>
             { Number(ld.total.recovery.total) > 0 && (
@@ -318,7 +347,7 @@ function DisasterEventsAnalysisContent() {
                       <span id="elementId05">Recovery in { ld.total.recovery.currency }</span>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-d">
-                      <span>{ ld.total.recovery.total }</span>
+                      <span>{ ld.total.recovery.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                     </div>
                   </div>
                 </>
@@ -329,7 +358,7 @@ function DisasterEventsAnalysisContent() {
         </div>
       </section>
 
-      { Number(ld.totalAffectedPeople.total) > 0 && (<>
+      { Number(ld.totalAffectedPeople2.noDisaggregations.total) > 0 && (<>
         <section className="dts-page-section">
           <div className="mg-container">
             <h2 className="dts-heading-2">Human direct effects</h2>
@@ -340,7 +369,7 @@ function DisasterEventsAnalysisContent() {
                     <span>Total people affected</span>
                   </h3>
                   <div className="dts-indicator dts-indicator--target-box-f">
-                    <span>{ ld.totalAffectedPeople.total }</span>
+                    <span>{ ld.totalAffectedPeople2.noDisaggregations.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                   </div>
                 </div>
             </div>
@@ -355,7 +384,7 @@ function DisasterEventsAnalysisContent() {
                   <span>Death</span>
                 </h3>
                 <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople.deaths }</span>
+                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.deaths.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                 </div>
               </div>
               <div className="dts-data-box">
@@ -363,7 +392,7 @@ function DisasterEventsAnalysisContent() {
                   <span>Injured</span>
                 </h3>
                 <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople.injured }</span>
+                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.injured.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                 </div>
               </div>
               <div className="dts-data-box">
@@ -371,7 +400,7 @@ function DisasterEventsAnalysisContent() {
                   <span>Missing</span>
                 </h3>
                 <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople.missing }</span>
+                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.missing.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                 </div>
               </div>
             </div>
@@ -386,7 +415,7 @@ function DisasterEventsAnalysisContent() {
                   <span>People directly affected (old DesInventar)</span>
                 </h3>
                 <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople.directlyAffected }</span>
+                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.directlyAffected.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                 </div>
               </div>
               <div className="dts-data-box">
@@ -394,12 +423,137 @@ function DisasterEventsAnalysisContent() {
                   <span>Displaced</span>
                 </h3>
                 <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople.displaced }</span>
+                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.displaced.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                 </div>
               </div>
             </div>
           </div>
         </section>
+
+
+        <section className="dts-page-section">
+          <div className="mg-container">
+            <div className="mg-grid mg-grid__col-3">
+              { ld.totalAffectedPeople2.disaggregations.sex && ( 
+                <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Men and women affected</span>
+                    </h3>
+                    <div className="dts-indicator" style={{height: '300px'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            width={500}
+                            height={300}
+                            data={
+                              [
+                                { 
+                                  name: '',
+                                  'Men': ld.totalAffectedPeople2.disaggregations.sex.m,
+                                  'Women': ld.totalAffectedPeople2.disaggregations.sex.f,
+                                  'Other non-Binary': ld.totalAffectedPeople2.disaggregations.sex.o,
+                                }
+                              ]
+                            }
+                            margin={{
+                              top: 5,
+                              right: 30,
+                              left: 20,
+                              bottom: 5,
+                            }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <Tooltip wrapperStyle={{ fontSize:'17px' }} />
+                            <Legend align="left" wrapperStyle={{ fontSize:'14px', paddingTop:'10px' }} />
+                            <Bar dataKey="Men" fill="#58508d" />
+                            <Bar dataKey="Women" fill="#bc5090" />
+                            <Bar dataKey="Other non-Binary" fill="#879e82" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+              )}
+
+              { (ld.totalAffectedPeople2.disaggregations.disability || ld.totalAffectedPeople2.disaggregations.globalPovertyLine || ld.totalAffectedPeople2.disaggregations.nationalPovertyLine ) && ( 
+                <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Persons with disabilities and living in poverty affected</span>
+                    </h3>
+                    <div className="dts-placeholder" style={{height: '330px'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            width={500}
+                            height={300}
+                            data={
+                              [{
+                                name: '',
+                                'Persons with disabilities': ld.totalAffectedPeople2.disaggregations.disability.disability,
+                                'Persons living in poverty (national)': ld.totalAffectedPeople2.disaggregations.nationalPovertyLine.below,
+                                'Persons living in poverty (international)': ld.totalAffectedPeople2.disaggregations.globalPovertyLine.below,
+                              }]
+                            }
+                            margin={{
+                              top: 5,
+                              right: 30,
+                              left: 20,
+                              bottom: 5,
+                            }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <Tooltip wrapperStyle={{ fontSize:'17px' }} />
+                            <Legend align="left" wrapperStyle={{ fontSize:'14px', paddingTop:'10px' }} />
+                            <Bar dataKey="Persons with disabilities" fill="#00202e" />
+                            <Bar dataKey="Persons living in poverty (national)" fill="#003f5c" />
+                            <Bar dataKey="Persons living in poverty (international)" fill="#2c4875" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+              )}
+
+
+
+              { ld.totalAffectedPeople2.disaggregations.age && disaggregationsAge2 && ( 
+                <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Children, adults, and seniors affected</span>
+                    </h3>
+                    <div className="dts-placeholder" style={{height: '300px'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            width={500}
+                            height={300}
+                            data={
+                              [
+                                { 
+                                  name: '',
+                                  'Children': disaggregationsAge2?.children,
+                                  'Adults': disaggregationsAge2?.adult,
+                                  'Seniors': disaggregationsAge2?.senior,
+                                }
+                              ]
+                            }
+                            margin={{
+                              top: 5,
+                              right: 30,
+                              left: 20,
+                              bottom: 5,
+                            }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <Tooltip wrapperStyle={{ fontSize:'17px' }} />
+                            <Legend align="left" wrapperStyle={{ fontSize:'14px', paddingTop:'10px' }} />
+                            <Bar dataKey="Children" fill="#58508d" />
+                            <Bar dataKey="Adults" fill="#bc5090" />
+                            <Bar dataKey="Seniors" fill="#879e82" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
 
 
       </>)}
