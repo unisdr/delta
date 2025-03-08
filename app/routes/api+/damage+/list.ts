@@ -21,7 +21,6 @@ export const loader = createApiListLoader(
 			orderBy: [desc(damagesTable.id)],
 		})
 	},
-	[]
 )
 
 

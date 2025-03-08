@@ -77,7 +77,6 @@ export function createPaginatedLoader<T>(
 export function createApiListLoader<T>(
 	table: any,
 	fetchData: (offsetLimit: OffsetLimit) => Promise<T[]>,
-	defaultOrderBy: any[] = [],
 ) {
 	return authLoaderApi(async (loaderArgs) => {
 		const {request} = loaderArgs;
@@ -87,7 +86,7 @@ export function createApiListLoader<T>(
 			return await fetchData(offsetLimit);
 		};
 
-		const res = await executeQueryForPagination3(request, count, dataFetcher, defaultOrderBy);
+		const res = await executeQueryForPagination3(request, count, dataFetcher, []);
 
 		return Response.json({data: res});
 	});

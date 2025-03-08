@@ -8,7 +8,6 @@ import {
 	disasterRecordsIdByImportId
 } from "~/backend.server/models/disaster_record";
 
-
 import {
 	fieldsDefApi,
 } from "~/frontend/disaster-record/form";
@@ -35,6 +34,6 @@ export const action = createAction({
 
 export default createScreen({
 	title: "Disaster Events",
-	apiBaseUrl: "/api/disaster-event",
-	listUrl: "/disaster-event"
+	apiBaseUrl: "/api/disaster-record",
+	listUrl: "/disaster-record"
 }) 

@@ -17,5 +17,4 @@ export let loader = createApiListLoader(
       orderBy: [desc(assetTable.name)],
     });
   },
-  [desc(assetTable.name)]
 )
