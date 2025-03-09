@@ -9,6 +9,7 @@ import {
 
 import {
 	upsertRecord as upsertRecordAsset,
+  assetByName,
 } from "~/backend.server/models/asset";
 
 import {AssetInsert as AssetType} from "~/drizzle/schema";
@@ -25,6 +26,7 @@ import {
   Form, 
   useActionData,
 } from "@remix-run/react";
+import { number } from "prop-types";
 
 
 
@@ -46,6 +48,18 @@ export const loader = authLoaderWithPerm("EditData", async () => {
     ok:'loader',
   };
 });
+
+// Define the type for dynamic assetImportData
+interface interfaceAssetData {
+  apiImportId?: string;
+  id?: string;
+  sectors: number[];
+  name: string;
+  category?: string;
+  isBuiltIn?: boolean;
+  nationalId?: string;
+  notes?: string;
+}
 
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -202,18 +216,84 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
       nationalId: item[6],
       notes: item[7],
     };
+  
+    // Use a dynamic object to store the assetImportData
+    const assetImportData: { [key: string]: interfaceAssetData } = {};
+
+    let xName:string = '';
+    let xNameKey:string = '';
+    let xSector:number = 0;
+
+    // Example: Dynamically adding entries to the object
+    function addAssetData(key: string, name: string, sectors: number[]) {
+      assetImportData[key] = { name, sectors };
+    }
 
     for (const [key, item] of all.entries()) {
       if (key !== 0) {
+        xName = item[5].trim();
+        xName = xName.charAt(0).toUpperCase() + xName.slice(1);
+        xNameKey = xName.toLowerCase();
+        xNameKey = xNameKey.replace(/[^a-zA-Z0-9]/g, '')
+        
+        xSector = Number(item[2]);
+
+        if ( assetImportData[xNameKey] ) {
+          if (!assetImportData[xNameKey].sectors.includes(xSector)) {
+            assetImportData[xNameKey].sectors.push( xSector );
+          }
+        }
+        else {
+          addAssetData(xNameKey, xName, [xSector]);
+          assetImportData[xNameKey].apiImportId = item[0];
+          assetImportData[xNameKey].id = item[1];
+          assetImportData[xNameKey].isBuiltIn = true;
+          assetImportData[xNameKey].category = item[6];
+          assetImportData[xNameKey].nationalId = item[7];
+          assetImportData[xNameKey].notes = item[8];
+        }
+
+        // xAsset = await assetByName(item[5]);
+        // if (xAsset) {
+        //   console.log(key, item[5], xAsset);
+        // }
+        // else {
+        //   console.log(key, item[5], 'DOESNT EXISTS');
+        // }
+        // try {
+        //   upsertRecordAsset(formRecord).catch(console.error);
+        // } catch (e) {
+        //   console.log(e);
+        //   throw e;
+        // }
+      }
+    }
+    
+    for (const key in assetImportData) {
+      if (assetImportData.hasOwnProperty(key)) {
+        // console.log( `${assetImportData[key].name}` ); 
+        // console.log( `${assetImportData[key].sectors.join(',')}` ); 
+
+        // formRecord = {
+        //   apiImportId: item[0],
+        //   id: item[1],
+        //   sectorIds: item[2],
+        //   isBuiltIn: Boolean(item[4]),
+        //   name: item[5],
+        //   category: item[6],
+        //   nationalId: item[7],
+        //   notes: item[8],
+        // };
+
         formRecord = {
-          apiImportId: item[0],
-          id: item[1],
-          sectorIds: item[2],
-          isBuiltIn: Boolean(item[3]),
-          name: item[4],
-          category: item[5],
-          nationalId: item[6],
-          notes: item[7],
+          apiImportId: `${assetImportData[key].apiImportId}`,
+          id: `${assetImportData[key].id}`,
+          sectorIds: `${assetImportData[key].sectors.join(',')}`,
+          isBuiltIn: true,
+          name: `${assetImportData[key].name}`,
+          category: `${assetImportData[key].category}`,
+          nationalId: `${assetImportData[key].nationalId}`,
+          notes: `${assetImportData[key].notes}`,
         };
 
         try {
@@ -224,6 +304,9 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
         }
       }
     }
+    
+
+    // console.log( assetImportData );
   }
   
 

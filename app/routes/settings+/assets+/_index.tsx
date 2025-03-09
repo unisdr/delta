@@ -28,6 +28,7 @@ export const loader = createPaginatedLoader(
       columns: {
 				id: true,
 				name: true,
+        sectorIds: true,
 			},
       orderBy: [desc(assetTable.name)],
     });
@@ -43,16 +44,17 @@ export default function Data() {
     plural: "Assets",
     resourceName: "Asset",
     baseRoute: route,
-    columns: ["ID", "Name", "Actions"],
+    columns: ["ID", "Name", "Sector(s)", "Actions"],
     items: items,
     paginationData: pagination,
     csvExportLinks: true,
     renderRow: (item, route) => (
       <tr key={item.id}>
         <td>
-          <Link to={`${route}/${item.id}`}>{item.id}</Link>
+          <Link to={`${route}/${item.id}`}>{item.id.slice(0, 8)}</Link>
         </td>
         <td>{item.name}</td>
+        <td>{item.sectorIds}</td>
         <td>
           <ActionLinks route={route} id={item.id} />
         </td>

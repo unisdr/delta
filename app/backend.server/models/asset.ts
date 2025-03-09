@@ -121,6 +121,15 @@ export async function assetById(idStr: string) {
 	return assetByIdTx(dr, idStr)
 }
 
+export async function assetByName(nameStr: string, nationalIdStr: string = '') {
+    let res = await dr.query.assetTable.findFirst({
+        where: eq(sql`LOWER(${assetTable.name})`, nameStr.toLowerCase()),
+    });
+
+    return res;
+
+}
+
 export async function assetByIdTx(tx: Tx, idStr: string) {
 	let id = idStr
 	let res = await tx.query.assetTable.findFirst({
