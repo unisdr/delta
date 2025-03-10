@@ -1168,6 +1168,7 @@ export const sectoryParent_Rel = relations(sectorTable, ({one}) => ({
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
+		...apiImportIdField(),
 		id: ourRandomUUID(),
 		sectorId: ourBigint("sector_id")
 			.notNull()
