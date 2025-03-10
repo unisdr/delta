@@ -13,14 +13,6 @@ import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cos
 
 export interface DisRecSectorsFields extends Omit<disRecSectorsType, "id"> {}
 
-// do not change
-export function validate(_fields: Partial<DisRecSectorsFields>): Errors<DisRecSectorsFields> {
-	let errors: Errors<DisRecSectorsFields> = {};
-	errors.fields = {};
-
-	return errors
-}
-
 export const fieldsDefCommon = [
 	{key: "sectorId", label: "Sector", type: "text", required: true},
 	{key: "disasterRecordId", label: "Disaster Record", type: "text", required: true},
@@ -44,6 +36,14 @@ export const fieldsDefApi: FormInputDef<DisRecSectorsFields>[] = [
 	...fieldsDefCommon,
 	{key: "apiImportId", label: "", type: "other"},
 ];
+
+// do not change
+export function validate(_fields: Partial<DisRecSectorsFields>): Errors<DisRecSectorsFields> {
+	let errors: Errors<DisRecSectorsFields> = {};
+	errors.fields = {};
+
+	return errors
+}
 
 
 export async function disRecSectorsCreate(tx: Tx, fields: DisRecSectorsFields): Promise<CreateResult<DisRecSectorsFields>> {

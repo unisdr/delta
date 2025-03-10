@@ -1,16 +1,16 @@
-import {dr, Tx} from "~/db.server";
+import {dr} from "~/db.server";
 import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
 
 import { MainContainer } from "~/frontend/container";
 import type { MetaFunction } from "@remix-run/node";
 
-import { useLocation } from 'react-router-dom';
+//import { useLocation } from 'react-router-dom';
 import {
 	PropRecord,
 	upsertRecord,
 	nonecoLossesById,
 } from "~/backend.server/models/noneco_losses";
-import {getCategories, CategoryType} from "~/backend.server/models/category";
+//import {getCategories} from "~/backend.server/models/category";
 
 import { 
 	useLoaderData, 
@@ -19,13 +19,9 @@ import {
 	useSubmit, 
 	useNavigation,
 	useActionData,
-	useNavigate,
-	Link
 } from "@remix-run/react";
 
-import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
-import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
-import { string } from "prop-types";
+import { useState, useEffect, useRef, RefObject } from 'react';
 
 //#Category: Start
 import { ContentPicker } from "~/components/ContentPicker";
@@ -33,27 +29,13 @@ import { contentPickerConfigCategory } from "../content-picker-config";
 //#Category: End
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
 	return [
 	  { title: "Non-economic Losses - Disaster Records - DTS" },
 	  { name: "description", content: "Non-economic Losses page." },
 	];
  };
 
-interface Category { 
-	id: number; 
-	name: string; 
-}
-
-interface SubCategory { 
-	id: number; 
-	data: PropsItem[]; 
-}
-
-interface Factor { 
-	id: number; 
-	data: PropsItem[];
-}
 
 type PropsLoader = { 
 	ok: string; 
@@ -89,7 +71,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params} = actionArgs;
 	const req = actionArgs.request;
 	// get first level categories
-	let arrayCat = await getCategories(null);
+	//let arrayCat = await getCategories(null);
 	let categoryDisplayName:string = '';
 
 	// Parse the request URL
@@ -143,7 +125,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	if (this_showForm && frmDescription.toString() !== '' && intCatetoryIDforDB > 0) {
 		const formRecord:PropRecord = { 
 			id: frmId && typeof frmId == 'string' ? frmId : undefined,
-			categortyId: intCatetoryIDforDB,
+			categoryId: intCatetoryIDforDB,
 			disasterRecordId: String(params.id),
 			description: String(frmDescription),
 		};
@@ -166,18 +148,18 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 export default function Screen() {
 	const loaderData = useLoaderData<PropsLoader>();
 	const actionData = useActionData<PropsAction>();
-	const navigate = useNavigate();
+//	const navigate = useNavigate();
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
 	const formRef = useRef<HTMLFormElement>(null);
 	const formRefHidden: RefObject<HTMLInputElement> = useRef(null);
-	const formRefHiddenType: RefObject<HTMLInputElement> = useRef(null);
-	const formRefHiddenSubType: RefObject<HTMLInputElement> = useRef(null);
-	const formRefHiddenFactor: RefObject<HTMLInputElement> = useRef(null);
+	//const formRefHiddenType: RefObject<HTMLInputElement> = useRef(null);
+	//const formRefHiddenSubType: RefObject<HTMLInputElement> = useRef(null);
+	//const formRefHiddenFactor: RefObject<HTMLInputElement> = useRef(null);
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
 
-	const locationUrlPath = useLocation();
+//	const locationUrlPath = useLocation();
 
 	const formAction = loaderData?.formAction || 'new';
 
@@ -196,11 +178,12 @@ export default function Screen() {
 	// console.log( actionData?.subcategories );
 	
 	
+	/*
 	const handleResetHiddenValues = (e: MouseEvent<HTMLAnchorElement>) => {
 	  	e.preventDefault(); // prevent the default link behavior
 		
 		navigate(locationUrlPath); // navigate to the desired path
-	};
+	};*/
 
   return (
 	<MainContainer title="Disaster Records: Non-economic Losses">
@@ -224,8 +207,8 @@ export default function Screen() {
 							<ContentPicker 
 								{...contentPickerConfigCategory} 
 								value={ 
-									(loaderData.record && loaderData.record.categortyId ) ? 
-									String(loaderData.record.categortyId) : '' 
+									(loaderData.record && loaderData.record.categoryId ) ? 
+									String(loaderData.record.categoryId) : '' 
 								} //Assign the sector id here
 								displayName={ loaderData.categoryDisplayName } //Assign the sector name here, from the loaderData > sectorDisplayName sample
 								onSelect={(selectedItems: any) => {

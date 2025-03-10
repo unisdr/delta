@@ -1,4 +1,4 @@
-import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
+import {authLoaderWithPerm} from "~/util/auth";
 
 import {
     nonecoLossesById,
@@ -6,15 +6,11 @@ import {
 } from "~/backend.server/models/noneco_losses";
 
 
-import {disruptionDeleteBySectorId} from "~/backend.server/models/disruption";
-import {damagesDeleteBySectorId} from "~/backend.server/models/damages";
-import {lossesDeleteBySectorId} from "~/backend.server/models/losses";
-
 import { 
     redirect,
 } from "@remix-run/react";
 
-import { json, } from "@remix-run/node";
+import { json } from "@remix-run/node";
 
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
