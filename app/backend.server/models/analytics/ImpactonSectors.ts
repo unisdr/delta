@@ -85,9 +85,9 @@ interface SectorImpactData {
   /** Total number of disaster events affecting the sector */
   eventCount: number;
   /** Total damage in local currency (replacement cost of destroyed assets) */
-  totalDamage: string;
+  totalDamage: string | null;
   /** Total losses in local currency (changes in economic flows) */
-  totalLoss: string;
+  totalLoss: string | null;
   /** Time series of event counts by year */
   eventsOverTime: { [year: string]: string };
   /** Time series of damages by year */
@@ -100,6 +100,10 @@ interface SectorImpactData {
   faoAgriculturalImpact?: {
     damage: FaoAgriculturalDamage;
     loss: FaoAgriculturalLoss;
+  };
+  dataAvailability: {
+    damage: 'available' | 'zero' | 'no_data';
+    loss: 'available' | 'zero' | 'no_data';
   };
 }
 
@@ -386,7 +390,7 @@ const getDisasterRecordsForSector = async (
                 THEN LOWER(${disasterEventTable.otherId1}) LIKE ${`%${eventId.toLowerCase()}%`}
                 ELSE FALSE END
               `);
-              
+
             }
           }
         } catch (error) {
@@ -607,13 +611,17 @@ export async function fetchSectorImpactData(
 
     return {
       eventCount: recordIds.length,
-      totalDamage: damagesResult.total.toString(),
-      totalLoss: lossesResult.total.toString(),
+      totalDamage: recordIds.length === 0 ? null : damagesResult.total.toString(),
+      totalLoss: recordIds.length === 0 ? null : lossesResult.total.toString(),
       eventsOverTime: Object.fromEntries([...eventCounts].map(([year, count]) => [year.toString(), count.toString()])),
       damageOverTime: Object.fromEntries([...damagesResult.byYear].map(([year, amount]) => [year.toString(), amount.toString()])),
       lossOverTime: Object.fromEntries([...lossesResult.byYear].map(([year, amount]) => [year.toString(), amount.toString()])),
       metadata,
-      faoAgriculturalImpact
+      faoAgriculturalImpact,
+      dataAvailability: {
+        damage: recordIds.length === 0 ? 'no_data' : (damagesResult.total > 0 ? 'available' : (damagesResult.total === 0 ? 'zero' : 'no_data')),
+        loss: recordIds.length === 0 ? 'no_data' : (lossesResult.total > 0 ? 'available' : (lossesResult.total === 0 ? 'zero' : 'no_data'))
+      }
     };
   } catch (error) {
     console.error("Error in fetchSectorImpactData:", error);

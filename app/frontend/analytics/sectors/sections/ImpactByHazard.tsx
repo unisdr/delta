@@ -412,23 +412,49 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
         return "Impact by Hazard Type";
     };
 
-    const formatChartData = (rawData: any[]) => {
-        // Filter out zero/null values and map the remaining data
-        return rawData
+    const formatChartData = (rawData: any[] | null) => {
+        if (!Array.isArray(rawData) || rawData.length === 0) {
+            return { data: [], dataAvailability: 'no_data' };
+        }
+
+        // Check if all values are zero
+        const allZero = rawData.every(item => {
+            const value = parseFloat(item.value);
+            return !isNaN(value) && value === 0;
+        });
+
+        if (allZero) {
+            return { data: [], dataAvailability: 'zero' };
+        }
+
+        // Filter out null values and undefined names, but keep non-zero values
+        const filteredData = rawData
             .filter(item => {
                 const value = parseFloat(item.value);
-                return !isNaN(value) && value > 0;
+                return !isNaN(value) && value > 0 && item.hazardName != null;
             })
             .map(item => ({
                 name: item.hazardName || 'Unknown',
                 value: item.percentage || 0,
                 rawValue: item.value || '0'
             }));
+
+        return {
+            data: filteredData.length > 0 ? filteredData : [],
+            dataAvailability: filteredData.length > 0 ? 'available' : 'no_data'
+        };
     };
 
-    const eventsData = formatChartData(data.data.eventsCount);
-    const damagesData = formatChartData(data.data.damages);
-    const lossesData = formatChartData(data.data.losses);
+    // Process the data
+    const eventsResult = formatChartData(data?.data?.eventsCount ?? []);
+    const damagesResult = formatChartData(data?.data?.damages ?? []);
+    const lossesResult = formatChartData(data?.data?.losses ?? []);
+
+    if (!data?.success || !data?.data) {
+        console.error("Invalid data structure:", data);
+        return <ErrorMessage message="Invalid data structure received from server" />;
+    }
+
 
     return (
         <section className="dts-page-section" style={{ maxWidth: "100%", overflow: "hidden" }}>
@@ -437,11 +463,59 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 <p className="dts-body-text mb-6">Analysis of how different hazards affect this sector</p>
 
                 <div className="mg-grid mg-grid__col-3">
-                    {/* Always render CustomPieChart for each category, regardless of data availability */}
-                    <CustomPieChart data={eventsData} title="Number of Disaster Events" />
-                    <CustomPieChart data={damagesData} title="Damages by Hazard Type" />
-                    <CustomPieChart data={lossesData} title="Losses by Hazard Type" />
+                    {/* Number of Disaster Events */}
+                    <div className="dts-data-box">
+                        {eventsResult.dataAvailability === 'available' ? (
+                            <CustomPieChart data={eventsResult.data} title="Number of Disaster Events" />
+                        ) : eventsResult.dataAvailability === 'zero' ? (
+                            <>
+                                <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
+                                <p className="text-gray-500 text-center mt-4">Zero Impact (Confirmed)</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
+                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Damages by Hazard Type */}
+                    <div className="dts-data-box">
+                        {damagesResult.dataAvailability === 'available' ? (
+                            <CustomPieChart data={damagesResult.data} title="Damages by Hazard Type" />
+                        ) : damagesResult.dataAvailability === 'zero' ? (
+                            <>
+                                <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">Zero Impact (Confirmed)</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Losses by Hazard Type */}
+                    <div className="dts-data-box">
+                        {lossesResult.dataAvailability === 'available' ? (
+                            <CustomPieChart data={lossesResult.data} title="Losses by Hazard Type" />
+                        ) : lossesResult.dataAvailability === 'zero' ? (
+                            <>
+                                <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">Zero Impact (Confirmed)</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                            </>
+                        )}
+                    </div>
                 </div>
+
+
             </div>
         </section>
     );

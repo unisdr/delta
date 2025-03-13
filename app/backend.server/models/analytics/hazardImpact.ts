@@ -103,13 +103,18 @@ function normalizeText(text: string): string {
 }
 
 export interface HazardImpactResult {
-    eventsCount: HazardDataPoint[];
-    damages: HazardDataPoint[];
-    losses: HazardDataPoint[];
+    eventsCount: HazardDataPoint[] | null;
+    damages: HazardDataPoint[] | null;
+    losses: HazardDataPoint[] | null;
     metadata: DisasterImpactMetadata;
     faoAgriculturalImpact?: {
         damage: FaoAgriculturalDamage;
         loss: FaoAgriculturalLoss;
+    };
+    dataAvailability?: {
+        events: 'available' | 'zero' | 'no_data';
+        damages: 'available' | 'zero' | 'no_data';
+        losses: 'available' | 'zero' | 'no_data';
     };
 }
 
@@ -387,10 +392,15 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     }));
 
     return {
-        eventsCount: eventsCountWithPercentage,
-        damages: damagesWithPercentage,
-        losses: lossesWithPercentage,
+        eventsCount: eventsCountWithPercentage.length > 0 ? eventsCountWithPercentage : [],
+        damages: damagesWithPercentage.length > 0 ? damagesWithPercentage : [],
+        losses: lossesWithPercentage.length > 0 ? lossesWithPercentage : [],
         metadata,
-        faoAgriculturalImpact
+        faoAgriculturalImpact,
+        dataAvailability: {
+            events: eventsCountWithPercentage.length > 0 ? (total > 0 ? 'available' : 'zero') : 'no_data',
+            damages: damagesWithPercentage.length > 0 ? (totalDamages > 0 ? 'available' : 'zero') : 'no_data',
+            losses: lossesWithPercentage.length > 0 ? (totalLosses > 0 ? 'available' : 'zero') : 'no_data',
+        }
     };
 }

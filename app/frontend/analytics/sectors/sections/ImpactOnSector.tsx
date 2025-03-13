@@ -24,6 +24,10 @@ interface ApiResponse {
         eventsOverTime: Record<string, string>;
         damageOverTime: Record<string, string>;
         lossOverTime: Record<string, string>;
+        dataAvailability: {
+            damage: string;
+            loss: string;
+        };
     };
 }
 
@@ -543,7 +547,19 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-d">
-                            <span>{data?.totalDamage ? formatMoneyValue(totalDamage) : "No data available"}</span>
+                            <span>
+                                {data?.dataAvailability?.damage === 'zero' ? (
+                                    "Zero Impact (Confirmed)"
+                                ) : data?.dataAvailability?.damage === 'no_data' ? (
+                                    "No data available"
+                                ) : data?.totalDamage !== undefined && data?.totalDamage !== null && data?.totalDamage !== "" ? (
+                                    !isNaN(Number(data.totalDamage)) ?
+                                        formatMoneyValue(Number(data.totalDamage)) :
+                                        "Data not assessed"
+                                ) : (
+                                    "No data available"
+                                )}
+                            </span>
                         </div>
                         <div style={{ height: "300px" }}>
                             {damageData && damageData.length > 0 ? (
@@ -597,7 +613,19 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-c">
-                            <span>{data?.totalLoss ? formatMoneyValue(totalLoss) : "No data available"}</span>
+                            <span>
+                                {data?.dataAvailability?.loss === 'zero' ? (
+                                    "Zero Impact (Confirmed)"
+                                ) : data?.dataAvailability?.loss === 'no_data' ? (
+                                    "No data available"
+                                ) : data?.totalLoss !== undefined && data?.totalLoss !== null && data?.totalLoss !== "" ? (
+                                    !isNaN(Number(data.totalLoss)) ?
+                                        formatMoneyValue(Number(data.totalLoss)) :
+                                        "Data not assessed"
+                                ) : (
+                                    "No data available"
+                                )}
+                            </span>
                         </div>
                         <div style={{ height: "300px" }}>
                             {lossData && lossData.length > 0 ? (
