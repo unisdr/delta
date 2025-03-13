@@ -620,10 +620,10 @@ export const previewMap = (items: any) => {
         window.onload = () => {
             document.getElementById("map").style.height = "${window.outerHeight - 100}px";
 
-            const map = L.map("map").setView([43.833, 87.616], 2);
+            const map = L.map("map"); //.setView([43.833, 87.616], 2);
 
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: "&copy; OpenStreetMap contributors",
+            L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+                attribution: "",
             }).addTo(map);
 
             const items = \`${items}\`;
@@ -678,6 +678,14 @@ export const previewMap = (items: any) => {
             } else {
                 console.warn("No valid bounds available for fitting the map.");
             }
+
+            setTimeout(() => {
+              // Remove attribution links
+              const attributionElement = document.querySelector(".leaflet-control-attribution.leaflet-control a");
+              if (attributionElement) {
+                attributionElement.remove();
+              }
+            }, 10);
         };
       </script>
       </body>

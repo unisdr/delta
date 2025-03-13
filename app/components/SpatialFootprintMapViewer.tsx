@@ -132,8 +132,8 @@ const SpatialFootprintMapViewer: React.FC<SpatialFootprintMapViewerProps> = ({
     
               window.onload = () => {
                 const map = L.map("map"); //.setView([11.3233, 124.9200], 6);
-                L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                  attribution: "&copy; OpenStreetMap contributors",
+                L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+                  attribution: "",
                 }).addTo(map);
     
                 const items = JSON.parse(\`${items}\`);
@@ -208,6 +208,14 @@ const SpatialFootprintMapViewer: React.FC<SpatialFootprintMapViewerProps> = ({
                 toggleLayer("toggleDamages", layers.damages);
                 toggleLayer("toggleLosses", layers.losses);
                 toggleLayer("toggleDisruptions", layers.disruptions);
+
+                setTimeout(() => {
+                  // Remove attribution links
+                  const attributionElement = document.querySelector(".leaflet-control-attribution.leaflet-control a");
+                  if (attributionElement) {
+                    attributionElement.remove();
+                  }
+                }, 50);
               };
             </script>
           </body>
