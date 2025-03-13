@@ -126,12 +126,12 @@ const SpatialFootprintMapViewer: React.FC<SpatialFootprintMapViewerProps> = ({
                         }
                     } else {
                         console.warn("No valid bounds to fit the map.");
-                        map.setView([11.3233, 124.9200], 6);  // Default view if no layers are visible
+                        //map.setView([11.3233, 124.9200], 6);  // Default view if no layers are visible
                     }
                 };
     
               window.onload = () => {
-                const map = L.map("map").setView([11.3233, 124.9200], 6);
+                const map = L.map("map"); //.setView([11.3233, 124.9200], 6);
                 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                   attribution: "&copy; OpenStreetMap contributors",
                 }).addTo(map);
