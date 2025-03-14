@@ -178,18 +178,44 @@ const validateSectorId = (sectorId: string): number => {
 const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
   try {
     const numericSectorId = validateSectorId(sectorId);
-
-    // Get all subsectors if this is a parent sector
-    const subsectors = await getSectorsByParentId(numericSectorId);
-
-    // Return all sector IDs (parent + subsectors if any, or just the sector ID if no subsectors)
-    return subsectors.length > 0
-      ? [sectorId, ...subsectors.map(s => s.id.toString())]
-      : [sectorId];
+    const allSectorIds = [sectorId];
+    
+    // Recursively get all subsectors at all levels
+    const fetchSubsectors = async (parentId: number): Promise<void> => {
+      // Get direct children
+      const directSubsectors = await dr
+        .select({
+          id: sectorTable.id
+        })
+        .from(sectorTable)
+        .where(eq(sectorTable.parentId, parentId));
+      
+      // Add each direct child to the result array
+      for (const subsector of directSubsectors) {
+        allSectorIds.push(subsector.id.toString());
+        // Recursively get children of this subsector
+        await fetchSubsectors(subsector.id);
+      }
+    };
+    
+    // Start the recursive fetch
+    await fetchSubsectors(numericSectorId);
+    
+    return allSectorIds;
   } catch (error) {
     console.error('Error in getAllSubsectorIds:', error);
     throw error;
   }
+};
+
+const getAgriSubsector = (sectorId: string): FaoAgriSubsector | null => {
+  const subsectorMap: { [key: string]: FaoAgriSubsector } = {
+    'agri_crops': 'crops',
+    'agri_livestock': 'livestock',
+    'agri_fisheries': 'fisheries',
+    'agri_forestry': 'forestry'
+  };
+  return subsectorMap[sectorId] || null;
 };
 
 // Function to get all disaster records for a sector
@@ -429,16 +455,6 @@ const getDisasterRecordsForSector = async (
     console.error('Error in getDisasterRecordsForSector:', error);
     throw error;
   }
-};
-
-const getAgriSubsector = (sectorId: string): FaoAgriSubsector | null => {
-  const subsectorMap: { [key: string]: FaoAgriSubsector } = {
-    'agri_crops': 'crops',
-    'agri_livestock': 'livestock',
-    'agri_fisheries': 'fisheries',
-    'agri_forestry': 'forestry'
-  };
-  return subsectorMap[sectorId] || null;
 };
 
 // Update aggregateDamagesData function
