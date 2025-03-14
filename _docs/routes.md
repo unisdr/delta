@@ -1,4 +1,4 @@
-- [code organization](code-organization)
+- [Code organization](code-organization.md)
 
 # Remix routes
 `app/routes`

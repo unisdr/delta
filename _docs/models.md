@@ -1,4 +1,4 @@
-- [code organization](code-organization)
+- [Code organization](code-organization.md)
 
 # Models
 `app/backend.server/models`

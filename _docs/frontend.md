@@ -1,7 +1,7 @@
-- [code organization](code-organization)
+- [Code organization](code-organization.md)
 
 # Frontend
-- [frontend](frontend)
+- [Frontend](frontend.md)
 `app/frontend`
 Contains code that runs on both the server and browser. Primarily UI-related with no direct database access.
 

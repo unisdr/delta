@@ -1,7 +1,7 @@
 # Code Organization
 
 ## Important concepts
-- [form csv api](form-csv-api)
+- [Form CSV API](form-csv-api.md)
 
 ## Folder Structure
 
@@ -10,22 +10,22 @@
 
 ### Database Access
 `app/backend.server/models`
-- [models](models)
+- [Models](models.md)
 
 ### Request Handlers
 `app/backend.server/handlers`
-- [handlers](handlers)
+- [Handlers](handlers.md)
 
 ### Remix Routes
-- [routes](routes)
+- [Routes](routes.md)
 `app/routes`
 
 ### Frontend
-- [frontend](frontend)
+- [Frontend](frontend.md)
 `app/frontend`
 
 ### Database schema
-- [drizzle](drizzle)
+- [Drizzle](drizzle.md)
 `app/drizzle`
 
 ### Types

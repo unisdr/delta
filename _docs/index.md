@@ -1,22 +1,23 @@
 # Developer documentation
 
 ## General
-- [code organization](code-organization)
-	- [models](models)
-	- [handlers](handlers)
-	- [routes](routes)
-	- [frontend](frontend)
-- [form-csv-api](form-csv-api)
-- [technical documentation](technical-documentation)
+- [Code organization](code-organization.md)
+	- [Models](models.md)
+	- [Handlers](handlers.md)
+	- [Routes](routes.md)
+	- [Frontend](frontend.md)
+- [Form CSV API](form-csv-api.md)
+- [Technical documentation](technical-documentation.md)
 
 ## Requirements
-- [ids](ids) - Document IDs used for hazardous, disaster events and disaster records
+- [IDs](ids.md) - Document IDs used for hazardous, disaster events and disaster records
 
 ## Database
-- [database options](database-options) - Decision document on picking the database access or ORM library
-- [drizzle](drizzle) - notes on using drizzle
+- [Database options](database-options.md) - Decision document on picking the database access or ORM library
+- [Drizzle](drizzle.md) - notes on using drizzle
 
 ## API docs for data import
-- [api for desinventar import](api-for-desinventar-import)
+- [API for Desinventar import](api-for-desinventar-import.md)
+
 ## Analytics
-- [Dashboard_Visualization_Requirements](Dashboard_Visualization_Requirements)
+- [Dashboard visualization requirements](Dashboard_Visualization_Requirements.md)
