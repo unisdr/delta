@@ -180,7 +180,7 @@ export function authLoaderApiDocs<T extends LoaderFunction>(fn: T): T {
 
 export function authLoaderGetAuth(args: any): UserSession {
 	if (!args.userSession || !args.userSession.user) {
-		throw "Missing user session"
+		throw new Error("Missing user session")
 	}
 	return args.userSession
 }
@@ -264,7 +264,8 @@ export function authActionApi<T extends ActionFunction>(fn: T): T {
 
 export function authActionGetAuth(args: any): UserSession {
 	if (!args.userSession || !args.userSession.user) {
-		throw "Missing user session"
+		console.error("Missing user session", args)
+		throw new Error("Missing user session")
 	}
 	return args.userSession
 }
