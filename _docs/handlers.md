@@ -3,9 +3,9 @@
 ### Request Handlers
 `app/backend.server/handlers`
 
-Learn about remix [routes](routes) before checking this.
+Learn about remix [routes](routes.md) before checking this.
 
-The handlers contain code that is shared between multiple routes. So the same as for [routes](routes) apply, but if the code is duplicated across routes, it went into this folder instead.
+The handlers contain code that is shared between multiple routes. So the same as for routes apply, but if the code is duplicated across routes, it went into this folder instead.
 
 The following are the largest parts.
 
