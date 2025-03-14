@@ -1,16 +1,25 @@
 import {dr, Tx} from "~/db.server";
 import {nonecoLossesTable, nonecoLosses, categoriesTable} from "~/drizzle/schema";
 import {eq,sql,aliasedTable} from "drizzle-orm";
-
-
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
-import {Errors, hasErrors} from "~/frontend/form";
+import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 
 export interface NonecoLossesFields extends Omit<nonecoLosses, "id"> {}
 
+export const fieldsDefCommon = [
+	{key: "disasterRecordId", label: "Disaster Record", type: "text", required: true},
+	{key: "categoryId", label: "Category", type: "text", required: true},
+	{key: "description", label: "Description", type: "text", required: true},
+] as const;
+
+export const fieldsDefApi: FormInputDef<NonecoLossesFields>[] = [
+	...fieldsDefCommon,
+	{key: "apiImportId", label: "", type: "other"},
+];
+
 // do not change
-export function validate(_fields: NonecoLossesFields): Errors<NonecoLossesFields> {
+export function validate(_fields: Partial<NonecoLossesFields>): Errors<NonecoLossesFields> {
 	let errors: Errors<NonecoLossesFields> = {};
 	errors.fields = {};
 
@@ -27,7 +36,7 @@ export async function nonecoLossesCreate(tx: Tx, fields: NonecoLossesFields): Pr
 	const res = await tx.insert(nonecoLossesTable)
 		.values({
 			disasterRecordId: fields.disasterRecordId,
-			categortyId: fields.categortyId,
+			categoryId: fields.categoryId,
 			description: fields.description,
 			updatedAt: sql`NOW()`,
 		})
@@ -36,7 +45,7 @@ export async function nonecoLossesCreate(tx: Tx, fields: NonecoLossesFields): Pr
 	return {ok: true, id: res[0].id};
 }
 
-export async function nonecoLossesUpdate(tx: Tx, idStr: string, fields: NonecoLossesFields): Promise<UpdateResult<NonecoLossesFields>> {
+export async function nonecoLossesUpdate(tx: Tx, idStr: string, fields: Partial<NonecoLossesFields>): Promise<UpdateResult<NonecoLossesFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return {ok: false, errors};
@@ -45,7 +54,7 @@ export async function nonecoLossesUpdate(tx: Tx, idStr: string, fields: NonecoLo
 	await tx.update(nonecoLossesTable)
 		.set({
 			disasterRecordId: fields.disasterRecordId,
-			categortyId: fields.categortyId,
+			categoryId: fields.categoryId,
 			description: fields.description,
 			updatedAt: sql`NOW()`,
 		})
@@ -78,14 +87,27 @@ export async function nonecoLossesDeleteById(idStr: string): Promise<DeleteResul
 	return {ok: true}
 }
 
+export async function nonecoLossesIdByImportId(tx: Tx, importId: string) {
+	const res = await tx.select({
+		id: nonecoLossesTable.id
+	}).from(nonecoLossesTable).where(eq(
+		nonecoLossesTable.apiImportId, importId
+	))
+	if (res.length == 0) {
+		return null
+	}
+	return String(res[0].id)
+}
+
 export type PropRecord = {
 	id?: string;
-	categortyId: number;
+	categoryId: number;
 	disasterRecordId: string;
 	description: string;
 	updatedAt?: Date;
 	category?: any;
 };
+
 
 export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {
 	let id = idStr;
@@ -95,13 +117,13 @@ export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {
 	return await dr.select({
 			noneccoId: nonecoLossesTable.id,
 			noneccoDesc: nonecoLossesTable.description,
-			noneccoCatId: nonecoLossesTable.categortyId,
+			noneccoCatId: nonecoLossesTable.categoryId,
 			catName: catTable.name,
 			categoryTreeDisplay: sql`(
 				WITH RECURSIVE CategoryCTE AS (
 					SELECT id, name, parent_id, name AS full_path
 					FROM categories
-					WHERE id = ${nonecoLossesTable.categortyId}
+					WHERE id = ${nonecoLossesTable.categoryId}
 
 					UNION ALL
 
@@ -114,13 +136,13 @@ export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {
 				WHERE parent_id IS NULL
 			)`.as('categoryTreeDisplay'),
 		}).from(nonecoLossesTable)
-		.leftJoin(catTable, eq(catTable.id, nonecoLossesTable.categortyId))
+		.leftJoin(catTable, eq(catTable.id, nonecoLossesTable.categoryId))
 		.where(eq(nonecoLossesTable.disasterRecordId, id))
 		.orderBy(sql`(
 			WITH RECURSIVE CategoryCTE AS (
 				SELECT id, name, parent_id, name AS full_path
 				FROM categories
-				WHERE id = ${nonecoLossesTable.categortyId}
+				WHERE id = ${nonecoLossesTable.categoryId}
 
 				UNION ALL
 
@@ -146,7 +168,7 @@ export async function upsertRecord(record: PropRecord): Promise<void> {
 		.onConflictDoUpdate({
 			target: nonecoLossesTable.id,
 			set: { 
-				categortyId: record.categortyId,
+				categoryId: record.categoryId,
 				disasterRecordId: record.disasterRecordId,
 				description: record.description,
 				updatedAt: sql`NOW()`,

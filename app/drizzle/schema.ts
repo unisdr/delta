@@ -335,7 +335,7 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	// otherId1: zeroText("otherId1"),
 	//duration: zeroText("duration"),
 	nationalSpecification: zeroText("national_specification"),
-	// yyyy or yyyy-mm or yyyy-mm-dd in utc
+	// yyyy or yyyy-mm or yyyy-mm-dd
 	startDate: zeroText("start_date"),
 	endDate: zeroText("end_date"),
 	description: zeroText("description"),
@@ -400,7 +400,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	nameNational: zeroText("name_national"),
 	glide: zeroText("glide"),
 	nameGlobalOrRegional: zeroText("name_global_or_regional"),
-	// yyyy or yyyy-mm or yyyy-mm-dd in utc
+	// yyyy or yyyy-mm or yyyy-mm-dd
 	startDate: zeroText("start_date"),
 	endDate: zeroText("end_date"),
 	startDateLocal: text("start_date_local"),
@@ -1009,7 +1009,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	disasterEventId: uuid("disaster_event_id")
 		.references((): AnyPgColumn => disasterEventTable.id),
 	locationDesc: text("location_desc"),
-	// yyyy or yyyy-mm or yyyy-mm-dd in utc
+	// yyyy or yyyy-mm or yyyy-mm-dd
 	startDate: text("start_date"),
 	endDate: text("end_date"),
 	localWarnInst: text("local_warn_inst"),
@@ -1104,11 +1104,12 @@ export type nonecoLossesInsert = typeof nonecoLossesTable.$inferInsert;
 export const nonecoLossesTable = pgTable(
 	"noneco_losses",
 	{
+		...apiImportIdField(),
 		id: ourRandomUUID(),
 		disasterRecordId: uuid("disaster_record_id")
 			.references((): AnyPgColumn => disasterRecordsTable.id)
 			.notNull(),
-		categortyId: ourBigint("category_id")
+		categoryId: ourBigint("category_id")
 			.references((): AnyPgColumn => categoriesTable.id)
 			.notNull(),
 		description: text("description").notNull(),
@@ -1116,13 +1117,13 @@ export const nonecoLossesTable = pgTable(
 	},
 	(table) => {
 		return [
-			unique("nonecolosses_sectorIdx").on(table.disasterRecordId, table.categortyId),
+			unique("nonecolosses_sectorIdx").on(table.disasterRecordId, table.categoryId),
 		];
 	}
 );
 
 export const nonecoLossesCategory_Rel = relations(nonecoLossesTable, ({one}) => ({
-	category: one(categoriesTable, {fields: [nonecoLossesTable.categortyId], references: [categoriesTable.id]}),
+	category: one(categoriesTable, {fields: [nonecoLossesTable.categoryId], references: [categoriesTable.id]}),
 }));
 
 /**
@@ -1168,6 +1169,7 @@ export const sectoryParent_Rel = relations(sectorTable, ({one}) => ({
 export const sectorDisasterRecordsRelationTable = pgTable(
 	"sector_disaster_records_relation",
 	{
+		...apiImportIdField(),
 		id: ourRandomUUID(),
 		sectorId: ourBigint("sector_id")
 			.notNull()
