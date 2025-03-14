@@ -13,8 +13,9 @@ While this provides a consistent basis for data management, it is also flexible 
 There is an example of this pattern named `dev_example1` that you can use as a baseline.
 
 See Form, CSV, API code sections in the following files as well.
-- [handlers](handlers)
-- [frontend](frontend)
+
+- [Handlers](handlers.md)
+- [Frontend](frontend.md)
 
 ## Adding a new type
 
