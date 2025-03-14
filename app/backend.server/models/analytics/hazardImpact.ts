@@ -39,19 +39,38 @@ const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null
 };
 
 /**
- * Gets all subsector IDs for a given sector and its subsectors
+ * Gets all subsector IDs for a given sector and all its subsectors recursively
  * @param sectorId - The ID of the sector to get subsectors for
- * @returns Array of sector IDs including the input sector and all its subsectors
+ * @returns Array of sector IDs including the input sector and all its subsectors at all levels
  */
 const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
     const numericSectorId = parseInt(sectorId, 10);
     if (isNaN(numericSectorId)) {
         return []; // Return empty array if invalid ID
     }
+
+    // Get immediate subsectors
     const subsectors = await getSectorsByParentId(numericSectorId);
-    return subsectors.length > 0
-        ? [numericSectorId, ...subsectors.map(s => s.id)]
-        : [numericSectorId];
+    
+    // Initialize result with the current sector ID
+    const result: number[] = [numericSectorId];
+    
+    // Recursively get all subsectors at all levels
+    if (subsectors.length > 0) {
+        // Add immediate subsector IDs
+        result.push(...subsectors.map(s => s.id));
+        
+        // For each subsector, recursively get its subsectors
+        for (const subsector of subsectors) {
+            const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
+            // Filter out the subsector ID itself as it's already included
+            const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
+            result.push(...uniqueChildIds);
+        }
+    }
+    
+    // Remove duplicates and return
+    return [...new Set(result)];
 };
 
 // Cache for division info
