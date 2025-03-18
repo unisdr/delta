@@ -19,6 +19,7 @@ import "./style.css";
 
 interface ItemRes {
 	id: number
+	nationalId: string
 	hasChildren: boolean
 	name: Record<string, string>
 }
@@ -43,6 +44,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 	const q1 = dr.select({
 		id: divisionTable.id,
+		nationalId: divisionTable.nationalId,
 		name: divisionTable.name,
 		hasChildren: sql<boolean>`EXISTS (
 		SELECT 1
@@ -105,6 +107,7 @@ export function DivisionsTable({items, langs}: DivisionsTableProps) {
 			<thead>
 				<tr>
 					<th>ID</th>
+					<th>National ID</th>
 					{langs.map((lang) => (
 						<th key={lang}>{lang.toUpperCase()}</th>
 					))}
@@ -118,6 +121,9 @@ export function DivisionsTable({items, langs}: DivisionsTableProps) {
 						<tr key={item.id}>
 							<td>
 								{linkOrText(linkUrl, item.id)}
+							</td>
+							<td>
+								{linkOrText(linkUrl, item.nationalId)}
 							</td>
 							{langs.map((lang) => (
 								<td key={lang}>

@@ -15,6 +15,7 @@ export const loader = createApiListLoader(
 			columns: {
 				id: true,
 				importId: true,
+				nationalId: true,
 				parentId: true,
 				name: true,
 				level: true,

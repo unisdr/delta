@@ -226,6 +226,7 @@ export const divisionTable = pgTable(
 	{
 		id: ourSerial("id").primaryKey(),
 		importId: text("import_id").unique(),
+		nationalId: text("national_id").unique(),
 		parentId: ourBigint("parent_id").references(
 			(): AnyPgColumn => divisionTable.id
 		),
