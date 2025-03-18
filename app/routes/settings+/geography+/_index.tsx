@@ -16,6 +16,7 @@ import {Breadcrumb} from "~/frontend/division";
 import {MainContainer} from "~/frontend/container";
 
 import "./style.css";
+import {DataMainLinks} from "~/frontend/data_screen";
 
 interface ItemRes {
 	id: number
@@ -159,13 +160,23 @@ export default function Screen() {
 							<li><Link to="/settings/geography/tree">Tree View</Link></li>
 						</ul>
 					</div>
-				</section>	
+				</section>
 			}
 		>
 			<>
-				<p style={{marginTop: "2.5rem"}}>
-					<a href="/settings/geography/upload">Upload CSV</a>
-				</p>
+				<br />
+				<DataMainLinks
+					noCreate={true}
+					noImport={true}
+					baseRoute="/settings/geography"
+					resourceName=""
+					csvExportLinks={true}
+					extraButtons={
+						[
+							{relPath: "upload", label: "Upload CSV"}
+						]
+					}
+				/>
 				{ld.pagination.totalItems > 0 ? (
 					<>
 						<LanguageCheckboxes langs={ld.langs} selectedLangs={ld.selectedLangs} />
