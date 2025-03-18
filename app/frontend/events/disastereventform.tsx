@@ -241,6 +241,9 @@ export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 export const fieldsDefApi: FormInputDef<DisasterEventFields>[] = [
 	{key: "hazardousEventId", label: "", type: "other"},
 	{key: "disasterEventId", label: "", type: "other"},
+	{key: "hipHazardId", label: "", type: "other"},
+	{key: "hipClusterId", label: "", type: "other"},
+	{key: "hipTypeId", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "apiImportId", label: "", type: "other"},
 ];
@@ -329,16 +332,14 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 		let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - 100;
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-		if (dtsFormBody) {	
-			dtsFormBody.style.height = `${getHeight-(window.innerHeight - getHeight)}px`;
+		if (dtsFormBody) {
+			dtsFormBody.style.height = `${getHeight - (window.innerHeight - getHeight)}px`;
 		}
 	}
 
-	let hazardousEventLinkInitial: "none" | "hazardous_event" | "hip" | "disaster_event" = "none"
+	let hazardousEventLinkInitial: "none" | "hazardous_event" | "disaster_event" = "none"
 	if (props.fields.hazardousEventId) {
 		hazardousEventLinkInitial = "hazardous_event"
-	} else if (props.fields.hipTypeId) {
-		hazardousEventLinkInitial = "hip"
 	} else if (props.fields.disasterEventId) {
 		hazardousEventLinkInitial = "disaster_event"
 	}
@@ -424,11 +425,10 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 			fieldsDef={fieldsDef}
 			infoNodes={<>
 				<div className="mg-grid mg-grid__col-3">
-					<WrapInputBasic label="Hazardous event link" child={
+					<WrapInputBasic label="Linking parameter" child={
 						<select defaultValue={hazardousEventLinkType} onChange={(e: any) => setHazardousEventLinkType(e.target.value)}>
 							<option value="none">No link</option>
 							<option value="hazardous_event">Hazardous event</option>
-							<option value="hip">HIP Hazard</option>
 							<option value="disaster_event">Disaster event</option>
 						</select>
 					} />
@@ -458,15 +458,10 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 				hipTypeId: null,
 				hipClusterId: null,
 				hipHazardId: (
-					(hazardousEventLinkType == "hip") ?
-						<Field key="hazardId" label="Specific Hazard *">
-							<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
-							<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
-						</Field> : <>
-							<input type="hidden" name="hipTypeId" value="" />
-							<input type="hidden" name="hipClusterId" value="" />
-							<input type="hidden" name="hipHazardId" value="" />
-						</>
+					<Field key="hazardId" label="Hazard classification">
+						<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
+						<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
+					</Field>
 				),
 				spatialFootprint: props.edit ? (
 					<Field key="spatialFootprint" label="">
@@ -586,7 +581,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 														arrValue = {
 															...arrValue,  // Spread existing properties (if any)
 															dts_info: {
-																division_id: selectedItems.selectedId || null, 
+																division_id: selectedItems.selectedId || null,
 																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
 															}
 														};

@@ -1,21 +1,25 @@
 interface HipHazardModel {
-	hipType?: {nameEn: string } | null
-	hipCluster?: {nameEn: string } | null
-	hipHazard?: {nameEn: string } | null
+	hipType?: {nameEn: string} | null
+	hipCluster?: {nameEn: string} | null
+	hipHazard?: {nameEn: string} | null
 }
 
 export function HipHazardInfo({model}: {model: HipHazardModel}) {
+	if (!model.hipType && !model.hipCluster && !model.hipHazard) {
+		return null
+	}
 	return (<div>
-		{model.hipType &&
-			<p>Type: {model.hipType.nameEn}</p>
-		}
-		{model.hipCluster &&
-			<p>Cluster: {model.hipCluster.nameEn}</p>
-		}
-		{model.hipHazard &&
-			<>
-				<p>Hazard Name: {model.hipHazard.nameEn}</p>
-			</>
-		}
+		<h5>Hazard classification</h5>
+		<ul>
+			{model.hipType &&
+				<li>Type: {model.hipType.nameEn}</li>
+			}
+			{model.hipCluster &&
+				<li>Cluster: {model.hipCluster.nameEn}</li>
+			}
+			{model.hipHazard &&
+				<li>Hazard Name: {model.hipHazard.nameEn}</li>
+			}
+		</ul>
 	</div>)
 }
