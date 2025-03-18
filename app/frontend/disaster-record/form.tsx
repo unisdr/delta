@@ -134,16 +134,14 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 		let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - 100;
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-		if (dtsFormBody) {	
-			dtsFormBody.style.height = `${getHeight-(window.innerHeight - getHeight)}px`;
+		if (dtsFormBody) {
+			dtsFormBody.style.height = `${getHeight - (window.innerHeight - getHeight)}px`;
 		}
 	}
 
-	let hazardousEventLinkInitial: "none" | "hip" | "disaster_event" = "none"
+	let hazardousEventLinkInitial: "none" | "disaster_event" = "none"
 	if (props.fields.disasterEventId) {
 		hazardousEventLinkInitial = "disaster_event"
-	} else if (props.fields.hipTypeId) {
-		hazardousEventLinkInitial = "hip"
 	}
 
 	console.log("disaster: initial link:", hazardousEventLinkInitial, "fields", props.fields)
@@ -164,10 +162,9 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 				fieldsDef={fieldsDef}
 				infoNodes={<>
 					<div className="mg-grid mg-grid__col-3">
-						<WrapInputBasic label="Hazardous event link" child={
+						<WrapInputBasic label="Linking parameter" child={
 							<select defaultValue={hazardousEventLinkType} onChange={(e: any) => setHazardousEventLinkType(e.target.value)}>
 								<option value="none">No link</option>
-								<option value="hip">HIP Hazard</option>
 								<option value="disaster_event">Disaster event</option>
 							</select>
 						} />
@@ -182,15 +179,10 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 					hipTypeId: null,
 					hipClusterId: null,
 					hipHazardId: (
-						(hazardousEventLinkType == "hip") ?
-							<Field key="hazardId" label="Specific Hazard *">
-								<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
-								<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
-							</Field> : <>
-								<input type="hidden" name="hipTypeId" value="" />
-								<input type="hidden" name="hipClusterId" value="" />
-								<input type="hidden" name="hipHazardId" value="" />
-							</>
+						<Field key="hazardId" label="Hazard classification">
+							<HazardPicker hip={props.hip} typeId={fields.hipTypeId} clusterId={fields.hipClusterId} hazardId={fields.hipHazardId} />
+							<FieldErrors errors={props.errors} field="hipHazardId"></FieldErrors>
+						</Field>
 					),
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
