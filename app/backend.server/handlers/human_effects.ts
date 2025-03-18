@@ -79,6 +79,7 @@ export async function saveData(req: Request, recordId: string) {
 	}
 	let defs = await defsForTable(d.table)
 	let expectedCols = defs.map(d => d.jsName)
+
 	if (!eqArr(d.columns, expectedCols)){
 		return Response.json({ok: false, error: `columns passed do not match expected: ${expectedCols} got ${d.columns}`}, {status: 400})
 	}

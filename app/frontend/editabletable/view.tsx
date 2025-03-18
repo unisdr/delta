@@ -12,6 +12,7 @@ import React from 'react'
 import {toStandardDate} from "~/util/date"
 import {eqArr} from "~/util/array"
 import {Link, useFetcher} from "@remix-run/react"
+import {notifyError, notifyInfo} from "../utils/notifications"
 
 interface TableProps {
 	recordId: string
@@ -152,6 +153,7 @@ function TableClient(props: TableProps) {
 		console.log("Saving data to server")
 		let dataUpdates = data.getUpdatesForSaving()
 		let json = JSON.stringify({
+			columns: props.defs.map(d => d.jsName),
 			table: props.table,
 			data: dataUpdates
 		})
@@ -174,10 +176,10 @@ function TableClient(props: TableProps) {
 				}
 				return
 			}
-			console.log("Data successfully saved")
+			notifyInfo("Your changes have been saved on the server")
 			await reloadData()
 		} catch (error) {
-			alert("Error saving data:" + error)
+			notifyError("Error saving changes: " + error)
 		}
 	}
 

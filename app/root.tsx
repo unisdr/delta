@@ -16,9 +16,9 @@ import {
 	useFetcher
 } from "@remix-run/react";
 
-import { LoaderFunctionArgs } from "react-router-dom";
+import {LoaderFunctionArgs} from "react-router-dom";
 
-import { toast, ToastContainer } from "react-toastify/unstyled"; // Import ToastContainer for notifications
+import {ToastContainer} from "react-toastify/unstyled"; // Import ToastContainer for notifications
 
 import {
 	getUserFromSession,
@@ -26,7 +26,7 @@ import {
 	getFlashMessage,
 } from "~/util/session";
 
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 
 import {
 	configApprovedRecordsArePublic,
@@ -34,7 +34,6 @@ import {
 	configSiteName,
 	configFooterURLPrivPolicy,
 	configFooterURLTermsConds,
-	configCurrencies
 } from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
@@ -46,15 +45,16 @@ import {
 	Footer,
 } from "~/frontend/footer/footer"
 
-import { QueryClient, QueryClientProvider } from 'react-query';
+import {QueryClient, QueryClientProvider} from 'react-query';
+import {notifyError, notifyInfo} from "./frontend/utils/notifications";
 
 
 export const links: LinksFunction = () => [
-	{ rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css' },
-	{ rel: "stylesheet", href: allStylesHref },
+	{rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css'},
+	{rel: "stylesheet", href: allStylesHref},
 ];
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({request}: LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request)
 
 	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
@@ -158,7 +158,7 @@ function InactivityWarning(props: InactivityWarningProps) {
 	return (
 		<>
 			{showWarning ? (
-				<div style={{ background: "red", position: "fixed", top: 0, width: "100%" }}>
+				<div style={{background: "red", position: "fixed", top: 0, width: "100%"}}>
 					{expiresInMinutes > 0.1 ? (
 						<>
 							<p>
@@ -190,20 +190,15 @@ const queryClient = new QueryClient({
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const { hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, env } = loaderData
+	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, env} = loaderData
 
 	// Display toast for flash messages
 	useEffect(() => {
 		if (flashMessage) {
-			const toastConfig = {
-				position: "top-center" as const,
-				autoClose: 5000,
-			};
-
 			if (flashMessage.type === "error") {
-				toast.error(flashMessage.text, toastConfig);
+				notifyError(flashMessage.text)
 			} else {
-				toast.info(flashMessage.text, toastConfig);
+				notifyInfo(flashMessage.text)
 			}
 		}
 	}, [flashMessage]);
