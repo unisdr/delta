@@ -65,6 +65,10 @@ export function LossesForm(props: LossesFormProps) {
 
 	// handle total overrides
 	useEffect(() => {
+		if (!formRef.current) return
+
+		totaloverrides.formOnSubmitAllowDisabled(formRef)
+
 		let prefixes = [
 			"public",
 			"private",
@@ -78,10 +82,8 @@ export function LossesForm(props: LossesFormProps) {
 				calc: (parts) => parts[0] * parts[1],
 			}
 		}
-		if (formRef.current) {
-			for (let pref of prefixes) {
-				totaloverrides.attach(opts(pref))
-			}
+		for (let pref of prefixes) {
+			totaloverrides.attach(opts(pref))
 		}
 		return () => {
 			if (formRef.current) {
@@ -316,7 +318,7 @@ export function LossesForm(props: LossesFormProps) {
 												arrValue = {
 													...arrValue,  // Spread existing properties (if any)
 													dts_info: {
-														division_id: selectedItems.selectedId || null, 
+														division_id: selectedItems.selectedId || null,
 														division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
 													}
 												};
@@ -525,7 +527,7 @@ interface LossesViewProps {
 
 export function LossesView(props: LossesViewProps) {
 
-	// select field to show based if sector is related to agriculture
+	// Select field to show depending on if sector is related to agriculture or not.
 	let extra = props.item.sectorIsAgriculture ? {
 		typeNotAgriculture: null,
 		relatedToNotAgriculture: null
@@ -719,7 +721,7 @@ export function LossesView(props: LossesViewProps) {
 					description: (
 						<h2>Public</h2>
 					),
-					publicTotalCostCurrency: (
+					publicCostTotalOverride: (
 						<h2>Private</h2>
 					),
 				}}
