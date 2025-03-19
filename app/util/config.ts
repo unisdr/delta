@@ -259,3 +259,9 @@ export async function configApplicationVersion(): Promise<string> {
 };
 
 
+
+export function configCountryInstanceISO(): string {
+	let returnValue:string = process.env.DTS_INSTANCE_CTRY_ISO3 || "";
+
+	return returnValue;
+};
