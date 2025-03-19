@@ -5,7 +5,7 @@ import {Link} from "@remix-run/react";
 import {useActionData} from "@remix-run/react";
 import {ReactElement, useRef, useState, useEffect} from "react";
 
-import {formatDate, formatDateTimeUTC, formatForDateTimeInput} from "~/util/date";
+import {formatDate, formatDateTimeUTC, formatForDateTimeInput, getMonthName} from "~/util/date";
 import {MainContainer} from "./container";
 
 import {capitalizeFirstLetter} from "~/util/string";
@@ -584,10 +584,14 @@ export interface InputProps {
 }
 
 export function Input(props: InputProps) {
-	let wrapInput = function (child: React.ReactNode) {
+	let wrapInput = function (child: React.ReactNode, label?: string) {
+		let def = {...props.def}
+		if (label) {
+			def.label = label
+		}
 		return (
 			<WrapInput
-				def={props.def}
+				def={def}
 				child={child}
 				errors={props.errors}
 			/>
@@ -735,46 +739,47 @@ export function Input(props: InputProps) {
 				let vsInit = (props.value || "") as string
 				let precisionInit: "yyyy-mm-dd" | "yyyy-mm" | "yyyy" = "yyyy-mm-dd"
 				// yyyy-mm-dd
-				let vsFullInit = vsInit
+				let vsFullInit: {y: number, m: number, d: number} = {y: 0, m: 0, d: 0}
 				if (vsInit) {
 					if (vsInit.length == 10) {
+						vsFullInit = {
+							y: Number(vsInit.slice(0, 4)),
+							m: Number(vsInit.slice(5, 7)),
+							d: Number(vsInit.slice(8))
+						}
 					} else if (vsInit.length == 7) {
-						vsFullInit += "-01"
+						vsFullInit = {y: Number(vsInit.slice(0, 4)), m: Number(vsInit.slice(5)), d: 1}
 						precisionInit = "yyyy-mm"
 					} else if (vsInit.length == 4) {
-						vsFullInit += "-01-01"
+						vsFullInit = {y: Number(vsInit), m: 1, d: 1}
 						precisionInit = "yyyy"
 					} else {
+						console.error("invalid date format in database", vsInit)
+						return null
 					}
 				}
-				let toDB = (vs: string, prec: "yyyy-mm-dd" | "yyyy-mm" | "yyyy") => {
+				let toDB = (vs: {y: number, m: number, d: number}, prec: "yyyy-mm-dd" | "yyyy-mm" | "yyyy"): string => {
 					if (prec == "yyyy") {
-						return vs.slice(0, 4)
+						if (!vs.y) return ""
+						return String(vs.y)
 					} else if (prec == "yyyy-mm") {
-						return vs.slice(0, 7)
+						if (!vs.y || !vs.m) return ""
+						return vs.y + "-" + String(vs.m).padStart(2, '0')
 					}
-					return vs
+					if (!vs.y || !vs.m || !vs.d) return ""
+					return vs.y + "-" + String(vs.m).padStart(2, '0') + "-" + String(vs.d).padStart(2, '0')
 				}
 				let [vsDB, vsDBSet] = useState(vsInit)
 				let [vsFull, vsFullSet] = useState(vsFullInit)
 				let [precision, precisionSet] = useState(precisionInit)
+				let vsDBSet2 = (v: string) => {
+					console.log("setting date in db format", v)
+					vsDBSet(v)
+				}
+
 				return <div>
-					<input type="hidden" name={props.name} value={vsDB} />
-					{wrapInput(
-						<input
-							required={props.def.required}
-							type="date"
-							value={vsFull}
-							onChange={(e: any) => {
-								let v = e.target.value
-								vsFullSet(v)
-								vsDBSet(toDB(v, precision))
-								if (props.onChange) props.onChange(e)
-							}}
-						/>)
-					}
 					<WrapInputBasic
-						label="Date Format"
+						label={props.def.label + " Format"}
 						child={
 							<select
 								value={precision}
@@ -785,13 +790,107 @@ export function Input(props: InputProps) {
 									if (props.onChange) props.onChange(e)
 								}}
 							>
-								<option value="yyyy-mm-dd">Full date (yyyy-mm-dd)</option>
-								<option value="yyyy-mm">Year and month (yyyy-mm)</option>
-								<option value="yyyy">Year only (yyyy)</option>
+								<option value="yyyy-mm-dd">Full date</option>
+								<option value="yyyy-mm">Year and month</option>
+								<option value="yyyy">Year only</option>
 							</select>
 						}
 					/>
-
+					<input type="hidden" name={props.name} value={vsDB} />
+					{precision == "yyyy-mm-dd" && (
+						wrapInput(
+							<input
+								required={props.def.required}
+								type="date"
+								value={vsFull.y + "-" + String(vsFull.m).padStart(2, '0') + "-" + String(vsFull.d).padStart(2, '0')}
+								onChange={(e: any) => {
+									let vStr = e.target.value
+									let v = {y: 0, m: 0, d: 0}
+									if (vStr.length >= "yyyy-mm-dd".length) {
+										let dateParts = vStr.split('-')
+										v = {y: Number(dateParts[0]), m: Number(dateParts[1]), d: Number(dateParts[2])}
+									}
+									vsFullSet(v)
+									vsDBSet2(toDB(v, precision))
+									if (props.onChange) props.onChange(e)
+								}}
+							/>, props.def.label + " Date")
+					)}
+					{precision == "yyyy-mm" && (
+						<>
+							{wrapInput(
+								<select
+									required={props.def.required}
+									value={vsFull.y}
+									onChange={(e: any) => {
+										let v = {y: Number(e.target.value), m: vsFull.m, d: 0}
+										vsFullSet(v)
+										vsDBSet2(toDB(v, precision))
+										if (props.onChange) props.onChange(e)
+									}}
+								>
+									{(() => {
+										let yearNow = new Date().getFullYear()
+										let options = []
+										options.push(<option key="" value="">Select</option>)
+										for (let year = yearNow; year >= 1950; year--) {
+											options.push(
+												<option key={year} value={year}>{year}</option>
+											)
+										}
+										return options
+									})()}
+								</select>
+								, props.def.label + " Year")}
+							<WrapInputBasic
+								label={props.def.label + " Month"}
+								child={
+									<select
+										value={vsFull.m}
+										onChange={(e: any) => {
+											let v = {y: vsFull.y, m: Number(e.target.value), d: 0}
+											vsFullSet(v)
+											vsDBSet2(toDB(v, precision))
+											if (props.onChange) props.onChange(e)
+										}}
+									>
+										<option key="" value="">Select</option>
+										{Array.from({length: 12}, (_, i) => (
+											<option key={i} value={i + 1}>{getMonthName(i + 1)}</option>
+										))}
+									</select>
+								}
+							/>
+						</>
+					)}
+					{precision == "yyyy" && (
+						<>
+							{wrapInput(
+								<select
+									required={props.def.required}
+									value={vsFull.y}
+									onChange={(e: any) => {
+										let v = {y: Number(e.target.value), m: 0, d: 0}
+										vsFullSet(v)
+										vsDBSet2(toDB(v, precision))
+										if (props.onChange) props.onChange(e)
+									}}
+								>
+									{(() => {
+										let yearNow = new Date().getFullYear()
+										let options = []
+										options.push(<option key="" value="">Select</option>)
+										for (let year = yearNow; year >= 1950; year--) {
+											options.push(
+												<option key={year} value={year}>{year}</option>
+											)
+										}
+										return options
+									})()}
+								</select>
+								, props.def.label + " Year")}
+						</>
+					)}
 				</div >
 			}
 		case "text":

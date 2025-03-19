@@ -194,10 +194,12 @@ export const devExample1Table = pgTable("dev_example1", {
 	field3: ourBigint("field3").notNull(),
 	// optional
 	field4: ourBigint("field4"),
-	field5: timestamp("field5"),
 	field6: text({enum: ["one", "two", "three"]})
 		.notNull()
 		.default("one"),
+	field7: timestamp("field7"),
+	// yyyy or yyyy-mm or yyyy-mm-dd
+	field8: zeroText("field8"),
 	repeatableNum1: integer("repeatable_num1"),
 	repeatableText1: text("repeatable_text1"),
 	repeatableNum2: integer("repeatable_num2"),

@@ -30,14 +30,16 @@ export async function fieldsDef(): Promise<FormInputDef<DevExample1Fields>[]> {
 			label: "Fields 3,4"
 		}},
 		{key: "field4", label: "Field 4", type: "number"},
-		{key: "field5", label: "Field 5", type: "date", uiRowNew: true},
 		{
 			key: "field6", label: "Field 6", type: "enum", required: true, enumData: [
 				{key: "one", label: "One"},
 				{key: "two", label: "Two"},
 				{key: "three", label: "Three"}
 			],
+			uiRowNew: true
 		},
+		{key: "field7", label: "Field 7", type: "date", uiRowNew: true},
+		{key: "field8", label: "Field 8", type: "date_optional_precision", uiRowNew: true},
 		...repeatFields(3),
 	]
 }
