@@ -28,7 +28,7 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	const {request} = loaderArgs;
 
 	const url = new URL(request.url);
-	let extraParams = ["hazardId"];
+	let extraParams = ["hipHazardId", "hipClusterId", "hipTypeId"]
 
 	const filters: {
 		hipHazardId: string;
@@ -48,9 +48,16 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 		filters.approvalStatus = undefined
 	}
 
-	const count = await dr.$count(hazardousEventTable)
-	const events = async (offsetLimit: OffsetLimit) => {
+	let condition = and(
+		filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
+		filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
+		filters.hipTypeId ? eq(hazardousEventTable.hipTypeId, filters.hipTypeId) : undefined,
+		filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
+	)
 
+	const count = await dr.$count(hazardousEventTable, condition)
+
+	const events = async (offsetLimit: OffsetLimit) => {
 		return await dr.query.hazardousEventTable.findMany({
 			...offsetLimit,
 			columns: {
@@ -69,12 +76,7 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 					},
 				}
 			},
-			where: and(
-				filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
-				filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
-				filters.hipTypeId ? eq(hazardousEventTable.hipTypeId, filters.hipTypeId) : undefined,
-				filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
-			),
+			where: condition
 		})
 	}
 
