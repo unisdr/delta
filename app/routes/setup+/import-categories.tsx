@@ -252,20 +252,6 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
           assetImportData[xNameKey].nationalId = item[7];
           assetImportData[xNameKey].notes = item[8];
         }
-
-        // xAsset = await assetByName(item[5]);
-        // if (xAsset) {
-        //   console.log(key, item[5], xAsset);
-        // }
-        // else {
-        //   console.log(key, item[5], 'DOESNT EXISTS');
-        // }
-        // try {
-        //   upsertRecordAsset(formRecord).catch(console.error);
-        // } catch (e) {
-        //   console.log(e);
-        //   throw e;
-        // }
       }
     }
     
@@ -274,28 +260,29 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
         // console.log( `${assetImportData[key].name}` ); 
         // console.log( `${assetImportData[key].sectors.join(',')}` ); 
 
-        // formRecord = {
-        //   apiImportId: item[0],
-        //   id: item[1],
-        //   sectorIds: item[2],
-        //   isBuiltIn: Boolean(item[4]),
-        //   name: item[5],
-        //   category: item[6],
-        //   nationalId: item[7],
-        //   notes: item[8],
-        // };
-
-        formRecord = {
-          apiImportId: `${assetImportData[key].apiImportId}`,
-          id: `${assetImportData[key].id}`,
-          sectorIds: `${assetImportData[key].sectors.join(',')}`,
-          isBuiltIn: true,
-          name: `${assetImportData[key].name}`,
-          category: `${assetImportData[key].category}`,
-          nationalId: `${assetImportData[key].nationalId}`,
-          notes: `${assetImportData[key].notes}`,
-        };
-
+        if (assetImportData[key].id === '') {
+          formRecord = {
+            apiImportId: `${assetImportData[key].apiImportId}`,
+            sectorIds: `${assetImportData[key].sectors.join(',')}`,
+            isBuiltIn: true,
+            name: `${assetImportData[key].name}`,
+            category: `${assetImportData[key].category}`,
+            nationalId: `${assetImportData[key].nationalId}`,
+            notes: `${assetImportData[key].notes}`,
+          };
+        }
+        else {
+          formRecord = {
+            apiImportId: `${assetImportData[key].apiImportId}`,
+            id: `${assetImportData[key].id}`,
+            sectorIds: `${assetImportData[key].sectors.join(',')}`,
+            isBuiltIn: true,
+            name: `${assetImportData[key].name}`,
+            category: `${assetImportData[key].category}`,
+            nationalId: `${assetImportData[key].nationalId}`,
+            notes: `${assetImportData[key].notes}`,
+          };
+        }
         try {
           upsertRecordAsset(formRecord).catch(console.error);
         } catch (e) {
@@ -303,10 +290,9 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
           throw e;
         }
       }
+      
     }
-    
 
-    // console.log( assetImportData );
   }
   
 
