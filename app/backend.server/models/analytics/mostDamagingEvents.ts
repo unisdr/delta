@@ -22,6 +22,43 @@ import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/b
 import LRUCache from "lru-cache";
 import { getSectorsByParentId } from "./sectors";
 
+/**
+ * Gets all subsector IDs for a given sector following international standards.
+ * This implementation uses the proper hierarchical structure defined in the sector table.
+ * 
+ * @param sectorId - The ID of the sector to get subsectors for
+ * @returns Array of sector IDs including the input sector and all its subsectors
+ */
+const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
+  const numericSectorId = parseInt(sectorId, 10);
+  if (isNaN(numericSectorId)) {
+    return []; // Return empty array if invalid ID
+  }
+
+  // Get immediate subsectors
+  const subsectors = await getSectorsByParentId(numericSectorId);
+
+  // Initialize result with the current sector ID
+  const result: number[] = [numericSectorId];
+
+  // Recursively get all subsectors at all levels
+  if (subsectors.length > 0) {
+    // Add immediate subsector IDs
+    result.push(...subsectors.map((s: { id: number }) => s.id));
+
+    // For each subsector, recursively get its subsectors
+    for (const subsector of subsectors) {
+      const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
+      // Filter out the subsector ID itself as it's already included
+      const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
+      result.push(...uniqueChildIds);
+    }
+  }
+
+  // Remove duplicates and return
+  return [...new Set(result)];
+};
+
 export type SortColumn = 'damages' | 'losses' | 'eventName' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
 
@@ -121,27 +158,48 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
   let sectorIds: string[] | undefined;
 
   if (params.sectorId) {
-    const numericSectorId = parseInt(params.sectorId, 10);
-    if (!isNaN(numericSectorId)) {
-      // Get all subsectors for the given sector ID
-      const subsectors = await getSectorsByParentId(numericSectorId);
-      const allSectorIds = subsectors.length > 0
-        ? [numericSectorId, ...subsectors.map(s => s.id)]
-        : [numericSectorId];
+    try {
+      const numericSectorId = parseInt(params.sectorId, 10);
+      if (!isNaN(numericSectorId)) {
+        // Get immediate subsectors
+        const subsectors = await getSectorsByParentId(numericSectorId);
 
-      // Convert numeric IDs to strings for return value
-      sectorIds = allSectorIds.map(id => id.toString());
+        // Initialize result with the current sector ID
+        const allSectorIds = [numericSectorId];
 
-      conditions.push(
-        exists(
-          db.select()
-            .from(sectorDisasterRecordsRelationTable)
-            .where(and(
-              eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-              inArray(sectorDisasterRecordsRelationTable.sectorId, allSectorIds)
-            ))
-        )
-      );
+        // Recursively get all subsectors at all levels
+        if (subsectors.length > 0) {
+          // Add immediate subsector IDs
+          allSectorIds.push(...subsectors.map((s: { id: number }) => s.id));
+
+          // For each subsector, recursively get its subsectors
+          for (const subsector of subsectors) {
+            const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
+            // Filter out the subsector ID itself as it's already included
+            const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
+            allSectorIds.push(...uniqueChildIds);
+          }
+        }
+
+        // Remove duplicates
+        const uniqueSectorIds = [...new Set(allSectorIds)];
+
+        // Convert numeric IDs to strings for return value
+        sectorIds = uniqueSectorIds.map(id => id.toString());
+
+        conditions.push(
+          exists(
+            db.select()
+              .from(sectorDisasterRecordsRelationTable)
+              .where(and(
+                eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                inArray(sectorDisasterRecordsRelationTable.sectorId, uniqueSectorIds)
+              ))
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error in sector handling:', error);
     }
   }
 

@@ -33,7 +33,6 @@ const COLORS = [
     "#F7B32B", // A bright yellow from Target C
 ];
 
-
 interface ImpactByHazardProps {
     filters: {
         disasterEventId: any;
@@ -109,7 +108,9 @@ const CustomTooltip = ({ active, payload, title }: any) => {
             formattedValue = `${data.rawValue}`;
         } else {
             // Use formatCurrencyWithCode for damages and losses
-            formattedValue = formatCurrencyWithCode(data.rawValue, defaultCurrency, {}, 'thousands');
+            // Ensure proper parsing of numeric values
+            const numericValue = typeof data.rawValue === 'string' ? parseFloat(data.rawValue) : Number(data.rawValue);
+            formattedValue = formatCurrencyWithCode(numericValue, defaultCurrency);
         }
 
         return (
@@ -144,8 +145,6 @@ const CustomTooltip = ({ active, payload, title }: any) => {
     }
     return null;
 };
-
-
 
 const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -260,6 +259,9 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
         index
     }));
 
+    // Add debug logging for the chart data
+    console.log('Chart data for', title, ':', dataWithIndex);
+
     return (
         <div className="dts-data-box">
             <h3 className="dts-body-label">
@@ -315,6 +317,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
 function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     const enabled = !!filters.sectorId;
     const targetSectorId = filters.subSectorId || filters.sectorId;
+    const defaultCurrency = useDefaultCurrency();
 
     const queryParams = new URLSearchParams();
     if (targetSectorId) queryParams.set("sectorId", targetSectorId);
@@ -325,7 +328,6 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     if (filters.toDate) queryParams.set("toDate", filters.toDate);
     if (filters.geographicLevelId) queryParams.set("geographicLevelId", filters.geographicLevelId);
     if (filters.disasterEventId) queryParams.set("disasterEventId", filters.disasterEventId);
-
 
     // Add sectors query
     const { data: sectorsData } = useQuery({
@@ -383,6 +385,16 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 if (subsector) {
                     return { sector: subsector, parent: sector };
                 }
+                
+                // Recursively check deeper subsectors
+                for (const sub of sector.subsectors) {
+                    if (sub.subsectors && sub.subsectors.length > 0) {
+                        const result = findSectorWithParent(sub.subsectors, targetId);
+                        if (result.sector) {
+                            return { sector: result.sector, parent: sub };
+                        }
+                    }
+                }
             }
         }
         return { sector: undefined, parent: undefined };
@@ -412,23 +424,59 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
         return "Impact by Hazard Type";
     };
 
-    const formatChartData = (rawData: any[]) => {
-        // Filter out zero/null values and map the remaining data
-        return rawData
+    const formatChartData = (rawData: any[] | null) => {
+        if (!Array.isArray(rawData) || rawData.length === 0) {
+            return { data: [], dataAvailability: 'no_data' };
+        }
+
+        // Check if all values are zero
+        const allZero = rawData.every(item => {
+            // Ensure proper parsing of string values
+            const value = typeof item.value === 'string' ? parseFloat(item.value) : Number(item.value);
+            return !isNaN(value) && value === 0;
+        });
+
+        if (allZero) {
+            return { data: [], dataAvailability: 'zero' };
+        }
+
+        // Filter out null values and undefined names, but keep non-zero values
+        const filteredData = rawData
             .filter(item => {
-                const value = parseFloat(item.value);
-                return !isNaN(value) && value > 0;
+                // Ensure proper parsing of string values
+                const value = typeof item.value === 'string' ? parseFloat(item.value) : Number(item.value);
+                return !isNaN(value) && value > 0 && item.hazardName != null;
             })
-            .map(item => ({
+            .map((item, index) => ({
                 name: item.hazardName || 'Unknown',
                 value: item.percentage || 0,
-                rawValue: item.value || '0'
+                rawValue: item.value || '0',
+                // Add index to help with color assignment in the chart
+                index
             }));
+
+        console.log('Filtered chart data:', filteredData);
+
+        return {
+            data: filteredData.length > 0 ? filteredData : [],
+            dataAvailability: filteredData.length > 0 ? 'available' : 'no_data'
+        };
     };
 
-    const eventsData = formatChartData(data.data.eventsCount);
-    const damagesData = formatChartData(data.data.damages);
-    const lossesData = formatChartData(data.data.losses);
+    // Process the data
+    const eventsResult = formatChartData(data?.data?.eventsCount ?? []);
+    const damagesResult = formatChartData(data?.data?.damages ?? []);
+    const lossesResult = formatChartData(data?.data?.losses ?? []);
+
+    // Add debug logging for data processing
+    console.log('Processed events data:', eventsResult);
+    console.log('Processed damages data:', damagesResult);
+    console.log('Processed losses data:', lossesResult);
+
+    if (!data?.success || !data?.data) {
+        console.error("Invalid data structure:", data);
+        return <ErrorMessage message="Invalid data structure received from server" />;
+    }
 
     return (
         <section className="dts-page-section" style={{ maxWidth: "100%", overflow: "hidden" }}>
@@ -437,10 +485,56 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 <p className="dts-body-text mb-6">Analysis of how different hazards affect this sector</p>
 
                 <div className="mg-grid mg-grid__col-3">
-                    {/* Always render CustomPieChart for each category, regardless of data availability */}
-                    <CustomPieChart data={eventsData} title="Number of Disaster Events" />
-                    <CustomPieChart data={damagesData} title="Damages by Hazard Type" />
-                    <CustomPieChart data={lossesData} title="Losses by Hazard Type" />
+                    {/* Number of Disaster Events */}
+                    <div className="dts-data-box">
+                        {eventsResult.dataAvailability === 'available' ? (
+                            <CustomPieChart data={eventsResult.data} title="Number of Disaster Events" />
+                        ) : eventsResult.dataAvailability === 'zero' ? (
+                            <>
+                                <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
+                                <p className="text-gray-500 text-center mt-4">Zero Impact (Confirmed)</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
+                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Damages by Hazard Type */}
+                    <div className="dts-data-box">
+                        {damagesResult.dataAvailability === 'available' ? (
+                            <CustomPieChart data={damagesResult.data} title="Damages by Hazard Type" />
+                        ) : damagesResult.dataAvailability === 'zero' ? (
+                            <>
+                                <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">Zero Impact (Confirmed)</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Losses by Hazard Type */}
+                    <div className="dts-data-box">
+                        {lossesResult.dataAvailability === 'available' ? (
+                            <CustomPieChart data={lossesResult.data} title="Losses by Hazard Type" />
+                        ) : lossesResult.dataAvailability === 'zero' ? (
+                            <>
+                                <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">Zero Impact (Confirmed)</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>
+                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
         </section>

@@ -24,6 +24,10 @@ interface ApiResponse {
         eventsOverTime: Record<string, string>;
         damageOverTime: Record<string, string>;
         lossOverTime: Record<string, string>;
+        dataAvailability: {
+            damage: string;
+            loss: string;
+        };
     };
 }
 
@@ -301,7 +305,15 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     };
 
     const currency = useDefaultCurrency();
-    const formatMoneyValue = (value: number) => formatCurrencyWithCode(value, currency);
+    
+    // Format money values with appropriate scale
+    const formatMoneyValue = (value: number) => {
+        if (value >= 1000) {
+            return formatCurrencyWithCode(value, currency, {}, 'thousands');
+        } else {
+            return formatCurrencyWithCode(value, currency);
+        }
+    };
 
     console.log('Debug - Component State:', {
         sectorId,
@@ -369,19 +381,24 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         );
     }
 
-    const { data } = apiResponse;
-    console.log('Debug - Data state:', {
-        eventCount: data?.eventCount,
-        eventsData: data?.eventsOverTime,
-        damageData: data?.damageOverTime,
-        lossData: data?.lossOverTime
+    // Extract the data from the API response
+    const data = apiResponse?.data || {};
+    
+    // Add debug logging for the data that will be used for display
+    console.log('Data for display:', {
+        apiResponseExists: !!apiResponse,
+        dataExists: !!data,
+        eventCount: data.eventCount,
+        totalDamage: data.totalDamage,
+        totalLoss: data.totalLoss,
+        dataAvailability: data.dataAvailability
     });
 
     // Transform time series data with proper typing and logging
     const eventsData = Object.entries(data.eventsOverTime || {})
         .map(([year, count]) => ({
             year: parseInt(year),
-            count: parseInt(count) || 0,
+            count: parseInt(count as string) || 0,
         }))
         .filter((entry) => {
             if (!filters.fromDate && !filters.toDate) return true;
@@ -392,11 +409,15 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         })
         .sort((a, b) => a.year - b.year);
 
+    // Fix damage data transformation to ensure it properly handles string values
     const damageData = Object.entries(data.damageOverTime || {})
-        .map(([year, amount]) => ({
-            year: parseInt(year),
-            amount: parseFloat(amount) || 0,
-        }))
+        .map(([year, amount]) => {
+            const parsedAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
+            return {
+                year: parseInt(year),
+                amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+            };
+        })
         .filter((entry) => {
             if (!filters.fromDate && !filters.toDate) return true;
             const yearNum = entry.year;
@@ -406,11 +427,15 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         })
         .sort((a, b) => a.year - b.year);
 
+    // Fix loss data transformation to ensure it properly handles string values
     const lossData = Object.entries(data.lossOverTime || {})
-        .map(([year, amount]) => ({
-            year: parseInt(year),
-            amount: parseFloat(amount) || 0,
-        }))
+        .map(([year, amount]) => {
+            const parsedAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
+            return {
+                year: parseInt(year),
+                amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+            };
+        })
         .filter((entry) => {
             if (!filters.fromDate && !filters.toDate) return true;
             const yearNum = entry.year;
@@ -423,7 +448,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     console.log('Final transformed data:', {
         eventsData,
         damageData,
-        lossData
+        lossData,
+        rawDamage: data.totalDamage,
+        rawLoss: data.totalLoss
     });
 
     const totalDamage = calculateTotal(damageData);
@@ -432,27 +459,37 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     const renderTitle = () => {
         if (!sectorsData?.sectors) return "Sector Impact Analysis";
 
-        const selectedSector = sectorsData.sectors.find((s: Sector) => s.id.toString() === sectorId);
-        if (!selectedSector) return "Sector Impact Analysis";
-
+        // First check if we're using a subsector ID from filters
         if (filters.subSectorId) {
-            const selectedSubSector = selectedSector.subsectors?.find(
-                (sub: Sector) => sub.id.toString() === filters.subSectorId
-            );
-            if (selectedSubSector) {
-                return `Impact in ${selectedSubSector.sectorname} (${selectedSector.sectorname} Sector)`;
+            // Find the parent sector that contains this subsector
+            for (const sector of sectorsData.sectors) {
+                const subsector = sector.subsectors?.find(
+                    (sub: Sector) => sub.id.toString() === filters.subSectorId
+                );
+                if (subsector) {
+                    return `Impact in ${subsector.sectorname} (${sector.sectorname} Sector)`;
+                }
             }
         }
 
-        return `Impact in ${selectedSector.sectorname} Sector`;
+        // If we're using the main sectorId
+        if (sectorId) {
+            const selectedSector = sectorsData.sectors.find((s: Sector) => s.id.toString() === sectorId);
+            if (selectedSector) {
+                return `Impact in ${selectedSector.sectorname} Sector`;
+            }
+        }
+
+        return "Sector Impact Analysis";
     };
 
     return (
         <section className="dts-page-section" style={{ maxWidth: "100%", overflow: "hidden" }}>
             <div className="mg-container" style={{ maxWidth: "100%", overflow: "hidden" }}>
                 <h2 className="dts-heading-2">{renderTitle()}</h2>
-                <p>These summaries represent disaster impact on all sectors combined. More explanation needed here.</p>
-
+                <p className="text-sm text-gray-600 mb-4">
+                    This dashboard shows the aggregated impact data for the selected sector, including all its subsectors.
+                </p>
                 {/* Events impacting sectors */}
                 <div className="mg-grid mg-grid--gap-default">
                     <div className="dts-data-box">
@@ -533,7 +570,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                     {/* Damage Box */}
                     <div className="dts-data-box">
                         <h3 className="dts-body-label">
-                            <span id="elementId03">Damages in {currency} - in Thousands - due to {getHazardTypeDisplay()}</span>
+                            <span id="elementId03">Damages in {currency} due to {getHazardTypeDisplay()}</span>
                             <button
                                 ref={damageTooltipRef}
                                 className="dts-tooltip__button"
@@ -543,7 +580,17 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-d">
-                            <span>{data?.totalDamage ? formatMoneyValue(totalDamage) : "No data available"}</span>
+                            <span>
+                                {data?.dataAvailability?.damage === 'zero' ? (
+                                    "Zero Impact (Confirmed)"
+                                ) : data?.dataAvailability?.damage === 'no_data' ? (
+                                    "No data available"
+                                ) : data?.totalDamage !== undefined && data?.totalDamage !== null && data?.totalDamage !== "" ? (
+                                    formatCurrencyWithCode(Number(data.totalDamage), currency)
+                                ) : (
+                                    "No data available"
+                                )}
+                            </span>
                         </div>
                         <div style={{ height: "300px" }}>
                             {damageData && damageData.length > 0 ? (
@@ -597,7 +644,17 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                             </button>
                         </h3>
                         <div className="dts-indicator dts-indicator--target-box-c">
-                            <span>{data?.totalLoss ? formatMoneyValue(totalLoss) : "No data available"}</span>
+                            <span>
+                                {data?.dataAvailability?.loss === 'zero' ? (
+                                    "Zero Impact (Confirmed)"
+                                ) : data?.dataAvailability?.loss === 'no_data' ? (
+                                    "No data available"
+                                ) : data?.totalLoss !== undefined && data?.totalLoss !== null && data?.totalLoss !== "" ? (
+                                    formatCurrencyWithCode(Number(data.totalLoss), currency)
+                                ) : (
+                                    "No data available"
+                                )}
+                            </span>
                         </div>
                         <div style={{ height: "300px" }}>
                             {lossData && lossData.length > 0 ? (

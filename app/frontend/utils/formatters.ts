@@ -24,13 +24,27 @@ export const useDefaultCurrency = (): string => {
     return rootData?.env?.CURRENCY_CODES?.split(',')[0]?.trim() || 'USD';
 };
 
-export const formatCurrencyWithCode = (value: string | number, currencyCode: string, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' = 'thousands'): string => {
+export const formatCurrencyWithCode = (value: string | number, currencyCode: string, options: CurrencyOptions = {}, scale?: 'thousands' | 'millions'): string => {
+    // Handle null, undefined, or empty string values
+    if (value === null || value === undefined || value === '') {
+        return `${currencyCode}0`;
+    }
+    
+    // Convert string to number if needed
     let numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    // Handle NaN
+    if (isNaN(numValue)) {
+        return `${currencyCode}0`;
+    }
+    
     let suffix = '';
-    if (scale === 'thousands') {
+    
+    // Only apply scaling if explicitly requested
+    if (scale === 'thousands' && Math.abs(numValue) >= 1000) {
         numValue /= 1000;
         suffix = 'K';
-    } else if (scale === 'millions') {
+    } else if (scale === 'millions' && Math.abs(numValue) >= 1000000) {
         numValue /= 1000000;
         suffix = 'M';
     }

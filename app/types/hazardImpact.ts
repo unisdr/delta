@@ -1,9 +1,9 @@
 import type { DisasterImpactMetadata } from "./disasterCalculations";
 
 export interface HazardImpactData {
-    eventsCount: HazardDataPoint[];
-    damages: HazardDataPoint[];
-    losses: HazardDataPoint[];
+    eventsCount: HazardDataPoint[] | null;
+    damages: HazardDataPoint[] | null;
+    losses: HazardDataPoint[] | null;
     metadata: DisasterImpactMetadata;
 }
 

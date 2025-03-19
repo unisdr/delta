@@ -7,7 +7,11 @@ import { authLoaderGetAuth, authLoaderWithPerm } from "~/util/auth";
 import { getSupportedTimeZone } from "~/util/timezone";
 
 import { getCurrency } from "~/util/currency";
-import { configCurrencies, configApplicationVersion } from  "~/util/config";
+import { 
+  configCurrencies, 
+  configApplicationVersion,
+  configCountryInstanceISO
+} from  "~/util/config";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
@@ -18,6 +22,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
   const timeZones: string[] = getSupportedTimeZone();
   const currency: string[] = configCurrencies();
   const systemLanguage: string[] = ["English"];
+  let ctryInstanceName:string = '';
 
 
   const confAppVersion = await configApplicationVersion().then(version => {
@@ -26,12 +31,26 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
     console.error('Error:', error);
   });
 
+  const confCtryInstanceISO = configCountryInstanceISO();
+
+  // Fetch data from API
+  if (confCtryInstanceISO !== '') {
+    const url = "https://data.undrr.org/api/json/gis/countries/1.0.0/?cca3=" + confCtryInstanceISO.toUpperCase();
+    const resp = await fetch(url);
+    const res = await resp.json();
+
+    ctryInstanceName = res.data[0].name;
+  }
+  
+
+
   return {
     message: `Hello ${user.email}`,
     currencyArray: currency,
     timeZonesArray: timeZones,
     appVersion: confAppVersion,
     systemLanguage: systemLanguage,
+    ctryInstanceName: ctryInstanceName,
   };
 });
 
@@ -118,6 +137,13 @@ export default function Settings() {
         </div>
         <div className="flex">
           <ul>
+            {
+              loaderData.ctryInstanceName !== '' && (<>
+                  <li>
+                    <strong>Country instance:</strong> { loaderData.ctryInstanceName }
+                  </li>
+              </>)
+            }
             <li>
               <strong>Current version of the application:</strong> { loaderData.appVersion }
             </li>

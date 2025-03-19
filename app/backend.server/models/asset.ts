@@ -179,20 +179,40 @@ export async function assetsForSector(tx: Tx, sectorId: number) {
 
 
 export async function upsertRecord(record: AssetInsert): Promise<void> {
+	
 	// Perform the upsert operation
-	await dr
-		.insert(assetTable)
-		.values(record)
-		.onConflictDoUpdate({
-			target: assetTable.apiImportId,
-			set: {
-				id: record.id,
-				name: record.name,
-				sectorIds: record.sectorIds,
-				isBuiltIn: record.isBuiltIn,
-				nationalId: record.nationalId,
-				notes: record.notes,
-				category: record.category,
-			},
-		});
+	if (record.id && record.id !== '' && record.id !== 'undefined') {
+		await dr
+			.insert(assetTable)
+			.values(record)
+			.onConflictDoUpdate({
+				target: assetTable.apiImportId,
+				set: {
+					id: record.id,
+					name: record.name,
+					sectorIds: record.sectorIds,
+					isBuiltIn: record.isBuiltIn,
+					nationalId: record.nationalId,
+					notes: record.notes,
+					category: record.category,
+				},
+			});
+	}
+	else {
+		await dr
+			.insert(assetTable)
+			.values(record)
+			.onConflictDoUpdate({
+				target: assetTable.apiImportId,
+				set: {
+					name: record.name,
+					sectorIds: record.sectorIds,
+					isBuiltIn: record.isBuiltIn,
+					nationalId: record.nationalId,
+					notes: record.notes,
+					category: record.category,
+				},
+			});
+	}
+	
 }

@@ -4,8 +4,8 @@ interface SectorImpactResponse {
   success: boolean;
   data?: {
     eventCount: number;
-    totalDamage: string;
-    totalLoss: string;
+    totalDamage: string | null;
+    totalLoss: string | null;
     eventsOverTime: { [key: string]: string };
     damageOverTime: { [key: string]: string };
     lossOverTime: { [key: string]: string };
