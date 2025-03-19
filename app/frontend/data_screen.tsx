@@ -13,6 +13,7 @@ interface DataScreenProps<T> {
 	renderRow: (item: T, baseRoute: string) => React.ReactNode;
 	csvExportLinks?: boolean;
 	headerElement?: React.ReactNode;
+	beforeListElement?: React.ReactNode;
 	hideMainLinks?: boolean
 }
 
@@ -31,6 +32,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 						csvExportLinks={props.csvExportLinks}
 					/>
 				}
+				{props.beforeListElement}
 				{props.paginationData.totalItems ? (
 					<>
 						<div className="dts-legend">

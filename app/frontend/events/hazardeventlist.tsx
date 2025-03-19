@@ -1,20 +1,21 @@
-import { useEffect, useRef } from "react";
+import {useEffect, useRef} from "react";
 
-import { useLoaderData, Link, Form } from "@remix-run/react";
+import {useLoaderData, Link} from "@remix-run/react";
 
-import { Pagination } from "~/frontend/pagination/view";
+import {Pagination} from "~/frontend/pagination/view";
 
-import { HazardPicker } from "~/frontend/hip/hazardpicker";
+import {HazardPicker} from "~/frontend/hip/hazardpicker";
 
-import { ActionLinks } from "~/frontend/form";
+import {ActionLinks} from "~/frontend/form";
 
-import { route } from "~/frontend/events/hazardeventform";
+import {route} from "~/frontend/events/hazardeventform";
 
-import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent";
+import {hazardousEventsLoader} from "~/backend.server/handlers/events/hazardevent";
 
-import { createFloatingTooltip } from "~/util/tooltip";
+import {createFloatingTooltip} from "~/util/tooltip";
 
-import { EventCounter } from "~/components/EventCounter";
+import {EventCounter} from "~/components/EventCounter";
+import {Filters} from "../components/list-page-filters";
 
 interface ListViewArgs {
 	isPublic: boolean;
@@ -26,8 +27,8 @@ interface ListViewArgs {
 export function ListView(args: ListViewArgs) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof hazardousEventsLoader>>>();
 
-	const { hip, filters } = ld;
-	const { items } = ld.data;
+	const {hip, filters} = ld;
+	const {items} = ld.data;
 
 	const pagination = Pagination(ld.data.pagination);
 
@@ -54,27 +55,20 @@ export function ListView(args: ListViewArgs) {
 
 	return (
 		<div>
-			<div className="dts-filter">
-				<h3>Filters</h3>
-				<Form className="dts-form">
+			<Filters
+				search={filters.search}
+				clearFiltersUrl={args.basePath}
+				formStartElement=
+				<>
+					{/* <h4>Hazard classification</h4> */}
 					<HazardPicker
 						hip={hip}
 						hazardId={filters.hipHazardId}
 						clusterId={filters.hipClusterId}
 						typeId={filters.hipTypeId}
 					/>
-					<div className="dts-form__actions">
-						<input
-							type="submit"
-							value="Apply"
-							className="mg-button mg-button-primary"
-						/>
-						<Link to={args.basePath} className="mg-button mg-button-outline">
-							Clear filters
-						</Link>
-					</div>
-				</Form>
-			</div>
+				</>
+			/>
 			{!args.isPublic && (
 				<>
 					<div>

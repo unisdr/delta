@@ -1,10 +1,8 @@
 
 import {disasterRecordLoader} from "~/backend.server/handlers/disaster_record";
 
-import {ListView} from "~/frontend/disaster-record/listview";
-import { DataScreen } from "~/frontend/data_screen";
-import { ActionLinks } from "~/frontend/form";
-import { formatDate } from "~/util/date";
+import {DataScreen} from "~/frontend/data_screen";
+import {ActionLinks} from "~/frontend/form";
 
 import {
 	useLoaderData,
@@ -16,7 +14,11 @@ import {
 	authLoaderPublicOrWithPerm,
 } from "~/util/auth";
 
-import { route } from "~/frontend/disaster-record/form";
+import {route} from "~/frontend/disaster-record/form";
+import {Filters} from "~/frontend/components/list-page-filters";
+
+
+
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 	return disasterRecordLoader({loaderArgs})
@@ -24,14 +26,15 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) 
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Disaster Records - DTS" },
-		{ name: "description", content: "Disaster Records Repository." },
+		{title: "Disaster Records - DTS"},
+		{name: "description", content: "Disaster Records Repository."},
 	];
 };
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
-	const { items, pagination } = ld.data;
+	const {filters} = ld;
+	const {items, pagination} = ld.data;
 	return DataScreen({
 		isPublic: ld.isPublic,
 		plural: "Disaster records",
@@ -48,6 +51,10 @@ export default function Data() {
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
+		beforeListElement: <Filters
+			clearFiltersUrl={route}
+			search={filters.search}
+		/>,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>
@@ -63,8 +70,6 @@ export default function Data() {
 				<td>{item.disasterEventId}</td>
 				<td>{item.startDate}</td>
 				<td>{item.endDate}</td>
-
-
 				<td>
 					{ld.isPublic ? null : <ActionLinks route={route} id={item.id} />}
 				</td>

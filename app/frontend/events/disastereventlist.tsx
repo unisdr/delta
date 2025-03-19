@@ -7,6 +7,8 @@ import {ActionLinks} from "~/frontend/form";
 import {route} from "~/frontend/events/disastereventform";
 
 import {hazardousEventLink} from "~/frontend/events/hazardeventform"
+import {Filters} from "../components/list-page-filters";
+
 
 interface ListViewProps {
 	titleOverride?: string
@@ -17,7 +19,7 @@ interface ListViewProps {
 
 export function ListView(props: ListViewProps) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof disasterEventsLoader>>>()
-
+	const {filters} = ld
 	const {items, pagination} = ld.data;
 	return DataScreen({
 		hideMainLinks: props.hideMainLinks,
@@ -36,6 +38,10 @@ export function ListView(props: ListViewProps) {
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
+		beforeListElement: <Filters
+			clearFiltersUrl={route}
+			search={filters.search}
+		/>,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>
