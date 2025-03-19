@@ -203,6 +203,7 @@ function DisasterEventsAnalysisContent() {
 
   // TODO: apply mapping of data, ask to revise key
   if (ld.record && ld.totalAffectedPeople2.disaggregations.age) {
+    console.log( ld.totalAffectedPeople2.disaggregations );
     const ageData = ld.totalAffectedPeople2.disaggregations.age;
     disaggregationsAge2 = {
       children: ageData["0-14"],
@@ -430,11 +431,20 @@ function DisasterEventsAnalysisContent() {
           </div>
         </section>
 
-
         <section className="dts-page-section">
           <div className="mg-container">
             <div className="mg-grid mg-grid__col-3">
-              { ld.totalAffectedPeople2.disaggregations.sex && ( 
+              { (
+                  (ld.totalAffectedPeople2.disaggregations.sex)
+                  && (
+                    ld.totalAffectedPeople2.disaggregations.sex.m
+                    ||
+                    ld.totalAffectedPeople2.disaggregations.sex.f
+                    ||
+                    ld.totalAffectedPeople2.disaggregations.sex.o
+                  )
+
+                ) && ( 
                 <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Men and women affected</span>
@@ -473,7 +483,13 @@ function DisasterEventsAnalysisContent() {
                 </div>
               )}
 
-              { (ld.totalAffectedPeople2.disaggregations.disability || ld.totalAffectedPeople2.disaggregations.globalPovertyLine || ld.totalAffectedPeople2.disaggregations.nationalPovertyLine ) && ( 
+              { (
+                  (ld.totalAffectedPeople2.disaggregations.disability && ld.totalAffectedPeople2.disaggregations.disability.disability)
+                  || 
+                  (ld.totalAffectedPeople2.disaggregations.globalPovertyLine && ld.totalAffectedPeople2.disaggregations.globalPovertyLine.below)
+                  || 
+                  (ld.totalAffectedPeople2.disaggregations.nationalPovertyLine && ld.totalAffectedPeople2.disaggregations.nationalPovertyLine.below)
+                ) && ( 
                 <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Persons with disabilities and living in poverty affected</span>
@@ -511,8 +527,9 @@ function DisasterEventsAnalysisContent() {
               )}
 
 
-
-              { ld.totalAffectedPeople2.disaggregations.age && disaggregationsAge2 && ( 
+              { (ld.totalAffectedPeople2.disaggregations.age) 
+                && (disaggregationsAge2 && disaggregationsAge2.children ) 
+                && ( 
                 <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Children, adults, and seniors affected</span>

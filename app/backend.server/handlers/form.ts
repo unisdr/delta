@@ -843,7 +843,7 @@ export function createViewLoaderPublicApproved<
 		}
 		const isPublic = authLoaderIsPublic(loaderArgs);
 		if (isPublic) {
-			if (item.approvalStatus != "approved") {
+			if (item.approvalStatus != "published") {
 				throw new Response("Permission denied, item is private", {
 					status: 404,
 				});
@@ -875,7 +875,7 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 		}
 		const isPublic = authLoaderIsPublic(loaderArgs);
 		if (isPublic) {
-			if (item.approvalStatus != "approved") {
+			if (item.approvalStatus != "published") {
 				throw new Response("Permission denied, item is private", {
 					status: 404,
 				});

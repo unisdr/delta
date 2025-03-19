@@ -18,10 +18,24 @@ function getCheckbox(opts: handleOverridesOpts, field: string): HTMLFormElement 
 	return f
 }
 
+export function formOnSubmitAllowDisabled(formRef: any) {
+	if (!formRef.current) return
+
+	formRef.current.addEventListener("submit", () => {
+		if (!formRef.current) return
+		for (let el of formRef.current.querySelectorAll("input[disabled]")) {
+			let input = el as HTMLInputElement
+			input.disabled = false
+		}
+	})
+}
+
 
 export function attach(opts: handleOverridesOpts) {
 	if (!opts.formRef.current) return
 	update(opts)
+
+
 	let els = [
 		getCheckbox(opts, opts.resName + "Override"),
 	]

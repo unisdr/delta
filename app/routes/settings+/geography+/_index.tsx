@@ -16,9 +16,11 @@ import {Breadcrumb} from "~/frontend/division";
 import {MainContainer} from "~/frontend/container";
 
 import "./style.css";
+import {DataMainLinks} from "~/frontend/data_screen";
 
 interface ItemRes {
 	id: number
+	nationalId: string
 	hasChildren: boolean
 	name: Record<string, string>
 }
@@ -43,6 +45,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 	const q1 = dr.select({
 		id: divisionTable.id,
+		nationalId: divisionTable.nationalId,
 		name: divisionTable.name,
 		hasChildren: sql<boolean>`EXISTS (
 		SELECT 1
@@ -105,6 +108,7 @@ export function DivisionsTable({items, langs}: DivisionsTableProps) {
 			<thead>
 				<tr>
 					<th>ID</th>
+					<th>National ID</th>
 					{langs.map((lang) => (
 						<th key={lang}>{lang.toUpperCase()}</th>
 					))}
@@ -118,6 +122,9 @@ export function DivisionsTable({items, langs}: DivisionsTableProps) {
 						<tr key={item.id}>
 							<td>
 								{linkOrText(linkUrl, item.id)}
+							</td>
+							<td>
+								{linkOrText(linkUrl, item.nationalId)}
 							</td>
 							{langs.map((lang) => (
 								<td key={lang}>
@@ -153,13 +160,23 @@ export default function Screen() {
 							<li><Link to="/settings/geography/tree">Tree View</Link></li>
 						</ul>
 					</div>
-				</section>	
+				</section>
 			}
 		>
 			<>
-				<p style={{marginTop: "2.5rem"}}>
-					<a href="/settings/geography/upload">Upload CSV</a>
-				</p>
+				<br />
+				<DataMainLinks
+					noCreate={true}
+					noImport={true}
+					baseRoute="/settings/geography"
+					resourceName=""
+					csvExportLinks={true}
+					extraButtons={
+						[
+							{relPath: "upload", label: "Upload CSV"}
+						]
+					}
+				/>
 				{ld.pagination.totalItems > 0 ? (
 					<>
 						<LanguageCheckboxes langs={ld.langs} selectedLangs={ld.selectedLangs} />

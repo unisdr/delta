@@ -387,9 +387,9 @@ export default function Screen() {
 						</div>
 						<div className="dts-form__actions">
 							<label>
-								<div className="dts-form-component__label">
+								{/* <div className="dts-form-component__label">
 									<span>&nbsp;</span>
-								</div>
+								</div> */}
 								<button name="submit_btn" value={'form'} ref={formRefSubmit}  className="mg-button mg-button-primary" type="submit" disabled={navigation.state === "submitting"}>
 									Save Changes
 								</button>

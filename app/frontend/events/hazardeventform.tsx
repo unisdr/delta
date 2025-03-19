@@ -164,11 +164,11 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 		contHeight[1] = (dialogTreeViewRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
 		contHeight[2] = (dialogTreeViewRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
 		contHeight[3] = (dialogTreeViewRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
-		let getHeight = contHeight[0] - contHeight[1] - contHeight[2];
+		let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - 100;
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
+		if (dtsFormBody) {	
+			dtsFormBody.style.height = `${getHeight-(window.innerHeight - getHeight)}px`;
 		}
 	}
 

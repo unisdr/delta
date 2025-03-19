@@ -241,7 +241,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
     const headers = rows[0];
 
     // Validate required columns
-    const requiredColumns = ['id', 'parent', 'geodata'];
+    const requiredColumns = ['id', 'parent', 'geodata', 'national_id'];
     const missingColumns = requiredColumns.filter(col => !headers.includes(col));
     if (missingColumns.length > 0) {
       throw new ImportError(`Missing required columns: ${missingColumns.join(', ')}`);
@@ -256,6 +256,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
     // Parse divisions and build a map of geodata filenames for quick lookup
     const divisions: {
       [key: string]: {
+				nationalId: string;
         parent: string;
         geodata: string;
         name: Record<string, string>;
@@ -277,6 +278,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
       const id = row[headers.indexOf('id')];
       const parent = row[headers.indexOf('parent')];
       const geodata = row[headers.indexOf('geodata')];
+      const nationalId = row[headers.indexOf('national_id')];
 
       // Skip empty rows
       if (!id) continue;
@@ -288,6 +290,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
       });
 
       divisions[id] = {
+				nationalId,
         parent,
         geodata,
         name
@@ -565,6 +568,7 @@ async function importDivision(
       parent: string;
       geodata: string;
       name: Record<string, string>;
+			nationalId: string;
     }
   },
   importId: string,
@@ -641,6 +645,7 @@ async function importDivision(
       await tx
         .update(divisionTable)
         .set({
+					nationalId: division.nationalId != "" ? division.nationalId: null,
           parentId: parentDbId,
           name: division.name,
           level,
@@ -654,6 +659,7 @@ async function importDivision(
       const [result] = await tx
         .insert(divisionTable)
         .values({
+					nationalId: division.nationalId != "" ? division.nationalId: null,
           importId,
           parentId: parentDbId,
           name: division.name,

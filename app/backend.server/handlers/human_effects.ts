@@ -8,6 +8,7 @@ import {
 import {PreviousUpdatesFromJson} from "~/frontend/editabletable/data";
 import {HumanEffectsTable} from "~/frontend/human_effects/defs";
 import {create, update, deleteRows, HEError, validate, defsForTable, clearData} from "~/backend.server/models/human_effects"
+import {eqArr} from "~/util/array";
 
 
 export async function loadData(recordId: string | undefined, tblStr: string) {
@@ -43,6 +44,7 @@ export async function loadData(recordId: string | undefined, tblStr: string) {
 
 interface Req {
 	table: HumanEffectsTable
+	columns: string[]
 	data: PreviousUpdatesFromJson
 }
 
@@ -75,8 +77,14 @@ export async function saveData(req: Request, recordId: string) {
 	if (!recordId) {
 		throw new Error("no record id")
 	}
+	let defs = await defsForTable(d.table)
+	let expectedCols = defs.map(d => d.jsName)
+
+	if (!eqArr(d.columns, expectedCols)){
+		return Response.json({ok: false, error: `columns passed do not match expected: ${expectedCols} got ${d.columns}`}, {status: 400})
+	}
+
 	try {
-		let defs = await defsForTable(d.table)
 		await dr.transaction(async (tx) => {
 			if (d.data.deletes) {
 				let res = await deleteRows(tx, d.table, d.data.deletes)
@@ -145,7 +153,7 @@ export async function clear(tableIdStr: string, recordId: string) {
 	if (!recordId) {
 		throw new Error("no record id")
 	}
-	let table: HumanEffectsTable|null = null
+	let table: HumanEffectsTable | null = null
 	try {
 		table = HumanEffectsTableFromString(tableIdStr)
 	} catch (e) {

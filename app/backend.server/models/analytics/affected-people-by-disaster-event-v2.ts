@@ -9,6 +9,7 @@ import {
 	affectedTable,
 	displacedTable,
 	disasterEventTable,
+	humanCategoryPresenceTable,
 } from "~/drizzle/schema";
 
 
@@ -32,11 +33,11 @@ type Total = {
 }
 
 const totalsTablesAndCols = [
-	{code: "deaths", table: deathsTable, col: deathsTable.deaths},
-	{code: "injured", table: injuredTable, col: injuredTable.injured},
-	{code: "missing", table: missingTable, col: missingTable.missing},
-	{code: "directlyAffected", table: affectedTable, col: affectedTable.direct},
-	{code: "displaced", table: displacedTable, col: displacedTable.displaced}
+	{code: "deaths", table: deathsTable, col: deathsTable.deaths, presenceCol: humanCategoryPresenceTable.deaths},
+	{code: "injured", table: injuredTable, col: injuredTable.injured, presenceCol: humanCategoryPresenceTable.injured},
+	{code: "missing", table: missingTable, col: missingTable.missing, presenceCol: humanCategoryPresenceTable.missing},
+	{code: "directlyAffected", table: affectedTable, col: affectedTable.direct, presenceCol: humanCategoryPresenceTable.affectedDirect},
+	{code: "displaced", table: displacedTable, col: displacedTable.displaced, presenceCol: humanCategoryPresenceTable.displaced}
 ]
 
 
@@ -44,7 +45,7 @@ async function totalsForEachTable(tx: Tx, disasterEventId: string): Promise<Tota
 	let vars: any = {}
 	let total = 0
 	for (let a of totalsTablesAndCols) {
-		let v = await totalsForOneTable(tx, disasterEventId, a.table, a.col)
+		let v = await totalsForOneTable(tx, disasterEventId, a.table, a.col, a.presenceCol)
 		vars[a.code] = v
 		total += v
 	}
@@ -55,14 +56,16 @@ async function totalsForEachTable(tx: Tx, disasterEventId: string): Promise<Tota
 // The code for deaths, injured, missing, displaced is exactly the same.
 // For directlyAffected has a minor variation that a table has both direct and indirect columns, we only need direct from there.
 
-async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any): Promise<number> {
+async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, presenceCol: any): Promise<number> {
 	/*
 	SELECT SUM(d.deaths)
 	FROM disaster_event de
 	JOIN disaster_records dr ON de.id = dr.disaster_event_id
 	JOIN human_dsg hd ON dr.id = hd.record_id
 	JOIN deaths d ON hd.id = d.dsg_id
+	JOIN human_category_presence hcp ON hd.record_id = hcp.record_id
 	WHERE de.id = 'f41bd013-23cc-41ba-91d2-4e325f785171'
+			AND hcp.deaths IS TRUE
 		AND dr."approvalStatus" = 'published'
 		AND hd.sex IS NULL
 		AND hd.age IS NULL
@@ -78,6 +81,7 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 	let dr = disasterRecordsTable
 	let hd = humanDsgTable
 	let vt = valTable
+	let hcp = humanCategoryPresenceTable
 
 	const res = await tx
 		.select({
@@ -87,9 +91,11 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 		.innerJoin(dr, eq(de.id, dr.disasterEventId))
 		.innerJoin(hd, eq(dr.id, hd.recordId))
 		.innerJoin(vt, eq(hd.id, vt.dsgId))
+		.innerJoin(hcp, eq(hd.recordId, hcp.recordId))
 		.where(
 			and(
 				eq(de.id, disasterEventId),
+				eq(presenceCol, true),
 				eq(dr.approvalStatus, "published"),
 				isNull(hd.sex),
 				isNull(hd.age),
@@ -120,6 +126,7 @@ const tables = [
 	{code: "nationalPovertyLine", col: humanDsgTable.nationalPovertyLine},
 ]
 
+/*
 type ByColAndTable = {
 	sex: ByTable
 	age: ByTable
@@ -134,7 +141,7 @@ async function byColAndTable(tx: Tx, disasterEventId: string): Promise<ByColAndT
 		res[t.code] = await byTable(tx, disasterEventId, t.col)
 	}
 	return res as ByColAndTable
-}
+}*/
 
 type ByColAndTableTotalsOnly = {
 	sex: Map<string, number>
@@ -155,7 +162,7 @@ async function byColAndTableTotalsOnly(tx: Tx, disasterEventId: string): Promise
 
 
 type ByColAndTableTotalsOnlyForFrontend = {
-	sex: Record<string,number>
+	sex: Record<string, number>
 	age: Record<string, number>
 	disability: Record<string, number>
 	globalPovertyLine: Record<string, number>
@@ -202,7 +209,7 @@ async function byTable(tx: Tx, disasterEventId: string, dsgCol: any): Promise<By
 	let tables: any = {}
 	let total = new Map<string, number>()
 	for (let a of totalsTablesAndCols) {
-		let vv = await countsForOneTable(tx, disasterEventId, a.table, a.col, dsgCol)
+		let vv = await countsForOneTable(tx, disasterEventId, a.table, a.col, dsgCol, a.presenceCol)
 		tables[a.code] = vv
 		for (let [k, v] of vv.entries()) {
 			let a = total.get(k) || 0
@@ -213,14 +220,16 @@ async function byTable(tx: Tx, disasterEventId: string, dsgCol: any): Promise<By
 	return {total, tables} as ByTable
 }
 
-async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, groupBy: any): Promise<Map<string, number>> {
+async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, groupBy: any, presenceCol: any): Promise<Map<string, number>> {
 	/*
 		SELECT hd.sex, SUM(d.deaths)
 	FROM disaster_event de
 	JOIN disaster_records dr ON de.id = dr.disaster_event_id
 	JOIN human_dsg hd ON dr.id = hd.record_id
 	JOIN deaths d ON hd.id = d.dsg_id
+		JOIN human_category_presence hcp ON hd.record_id = hcp.record_id
 	WHERE de.id = 'f41bd013-23cc-41ba-91d2-4e325f785171'
+			AND hcp.deaths IS TRUE
 		AND dr."approvalStatus" = 'published'
 		AND hd.sex IS NOT NULL
 		AND hd.age IS NULL
@@ -242,8 +251,9 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 	let dr = disasterRecordsTable
 	let hd = humanDsgTable
 	let vt = valTable
+	let hcp = humanCategoryPresenceTable
 
-	if (![hd.sex, hd.age, hd.disability, hd.globalPovertyLine, hd.nationalPovertyLine].includes(groupBy)){
+	if (![hd.sex, hd.age, hd.disability, hd.globalPovertyLine, hd.nationalPovertyLine].includes(groupBy)) {
 		console.log("groupBy", groupBy)
 		throw new Error("unknown group by column")
 	}
@@ -257,9 +267,11 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 		.innerJoin(dr, eq(de.id, dr.disasterEventId))
 		.innerJoin(hd, eq(dr.id, hd.recordId))
 		.innerJoin(vt, eq(hd.id, vt.dsgId))
+		.innerJoin(hcp, eq(hd.recordId, hcp.recordId))
 		.where(
 			and(
 				eq(de.id, disasterEventId),
+				eq(presenceCol, true),
 				eq(dr.approvalStatus, "published"),
 				groupBy == hd.sex ? isNotNull(hd.sex) : isNull(hd.sex),
 				groupBy == hd.age ? isNotNull(hd.age) : isNull(hd.age),

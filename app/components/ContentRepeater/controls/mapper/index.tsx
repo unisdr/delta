@@ -538,71 +538,26 @@ export const previewMap = (items: any) => {
         <div id="map"></div>
         <script src="${glbMapperJS}"></script>
         <script>
-          const adjustZoomBasedOnDistance = (map, bounds, centers) => {
-            let maxDistance = 0;
+        const adjustZoomBasedOnDistance = (map, geoJsonLayers) => {
+          const L = window.L;
+          const boundsArray = [];
 
-            if (centers.length === 1) {
-              // Calculate maxDistance for a single shape based on its bounds
-              const singleShapeBounds = bounds.isValid() ? bounds : null;
-
-              if (singleShapeBounds) {
-                maxDistance = singleShapeBounds.getNorthEast().distanceTo(singleShapeBounds.getSouthWest());
-              } else {
-                console.warn("No valid bounds available for the single shape.");
-                map.setView(centers[0], 14); // Default zoom for a single center if no bounds
-                return;
-              }
-            } else {
-              // Calculate the maximum distance between all centers
-              for (let i = 0; i < centers.length; i++) {
-                for (let j = i + 1; j < centers.length; j++) {
-                  const distance = centers[i].distanceTo(centers[j]);
-                  maxDistance = Math.max(maxDistance, distance);
-                }
-              }
+          geoJsonLayers.forEach(layer => {
+            if (layer && layer.getBounds && layer.getBounds().isValid()) {
+              boundsArray.push(layer.getBounds());
             }
+          });
 
-            // Define zoom level thresholds based on distances
-            const globalLevelDistance = 10000000; // ~10,000km
-            const regionalLevelDistance = 5000000; // ~5,000km
-            const countryLevelDistance = 1000000; // ~1,000km
-            const cityLevelDistance = 100000; // ~100km
-            const townLevelDistance1 = 20000; // ~20km
-            const townLevelDistance2 = 15000; // ~15km
-            const townLevelDistance3 = 10000; // ~10km
-            const townLevelDistance4 = 5000; // ~5km
-
-            let calculatedZoom;
-
-            // Adjust zoom based on maximum distance
-            if (maxDistance > globalLevelDistance) {
-              calculatedZoom = 2; // Minimum zoom for global scale
-            } else if (maxDistance > regionalLevelDistance) {
-              calculatedZoom = 4; // Regional scale
-            } else if (maxDistance > countryLevelDistance) {
-              calculatedZoom = 7; // Country-level zoom
-            } else if (maxDistance > cityLevelDistance) {
-              calculatedZoom = 10; // City-level zoom
-            } else if (maxDistance > townLevelDistance1) {
-              calculatedZoom = 11; // Town-level zoom
-            } else if (maxDistance > townLevelDistance2) {
-              calculatedZoom = 12; // Town-level zoom
-            } else if (maxDistance > townLevelDistance3) {
-              calculatedZoom = 13; // Town-level zoom
-            } else if (maxDistance > townLevelDistance4) {
-              calculatedZoom = 14; // Town-level zoom
-            } else {
-              calculatedZoom = 17; // Local zoom for nearby shapes
+          if (boundsArray.length > 0) {
+            const bounds = L.latLngBounds(boundsArray.flat());
+            if (bounds.isValid()) {
+              map.fitBounds(bounds, { padding: [50, 50] });
             }
-
-            // Fit bounds first with padding
-            map.fitBounds(bounds, {
-              padding: [50, 50],
-            });
-
-            // Set the zoom level dynamically
-            map.setZoom(Math.min(map.getZoom(), calculatedZoom));
-          };
+          } else {
+            console.warn("No valid bounds to fit the map.");
+            map.setView([11.3233, 124.9200], 6);
+          }
+        };
 
         // Function to dynamically assign colors for different geometry types
         function getColorForType(geometryType) {
@@ -620,15 +575,17 @@ export const previewMap = (items: any) => {
         window.onload = () => {
             document.getElementById("map").style.height = "${window.outerHeight - 100}px";
 
-            const map = L.map("map").setView([43.833, 87.616], 2);
+            const map = L.map("map", { preferCanvas: true }); //.setView([43.833, 87.616], 2);
 
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: "&copy; OpenStreetMap contributors",
+            L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+                attribution: "",
             }).addTo(map);
 
             const items = \`${items}\`;
             const boundsArray = [];
             const centers = [];
+
+            const geoJsonLayers = [];
 
             JSON.parse(items).forEach((item) => {
                 try {
@@ -636,9 +593,14 @@ export const previewMap = (items: any) => {
                     const map_coords = (item?.map_coords || null) ? (item.map_coords) : [];
 
                     const getShape = map_coords?.mode || "geographic_level";
+
+                    console.log('getShape', getShape);
+                    console.log('geojsonData', geojsonData);
+                    console.log('color', getColorForType(getShape));
+                    console.log('fillColor', getColorForType(getShape));
                     
-                    L.geoJSON(geojsonData, {
-                        style: (feature) => ({
+                    const geojsonLayer = L.geoJSON(geojsonData, {
+                        style: () => ({
                             color: getColorForType(getShape),
                             fillColor: getColorForType(getShape),
                             weight: 2,
@@ -657,27 +619,25 @@ export const previewMap = (items: any) => {
                                 opacity: 1,
                                 fillOpacity: 0.8
                             });
-                        },
-                        onEachFeature: (feature, layer) => {
-                            if (feature.geometry.type !== "Point") {
-                                boundsArray.push(layer.getBounds());
-                                centers.push(layer.getBounds().getCenter());
-                            } else {
-                                centers.push(layer.getLatLng());
-                            }
-                        },
+                        }
                     }).addTo(map);
+                    geoJsonLayers.push(geojsonLayer);
                 } catch (error) {
                     console.error("Error parsing GeoJSON:", error);
                 }
             });
 
-            if (boundsArray.length > 0) {
-                const bounds = L.latLngBounds(boundsArray.flat());
-                adjustZoomBasedOnDistance(map, bounds, centers);
-            } else {
-                console.warn("No valid bounds available for fitting the map.");
-            }
+            setTimeout(() => {
+              adjustZoomBasedOnDistance(map, geoJsonLayers);
+            }, 500);
+
+            setTimeout(() => {
+              // Remove attribution links
+              const attributionElement = document.querySelector(".leaflet-control-attribution.leaflet-control a");
+              if (attributionElement) {
+                attributionElement.remove();
+              }
+            }, 10);
         };
       </script>
       </body>

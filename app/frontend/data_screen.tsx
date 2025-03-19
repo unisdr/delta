@@ -1,5 +1,5 @@
-import { Pagination } from "~/frontend/pagination/view";
-import { MainContainer } from "./container";
+import {Pagination} from "~/frontend/pagination/view";
+import {MainContainer} from "./container";
 
 interface DataScreenProps<T> {
 	plural: string;
@@ -23,13 +23,13 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 			<>
 				{props.headerElement}
 				{!props.hideMainLinks &&
-				<DataMainLinks
-					searchParams={props.searchParams}
-					isPublic={props.isPublic}
-					baseRoute={props.baseRoute}
-					resourceName={props.resourceName}
-					csvExportLinks={props.csvExportLinks}
-				/>
+					<DataMainLinks
+						searchParams={props.searchParams}
+						isPublic={props.isPublic}
+						baseRoute={props.baseRoute}
+						resourceName={props.resourceName}
+						csvExportLinks={props.csvExportLinks}
+					/>
 				}
 				{props.paginationData.totalItems ? (
 					<>
@@ -96,12 +96,18 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 }
 
 interface DataMainLinksProps {
+	noCreate?: boolean;
+	noExport?: boolean;
+	noImport?: boolean;
+
 	relLinkToNew?: string;
 	isPublic?: boolean;
 	baseRoute: string;
 	resourceName: string;
 	csvExportLinks?: boolean;
 	searchParams?: URLSearchParams;
+
+	extraButtons?: {relPath: string, label: string}[]
 }
 
 export function DataMainLinks(props: DataMainLinksProps) {
@@ -112,7 +118,7 @@ export function DataMainLinks(props: DataMainLinksProps) {
 			className="dts-main-container mg-grid mg-grid__col-auto"
 			role="region"
 			aria-label="Main container"
-			style={{ marginBottom: "2rem" }}
+			style={{marginBottom: "2rem"}}
 		>
 			<div
 				className="mg-grid__col--span-all"
@@ -125,39 +131,59 @@ export function DataMainLinks(props: DataMainLinksProps) {
 				role="navigation"
 				aria-label="Main links"
 			>
-				<a
-					href={
-						props.baseRoute +
-						(props.relLinkToNew
-							? props.relLinkToNew + urlParams
-							: "/edit/new" + urlParams)
-					}
-					className="mg-button mg-button--small mg-button-primary"
-					role="button"
-					aria-label={`Create new ${props.resourceName}`}
-				>
-					Add new {props.resourceName}
-				</a>
+				{!props.noCreate &&
+					<a
+						href={
+							props.baseRoute +
+							(props.relLinkToNew
+								? props.relLinkToNew + urlParams
+								: "/edit/new" + urlParams)
+						}
+						className="mg-button mg-button--small mg-button-primary"
+						role="button"
+						aria-label={`Create new ${props.resourceName}`}
+					>
+						Add new {props.resourceName}
+					</a>
+				}
 				{props.csvExportLinks && (
 					<>
-						<a
-							href={`${props.baseRoute}/csv-export${urlParams}`}
-							className="mg-button mg-button--small mg-button-outline"
-							role="button"
-							aria-label="Export CSV"
-						>
-							CSV Export
-						</a>
-						<a
-							href={`${props.baseRoute}/csv-import${urlParams}`}
-							className="mg-button mg-button--small mg-button-secondary"
-							role="button"
-							aria-label="Import CSV"
-						>
-							CSV Import
-						</a>
+						{!props.noExport &&
+
+							<a
+								href={`${props.baseRoute}/csv-export${urlParams}`}
+								className="mg-button mg-button--small mg-button-outline"
+								role="button"
+								aria-label="Export CSV"
+							>
+								CSV Export
+							</a>
+						}
+						{!props.noImport &&
+
+							<a
+								href={`${props.baseRoute}/csv-import${urlParams}`}
+								className="mg-button mg-button--small mg-button-secondary"
+								role="button"
+								aria-label="Import CSV"
+							>
+								CSV Import
+							</a>
+						}
 					</>
 				)}
+				{props.extraButtons &&
+					props.extraButtons.map(b =>
+						<a
+							href={`${props.baseRoute}/${b.relPath}${urlParams}`}
+							className="mg-button mg-button--small mg-button-secondary"
+							role="button"
+							aria-label={b.label}
+						>
+							{b.label}
+						</a>
+					)
+				}
 			</div>
 		</div>
 	);

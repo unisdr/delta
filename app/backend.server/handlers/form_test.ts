@@ -46,9 +46,10 @@ describe("formSave", () => {
 		const actionArgs = {
 			request: new Request("http://example.com", {
 				method: "POST",
-				body: new URLSearchParams({field1: "a"})
+				body: new URLSearchParams({field1: "a"}),
 			}),
 			params: {id: "new"},
+			userSession: {user: {role: "admin"}}
 		};
 		const res = await formSave({
 			actionArgs: actionArgs as unknown as ActionFunctionArgs,
@@ -540,10 +541,12 @@ export const fieldsDef5: FormInputDef<TestFields5>[] = [
 	{key: "text1", label: "", type: "text"},
 	{key: "bool1", label: "", type: "bool"},
 	{key: "date1", label: "", type: "date"},
-	{key: "enum1", label: "", type: "enum", enumData: [
-		{key: "one", label: ""},
-		{key: "two", label: ""},
-	]},
+	{
+		key: "enum1", label: "", type: "enum", enumData: [
+			{key: "one", label: ""},
+			{key: "two", label: ""},
+		]
+	},
 ];
 
 interface TestFields6 {
@@ -568,7 +571,7 @@ describe('csvImportExample', () => {
 			["number1", "text1", "bool1", "date1", "enum1"],
 			["1", "text example", "true", "2025-01-01", "one"],
 			["1", "text example", "true", "2025-01-01", "one"],
-		
+
 		])
 	})
 	it('update', async () => {

@@ -25,6 +25,9 @@ export function csvExportLoader<T>(args: csvExportLoaderArgs<T>) {
 		let headers: string[] = []
 		let rows: string[][] = []
 		for (const k in data[0]) {
+			if (k == "spatialFootprint" || k == "attachments") {
+				continue
+			}
 			headers.push(k)
 		}
 		for (const item of data as Record<string, any>[]) {

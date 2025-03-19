@@ -121,6 +121,15 @@ export async function assetById(idStr: string) {
 	return assetByIdTx(dr, idStr)
 }
 
+export async function assetByName(nameStr: string, nationalIdStr: string = '') {
+    let res = await dr.query.assetTable.findFirst({
+        where: eq(sql`LOWER(${assetTable.name})`, nameStr.toLowerCase()),
+    });
+
+    return res;
+
+}
+
 export async function assetByIdTx(tx: Tx, idStr: string) {
 	let id = idStr
 	let res = await tx.query.assetTable.findFirst({
@@ -170,20 +179,40 @@ export async function assetsForSector(tx: Tx, sectorId: number) {
 
 
 export async function upsertRecord(record: AssetInsert): Promise<void> {
+	
 	// Perform the upsert operation
-	await dr
-		.insert(assetTable)
-		.values(record)
-		.onConflictDoUpdate({
-			target: assetTable.apiImportId,
-			set: {
-				id: record.id,
-				name: record.name,
-				sectorIds: record.sectorIds,
-				isBuiltIn: record.isBuiltIn,
-				nationalId: record.nationalId,
-				notes: record.notes,
-				category: record.category,
-			},
-		});
+	if (record.id && record.id !== '' && record.id !== 'undefined') {
+		await dr
+			.insert(assetTable)
+			.values(record)
+			.onConflictDoUpdate({
+				target: assetTable.apiImportId,
+				set: {
+					id: record.id,
+					name: record.name,
+					sectorIds: record.sectorIds,
+					isBuiltIn: record.isBuiltIn,
+					nationalId: record.nationalId,
+					notes: record.notes,
+					category: record.category,
+				},
+			});
+	}
+	else {
+		await dr
+			.insert(assetTable)
+			.values(record)
+			.onConflictDoUpdate({
+				target: assetTable.apiImportId,
+				set: {
+					name: record.name,
+					sectorIds: record.sectorIds,
+					isBuiltIn: record.isBuiltIn,
+					nationalId: record.nationalId,
+					notes: record.notes,
+					category: record.category,
+				},
+			});
+	}
+	
 }
