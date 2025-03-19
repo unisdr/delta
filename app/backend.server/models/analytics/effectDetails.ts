@@ -12,9 +12,47 @@ import {
   disasterEventTable,
   hazardousEventTable,
   divisionTable,
+  sectorTable,
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
 import { calculateDamages, calculateLosses } from "~/backend.server/utils/disasterCalculations";
+
+/**
+ * Gets all subsector IDs for a given sector following international standards.
+ * This implementation uses the proper hierarchical structure defined in the sector table.
+ * 
+ * @param sectorId - The ID of the sector to get subsectors for
+ * @returns Array of sector IDs including the input sector and all its subsectors
+ */
+const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
+  const numericSectorId = parseInt(sectorId, 10);
+  if (isNaN(numericSectorId)) {
+    return []; // Return empty array if invalid ID
+  }
+
+  // Get immediate subsectors
+  const subsectors = await getSectorsByParentId(numericSectorId);
+
+  // Initialize result with the current sector ID
+  const result: number[] = [numericSectorId];
+
+  // Recursively get all subsectors at all levels
+  if (subsectors.length > 0) {
+    // Add immediate subsector IDs
+    result.push(...subsectors.map((s: { id: number }) => s.id));
+
+    // For each subsector, recursively get its subsectors
+    for (const subsector of subsectors) {
+      const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
+      // Filter out the subsector ID itself as it's already included
+      const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
+      result.push(...uniqueChildIds);
+    }
+  }
+
+  // Remove duplicates and return
+  return [...new Set(result)];
+};
 
 /**
  * Interface defining the filter parameters for effect details queries
@@ -47,16 +85,37 @@ interface FilterParams {
 export async function getEffectDetails(filters: FilterParams) {
   let targetSectorIds: number[] = [];
   if (filters.sectorId) {
-    const numericSectorId = Number(filters.sectorId);
-    if (!isNaN(numericSectorId)) {
-      const subsectors = await getSectorsByParentId(numericSectorId);
-      if (subsectors.length === 0) {
-        // This is a subsector - filter for exact match
-        targetSectorIds = [numericSectorId];
+    try {
+      const numericSectorId = parseInt(filters.sectorId, 10);
+      if (isNaN(numericSectorId)) {
+        targetSectorIds = []; // Return empty array if invalid ID
       } else {
-        // This is a main sector - include all subsectors
-        targetSectorIds = [numericSectorId, ...subsectors.map(s => s.id)];
+        // Get immediate subsectors
+        const subsectors = await getSectorsByParentId(numericSectorId);
+
+        // Initialize result with the current sector ID
+        targetSectorIds = [numericSectorId];
+
+        // Recursively get all subsectors at all levels
+        if (subsectors.length > 0) {
+          // Add immediate subsector IDs
+          targetSectorIds.push(...subsectors.map((s: { id: number }) => s.id));
+
+          // For each subsector, recursively get its subsectors
+          for (const subsector of subsectors) {
+            const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
+            // Filter out the subsector ID itself as it's already included
+            const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
+            targetSectorIds.push(...uniqueChildIds);
+          }
+        }
+
+        // Remove duplicates
+        targetSectorIds = [...new Set(targetSectorIds)];
       }
+    } catch (error) {
+      console.error('Error processing sector IDs:', error);
+      targetSectorIds = [];
     }
   }
 
