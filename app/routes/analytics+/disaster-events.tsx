@@ -28,7 +28,7 @@ import {
   getDivisionByLevel,
 } from "~/backend.server/models/division";
 import { dr } from "~/db.server"; // Drizzle ORM instance
-import MapChart from "~/components/MapChart";
+import MapChart, { MapChartRef } from "~/components/MapChart";
 import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
 
@@ -72,7 +72,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let countRelatedDisasterRecords:any = undefined;
   let totalSectorEffects:any = undefined;
   let cpDisplayName:string = '';
-  let geoData:interfaceMap[] = [];
+  let datamageGeoData:interfaceMap[] = [];
+  let lossesGeoData:interfaceMap[] = [];
   let totalAffectedPeople:any = {};
   let totalAffectedPeople2:any = {};
 
@@ -106,16 +107,25 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         for (const item of divisionLevel1) {
           const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(xId, [item.id]);
           // scores[item.id] = {};
-          geoData.push({
+          lossesGeoData.push({
+            total: totalPerDivision.losses.total,
+            name: String(item.name['en']),
+            description: 'Total Losses: ' + totalPerDivision.losses.currency + ' ' + totalPerDivision.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }),
+            colorPercentage: 1,
+            geojson: item.geojson,
+          });
+
+          datamageGeoData.push({
             total: totalPerDivision.damages.total,
             name: String(item.name['en']),
-            description: 'Total Damage: ' + totalPerDivision.damages.currency + ' ' + totalPerDivision.damages.total,
+            description: 'Total Damage: ' + totalPerDivision.damages.currency + ' ' + totalPerDivision.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }),
             colorPercentage: 1,
             geojson: item.geojson,
           });
           // console.log( item );
         }
-        // console.log( geoData );
+        // console.log( datamageGeoData );
+        // console.log( lossesGeoData );
       } catch (e) {
         console.log(e);
         throw e;
@@ -132,7 +142,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     countRelatedDisasterRecords: countRelatedDisasterRecords,
     total: totalSectorEffects,
     cpDisplayName: cpDisplayName,
-    geoData: geoData,
+    datamageGeoData: datamageGeoData,
+    lossesGeoData: lossesGeoData,
     totalAffectedPeople: totalAffectedPeople,
     totalAffectedPeople2: totalAffectedPeople2,
   });
@@ -150,6 +161,7 @@ export const meta: MetaFunction = ({ data }) => {
 function DisasterEventsAnalysisContent() {
   const btnCancelRef = useRef<HTMLButtonElement>(null);
   const btnSubmitRef = useRef<HTMLButtonElement>(null);
+  const mapChartRef = useRef<MapChartRef>(null); //  Reference to MapChart
 
   const ld = useLoaderData<{
     record: DisasterEventViewModel | null, 
@@ -157,13 +169,16 @@ function DisasterEventsAnalysisContent() {
     countRelatedDisasterRecords: number | null,
     total: any | null,
     cpDisplayName: string,
-    geoData: any,
+    datamageGeoData: any,
+    lossesGeoData: any,
     totalAffectedPeople: any,
     totalAffectedPeople2: any,
   }>();
   let disaggregationsAge2:{
     children:number|undefined, adult: number|undefined, senior: number|undefined
   } | undefined = undefined;
+
+  let [activeData, setActiveData] = useState(ld.datamageGeoData); //  Default MapChart geoData
 
   // // State declarations
   // const [filters, setFilters] = useState<{
@@ -180,7 +195,31 @@ function DisasterEventsAnalysisContent() {
     event.preventDefault(); // Prevent the default form submission
     window.location.href = '/analytics/disaster-events';
   };
+
+  const handleSwitchMapData = (e: React.MouseEvent<HTMLButtonElement>, data: any, legendMaxColor: string) => {
+    if (!e || !e.currentTarget) {
+      console.error("Event is undefined or does not have a target.");
+      return;
+    }
+
+    e.preventDefault();
+
+    document.getElementById('tab01')?.setAttribute('aria-selected', 'false');
+    document.getElementById('tab02')?.setAttribute('aria-selected', 'false');
+    document.getElementById('tab03')?.setAttribute('aria-selected', 'false')
   
+    const buttonText = e.currentTarget.textContent?.trim() || "Legend";
+  
+    // console.log('data:', data);
+    // console.log('buttonText:', buttonText);
+    // console.log();
+    e.currentTarget.ariaSelected = 'true';
+  
+    setActiveData(data);
+    mapChartRef.current?.setDataSource(data);
+    mapChartRef.current?.setLegendTitle(buttonText);
+    mapChartRef.current?.setLegendMaxColor(legendMaxColor);
+  };
 
 
   useEffect(() => {
@@ -199,11 +238,11 @@ function DisasterEventsAnalysisContent() {
       }
     }, []);
 
-  // console.log(ld.geoData);
+  // console.log(ld.datamageGeoData);
 
   // TODO: apply mapping of data, ask to revise key
   if (ld.record && ld.totalAffectedPeople2.disaggregations.age) {
-    console.log( ld.totalAffectedPeople2.disaggregations );
+    // console.log( ld.totalAffectedPeople2.disaggregations );
     const ageData = ld.totalAffectedPeople2.disaggregations.age;
     disaggregationsAge2 = {
       children: ageData["0-14"],
@@ -589,7 +628,7 @@ function DisasterEventsAnalysisContent() {
 
                 <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
                   <li role="presentation">
-                    <button type="button" className="dts-tablist__button" role="tab" id="tab01" aria-selected="true" aria-controls="tabpanel01">
+                    <button onClick={(e) => handleSwitchMapData(e, ld.datamageGeoData, '#208f04')} type="button" className="dts-tablist__button" role="tab" id="tab01" aria-selected="true" aria-controls="tabpanel01">
                       <span>Total Damage</span>
                     </button>
                   </li>
@@ -599,17 +638,17 @@ function DisasterEventsAnalysisContent() {
                     </button>
                   </li>
                   <li role="presentation">
-                    <button type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false" disabled>
+                    <button onClick={(e) => handleSwitchMapData(e, ld.lossesGeoData, '#58508d')} type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false">
                       <span>Total Losses</span>
                     </button>
                   </li>
                 </ul>
                 <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
                   <div>
-                      <MapChart id="map_viewer" dataSource={ld.geoData} legendMaxColor="#208f04" />
+                      <MapChart ref={mapChartRef} id="map_viewer" dataSource={activeData} legendMaxColor="#208f04" />
                   </div>
                 </div>
-                <div className="dts-tablist__panel hidden" id="tabpanel02" role="tabpanel" aria-labelledby="tab02">
+                {/* <div className="dts-tablist__panel hidden" id="tabpanel02" role="tabpanel" aria-labelledby="tab02">
                   <div className="dts-placeholder">
                     <span>Placeholder map 2</span>
                   </div>
@@ -618,7 +657,7 @@ function DisasterEventsAnalysisContent() {
                   <div className="dts-placeholder">
                     <span>Placeholder map 3</span>
                   </div>
-                </div>
+                </div> */}
               </div>
             </section>
           </>
