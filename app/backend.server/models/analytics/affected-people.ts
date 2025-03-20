@@ -1,4 +1,4 @@
-import { eq, sql, and, isNotNull } from "drizzle-orm";
+import { eq, sql, and, isNotNull, isNull } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
 	disasterRecordsTable,
@@ -234,7 +234,16 @@ export async function getTotalAffectedPeople(
 		const humanDsgRecords = await dr
 			.select({ id: humanDsgTable.id })
 			.from(humanDsgTable)
-			.where(sql`${humanDsgTable.recordId} IN ${validRecordIds}`);
+			.where(
+				and(
+					sql`${humanDsgTable.recordId} IN ${validRecordIds}`,
+					isNull(humanDsgTable.sex),
+					isNull(humanDsgTable.age),
+					isNull(humanDsgTable.disability),
+					isNull(humanDsgTable.globalPovertyLine),
+					isNull(humanDsgTable.nationalPovertyLine)
+				)
+			);
 
 		const dsgIds = humanDsgRecords.map((record) => record.id);
 		console.log("dsgIds:", dsgIds);
