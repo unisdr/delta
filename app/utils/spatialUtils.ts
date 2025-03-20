@@ -157,60 +157,6 @@ export function checkShapeAgainstDivisions(
 
     console.log('shapeGeoJSON.geometry.type:', shapeGeoJSON.geometry.type);
 
-    /*
-    //console.log('source:', shapeGeoJSON.properties?.source);
-
-    // Handle Point type
-    if (shapeGeoJSON.geometry.type === "Point") {
-        for (const division of divisions) {
-            const divisionGeoJSON = division.geojson;
-            const divisionPolygon: turf.Feature<turf.Geometry> =
-                divisionGeoJSON.type === "MultiPolygon"
-                    ? turf.multiPolygon(divisionGeoJSON.coordinates)
-                    : turf.polygon(divisionGeoJSON.coordinates);
-        }
-        return "⚠️ The point is completely outside of all divisions!";
-    }
-
-    // Handle LineString type
-    if (shapeGeoJSON.geometry.type === "LineString") {
-        let lineSomePartOutside = false;
-        let lineCompletelyOutside = true;
-
-        for (const [lng, lat] of shapeGeoJSON.geometry.coordinates) {
-            const point = turf.point([lng, lat]); // Convert each coordinate to a Point
-
-            let pointInside = false;
-            for (const division of divisions) {
-                const divisionGeoJSON = division.geojson;
-                const divisionPolygon: turf.Feature<turf.Geometry> =
-                    divisionGeoJSON.type === "MultiPolygon"
-                        ? turf.multiPolygon(divisionGeoJSON.coordinates)
-                        : turf.polygon(divisionGeoJSON.coordinates);
-
-                if (turf.booleanPointInPolygon(point, divisionPolygon)) {
-                    pointInside = true;
-                    break;
-                }
-            }
-
-            if (!pointInside) {
-                lineSomePartOutside = true;
-            } else {
-                lineCompletelyOutside = false;
-            }
-        }
-
-        if (lineCompletelyOutside) {
-            return "⚠️ The line is completely outside of all divisions!";
-        } else if (lineSomePartOutside) {
-            return "⚠️ Some parts of the line extend outside the divisions.";
-        } else {
-            return "The entire line is inside a division.";
-        }
-    }
-    */
-
     // Step 1: Collect all division polygons
     const divisionPolygons: turf.Feature<turf.Geometry>[] = [];
 
@@ -236,7 +182,7 @@ export function checkShapeAgainstDivisions(
     }
 
     // Step 3: Debugging merged polygon
-    console.log("Merged Division Polygon:", JSON.stringify(mergedDivisionPolygon, null, 2));
+    //console.log("Merged Division Polygon:", JSON.stringify(mergedDivisionPolygon, null, 2));
 
     if (!mergedDivisionPolygon) {
         console.warn("⚠️ No valid divisions to check against!");
