@@ -77,7 +77,12 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 		AND hd.global_poverty_line IS NULL
 		AND hd.national_poverty_line IS NULL
 		AND (hd.custom IS NULL
-			OR hd.custom = '{}'::jsonb)
+			OR hd.custom = '{}'::jsonb
+			OR (
+				SELECT COUNT(*)
+				FROM jsonb_each(hd.custom)
+				WHERE jsonb_typeof(value) != 'null'
+			) = 0
 		AND EXISTS (
 			SELECT 1
 			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
@@ -114,6 +119,11 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				sql`(
 					${hd.custom} IS NULL
 					OR ${hd.custom} = '{}'::jsonb
+					OR (
+						SELECT COUNT(*)
+						FROM jsonb_each(${hd.custom})
+						WHERE jsonb_typeof(value) != 'null'
+					) = 0
 				)`,
 				conditions?.divisionId ? sql`EXISTS (
 					SELECT 1
@@ -259,7 +269,7 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				WHERE jsonb_typeof(value) != 'null'
 			) = 0
 		)
-	 	AND EXISTS (
+			AND EXISTS (
 			SELECT 1
 			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
 			WHERE elem->'geojson'->'dts_info'->>'division_id' = '74'
