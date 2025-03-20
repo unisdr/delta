@@ -13,10 +13,14 @@ import {
 } from "~/drizzle/schema";
 
 
-export async function getAffected(tx: Tx, disasterEventId: string) {
+interface Conditions {
+	divisionId?: number
+}
+
+export async function getAffected(tx: Tx, disasterEventId: string, conditions?: Conditions) {
 	let res = {
-		noDisaggregations: await totalsForEachTable(tx, disasterEventId),
-		disaggregations: await byColAndTableTotalsOnlyForFrontend(tx, disasterEventId)
+		noDisaggregations: await totalsForEachTable(tx, disasterEventId, conditions),
+		disaggregations: await byColAndTableTotalsOnlyForFrontend(tx, disasterEventId, conditions)
 	}
 	return res
 }
@@ -41,11 +45,11 @@ const totalsTablesAndCols = [
 ]
 
 
-async function totalsForEachTable(tx: Tx, disasterEventId: string): Promise<Total> {
+async function totalsForEachTable(tx: Tx, disasterEventId: string, conditions?: Conditions): Promise<Total> {
 	let vars: any = {}
 	let total = 0
 	for (let a of totalsTablesAndCols) {
-		let v = await totalsForOneTable(tx, disasterEventId, a.table, a.col, a.presenceCol)
+		let v = await totalsForOneTable(tx, disasterEventId, a.table, a.col, a.presenceCol, conditions)
 		vars[a.code] = v
 		total += v
 	}
@@ -56,7 +60,7 @@ async function totalsForEachTable(tx: Tx, disasterEventId: string): Promise<Tota
 // The code for deaths, injured, missing, displaced is exactly the same.
 // For directlyAffected has a minor variation that a table has both direct and indirect columns, we only need direct from there.
 
-async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, presenceCol: any): Promise<number> {
+async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, presenceCol: any, conditions?: Conditions): Promise<number> {
 	/*
 	SELECT SUM(d.deaths)
 	FROM disaster_event de
@@ -73,7 +77,12 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 		AND hd.global_poverty_line IS NULL
 		AND hd.national_poverty_line IS NULL
 		AND (hd.custom IS NULL
-			OR hd.custom = '{}'::jsonb
+			OR hd.custom = '{}'::jsonb)
+		AND EXISTS (
+			SELECT 1
+			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
+			WHERE elem->'geojson'->'dts_info'->>'division_id' = '74'
+			OR elem->'geojson'->'dts_info'->'division_ids' @> '74'::jsonb
 		)
 	*/
 
@@ -105,7 +114,13 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				sql`(
 					${hd.custom} IS NULL
 					OR ${hd.custom} = '{}'::jsonb
-				)`
+				)`,
+				conditions?.divisionId ? sql`EXISTS (
+					SELECT 1
+					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
+					WHERE elem->'geojson'->'dts_info'->>'division_id' = ${conditions.divisionId}
+					OR elem->'geojson'->'dts_info'->'division_ids' @> ${conditions.divisionId}::jsonb
+				)` : undefined
 			)
 		)
 
@@ -151,10 +166,10 @@ type ByColAndTableTotalsOnly = {
 	nationalPovertyLine: Map<string, number>
 }
 
-async function byColAndTableTotalsOnly(tx: Tx, disasterEventId: string): Promise<ByColAndTableTotalsOnly> {
+async function byColAndTableTotalsOnly(tx: Tx, disasterEventId: string, conditions?: Conditions): Promise<ByColAndTableTotalsOnly> {
 	let res: any = {}
 	for (let t of tables) {
-		let v = await byTable(tx, disasterEventId, t.col)
+		let v = await byTable(tx, disasterEventId, t.col, conditions)
 		res[t.code] = v.total
 	}
 	return res as ByColAndTableTotalsOnly
@@ -169,9 +184,9 @@ type ByColAndTableTotalsOnlyForFrontend = {
 	nationalPovertyLine: Record<string, number>
 }
 
-async function byColAndTableTotalsOnlyForFrontend(tx: Tx, disasterEventId: string): Promise<ByColAndTableTotalsOnlyForFrontend> {
+async function byColAndTableTotalsOnlyForFrontend(tx: Tx, disasterEventId: string, conditions?: Conditions): Promise<ByColAndTableTotalsOnlyForFrontend> {
 	let res: any = {}
-	let r = await byColAndTableTotalsOnly(tx, disasterEventId)
+	let r = await byColAndTableTotalsOnly(tx, disasterEventId, conditions)
 
 	// adjust results for disabilities to only group by no/has disabilities
 	let dis = new Map<string, number>()
@@ -205,11 +220,11 @@ type ByTable = {
 	}
 }
 
-async function byTable(tx: Tx, disasterEventId: string, dsgCol: any): Promise<ByTable> {
+async function byTable(tx: Tx, disasterEventId: string, dsgCol: any, conditions?: Conditions): Promise<ByTable> {
 	let tables: any = {}
 	let total = new Map<string, number>()
 	for (let a of totalsTablesAndCols) {
-		let vv = await countsForOneTable(tx, disasterEventId, a.table, a.col, dsgCol, a.presenceCol)
+		let vv = await countsForOneTable(tx, disasterEventId, a.table, a.col, dsgCol, a.presenceCol, conditions)
 		tables[a.code] = vv
 		for (let [k, v] of vv.entries()) {
 			let a = total.get(k) || 0
@@ -220,7 +235,7 @@ async function byTable(tx: Tx, disasterEventId: string, dsgCol: any): Promise<By
 	return {total, tables} as ByTable
 }
 
-async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, groupBy: any, presenceCol: any): Promise<Map<string, number>> {
+async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, groupBy: any, presenceCol: any, conditions?: Conditions): Promise<Map<string, number>> {
 	/*
 		SELECT hd.sex, SUM(d.deaths)
 	FROM disaster_event de
@@ -243,6 +258,12 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				FROM jsonb_each(hd.custom)
 				WHERE jsonb_typeof(value) != 'null'
 			) = 0
+		)
+	 	AND EXISTS (
+			SELECT 1
+			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
+			WHERE elem->'geojson'->'dts_info'->>'division_id' = '74'
+			OR elem->'geojson'->'dts_info'->'division_ids' @> '74'::jsonb
 		)
 	GROUP BY hd.sex
 	*/
@@ -286,7 +307,13 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 						FROM jsonb_each(${hd.custom})
 						WHERE jsonb_typeof(value) != 'null'
 					) = 0
-				)`
+				)`,
+				conditions?.divisionId ? sql`EXISTS (
+					SELECT 1
+					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
+					WHERE elem->'geojson'->'dts_info'->>'division_id' = ${conditions.divisionId}
+					OR elem->'geojson'->'dts_info'->'division_ids' @> ${conditions.divisionId}::jsonb
+				)` : undefined
 			)
 		)
 		.groupBy(groupBy)
