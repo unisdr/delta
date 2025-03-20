@@ -15,6 +15,7 @@ import React from 'react'
 import * as repeatablefields from "~/frontend/components/repeatablefields"
 
 import {UserForFrontend} from "~/util/auth"
+import {notifyError} from "./utils/notifications";
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -819,28 +820,24 @@ export function Input(props: InputProps) {
 					{precision == "yyyy-mm" && (
 						<>
 							{wrapInput(
-								<select
+								<input
 									required={props.def.required}
-									value={vsFull.y}
-									onChange={(e: any) => {
-										let v = {y: Number(e.target.value), m: vsFull.m, d: 0}
+									type="text"
+									inputMode="numeric"
+									name={props.name}
+									defaultValue={vsFull.y}
+									onBlur={(e: any) => {
+										let vStr = e.target.value
+										if (!/^\d{4}$/.test(vStr)) {
+											notifyError("Invalid year format, must be.")
+											return
+										}
+										let v = {y: Number(vStr), m: vsFull.m, d: 0}
 										vsFullSet(v)
 										vsDBSet2(toDB(v, precision))
 										if (props.onChange) props.onChange(e)
 									}}
-								>
-									{(() => {
-										let yearNow = new Date().getFullYear()
-										let options = []
-										options.push(<option key="" value="">Select</option>)
-										for (let year = yearNow; year >= 1950; year--) {
-											options.push(
-												<option key={year} value={year}>{year}</option>
-											)
-										}
-										return options
-									})()}
-								</select>
+								/>
 								, props.def.label + " Year")}
 							<WrapInputBasic
 								label={props.def.label + " Month"}
@@ -866,28 +863,24 @@ export function Input(props: InputProps) {
 					{precision == "yyyy" && (
 						<>
 							{wrapInput(
-								<select
+								<input
 									required={props.def.required}
-									value={vsFull.y}
-									onChange={(e: any) => {
-										let v = {y: Number(e.target.value), m: 0, d: 0}
+									type="text"
+									inputMode="numeric"
+									name={props.name}
+									defaultValue={vsFull.y}
+									onBlur={(e: any) => {
+										let vStr = e.target.value
+										if (!/^\d{4}$/.test(vStr)) {
+											notifyError("Invalid year format, must be yyyy.")
+											return
+										}
+										let v = {y: Number(vStr), m: vsFull.m, d: 0}
 										vsFullSet(v)
 										vsDBSet2(toDB(v, precision))
 										if (props.onChange) props.onChange(e)
 									}}
-								>
-									{(() => {
-										let yearNow = new Date().getFullYear()
-										let options = []
-										options.push(<option key="" value="">Select</option>)
-										for (let year = yearNow; year >= 1950; year--) {
-											options.push(
-												<option key={year} value={year}>{year}</option>
-											)
-										}
-										return options
-									})()}
-								</select>
+								/>
 								, props.def.label + " Year")}
 						</>
 					)}
