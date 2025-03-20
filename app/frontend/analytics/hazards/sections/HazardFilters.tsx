@@ -1,24 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import Swal from "sweetalert2";
-import { AiOutlineSearch } from "react-icons/ai"; // Import the Search Icon from react-icons
-
-// Interfaces for filter data
-interface Sector {
-  id: number;
-  sectorname: string;
-  parentId: number | null;
-  description: string | null;
-  subsectors: Sector[];
-}
-
-interface DisasterEvent {
-  id: string;
-  name: string;
-  glide: string;
-  national_disaster_id: string;
-  other_id1: string;
-}
+import { AiOutlineSearch } from "react-icons/ai";
 
 interface Hazard {
   id: string;
@@ -61,7 +44,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
     setIsMounted(true);
   }, []);
 
-  const [subSectors, setSubSectors] = useState<Sector[]>([]); // For filtered subsectors
+  // const [subSectors, setSubSectors] = useState<Sector[]>([]); // For filtered subsectors
 
   const [dropdownVisibility, setDropdownVisibility] = useState<{
     [key: string]: boolean;
@@ -173,7 +156,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
 
 
   // Extract data from the fetched data
-  const sectors: Sector[] = sectorsData?.sectors || [];
+  // const sectors: Sector[] = sectorsData?.sectors || [];
   const hazardTypes: Hazard[] = hazardTypesData?.hazardTypes || [];
   const hazardClusters: Hazard[] = hazardClustersData?.clusters || [];
   const specificHazards: Hazard[] = specificHazardsData?.hazards || [];
@@ -213,36 +196,10 @@ const HazardFilters: React.FC<FiltersProps> = ({
     }
   }, [specificHazards, filters.hazardClusterId]);
 
-  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
-
-  // Filter events based on search input
-  /*const filteredEvents = filters.disasterEventId
-    ? disasterEvents.filter(event =>
-      event.name?.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      event.id?.toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      (event.glide || "").toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      (event.national_disaster_id || "").toLowerCase().includes(filters.disasterEventId.toLowerCase()) ||
-      (event.other_id1 || "").toLowerCase().includes(filters.disasterEventId.toLowerCase())
-    )
-    : [];*/
-
-  // Debug to ensure correct data mapping
-  // console.log("Hazard Types:", hazardTypes);
-  // console.log("Hazard Clusters:", hazardClusters);
-  // console.log("Specific Hazards:", specificHazards);
-  // console.log("Geographic Levels:", geographicLevels);
-
   // Handle filter changes
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
     setFilters((prev) => {
       const updatedFilters = { ...prev, [field]: value };
-
-      // Reset dependent fields for sectors
-      /*if (field === "sectorId") {
-        const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
-        setSubSectors(selectedSector?.subsectors || []); // Update subsectors dropdown
-        updatedFilters.subSectorId = ""; // Reset sub-sector
-      }*/
 
       // Reset dependent fields for hazard filtering
       if (field === "hazardTypeId") {
@@ -327,7 +284,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
       specificHazardId: "",
       geographicLevelId: "",
     });
-    setSubSectors([]); // Clear sub-sector options
+    // setSubSectors([]); // Clear sub-sector options
     onClearFilters(); // Call parent clear handler
   };
 
