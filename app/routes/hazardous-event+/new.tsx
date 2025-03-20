@@ -62,7 +62,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
-	return {hip: hip, treeData: treeData, ctryIso3: ctryIso3, user};
+
+    const divisionGeoJSON = await dr.execute(`
+		SELECT id, name, geojson
+		FROM division
+		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+    `);
+
+	return {hip: hip, treeData: treeData, ctryIso3: ctryIso3, divisionGeoJSON: divisionGeoJSON?.rows || [], user};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -95,7 +102,8 @@ export default function Screen() {
 			parent: ld.parent,
 			treeData: ld.treeData,
 			ctryIso3: ld.ctryIso3,
-			user: ld.user
+			user: ld.user,
+			divisionGeoJSON: ld.divisionGeoJSON
 		},
 		fieldsInitial,
 		form: HazardousEventForm,

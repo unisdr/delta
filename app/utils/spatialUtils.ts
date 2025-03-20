@@ -1,8 +1,9 @@
 import * as turf from "@turf/turf";
+import { Feature, Point, LineString, Polygon, MultiPolygon, Geometry } from "geojson";
 
 export function convertTurfPolygon(
-    polygonGeoJSON: turf.Feature<turf.Polygon | turf.MultiPolygon>
-  ): turf.Feature<turf.Polygon | turf.LineString> | null {
+    polygonGeoJSON: Feature<Polygon | MultiPolygon>
+): Feature<Polygon | LineString> | null {
     // Check if it's a valid input
     if (!polygonGeoJSON || !polygonGeoJSON.geometry) {
       console.warn("Invalid polygon input!");
@@ -40,8 +41,8 @@ export function convertTurfPolygon(
 }  
 
 export function convertPolylineToTurfPolygon(
-  polylineGeoJSON: turf.Feature<turf.LineString>
-): turf.Feature<turf.LineString | turf.Polygon> | null {
+    polylineGeoJSON: Feature<LineString>
+  ): Feature<LineString | Polygon> | null {  
   if (!polylineGeoJSON || !polylineGeoJSON.geometry) {
     return null;
   }
@@ -50,7 +51,7 @@ export function convertPolylineToTurfPolygon(
     return null;
   }
   if (coordinates.length === 1) {
-    return turf.point(coordinates[0]); // Although a single point doesn't make sense for a polyline
+    return turf.point(coordinates[0]) as any; // Although a single point doesn't make sense for a polyline
   }
   if (coordinates.length === 2) {
     return turf.lineString(coordinates);
@@ -90,8 +91,8 @@ export function convertCircleToTurfPolygon(center: { lat: number; lng: number },
 }
 
 export function convertRectangleToTurfPolygon(
-    rectangleGeoJSON: turf.Feature<turf.Polygon>
-): turf.Feature<turf.Polygon> | null {
+    rectangleGeoJSON: Feature<Polygon>
+): Feature<Polygon> | null {
     if (!rectangleGeoJSON || !rectangleGeoJSON.geometry) {
         console.warn("Invalid rectangle input!");
         return null;
@@ -117,7 +118,7 @@ export function convertRectangleToTurfPolygon(
 
 export function convertMarkersToTurfPolygon(
     markers: any[]
-  ): turf.Feature<turf.Point | turf.LineString | turf.Polygon> | null {
+): Feature<Point | LineString | Polygon> | null {
     if (!markers || markers.length === 0) {
       return null; // No markers provided
     }
@@ -149,7 +150,7 @@ export function convertMarkersToTurfPolygon(
 
 export function checkShapeAgainstDivisions(
     divisions: { id: string; name: string; geojson: any }[],
-    shapeGeoJSON: turf.Feature<turf.Geometry>
+    shapeGeoJSON: Feature<Geometry>
 ) {
     if (divisions.length === 0) {
         return ""; // Return empty string if no divisions are provided
@@ -158,11 +159,11 @@ export function checkShapeAgainstDivisions(
     console.log('shapeGeoJSON.geometry.type:', shapeGeoJSON.geometry.type);
 
     // Step 1: Collect all division polygons
-    const divisionPolygons: turf.Feature<turf.Geometry>[] = [];
+    const divisionPolygons: Feature<Geometry>[] = [];
 
     for (const division of divisions) {
         const divisionGeoJSON = division.geojson;
-        const divisionPolygon: turf.Feature<turf.Geometry> =
+        const divisionPolygon: Feature<Geometry> =
             divisionGeoJSON.type === "MultiPolygon"
                 ? turf.multiPolygon(divisionGeoJSON.coordinates)
                 : turf.polygon(divisionGeoJSON.coordinates);
@@ -171,13 +172,13 @@ export function checkShapeAgainstDivisions(
     }
 
     // Step 2: Merge all division polygons
-    let mergedDivisionPolygon: turf.Feature<turf.Geometry> | null = null;
+    let mergedDivisionPolygon: Feature<Geometry> | null = null;
 
     if (divisionPolygons.length === 1) {
         mergedDivisionPolygon = divisionPolygons[0]; //If only one division, use it directly
     } else if (divisionPolygons.length > 1) {
         //Merge all polygons into one
-        const combined = turf.combine(turf.featureCollection(divisionPolygons));
+        const combined = turf.combine(turf.featureCollection(divisionPolygons as any));
         mergedDivisionPolygon = combined.features.length === 1 ? combined.features[0] : null;
     }
 
@@ -191,7 +192,7 @@ export function checkShapeAgainstDivisions(
 
     // Move Point Type Check Here (After `mergedDivisionPolygon` is Set)
     if (shapeGeoJSON.geometry.type === "Point") {
-        if (turf.booleanPointInPolygon(shapeGeoJSON, mergedDivisionPolygon)) {
+        if (turf.booleanPointInPolygon(shapeGeoJSON as any, mergedDivisionPolygon as any)) {
             console.log("The point is inside a division.");
             return ""; // Do nothing if the point is inside
         }
@@ -206,7 +207,7 @@ export function checkShapeAgainstDivisions(
         for (const [lng, lat] of lineCoordinates) {
             const point = turf.point([lng, lat]); // Convert each coordinate to a Point
     
-            if (turf.booleanPointInPolygon(point, mergedDivisionPolygon)) {
+            if (turf.booleanPointInPolygon(point, mergedDivisionPolygon as any)) {
                 lineCompletelyOutside = false; //At least one point is inside
             } else {
                 lineSomePartOutside = true; //Found a point outside

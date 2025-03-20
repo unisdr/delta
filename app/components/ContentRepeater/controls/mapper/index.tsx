@@ -343,7 +343,7 @@ export const renderMapperDialog = (
                       }); // Save as JSON object
 
                       if (state.current.polygon) {
-                        const getGeoJSON = convertTurfPolygon(state.current.polygon.toGeoJSON());
+                        const getGeoJSON = convertTurfPolygon(state.current.polygon.toGeoJSON()) as any;
                         const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
                         if (getDivisionsCheck !== "") {
                           const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
@@ -374,7 +374,7 @@ export const renderMapperDialog = (
                       }); // Save as JSON object
 
                       if (state.current.polyline) {
-                        const getGeoJSON = convertPolylineToTurfPolygon(state.current.polyline.toGeoJSON());
+                        const getGeoJSON = convertPolylineToTurfPolygon(state.current.polyline.toGeoJSON()) as any;
                         const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
                         if (getDivisionsCheck !== "") {
                           const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
@@ -457,7 +457,7 @@ export const renderMapperDialog = (
                       updatedValue = JSON.stringify(rectangleData); // Save as JSON object
 
                       if (state.current.rectangle) {
-                        const getGeoJSON = convertRectangleToTurfPolygon(state.current.rectangle.toGeoJSON());
+                        const getGeoJSON = convertRectangleToTurfPolygon(state.current.rectangle.toGeoJSON()) as any;
                         const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
                         if (getDivisionsCheck !== "") {
                           const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
@@ -521,7 +521,7 @@ export const renderMapperDialog = (
                       updatedValue = JSON.stringify(markerData); // Save as JSON object
 
                       if (state.current.marker.length > 0) {
-                        const getGeoJSON = convertMarkersToTurfPolygon(state.current.marker);
+                        const getGeoJSON = convertMarkersToTurfPolygon(state.current.marker) as any;
                         const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
                         if (getDivisionsCheck !== "") {
                           const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
