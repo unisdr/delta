@@ -93,6 +93,7 @@ interface ContentRepeaterProps {
   mapper_preview?: boolean;
   caption?: string;
   ctryIso3?: string;
+  divisions?: any[];
 }
 
 const loadLeaflet = (() => {
@@ -186,6 +187,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
   mapper_preview = false,
   caption = "",
   ctryIso3 = null,
+  divisions = [],
 }, ref: any) => {
   const [items, setItems] = useState<Record<string, any>>(() => {
     const initialState: Record<string, any> = {};
@@ -470,15 +472,31 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       // Initialize the map
       const { coords, bounds } = await defaultMapLocation();
       mapRef.current = L.map(`${id}_mapper_container`, { dragging: true });
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
       }).addTo(mapRef.current);
       if (bounds) {
         mapRef.current.fitBounds(bounds, { padding: [50, 50] });
       } else {
         mapRef.current.setView(coords, 2); // Default zoom if no bounds found
       }
-  
+
+      divisions.forEach(function(division: { geojson: any; name?: { en?: string } }) {
+        var layer = L.geoJSON(division.geojson, {
+            style: function(feature: any) {
+                return {
+                    color: 'gray',  // sets the line color
+                    weight: 1       // sets the line thickness
+                };
+            },
+            onEachFeature: function(feature: any, layer: any) {
+                // Assuming you want to show the English name in the popup
+                // layer.bindPopup(division.name?.en || '');
+            }
+        });
+        layer.addTo(mapRef.current);
+      });
+    
       // Handle map click events
       mapRef.current.on("click", (e: any) => {
         const latLng = e.latlng;
@@ -1320,6 +1338,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
             handleRectangleMode,
             handleCircleMode,
             handleFieldChange,
+            divisions,
             debug
           )
       }

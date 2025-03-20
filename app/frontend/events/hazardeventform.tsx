@@ -82,6 +82,7 @@ export const fieldsDefView: FormInputDef<HazardousEventViewModel>[] = [
 ];
 
 interface HazardousEventFormProps extends UserFormProps<HazardousEventFields> {
+	divisionGeoJSON?: any;
 	ctryIso3?: any;
 	hip: Hip;
 	parent?: HazardousEventViewModel;
@@ -131,6 +132,8 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 	const fields = props.fields;
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
+	const divisionGeoJSON = props.divisionGeoJSON;
+	console.log('divisionGeoJSON: ', divisionGeoJSON);
 
 	const [selected, setSelected] = useState(props.parent);
 
@@ -209,6 +212,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 				spatialFootprint: (
 					<Field key="spatialFootprint" label="">
 						<ContentRepeater
+							divisions={divisionGeoJSON}
 							ctryIso3={ctryIso3}
 							caption="Spatial Footprint"
 							ref={contentReapeaterRef}
