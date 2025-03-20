@@ -35,7 +35,7 @@
     "@remix-run/server-runtime": "^2.0.0",
     "@tanstack/react-query": "^5.64.2",
     "@tanstack/react-query-devtools": "^5.64.2",
-    "@turf/turf": "^7.1.0",
+    "@turf/turf": "^7.2.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/chroma-js": "^3.1.1",
     "@types/leaflet": "1.9.16",

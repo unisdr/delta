@@ -1,3 +1,5 @@
+import { convertTurfPolygon, convertPolylineToTurfPolygon, convertCircleToTurfPolygon, convertRectangleToTurfPolygon, convertMarkersToTurfPolygon, checkShapeAgainstDivisions } from "~/utils/spatialUtils";
+
 declare namespace L {
   export const map: any;
   export const tileLayer: any;
@@ -57,6 +59,7 @@ export const renderMapperDialog = (
     handleRectangleMode: any,
     handleCircleMode: any,
     handleFieldChange: any,
+    divisions: any,
     debug: boolean
 ) => {
     return (
@@ -339,7 +342,18 @@ export const renderMapperDialog = (
                         coordinates: polygonCoordinates,
                       }); // Save as JSON object
 
-                      saveGeoJSON(JSON.stringify(state.current.polygon.toGeoJSON(), null, 2));
+                      if (state.current.polygon) {
+                        const getGeoJSON = convertTurfPolygon(state.current.polygon.toGeoJSON());
+                        const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
+                        if (getDivisionsCheck !== "") {
+                          const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
+                          
+                          if (!userConfirmed) {
+                              return false; // Stop execution if the user clicks "No"
+                          }
+                        }
+                        saveGeoJSON(JSON.stringify(state.current.polygon.toGeoJSON(), null, 2));
+                      }
                     } else if (state.current.polyline) {
                       // Convert polyline LatLng objects to plain arrays and normalize
                       const lineCoordinates = state.current.polyline
@@ -359,50 +373,68 @@ export const renderMapperDialog = (
                         coordinates: lineCoordinates,
                       }); // Save as JSON object
 
-                      saveGeoJSON(JSON.stringify(state.current.polyline.toGeoJSON(), null, 2));
+                      if (state.current.polyline) {
+                        const getGeoJSON = convertPolylineToTurfPolygon(state.current.polyline.toGeoJSON());
+                        const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
+                        if (getDivisionsCheck !== "") {
+                          const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
+                          if (!userConfirmed) {
+                              return false; // Stop execution if the user clicks "No"
+                          }
+                        }
+                        saveGeoJSON(JSON.stringify(state.current.polyline.toGeoJSON(), null, 2));
+                      }
                     } else if (state.current.circle) {
                       // Get circle data
                       const center = state.current.circle.getLatLng();
                       const radius = state.current.circle.getRadius();
+
+                      function generateCirclePolygon(center: any, radius: any, points = 64) {
+                        const coordinates = [];
+                        for (let i = 0; i < points; i++) {
+                            const angle = (i / points) * (2 * Math.PI);
+                            const dx = radius * Math.cos(angle);
+                            const dy = radius * Math.sin(angle);
+
+                            // Convert meters to degrees (approximate conversion)
+                            const deltaLat = dy / 111320;
+                            const deltaLon = dx / (111320 * Math.cos(center.lat * (Math.PI / 180)));
+
+                            coordinates.push([center.lng + deltaLon, center.lat + deltaLat]);
+                        }
+                        coordinates.push(coordinates[0]); // Close the polygon
+
+                        return {
+                            type: "Feature",
+                            geometry: {
+                                type: "Polygon",
+                                coordinates: [coordinates]
+                            },
+                            properties: {}
+                        };
+                      }
                   
                       const circleData = {
                         mode: "circle",
                         center: [center.lat, normalizeLongitude(center.lng)],
                         radius: radius,
                       };
-
-                      function generateCirclePolygon(center: any, radius: any, points = 64) {
-                          const coordinates = [];
-                          for (let i = 0; i < points; i++) {
-                              const angle = (i / points) * (2 * Math.PI);
-                              const dx = radius * Math.cos(angle);
-                              const dy = radius * Math.sin(angle);
-
-                              // Convert meters to degrees (approximate conversion)
-                              const deltaLat = dy / 111320;
-                              const deltaLon = dx / (111320 * Math.cos(center.lat * (Math.PI / 180)));
-
-                              coordinates.push([center.lng + deltaLon, center.lat + deltaLat]);
-                          }
-                          coordinates.push(coordinates[0]); // Close the polygon
-
-                          return {
-                              type: "Feature",
-                              geometry: {
-                                  type: "Polygon",
-                                  coordinates: [coordinates]
-                              },
-                              properties: {}
-                          };
-                      }
                   
                       if (debug) { 
                         console.log("Circle Data:", JSON.stringify(circleData));
-                        const circleGeoJSON = generateCirclePolygon(center, radius);
-                        console.log("Circle GeoJSON (Polygon):", JSON.stringify(circleGeoJSON, null, 2));
+                        console.log("Circle GeoJSON (Polygon):", JSON.stringify(generateCirclePolygon(center, radius), null, 2));
                       }
                   
                       updatedValue = JSON.stringify(circleData); // Save as JSON object
+
+                      const circleGeoJSON = convertCircleToTurfPolygon(center, radius);
+                      const getDivisionsCheck = checkShapeAgainstDivisions(divisions, circleGeoJSON);
+                      if (getDivisionsCheck !== "") {
+                        const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
+                        if (!userConfirmed) {
+                            return false; // Stop execution if the user clicks "No"
+                        }
+                      }
 
                       saveGeoJSON(JSON.stringify(generateCirclePolygon(center, radius), null, 2));
                     } else if (state.current.rectangle) {
@@ -421,10 +453,20 @@ export const renderMapperDialog = (
                         console.log("Rectangle Data:", JSON.stringify(rectangleData));
                         console.log("Rectangle GeoJSON:", JSON.stringify(state.current.rectangle.toGeoJSON(), null, 2));
                       }
-                  
+
                       updatedValue = JSON.stringify(rectangleData); // Save as JSON object
 
-                      saveGeoJSON(JSON.stringify(state.current.rectangle.toGeoJSON(), null, 2));
+                      if (state.current.rectangle) {
+                        const getGeoJSON = convertRectangleToTurfPolygon(state.current.rectangle.toGeoJSON());
+                        const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
+                        if (getDivisionsCheck !== "") {
+                          const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
+                          if (!userConfirmed) {
+                              return false; // Stop execution if the user clicks "No"
+                          }
+                        }
+                        saveGeoJSON(JSON.stringify(state.current.rectangle.toGeoJSON(), null, 2));
+                      }
                     } else if (state.current.marker && Array.isArray(state.current.marker)) {
                       // Get marker data as an array of coordinates
                       const markerCoordinates = state.current.marker.map((marker: any) => [
@@ -451,39 +493,45 @@ export const renderMapperDialog = (
                           };
                       };
 
-                      /**
-                       * Converts an array of Leaflet markers to a valid GeoJSON FeatureCollection.
-                       * @param markers - An array of Leaflet Marker objects.
-                       * @returns A valid GeoJSON FeatureCollection.
-                       */
-                      function convertMarkersToGeoJSON(markers: any[]): GeoJSONFeatureCollection {
-                          const features: GeoJSONFeature[] = markers.map((marker) => {
-                              const { lat, lng } = marker.getLatLng();
-                              return {
-                                  type: "Feature",
-                                  properties: {}, // Add custom properties if needed
-                                  geometry: {
-                                      type: "Point",
-                                      coordinates: [lng, lat], // GeoJSON uses [longitude, latitude]
-                                  },
-                              };
-                          });
-
-                          return {
-                              type: "FeatureCollection",
-                              features,
-                          };
-                      }
-
                       if (debug) {
                         console.log("Marker Data:", JSON.stringify(markerData));
                         const markerGeoJSON = convertMarkersToGeoJSON(state.current.marker);
                         console.log("Marker GeoJSON:", JSON.stringify(markerGeoJSON, null, 2));
                       }
+
+                      function convertMarkersToGeoJSON(markers: any[]): GeoJSONFeatureCollection {
+                        const features: GeoJSONFeature[] = markers.map((marker) => {
+                            const { lat, lng } = marker.getLatLng();
+                            return {
+                                type: "Feature",
+                                properties: {}, // Add custom properties if needed
+                                geometry: {
+                                    type: "Point",
+                                    coordinates: [lng, lat], // GeoJSON uses [longitude, latitude]
+                                },
+                            };
+                        });
+
+                        return {
+                            type: "FeatureCollection",
+                            features,
+                        };
+                      }
                   
                       updatedValue = JSON.stringify(markerData); // Save as JSON object
 
-                      saveGeoJSON(JSON.stringify(convertMarkersToGeoJSON(state.current.marker), null, 2));
+                      if (state.current.marker.length > 0) {
+                        const getGeoJSON = convertMarkersToTurfPolygon(state.current.marker);
+                        const getDivisionsCheck = checkShapeAgainstDivisions(divisions, getGeoJSON);
+                        if (getDivisionsCheck !== "") {
+                          const userConfirmed = confirm(`${getDivisionsCheck}\n\nDo you want to continue?`);
+                          if (!userConfirmed) {
+                              return false; // Stop execution if the user clicks "No"
+                          }
+                        }
+
+                        saveGeoJSON(JSON.stringify(convertMarkersToGeoJSON(state.current.marker), null, 2));
+                      }
                     } else {
                       if (debug) console.log("No shape created yet.");
                     }
