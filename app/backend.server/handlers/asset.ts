@@ -6,12 +6,11 @@ import {dr} from "~/db.server";
 
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
 
-import {and, eq, desc, or, ilike} from 'drizzle-orm';
+import {and, desc, or, ilike, sql} from 'drizzle-orm';
 
 import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
-import {isValidUUID} from '~/util/id';
 
 interface assetLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
@@ -29,15 +28,17 @@ export async function assetLoader(args: assetLoaderArgs) {
 		search: url.searchParams.get("search") || "",
 	};
 
+	filters.search = filters.search.trim()
 	let searchIlike = "%" + filters.search + "%"
-	let isValidUUID2 = isValidUUID(filters.search)
 
 	let condition = and(
 		filters.search !== "" ? or(
-			isValidUUID2 ? eq(assetTable.id, filters.search) : undefined,
-			isValidUUID2 ? eq(assetTable.nationalId, filters.search) : undefined,
+			sql`${assetTable.id}::text ILIKE ${searchIlike}`,
+			ilike(assetTable.nationalId, searchIlike),
 			ilike(assetTable.name, searchIlike),
 			ilike(assetTable.category, searchIlike),
+			ilike(assetTable.notes, searchIlike),
+			ilike(assetTable.sectorIds, searchIlike),
 		) : undefined,
 	)
 

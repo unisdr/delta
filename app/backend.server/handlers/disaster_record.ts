@@ -10,13 +10,12 @@ import {dr} from "~/db.server";
 
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
 
-import {and, eq, desc, or, ilike} from 'drizzle-orm';
+import {and, eq, desc, or, ilike, sql} from 'drizzle-orm';
 
 import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
 import {approvalStatusIds} from '~/frontend/approval';
-import {isValidUUID} from '~/util/id';
 
 interface disasterRecordLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
@@ -42,14 +41,15 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		filters.approvalStatus = undefined
 	}
 
+	filters.search = filters.search.trim()
+
 	let searchIlike = "%" + filters.search + "%"
-	let isValidUUID2 = isValidUUID(filters.search)
 
 	let condition = and(
 		filters.approvalStatus ? eq(disasterRecordsTable.approvalStatus, filters.approvalStatus) : undefined,
 		filters.search !== "" ? or(
-			isValidUUID2 ? eq(disasterRecordsTable.id, filters.search) : undefined,
-			isValidUUID2 ? eq(disasterRecordsTable.disasterEventId, filters.search) : undefined,
+			sql`${disasterRecordsTable.id}::text ILIKE ${searchIlike}`,
+			sql`${disasterRecordsTable.disasterEventId}::text ILIKE ${searchIlike}`,
 			ilike(disasterRecordsTable.locationDesc, searchIlike),
 			ilike(disasterRecordsTable.startDate, searchIlike),
 			ilike(disasterRecordsTable.endDate, searchIlike),

@@ -10,7 +10,7 @@ import {dr} from "~/db.server";
 
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
 
-import {and, eq, desc, ilike, or} from 'drizzle-orm';
+import {sql, and, eq, desc, ilike, or} from 'drizzle-orm';
 
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
@@ -18,7 +18,6 @@ import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
 import {approvalStatusIds} from '~/frontend/approval';
-import {isValidUUID} from '~/util/id';
 
 interface hazardousEventLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
@@ -51,8 +50,8 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 		filters.approvalStatus = undefined
 	}
 
+	filters.search = filters.search.trim()
 	let searchIlike = "%" + filters.search + "%"
-	let isValidUUID2 = isValidUUID(filters.search)
 
 	let condition = and(
 		filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
@@ -60,9 +59,17 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 		filters.hipTypeId ? eq(hazardousEventTable.hipTypeId, filters.hipTypeId) : undefined,
 		filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
 		filters.search ? or(
-			isValidUUID2 ? eq(hazardousEventTable.id, filters.search): undefined,
-			ilike(hazardousEventTable.description, searchIlike))
-			: undefined,
+			sql`${hazardousEventTable.id}::text ILIKE ${searchIlike}`,
+			ilike(hazardousEventTable.status, searchIlike),
+			ilike(hazardousEventTable.nationalSpecification, searchIlike),
+			ilike(hazardousEventTable.startDate, searchIlike),
+			ilike(hazardousEventTable.endDate, searchIlike),
+			ilike(hazardousEventTable.description, searchIlike),
+			ilike(hazardousEventTable.chainsExplanation, searchIlike),
+			ilike(hazardousEventTable.magnitude, searchIlike),
+			ilike(hazardousEventTable.recordOriginator, searchIlike),
+			ilike(hazardousEventTable.dataSource, searchIlike)
+		) : undefined,
 	)
 
 	const count = await dr.$count(hazardousEventTable, condition)
