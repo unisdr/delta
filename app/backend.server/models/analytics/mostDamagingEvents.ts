@@ -231,7 +231,7 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
             geom: divisionTable.geom
           })
           .from(divisionTable)
-          .where(eq(divisionTable.id, parseInt(params.geographicLevelId, 10)))
+          .where(eq(divisionTable.id, parseInt(params.geographicLevelId)))
           .limit(1);
 
         if (division.length > 0) {
@@ -403,32 +403,21 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         eventId: disasterEventTable.id,
         eventName: disasterEventTable.nameNational,
         createdAt: disasterEventTable.createdAt,
-        // Use COALESCE to handle null values safely
         totalDamages: sql<number>`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`,
-        totalLosses: sql<number>`COALESCE(SUM(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)), 0)`
+        totalLosses: sql<number>`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`
       })
       .from(disasterEventTable)
-      .innerJoin(
+      .leftJoin(
         disasterRecordsTable,
         eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
       )
       .leftJoin(
-        hazardousEventTable,
-        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
+        sectorDisasterRecordsRelationTable,
+        eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
       )
       .leftJoin(
         damagesTable,
-        and(
-          eq(disasterRecordsTable.id, damagesTable.recordId),
-          sectorIds ? inArray(damagesTable.sectorId, sectorIds.map(id => parseInt(id, 10))) : undefined
-        )
-      )
-      .leftJoin(
-        lossesTable,
-        and(
-          eq(disasterRecordsTable.id, lossesTable.recordId),
-          sectorIds ? inArray(lossesTable.sectorId, sectorIds.map(id => parseInt(id, 10))) : undefined
-        )
+        eq(disasterRecordsTable.id, damagesTable.recordId)
       )
       .where(and(...conditions))
       .groupBy(
@@ -448,8 +437,8 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     } else if (sortBy === 'losses') {
       sortedQuery = query.orderBy(
         sortDirection === 'desc'
-          ? desc(sql`COALESCE(SUM(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)), 0)`)
-          : sql`COALESCE(SUM(COALESCE(${lossesTable.publicCostTotal}, 0) + COALESCE(${lossesTable.privateCostTotal}, 0)), 0)`
+          ? desc(sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`)
+          : sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`
       );
     } else if (sortBy === 'eventName') {
       sortedQuery = query.orderBy(

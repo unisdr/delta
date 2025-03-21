@@ -513,54 +513,64 @@ const aggregateDamagesData = async (
 // Update aggregateLossesData function
 const aggregateLossesData = async (
   recordIds: string[],
-  sectorId: string
+  sectorId: string | undefined
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: FaoAgriculturalLoss }> => {
-  const sectorIds = await getAllSubsectorIds(sectorId);
-  const numericSectorIds = sectorIds.map(id => parseInt(id));
+  const numericSectorIds = sectorId ? await getAllSubsectorIds(sectorId) : undefined;
 
   // Get losses for all relevant sectors
   const losses = await dr
     .select({
-      publicCostTotal: lossesTable.publicCostTotal,
-      privateCostTotal: lossesTable.privateCostTotal,
-      recordId: lossesTable.recordId,
-      sectorId: lossesTable.sectorId
+      lossesCost: sql<number>`COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric`,
+      recordId: disasterRecordsTable.id,
+      sectorId: sectorDisasterRecordsRelationTable.sectorId,
+      startDate: disasterEventTable.startDate
     })
-    .from(lossesTable)
+    .from(disasterRecordsTable)
+    .innerJoin(
+      sectorDisasterRecordsRelationTable,
+      eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
+    )
+    .innerJoin(
+      disasterEventTable,
+      eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+    )
     .where(
       and(
-        inArray(lossesTable.recordId, recordIds),
-        inArray(lossesTable.sectorId, numericSectorIds)
+        inArray(disasterRecordsTable.id, recordIds),
+        numericSectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds.map(id => parseInt(id, 10))) : undefined
       )
     );
 
-  // Calculate totals and yearly breakdown
-  let total = 0;
+  // Initialize result maps
   const byYear = new Map<number, number>();
+  let total = 0;
+  let faoAgriLoss: FaoAgriculturalLoss | undefined = undefined;
 
+  // Process each loss record
   for (const loss of losses) {
-    const lossAmount =
-      (Number(loss.publicCostTotal) || 0) +
-      (Number(loss.privateCostTotal) || 0);
+    const year = new Date(loss.startDate).getFullYear();
+    const amount = Number(loss.lossesCost);
 
-    total += lossAmount;
+    // Update year total
+    byYear.set(year, (byYear.get(year) || 0) + amount);
+    // Update overall total
+    total += amount;
 
-    // Get year from record and add to yearly breakdown
-    const record = await dr
-      .select({
-        year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
-      })
-      .from(disasterRecordsTable)
-      .where(eq(disasterRecordsTable.id, loss.recordId))
-      .limit(1);
-
-    if (record && record[0]?.year) {
-      const year = Number(record[0].year);
-      byYear.set(year, (byYear.get(year) || 0) + lossAmount);
+    // Calculate FAO agricultural loss if applicable
+    if (!faoAgriLoss && sectorId) {
+      const agriSubsector = getAgriSubsector(sectorId);
+      if (agriSubsector) {
+        const calculatedLoss = await calculateFaoAgriculturalLoss(losses, agriSubsector);
+        faoAgriLoss = calculatedLoss;
+      }
     }
   }
 
-  return { total, byYear };
+  return {
+    total,
+    byYear,
+    faoAgriLoss
+  };
 };
 
 // Function to get event counts by year
