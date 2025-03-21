@@ -24,29 +24,32 @@ export const useDefaultCurrency = (): string => {
     return rootData?.env?.CURRENCY_CODES?.split(',')[0]?.trim() || 'USD';
 };
 
-export const formatCurrencyWithCode = (value: string | number, currencyCode: string, options: CurrencyOptions = {}, scale?: 'thousands' | 'millions'): string => {
+export const formatCurrencyWithCode = (value: string | number, currencyCode: string, options: CurrencyOptions = {}, scale?: 'thousands' | 'millions' | 'billions'): string => {
     // Handle null, undefined, or empty string values
     if (value === null || value === undefined || value === '') {
         return `${currencyCode}0`;
     }
-    
+
     // Convert string to number if needed
     let numValue = typeof value === 'string' ? parseFloat(value) : value;
-    
+
     // Handle NaN
     if (isNaN(numValue)) {
         return `${currencyCode}0`;
     }
-    
+
     let suffix = '';
-    
-    // Only apply scaling if explicitly requested
-    if (scale === 'thousands' && Math.abs(numValue) >= 1000) {
-        numValue /= 1000;
-        suffix = 'K';
-    } else if (scale === 'millions' && Math.abs(numValue) >= 1000000) {
-        numValue /= 1000000;
+
+    // Apply scaling based on value size and requested scale
+    if (scale === 'billions' && Math.abs(numValue) >= 1_000_000_000) {
+        numValue /= 1_000_000_000;
+        suffix = 'B';
+    } else if (scale === 'millions' && Math.abs(numValue) >= 1_000_000) {
+        numValue /= 1_000_000;
         suffix = 'M';
+    } else if (scale === 'thousands' && Math.abs(numValue) >= 1_000) {
+        numValue /= 1_000;
+        suffix = 'K';
     }
 
     return new Intl.NumberFormat(options.locale || 'en-US', {
@@ -58,7 +61,7 @@ export const formatCurrencyWithCode = (value: string | number, currencyCode: str
 };
 
 // This is a non-hook version that uses a default currency
-export const formatCurrency = (value: string | number, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' = 'thousands'): string => {
+export const formatCurrency = (value: string | number, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' | 'billions' = 'thousands'): string => {
     return formatCurrencyWithCode(value, options.currency || 'USD', options, scale);
 };
 

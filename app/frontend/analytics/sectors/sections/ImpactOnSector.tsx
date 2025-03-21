@@ -305,14 +305,18 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     };
 
     const currency = useDefaultCurrency();
-    
+
     // Format money values with appropriate scale
     const formatMoneyValue = (value: number) => {
-        if (value >= 1000) {
-            return formatCurrencyWithCode(value, currency, {}, 'thousands');
-        } else {
-            return formatCurrencyWithCode(value, currency);
-        }
+        return formatCurrencyWithCode(
+            value,
+            currency,
+            {},
+            value >= 1_000_000_000 ? 'billions' :
+                value >= 1_000_000 ? 'millions' :
+                    value >= 1_000 ? 'thousands' :
+                        undefined
+        );
     };
 
     console.log('Debug - Component State:', {
@@ -383,7 +387,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
     // Extract the data from the API response
     const data = apiResponse?.data || {};
-    
+
     // Add debug logging for the data that will be used for display
     console.log('Data for display:', {
         apiResponseExists: !!apiResponse,
