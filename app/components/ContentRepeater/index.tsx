@@ -485,8 +485,10 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
         var layer = L.geoJSON(division.geojson, {
             style: function(feature: any) {
                 return {
-                    color: 'gray',  // sets the line color
-                    weight: 1       // sets the line thickness
+                    color: 'gray',       // border color
+                    weight: 1,           // border thickness
+                    fillColor: 'transparent', // optional
+                    fillOpacity: 0       // make the inside transparent
                 };
             },
             onEachFeature: function(feature: any, layer: any) {
