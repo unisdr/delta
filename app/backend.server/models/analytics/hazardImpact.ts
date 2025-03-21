@@ -51,15 +51,15 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
 
     // Get immediate subsectors
     const subsectors = await getSectorsByParentId(numericSectorId);
-    
+
     // Initialize result with the current sector ID
     const result: number[] = [numericSectorId];
-    
+
     // Recursively get all subsectors at all levels
     if (subsectors.length > 0) {
         // Add immediate subsector IDs
         result.push(...subsectors.map(s => s.id));
-        
+
         // For each subsector, recursively get its subsectors
         for (const subsector of subsectors) {
             const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
@@ -68,7 +68,7 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
             result.push(...uniqueChildIds);
         }
     }
-    
+
     // Remove duplicates and return
     return [...new Set(result)];
 };
@@ -296,7 +296,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: sql<number>`COUNT(${disasterRecordsTable.id})`,
+            value: sql<number>`COUNT(DISTINCT ${disasterEventTable.id})`,
         })
         .from(disasterRecordsTable)
         .leftJoin(
@@ -313,7 +313,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(sql`COUNT(${disasterRecordsTable.id})`))
+        .orderBy(desc(sql`COUNT(DISTINCT ${disasterEventTable.id})`))
         .limit(10);
 
     // Calculate total events for percentage

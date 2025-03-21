@@ -179,7 +179,7 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
   try {
     const numericSectorId = validateSectorId(sectorId);
     const allSectorIds = [sectorId];
-    
+
     // Recursively get all subsectors at all levels
     const fetchSubsectors = async (parentId: number): Promise<void> => {
       // Get direct children
@@ -189,7 +189,7 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
         })
         .from(sectorTable)
         .where(eq(sectorTable.parentId, parentId));
-      
+
       // Add each direct child to the result array
       for (const subsector of directSubsectors) {
         allSectorIds.push(subsector.id.toString());
@@ -197,10 +197,10 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
         await fetchSubsectors(subsector.id);
       }
     };
-    
+
     // Start the recursive fetch
     await fetchSubsectors(numericSectorId);
-    
+
     return allSectorIds;
   } catch (error) {
     console.error('Error in getAllSubsectorIds:', error);
@@ -567,16 +567,33 @@ const aggregateLossesData = async (
 const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, number>> => {
   if (recordIds.length === 0) return new Map();
 
-  const eventCounts = await dr
+  // Get events that span years by considering both start and end dates
+  const eventYearSpans = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year"),
-      count: sql<number>`COUNT(*)`.as("count")
+      eventId: disasterEventTable.id,
+      startYear: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`,
+      endYear: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.endDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`
     })
     .from(disasterRecordsTable)
+    .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
     .where(inArray(disasterRecordsTable.id, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`);
+    .groupBy(disasterEventTable.id,
+      sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`,
+      sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.endDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`);
 
-  return new Map(eventCounts.map(row => [row.year, row.count]));
+  // Process events and count them for each year they span
+  const yearCounts = new Map<number, number>();
+  for (const event of eventYearSpans) {
+    const startYear = event.startYear;
+    const endYear = event.endYear || event.startYear; // fallback to startYear if no end date
+
+    // Count event for each year in its duration
+    for (let year = startYear; year <= endYear; year++) {
+      yearCounts.set(year, (yearCounts.get(year) || 0) + 1);
+    }
+  }
+
+  return yearCounts;
 };
 
 /**
