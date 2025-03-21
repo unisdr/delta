@@ -133,7 +133,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
 	const divisionGeoJSON = props.divisionGeoJSON;
-	console.log('divisionGeoJSON: ', divisionGeoJSON);
+	//console.log('divisionGeoJSON: ', divisionGeoJSON);
 
 	const [selected, setSelected] = useState(props.parent);
 
