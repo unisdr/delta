@@ -173,7 +173,7 @@ export default function Screen() {
 					<div className="mg-container">
 						<fieldset className="dts-form__section">
 							<div className="dts-form__intro">
-								<legend className="dts-heading-3">Human Direct Effects</legend>
+								<legend className="dts-heading-3">Human Effects</legend>
 							</div>
 							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">
