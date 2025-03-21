@@ -8,6 +8,7 @@ interface HeaderProps {
   loggedIn: boolean;
   siteName: string;
   siteLogo: string;
+  userRole: string;
 }
 
 interface LogoProps {
