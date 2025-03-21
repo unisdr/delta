@@ -121,18 +121,29 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
         });
 
         const response = await fetch(url.toString());
-        if (!response.ok) throw new Error('Failed to fetch geographic data');
         const data = await response.json();
+
+        if (!response.ok) {
+          // Handle specific error cases
+          if (response.status === 404) {
+            setGeoData({ type: "FeatureCollection", features: [] });
+            return;
+          }
+          throw new Error(data.message || 'Failed to fetch geographic data');
+        }
 
         // Validate response format
         if (!data || !data.features) {
-          throw new Error('Invalid geographic data format');
+          setGeoData({ type: "FeatureCollection", features: [] });
+          return;
         }
 
         setGeoData(data);
       } catch (error) {
         console.error('Error fetching geographic data:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch geographic data');
+        // Set empty data to trigger no-data UI
+        setGeoData({ type: "FeatureCollection", features: [] });
       } finally {
         setLoading(false);
       }
@@ -196,13 +207,17 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
                 <div className="loading-spinner"></div>
                 <p>Loading map data...</p>
               </div>
-            ) : geoData ? (
+            ) : !geoData || !geoData.features || geoData.features.length === 0 ? (
+              <div className="map-no-data">
+                <p>No geographic data available for the selected filters.</p>
+              </div>
+            ) : (
               <ImpactMapOl
                 geoData={geoData}
-                selectedMetric="totalDamage"
+                selectedMetric={selectedMetric}
                 filters={filters || DEFAULT_FILTERS}
               />
-            ) : null}
+            )}
           </div>
           <div id="tabpanel02" role="tabpanel" aria-labelledby="tab02" hidden={selectedTab !== 'tab02'}>
             {loading ? (
@@ -210,13 +225,17 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
                 <div className="loading-spinner"></div>
                 <p>Loading map data...</p>
               </div>
-            ) : geoData ? (
+            ) : !geoData || !geoData.features || geoData.features.length === 0 ? (
+              <div className="map-no-data">
+                <p>No geographic data available for the selected filters.</p>
+              </div>
+            ) : (
               <ImpactMapOl
                 geoData={geoData}
-                selectedMetric="totalLoss"
+                selectedMetric={selectedMetric}
                 filters={filters || DEFAULT_FILTERS}
               />
-            ) : null}
+            )}
           </div>
         </div>
       </div>

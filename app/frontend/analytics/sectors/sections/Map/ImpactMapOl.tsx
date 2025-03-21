@@ -219,11 +219,11 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters }: Impact
 
     if (max > 0) {
       ranges = [
-        { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)', label: `${formatCurrencyWithCode(max * 0.8, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max, defaultCurrency, {}, 'thousands')}` },
-        { min: max * 0.6, max: max * 0.8, color: 'rgba(30, 136, 229, 0.9)', label: `${formatCurrencyWithCode(max * 0.6, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.8, defaultCurrency, {}, 'thousands')}` },
-        { min: max * 0.4, max: max * 0.6, color: 'rgba(66, 165, 245, 0.9)', label: `${formatCurrencyWithCode(max * 0.4, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.6, defaultCurrency, {}, 'thousands')}` },
-        { min: max * 0.2, max: max * 0.4, color: 'rgba(144, 202, 249, 0.9)', label: `${formatCurrencyWithCode(max * 0.2, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.4, defaultCurrency, {}, 'thousands')}` },
-        { min: 0.1, max: max * 0.2, color: 'rgba(227, 242, 253, 0.9)', label: `${formatCurrencyWithCode(0.1, defaultCurrency, {}, 'thousands')} - ${formatCurrencyWithCode(max * 0.2, defaultCurrency, {}, 'thousands')}` }
+        { min: max * 0.8, max: max, color: 'rgba(21, 101, 192, 0.9)', label: `${formatCurrencyWithCode(max * 0.8, defaultCurrency, {}, max * 0.8 >= 1_000_000_000 ? 'billions' : max * 0.8 >= 1_000_000 ? 'millions' : 'thousands')} - ${formatCurrencyWithCode(max, defaultCurrency, {}, max >= 1_000_000_000 ? 'billions' : max >= 1_000_000 ? 'millions' : 'thousands')}` },
+        { min: max * 0.6, max: max * 0.8, color: 'rgba(30, 136, 229, 0.9)', label: `${formatCurrencyWithCode(max * 0.6, defaultCurrency, {}, max * 0.6 >= 1_000_000_000 ? 'billions' : max * 0.6 >= 1_000_000 ? 'millions' : 'thousands')} - ${formatCurrencyWithCode(max * 0.8, defaultCurrency, {}, max * 0.8 >= 1_000_000_000 ? 'billions' : max * 0.8 >= 1_000_000 ? 'millions' : 'thousands')}` },
+        { min: max * 0.4, max: max * 0.6, color: 'rgba(66, 165, 245, 0.9)', label: `${formatCurrencyWithCode(max * 0.4, defaultCurrency, {}, max * 0.4 >= 1_000_000_000 ? 'billions' : max * 0.4 >= 1_000_000 ? 'millions' : 'thousands')} - ${formatCurrencyWithCode(max * 0.6, defaultCurrency, {}, max * 0.6 >= 1_000_000_000 ? 'billions' : max * 0.6 >= 1_000_000 ? 'millions' : 'thousands')}` },
+        { min: max * 0.2, max: max * 0.4, color: 'rgba(144, 202, 249, 0.9)', label: `${formatCurrencyWithCode(max * 0.2, defaultCurrency, {}, max * 0.2 >= 1_000_000_000 ? 'billions' : max * 0.2 >= 1_000_000 ? 'millions' : 'thousands')} - ${formatCurrencyWithCode(max * 0.4, defaultCurrency, {}, max * 0.4 >= 1_000_000_000 ? 'billions' : max * 0.4 >= 1_000_000 ? 'millions' : 'thousands')}` },
+        { min: 0.1, max: max * 0.2, color: 'rgba(227, 242, 253, 0.9)', label: `${formatCurrencyWithCode(0.1, defaultCurrency, {}, 0.1 >= 1_000_000_000 ? 'billions' : 0.1 >= 1_000_000 ? 'millions' : 'thousands')} - ${formatCurrencyWithCode(max * 0.2, defaultCurrency, {}, max * 0.2 >= 1_000_000_000 ? 'billions' : max * 0.2 >= 1_000_000 ? 'millions' : 'thousands')}` }
       ];
     }
 
@@ -298,7 +298,7 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters }: Impact
     } else if (value === 0) {
       displayValue = "Zero Impact (Confirmed)";
     } else if (value > 0) {
-      displayValue = formatCurrencyWithCode(value, defaultCurrency, {}, 'thousands');
+      displayValue = formatCurrencyWithCode(value, defaultCurrency, {}, value >= 1_000_000_000 ? 'billions' : value >= 1_000_000 ? 'millions' : 'thousands');
     } else {
       displayValue = "No Data Available";
     }
@@ -382,7 +382,9 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters }: Impact
     // Fit to vector source extent with padding
     const extent = vectorSource.getExtent();
     map.getView().fit(extent, {
-      padding: [50, 50, 50, 50],
+      // padding: [50, 50, 50, 50],
+      padding: [80, 80, 80, 80],
+      maxZoom: 8,
       duration: 1000
     });
 
@@ -460,8 +462,9 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters }: Impact
     if (extent && !extent.some(isNaN) && extent[0] !== Infinity && extent[2] !== -Infinity) {
       const view = map.getView();
       view.fit(extent, {
-        padding: [50, 50, 50, 50],
-        maxZoom: 5.5, // Set consistent max zoom
+        // padding: [50, 50, 50, 50],
+        padding: [80, 80, 80, 80],
+        maxZoom: 6, // Set consistent max zoom
         duration: 1000
       });
     }

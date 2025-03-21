@@ -1,3 +1,4 @@
+
 /**
  * Geographic Impact Analysis Module
  * 
@@ -531,7 +532,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             };
         }
 
-        // Create assessment metadata with defaults following UNDRR standards
+        // Create assessment metadata with all required fields
         const metadata = createAssessmentMetadata(
             filters.assessmentType || 'rapid',
             filters.confidenceLevel || 'low'
@@ -740,11 +741,12 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         }
 
         // Get divisions with complete fields and apply geographic level filter
-        const divisions = await dr
+        const baseDivisionsQuery = dr
             .select({
                 id: divisionTable.id,
                 parentId: divisionTable.parentId,
                 name: divisionTable.name,
+                nationalId: divisionTable.nationalId,
                 level: divisionTable.level,
                 geojson: divisionTable.geojson,
                 geom: divisionTable.geom,
@@ -762,139 +764,79 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 )
             );
 
-        if (divisions.length === 0) {
+        let divisions: Division[] = [];
+        try {
+            divisions = await baseDivisionsQuery;
+
+            if (!divisions || divisions.length === 0) {
+                return {
+                    success: false,
+                    divisions: [],
+                    values: {},
+                    error: 'No divisions found for the given criteria'
+                };
+            }
+        } catch (error) {
+            console.error('Error fetching divisions:', error);
             return {
                 success: false,
                 divisions: [],
                 values: {},
-                error: 'No divisions found'
+                error: 'Failed to fetch geographic divisions'
             };
         }
 
         // Create a map to store values for each division
-        const values: { [key: string]: DivisionValues } = {};
+        const values: { [key: string]: CleanDivisionValues } = {};
 
         for (const division of divisions) {
             try {
-                // Validate division geometry before proceeding
-                if (!division.geom) {
-                    console.warn(`Division ${division.id} has no geometry data`);
+                const disasterRecords = await getDisasterRecordsForDivision(division.id.toString(), {
+                    startDate: filters.fromDate,
+                    endDate: filters.toDate,
+                    hazardType: filters.hazardTypeId,
+                    hazardCluster: filters.hazardClusterId,
+                    specificHazard: filters.specificHazardId,
+                    disasterEvent: filters.disasterEventId,
+                    assessmentType: filters.assessmentType,
+                    confidenceLevel: filters.confidenceLevel
+                });
+
+                if (!disasterRecords || disasterRecords.length === 0) {
                     values[division.id.toString()] = {
                         totalDamage: 0,
                         totalLoss: 0,
-                        sources: new Set(),
                         metadata,
                         dataAvailability: 'no_data'
                     };
                     continue;
                 }
 
-                // Create a base query with all conditions including spatial filtering
-                const recordsQuery = dr
-                    .select({
-                        id: disasterRecordsTable.id
-                    })
-                    .from(disasterRecordsTable)
-                    .leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
-                    .leftJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
-                    .where(
-                        and(
-                            ...baseConditions,
-                            // Add spatial filtering with proper null handling
-                            sql`${disasterRecordsTable.spatialFootprint} IS NOT NULL AND 
-                                jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
-                                (${disasterRecordsTable.spatialFootprint}->>'type' IS NOT NULL) AND
-                                ST_IsValid(
-                                    ST_SetSRID(
-                                        ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
-                                        4326
-                                    )
-                                ) AND
-                                ST_Intersects(
-                                    ST_SetSRID(
-                                        ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
-                                        4326
-                                    ),
-                                    ${division.geom}
-                                )`
-                        )
-                    );
-
-                // Execute the query with all conditions
-                const recordsInDivision = await recordsQuery;
-
-                if (recordsInDivision.length === 0) {
-                    values[division.id.toString()] = {
-                        totalDamage: 0,
-                        totalLoss: 0,
-                        sources: new Set(),
-                        metadata,
-                        dataAvailability: 'no_data'
-                    };
-                    continue;
-                }
-
-                const recordIds = recordsInDivision.map((r: { id: string }) => r.id);
-
-                // Get damages and losses from sectorDisasterRecordsRelationTable
-                const impactData = await dr
-                    .select({
-                        totalDamage: sql<string>`COALESCE(SUM(CASE 
-                            WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true 
-                            THEN COALESCE(${sectorDisasterRecordsRelationTable.damageCost}::numeric, 0) + 
-                                 COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}::numeric, 0)
-                            ELSE 0 
-                        END), 0)`,
-                        totalLoss: sql<string>`COALESCE(SUM(CASE 
-                            WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true 
-                            THEN COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}::numeric, 0)
-                            ELSE 0 
-                        END), 0)`
-                    })
-                    .from(sectorDisasterRecordsRelationTable)
-                    .where(and(
-                        inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
-                        sectorIds.length > 0 ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
-                    ));
-
-                const totalDamage = safeMoneyToNumber(impactData[0]?.totalDamage);
-                const totalLoss = safeMoneyToNumber(impactData[0]?.totalLoss);
+                // Calculate impact values
+                const { total: totalDamage } = await aggregateDamagesData(disasterRecords);
+                const { total: totalLoss } = await aggregateLossesData(disasterRecords);
 
                 values[division.id.toString()] = {
                     totalDamage,
                     totalLoss,
-                    sources: new Set(recordIds),
                     metadata,
                     dataAvailability: totalDamage > 0 || totalLoss > 0 ? 'available' : 'zero'
                 };
             } catch (error) {
                 console.error(`Error processing division ${division.id}:`, error);
-                // Provide fallback values for this division instead of failing the entire operation
                 values[division.id.toString()] = {
                     totalDamage: 0,
                     totalLoss: 0,
-                    sources: new Set(),
                     metadata,
                     dataAvailability: 'no_data'
                 };
             }
         }
 
-        // Clean up the values for the response
-        const cleanValues: { [key: string]: CleanDivisionValues } = {};
-        for (const [key, value] of Object.entries(values)) {
-            cleanValues[key] = {
-                totalDamage: value.totalDamage,
-                totalLoss: value.totalLoss,
-                metadata: value.metadata,
-                dataAvailability: value.dataAvailability
-            };
-        }
-
         return {
             success: true,
             divisions,
-            values: cleanValues
+            values
         };
     } catch (error) {
         console.error("Error in getGeographicImpact:", error);
