@@ -584,6 +584,8 @@ export interface InputProps {
 	disabled?: boolean
 }
 
+let notifiedDateFormatErrorOnce = false
+
 export function Input(props: InputProps) {
 	let wrapInput = function (child: React.ReactNode, label?: string) {
 		let def = {...props.def}
@@ -755,8 +757,10 @@ export function Input(props: InputProps) {
 						vsFullInit = {y: Number(vsInit), m: 1, d: 1}
 						precisionInit = "yyyy"
 					} else {
-						console.error("invalid date format in database", vsInit)
-						return null
+						if (!notifiedDateFormatErrorOnce) {
+							notifiedDateFormatErrorOnce = true
+							notifyError(`Invalid date format in database. Removing value for field ${props.def.label}. Got date: ${vsInit}`)
+						}
 					}
 				}
 				let toDB = (vs: {y: number, m: number, d: number}, prec: "yyyy-mm-dd" | "yyyy-mm" | "yyyy"): string => {
@@ -824,8 +828,7 @@ export function Input(props: InputProps) {
 									required={props.def.required}
 									type="text"
 									inputMode="numeric"
-									name={props.name}
-									defaultValue={vsFull.y}
+									defaultValue={vsFull.y || ""}
 									onBlur={(e: any) => {
 										let vStr = e.target.value
 										if (!/^\d{4}$/.test(vStr)) {
@@ -843,7 +846,7 @@ export function Input(props: InputProps) {
 								label={props.def.label + " Month"}
 								child={
 									<select
-										value={vsFull.m}
+										value={vsFull.m || ""}
 										onChange={(e: any) => {
 											let v = {y: vsFull.y, m: Number(e.target.value), d: 0}
 											vsFullSet(v)
@@ -867,8 +870,7 @@ export function Input(props: InputProps) {
 									required={props.def.required}
 									type="text"
 									inputMode="numeric"
-									name={props.name}
-									defaultValue={vsFull.y}
+									defaultValue={vsFull.y || ""}
 									onBlur={(e: any) => {
 										let vStr = e.target.value
 										if (!/^\d{4}$/.test(vStr)) {
