@@ -1,4 +1,5 @@
 
+import { eq } from "drizzle-orm";
 import { dr } from "~/db.server";
 import { hipTypeTable } from "~/drizzle/schema";
 
@@ -26,3 +27,13 @@ export const fetchHazardTypes = async (): Promise<HazardType[]> => {
     throw new Error("Failed to fetch hazard types from the database.");
   }
 };
+
+/**
+ * Fetches a hazard type record by its ID.
+ * @param {string} hazardTypeId - The ID of the hazard type.
+ * @returns {Promise<{ id: string; nameEn: string } | null>} The hazard type record or null if not found.
+ */
+export async function getHazardTypeById(hazardTypeId: string) {
+  const result = await dr.select().from(hipTypeTable).where(eq(hipTypeTable.id, hazardTypeId));
+  return result.length > 0 ? result[0] : null;
+}

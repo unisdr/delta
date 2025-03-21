@@ -276,6 +276,7 @@ export function disasterEventLink(args: {
 }
 
 interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
+	divisionGeoJSON?: any;
 	hip: Hip;
 	hazardousEvent?: HazardousEventBasicInfoViewModel | null
 	disasterEvent?: DisasterEventBasicInfoViewModel | null
@@ -311,6 +312,8 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
+	const divisionGeoJSON = props.divisionGeoJSON;
+	console.log("divisionGeoJSON", divisionGeoJSON);
 
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
@@ -466,6 +469,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 				spatialFootprint: props.edit ? (
 					<Field key="spatialFootprint" label="">
 						<ContentRepeater
+							divisions={divisionGeoJSON}
 							ctryIso3={ctryIso3}
 							caption="Spatial Footprint"
 							ref={contentReapeaterRef}

@@ -79,6 +79,7 @@ interface DisasterRecordsFormProps extends UserFormProps<DisasterRecordsFields> 
 	treeData: any[];
 	cpDisplayName?: string;
 	ctryIso3?: string;
+	divisionGeoJSON?: any[];
 }
 
 export function disasterRecordsLabel(args: {
@@ -109,7 +110,7 @@ export function disasterRecordsLink(args: {
 }
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
-	const {fields, treeData, cpDisplayName, ctryIso3} = props;
+	const {fields, treeData, cpDisplayName, ctryIso3, divisionGeoJSON} = props;
 
 	useEffect(() => {
 	}, []);
@@ -187,6 +188,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
 							<ContentRepeater
+								divisions={divisionGeoJSON}
 								ctryIso3={ctryIso3}
 								caption="Spatial Footprint"
 								ref={contentReapeaterRef}

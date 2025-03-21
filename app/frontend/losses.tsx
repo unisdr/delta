@@ -31,6 +31,7 @@ interface LossesFormProps extends UserFormProps<LossesFields> {
 	ctryIso3?: string;
 	treeData?: any;
 	fieldDef: FormInputDef<LossesFields>[]
+	divisionGeoJSON?: any[]
 }
 
 export function LossesForm(props: LossesFormProps) {
@@ -38,6 +39,7 @@ export function LossesForm(props: LossesFormProps) {
 
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
+	const divisionGeoJSON = props.divisionGeoJSON;
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
@@ -184,6 +186,7 @@ export function LossesForm(props: LossesFormProps) {
 		spatialFootprint: (
 			<Field key="spatialFootprint" label="">
 				<ContentRepeater
+					divisions={divisionGeoJSON}
 					ctryIso3={ctryIso3}
 					caption="Spatial Footprint"
 					ref={contentReapeaterRef}

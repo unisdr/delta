@@ -33,6 +33,7 @@ interface Asset {
 
 
 interface DamagesFormProps extends UserFormProps<DamagesFields> {
+	divisionGeoJSON?: any[]
 	ctryIso3?: any
 	fieldDef: FormInputDef<DamagesFields>[]
 	assets: Asset[]
@@ -48,6 +49,7 @@ export function DamagesForm(props: DamagesFormProps) {
 
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
+	const divisionGeoJSON = props.divisionGeoJSON || [];
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
@@ -321,6 +323,7 @@ export function DamagesForm(props: DamagesFormProps) {
 		spatialFootprint: (
 			<Field key="spatialFootprint" label="">
 				<ContentRepeater
+					divisions={divisionGeoJSON}
 					ctryIso3={ctryIso3}
 					caption="Spatial Footprint"
 					ref={contentReapeaterRef}

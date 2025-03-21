@@ -70,7 +70,13 @@ curl -H "X-Auth:$DTS_KEY" http://localhost:3000/api/disaster-record/add -d '[{
 	"primaryDataSource": "x",
 	"validatedBy": "x",
 	"originatorRecorderInst": "a",
-	"spatialFootprint": [{"dts_info":{"division_id":74}}]
+	"spatialFootprint": [{
+    "geojson": {
+      "dts_info": {
+        "division_id": "355",
+        "division_ids": ["354","355"]
+      }
+	}]
 }]'
 ```
 

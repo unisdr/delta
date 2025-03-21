@@ -39,6 +39,7 @@ interface LoaderRes {
 	sectorId: number
 	treeData?: any[]
 	ctryIso3?: string
+	divisionGeoJSON?: any[]
 }
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -58,6 +59,12 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
+    const divisionGeoJSON = await dr.execute(`
+		SELECT id, name, geojson
+		FROM division
+		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+    `);
+
 	if (params.id === "new") {
 		let url = new URL(request.url)
 		let sectorId = Number(url.searchParams.get("sectorId")) || 0
@@ -71,6 +78,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			sectorId: sectorId,
 			treeData: treeData || [],
 			ctryIso3: ctryIso3 || "",
+			divisionGeoJSON: divisionGeoJSON?.rows || [],
 		}
 		return res
 	}
@@ -86,6 +94,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		sectorId: item.sectorId,
 		treeData: treeData || [],
 		ctryIso3: ctryIso3 || "",
+		divisionGeoJSON: divisionGeoJSON?.rows || [],
 	}
 	return res
 });
@@ -138,6 +147,7 @@ export default function Screen() {
 			fieldDef: ld.fieldDef,
 			treeData: ld.treeData || [],
 			ctryIso3: ld.ctryIso3,
+			divisionGeoJSON: ld.divisionGeoJSON
 		},
 		fieldsInitial,
 		form: DisruptionForm,

@@ -241,6 +241,7 @@ export default function Screen() {
 						<label>
 							<div>
 							<ContentPicker 
+								selectAnyItem={true}
 								{...contentPickerConfigSector} 
 								value={ loaderData.record ? loaderData.record.sectorId : '' } //Assign the sector id here
 								displayName={ loaderData.sectorDisplayName } //Assign the sector name here, from the loaderData > sectorDisplayName sample

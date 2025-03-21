@@ -19,6 +19,7 @@ import {
 } from "~/frontend/losses"
 import {authLoaderWithPerm} from "~/util/auth"
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server"
+import { getSectorFullPathById } from "~/backend.server/models/sector";
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	let {params, request} = loaderArgs
@@ -55,7 +56,9 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 	const res = await executeQueryForPagination3(request, count, dataFetcher, ["sectorId"])
 
-	return {data: res, recordId, sectorId}
+	const sectorFullPath = await getSectorFullPathById(sectorId) as string;
+
+	return {data: res, recordId, sectorId, sectorFullPath}
 })
 
 export default function Data() {
@@ -66,7 +69,7 @@ export default function Data() {
 		headerElement: (
 			<Link to={"/disaster-record/edit/" + ld.recordId}>Back to disaster record</Link>
 		),
-		plural: "Losses",
+		plural: "Losses: Sectors: " + ld.sectorFullPath,
 		resourceName: "Losses",
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", String(ld.sectorId)]]),

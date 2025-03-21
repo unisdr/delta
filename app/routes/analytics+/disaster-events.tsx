@@ -74,6 +74,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let cpDisplayName:string = '';
   let datamageGeoData:interfaceMap[] = [];
   let lossesGeoData:interfaceMap[] = [];
+  let humanEffectsGeoData:interfaceMap[] = [];
   let totalAffectedPeople:any = {};
   let totalAffectedPeople2:any = {};
 
@@ -106,6 +107,16 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         const divisionLevel1 = await getDivisionByLevel(1);
         for (const item of divisionLevel1) {
           const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(xId, [item.id]);
+          const humanEffectsPerDivision = await getAffected(dr, xId, {divisionId: item.id});
+          
+          humanEffectsGeoData.push({
+            total: humanEffectsPerDivision.noDisaggregations.total,
+            name: String(item.name['en']),
+            description: 'Total People Affected: ' + humanEffectsPerDivision.noDisaggregations.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }),
+            colorPercentage: 1,
+            geojson: item.geojson,
+          });
+
           // scores[item.id] = {};
           lossesGeoData.push({
             total: totalPerDivision.losses.total,
@@ -126,6 +137,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         }
         // console.log( datamageGeoData );
         // console.log( lossesGeoData );
+        // console.log( humanEffectsGeoData );
       } catch (e) {
         console.log(e);
         throw e;
@@ -144,6 +156,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     cpDisplayName: cpDisplayName,
     datamageGeoData: datamageGeoData,
     lossesGeoData: lossesGeoData,
+    humanEffectsGeoData: humanEffectsGeoData,
     totalAffectedPeople: totalAffectedPeople,
     totalAffectedPeople2: totalAffectedPeople2,
   });
@@ -171,6 +184,7 @@ function DisasterEventsAnalysisContent() {
     cpDisplayName: string,
     datamageGeoData: any,
     lossesGeoData: any,
+    humanEffectsGeoData: any,
     totalAffectedPeople: any,
     totalAffectedPeople2: any,
   }>();
@@ -401,7 +415,7 @@ function DisasterEventsAnalysisContent() {
       { Number(ld.totalAffectedPeople2.noDisaggregations.total) > 0 && (<>
         <section className="dts-page-section">
           <div className="mg-container">
-            <h2 className="dts-heading-2">Human direct effects</h2>
+            <h2 className="dts-heading-2">Human effects</h2>
 
             <div className="mg-grid mg-grid__col-3">
               <div className="dts-data-box">
@@ -633,7 +647,7 @@ function DisasterEventsAnalysisContent() {
                     </button>
                   </li>
                   <li role="presentation">
-                    <button type="button" className="dts-tablist__button" role="tab" id="tab02" aria-controls="tabpanel02" aria-selected="false" disabled>
+                    <button onClick={(e) => handleSwitchMapData(e, ld.humanEffectsGeoData, '#ff1010')}  type="button" className="dts-tablist__button" role="tab" id="tab02" aria-controls="tabpanel02" aria-selected="false">
                       <span>Total Affected</span>
                     </button>
                   </li>
@@ -662,6 +676,113 @@ function DisasterEventsAnalysisContent() {
             </section>
           </>
         )}
+
+          <section className="dts-page-section">
+              <div className="mg-container">
+                <h2 className="dts-heading-2">{ ld.cpDisplayName } impacts on sectors</h2>
+
+                  <div className="mg-grid mg-grid__col-3">
+                    <div className="dts-data-box">
+                      <div className="dts-indicator dts-indicator--target-box-b">
+                        <span>Damage pie chart</span>
+                      </div>
+                    </div>
+                    <div className="dts-data-box">
+                      <div className="dts-indicator dts-indicator--target-box-c">
+                        <span>Losses pie chart</span>
+                      </div>
+                    </div>
+
+                    <div className="dts-data-box">
+                      <div className="dts-indicator dts-indicator--target-box-d">
+                        <span>Recovery pie chart</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mg-grid mg-grid__col-1">
+                    <div className="dts-data-box">
+                      <div className="dts-indicator dts-indicator--target-box-a">
+                        <span>Bar chart</span>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+          </section>
+
+
+          <section className="dts-page-section">
+              <div className="mg-container">
+                <h2 className="dts-heading-3">Details of effects</h2>
+
+                <div className="mg-grid mg-grid__col-3">
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Damage in [sector] in [currency]</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-b">
+                      <span> todo </span>
+                    </div>
+                  </div>
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Losses in [sector] in [currency]</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-c">
+                      <span> todo </span>
+                    </div>
+                  </div>
+
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Recovery in [sector] in [currency]</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-d">
+                      <span> todo </span>
+                    </div>
+                  </div>
+
+
+                </div>
+
+                <div className="mg-grid mg-grid__col-3">
+                    <div className="dts-data-box">
+                      <div className="dts-indicator dts-indicator--target-box-b">
+                        <span>Sub-sector pie chart</span>
+                      </div>
+                    </div>
+                    <div className="dts-data-box">
+                      <div className="dts-indicator dts-indicator--target-box-c">
+                        <span>Sub-sector pie chart</span>
+                      </div>
+                    </div>
+
+                    <div className="dts-data-box">
+                      <div className="dts-indicator dts-indicator--target-box-d">
+                        <span>Sub-sector pie chart</span>
+                      </div>
+                    </div>
+                  </div>
+
+              </div>
+          </section>
+
+
+          <section className="dts-page-section">
+              <div className="mg-container">
+                <h2 className="dts-heading-3">Detailed effects in [selected sector]</h2>
+
+                <div className="mg-grid mg-grid__col-1">
+                  <div className="dts-data-box">
+                    <div className="dts-indicator dts-indicator--target-box-a">
+                      <span>Table raw data</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </section>
+
+          
       
 
       </>)}

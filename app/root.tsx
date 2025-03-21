@@ -64,6 +64,7 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 	return json({
 		hasPublicSite: configApprovedRecordsArePublic(),
 		loggedIn: !!user,
+		userRole: user?.user.role || '',
 		flashMessage: message,
 		confSiteName: configSiteName(),
 		confSiteLogo: configSiteLogo(),
@@ -190,8 +191,8 @@ const queryClient = new QueryClient({
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, env} = loaderData
-
+	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, userRole, env} = loaderData
+	
 	// Display toast for flash messages
 	useEffect(() => {
 		if (flashMessage) {
@@ -229,7 +230,7 @@ export default function Screen() {
 						{(hasPublicSite || loggedIn) && (
 							<header>
 								<div className="mg-container">
-									<Header loggedIn={loggedIn} siteName={confSiteName} siteLogo={confSiteLogo} />
+									<Header loggedIn={loggedIn} userRole={userRole} siteName={confSiteName} siteLogo={confSiteLogo} />
 								</div>
 							</header>
 						)}
