@@ -15,6 +15,7 @@ const GeographicImpactQuerySchema = z.object({
         })
         .optional(),
     hazardTypeId: z.string().optional(),
+    hazardClusterId: z.string().optional(),
     specificHazardId: z.string().optional(),
     geographicLevelId: z.string().optional(),
     fromDate: z.string().optional(),
@@ -36,6 +37,7 @@ type GeographicImpactFilters = {
     sectorId?: string;
     subSectorId?: string;
     hazardTypeId?: string;
+    hazardClusterId?: string;
     specificHazardId?: string;
     geographicLevelId?: string;
     fromDate?: string;
@@ -53,6 +55,7 @@ export async function handleGeographicImpactQuery(params: unknown) {
             sectorId: validParams.sectorId || undefined,
             subSectorId: validParams.subSectorId || undefined,
             hazardTypeId: validParams.hazardTypeId,
+            hazardClusterId: validParams.hazardClusterId,
             specificHazardId: validParams.specificHazardId,
             geographicLevelId: validParams.geographicLevelId,
             fromDate: validParams.fromDate,

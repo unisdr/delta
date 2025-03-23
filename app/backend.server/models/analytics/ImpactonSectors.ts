@@ -179,7 +179,7 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
   try {
     const numericSectorId = validateSectorId(sectorId);
     const allSectorIds = [sectorId];
-    
+
     // Recursively get all subsectors at all levels
     const fetchSubsectors = async (parentId: number): Promise<void> => {
       // Get direct children
@@ -189,7 +189,7 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
         })
         .from(sectorTable)
         .where(eq(sectorTable.parentId, parentId));
-      
+
       // Add each direct child to the result array
       for (const subsector of directSubsectors) {
         allSectorIds.push(subsector.id.toString());
@@ -197,10 +197,10 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
         await fetchSubsectors(subsector.id);
       }
     };
-    
+
     // Start the recursive fetch
     await fetchSubsectors(numericSectorId);
-    
+
     return allSectorIds;
   } catch (error) {
     console.error('Error in getAllSubsectorIds:', error);
@@ -513,70 +513,97 @@ const aggregateDamagesData = async (
 // Update aggregateLossesData function
 const aggregateLossesData = async (
   recordIds: string[],
-  sectorId: string
+  sectorId: string | undefined
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: FaoAgriculturalLoss }> => {
-  const sectorIds = await getAllSubsectorIds(sectorId);
-  const numericSectorIds = sectorIds.map(id => parseInt(id));
+  const numericSectorIds = sectorId ? await getAllSubsectorIds(sectorId) : undefined;
 
   // Get losses for all relevant sectors
   const losses = await dr
     .select({
-      publicCostTotal: lossesTable.publicCostTotal,
-      privateCostTotal: lossesTable.privateCostTotal,
-      recordId: lossesTable.recordId,
-      sectorId: lossesTable.sectorId
+      lossesCost: sql<number>`COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric`,
+      recordId: disasterRecordsTable.id,
+      sectorId: sectorDisasterRecordsRelationTable.sectorId,
+      startDate: disasterEventTable.startDate
     })
-    .from(lossesTable)
+    .from(disasterRecordsTable)
+    .innerJoin(
+      sectorDisasterRecordsRelationTable,
+      eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
+    )
+    .innerJoin(
+      disasterEventTable,
+      eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+    )
     .where(
       and(
-        inArray(lossesTable.recordId, recordIds),
-        inArray(lossesTable.sectorId, numericSectorIds)
+        inArray(disasterRecordsTable.id, recordIds),
+        numericSectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds.map(id => parseInt(id, 10))) : undefined
       )
     );
 
-  // Calculate totals and yearly breakdown
-  let total = 0;
+  // Initialize result maps
   const byYear = new Map<number, number>();
+  let total = 0;
+  let faoAgriLoss: FaoAgriculturalLoss | undefined = undefined;
 
+  // Process each loss record
   for (const loss of losses) {
-    const lossAmount =
-      (Number(loss.publicCostTotal) || 0) +
-      (Number(loss.privateCostTotal) || 0);
+    const year = new Date(loss.startDate).getFullYear();
+    const amount = Number(loss.lossesCost);
 
-    total += lossAmount;
+    // Update year total
+    byYear.set(year, (byYear.get(year) || 0) + amount);
+    // Update overall total
+    total += amount;
 
-    // Get year from record and add to yearly breakdown
-    const record = await dr
-      .select({
-        year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
-      })
-      .from(disasterRecordsTable)
-      .where(eq(disasterRecordsTable.id, loss.recordId))
-      .limit(1);
-
-    if (record && record[0]?.year) {
-      const year = Number(record[0].year);
-      byYear.set(year, (byYear.get(year) || 0) + lossAmount);
+    // Calculate FAO agricultural loss if applicable
+    if (!faoAgriLoss && sectorId) {
+      const agriSubsector = getAgriSubsector(sectorId);
+      if (agriSubsector) {
+        const calculatedLoss = await calculateFaoAgriculturalLoss(losses, agriSubsector);
+        faoAgriLoss = calculatedLoss;
+      }
     }
   }
 
-  return { total, byYear };
+  return {
+    total,
+    byYear,
+    faoAgriLoss
+  };
 };
 
 // Function to get event counts by year
 const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, number>> => {
   if (recordIds.length === 0) return new Map();
 
-  const eventCounts = await dr
+  // Get events that span years by considering both start and end dates
+  const eventYearSpans = await dr
     .select({
-      year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year"),
-      count: sql<number>`COUNT(*)`.as("count")
+      eventId: disasterEventTable.id,
+      startYear: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`,
+      endYear: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.endDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`
     })
     .from(disasterRecordsTable)
+    .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
     .where(inArray(disasterRecordsTable.id, recordIds))
-    .groupBy(sql`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`);
+    .groupBy(disasterEventTable.id,
+      sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`,
+      sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.endDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`);
 
-  return new Map(eventCounts.map(row => [row.year, row.count]));
+  // Process events and count them for each year they span
+  const yearCounts = new Map<number, number>();
+  for (const event of eventYearSpans) {
+    const startYear = event.startYear;
+    const endYear = event.endYear || event.startYear; // fallback to startYear if no end date
+
+    // Count event for each year in its duration
+    for (let year = startYear; year <= endYear; year++) {
+      yearCounts.set(year, (yearCounts.get(year) || 0) + 1);
+    }
+  }
+
+  return yearCounts;
 };
 
 /**
