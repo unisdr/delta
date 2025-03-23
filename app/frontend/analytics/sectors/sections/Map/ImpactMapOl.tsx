@@ -153,10 +153,10 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters }: Impact
       // Update geoData with the new response
       geoData = data;
     } catch (error) {
-      console.error('Error fetching geographic impact data:', error);
+      console.error('🧭 Unable to load map data. Please check your internet connection or filters.', error);
       Swal.fire({
-        title: 'Error',
-        text: error instanceof Error ? error.message : 'Failed to fetch geographic impact data',
+        title: 'Could not load map',
+        text: error instanceof Error ? error.message : 'Please check your filters or try reloading the page. If the issue persists, contact support.',
         icon: 'error'
       });
     } finally {

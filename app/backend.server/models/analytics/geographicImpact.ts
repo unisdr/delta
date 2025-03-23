@@ -38,6 +38,8 @@ import {
 import { getSectorsByParentId } from "./sectors";
 import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
+import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
+
 
 /**
  * Interface for geographic impact query filters
@@ -95,6 +97,7 @@ interface GeographicFilters {
     confidenceLevel?: 'low' | 'medium' | 'high';
     /** Sector ID for filtering */
     sectorId?: string;
+    baseQuery?: any;
 }
 
 interface DivisionValues {
@@ -536,7 +539,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         } else if (filters.sectorId) {
             // If only parent sector is selected, get all its subsectors
             sectorIds = await getAllSubsectorIds(filters.sectorId);
-            console.log('Retrieved all subsector IDs for sector', filters.sectorId, ':', sectorIds);
+            console.log(`[SECTOR EXPANSION] Sector ID: ${filters.sectorId ?? "(none)"} ➜ Subsector IDs:`, sectorIds);
         }
 
         if (filters.sectorId && sectorIds.length === 0) {
@@ -621,147 +624,61 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             }
         }
 
+        // Add base query builder for disaster records, supporting hazard filters with joins in applyHazardFilters()
+        let queryBuilder = dr
+            .select()
+            .from(disasterRecordsTable);
+
+        console.log("🧾 [PASSING FILTERS]: GeographicImpactFilters");
+        console.table(filters);
+
         // Hazard filtering with improved hierarchical structure handling
-        if (filters.hazardTypeId) {
-            console.log("🧪 Processing hazardTypeId:", filters.hazardTypeId);
-            try {
-                // Ensure hazardTypeId is a valid string before using in query
-                if (typeof filters.hazardTypeId === 'string' && filters.hazardTypeId.trim()) {
-                    // Check if the hazard type exists before adding condition
-                    const typeExists = await dr
-                        .select({ exists: sql`COUNT(*) > 0` })
-                        .from(hipTypeTable)
-                        .where(eq(hipTypeTable.id, filters.hazardTypeId))
-                        .then(result => result[0]?.exists || false);
+        await applyHazardFilters(
+            {
+                hazardTypeId: filters.hazardTypeId,
+                hazardClusterId: filters.hazardClusterId,
+                specificHazardId: filters.specificHazardId,
+            },
+            dr,
+            baseConditions,
+            sql,
+            eq,
+            inArray,
+            hipTypeTable,
+            hipClusterTable,
+            hipHazardTable,
+            hazardousEventTable,
+            disasterEventTable,
+            disasterRecordsTable,
+            queryBuilder,
+            and
+        );
 
-                    if (typeExists) {
-                        baseConditions.push(sql<string>`${hazardousEventTable.hipTypeId} = ${filters.hazardTypeId}`);
-                        console.log(`✔ Applied hazardTypeId filter: ${filters.hazardTypeId}`);
-                    } else {
-                        console.log(`⚠️ Skipped hazardTypeId: ${filters.hazardTypeId} (not found in hipTypeTable)`);
-                    }
-                } else {
-                    console.warn(`❌ Invalid hazard type ID format: ${filters.hazardTypeId}`);
-                }
-            } catch (error) {
-                console.error('Error filtering by hazard type:', error);
-            }
-        }
+        // ✅ Finalize query with all base conditions
+        const filteredDisasterQuery = queryBuilder.where(and(...baseConditions));
 
-        if (filters.hazardClusterId) {
-            try {
-                // Ensure hazardClusterId is a valid string before using in query
-                if (typeof filters.hazardClusterId === 'string' && filters.hazardClusterId.trim()) {
-                    // First, check if the cluster exists
-                    const clusterQuery = dr
-                        .select({
-                            exists: sql`COUNT(*) > 0`,
-                            typeId: hipClusterTable.typeId
-                        })
-                        .from(hipClusterTable)
-                        .where(eq(hipClusterTable.id, filters.hazardClusterId))
-                        .limit(1);
+        // ✅ Extract hazard ID values for debug
+        console.log('HazardType:', filters.hazardTypeId);
+        console.log('HazardCluster:', filters.hazardClusterId);
+        console.log('SpecificHazard:', filters.specificHazardId);
+        // console.log('Hazard-related WHERE clause:', filteredDisasterQuery.toSQL().sql);
 
-                    const clusterResult = await clusterQuery;
-                    const clusterExists = clusterResult[0]?.exists || false;
+        // ✅ Check actual hazard values in query
+        const debugHazards = await dr
+            .select({
+                id: disasterRecordsTable.id,
+                hip_type: hazardousEventTable.hipTypeId,
+                hip_cluster: hazardousEventTable.hipClusterId,
+                hip_hazard: hazardousEventTable.hipHazardId,
+            })
+            .from(disasterRecordsTable)
+            .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+            .innerJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
+            .where(and(...baseConditions));
 
-                    if (clusterExists) {
-                        // Add condition for the cluster ID
-                        baseConditions.push(sql<string>`${hazardousEventTable.hipClusterId} = ${filters.hazardClusterId}`);
-
-                        // If hazardTypeId is also provided, ensure the cluster belongs to that type
-                        if (filters.hazardTypeId) {
-                            const clusterTypeId = clusterResult[0]?.typeId;
-
-                            if (clusterTypeId !== filters.hazardTypeId) {
-                                console.warn(`Hazard cluster ${filters.hazardClusterId} does not belong to type ${filters.hazardTypeId}`);
-                                // Add a condition to ensure proper hierarchy is maintained
-                                baseConditions.push(
-                                    inArray(
-                                        hazardousEventTable.hipClusterId,
-                                        dr.select({ id: hipClusterTable.id })
-                                            .from(hipClusterTable)
-                                            .where(eq(hipClusterTable.typeId, filters.hazardTypeId))
-                                    )
-                                );
-                            }
-                        }
-                    } else {
-                        console.warn(`Hazard cluster ID not found: ${filters.hazardClusterId}`);
-                    }
-                } else {
-                    console.warn(`Invalid hazard cluster ID format: ${filters.hazardClusterId}`);
-                }
-            } catch (error) {
-                console.error('Error filtering by hazard cluster:', error);
-            }
-        }
-
-        if (filters.specificHazardId) {
-            try {
-                // Ensure specificHazardId is a valid string before using in query
-                if (typeof filters.specificHazardId === 'string' && filters.specificHazardId.trim()) {
-                    // First, check if the hazard exists and get its cluster ID
-                    const hazardQuery = dr
-                        .select({
-                            exists: sql`COUNT(*) > 0`,
-                            clusterId: hipHazardTable.clusterId
-                        })
-                        .from(hipHazardTable)
-                        .where(eq(hipHazardTable.id, filters.specificHazardId))
-                        .limit(1);
-
-                    const hazardResult = await hazardQuery;
-                    const hazardExists = hazardResult[0]?.exists || false;
-
-                    if (hazardExists) {
-                        // Add condition for the specific hazard ID
-                        baseConditions.push(sql<string>`${hazardousEventTable.hipHazardId} = ${filters.specificHazardId}`);
-
-                        // If hazardClusterId is also provided, ensure the hazard belongs to that cluster
-                        if (filters.hazardClusterId) {
-                            const hazardClusterId = hazardResult[0]?.clusterId;
-
-                            if (hazardClusterId !== filters.hazardClusterId) {
-                                console.warn(`Specific hazard ${filters.specificHazardId} does not belong to cluster ${filters.hazardClusterId}`);
-                                // Add a condition to ensure proper hierarchy is maintained
-                                baseConditions.push(
-                                    inArray(
-                                        hazardousEventTable.hipHazardId,
-                                        dr.select({ id: hipHazardTable.id })
-                                            .from(hipHazardTable)
-                                            .where(eq(hipHazardTable.clusterId, filters.hazardClusterId))
-                                    )
-                                );
-                            }
-                        }
-
-                        // If hazardTypeId is provided but hazardClusterId is not, ensure the hazard's cluster belongs to that type
-                        if (filters.hazardTypeId && !filters.hazardClusterId) {
-                            baseConditions.push(
-                                inArray(
-                                    hazardousEventTable.hipClusterId,
-                                    dr.select({ id: hipClusterTable.id })
-                                        .from(hipClusterTable)
-                                        .where(eq(hipClusterTable.typeId, filters.hazardTypeId))
-                                )
-                            );
-                        }
-                    } else {
-                        console.warn(`Specific hazard ID not found: ${filters.specificHazardId}`);
-                    }
-                } else {
-                    console.warn(`Invalid specific hazard ID format: ${filters.specificHazardId}`);
-                }
-            } catch (error) {
-                console.error('Error filtering by specific hazard:', error);
-            }
-        }
+        console.log('🧪 Matching record hazard fields:', debugHazards);
 
         // Get divisions with complete fields and apply geographic level filter
-
-
-
         const baseDivisionsQuery = dr
             .select({
                 id: divisionTable.id,
@@ -820,7 +737,8 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                     specificHazard: filters.specificHazardId,
                     disasterEvent: filters.disasterEventId,
                     assessmentType: filters.assessmentType,
-                    confidenceLevel: filters.confidenceLevel
+                    confidenceLevel: filters.confidenceLevel,
+                    baseQuery: queryBuilder.where(and(...baseConditions))
                 },
                     sectorIds
                 );
@@ -942,23 +860,28 @@ async function getDisasterRecordsForDivision(
 
         // Build conditions array
         const conditions: Array<SQL<unknown>> = [];
-        // console.log('Starting conditions array construction');
 
         // Add approval status filter
         conditions.push(sql<string>`${disasterRecordsTable.approvalStatus} = 'published'`);
-        // console.log('Added approval status condition');
+
+        // Add hazard conditions from baseQuery if present
+        if (filters?.hazardType) {
+            conditions.push(eq(hazardousEventTable.hipTypeId, filters.hazardType));
+        }
+        if (filters?.hazardCluster) {
+            conditions.push(eq(hazardousEventTable.hipClusterId, filters.hazardCluster));
+        }
+        if (filters?.specificHazard) {
+            conditions.push(eq(hazardousEventTable.hipHazardId, filters.specificHazard));
+        }
 
         // Add sector filter with hierarchy support
         if (sectorIds.length > 0) {
-            // console.log('Applying sector filter for:', sectorIds);
             conditions.push(
                 inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
             );
             console.log(`✔ Sector filter applied: ${sectorIds.length} sectors`);
         }
-
-        //Log final conditions before query
-        // console.log("Final WHERE conditions:", conditions.map(c => c.getSQL()));
 
         // Add date filters if specified
         if (filters?.startDate) {
@@ -1035,6 +958,14 @@ async function getDisasterRecordsForDivision(
             .innerJoin(
                 sectorDisasterRecordsRelationTable,
                 eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id)
+            )
+            .innerJoin(
+                disasterEventTable,
+                eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+            )
+            .innerJoin(
+                hazardousEventTable,
+                eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
             );
 
         const descendantIds = await getDescendantDivisionIds(parseInt(divisionId));
@@ -1062,8 +993,8 @@ async function getDisasterRecordsForDivision(
         // console.log('Executing spatial query first');
         // console.log('Spatial SQL Query:', spatialQuery.toSQL().sql);
         // console.log('Query parameters:', spatialQuery.toSQL().params);
-        console.log("🚀 Executing spatial query (SQL + params)");
-        console.log(spatialQuery.toSQL());
+        // console.log("🚀 Executing spatial query (SQL + params)");
+        // console.log(spatialQuery.toSQL());
 
 
         // Execute spatial query
@@ -1152,7 +1083,7 @@ async function getDisasterRecordsForDivision(
                 if (divisionDetails.length > 0 && divisionDetails[0].name) {
                     const divisionName = divisionDetails[0].name.en || '';
                     const normalizedDivName = normalizeText(divisionName);
-                    console.log(`Trying text match with division name: "${divisionName}" (normalized: "${normalizedDivName}")`);
+                    console.log(`[DIVISION NAME MATCH] Raw: "${divisionName}" (normalized: "${normalizedDivName}")`);
 
                     const textQuery = query.where(and(
                         ...conditions,
@@ -1165,11 +1096,11 @@ async function getDisasterRecordsForDivision(
                     ));
 
                     const textQueryStr = textQuery.toSQL();
-                    console.log('Text matching SQL Query:', textQueryStr.sql);
+                    console.log(`[TEXT MATCH] SQL Query: ${textQueryStr.sql}`);
                     console.log('Query parameters:', textQueryStr.params);
 
                     const textRecords = await textQuery;
-                    console.log(`Text matching returned ${textRecords.length} additional records`);
+                    console.log(`[TEXT MATCH] ➜ Returned ${textRecords.length} additional records`);
 
                     return [...spatialRecords, ...textRecords].map(r => r.id);
                 }
