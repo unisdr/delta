@@ -16,9 +16,13 @@ import {
   hazardousEventTable,
   divisionTable,
   damagesTable,
-  lossesTable
+  lossesTable,
+  hipTypeTable,
+  hipClusterTable,
+  hipHazardTable
 } from "~/drizzle/schema";
 import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
 import LRUCache from "lru-cache";
 import { getSectorsByParentId } from "./sectors";
 
@@ -203,19 +207,56 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     }
   }
 
-  if (params.hazardTypeId) {
-    conditions.push(eq(hazardousEventTable.hipTypeId, params.hazardTypeId));
-  }
+  // Initialize base query with required joins for hazard filtering
+  let queryBuilder = db
+    .select()
+    .from(disasterRecordsTable);
 
-  if (params.hazardClusterId) {
-    conditions.push(eq(hazardousEventTable.hipClusterId, params.hazardClusterId));
-  }
+  console.log(" [PASSING FILTERS]: MostDamagingEventsParams");
+  console.table(params);
 
-  if (params.specificHazardId) {
-    conditions.push(eq(hazardousEventTable.hipHazardId, params.specificHazardId));
-  }
+  // Apply hazard filters using the utility function
+  await applyHazardFilters(
+    {
+      hazardTypeId: params.hazardTypeId,
+      hazardClusterId: params.hazardClusterId,
+      specificHazardId: params.specificHazardId,
+    },
+    db,
+    conditions,
+    sql,
+    eq,
+    inArray,
+    hipTypeTable,
+    hipClusterTable,
+    hipHazardTable,
+    hazardousEventTable,
+    disasterEventTable,
+    disasterRecordsTable,
+    queryBuilder,
+    and
+  );
 
-  // Improved geographic level filtering with robust error handling
+  // Extract hazard ID values for debug
+  console.log('HazardType:', params.hazardTypeId);
+  console.log('HazardCluster:', params.hazardClusterId);
+  console.log('SpecificHazard:', params.specificHazardId);
+
+  // Check actual hazard values in query
+  const debugHazards = await db
+    .select({
+      id: disasterRecordsTable.id,
+      hip_type: hazardousEventTable.hipTypeId,
+      hip_cluster: hazardousEventTable.hipClusterId,
+      hip_hazard: hazardousEventTable.hipHazardId,
+    })
+    .from(disasterRecordsTable)
+    .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+    .innerJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
+    .where(and(...conditions));
+
+  console.log(' Matching record hazard fields:', debugHazards);
+
   if (params.geographicLevelId) {
     try {
       // First, get the division info for name-based matching
@@ -339,6 +380,10 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     const sortBy = params.sortBy || 'damages';
     const sortDirection = params.sortDirection || 'desc';
 
+    console.log('📊 [MostDamagingEvents] Running with params:');
+    console.table(params);
+
+
     // Generate cache key from params
     const cacheKey = JSON.stringify(params);
     const cached = resultsCache.get(cacheKey);
@@ -348,6 +393,20 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
 
     // Build filter conditions with improved geographic filtering
     const { conditions, sectorIds } = await buildFilterConditions(params);
+    console.log('🛠️ [Filters Applied] SQL Conditions count:', conditions.length);
+
+    // Base query builder with required joins for hazard filtering
+    let baseQuery = db
+      .select()
+      .from(disasterRecordsTable)
+      .innerJoin(
+        disasterEventTable,
+        eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+      )
+      .innerJoin(
+        hazardousEventTable,
+        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
+      );
 
     // Optimize the count query by separating it from the main query
     // This prevents unnecessary computations when counting total records
@@ -355,12 +414,12 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       .select({
         count: sql<number>`COUNT(DISTINCT ${disasterEventTable.id})`
       })
-      .from(disasterEventTable)
+      .from(disasterRecordsTable)
       .innerJoin(
-        disasterRecordsTable,
-        eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
+        disasterEventTable,
+        eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
       )
-      .leftJoin(
+      .innerJoin(
         hazardousEventTable,
         eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
       )
@@ -370,9 +429,11 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     const countResult = await countQuery;
     const total = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(total / pageSize);
+    console.log(`🔢 [Count] Found ${total} event(s) across ${totalPages} page(s).`);
 
     // If no results, return empty response with proper metadata
     if (total === 0) {
+      console.warn('⚠️ No results found for the current filter combination.');
       const metadata = createAssessmentMetadata(
         params.assessmentType || 'rapid',
         params.confidenceLevel || 'medium'
@@ -406,18 +467,22 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         totalDamages: sql<number>`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`,
         totalLosses: sql<number>`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`
       })
-      .from(disasterEventTable)
-      .leftJoin(
-        disasterRecordsTable,
-        eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
+      .from(disasterRecordsTable)
+      .innerJoin(
+        disasterEventTable,
+        eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
       )
-      .leftJoin(
-        sectorDisasterRecordsRelationTable,
-        eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
+      .innerJoin(
+        hazardousEventTable,
+        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
       )
       .leftJoin(
         damagesTable,
-        eq(disasterRecordsTable.id, damagesTable.recordId)
+        eq(damagesTable.recordId, disasterRecordsTable.id)
+      )
+      .leftJoin(
+        sectorDisasterRecordsRelationTable,
+        eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id)
       )
       .where(and(...conditions))
       .groupBy(
@@ -464,8 +529,9 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     let results: any[] = [];
     try {
       results = await paginatedQuery;
+      console.log(`📄 [Results] Successfully fetched ${results.length} row(s).`);
     } catch (error) {
-      console.error('Error executing most damaging events query:', error);
+      console.error('🚨 [Query Error] Falling back to basic query:', error);
       // Fallback to a simpler query if the complex one fails
       const fallbackQuery = db
         .select({
@@ -473,10 +539,14 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
           eventName: disasterEventTable.nameNational,
           createdAt: disasterEventTable.createdAt
         })
-        .from(disasterEventTable)
+        .from(disasterRecordsTable)
         .innerJoin(
-          disasterRecordsTable,
-          eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
+          disasterEventTable,
+          eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+        )
+        .innerJoin(
+          hazardousEventTable,
+          eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
         )
         .where(and(...conditions))
         .groupBy(
@@ -532,10 +602,11 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
 
     // Cache the results
     resultsCache.set(cacheKey, paginatedResult);
+    console.log('[Completed] Result cached and returned.');
 
     return paginatedResult;
   } catch (error) {
-    console.error('Error in getMostDamagingEvents:', error);
+    console.error('🔥 [Fatal Error] getMostDamagingEvents failed:', error);
 
     // Return a graceful error response instead of throwing
     const metadata = createAssessmentMetadata(
