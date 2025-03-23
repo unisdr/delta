@@ -637,7 +637,7 @@ export function DamagesForm(props: DamagesFormProps) {
 
 	return (
 		<FormView
-			ref={formRef}
+			formRef={formRef}
 			path={route}
 			listUrl={route2(props.fields.recordId!) + "?sectorId=" + props.fields.sectorId}
 			edit={props.edit}

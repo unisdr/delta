@@ -500,7 +500,7 @@ export function LossesForm(props: LossesFormProps) {
 
 	return (
 		<FormView
-			ref={formRef}
+			formRef={formRef}
 			path={route}
 			listUrl={route2(props.fields.recordId!) + "?sectorId=" + props.fields.sectorId}
 			edit={props.edit}
