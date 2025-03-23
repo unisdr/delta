@@ -71,7 +71,7 @@ export function DamagesForm(props: DamagesFormProps) {
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
 		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+			dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
 		}
 	}
 
@@ -182,10 +182,22 @@ export function DamagesForm(props: DamagesFormProps) {
 			})
 		}
 		if (formRef.current) {
-			attach("pd")
-			showHide("pd", false)
-			attach("td")
-			showHide("td", false)
+			let isEmpty = function (v: any) {
+				return typeof v !== 'string' || v === ""
+			}
+			let disruptionFields = [
+				"DisruptionDescription",
+				"DisruptionDurationDays",
+				"DisruptionDurationHours",
+				"DisruptionUsersAffected",
+				"DisruptionPeopleAffected"
+			]
+			let prefixes: ("pd"|"td")[] = ["pd", "td"]
+			prefixes.forEach(prefix => {
+				attach(prefix)
+				let show = disruptionFields.some(field => !isEmpty((props.fields as any)[prefix + field]))
+				showHide(prefix, show)
+			});
 		}
 		return () => {
 			if (formRef.current) {
@@ -232,7 +244,7 @@ export function DamagesForm(props: DamagesFormProps) {
 	}
 	tdDam.label = `Amount of units (${unitNameLocal()})`
 
-//	let [pdDamageAmountDef, setPdDamageAmountDef] = useState(pdDam)
+	//	let [pdDamageAmountDef, setPdDamageAmountDef] = useState(pdDam)
 	let pdDamageAmountErrors: string[] | undefined;
 	if (props.errors && props.errors.fields) {
 		assetIdErrors = errorsToStrings(props.errors.fields.pdDamageAmount);
@@ -458,7 +470,7 @@ export function DamagesForm(props: DamagesFormProps) {
 												arrValue = {
 													...arrValue,  // Spread existing properties (if any)
 													dts_info: {
-														division_id: selectedItems.selectedId || null, 
+														division_id: selectedItems.selectedId || null,
 														division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
 													}
 												};
