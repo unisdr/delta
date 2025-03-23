@@ -36,11 +36,14 @@ type Total = {
 	}
 }
 
+type humanEffectsDataCode = "deaths"|"injured"|"missing"|"directlyAffected"|"indirectlyAffected"|"displaced"
+
 const totalsTablesAndCols = [
 	{code: "deaths", table: deathsTable, col: deathsTable.deaths, presenceCol: humanCategoryPresenceTable.deaths},
 	{code: "injured", table: injuredTable, col: injuredTable.injured, presenceCol: humanCategoryPresenceTable.injured},
 	{code: "missing", table: missingTable, col: missingTable.missing, presenceCol: humanCategoryPresenceTable.missing},
 	{code: "directlyAffected", table: affectedTable, col: affectedTable.direct, presenceCol: humanCategoryPresenceTable.affectedDirect},
+	{code: "indirectlyAffected", table: affectedTable, col: affectedTable.indirect, presenceCol: humanCategoryPresenceTable.affectedIndirect},
 	{code: "displaced", table: displacedTable, col: displacedTable.displaced, presenceCol: humanCategoryPresenceTable.displaced}
 ]
 
@@ -139,6 +142,89 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 	}
 
 	return Number(res[0].sum)
+}
+
+
+export async function totalsRecordsForTypeCol(tx: Tx, dataCode: humanEffectsDataCode, disasterEventId: string){
+	let record = totalsTablesAndCols.find(d => d.code == dataCode)
+	if (!record) throw new Error("invalid dataCode: " + dataCode)
+	return await totalsForOneTableRecords(tx, disasterEventId, record.table, record.col, record.presenceCol)
+}
+
+async function totalsForOneTableRecords(tx: Tx, disasterEventId: string, valTable: any, resCol: any, presenceCol: any) {
+	/*
+	SELECT dr.id, d.deaths
+	FROM disaster_event de
+	JOIN disaster_records dr ON de.id = dr.disaster_event_id
+	JOIN human_dsg hd ON dr.id = hd.record_id
+	JOIN deaths d ON hd.id = d.dsg_id
+	JOIN human_category_presence hcp ON hd.record_id = hcp.record_id
+	WHERE de.id = 'f41bd013-23cc-41ba-91d2-4e325f785171'
+			AND hcp.deaths IS TRUE
+		AND dr."approvalStatus" = 'published'
+		AND hd.sex IS NULL
+		AND hd.age IS NULL
+		AND hd.disability IS NULL
+		AND hd.global_poverty_line IS NULL
+		AND hd.national_poverty_line IS NULL
+		AND (hd.custom IS NULL
+			OR hd.custom = '{}'::jsonb
+			OR (
+				SELECT COUNT(*)
+				FROM jsonb_each(hd.custom)
+				WHERE jsonb_typeof(value) != 'null'
+			) = 0
+		AND EXISTS (
+			SELECT 1
+			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
+			WHERE elem->'geojson'->'dts_info'->>'division_id' = '74'
+			OR elem->'geojson'->'dts_info'->'division_ids' @> '74'::jsonb
+		)
+	*/
+
+	let de = disasterEventTable
+	let dr = disasterRecordsTable
+	let hd = humanDsgTable
+	let vt = valTable
+	let hcp = humanCategoryPresenceTable
+
+	const res = await tx
+		.select({
+			drId: disasterRecordsTable.id,
+			value: resCol,
+		})
+		.from(de)
+		.innerJoin(dr, eq(de.id, dr.disasterEventId))
+		.innerJoin(hd, eq(dr.id, hd.recordId))
+		.innerJoin(vt, eq(hd.id, vt.dsgId))
+		.innerJoin(hcp, eq(hd.recordId, hcp.recordId))
+		.where(
+			and(
+				eq(de.id, disasterEventId),
+				eq(presenceCol, true),
+				eq(dr.approvalStatus, "published"),
+				isNull(hd.sex),
+				isNull(hd.age),
+				isNull(hd.disability),
+				isNull(hd.globalPovertyLine),
+				isNull(hd.nationalPovertyLine),
+				sql`(
+					${hd.custom} IS NULL
+					OR ${hd.custom} = '{}'::jsonb
+					OR (
+						SELECT COUNT(*)
+						FROM jsonb_each(${hd.custom})
+						WHERE jsonb_typeof(value) != 'null'
+					) = 0
+				)`,
+			)
+		)
+
+	if (!res || !res.length) {
+		return 0
+	}
+
+	return res
 }
 
 
@@ -337,4 +423,5 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 	}
 	return m
 }
+
 
