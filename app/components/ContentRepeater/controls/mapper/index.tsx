@@ -474,9 +474,12 @@ export const renderMapperDialog = (
                         normalizeLongitude(marker.getLatLng().lng),
                       ]);
                   
+                      const markerPopups = state.current.popups?.slice() || [];
+
                       const markerData = {
                         mode: "markers",
                         coordinates: markerCoordinates,
+                        popups: markerPopups,
                       };
 
                       type GeoJSONFeatureCollection = {
@@ -500,23 +503,27 @@ export const renderMapperDialog = (
                       }
 
                       function convertMarkersToGeoJSON(markers: any[]): GeoJSONFeatureCollection {
-                        const features: GeoJSONFeature[] = markers.map((marker) => {
-                            const { lat, lng } = marker.getLatLng();
-                            return {
-                                type: "Feature",
-                                properties: {}, // Add custom properties if needed
-                                geometry: {
-                                    type: "Point",
-                                    coordinates: [lng, lat], // GeoJSON uses [longitude, latitude]
-                                },
-                            };
+                        const features: GeoJSONFeature[] = markers.map((marker, index) => {
+                          const { lat, lng } = marker.getLatLng();
+                          const popupText = state.current.popups?.[index] || "";
+                      
+                          return {
+                            type: "Feature",
+                            properties: {
+                              description: popupText, // Include the popup message here
+                            },
+                            geometry: {
+                              type: "Point",
+                              coordinates: [lng, lat], // GeoJSON uses [longitude, latitude]
+                            },
+                          };
                         });
-
+                      
                         return {
-                            type: "FeatureCollection",
-                            features,
+                          type: "FeatureCollection",
+                          features,
                         };
-                      }
+                      }                      
                   
                       updatedValue = JSON.stringify(markerData); // Save as JSON object
 
@@ -642,10 +649,10 @@ export const previewMap = (items: any) => {
 
                     const getShape = map_coords?.mode || "geographic_level";
 
-                    console.log('getShape', getShape);
-                    console.log('geojsonData', geojsonData);
-                    console.log('color', getColorForType(getShape));
-                    console.log('fillColor', getColorForType(getShape));
+                    //console.log('getShape', getShape);
+                    //console.log('geojsonData', geojsonData);
+                    //console.log('color', getColorForType(getShape));
+                    //console.log('fillColor', getColorForType(getShape));
                     
                     const geojsonLayer = L.geoJSON(geojsonData, {
                         style: () => ({
@@ -655,9 +662,16 @@ export const previewMap = (items: any) => {
                         }),
                         pointToLayer: (feature, latlng) => {
                             if (feature.geometry.type === "Point") {
-                                return L.marker(latlng, {
-                                    icon: L.icon(${JSON.stringify(glbMarkerIcon)}),
-                                });
+                              const marker = L.marker(latlng, {
+                                icon: L.icon(${JSON.stringify(glbMarkerIcon)}),
+                              });
+
+                              // Bind popup only for markers
+                              if (feature?.properties?.description) {
+                                marker.bindPopup(feature.properties.description);
+                              }
+
+                              return marker;
                             }
                             return L.circleMarker(latlng, {
                                 radius: 5,
