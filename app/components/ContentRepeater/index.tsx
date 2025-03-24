@@ -750,13 +750,10 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
 
   const handleMarkerMode = (latLng: any) => {
     const L = (window as any).L || null;
-
     state.current.mode = "placeMarker";
+    state.current.marker = state.current.marker || [];
+    state.current.popups = state.current.popups || [];
   
-    // Ensure state.current.marker is an array
-    state.current.marker = state.current.marker || []; // Initialize as an array if undefined
-  
-    // Define a custom icon for the marker
     const customIcon = L.icon({
       iconUrl: glbMarkerIcon.iconUrl,
       iconSize: glbMarkerIcon.iconSize,
@@ -766,31 +763,79 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       className: glbMarkerIcon.className,
     });
   
-    // Create and add a new marker
     const newMarker = L.marker(latLng, {
       icon: customIcon,
       draggable: true,
     }).addTo(mapRef.current);
   
-    // Add the new marker to the array
+    const markerIndex = state.current.marker.length;
     state.current.marker.push(newMarker);
+    state.current.popups.push(""); // Default empty popup content
   
-    // Add dragend event
+    // Prevent marker click from propagating to map (no accidental marker placements)
+    newMarker.on("click", (e: any) => {
+      e.originalEvent.stopPropagation();
+    });
+  
+    // Drag event
     newMarker.on("dragend", (event: any) => {
       const updatedLatLng = event.target.getLatLng();
-      const markerIndex = state.current.marker.indexOf(newMarker);
-      if (markerIndex !== -1) {
-        state.current.points[markerIndex] = [updatedLatLng.lat, normalizeLongitude(updatedLatLng.lng)];
-      }
-  
+      state.current.points[markerIndex] = [updatedLatLng.lat, normalizeLongitude(updatedLatLng.lng)];
       if (debug) console.log("Marker moved to:", updatedLatLng);
     });
   
-    // Update points array
+    // Double-click to edit popup
+    newMarker.on("dblclick", (markerEvent: any) => {
+      const savedText = state.current.popups[markerIndex] || "";
+  
+      const popupDiv = document.createElement("div");
+      popupDiv.style.width = "250px";
+  
+      popupDiv.innerHTML = `
+        <input style="width:100%;" value="${savedText}" />
+        <div style="text-align:right; margin-top:4px;">
+          <a href="#" style="margin-right:6px; text-decoration: underline; cursor: pointer;" class="ok-link">OK</a>
+          <a href="#" style="text-decoration: underline; cursor: pointer;" class="cancel-link">Cancel</a>
+        </div>
+      `;
+  
+      // Add event listeners to <a> links
+      setTimeout(() => {
+        const input = popupDiv.querySelector("input") as HTMLInputElement;
+        const okLink = popupDiv.querySelector(".ok-link") as HTMLAnchorElement;
+        const cancelLink = popupDiv.querySelector(".cancel-link") as HTMLAnchorElement;
+  
+        okLink.addEventListener("click", (e: MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation(); // Prevent map click
+  
+          const updatedText = input.value;
+          state.current.popups[markerIndex] = updatedText;
+  
+          newMarker.closePopup();
+          newMarker.bindPopup(updatedText); // Show plain text after save
+          newMarker.openPopup();
+  
+          if (debug) console.log("Popup saved:", updatedText);
+        });
+  
+        cancelLink.addEventListener("click", (e: MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation(); // Just in case
+          newMarker.closePopup();
+          if (debug) console.log("Edit cancelled");
+        });
+      }, 0);
+  
+      newMarker.bindPopup(popupDiv).openPopup();
+    });
+  
+    // Store initial point
     state.current.points.push([latLng.lat, normalizeLongitude(latLng.lng)]);
   
     if (debug) console.log("Marker added:", { lat: latLng.lat, lng: latLng.lng });
-  };
+  };  
+  
 
   // Enable/disable dragging dynamically
   const disableDragging = () => {
@@ -806,7 +851,8 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
     const L = (window as any).L || null;
 
     if (data.mode) {
-      const { mode, coordinates, center, radius } = data;
+      console.log('data:', data);
+      const { mode, coordinates, center, radius, popups } = data;
 
       if (mode === "polygon" && Array.isArray(coordinates)) {
         // Process polygon data
@@ -899,14 +945,13 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
           selectElement.setAttribute('last_mode', 'drawCircle');
         }
       } else if (mode === "markers" && Array.isArray(coordinates)) {
-        // Process marker data
         state.current.points = [];
         state.current.marker = [];
-        
-        // Create bounds object to fit all markers
+        state.current.popups = [];
+      
         const markerBounds = L.latLngBounds();
-
-        coordinates.forEach(([lat, lng]) => {
+      
+        coordinates.forEach(([lat, lng], index) => {
           const customIcon = L.icon({
             iconUrl: glbMarkerIcon.iconUrl,
             iconSize: glbMarkerIcon.iconSize,
@@ -915,33 +960,82 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
             shadowUrl: glbMarkerIcon.shadowUrl,
             className: glbMarkerIcon.className,
           });
-
+      
           const marker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(mapRef.current);
-
+      
           state.current.marker.push(marker);
           state.current.points.push([lat, lng]);
-
-          // Extend the bounds to include this marker
-          markerBounds.extend([lat, lng]);
-
-          // Add dragend event to update state
+      
+          const popupText = popups?.[index] || "";
+          state.current.popups.push(popupText);
+      
+          if (popupText) {
+            marker.bindPopup(popupText);
+          }
+      
+          // Prevent accidental propagation
+          marker.on("click", (e: any) => {
+            e.originalEvent.stopPropagation();
+          });
+      
+          // Enable double-click to edit
+          marker.on("dblclick", () => {
+            const savedText = state.current.popups[index];
+      
+            const popupDiv = document.createElement("div");
+            popupDiv.style.width = "250px";
+      
+            popupDiv.innerHTML = `
+              <input style="width:100%;" value="${savedText}" />
+              <div style="text-align:right; margin-top:4px;">
+                <a href="#" class="ok-link" style="margin-right:6px; text-decoration: underline; cursor: pointer;">OK</a>
+                <a href="#" class="cancel-link" style="text-decoration: underline; cursor: pointer;">Cancel</a>
+              </div>
+            `;
+      
+            setTimeout(() => {
+              const input = popupDiv.querySelector("input") as HTMLInputElement;
+              const okLink = popupDiv.querySelector(".ok-link") as HTMLAnchorElement;
+              const cancelLink = popupDiv.querySelector(".cancel-link") as HTMLAnchorElement;
+      
+              okLink.addEventListener("click", (e: MouseEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+      
+                const updatedText = input.value;
+                state.current.popups[index] = updatedText;
+                marker.closePopup();
+                marker.bindPopup(updatedText).openPopup();
+      
+                if (debug) console.log("Popup updated:", updatedText);
+              });
+      
+              cancelLink.addEventListener("click", (e: MouseEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+                marker.closePopup();
+              });
+            }, 0);
+      
+            marker.bindPopup(popupDiv).openPopup();
+          });
+      
+          // Dragging logic
           marker.on("dragend", (event: any) => {
             const updatedLatLng = event.target.getLatLng();
-            const markerIndex = state.current.marker.indexOf(marker);
-            if (markerIndex !== -1) {
-              state.current.points[markerIndex] = [updatedLatLng.lat, normalizeLongitude(updatedLatLng.lng)];
-            }
+            state.current.points[index] = [updatedLatLng.lat, normalizeLongitude(updatedLatLng.lng)];
             if (debug) console.log("Marker updated:", state.current.points);
           });
+      
+          markerBounds.extend([lat, lng]);
         });
-
-        // Fit map view to marker bounds
+      
         if (markerBounds.isValid()) {
           mapRef.current.fitBounds(markerBounds);
         }
-
+      
         if (debug) console.log("Markers initialized:", state.current.points);
-
+      
         const selectElement = dialogMapRef.current?.querySelector('select');
         if (selectElement) {
           selectElement.setAttribute('last_mode', 'placeMarker');
