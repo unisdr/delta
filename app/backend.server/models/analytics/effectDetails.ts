@@ -15,7 +15,7 @@ import {
   sectorTable,
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
-import { calculateDamages, calculateLosses } from "~/backend.server/utils/disasterCalculations";
+
 
 /**
  * Gets all subsector IDs for a given sector following international standards.
@@ -219,9 +219,23 @@ export async function getEffectDetails(filters: FilterParams) {
       id: damagesTable.id,
       type: sql<string>`'damage'`.as("type"),
       assetName: assetTable.name,
-      totalDamageAmount: sql<string>`${calculateDamages(damagesTable)}`.as("totalDamageAmount"),
+      totalDamageAmount: sql<string>`
+        CASE 
+            WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+            ELSE
+                COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+        END`.as("totalDamageAmount"),
       totalRepairReplacement: damagesTable.totalRepairReplacement,
-      totalRecovery: damagesTable.totalRecovery,
+      totalRecovery: sql<string>`
+        CASE 
+            WHEN ${damagesTable.totalRecoveryOverride} = true THEN
+                COALESCE(${damagesTable.totalRecovery}, 0)::numeric
+            ELSE
+                COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRecoveryCostUnit}, 0)::numeric +
+                COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdRecoveryCostUnit}, 0)::numeric
+        END`.as("totalRecovery"),
       sectorId: damagesTable.sectorId,
       attachments: damagesTable.attachments,
       spatialFootprint: damagesTable.spatialFootprint
@@ -252,10 +266,22 @@ export async function getEffectDetails(filters: FilterParams) {
       description: lossesTable.description,
       publicUnit: lossesTable.publicUnit,
       publicUnits: lossesTable.publicUnits,
-      publicCostTotal: sql<string>`${calculateLosses(lossesTable)}`.as("publicCostTotal"),
+      publicCostTotal: sql<string>`
+        CASE 
+            WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+            ELSE
+                COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+        END`.as("publicCostTotal"),
       privateUnit: lossesTable.privateUnit,
       privateUnits: lossesTable.privateUnits,
-      privateCostTotal: lossesTable.privateCostTotal,
+      privateCostTotal: sql<string>`
+        CASE 
+            WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+            ELSE
+                COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+        END`.as("privateCostTotal"),
       sectorId: lossesTable.sectorId,
       attachments: lossesTable.attachments,
       spatialFootprint: lossesTable.spatialFootprint

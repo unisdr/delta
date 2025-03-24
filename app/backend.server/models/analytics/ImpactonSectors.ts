@@ -1,24 +1,3 @@
-/**
- * ImpactonSectors.ts
- * 
- * This module implements sector-based disaster impact calculations following international standards:
- * 
- * 1. Sendai Framework for Disaster Risk Reduction 2015-2030
- *    Reference: https://www.undrr.org/publication/sendai-framework-disaster-risk-reduction-2015-2030
- *    - Target C: Reduce direct disaster economic loss
- *    - Indicators C-2 and C-3: Direct agricultural loss and economic loss to all other damaged or destroyed productive assets
- * 
- * 2. UNDRR Technical Guidance (2017)
- *    Reference: https://www.preventionweb.net/publication/technical-guidance-monitoring-and-reporting-progress
- *    - Section B: Methodology for Economic Loss Assessment
- *    - Pages 43-45: Sectoral damage calculation methods
- * 
- * 3. World Bank Damage and Loss Assessment (DaLA) Methodology
- *    Reference: https://openknowledge.worldbank.org/handle/10986/2403
- *    - Chapter 3: Damage calculation as replacement cost
- *    - Chapter 4: Loss calculation including flow disruptions
- */
-
 import { dr } from "~/db.server";
 import { sql } from "drizzle-orm";
 import {
@@ -35,27 +14,46 @@ import {
 } from "~/drizzle/schema";
 import { and, eq, inArray, ilike, SQL, exists, like, or } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
-import {
-  calculateDamages,
-  calculateLosses,
-  createAssessmentMetadata,
-  calculateFaoAgriculturalDamage,
-  calculateFaoAgriculturalLoss
-} from "~/backend.server/utils/disasterCalculations";
-import type {
-  DisasterImpactMetadata,
-  FaoAgriculturalDamage,
-  FaoAgriculturalLoss,
-  FaoAgriSubsector
-} from "~/types/disasterCalculations";
+import { configCurrencies } from "~/util/config";
 
-// Types
-/*
-interface TimeSeriesData {
-  year: number;
-  count: number;
-  amount: number;
-}*/
+type AssessmentType = 'rapid' | 'detailed';
+type ConfidenceLevel = 'low' | 'medium' | 'high';
+
+interface DisasterImpactMetadata {
+  assessmentType: AssessmentType;
+  confidenceLevel: ConfidenceLevel;
+  currency: string;
+  assessmentDate: string;
+  assessedBy: string;
+  notes: string;
+}
+
+export const createAssessmentMetadata = (
+  assessmentType: AssessmentType = 'rapid',
+  confidenceLevel: ConfidenceLevel = 'medium'
+): DisasterImpactMetadata => {
+  const currencies = configCurrencies();
+  return {
+    assessmentType,
+    confidenceLevel,
+    currency: currencies[0] || 'USD', // Use first configured currency or USD as fallback
+    assessmentDate: new Date().toISOString(),
+    assessedBy: 'DTS Analytics System',
+    notes: 'Automatically generated assessment based on database records'
+  };
+};
+
+/**
+ * Validates currency codes against ISO 4217 standard
+ * Used to ensure consistent monetary reporting across assessments
+ * 
+ * @param currency - Currency code to validate
+ * @returns true if valid ISO 4217 code
+ */
+export const validateCurrency = (currency: string): boolean => {
+  const iso4217Pattern = /^[A-Z]{3}$/;
+  return iso4217Pattern.test(currency);
+};
 
 interface Filters {
   startDate?: string | null;
@@ -66,40 +64,21 @@ interface Filters {
   geographicLevel?: string | null;
   disasterEvent?: string | null;
   _disasterEventId?: string | null;
-  /** 
-   * Assessment type following UNDRR Technical Guidance:
-   * - 'rapid': Quick assessment within first 2 weeks
-   * - 'detailed': Comprehensive assessment after 2+ weeks
-   */
   assessmentType?: 'rapid' | 'detailed';
-  /** 
-   * Confidence level based on World Bank DaLA methodology:
-   * - 'low': Limited data availability or rapid assessment
-   * - 'medium': Partial data with some field verification
-   * - 'high': Complete data with full field verification
-   */
   confidenceLevel?: 'low' | 'medium' | 'high';
 }
 
 interface SectorImpactData {
-  /** Total number of disaster events affecting the sector */
   eventCount: number;
-  /** Total damage in local currency (replacement cost of destroyed assets) */
   totalDamage: string | null;
-  /** Total losses in local currency (changes in economic flows) */
   totalLoss: string | null;
-  /** Time series of event counts by year */
   eventsOverTime: { [year: string]: string };
-  /** Time series of damages by year */
   damageOverTime: { [year: string]: string };
-  /** Time series of losses by year */
   lossOverTime: { [year: string]: string };
-  /** Assessment metadata following international standards */
   metadata: DisasterImpactMetadata;
-  /** FAO-specific agricultural impact data if applicable */
   faoAgriculturalImpact?: {
-    damage: FaoAgriculturalDamage;
-    loss: FaoAgriculturalLoss;
+    damage: any;
+    loss: any;
   };
   dataAvailability: {
     damage: 'available' | 'zero' | 'no_data';
@@ -168,7 +147,6 @@ const validateSectorId = (sectorId: string): number => {
 };
 
 /**
- * Gets all subsector IDs for a given sector following international standards.
  * This implementation uses the proper hierarchical structure defined in the sector table
  * rather than relying on ID patterns, making it suitable for all countries.
  * 
@@ -208,8 +186,8 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
   }
 };
 
-const getAgriSubsector = (sectorId: string): FaoAgriSubsector | null => {
-  const subsectorMap: { [key: string]: FaoAgriSubsector } = {
+const getAgriSubsector = (sectorId: string): any | null => {
+  const subsectorMap: { [key: string]: any } = {
     'agri_crops': 'crops',
     'agri_livestock': 'livestock',
     'agri_fisheries': 'fisheries',
@@ -249,68 +227,46 @@ const getDisasterRecordsForSector = async (
         return [];
       }
 
-      // 1. Spatial matching using PostGIS - only if we have spatial data
+      // Build an OR condition for both spatial and text matching
+      const geoConditions = [];
+
+      // 1. Spatial matching using PostGIS - primary method
       if (divisionInfo.geometry) {
         try {
-          conditions.push(sql`
+          geoConditions.push(sql`
             ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-            jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
-            (${disasterRecordsTable.spatialFootprint}->>'type') IS NOT NULL AND
-            ST_IsValid(ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326)) AND
             ST_Intersects(
               ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
               ${divisionInfo.geometry}
             )
           `);
         } catch (error) {
-          // Log error but don't fail the entire query
           console.error('Error in spatial filtering:', error);
-
-          // Add a fallback condition that will still filter by division name if possible
-          // This ensures we get some results even if spatial operations fail
-          if (divisionInfo.names) {
-            const normalizedDivisionNames = Object.values(divisionInfo.names)
-              .map(name => normalizeText(name || ''))
-              .filter(Boolean);
-
-            if (normalizedDivisionNames.length > 0) {
-              // Create an array of SQL conditions for each division name
-              const likeConditions: SQL<unknown>[] = normalizedDivisionNames.map(name =>
-                sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name}%`}`
-              );
-
-              // Handle the case where we have a single condition vs multiple conditions
-              if (likeConditions.length === 1) {
-                conditions.push(likeConditions[0]);
-              } else if (likeConditions.length > 1) {
-                conditions.push(sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND (${or(...likeConditions)})`);
-              }
-            }
-          }
         }
       }
 
-      // 2. Text matching using normalized names
-      const normalized = normalizeText(Object.values(divisionInfo.names)[0]);
-      const alternateNames = [
-        normalized,
-        normalized.replace(/\s*\([^)]*\)/g, ''), // Remove parentheses
-        normalized.replace(/region\s*([\w-]+)/i, '$1'), // Remove 'Region'
-        'ARMM', // Special case for ARMM
-        'BARMM'  // Special case for BARMM
-      ].filter(Boolean);
+      // 2. Text matching using normalized names - fallback method
+      if (divisionInfo.names) {
+        const normalizedNames = Object.values(divisionInfo.names)
+          .filter(Boolean)
+          .map(name => name.toLowerCase());
 
-      if (alternateNames.length > 0) {
-        const nameConditions: SQL<unknown>[] = alternateNames.map(name =>
-          sql`LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name.toLowerCase()}%`}`
-        );
-
-        // Handle the case where we have a single condition vs multiple conditions
-        if (nameConditions.length === 1) {
-          conditions.push(sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND ${nameConditions[0]}`);
-        } else if (nameConditions.length > 1) {
-          conditions.push(sql`${disasterRecordsTable.locationDesc} IS NOT NULL AND (${or(...nameConditions)})`);
+        if (normalizedNames.length > 0) {
+          geoConditions.push(sql`
+            ${disasterRecordsTable.locationDesc} IS NOT NULL AND
+            (${or(...normalizedNames.map(name =>
+              sql`LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name}%`}`
+            ))})
+          `);
         }
+      }
+
+      // Add the combined OR condition if we have any matches
+      if (geoConditions.length > 0) {
+        conditions.push(sql`(${or(...geoConditions)})`);
+      } else {
+        // If we have no valid conditions, return no results
+        return [];
       }
     }
 
@@ -461,17 +417,50 @@ const getDisasterRecordsForSector = async (
 const aggregateDamagesData = async (
   recordIds: string[],
   sectorId: string
-): Promise<{ total: number; byYear: Map<number, number>; faoAgriDamage?: FaoAgriculturalDamage }> => {
+): Promise<{ total: number; byYear: Map<number, number>; faoAgriDamage?: any }> => {
   const sectorIds = await getAllSubsectorIds(sectorId);
   const numericSectorIds = sectorIds.map(id => parseInt(id));
 
-  // Get damages for all relevant sectors
-  const damages = await dr
+  // First check sectorDisasterRecordsRelation for overrides
+  const sectorOverrides = await dr
     .select({
-      totalRepairReplacement: damagesTable.totalRepairReplacement,
-      totalRecovery: damagesTable.totalRecovery,
+      recordId: sectorDisasterRecordsRelationTable.disasterRecordId,
+      sectorId: sectorDisasterRecordsRelationTable.sectorId,
+      damageCost: sectorDisasterRecordsRelationTable.damageCost,
+      withDamage: sectorDisasterRecordsRelationTable.withDamage
+      // damageRecoveryCost: sectorDisasterRecordsRelationTable.damageRecoveryCost
+    })
+    .from(sectorDisasterRecordsRelationTable)
+    .where(
+      and(
+        inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
+        inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+      )
+    );
+
+  // Get detailed damages for records without sector overrides
+  const detailedDamages = await dr
+    .select({
       recordId: damagesTable.recordId,
-      sectorId: damagesTable.sectorId
+      sectorId: damagesTable.sectorId,
+      totalRepairReplacement: damagesTable.totalRepairReplacement,
+      totalRepairReplacementOverride: damagesTable.totalRepairReplacementOverride,
+      totalRecovery: damagesTable.totalRecovery,
+      totalRecoveryOverride: damagesTable.totalRecoveryOverride,
+      pdDamageAmount: damagesTable.pdDamageAmount,
+      pdRepairCostUnit: damagesTable.pdRepairCostUnit,
+      pdRepairCostTotal: damagesTable.pdRepairCostTotal,
+      pdRepairCostTotalOverride: damagesTable.pdRepairCostTotalOverride,
+      pdRecoveryCostUnit: damagesTable.pdRecoveryCostUnit,
+      pdRecoveryCostTotal: damagesTable.pdRecoveryCostTotal,
+      pdRecoveryCostTotalOverride: damagesTable.pdRecoveryCostTotalOverride,
+      tdDamageAmount: damagesTable.tdDamageAmount,
+      tdReplacementCostUnit: damagesTable.tdReplacementCostUnit,
+      tdReplacementCostTotal: damagesTable.tdReplacementCostTotal,
+      tdReplacementCostTotalOverride: damagesTable.tdReplacementCostTotalOverride,
+      tdRecoveryCostUnit: damagesTable.tdRecoveryCostUnit,
+      tdRecoveryCostTotal: damagesTable.tdRecoveryCostTotal,
+      tdRecoveryCostTotalOverride: damagesTable.tdRecoveryCostTotalOverride
     })
     .from(damagesTable)
     .where(
@@ -485,25 +474,105 @@ const aggregateDamagesData = async (
   let total = 0;
   const byYear = new Map<number, number>();
 
-  for (const damage of damages) {
-    const damageAmount =
-      (Number(damage.totalRepairReplacement) || 0) +
-      (Number(damage.totalRecovery) || 0);
+  // Process each record
+  for (const recordId of recordIds) {
+    for (const sectorId of numericSectorIds) {
+      // Check sector override first
+      const sectorOverride = sectorOverrides.find(
+        so => so.recordId === recordId && so.sectorId === sectorId
+      );
 
-    total += damageAmount;
+      if (sectorOverride?.withDamage) {
+        // Use sector override values if they exist
+        const damageAmount =
+          (Number(sectorOverride.damageCost) || 0);
+        // (Number(sectorOverride.damageRecoveryCost) || 0);
 
-    // Get year from record and add to yearly breakdown
-    const record = await dr
-      .select({
-        year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
-      })
-      .from(disasterRecordsTable)
-      .where(eq(disasterRecordsTable.id, damage.recordId))
-      .limit(1);
+        if (damageAmount > 0) {
+          total += damageAmount;
 
-    if (record && record[0]?.year) {
-      const year = Number(record[0].year);
-      byYear.set(year, (byYear.get(year) || 0) + damageAmount);
+          // Get year and update yearly breakdown
+          const record = await dr
+            .select({
+              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+            })
+            .from(disasterRecordsTable)
+            .where(eq(disasterRecordsTable.id, recordId))
+            .limit(1);
+
+          if (record && record[0]?.year) {
+            const year = Number(record[0].year);
+            byYear.set(year, (byYear.get(year) || 0) + damageAmount);
+          }
+          continue;
+        }
+      }
+
+      // If no sector override, check detailed damages
+      const damage = detailedDamages.find(
+        d => d.recordId === recordId && d.sectorId === sectorId
+      );
+
+      if (damage) {
+        let damageAmount = 0;
+
+        // Check total overrides first
+        if (damage.totalRepairReplacementOverride) {
+          damageAmount += Number(damage.totalRepairReplacement) || 0;
+        } else {
+          // Calculate from PD and TD details
+          // PD Repair Cost
+          if (damage.pdRepairCostTotalOverride) {
+            damageAmount += Number(damage.pdRepairCostTotal) || 0;
+          } else {
+            damageAmount += (Number(damage.pdDamageAmount) || 0) * (Number(damage.pdRepairCostUnit) || 0);
+          }
+
+          // PD Recovery Cost
+          if (damage.pdRecoveryCostTotalOverride) {
+            damageAmount += Number(damage.pdRecoveryCostTotal) || 0;
+          } else {
+            damageAmount += (Number(damage.pdDamageAmount) || 0) * (Number(damage.pdRecoveryCostUnit) || 0);
+          }
+
+          // TD Replacement Cost
+          if (damage.tdReplacementCostTotalOverride) {
+            damageAmount += Number(damage.tdReplacementCostTotal) || 0;
+          } else {
+            damageAmount += (Number(damage.tdDamageAmount) || 0) * (Number(damage.tdReplacementCostUnit) || 0);
+          }
+
+          // TD Recovery Cost
+          if (damage.tdRecoveryCostTotalOverride) {
+            damageAmount += Number(damage.tdRecoveryCostTotal) || 0;
+          } else {
+            damageAmount += (Number(damage.tdDamageAmount) || 0) * (Number(damage.tdRecoveryCostUnit) || 0);
+          }
+        }
+
+        // Add recovery costs if total override exists
+        if (damage.totalRecoveryOverride) {
+          damageAmount += Number(damage.totalRecovery) || 0;
+        }
+
+        if (damageAmount > 0) {
+          total += damageAmount;
+
+          // Get year and update yearly breakdown
+          const record = await dr
+            .select({
+              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+            })
+            .from(disasterRecordsTable)
+            .where(eq(disasterRecordsTable.id, recordId))
+            .limit(1);
+
+          if (record && record[0]?.year) {
+            const year = Number(record[0].year);
+            byYear.set(year, (byYear.get(year) || 0) + damageAmount);
+          }
+        }
+      }
     }
   }
 
@@ -514,63 +583,127 @@ const aggregateDamagesData = async (
 const aggregateLossesData = async (
   recordIds: string[],
   sectorId: string | undefined
-): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: FaoAgriculturalLoss }> => {
-  const numericSectorIds = sectorId ? await getAllSubsectorIds(sectorId) : undefined;
+): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: any }> => {
+  const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : undefined;
+  const numericSectorIds = sectorIds?.map(id => parseInt(id));
 
-  // Get losses for all relevant sectors
-  const losses = await dr
+  // First check sectorDisasterRecordsRelation for overrides
+  const sectorOverrides = await dr
     .select({
-      lossesCost: sql<number>`COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric`,
-      recordId: disasterRecordsTable.id,
+      recordId: sectorDisasterRecordsRelationTable.disasterRecordId,
       sectorId: sectorDisasterRecordsRelationTable.sectorId,
-      startDate: disasterEventTable.startDate
+      lossesCost: sectorDisasterRecordsRelationTable.lossesCost,
+      withLosses: sectorDisasterRecordsRelationTable.withLosses
     })
-    .from(disasterRecordsTable)
-    .innerJoin(
-      sectorDisasterRecordsRelationTable,
-      eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
-    )
-    .innerJoin(
-      disasterEventTable,
-      eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-    )
+    .from(sectorDisasterRecordsRelationTable)
     .where(
       and(
-        inArray(disasterRecordsTable.id, recordIds),
-        numericSectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds.map(id => parseInt(id, 10))) : undefined
+        inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
+        numericSectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds) : undefined
       )
     );
 
-  // Initialize result maps
-  const byYear = new Map<number, number>();
+  // Get detailed losses for records without sector overrides
+  const detailedLosses = await dr
+    .select({
+      recordId: lossesTable.recordId,
+      sectorId: lossesTable.sectorId,
+      publicCostTotal: lossesTable.publicCostTotal,
+      publicCostTotalOverride: lossesTable.publicCostTotalOverride,
+      publicUnits: lossesTable.publicUnits,
+      publicCostUnit: lossesTable.publicCostUnit,
+      privateCostTotal: lossesTable.privateCostTotal,
+      privateCostTotalOverride: lossesTable.privateCostTotalOverride,
+      privateUnits: lossesTable.privateUnits,
+      privateCostUnit: lossesTable.privateCostUnit
+    })
+    .from(lossesTable)
+    .where(
+      and(
+        inArray(lossesTable.recordId, recordIds),
+        numericSectorIds ? inArray(lossesTable.sectorId, numericSectorIds) : undefined
+      )
+    );
+
   let total = 0;
-  let faoAgriLoss: FaoAgriculturalLoss | undefined = undefined;
+  const byYear = new Map<number, number>();
 
-  // Process each loss record
-  for (const loss of losses) {
-    const year = new Date(loss.startDate).getFullYear();
-    const amount = Number(loss.lossesCost);
+  // Process each record
+  for (const recordId of recordIds) {
+    for (const sectorId of numericSectorIds || []) {
+      // Check sector override first
+      const sectorOverride = sectorOverrides.find(
+        so => so.recordId === recordId && so.sectorId === sectorId
+      );
 
-    // Update year total
-    byYear.set(year, (byYear.get(year) || 0) + amount);
-    // Update overall total
-    total += amount;
+      if (sectorOverride?.withLosses) {
+        // Use sector override value if it exists
+        const lossAmount = Number(sectorOverride.lossesCost) || 0;
 
-    // Calculate FAO agricultural loss if applicable
-    if (!faoAgriLoss && sectorId) {
-      const agriSubsector = getAgriSubsector(sectorId);
-      if (agriSubsector) {
-        const calculatedLoss = await calculateFaoAgriculturalLoss(losses, agriSubsector);
-        faoAgriLoss = calculatedLoss;
+        if (lossAmount > 0) {
+          total += lossAmount;
+
+          // Get year and update yearly breakdown
+          const record = await dr
+            .select({
+              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+            })
+            .from(disasterRecordsTable)
+            .where(eq(disasterRecordsTable.id, recordId))
+            .limit(1);
+
+          if (record && record[0]?.year) {
+            const year = Number(record[0].year);
+            byYear.set(year, (byYear.get(year) || 0) + lossAmount);
+          }
+          continue;
+        }
+      }
+
+      // If no sector override, check detailed losses
+      const loss = detailedLosses.find(
+        l => l.recordId === recordId && l.sectorId === sectorId
+      );
+
+      if (loss) {
+        let lossAmount = 0;
+
+        // Public losses
+        if (loss.publicCostTotalOverride) {
+          lossAmount += Number(loss.publicCostTotal) || 0;
+        } else if (loss.publicUnits && loss.publicCostUnit) {
+          lossAmount += (Number(loss.publicUnits) || 0) * (Number(loss.publicCostUnit) || 0);
+        }
+
+        // Private losses
+        if (loss.privateCostTotalOverride) {
+          lossAmount += Number(loss.privateCostTotal) || 0;
+        } else if (loss.privateUnits && loss.privateCostUnit) {
+          lossAmount += (Number(loss.privateUnits) || 0) * (Number(loss.privateCostUnit) || 0);
+        }
+
+        if (lossAmount > 0) {
+          total += lossAmount;
+
+          // Get year and update yearly breakdown
+          const record = await dr
+            .select({
+              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+            })
+            .from(disasterRecordsTable)
+            .where(eq(disasterRecordsTable.id, recordId))
+            .limit(1);
+
+          if (record && record[0]?.year) {
+            const year = Number(record[0].year);
+            byYear.set(year, (byYear.get(year) || 0) + lossAmount);
+          }
+        }
       }
     }
   }
 
-  return {
-    total,
-    byYear,
-    faoAgriLoss
-  };
+  return { total, byYear };
 };
 
 // Function to get event counts by year
@@ -608,20 +741,6 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
 
 /**
  * Fetches comprehensive sector impact data following multiple international standards:
- * 
- * 1. Sendai Framework for Disaster Risk Reduction:
- *    - Target C: Economic loss calculation
- *    - Target D: Critical infrastructure damage
- *    - Target B: Affected people in sector
- * 
- * 2. World Bank DaLA Methodology:
- *    - Separate tracking of damage and losses
- *    - Time-series analysis for recovery monitoring
- * 
- * 3. UNDRR Technical Guidance:
- *    - Assessment types (rapid vs detailed)
- *    - Confidence levels for data quality
- * 
  * @param sectorId - ID of the sector to analyze
  * @param filters - Optional filters for data selection
  * @returns Comprehensive sector impact data with metadata

@@ -332,7 +332,28 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric + COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}, 0)::numeric)`,
+            value: sql<string>`
+                SUM(
+                    CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                            COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
+                        ELSE
+                            COALESCE((
+                                SELECT 
+                                    CASE 
+                                        WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                                            COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                                            COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                                    END
+                                FROM ${damagesTable}
+                                WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
+                                AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                                LIMIT 1
+                            ), 0)::numeric
+                    END
+                )`,
         })
         .from(disasterRecordsTable)
         .innerJoin(
@@ -356,7 +377,27 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric + COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}, 0)::numeric)`))
+        .orderBy(desc(sql<string>`SUM(
+            CASE 
+                WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                    COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
+                ELSE
+                    COALESCE((
+                        SELECT 
+                            CASE 
+                                WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                                    COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                                ELSE
+                                    COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                                    COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                            END
+                        FROM ${damagesTable}
+                        WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
+                        AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                        LIMIT 1
+                    ), 0)::numeric
+            END
+        )`))
         .limit(10);
 
     // Query for losses by hazard type
@@ -364,7 +405,33 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric)`,
+            value: sql<string>`
+                SUM(
+                    CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                            COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
+                        ELSE
+                            COALESCE((
+                                SELECT 
+                                    CASE 
+                                        WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                                            COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+                                    END +
+                                    CASE 
+                                        WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                                            COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                                    END
+                                FROM ${lossesTable}
+                                WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
+                                AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                                LIMIT 1
+                            ), 0)::numeric
+                    END
+                )`,
         })
         .from(disasterRecordsTable)
         .innerJoin(
@@ -388,7 +455,32 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric)`))
+        .orderBy(desc(sql<string>`SUM(
+            CASE 
+                WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                    COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
+                ELSE
+                    COALESCE((
+                        SELECT 
+                            CASE 
+                                WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                                    COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+                                ELSE
+                                    COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+                            END +
+                            CASE 
+                                WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                                    COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                                ELSE
+                                    COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                            END
+                        FROM ${lossesTable}
+                        WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
+                        AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                        LIMIT 1
+                    ), 0)::numeric
+            END
+        )`))
         .limit(10);
 
     // Calculate total damages and losses for percentage

@@ -464,7 +464,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         eventId: disasterEventTable.id,
         eventName: disasterEventTable.nameNational,
         createdAt: disasterEventTable.createdAt,
-        totalDamages: sql<number>`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`,
+        totalDamages: sql<number>`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) ), 0)`,
         totalLosses: sql<number>`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`
       })
       .from(disasterRecordsTable)

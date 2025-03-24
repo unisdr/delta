@@ -1,24 +1,3 @@
-/**
- * Geographic Impact Analysis Module
- * 
- * This module implements spatial analysis of disaster impacts following international standards:
- * 
- * 1. Sendai Framework for Disaster Risk Reduction 2015-2030
- *    Reference: https://www.undrr.org/publication/sendai-framework-disaster-risk-reduction-2015-2030
- *    - Target C: Economic loss by geographic region
- *    - Target D: Critical infrastructure damage by area
- * 
- * 2. UNDRR Technical Guidance (2017)
- *    Reference: https://www.preventionweb.net/publication/technical-guidance-monitoring-and-reporting-progress
- *    - Section C: Spatial Data Requirements
- *    - Pages 89-92: Geographic aggregation methods
- * 
- * 3. World Bank DaLA Methodology
- *    Reference: https://openknowledge.worldbank.org/handle/10986/2403
- *    - Chapter 5: Geographic Impact Assessment
- *    - Section 5.2: Administrative Level Analysis
- */
-
 import { eq, sql, SQL, and, count, desc, inArray, gte, lte, exists, or } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
@@ -41,10 +20,7 @@ import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
 
 
-/**
- * Interface for geographic impact query filters
- * Based on UNDRR's spatial data requirements
- */
+
 export interface GeographicImpactFilters {
     sectorId?: string;
     subSectorId?: string;
@@ -672,8 +648,14 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 hip_hazard: hazardousEventTable.hipHazardId,
             })
             .from(disasterRecordsTable)
-            .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
-            .innerJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
+            .innerJoin(
+                disasterEventTable,
+                eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
+            )
+            .innerJoin(
+                hazardousEventTable,
+                eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
+            )
             .where(and(...baseConditions));
 
         console.log('🧪 Matching record hazard fields:', debugHazards);
@@ -1230,12 +1212,27 @@ async function aggregateDamagesData(recordIds: string[]): Promise<{ total: numbe
         const damageData = await dr
             .select({
                 year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
-                totalDamage: sql<string>`COALESCE(SUM(CASE 
-                    WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true 
-                    THEN COALESCE(${sectorDisasterRecordsRelationTable.damageCost}::numeric, 0) + 
-                         COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}::numeric, 0)
-                    ELSE 0 
-                END), 0)`
+                totalDamage: sql<string>`COALESCE(SUM(
+                    CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                            COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
+                        ELSE
+                            COALESCE((
+                                SELECT 
+                                    CASE 
+                                        WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                                            COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                                            COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                                    END
+                                FROM ${damagesTable}
+                                WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
+                                AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                                LIMIT 1
+                            ), 0)::numeric
+                    END
+                ), 0)`
             })
             .from(sectorDisasterRecordsRelationTable)
             .innerJoin(
@@ -1286,11 +1283,32 @@ async function aggregateLossesData(recordIds: string[]): Promise<{ total: number
         const lossData = await dr
             .select({
                 year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
-                totalLoss: sql<string>`COALESCE(SUM(CASE 
-                    WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true 
-                    THEN COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}::numeric, 0)
-                    ELSE 0 
-                END), 0)`
+                totalLoss: sql<string>`COALESCE(SUM(
+                    CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                            COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
+                        ELSE
+                            COALESCE((
+                                SELECT 
+                                    CASE 
+                                        WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                                            COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+                                    END +
+                                    CASE 
+                                        WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                                            COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                                    END
+                                FROM ${lossesTable}
+                                WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
+                                AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                                LIMIT 1
+                            ), 0)::numeric
+                    END
+                ), 0)`
             })
             .from(sectorDisasterRecordsRelationTable)
             .innerJoin(
