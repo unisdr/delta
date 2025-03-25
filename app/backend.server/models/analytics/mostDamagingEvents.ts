@@ -14,15 +14,16 @@ import {
   sectorDisasterRecordsRelationTable,
   disasterEventTable,
   hazardousEventTable,
-  divisionTable,
   damagesTable,
   lossesTable,
   hipTypeTable,
   hipClusterTable,
+  divisionTable,
   hipHazardTable
 } from "~/drizzle/schema";
 import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
+import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 import LRUCache from "lru-cache";
 import { getSectorsByParentId } from "./sectors";
 
@@ -128,35 +129,9 @@ const normalizeText = (text: string): string => {
     .trim();
 };
 
-// Helper function to get division info
-const getDivisionInfo = async (geographicLevelId: string): Promise<{ name: string, normalized: string } | null> => {
-  const division = await db
-    .select({
-      name: divisionTable.name
-    })
-    .from(divisionTable)
-    .where(eq(divisionTable.id, parseInt(geographicLevelId)))
-    .limit(1);
-
-  if (!division || division.length === 0) {
-    return null;
-  }
-
-  const divisionName = String(division[0].name);
-  return {
-    name: divisionName,
-    normalized: normalizeText(divisionName)
-  };
-};
-
-interface FilterConditions {
-  conditions: SQL<unknown>[];
-  sectorIds?: string[];
-}
-
-async function buildFilterConditions(params: MostDamagingEventsParams): Promise<FilterConditions> {
-  const conditions: SQL<unknown>[] = [
-    sql`${disasterRecordsTable.approvalStatus} = ${"published"}`
+async function buildFilterConditions(params: MostDamagingEventsParams): Promise<{ conditions: SQL<unknown>[]; sectorIds?: string[] }> {
+  let conditions: SQL[] = [
+    sql`${disasterRecordsTable.approvalStatus} = 'published'`
   ];
 
   let sectorIds: string[] | undefined;
@@ -257,101 +232,18 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
 
   console.log(' Matching record hazard fields:', debugHazards);
 
+  // Apply geographic level filter
   if (params.geographicLevelId) {
     try {
-      // First, get the division info for name-based matching
       const divisionInfo = await getDivisionInfo(params.geographicLevelId);
-
-      // Only proceed if we found a valid division
       if (divisionInfo) {
-        // Query the division table to get the division geometry
-        const division = await db
-          .select({
-            id: divisionTable.id,
-            name: divisionTable.name,
-            geom: divisionTable.geom
-          })
-          .from(divisionTable)
-          .where(eq(divisionTable.id, parseInt(params.geographicLevelId)))
-          .limit(1);
-
-        if (division.length > 0) {
-          // Create an array of conditions for geographic filtering
-          const geoConditions: SQL<unknown>[] = [];
-
-          // Text-based fallback conditions that don't rely on spatial data
-          geoConditions.push(
-            // Match by location description (text-based fallback)
-            ilike(disasterRecordsTable.locationDesc, `%${divisionInfo.name}%`)
-          );
-
-          // JSON-based conditions with null checking
-          geoConditions.push(
-            sql`(
-              ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-              jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
-              ${disasterRecordsTable.spatialFootprint}->>'division_id' = ${params.geographicLevelId}
-            )`
-          );
-
-          geoConditions.push(
-            sql`(
-              ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-              jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
-              ${disasterRecordsTable.spatialFootprint}->>'regions' IS NOT NULL AND
-              ${disasterRecordsTable.spatialFootprint}->>'regions' ILIKE ${`%${divisionInfo.name}%`}
-            )`
-          );
-
-          // Add spatial intersection condition with proper validation
-          if (division[0].geom) {
-            geoConditions.push(
-              sql`(
-                ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-                jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
-                (${disasterRecordsTable.spatialFootprint}->>'type' IS NOT NULL) AND
-                ST_IsValid(
-                  ST_SetSRID(
-                    ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
-                    4326
-                  )
-                ) AND
-                ST_Intersects(
-                  ST_SetSRID(
-                    ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
-                    4326
-                  ),
-                  ${division[0].geom}
-                )
-              )`
-            );
-          }
-
-          // Create a single OR condition combining all valid conditions
-          conditions.push(sql`(${or(...geoConditions)})`);
-          console.log(`Applied geographic filtering for division ${params.geographicLevelId} (${divisionInfo.name})`);
-        } else {
-          console.warn(`Division with ID ${params.geographicLevelId} not found in database. Skipping geographic filtering.`);
-        }
+        // Apply geographic filters from utility
+        conditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, conditions);
       } else {
-        console.warn(`Could not retrieve division info for ID ${params.geographicLevelId}. Skipping geographic filtering.`);
+        console.warn(`Division with ID ${params.geographicLevelId} not found. No geographic filtering will be applied.`);
       }
     } catch (error) {
-      // Log error but don't fail the entire query
       console.error(`Error in geographic filtering for division ${params.geographicLevelId}:`, error);
-
-      // Add a simple fallback condition if possible
-      if (params.geographicLevelId) {
-        conditions.push(
-          sql`(
-            ${disasterRecordsTable.locationDesc} ILIKE ${`%${params.geographicLevelId}%`} OR
-            (
-              ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-              ${disasterRecordsTable.spatialFootprint}->>'division_id' = ${params.geographicLevelId}
-            )
-          )`
-        );
-      }
     }
   }
 
@@ -380,9 +272,8 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     const sortBy = params.sortBy || 'damages';
     const sortDirection = params.sortDirection || 'desc';
 
-    console.log('📊 [MostDamagingEvents] Running with params:');
+    console.log(' [MostDamagingEvents] Running with params:');
     console.table(params);
-
 
     // Generate cache key from params
     const cacheKey = JSON.stringify(params);
@@ -393,7 +284,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
 
     // Build filter conditions with improved geographic filtering
     const { conditions, sectorIds } = await buildFilterConditions(params);
-    console.log('🛠️ [Filters Applied] SQL Conditions count:', conditions.length);
+    console.log(' [Filters Applied] SQL Conditions count:', conditions.length);
 
     // Base query builder with required joins for hazard filtering
     let baseQuery = db
@@ -429,11 +320,11 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     const countResult = await countQuery;
     const total = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(total / pageSize);
-    console.log(`🔢 [Count] Found ${total} event(s) across ${totalPages} page(s).`);
+    console.log(` [Count] Found ${total} event(s) across ${totalPages} page(s).`);
 
     // If no results, return empty response with proper metadata
     if (total === 0) {
-      console.warn('⚠️ No results found for the current filter combination.');
+      console.warn(' No results found for the current filter combination.');
       const metadata = createAssessmentMetadata(
         params.assessmentType || 'rapid',
         params.confidenceLevel || 'medium'
@@ -529,9 +420,9 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     let results: any[] = [];
     try {
       results = await paginatedQuery;
-      console.log(`📄 [Results] Successfully fetched ${results.length} row(s).`);
+      console.log(` [Results] Successfully fetched ${results.length} row(s).`);
     } catch (error) {
-      console.error('🚨 [Query Error] Falling back to basic query:', error);
+      console.error(' [Query Error] Falling back to basic query:', error);
       // Fallback to a simpler query if the complex one fails
       const fallbackQuery = db
         .select({
@@ -606,7 +497,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
 
     return paginatedResult;
   } catch (error) {
-    console.error('🔥 [Fatal Error] getMostDamagingEvents failed:', error);
+    console.error(' [Fatal Error] getMostDamagingEvents failed:', error);
 
     // Return a graceful error response instead of throwing
     const metadata = createAssessmentMetadata(

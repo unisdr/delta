@@ -8,13 +8,13 @@ import {
   hazardousEventTable,
   hipHazardTable,
   hipClusterTable,
-  divisionTable,
   sectorDisasterRecordsRelationTable,
   sectorTable
 } from "~/drizzle/schema";
 import { and, eq, inArray, ilike, SQL, exists, like, or } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import { configCurrencies } from "~/util/config";
+import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 
 type AssessmentType = 'rapid' | 'detailed';
 type ConfidenceLevel = 'low' | 'medium' | 'high';
@@ -86,106 +86,6 @@ interface SectorImpactData {
   };
 }
 
-// Cache for division info
-const divisionCache = new Map<string, { id: number, names: Record<string, string>, geometry: any }>();
-
-const getDivisionInfo = async (geographicLevelId: string): Promise<{ id: number, names: Record<string, string>, geometry: any } | null> => {
-  // Check cache first
-  const cached = divisionCache.get(geographicLevelId);
-  if (cached) {
-    return cached;
-  }
-
-  // If not in cache, fetch from database
-  const division = await dr
-    .select({
-      id: divisionTable.id,
-      name: divisionTable.name,
-      geom: divisionTable.geom
-    })
-    .from(divisionTable)
-    .where(eq(divisionTable.id, parseInt(geographicLevelId)))
-    .limit(1);
-
-  if (!division || division.length === 0) {
-    return null;
-  }
-
-  const result = {
-    id: division[0].id,
-    names: division[0].name as Record<string, string>,
-    geometry: division[0].geom
-  };
-
-  // Cache the result
-  divisionCache.set(geographicLevelId, result);
-  return result;
-};
-
-// Helper function to normalize text for matching (same as in geographicImpact.ts)
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFKD')                // Normalize unicode characters
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-    .replace(/[^\w\s,-]/g, ' ')      // Replace special chars with space
-    .replace(/\s+/g, ' ')            // Clean up multiple spaces
-    .replace(/\b(region|province|city|municipality)\b/g, '') // Remove common geographic terms
-    .trim();
-}
-
-// Helper function to validate sector ID
-const validateSectorId = (sectorId: string): number => {
-  if (!sectorId || sectorId.trim() === '') {
-    throw new Error("Invalid sector ID provided");
-  }
-  const numericId = parseInt(sectorId, 10);
-  if (isNaN(numericId)) {
-    throw new Error("Sector ID must be a valid number");
-  }
-  return numericId;
-};
-
-/**
- * This implementation uses the proper hierarchical structure defined in the sector table
- * rather than relying on ID patterns, making it suitable for all countries.
- * 
- * @param sectorId - The ID of the sector to get subsectors for
- * @returns Array of sector IDs including the input sector and all its subsectors
- */
-const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
-  try {
-    const numericSectorId = validateSectorId(sectorId);
-    const allSectorIds = [sectorId];
-
-    // Recursively get all subsectors at all levels
-    const fetchSubsectors = async (parentId: number): Promise<void> => {
-      // Get direct children
-      const directSubsectors = await dr
-        .select({
-          id: sectorTable.id
-        })
-        .from(sectorTable)
-        .where(eq(sectorTable.parentId, parentId));
-
-      // Add each direct child to the result array
-      for (const subsector of directSubsectors) {
-        allSectorIds.push(subsector.id.toString());
-        // Recursively get children of this subsector
-        await fetchSubsectors(subsector.id);
-      }
-    };
-
-    // Start the recursive fetch
-    await fetchSubsectors(numericSectorId);
-
-    return allSectorIds;
-  } catch (error) {
-    console.error('Error in getAllSubsectorIds:', error);
-    throw error;
-  }
-};
-
 const getAgriSubsector = (sectorId: string): any | null => {
   const subsectorMap: { [key: string]: any } = {
     'agri_crops': 'crops',
@@ -202,71 +102,29 @@ const getDisasterRecordsForSector = async (
   filters?: Filters
 ): Promise<string[]> => {
   try {
+    console.log("Sector ID:", sectorId);
+
     // Get all relevant sector IDs (including subsectors if parent sector)
     const sectorIds = await getAllSubsectorIds(sectorId);
     const numericSectorIds = sectorIds.map(id => parseInt(id));
+    console.log("Found Sector IDs:", numericSectorIds);
 
-    // Build the where conditions
-    const conditions: SQL<unknown>[] = [
-      exists(
-        dr.select()
-          .from(sectorDisasterRecordsRelationTable)
-          .where(and(
-            eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-            inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
-          ))
-      ),
+
+    // Initialize conditions array
+    let conditions: SQL[] = [
       sql`${disasterRecordsTable.approvalStatus} = 'published'`
     ];
 
-    // Handle geographic level filtering with enhanced matching
+    // Apply geographic level filter
     if (filters?.geographicLevel) {
-      const divisionInfo = await getDivisionInfo(filters.geographicLevel);
-      if (!divisionInfo) {
-        // If the geographic level doesn't exist, return no results
-        return [];
-      }
-
-      // Build an OR condition for both spatial and text matching
-      const geoConditions = [];
-
-      // 1. Spatial matching using PostGIS - primary method
-      if (divisionInfo.geometry) {
-        try {
-          geoConditions.push(sql`
-            ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-            ST_Intersects(
-              ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326),
-              ${divisionInfo.geometry}
-            )
-          `);
-        } catch (error) {
-          console.error('Error in spatial filtering:', error);
+      try {
+        const divisionInfo = await getDivisionInfo(filters.geographicLevel);
+        if (divisionInfo) {
+          // console.log("Geographic Level:", divisionInfo);
+          conditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, conditions);
         }
-      }
-
-      // 2. Text matching using normalized names - fallback method
-      if (divisionInfo.names) {
-        const normalizedNames = Object.values(divisionInfo.names)
-          .filter(Boolean)
-          .map(name => name.toLowerCase());
-
-        if (normalizedNames.length > 0) {
-          geoConditions.push(sql`
-            ${disasterRecordsTable.locationDesc} IS NOT NULL AND
-            (${or(...normalizedNames.map(name =>
-              sql`LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name}%`}`
-            ))})
-          `);
-        }
-      }
-
-      // Add the combined OR condition if we have any matches
-      if (geoConditions.length > 0) {
-        conditions.push(sql`(${or(...geoConditions)})`);
-      } else {
-        // If we have no valid conditions, return no results
-        return [];
+      } catch (error) {
+        console.error('Error applying geographic filter:', error);
       }
     }
 
@@ -322,6 +180,7 @@ const getDisasterRecordsForSector = async (
       // Handle hazard type hierarchy
       if (filters.hazardType) {
         try {
+          console.log("Hazard Type filter applied:", filters.hazardType);
           conditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardType}`);
         } catch (error) {
           console.error('Invalid hazard type ID:', error);
@@ -329,6 +188,7 @@ const getDisasterRecordsForSector = async (
       }
       if (filters.hazardCluster) {
         try {
+          console.log("Hazard Cluster filter applied:", filters.hazardCluster);
           conditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardCluster}`);
         } catch (error) {
           console.error('Invalid hazard cluster ID:', error);
@@ -336,6 +196,7 @@ const getDisasterRecordsForSector = async (
       }
       if (filters.specificHazard) {
         try {
+          console.log("Specific Hazard filter applied:", filters.specificHazard);
           conditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazard}`);
         } catch (error) {
           console.error('Invalid specific hazard ID:', error);
@@ -347,6 +208,7 @@ const getDisasterRecordsForSector = async (
         try {
           const eventId = filters._disasterEventId || filters.disasterEvent;
           if (eventId) {
+            console.log("Disaster Event filter applied:", eventId);
             // Check if it's a UUID (for direct ID matching)
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             if (uuidRegex.test(eventId)) {
@@ -354,7 +216,7 @@ const getDisasterRecordsForSector = async (
               conditions.push(eq(disasterEventTable.id, eventId));
             } else {
               // Text search across multiple fields for non-UUID format
-              const searchConditions: SQL<unknown>[] = [];
+              const searchConditions: SQL[] = [];
               searchConditions.push(sql`LOWER(${disasterEventTable.nameNational}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
               searchConditions.push(sql`LOWER(${disasterEventTable.id}::text) LIKE ${`%${eventId.toLowerCase()}%`}`);
               searchConditions.push(sql`
@@ -401,6 +263,7 @@ const getDisasterRecordsForSector = async (
 
       // Execute the query and map results
       const results = await query;
+      console.log("Query success. Total records fetched:", results.length);
       return results.map(r => r.id.toString());
     } catch (error) {
       console.error('Error executing getDisasterRecordsForSector query:', error);
@@ -411,6 +274,58 @@ const getDisasterRecordsForSector = async (
     console.error('Error in getDisasterRecordsForSector:', error);
     throw error;
   }
+};
+
+/**
+ * This implementation uses the proper hierarchical structure defined in the sector table
+ * rather than relying on ID patterns, making it suitable for all countries.
+ * 
+ * @param sectorId - The ID of the sector to get subsectors for
+ * @returns Array of sector IDs including the input sector and all its subsectors
+ */
+const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
+  try {
+    const numericSectorId = validateSectorId(sectorId);
+    const allSectorIds = [sectorId];
+
+    // Recursively get all subsectors at all levels
+    const fetchSubsectors = async (parentId: number): Promise<void> => {
+      // Get direct children
+      const directSubsectors = await dr
+        .select({
+          id: sectorTable.id
+        })
+        .from(sectorTable)
+        .where(eq(sectorTable.parentId, parentId));
+
+      // Add each direct child to the result array
+      for (const subsector of directSubsectors) {
+        allSectorIds.push(subsector.id.toString());
+        // Recursively get children of this subsector
+        await fetchSubsectors(subsector.id);
+      }
+    };
+
+    // Start the recursive fetch
+    await fetchSubsectors(numericSectorId);
+
+    return allSectorIds;
+  } catch (error) {
+    console.error('Error in getAllSubsectorIds:', error);
+    throw error;
+  }
+};
+
+// Helper function to validate sector ID
+const validateSectorId = (sectorId: string): number => {
+  if (!sectorId || sectorId.trim() === '') {
+    throw new Error("Invalid sector ID provided");
+  }
+  const numericId = parseInt(sectorId, 10);
+  if (isNaN(numericId)) {
+    throw new Error("Sector ID must be a valid number");
+  }
+  return numericId;
 };
 
 // Update aggregateDamagesData function
@@ -709,6 +624,8 @@ const aggregateLossesData = async (
 // Function to get event counts by year
 const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, number>> => {
   if (recordIds.length === 0) return new Map();
+  console.log("Getting event counts by year for records:", recordIds);
+  console.log("Calculating events by year for", recordIds.length, "records.");
 
   // Get events that span years by considering both start and end dates
   const eventYearSpans = await dr
@@ -735,6 +652,8 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
       yearCounts.set(year, (yearCounts.get(year) || 0) + 1);
     }
   }
+  console.log("Event count by year:", [...yearCounts.entries()]);
+
 
   return yearCounts;
 };
@@ -750,12 +669,21 @@ export async function fetchSectorImpactData(
   filters?: Filters
 ): Promise<SectorImpactData> {
   try {
+    console.log("[Sector Impact] Fetching impact data for sector:", sectorId);
+    console.log("Filters provided:", filters);
+
     const recordIds = await getDisasterRecordsForSector(sectorId, filters);
+    console.log("Record IDs retrieved:", recordIds.length);
+
     const [damagesResult, lossesResult, eventCounts] = await Promise.all([
       aggregateDamagesData(recordIds, sectorId),
       aggregateLossesData(recordIds, sectorId),
       getEventCountsByYear(recordIds)
     ]);
+    console.log("Final damage & loss summary:", {
+      totalDamage: damagesResult.total,
+      totalLoss: lossesResult.total
+    });
 
     // Create assessment metadata
     const metadata = createAssessmentMetadata(
@@ -786,7 +714,7 @@ export async function fetchSectorImpactData(
       }
     };
   } catch (error) {
-    console.error("Error in fetchSectorImpactData:", error);
+    console.error("Error in fetchSectorImpactData for sector:", sectorId, error);
     throw error;
   }
 }
