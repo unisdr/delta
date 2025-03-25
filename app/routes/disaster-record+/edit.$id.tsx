@@ -53,7 +53,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		const parentKey = "parentId";
 		const nameKey = "name";
 		const rawData = await dr.select().from(divisionTable);
-		return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+		return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId", "nationalId", "level", "name"]);
 	};
 
 	const hip = await dataForHazardPicker();

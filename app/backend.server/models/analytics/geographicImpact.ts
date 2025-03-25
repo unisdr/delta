@@ -956,7 +956,7 @@ async function getDisasterRecordsForDivision(
         console.log(`✔ Division path filter applied: ${descendantIds.length} divisions`);
 
         const pathCondition = sql.raw(
-            `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_ids[*] ? (${quoted})')`
+            `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.features[0].properties.division_ids[*] ? (${quoted})')`
         );
         console.log("✔ JSONB path condition constructed for spatial filter");
 
@@ -967,7 +967,7 @@ async function getDisasterRecordsForDivision(
                 ...conditions,
                 sql`${disasterRecordsTable.spatialFootprint} IS NOT NULL`,
                 sql.raw(
-                    `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_ids[*] ? (${quoted})')`
+                    `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.features[0].properties.division_ids[*] ? (${quoted})')`
                 )
             )
         );
@@ -992,7 +992,7 @@ async function getDisasterRecordsForDivision(
             if (!Array.isArray(footprint)) return false;
 
             return footprint.some((feature) => {
-                const info = feature.geojson?.dts_info;
+                const info = feature.geojson?.features?.[0]?.properties;
                 if (!info) return false;
 
                 const ids = info.division_ids || [info.division_id];
@@ -1019,14 +1019,14 @@ async function getDisasterRecordsForDivision(
 
                 // Check if any item in the footprint contains this division ID
                 // const hasMatchingDivision = footprint.some((item: any) => 
-                //     item?.geojson?.dts_info?.division_ids?.includes(parseInt(divisionId))
+                //     item?.geojson?.features?.[0]?.properties?.division_ids?.includes(parseInt(divisionId))
                 // );
 
                 // Convert allIds to strings to match JSON content
                 const allIds = new Set(descendantIds.map((id) => String(id)));
 
                 const hasMatchingDivision = footprint.some((item: any) => {
-                    const ids = item?.geojson?.dts_info?.division_ids;
+                    const ids = item?.geojson?.features?.[0]?.properties?.division_ids;
                     if (!Array.isArray(ids)) return false;
                     return ids.some((id: any) => allIds.has(String(id)));
                 });

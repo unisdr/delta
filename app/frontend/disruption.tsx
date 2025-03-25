@@ -14,6 +14,8 @@ import {ContentRepeater} from "~/components/ContentRepeater";
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
 import {TreeView} from "~/components/TreeView";
 
+import { rewindGeoJSON } from '~/utils/spatialUtils'
+
 export const route = "/disaster-record/edit-sub/_/disruptions"
 
 export function route2(recordId: string): string {
@@ -207,18 +209,23 @@ export function DisruptionForm(props: DisruptionFormProps) {
 												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
 												selectedItems.data.map((item: any) => {
 													if (item.id == selectedItems.selectedId) {
-														contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-														let arrValue = JSON.parse(item.geojson);
-														arrValue = {
-															...arrValue,  // Spread existing properties (if any)
-															dts_info: {
-																division_id: selectedItems.selectedId || null, 
-																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
+														let geometry = JSON.parse(item.geojson);
+														let arrValue = {
+															type: "Feature",
+															geometry: geometry,
+															properties: {
+																division_id: selectedItems.selectedId || null,
+																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : [],
+																import_id: (item?.importId || null) ? JSON.parse(item.importId) : null,
+																level: (item?.level || null) ? JSON.parse(item.level) : null,
+																name: (item?.name || null) ? JSON.parse(item.name) : null,
+																national_id: (item?.nationalId || null) ? JSON.parse(item.nationalId) : null,
 															}
 														};
+														arrValue = rewindGeoJSON(arrValue);
+														contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = JSON.stringify(arrValue);
 														const setField = {id: "geojson", value: arrValue};
 														contentReapeaterRef.current.handleFieldChange(setField, arrValue);
-
 														const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 														contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 													}

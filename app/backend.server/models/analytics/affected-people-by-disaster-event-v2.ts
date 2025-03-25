@@ -89,8 +89,8 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 		AND EXISTS (
 			SELECT 1
 			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
-			WHERE elem->'geojson'->'dts_info'->>'division_id' = '74'
-			OR elem->'geojson'->'dts_info'->'division_ids' @> '74'::jsonb
+			WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = '74'
+			OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> '74'::jsonb
 		)
 	*/
 
@@ -131,8 +131,8 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				conditions?.divisionId ? sql`EXISTS (
 					SELECT 1
 					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
-					WHERE elem->'geojson'->'dts_info'->>'division_id' = ${conditions.divisionId}
-					OR elem->'geojson'->'dts_info'->'division_ids' @> ${conditions.divisionId}::jsonb
+					WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = ${conditions.divisionId}
+					OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> ${conditions.divisionId}::jsonb
 				)` : undefined
 			)
 		)
@@ -177,8 +177,8 @@ async function totalsForOneTableRecords(tx: Tx, disasterEventId: string, valTabl
 		AND EXISTS (
 			SELECT 1
 			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
-			WHERE elem->'geojson'->'dts_info'->>'division_id' = '74'
-			OR elem->'geojson'->'dts_info'->'division_ids' @> '74'::jsonb
+			WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = '74'
+			OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> '74'::jsonb
 		)
 	*/
 
@@ -358,8 +358,8 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 			AND EXISTS (
 			SELECT 1
 			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
-			WHERE elem->'geojson'->'dts_info'->>'division_id' = '74'
-			OR elem->'geojson'->'dts_info'->'division_ids' @> '74'::jsonb
+			WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = '74'
+			OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> '74'::jsonb
 		)
 	GROUP BY hd.sex
 	*/
@@ -407,8 +407,8 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				conditions?.divisionId ? sql`EXISTS (
 					SELECT 1
 					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
-					WHERE elem->'geojson'->'dts_info'->>'division_id' = ${conditions.divisionId}
-					OR elem->'geojson'->'dts_info'->'division_ids' @> ${conditions.divisionId}::jsonb
+					WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = ${conditions.divisionId}
+					OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> ${conditions.divisionId}::jsonb
 				)` : undefined
 			)
 		)

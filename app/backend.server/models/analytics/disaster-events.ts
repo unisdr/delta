@@ -281,7 +281,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 		.where(
 			and(
 				sql`(
-					jsonb_path_exists(disaster_records.spatial_footprint, ${`$[*].geojson.dts_info.division_ids  ? (${division_ids})`})
+					jsonb_path_exists(disaster_records.spatial_footprint, ${`$[*].geojson.features[0].properties.division_ids  ? (${division_ids})`})
 				)`,
 				eq(disasterRecordsTable.approvalStatus, "published"),
 				eq(disasterEventTable.approvalStatus, "published"),
