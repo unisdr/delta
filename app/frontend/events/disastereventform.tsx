@@ -31,6 +31,7 @@ import {HipHazardInfo} from "~/frontend/hip/hip";
 import {capitalizeFirstLetter} from "~/util/string";
 
 import { rewindGeoJSON } from '~/utils/spatialUtils'
+import {UserForFrontend} from "~/util/auth";
 
 export const route = "/disaster-event"
 
@@ -227,6 +228,7 @@ export const fieldsDefCommon = [
 	//{key: "replacementCostsUSD", label: "Replacement costs - total in USD", type: "money"},
 	{key: "recoveryNeedsLocalCurrencyOverride", label: "Recovery needs - total in local currency", type: "money", uiRow: {}},
 	//{key: "recoveryNeedsUSD", label: "Recovery needs - total in USD", type: "money"},
+	{key: "legacyData", label: "Legacy Data", type: "json", uiRow: {colOverride: 1}},
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 ] as const;
@@ -760,9 +762,12 @@ interface DisasterEventViewProps {
 	item: DisasterEventViewModel;
 	isPublic: boolean;
 	auditLogs?: any[];
+	user: UserForFrontend
 }
 
 export function DisasterEventView(props: DisasterEventViewProps) {
+
+	console.log("Disaster even tview got user", props.user)
 	const {item, auditLogs} = props;
 
 	const handlePreviewMap = (e: any) => {
@@ -964,7 +969,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			plural="Disaster events"
 			singular="Disaster event"
 		>
-			<FieldsView def={fieldsDefView} fields={item} override={override} />
+			<FieldsView def={fieldsDefView} fields={item} override={override} user={props.user} />
 
 			{/* Add Audit Log History at the end */}
 			<br />
