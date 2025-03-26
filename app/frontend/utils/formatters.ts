@@ -27,7 +27,7 @@ export const useDefaultCurrency = (): string => {
 export const formatCurrencyWithCode = (value: string | number, currencyCode: string, options: CurrencyOptions = {}, scale?: 'thousands' | 'millions' | 'billions'): string => {
     // Handle null, undefined, or empty string values
     if (value === null || value === undefined || value === '') {
-        return `${currencyCode}0`;
+        return `${currencyCode} 0`;
     }
 
     // Convert string to number if needed
@@ -35,30 +35,44 @@ export const formatCurrencyWithCode = (value: string | number, currencyCode: str
 
     // Handle NaN
     if (isNaN(numValue)) {
-        return `${currencyCode}0`;
+        return `${currencyCode} 0`;
     }
 
     let suffix = '';
+    let fractionDigits = 0;  // Default fraction digits for no scaling
+    let scaledValue = numValue; // Store scaled value for fractional check
 
     // Apply scaling based on value size and requested scale
     if (scale === 'billions' && Math.abs(numValue) >= 1_000_000_000) {
         numValue /= 1_000_000_000;
+        scaledValue = numValue; // Capture scaled value for fractional check
         suffix = 'B';
+        fractionDigits = 1;  // Default to 1 decimal for billions
     } else if (scale === 'millions' && Math.abs(numValue) >= 1_000_000) {
         numValue /= 1_000_000;
+        scaledValue = numValue; // Capture scaled value for fractional check
         suffix = 'M';
+        fractionDigits = 1;  // Default to 1 decimal for millions
     } else if (scale === 'thousands' && Math.abs(numValue) >= 1_000) {
         numValue /= 1_000;
         suffix = 'K';
     }
 
+    // Determine if fractional digits are necessary
+    if (Math.floor(scaledValue) === scaledValue) { // Check if there is no fractional part
+        fractionDigits = 0; // No fractional digits needed if number is whole
+    }
+
+    // Format the number with the appropriate currency code, and use the determined number of fraction digits
     return new Intl.NumberFormat(options.locale || 'en-US', {
         style: 'currency',
         currency: currencyCode,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
     }).format(numValue) + suffix;
 };
+
+
 
 // This is a non-hook version that uses a default currency
 export const formatCurrency = (value: string | number, options: CurrencyOptions = {}, scale: 'thousands' | 'millions' | 'billions' = 'thousands'): string => {
