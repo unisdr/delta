@@ -33,6 +33,10 @@ import {HipHazardInfo} from "~/frontend/hip/hip";
 import SpatialFootprintMapViewer from "~/components/SpatialFootprintMapViewer";
 
 import {rewindGeoJSON} from '~/utils/spatialUtils'
+
+import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
+import { AttachmentsFormView } from "~/frontend/attachementsFormView";
+
 import {UserForFrontend} from "~/util/auth";
 
 export const route = "/disaster-record"
@@ -191,319 +195,22 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 					),
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
-							<ContentRepeater
+							<SpatialFootprintFormView
 								divisions={divisionGeoJSON}
-								ctryIso3={ctryIso3}
-								caption="Spatial Footprint"
-								ref={contentReapeaterRef}
-								id="spatialFootprint"
-								mapper_preview={true}
-								table_columns={[
-									{type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "40%"},
-									{
-										type: "custom",
-										caption: "Option",
-										render: (item) => {
-											if (item.map_option === "Map Coordinates") {
-												return (
-													<>
-														<span>Map Coordinates</span>
-													</>
-												);
-											} else if (item.map_option === "Geographic Level") {
-												return (
-													<>
-														<span>Geographic Level</span>
-													</>
-												);
-											}
-										},
-										width: "40%",
-									},
-									{type: "action", caption: "Action", width: "20%"},
-								]}
-								dialog_fields={[
-									{id: "title", caption: "Title", type: "input", required: true},
-									{
-										id: "map_option",
-										caption: "Option",
-										type: "option",
-										options: ["Map Coordinates", "Geographic Level"],
-										onChange: (e: any) => {
-											const value = e.target.value;
-
-											const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
-											const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
-											const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
-											const geoLevelFieldComponent = geoLevelField.closest(".dts-form-component") as HTMLElement;
-											if (value === "Map Coordinates") {
-												mapsCoordsFieldComponent.style.setProperty("display", "block");
-												geoLevelFieldComponent.style.setProperty("display", "none");
-											} else if (value === "Geographic Level") {
-												mapsCoordsFieldComponent.style.setProperty("display", "none");
-												geoLevelFieldComponent.style.setProperty("display", "block");
-											}
-										},
-										show: true
-									},
-									{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
-									{
-										id: "geographic_level", caption: "Geographic Level", type: "custom",
-										render: (data: any, _handleFieldChange: any, formData: any) => {
-											return (
-												<>
-													<div className="input-group">
-														<div id="spatialFootprint_geographic_level_container" className="wrapper">
-															<span onClick={() => {previewGeoJSON(formData['geojson'])}}>{data}</span>
-															<a href="#" className="btn" onClick={treeViewOpen}><img src="/assets/icons/globe.svg" alt="Globe SVG File" title="Globe SVG File" />Select</a>
-														</div>
-														<textarea id="spatialFootprint_geographic_level" name="spatialFootprint_geographic_level" className="dts-hidden-textarea" style={{display: "none"}}></textarea>
-													</div>
-												</>
-											);
-										}
-									},
-									{id: "geojson", caption: "Map Coordinates / Geographic Level", type: "hidden", required: true},
-								]}
-								data={(() => {
-									try {
-										let footprints: any[] = [];
-
-										if (props?.fields?.spatialFootprint) {
-											if (Array.isArray(props.fields.spatialFootprint)) {
-												footprints = props.fields.spatialFootprint;
-											} else if (typeof props.fields.spatialFootprint === "string") {
-												try {
-													const parsed = JSON.parse(props.fields.spatialFootprint);
-													footprints = Array.isArray(parsed) ? parsed : [];
-												} catch (error) {
-													console.error("Invalid JSON in spatialFootprint:", error);
-													footprints = [];
-												}
-											} else {
-												console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
-												footprints = [];
-											}
-										}
-
-										return footprints;
-									} catch (error) {
-										console.error("Error processing spatialFootprint:", error);
-										return [];
-									}
-								})()}
-								onChange={(items: any) => {
-									try {
-										const parsedItems = Array.isArray(items) ? items : (items);
-									} catch {
-										console.error("Failed to process items.");
-									}
-								}}
+								ctryIso3={ctryIso3 || ""}
+								treeData={treeData ?? []}
+								initialData={fields?.spatialFootprint}
 							/>
-							<dialog ref={dialogTreeViewRef} className="dts-dialog tree-dialog">
-								<div className="dts-dialog__content">
-									<div className="dts-dialog__header" style={{justifyContent: "space-between"}}>
-										<h2 className="dts-heading-2" style={{marginBottom: "0px"}}>Select Geographic level</h2>
-										<a type="button" aria-label="Close dialog" onClick={treeViewDiscard}>
-											<svg aria-hidden="true" focusable="false" role="img">
-												<use href={`/assets/icons/close.svg#close`}></use>
-											</svg>
-										</a>
-									</div>
-									<TreeView
-										dialogMode={false}
-										ref={treeViewRef}
-										treeData={treeData ?? []}
-										caption="Select Geographic level"
-										rootCaption="Geographic levels"
-										onApply={
-											(selectedItems: any) => {
-												if (contentReapeaterRef.current.getDialogRef()) {
-													contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
-													selectedItems.data.map((item: any) => {
-														if (item.id == selectedItems.selectedId) {
-															let geometry = JSON.parse(item.geojson);
-															let arrValue = {
-																type: "Feature",
-																geometry: geometry,
-																properties: {
-																	division_id: selectedItems.selectedId || null,
-																	division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : [],
-																	import_id: (item?.importId || null) ? JSON.parse(item.importId) : null,
-																	level: (item?.level || null) ? JSON.parse(item.level) : null,
-																	name: (item?.name || null) ? JSON.parse(item.name) : null,
-																	national_id: (item?.nationalId || null) ? JSON.parse(item.nationalId) : null,
-																}
-															};
-															arrValue = rewindGeoJSON(arrValue);
-															contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = JSON.stringify(arrValue);
-															const setField = {id: "geojson", value: arrValue};
-															contentReapeaterRef.current.handleFieldChange(setField, arrValue);
-															const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
-															contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
-														}
-													});
-													treeViewDiscard();
-												}
-											}
-										}
-										onClose={
-											() => {
-												treeViewDiscard();
-											}
-										}
-										onRenderItemName={
-											(item: any) => {
-												return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
-											}
-										}
-										appendCss={
-											`
-												ul.tree li div[disable="true"] {
-													color: #ccc;
-												}
-												ul.tree li div[disable="true"] .btn-face.select {
-													display: none;
-												}
-											`
-										}
-										disableButtonSelect={true}
-										showActionFooter={true}
-									/>
-								</div>
-							</dialog>
 						</Field>
 					),
 					attachments: (
 						<Field key="attachments" label="">
-							<ContentRepeater
-								id="attachments"
-								caption="Attachments"
-								dnd_order={true}
+							<AttachmentsFormView
 								save_path_temp="/uploads/temp"
 								file_viewer_temp_url="/disaster-record/file-temp-viewer"
 								file_viewer_url="/disaster-record/file-viewer?loc=record"
 								api_upload_url="/disaster-record/file-pre-upload"
-								table_columns={[
-									{type: "dialog_field", dialog_field_id: "title", caption: "Title"},
-									{
-										type: "custom", caption: "Tags",
-										render: (item: any) => {
-											try {
-												if (!item.tag) {
-													return "N/A"; // Return "N/A" if no tags exist
-												}
-
-												const tags = (item.tag); // Parse the JSON string
-												if (Array.isArray(tags) && tags.length > 0) {
-													// Map the names and join them with commas
-													return tags.map(tag => tag.name).join(", ");
-												}
-												return "N/A"; // If no tags exist
-											} catch (error) {
-												console.error("Failed to parse tags:", error);
-												return "N/A"; // Return "N/A" if parsing fails
-											}
-										}
-									},
-									{
-										type: "custom",
-										caption: "File/URL",
-										render: (item) => {
-											let strRet = "N/A"; // Default to "N/A"		
-
-											const fileOption = item?.file_option || "";
-
-											if (fileOption === "File") {
-												// Get the file name or fallback to URL
-												const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-
-												// Truncate long file names while preserving the file extension
-												const maxLength = 30; // Adjust to fit your design
-												strRet = fullFileName;
-
-												if (fullFileName && fullFileName.length > maxLength) {
-													const extension = fullFileName.includes('.')
-														? fullFileName.substring(fullFileName.lastIndexOf('.'))
-														: '';
-													const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
-													strRet = `${baseName}...${extension}`;
-												}
-											} else if (fileOption === "Link") {
-												strRet = item.url || "N/A";
-											}
-
-											return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
-										},
-									},
-									{type: "action", caption: "Action"},
-								]}
-								dialog_fields={[
-									{id: "title", caption: "Title", type: "input"},
-									{id: "tag", caption: "Tags", type: "tokenfield", dataSource: "/api/disaster-event/tags-sectors"},
-									{
-										id: "file_option",
-										caption: "Option",
-										type: "option",
-										options: ["File", "Link"],
-										onChange: (e) => {
-											const value = e.target.value;
-											const fileField = document.getElementById("attachments_file") as HTMLInputElement;
-											const urlField = document.getElementById("attachments_url") as HTMLInputElement;
-
-											if (fileField && urlField) {
-												const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
-												const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
-
-												if (value === "File") {
-													fileDiv?.style.setProperty("display", "block");
-													urlDiv?.style.setProperty("display", "none");
-												} else if (value === "Link") {
-													fileDiv?.style.setProperty("display", "none");
-													urlDiv?.style.setProperty("display", "block");
-												}
-											}
-										},
-									},
-									{id: "file", caption: "File Upload", type: "file"},
-									{id: "url", caption: "Link", type: "input", placeholder: "Enter URL"},
-								]}
-								data={(() => {
-									try {
-										let attachments: any[] = []; // Ensure it's always an array
-
-										if (props?.fields?.attachments) {
-											if (Array.isArray(props.fields.attachments)) {
-												attachments = props.fields.attachments;
-											} else if (typeof props.fields.attachments === "string") {
-												try {
-													const parsed = JSON.parse(props.fields.attachments);
-													attachments = Array.isArray(parsed) ? parsed : [];
-												} catch (error) {
-													console.error("Invalid JSON in attachments:", error);
-													attachments = [];
-												}
-											} else {
-												console.warn("Unexpected type for attachments:", typeof props.fields.attachments);
-												attachments = [];
-											}
-										}
-
-										return attachments;
-									} catch (error) {
-										console.error("Error processing attachments:", error);
-										return [];
-									}
-								})()}
-								onChange={(_items: any) => {
-									try {
-										//const parsedItems = Array.isArray(items) ? items : (items);
-										//console.log("Updated Items:", parsedItems);
-										// Save or process `parsedItems` here, e.g., updating state or making an API call
-									} catch {
-										console.error("Failed to process items.");
-									}
-								}}
+								initialData={fields?.attachments}
 							/>
 						</Field>
 					)
