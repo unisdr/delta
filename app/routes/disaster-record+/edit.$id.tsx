@@ -9,7 +9,8 @@ import {
 
 import {
 	useLoaderData,
-	Link
+	Link,
+	useFetcher,
 } from "@remix-run/react";
 
 import {
@@ -41,12 +42,14 @@ import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 import {contentPickerConfig} from "./content-picker-config";
 
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
+import {useEffect} from "react";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
 	if (!params.id) {
 		throw "Route does not have $id param";
 	}
+
 
 	const initializeNewTreeView = async (): Promise<any[]> => {
 		const idKey = "id";
@@ -60,7 +63,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let user = authLoaderGetUserForFrontend(loaderArgs)
 
-    const divisionGeoJSON = await dr.execute(`
+	const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson
 		FROM division
 		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
@@ -152,6 +155,16 @@ export const action = createAction({
 
 export default function Screen() {
 	const ld = useLoaderData<typeof loader>();
+	let deleteFetcher = useFetcher()
+
+	useEffect(() => {
+		let data = deleteFetcher.data as any
+		if (deleteFetcher.state == 'idle' && data && !data.ok) {
+			console.error(`Delete failed ${data}`)
+			alert(`Delete failed`)
+		}
+	}, [deleteFetcher.state, deleteFetcher.data])
+
 
 	return (
 		<>
@@ -177,7 +190,12 @@ export default function Screen() {
 							</div>
 							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">
-									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>
+									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>&nbsp;
+									<deleteFetcher.Form method="post" action={`/disaster-record/edit-sub/${ld.item.id}/human-effects/delete-all-data`} onSubmit={e => {
+										if (!window.confirm('Are you sure you want to delete all records?')) e.preventDefault()
+									}}>
+										<button type="submit">[ Delete all records ]</button>
+									</deleteFetcher.Form>
 								</div>
 								<div className="mg-grid mg-grid__col-1">
 									<div className="dts-form-component">

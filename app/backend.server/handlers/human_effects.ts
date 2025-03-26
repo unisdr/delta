@@ -3,7 +3,8 @@ import {HumanEffectsTableFromString, HumanEffectTablesDefs} from "~/frontend/hum
 import {
 	get,
 	GetRes,
-	categoryPresenceGet
+	categoryPresenceGet,
+	categoryPresenceDeleteAll
 } from '~/backend.server/models/human_effects'
 import {PreviousUpdatesFromJson} from "~/frontend/editabletable/data";
 import {HumanEffectsTable} from "~/frontend/human_effects/defs";
@@ -173,5 +174,19 @@ export async function clear(tableIdStr: string, recordId: string) {
 			throw e
 		}
 	}
+	return Response.json({ok: true})
+}
+
+export async function deleteAllData(recordId: string) {
+	if (!recordId) {
+		throw new Error("no record id")
+	}
+	for (let def of HumanEffectTablesDefs){
+		let r = await clear(def.id, recordId)
+		if (!r.ok){
+			return r
+		}
+	}
+	await categoryPresenceDeleteAll(recordId)
 	return Response.json({ok: true})
 }
