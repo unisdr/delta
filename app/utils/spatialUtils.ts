@@ -1,5 +1,5 @@
 import * as turf from "@turf/turf";
-import { Feature, Point, LineString, Polygon, MultiPolygon, Geometry } from "geojson";
+import { Feature, Point, LineString, Polygon, MultiPolygon, Geometry, Position } from "geojson";
 
 export function convertTurfPolygon(
     polygonGeoJSON: Feature<Polygon | MultiPolygon>
@@ -238,6 +238,43 @@ export function checkShapeAgainstDivisions(
     return "⚠️ The drawn shape is completely outside of all divisions!";
 }
 
+export function rewindGeoJSON(feature: any): any {
+  const rewindPolygon = (coords: number[][][]) => {
+    return coords.map((ringGroup) => {
+      // ringGroup = one polygon with outer + holes
+      return ringGroup.map((ring: any, index: any) => {
+        const isOuter = index === 0;
+        const isClockwise = turf.booleanClockwise(ring);
+        if ((isOuter && isClockwise) || (!isOuter && !isClockwise)) {
+          return [...ring].reverse();
+        }
+        return ring;
+      });
+    });
+  };
 
+  if (feature.geometry.type === "MultiPolygon") {
+    const newCoords = rewindPolygon(feature.geometry.coordinates);
+    return {
+      ...feature,
+      geometry: {
+        ...feature.geometry,
+        coordinates: newCoords,
+      },
+    };
+  }
 
+  if (feature.geometry.type === "Polygon") {
+    const ringGroup = [feature.geometry.coordinates]; // wrap for uniformity
+    const newCoords = rewindPolygon(ringGroup)[0]; // unwrap
+    return {
+      ...feature,
+      geometry: {
+        ...feature.geometry,
+        coordinates: newCoords,
+      },
+    };
+  }
 
+  return feature;
+}

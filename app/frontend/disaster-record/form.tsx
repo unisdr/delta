@@ -32,6 +32,9 @@ import {HipHazardInfo} from "~/frontend/hip/hip";
 
 import SpatialFootprintMapViewer from "~/components/SpatialFootprintMapViewer";
 
+import {rewindGeoJSON} from '~/utils/spatialUtils'
+import {UserForFrontend} from "~/util/auth";
+
 export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
@@ -48,6 +51,7 @@ export const fieldsDefCommon = [
 	{key: "validatedBy", label: "Validated by", type: "text", required: true},
 	{key: "checkedBy", label: "Checked by", type: "text", uiRow: {}},
 	{key: "dataCollector", label: "Data collector", type: "text"},
+	{key: "legacyData", label: "Legacy Data", type: "json", uiRow: {colOverride: 1}},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
 ] as const;
@@ -79,6 +83,7 @@ interface DisasterRecordsFormProps extends UserFormProps<DisasterRecordsFields> 
 	treeData: any[];
 	cpDisplayName?: string;
 	ctryIso3?: string;
+	divisionGeoJSON?: any[];
 }
 
 export function disasterRecordsLabel(args: {
@@ -109,7 +114,7 @@ export function disasterRecordsLink(args: {
 }
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
-	const {fields, treeData, cpDisplayName, ctryIso3} = props;
+	const {fields, treeData, cpDisplayName, ctryIso3, divisionGeoJSON} = props;
 
 	useEffect(() => {
 	}, []);
@@ -187,6 +192,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 					spatialFootprint: (
 						<Field key="spatialFootprint" label="">
 							<ContentRepeater
+								divisions={divisionGeoJSON}
 								ctryIso3={ctryIso3}
 								caption="Spatial Footprint"
 								ref={contentReapeaterRef}
@@ -316,18 +322,23 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 													contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
 													selectedItems.data.map((item: any) => {
 														if (item.id == selectedItems.selectedId) {
-															contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-															let arrValue = JSON.parse(item.geojson);
-															arrValue = {
-																...arrValue,  // Spread existing properties (if any)
-																dts_info: {
+															let geometry = JSON.parse(item.geojson);
+															let arrValue = {
+																type: "Feature",
+																geometry: geometry,
+																properties: {
 																	division_id: selectedItems.selectedId || null,
-																	division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
+																	division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : [],
+																	import_id: (item?.importId || null) ? JSON.parse(item.importId) : null,
+																	level: (item?.level || null) ? JSON.parse(item.level) : null,
+																	name: (item?.name || null) ? JSON.parse(item.name) : null,
+																	national_id: (item?.nationalId || null) ? JSON.parse(item.nationalId) : null,
 																}
 															};
+															arrValue = rewindGeoJSON(arrValue);
+															contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = JSON.stringify(arrValue);
 															const setField = {id: "geojson", value: arrValue};
 															contentReapeaterRef.current.handleFieldChange(setField, arrValue);
-
 															const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 															contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 														}
@@ -505,6 +516,7 @@ interface DisasterRecordsViewProps {
 	item: DisasterRecordsViewModel;
 	isPublic: boolean;
 	auditLogs?: any[];
+	user: UserForFrontend
 }
 
 export function DisasterRecordsView(props: DisasterRecordsViewProps) {
@@ -536,6 +548,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 			<FieldsView
 				def={fieldsDefView}
 				fields={item}
+				user={props.user}
 				override={{
 					hipHazard: (
 						<HipHazardInfo key="hazard" model={item} />

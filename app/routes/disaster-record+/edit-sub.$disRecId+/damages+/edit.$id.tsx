@@ -33,7 +33,7 @@ import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
-async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number, treeData?: any[], ctryIso3?: string, p0?: any[]) {
+async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number, treeData?: any[], ctryIso3?: string, divisionGeoJSON?: any[], p0?: any[]) {
 	let assets = (await assetsForSector(dr, sectorId)).map((a: any) => {
 		return {
 			id: a.id,
@@ -56,6 +56,7 @@ async function getResponseData(item: DamagesViewModel | null, recordId: string, 
 		fieldDef: await fieldsDef(),
 		treeData,
 		ctryIso3,
+		divisionGeoJSON,
 	}
 }
 
@@ -72,9 +73,15 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
     const parentKey = "parentId";
     const nameKey = "name";
     const rawData = await dr.select().from(divisionTable);
-    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+    const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId", "nationalId", "level", "name"]);
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+
+    const divisionGeoJSON = await dr.execute(`
+		SELECT id, name, geojson
+		FROM division
+		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+    `);
 
 	if (params.id === "new") {
 		let url = new URL(request.url)
@@ -83,14 +90,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			throw new Response("Not Found", {status: 404})
 		}
 		const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
-		return await getResponseData(null, params.disRecId, sectorId, treeData, ctryIso3)
+		return await getResponseData(null, params.disRecId, sectorId, treeData, ctryIso3, divisionGeoJSON?.rows)
 	}
 	const item = await damagesById(params.id)
 	if (!item) {
 		throw new Response("Not Found", {status: 404})
 	}
 
-	return await getResponseData(item, item.recordId, item.sectorId, treeData, ctryIso3);
+	return await getResponseData(item, item.recordId, item.sectorId, treeData, ctryIso3, divisionGeoJSON?.rows);
 });
 
 export const action = createAction({
@@ -141,6 +148,7 @@ export default function Screen() {
 			fieldDef: ld.fieldDef,
 			assets: ld.assets,
 			ctryIso3: ld.ctryIso3,
+			divisionGeoJSON: ld.divisionGeoJSON
 		},
 		fieldsInitial,
 		form: DamagesForm,

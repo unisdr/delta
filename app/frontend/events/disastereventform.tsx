@@ -30,6 +30,9 @@ import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
 import {HipHazardInfo} from "~/frontend/hip/hip";
 import {capitalizeFirstLetter} from "~/util/string";
 
+import { rewindGeoJSON } from '~/utils/spatialUtils'
+import {UserForFrontend} from "~/util/auth";
+
 export const route = "/disaster-event"
 
 function repeatOtherIds(n: number): FormInputDef<DisasterEventFields>[] {
@@ -225,6 +228,7 @@ export const fieldsDefCommon = [
 	//{key: "replacementCostsUSD", label: "Replacement costs - total in USD", type: "money"},
 	{key: "recoveryNeedsLocalCurrencyOverride", label: "Recovery needs - total in local currency", type: "money", uiRow: {}},
 	//{key: "recoveryNeedsUSD", label: "Recovery needs - total in USD", type: "money"},
+	{key: "legacyData", label: "Legacy Data", type: "json", uiRow: {colOverride: 1}},
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb"},
 ] as const;
@@ -276,6 +280,7 @@ export function disasterEventLink(args: {
 }
 
 interface DisasterEventFormProps extends UserFormProps<DisasterEventFields> {
+	divisionGeoJSON?: any;
 	hip: Hip;
 	hazardousEvent?: HazardousEventBasicInfoViewModel | null
 	disasterEvent?: DisasterEventBasicInfoViewModel | null
@@ -311,6 +316,8 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
+	const divisionGeoJSON = props.divisionGeoJSON;
+	console.log("divisionGeoJSON", divisionGeoJSON);
 
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
@@ -466,6 +473,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 				spatialFootprint: props.edit ? (
 					<Field key="spatialFootprint" label="">
 						<ContentRepeater
+							divisions={divisionGeoJSON}
 							ctryIso3={ctryIso3}
 							caption="Spatial Footprint"
 							ref={contentReapeaterRef}
@@ -576,18 +584,23 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
 												selectedItems.data.map((item: any) => {
 													if (item.id == selectedItems.selectedId) {
-														contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-														let arrValue = JSON.parse(item.geojson);
-														arrValue = {
-															...arrValue,  // Spread existing properties (if any)
-															dts_info: {
+														let geometry = JSON.parse(item.geojson);
+														let arrValue = {
+															type: "Feature",
+															geometry: geometry,
+															properties: {
 																division_id: selectedItems.selectedId || null,
-																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
+																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : [],
+																import_id: (item?.importId || null) ? JSON.parse(item.importId) : null,
+																level: (item?.level || null) ? JSON.parse(item.level) : null,
+																name: (item?.name || null) ? JSON.parse(item.name) : null,
+																national_id: (item?.nationalId || null) ? JSON.parse(item.nationalId) : null,
 															}
 														};
+														arrValue = rewindGeoJSON(arrValue);
+														contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = JSON.stringify(arrValue);
 														const setField = {id: "geojson", value: arrValue};
 														contentReapeaterRef.current.handleFieldChange(setField, arrValue);
-
 														const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 														contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 													}
@@ -749,9 +762,12 @@ interface DisasterEventViewProps {
 	item: DisasterEventViewModel;
 	isPublic: boolean;
 	auditLogs?: any[];
+	user: UserForFrontend
 }
 
 export function DisasterEventView(props: DisasterEventViewProps) {
+
+	console.log("Disaster even tview got user", props.user)
 	const {item, auditLogs} = props;
 
 	const handlePreviewMap = (e: any) => {
@@ -953,7 +969,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 			plural="Disaster events"
 			singular="Disaster event"
 		>
-			<FieldsView def={fieldsDefView} fields={item} override={override} />
+			<FieldsView def={fieldsDefView} fields={item} override={override} user={props.user} />
 
 			{/* Add Audit Log History at the end */}
 			<br />

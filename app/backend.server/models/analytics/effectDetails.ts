@@ -1,4 +1,4 @@
-import { and, eq, sql, inArray, exists } from "drizzle-orm";
+import { and, eq, sql, inArray, exists, SQL } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
   damagesTable,
@@ -11,11 +11,10 @@ import {
   assetTable,
   disasterEventTable,
   hazardousEventTable,
-  divisionTable,
   sectorTable,
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
-import { calculateDamages, calculateLosses } from "~/backend.server/utils/disasterCalculations";
+import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 
 /**
  * Gets all subsector IDs for a given sector following international standards.
@@ -120,7 +119,7 @@ export async function getEffectDetails(filters: FilterParams) {
   }
 
   // Base conditions for disaster records
-  const baseConditions = [
+  let baseConditions: SQL[] = [
     sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`
   ];
 
@@ -149,56 +148,18 @@ export async function getEffectDetails(filters: FilterParams) {
     baseConditions.push(eq(hazardousEventTable.hipTypeId, filters.specificHazardId));
   }
 
-  // Improved geographic level filtering with PostGIS
+  // Apply geographic level filter
   if (filters.geographicLevelId) {
     try {
-      // First, get the division geometry for the specified geographic level
-      const division = await dr
-        .select({
-          id: divisionTable.id,
-          geom: divisionTable.geom
-        })
-        .from(divisionTable)
-        .where(eq(divisionTable.id, Number(filters.geographicLevelId)))
-        .limit(1);
-
-      if (division.length > 0) {
-        // Use PostGIS for spatial filtering with proper error handling
-        baseConditions.push(
-          sql`(
-            (${disasterRecordsTable.spatialFootprint} IS NOT NULL AND 
-             jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
-             (${disasterRecordsTable.spatialFootprint}->>'type' IS NOT NULL) AND
-             ST_IsValid(
-               ST_SetSRID(
-                 ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
-                 4326
-               )
-             ) AND
-             ST_Intersects(
-               ST_SetSRID(
-                 ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 
-                 4326
-               ),
-               ${division[0].geom}
-             )
-            ) OR
-            (${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text)
-          )`
-        );
+      const divisionInfo = await getDivisionInfo(filters.geographicLevelId);
+      if (divisionInfo) {
+        // Apply geographic filters from utility
+        baseConditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, baseConditions);
       } else {
-        // Fallback to text-based filtering if division not found
-        console.warn(`Division with ID ${filters.geographicLevelId} not found. Falling back to text-based filtering.`);
-        baseConditions.push(
-          sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text`
-        );
+        console.warn(`Division with ID ${filters.geographicLevelId} not found. No geographic filtering will be applied.`);
       }
     } catch (error) {
-      // Log error and fall back to text-based filtering
-      console.error(`Error in spatial filtering for division ${filters.geographicLevelId}:`, error);
-      baseConditions.push(
-        sql`${disasterRecordsTable.spatialFootprint}->>'division_id' = ${filters.geographicLevelId}::text`
-      );
+      console.error(`Error in geographic filtering for division ${filters.geographicLevelId}:`, error);
     }
   }
 
@@ -219,9 +180,23 @@ export async function getEffectDetails(filters: FilterParams) {
       id: damagesTable.id,
       type: sql<string>`'damage'`.as("type"),
       assetName: assetTable.name,
-      totalDamageAmount: sql<string>`${calculateDamages(damagesTable)}`.as("totalDamageAmount"),
+      totalDamageAmount: sql<string>`
+        CASE 
+            WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+            ELSE
+                COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+        END`.as("totalDamageAmount"),
       totalRepairReplacement: damagesTable.totalRepairReplacement,
-      totalRecovery: damagesTable.totalRecovery,
+      totalRecovery: sql<string>`
+        CASE 
+            WHEN ${damagesTable.totalRecoveryOverride} = true THEN
+                COALESCE(${damagesTable.totalRecovery}, 0)::numeric
+            ELSE
+                COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRecoveryCostUnit}, 0)::numeric +
+                COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdRecoveryCostUnit}, 0)::numeric
+        END`.as("totalRecovery"),
       sectorId: damagesTable.sectorId,
       attachments: damagesTable.attachments,
       spatialFootprint: damagesTable.spatialFootprint
@@ -252,10 +227,22 @@ export async function getEffectDetails(filters: FilterParams) {
       description: lossesTable.description,
       publicUnit: lossesTable.publicUnit,
       publicUnits: lossesTable.publicUnits,
-      publicCostTotal: sql<string>`${calculateLosses(lossesTable)}`.as("publicCostTotal"),
+      publicCostTotal: sql<string>`
+        CASE 
+            WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+            ELSE
+                COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+        END`.as("publicCostTotal"),
       privateUnit: lossesTable.privateUnit,
       privateUnits: lossesTable.privateUnits,
-      privateCostTotal: lossesTable.privateCostTotal,
+      privateCostTotal: sql<string>`
+        CASE 
+            WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+            ELSE
+                COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+        END`.as("privateCostTotal"),
       sectorId: lossesTable.sectorId,
       attachments: lossesTable.attachments,
       spatialFootprint: lossesTable.spatialFootprint

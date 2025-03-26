@@ -362,16 +362,15 @@ const SortableTable: React.FC<TableProps> = ({ title, columns, data, currency })
         'totalDamageAmount', 'totalRepairReplacement', 'totalRecovery', 'publicCostTotal', 'privateCostTotal', 'responseCost'].includes(key) &&
       typeof value === 'number'
     ) {
-      // Use millions for values >= 1 billion
-      if (value >= 1_000_000_000) {
-        return formatCurrencyWithCode(value, currency, {}, 'millions');
-      }
-      // Use thousands for values >= 1 million
-      if (value >= 1_000_000) {
-        return formatCurrencyWithCode(value, currency, {}, 'thousands');
-      }
-      // Use raw values for smaller amounts
-      return formatCurrencyWithCode(value, currency);
+      return formatCurrencyWithCode(
+        value,
+        currency,
+        {},
+        value >= 1_000_000_000 ? 'billions' :
+          value >= 1_000_000 ? 'millions' :
+            value >= 1_000 ? 'thousands' :
+              undefined
+      );
     }
 
     // Format other numeric values with proper grouping

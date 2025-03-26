@@ -1,4 +1,4 @@
-import { and, desc, eq, exists, inArray, sql, or } from "drizzle-orm";
+import { and, desc, eq, exists, inArray, sql, SQL, or } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     damagesTable,
@@ -7,8 +7,7 @@ import {
     hazardousEventTable,
     disasterEventTable,
     hipTypeTable,
-    sectorDisasterRecordsRelationTable,
-    divisionTable
+    sectorDisasterRecordsRelationTable
 } from "~/drizzle/schema";
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
@@ -25,7 +24,7 @@ import type {
     FaoAgriculturalDamage,
     FaoAgriculturalLoss
 } from "~/types/disasterCalculations";
-
+import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 
 const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null => {
     if (!sectorId) return null;
@@ -51,15 +50,15 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
 
     // Get immediate subsectors
     const subsectors = await getSectorsByParentId(numericSectorId);
-    
+
     // Initialize result with the current sector ID
     const result: number[] = [numericSectorId];
-    
+
     // Recursively get all subsectors at all levels
     if (subsectors.length > 0) {
         // Add immediate subsector IDs
         result.push(...subsectors.map(s => s.id));
-        
+
         // For each subsector, recursively get its subsectors
         for (const subsector of subsectors) {
             const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
@@ -68,58 +67,10 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
             result.push(...uniqueChildIds);
         }
     }
-    
+
     // Remove duplicates and return
     return [...new Set(result)];
 };
-
-// Cache for division info
-const divisionCache = new Map<string, { id: number, names: Record<string, string>, geometry: any }>();
-
-const getDivisionInfo = async (geographicLevelId: string): Promise<{ id: number, names: Record<string, string>, geometry: any } | null> => {
-    // Check cache first
-    const cached = divisionCache.get(geographicLevelId);
-    if (cached) {
-        return cached;
-    }
-
-    // If not in cache, fetch from database
-    const division = await dr
-        .select({
-            id: divisionTable.id,
-            name: divisionTable.name,
-            geom: divisionTable.geom
-        })
-        .from(divisionTable)
-        .where(eq(divisionTable.id, parseInt(geographicLevelId)))
-        .limit(1);
-
-    if (!division || division.length === 0) {
-        return null;
-    }
-
-    const result = {
-        id: division[0].id,
-        names: division[0].name as Record<string, string>,
-        geometry: division[0].geom
-    };
-
-    // Cache the result
-    divisionCache.set(geographicLevelId, result);
-    return result;
-};
-
-// Helper function to normalize text for matching
-function normalizeText(text: string): string {
-    return text
-        .toLowerCase()
-        .normalize('NFKD')                // Normalize unicode characters
-        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-        .replace(/[^\w\s,-]/g, ' ')      // Replace special chars with space
-        .replace(/\s+/g, ' ')            // Clean up multiple spaces
-        .replace(/\b(region|province|city|municipality)\b/g, '') // Remove common geographic terms
-        .trim();
-}
 
 export interface HazardImpactResult {
     eventsCount: HazardDataPoint[] | null;
@@ -158,9 +109,9 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         confidenceLevel
     );
 
-    // Base conditions including approval status
-    const baseConditions = [
-        sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`
+    // Build base conditions array
+    let baseConditions: SQL[] = [
+        sql`${disasterRecordsTable.approvalStatus} = 'published'`
     ];
 
     // Get all sector IDs (including subsectors)
@@ -198,7 +149,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         baseConditions.push(eq(hazardousEventTable.hipHazardId, specificHazardId));
     }
 
-    // Add geographic level filter if provided
+    // Apply geographic level filter
     if (geographicLevelId) {
         const divisionInfo = await getDivisionInfo(geographicLevelId);
         if (!divisionInfo) {
@@ -212,48 +163,8 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
             };
         }
 
-        // 1. Spatial matching using PostGIS - only if we have spatial data
-        if (divisionInfo.geometry) {
-            try {
-                // Add robust spatial condition with proper validation of GeoJSON format
-                baseConditions.push(sql`
-                    ${disasterRecordsTable.spatialFootprint} IS NOT NULL AND
-                    jsonb_typeof(${disasterRecordsTable.spatialFootprint}) = 'object' AND
-                    (${disasterRecordsTable.spatialFootprint}->>'type') IS NOT NULL AND
-                    ST_Intersects(
-                        CASE 
-                            WHEN ST_IsValid(ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326)) 
-                            THEN ST_SetSRID(ST_GeomFromGeoJSON(${disasterRecordsTable.spatialFootprint}), 4326)
-                            ELSE NULL 
-                        END,
-                        ${divisionInfo.geometry}
-                    )
-                `);
-            } catch (error) {
-                // Log error but don't fail the entire query
-                console.error('Error in spatial filtering for hazard impact:', error);
-
-                // We don't add any spatial condition if there's an error
-                // The text-based location matching below will serve as fallback
-            }
-        }
-
-        // 2. Text matching using normalized names
-        const normalized = normalizeText(Object.values(divisionInfo.names)[0]);
-        const alternateNames = [
-            normalized,
-            normalized.replace(/\s*\([^)]*\)/g, ''), // Remove parentheses
-            normalized.replace(/region\s*([\w-]+)/i, '$1'), // Remove 'Region'
-            'ARMM', // Special case for ARMM
-            'BARMM'  // Special case for BARMM
-        ].filter(Boolean);
-
-        baseConditions.push(sql`
-            ${disasterRecordsTable.locationDesc} IS NOT NULL AND
-            (${or(...alternateNames.map(name =>
-            sql`LOWER(${disasterRecordsTable.locationDesc}) LIKE ${`%${name.toLowerCase()}%`}`
-        ))})
-        `);
+        // Apply geographic filters from utility
+        baseConditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, baseConditions);
     }
 
     // Add disaster event filter if provided
@@ -296,7 +207,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: sql<number>`COUNT(${disasterRecordsTable.id})`,
+            value: sql<number>`COUNT(DISTINCT ${disasterEventTable.id})`,
         })
         .from(disasterRecordsTable)
         .leftJoin(
@@ -313,11 +224,13 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(sql`COUNT(${disasterRecordsTable.id})`))
+        .orderBy(desc(sql`COUNT(DISTINCT ${disasterEventTable.id})`))
         .limit(10);
 
     // Calculate total events for percentage
     const total = eventsCount.reduce((sum, item) => sum + Number(item.value), 0);
+    console.log("Events Count retrieved:", eventsCount.length);
+    console.log("Total events:", total);
 
     // Add percentage to each item and ensure types match HazardDataPoint
     const eventsCountWithPercentage = eventsCount.map(item => ({
@@ -332,7 +245,28 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric + COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}, 0)::numeric)`,
+            value: sql<string>`
+                SUM(
+                    CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                            COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
+                        ELSE
+                            COALESCE((
+                                SELECT 
+                                    CASE 
+                                        WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                                            COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                                            COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                                    END
+                                FROM ${damagesTable}
+                                WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
+                                AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                                LIMIT 1
+                            ), 0)::numeric
+                    END
+                )`,
         })
         .from(disasterRecordsTable)
         .innerJoin(
@@ -356,7 +290,27 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric + COALESCE(${sectorDisasterRecordsRelationTable.damageRecoveryCost}, 0)::numeric)`))
+        .orderBy(desc(sql<string>`SUM(
+            CASE 
+                WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                    COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
+                ELSE
+                    COALESCE((
+                        SELECT 
+                            CASE 
+                                WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                                    COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                                ELSE
+                                    COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                                    COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                            END
+                        FROM ${damagesTable}
+                        WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
+                        AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                        LIMIT 1
+                    ), 0)::numeric
+            END
+        )`))
         .limit(10);
 
     // Query for losses by hazard type
@@ -364,7 +318,33 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .select({
             hazardId: sql<string>`${hazardousEventTable.hipTypeId}`,
             hazardName: sql<string>`COALESCE(${hipTypeTable.nameEn}, '')`,
-            value: sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric)`,
+            value: sql<string>`
+                SUM(
+                    CASE 
+                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                            COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
+                        ELSE
+                            COALESCE((
+                                SELECT 
+                                    CASE 
+                                        WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                                            COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+                                    END +
+                                    CASE 
+                                        WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                                            COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                                        ELSE
+                                            COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                                    END
+                                FROM ${lossesTable}
+                                WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
+                                AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                                LIMIT 1
+                            ), 0)::numeric
+                    END
+                )`,
         })
         .from(disasterRecordsTable)
         .innerJoin(
@@ -388,12 +368,42 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(sql<string>`SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric)`))
+        .orderBy(desc(sql<string>`SUM(
+            CASE 
+                WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                    COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
+                ELSE
+                    COALESCE((
+                        SELECT 
+                            CASE 
+                                WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                                    COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+                                ELSE
+                                    COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+                            END +
+                            CASE 
+                                WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                                    COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                                ELSE
+                                    COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                            END
+                        FROM ${lossesTable}
+                        WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
+                        AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                        LIMIT 1
+                    ), 0)::numeric
+            END
+        )`))
         .limit(10);
 
     // Calculate total damages and losses for percentage
     const totalDamages = damages.reduce((sum, item) => sum + Number(item.value), 0);
+    console.log("Damages result count:", damages.length);
+    console.log("Total damages sum:", totalDamages);
+
     const totalLosses = losses.reduce((sum, item) => sum + Number(item.value), 0);
+    console.log("Losses result count:", losses.length);
+    console.log("Total losses sum:", totalLosses);
 
     // Add percentage to damages and losses
     const damagesWithPercentage = damages.map(item => ({
@@ -423,3 +433,4 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         }
     };
 }
+

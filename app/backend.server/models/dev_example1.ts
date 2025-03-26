@@ -41,6 +41,7 @@ export async function fieldsDef(): Promise<FormInputDef<DevExample1Fields>[]> {
 		{key: "field7", label: "Field 7", type: "date", uiRowNew: true},
 		{key: "field8", label: "Field 8", type: "date_optional_precision", uiRowNew: true},
 		...repeatFields(3),
+		{key: "jsonData", label: "Field JSON data", type: "json", uiRowNew: true},
 	]
 }
 

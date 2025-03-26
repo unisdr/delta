@@ -8,6 +8,7 @@ interface HeaderProps {
   loggedIn: boolean;
   siteName: string;
   siteLogo: string;
+  userRole: string;
 }
 
 interface LogoProps {
@@ -23,16 +24,16 @@ const LogoComponent = ({ src, alt }: LogoProps) => {
   }
 };
 
-export function Header({ loggedIn, siteName, siteLogo }: HeaderProps) {
+export function Header({ loggedIn, siteName, siteLogo, userRole }: HeaderProps) {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  let navItems = navItemsNotLoggedIn();
+  let navItems = navItemsNotLoggedIn(userRole);
   if (loggedIn) {
-    navItems = navItemsLoggedIn();
+    navItems = navItemsLoggedIn(userRole);
   }
 
   return (
@@ -49,7 +50,7 @@ export function Header({ loggedIn, siteName, siteLogo }: HeaderProps) {
   );
 }
 
-function navItemsNotLoggedIn(): Lvl1Item[] {
+function navItemsNotLoggedIn(userRole:string): Lvl1Item[] {
   return [
     {
       name: "Data",
@@ -138,7 +139,7 @@ function navItemsNotLoggedIn(): Lvl1Item[] {
   ];
 }
 
-function navItemsLoggedIn(): Lvl1Item[] {
+function navItemsLoggedIn(userRole:string): Lvl1Item[] {
   return [
     {
       name: "Data",
@@ -229,18 +230,23 @@ function navItemsLoggedIn(): Lvl1Item[] {
           lvl3: [
             {
               title: "System",
-              lvl4: [
-                { name: "Access Management", link: "/settings/access-mgmnt" },
-                { name: "System settings", link: "/settings/system" },
-                { name: "Geographic levels", link: "/settings/geography" },
-                { name: "Sectors", link: "/settings/sectors" },
-                { name: "HIPs import", link: "/setup/import-hip" },
-                { name: "Categories import", link: "/setup/import-categories" },
-                { name: "API Keys", link: "/settings/api-key" },
-                { name: "Assets", link: "/settings/assets" },
-                { name: "Measures", link: "/settings/measure" },
-                { name: "Units", link: "/settings/unit" },
-              ],
+              lvl4: userRole === "admin" ? 
+                [
+                  { name: "Access Management", link: "/settings/access-mgmnt" },
+                  { name: "System settings", link: "/settings/system" },
+                  { name: "Geographic levels", link: "/settings/geography" },
+                  { name: "Sectors", link: "/settings/sectors" },
+                  { name: "HIPs import", link: "/setup/import-hip" },
+                  { name: "Categories import", link: "/setup/import-categories" },
+                  { name: "API Keys", link: "/settings/api-key" },
+                  { name: "Assets", link: "/settings/assets" },
+                  { name: "Measures", link: "/settings/measure" },
+                  { name: "Units", link: "/settings/unit" },
+                ] : [
+                  { name: "System settings", link: "/settings/system" },
+                  { name: "Sectors", link: "/settings/sectors" },
+                  { name: "Assets", link: "/settings/assets" },
+                ],
             },
             {
               title: "Your profile",

@@ -13,7 +13,11 @@ export const loader = createApiListLoader(
 	async (offsetLimit) => {
 		return dr.query.devExample1Table.findMany({
 			...offsetLimit,
-			columns: {id: true, field1: true},
+			columns: {
+				id: true,
+				field1: true,
+				jsonData: true
+			},
 			orderBy: [desc(devExample1Table.field1)],
 		});
 	},

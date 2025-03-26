@@ -38,10 +38,11 @@ interface ContentPickerProps {
     multiSelect?: boolean;
     treeViewRootCaption?: string;
     disabledOnEdit?: boolean;
+    selectAnyItem?: boolean;
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect, multiSelect = false, treeViewRootCaption = "", disabledOnEdit = false }, ref) => {
+    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect, multiSelect = false, treeViewRootCaption = "", disabledOnEdit = false, selectAnyItem = false }, ref) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -414,18 +415,34 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                         appendCss={
                                             (!multiSelect) ?
                                             `
-                                                ul.tree li[data-has_children="false"] span {
-                                                    display: inline-block;
-                                                    cursor: pointer;
-                                                    padding: 0.3rem;
-                                                    margin-bottom: 0.3rem;
-                                                    background-color: #f9f9f9;
-                                                    border: 1px solid #007B7A;
-                                                    border-radius: 5px;
-                                                }
-                                                ul.tree li[data-has_children="false"]:hover span {
-                                                    text-decoration: underline;
-                                                }
+                                                ${(!selectAnyItem) ? `
+                                                    ul.tree li[data-has_children="false"] span {
+                                                        display: inline-block;
+                                                        cursor: pointer;
+                                                        padding: 0.3rem;
+                                                        margin-bottom: 0.3rem;
+                                                        background-color: #f9f9f9;
+                                                        border: 1px solid #007B7A;
+                                                        border-radius: 5px;
+                                                    }
+                                                    ul.tree li[data-has_children="false"]:hover span {
+                                                        text-decoration: underline;
+                                                    }
+                                                ` : `
+                                                    ul.tree li span {
+                                                        display: inline-block;
+                                                        cursor: pointer;
+                                                        padding: 0rem 0.3rem 0rem 0.3rem;
+                                                        margin-bottom: 0.3rem;
+                                                        background-color: #f9f9f9;
+                                                        border: 1px solid #007B7A;
+                                                        border-radius: 3px;
+                                                    }
+                                                    ul.tree li span:hover {
+                                                        text-decoration: underline;
+                                                    }
+                                                `}
+
                                             ` : `
                                                 .content-picker .cp-input-container {
                                                     position: relative;
@@ -479,8 +496,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                         }
                                         onItemClick={(e: any) => {
                                             if (!multiSelect) {
-                                                const dataHasChildren = e.target.closest("li")?.getAttribute("data-has_children") || "";
-                                                if (dataHasChildren === "false") {
+                                                const selectItem = () => {
                                                     const dataId = e.target.closest("li").getAttribute("data-id") || "";
                                                     const dataPath = e.target.closest("li").getAttribute("data-path") || "";
 
@@ -497,7 +513,17 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                                         onSelect({ value: dataId, name: dataPath, object: e.target.closest("li") });
                                                     }
                                                 }
-                                            }
+
+                                                if (selectAnyItem) {
+                                                    selectItem();
+                                                } else
+                                                    {
+                                                        const dataHasChildren = e.target.closest("li")?.getAttribute("data-has_children") || "";
+                                                        if (dataHasChildren === "false") {
+                                                            selectItem();
+                                                        }
+                                                    }
+                                                }
                                         }}
                                     />
                             </div>                            

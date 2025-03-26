@@ -108,9 +108,16 @@ const CustomTooltip = ({ active, payload, title }: any) => {
             formattedValue = `${data.rawValue}`;
         } else {
             // Use formatCurrencyWithCode for damages and losses
-            // Ensure proper parsing of numeric values
             const numericValue = typeof data.rawValue === 'string' ? parseFloat(data.rawValue) : Number(data.rawValue);
-            formattedValue = formatCurrencyWithCode(numericValue, defaultCurrency);
+            formattedValue = formatCurrencyWithCode(
+                numericValue,
+                defaultCurrency,
+                {},
+                numericValue >= 1_000_000_000 ? 'billions' :
+                    numericValue >= 1_000_000 ? 'millions' :
+                        numericValue >= 1_000 ? 'thousands' :
+                            undefined
+            );
         }
 
         return (
@@ -385,7 +392,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 if (subsector) {
                     return { sector: subsector, parent: sector };
                 }
-                
+
                 // Recursively check deeper subsectors
                 for (const sub of sector.subsectors) {
                     if (sub.subsectors && sub.subsectors.length > 0) {

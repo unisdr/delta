@@ -33,8 +33,6 @@ export const loader = async ({
 
 	const result = await loaderFunction({ request, params, context });
 
-	
-
 	return { ...result };
 };
 

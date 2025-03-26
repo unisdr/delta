@@ -53,12 +53,18 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		const parentKey = "parentId";
 		const nameKey = "name";
 		const rawData = await dr.select().from(divisionTable);
-		return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+		return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId", "nationalId", "level", "name"]);
 	};
 
 	const hip = await dataForHazardPicker();
 
 	let user = authLoaderGetUserForFrontend(loaderArgs)
+
+    const divisionGeoJSON = await dr.execute(`
+		SELECT id, name, geojson
+		FROM division
+		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+    `);
 
 	if (params.id === "new") {
 		const treeData = await initializeNewTreeView();
@@ -73,6 +79,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			treeData: treeData,
 			cpDisplayName: null,
 			ctryIso3: ctryIso3,
+			divisionGeoJSON: divisionGeoJSON?.rows,
 			user
 		};
 	}
@@ -107,6 +114,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		treeData: treeData,
 		cpDisplayName: cpDisplayName,
 		ctryIso3: ctryIso3,
+		divisionGeoJSON: divisionGeoJSON?.rows,
 		user
 	};
 });
@@ -155,6 +163,7 @@ export default function Screen() {
 					treeData={ld.treeData}
 					ctryIso3={ld.ctryIso3}
 					cpDisplayName={ld.cpDisplayName}
+					divisionGeoJSON={ld.divisionGeoJSON}
 					user={ld.user}
 				/>}
 			/>
@@ -164,7 +173,7 @@ export default function Screen() {
 					<div className="mg-container">
 						<fieldset className="dts-form__section">
 							<div className="dts-form__intro">
-								<legend className="dts-heading-3">Human Direct Effects</legend>
+								<legend className="dts-heading-3">Human Effects</legend>
 							</div>
 							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">

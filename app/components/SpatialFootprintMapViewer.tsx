@@ -168,9 +168,16 @@ const SpatialFootprintMapViewer: React.FC<SpatialFootprintMapViewerProps> = ({
                       }),
                       pointToLayer: (feature, latlng) => {
                         if (feature.geometry.type === "Point") {
-                          return L.marker(latlng, {
+                          const marker = L.marker(latlng, {
                             icon: L.icon(${JSON.stringify(glbMarkerIcon)}),
                           });
+
+                          // Bind popup only for markers
+                          if (feature?.properties?.description) {
+                            marker.bindPopup(feature.properties.description);
+                          }
+
+                          return marker;
                         }
                         return L.circleMarker(latlng, {
                           radius: 5,

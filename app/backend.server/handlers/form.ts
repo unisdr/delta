@@ -580,6 +580,9 @@ function jsonPayloadExample<T>(
 			case "approval_status":
 				val = "draft"
 				break
+			case "json":
+				val = {"k": "any json"}
+				break
 			default:
 				val = null;
 		}
@@ -863,7 +866,8 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 			if (!item) {
 				throw new Response("Not Found", {status: 404});
 			}
-			return {item, isPublic: false, auditLogs: []};
+			let user = authLoaderGetUserForFrontend(loaderArgs)
+			return {item, isPublic: false, auditLogs: [], user};
 		});
 	}
 
@@ -899,8 +903,9 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 				)
 			)
 			.orderBy(desc(auditLogsTable.timestamp));
+		let user = authLoaderGetUserForFrontend(loaderArgs)
 
-		return {item, isPublic, auditLogs};
+		return {item, isPublic, auditLogs, user};
 	});
 }
 
@@ -1183,6 +1188,8 @@ export async function csvImportExample<T>(
 				return field.enumData && field.enumData.length > 0
 					? field.enumData[0].key
 					: "";
+			case "json":
+				return JSON.stringify({"k": "any json"})
 			default:
 				return "";
 		}

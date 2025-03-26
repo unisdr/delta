@@ -20,6 +20,8 @@ import {TreeView} from "~/components/TreeView";
 
 import * as totaloverrides from "~/frontend/components/totaloverrides"
 
+import { rewindGeoJSON } from '~/utils/spatialUtils'
+
 export const route = "/disaster-record/edit-sub/_/damages"
 
 export function route2(recordId: string): string {
@@ -33,6 +35,7 @@ interface Asset {
 
 
 interface DamagesFormProps extends UserFormProps<DamagesFields> {
+	divisionGeoJSON?: any[]
 	ctryIso3?: any
 	fieldDef: FormInputDef<DamagesFields>[]
 	assets: Asset[]
@@ -48,6 +51,7 @@ export function DamagesForm(props: DamagesFormProps) {
 
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
+	const divisionGeoJSON = props.divisionGeoJSON || [];
 	const dialogTreeViewRef = useRef<any>(null);
 	const treeViewRef = useRef<any>(null);
 	const contentReapeaterRef = useRef<any>(null);
@@ -69,7 +73,7 @@ export function DamagesForm(props: DamagesFormProps) {
 
 		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
 		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
+			dtsFormBody.style.height = `${window.innerHeight - getHeight}px`;
 		}
 	}
 
@@ -180,10 +184,22 @@ export function DamagesForm(props: DamagesFormProps) {
 			})
 		}
 		if (formRef.current) {
-			attach("pd")
-			showHide("pd", false)
-			attach("td")
-			showHide("td", false)
+			let isEmpty = function (v: any) {
+				return typeof v !== 'string' || v === ""
+			}
+			let disruptionFields = [
+				"DisruptionDescription",
+				"DisruptionDurationDays",
+				"DisruptionDurationHours",
+				"DisruptionUsersAffected",
+				"DisruptionPeopleAffected"
+			]
+			let prefixes: ("pd"|"td")[] = ["pd", "td"]
+			prefixes.forEach(prefix => {
+				attach(prefix)
+				let show = disruptionFields.some(field => !isEmpty((props.fields as any)[prefix + field]))
+				showHide(prefix, show)
+			});
 		}
 		return () => {
 			if (formRef.current) {
@@ -230,7 +246,7 @@ export function DamagesForm(props: DamagesFormProps) {
 	}
 	tdDam.label = `Amount of units (${unitNameLocal()})`
 
-//	let [pdDamageAmountDef, setPdDamageAmountDef] = useState(pdDam)
+	//	let [pdDamageAmountDef, setPdDamageAmountDef] = useState(pdDam)
 	let pdDamageAmountErrors: string[] | undefined;
 	if (props.errors && props.errors.fields) {
 		assetIdErrors = errorsToStrings(props.errors.fields.pdDamageAmount);
@@ -321,6 +337,7 @@ export function DamagesForm(props: DamagesFormProps) {
 		spatialFootprint: (
 			<Field key="spatialFootprint" label="">
 				<ContentRepeater
+					divisions={divisionGeoJSON}
 					ctryIso3={ctryIso3}
 					caption="Spatial Footprint"
 					ref={contentReapeaterRef}
@@ -450,18 +467,23 @@ export function DamagesForm(props: DamagesFormProps) {
 										contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
 										selectedItems.data.map((item: any) => {
 											if (item.id == selectedItems.selectedId) {
-												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = item.geojson;
-												let arrValue = JSON.parse(item.geojson);
-												arrValue = {
-													...arrValue,  // Spread existing properties (if any)
-													dts_info: {
-														division_id: selectedItems.selectedId || null, 
-														division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : []
+												let geometry = JSON.parse(item.geojson);
+												let arrValue = {
+													type: "Feature",
+													geometry: geometry,
+													properties: {
+														division_id: selectedItems.selectedId || null,
+														division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : [],
+														import_id: (item?.importId || null) ? JSON.parse(item.importId) : null,
+														level: (item?.level || null) ? JSON.parse(item.level) : null,
+														name: (item?.name || null) ? JSON.parse(item.name) : null,
+														national_id: (item?.nationalId || null) ? JSON.parse(item.nationalId) : null,
 													}
 												};
+												arrValue = rewindGeoJSON(arrValue);
+												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = JSON.stringify(arrValue);
 												const setField = {id: "geojson", value: arrValue};
 												contentReapeaterRef.current.handleFieldChange(setField, arrValue);
-
 												const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
 												contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
 											}
@@ -634,7 +656,7 @@ export function DamagesForm(props: DamagesFormProps) {
 
 	return (
 		<FormView
-			ref={formRef}
+			formRef={formRef}
 			path={route}
 			listUrl={route2(props.fields.recordId!) + "?sectorId=" + props.fields.sectorId}
 			edit={props.edit}

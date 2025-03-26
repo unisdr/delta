@@ -241,10 +241,20 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
                       {event.eventName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatCurrencyWithCode(event.totalDamages, currency, {}, event.totalDamages >= 1_000_000_000 ? 'millions' : event.totalDamages >= 1_000_000 ? 'thousands' : undefined)}
+                      {formatCurrencyWithCode(event.totalDamages, currency, {}, 
+                        event.totalDamages >= 1_000_000_000 ? 'billions' : 
+                        event.totalDamages >= 1_000_000 ? 'millions' : 
+                        event.totalDamages >= 1_000 ? 'thousands' : 
+                        undefined
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatCurrencyWithCode(event.totalLosses, currency, {}, event.totalLosses >= 1_000_000_000 ? 'millions' : event.totalLosses >= 1_000_000 ? 'thousands' : undefined)}
+                      {formatCurrencyWithCode(event.totalLosses, currency, {}, 
+                        event.totalLosses >= 1_000_000_000 ? 'billions' : 
+                        event.totalLosses >= 1_000_000 ? 'millions' : 
+                        event.totalLosses >= 1_000 ? 'thousands' : 
+                        undefined
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(event.createdAt).toLocaleDateString()}
