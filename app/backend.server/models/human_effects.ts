@@ -368,6 +368,7 @@ WHERE human_dsg.record_id = ${recordId}
 }
 
 
+
 export type GetRes =
 	| {ok: true, defs: Def[], ids: string[], data: any[][]}
 	| {ok: false, error: HEError}
@@ -757,3 +758,8 @@ export async function categoryPresenceSet(recordId: string, tblId: HumanEffectsT
 		}
 	})
 }
+
+export async function categoryPresenceDeleteAll(recordId: string) {
+	await dr.delete(humanCategoryPresenceTable).where(eq(humanCategoryPresenceTable.recordId, recordId))
+}
+
