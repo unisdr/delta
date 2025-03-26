@@ -14,13 +14,7 @@
     "startprod": "cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc",
     "dbsync": "yarn run drizzle-kit push",
-    "dbmigrate": "yarn drizzle-kit migrate",
-    "db:backup": "tsx app/utils/sync-db.ts backup",
-    "db:sync": "tsx app/utils/sync-db.ts",
-    "import-regions": "cross-env NODE_ENV=development tsx scripts/import_ph_regions.ts",
-    "import-divisions": "cross-env NODE_ENV=development tsx scripts/import_ph_divisions.ts",
-    "check-divisions": "cross-env NODE_ENV=development tsx scripts/check_divisions.ts",
-    "fix-divisions": "cross-env NODE_ENV=development tsx scripts/fix_ph_divisions.ts"
+    "dbmigrate": "yarn drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
