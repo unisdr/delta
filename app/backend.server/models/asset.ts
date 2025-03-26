@@ -89,6 +89,17 @@ export async function assetUpdate(
 
 	let id = idStr
 
+	let res = await tx.query.assetTable.findFirst({
+		where: eq(assetTable.id, id),
+	})
+	if (!res) {
+		throw new Error("Id is invalid")
+	}
+
+	if (res.isBuiltIn) {
+		throw new Error("Attempted to modify builtin asset")
+	}
+
 	await tx.update(assetTable)
 		.set({
 			...fields,
@@ -122,11 +133,11 @@ export async function assetById(idStr: string) {
 }
 
 export async function assetByName(nameStr: string, nationalIdStr: string = '') {
-    let res = await dr.query.assetTable.findFirst({
-        where: eq(sql`LOWER(${assetTable.name})`, nameStr.toLowerCase()),
-    });
+	let res = await dr.query.assetTable.findFirst({
+		where: eq(sql`LOWER(${assetTable.name})`, nameStr.toLowerCase()),
+	});
 
-    return res;
+	return res;
 
 }
 
@@ -144,7 +155,17 @@ export async function assetByIdTx(tx: Tx, idStr: string) {
 }
 
 export async function assetDeleteById(idStr: string): Promise<DeleteResult> {
-	await deleteByIdForStringId(idStr, assetTable)
+	let id = idStr
+	let res = await dr.query.assetTable.findFirst({
+		where: eq(assetTable.id, id),
+	})
+	if (!res) {
+		throw new Error("Id is invalid")
+	}
+	if (res.isBuiltIn) {
+		throw new Error("Attempted to delete builtin asset")
+	}
+	await deleteByIdForStringId(id, assetTable)
 	return {ok: true}
 }
 
@@ -179,7 +200,7 @@ export async function assetsForSector(tx: Tx, sectorId: number) {
 
 
 export async function upsertRecord(record: AssetInsert): Promise<void> {
-	
+
 	// Perform the upsert operation
 	if (record.id && record.id !== '' && record.id !== 'undefined') {
 		await dr
@@ -214,5 +235,5 @@ export async function upsertRecord(record: AssetInsert): Promise<void> {
 				},
 			});
 	}
-	
+
 }

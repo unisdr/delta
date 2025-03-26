@@ -6,11 +6,12 @@ import {dr} from "~/db.server";
 
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
 
-import {and, desc, or, ilike, sql} from 'drizzle-orm';
+import {and, asc, or, ilike, sql, eq} from 'drizzle-orm';
 
 import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
+import {stringToBoolean} from '~/util/string';
 
 interface assetLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
@@ -21,12 +22,16 @@ export async function assetLoader(args: assetLoaderArgs) {
 	const {request} = loaderArgs;
 
 	const url = new URL(request.url);
-	const extraParams = ["search"]
+	const extraParams = ["search", "builtIn"]
+	const rawBuiltIn = url.searchParams.get("builtIn")
+
 	const filters: {
-		search: string;
+		search: string
+		builtIn?: boolean
 	} = {
 		search: url.searchParams.get("search") || "",
-	};
+		builtIn: rawBuiltIn === "" || rawBuiltIn == null ? undefined : stringToBoolean(rawBuiltIn),
+	}
 
 	filters.search = filters.search.trim()
 	let searchIlike = "%" + filters.search + "%"
@@ -40,6 +45,7 @@ export async function assetLoader(args: assetLoaderArgs) {
 			ilike(assetTable.notes, searchIlike),
 			ilike(assetTable.sectorIds, searchIlike),
 		) : undefined,
+		filters.builtIn !== undefined ? eq(assetTable.isBuiltIn, filters.builtIn) : undefined
 	)
 
 	const count = await dr.$count(assetTable, condition)
@@ -51,8 +57,9 @@ export async function assetLoader(args: assetLoaderArgs) {
 				id: true,
 				name: true,
 				sectorIds: true,
+				isBuiltIn: true
 			},
-			orderBy: [desc(assetTable.name)],
+			orderBy: [asc(assetTable.name)],
 			where: condition
 		})
 	}

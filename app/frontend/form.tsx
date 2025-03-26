@@ -1372,28 +1372,40 @@ interface ActionLinksProps {
 	route: string;
 	id: string | number;
 	deleteMessage?: string;
+	hideViewButton?: boolean
+	hideEditButton?: boolean
+	hideDeleteButton?: boolean
 }
 
-export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
+export function ActionLinks(props: ActionLinksProps) {
 	return (
-		<>
-			<div style={{display: "flex", justifyContent: "space-evenly"}}>
-				<Link to={`${route}/${id}`}>
+		<div style={{display: 'flex', justifyContent: 'space-evenly'}}>
+			{!props.hideViewButton && (
+				<Link to={`${props.route}/${props.id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="/assets/icons/eye-show-password.svg#eye-show"></use>
+							<use href="/assets/icons/eye-show-password.svg#eye-show" />
 						</svg>
 					</button>
 				</Link>
-				<Link to={`${route}/edit/${id}`}>
+			)}
+			{!props.hideEditButton && (
+				<Link to={`${props.route}/edit/${props.id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="/assets/icons/edit.svg#edit"></use>
+							<use href="/assets/icons/edit.svg#edit" />
 						</svg>
 					</button>
 				</Link>
-				<DeleteButton key={id} action={`${route}/delete/${id}`} useIcon={true} confirmMessage={deleteMessage} />
-			</div>
-		</>
-	);
+			)}
+			{!props.hideDeleteButton && (
+				<DeleteButton
+					key={props.id}
+					action={`${props.route}/delete/${props.id}`}
+					useIcon
+					confirmMessage={props.deleteMessage}
+				/>
+			)}
+		</div>
+	)
 }

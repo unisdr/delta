@@ -5,7 +5,7 @@ import {
 
 import {DataScreen} from "~/frontend/data_screen";
 
-import {ActionLinks} from "~/frontend/form"
+import {ActionLinks, Field} from "~/frontend/form"
 
 import {
 	route
@@ -14,7 +14,6 @@ import {authLoaderPublicOrWithPerm} from "~/util/auth";
 import {assetLoader} from "~/backend.server/handlers/asset";
 
 import {Filters} from "~/frontend/components/list-page-filters";
-
 
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
@@ -30,13 +29,32 @@ export default function Data() {
 		plural: "Assets",
 		resourceName: "Asset",
 		baseRoute: route,
-		columns: ["ID", "Name", "Sector(s)", "Actions"],
+		columns: [
+			"ID",
+			"Name",
+			"Sector(s)",
+			"Is Custom",
+			"Actions"
+		],
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
 		beforeListElement: <Filters
 			clearFiltersUrl={route}
 			search={filters.search}
+			formStartElement={
+				<div className="mg-grid mg-grid__col-3">
+					<div className="dts-form-component">
+						<Field label="Is Custom?">
+							<select name="builtIn" defaultValue="">
+								<option value="">All</option>
+								<option value="false">Custom</option>
+								<option value="true">Built-in</option>
+							</select>
+						</Field>
+					</div>
+				</div>
+			}
 		/>,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
@@ -45,8 +63,12 @@ export default function Data() {
 				</td>
 				<td>{item.name}</td>
 				<td>{item.sectorIds}</td>
+				<td>{!item.isBuiltIn ? "Yes" : "No"}</td>
 				<td>
-					<ActionLinks route={route} id={item.id} />
+					{item.isBuiltIn ?
+						<ActionLinks route={route} id={item.id} hideEditButton={true} hideDeleteButton={true} />
+						: <ActionLinks route={route} id={item.id} />
+					}
 				</td>
 			</tr>
 		),
