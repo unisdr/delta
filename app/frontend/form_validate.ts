@@ -308,6 +308,9 @@ export function validateFromMap<T>(
 					}
 					return value
 				}
+				if (value === ""){
+					return null
+				}
 				try {
 					let obj = JSON.parse(value)
 					return obj
