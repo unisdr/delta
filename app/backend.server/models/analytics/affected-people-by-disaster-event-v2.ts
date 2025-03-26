@@ -131,8 +131,8 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 				conditions?.divisionId ? sql`EXISTS (
 					SELECT 1
 					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
-					WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = ${conditions.divisionId}
-					OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> ${conditions.divisionId}::jsonb
+					WHERE elem->'geojson'->'properties'->>'division_id' = ${conditions.divisionId}
+					OR elem->'geojson'->'properties'->'division_ids' @> ${conditions.divisionId}::jsonb
 				)` : undefined
 			)
 		)

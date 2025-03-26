@@ -349,3 +349,21 @@ table.table-border th.center {
 .no-border-bottom {
   border-bottom: none !important;
 }
+
+.dts-spinner {
+	width: 1em;
+	height: 1em;
+	border: 2px solid currentColor;
+	border-top-color: transparent;
+	border-radius: 50%;
+	animation: dts-spin 0.6s linear infinite;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+@keyframes dts-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+

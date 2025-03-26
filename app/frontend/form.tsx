@@ -17,6 +17,11 @@ import * as repeatablefields from "~/frontend/components/repeatablefields"
 import {UserForFrontend} from "~/util/auth"
 import {notifyError} from "./utils/notifications";
 
+import {JsonView, allExpanded, defaultStyles} from 'react-json-view-lite';
+
+import 'react-json-view-lite/dist/index.css';
+import {DeleteButton} from "./components/delete-dialog";
+
 export type FormResponse<T> =
 	| {ok: true; data: T}
 	| {ok: false; data: T; errors: Errors<T>};
@@ -272,7 +277,8 @@ export type FormInputType =
 	| "other"
 	| "approval_status"
 	| "enum"
-	| "enum-flex"; // enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
+	| "enum-flex" // enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
+	| "json"
 
 export interface EnumEntry {
 	key: string;
@@ -309,41 +315,6 @@ export interface FormInputDefSpecific {
 	description?: string;
 	enumData?: readonly EnumEntry[];
 }
-
-export function fieldsFromMap<T>(
-	data: {[key: string]: string},
-	fieldsDef: FormInputDef<T>[]
-): T {
-	return Object.fromEntries(
-		fieldsDef.map((field) => {
-			let k = field.key;
-			let vs = data[field.key] || "";
-			switch (field.type) {
-				case "number":
-					return [k, Number(vs)];
-				case "other":
-				case "approval_status":
-				case "money":
-				case "text":
-				case "textarea":
-				case "date_optional_precision":
-				case "enum-flex":
-				case "enum":
-					return [k, vs];
-				case "date":
-				case "datetime":
-					if (!vs) {
-						return [k, null];
-					}
-					return [k, new Date(vs)];
-				case "bool":
-					return [k, Boolean(vs)];
-			}
-		})
-	) as T;
-}
-
-
 
 export interface InputsProps<T> {
 	user?: UserForFrontend
@@ -459,11 +430,16 @@ export function Inputs<T>(props: InputsProps<T>) {
 		throw new Error("props.def not passed to form/Inputs")
 	}
 
-	let uiRows = splitDefsIntoRows(props.def)
+	let defs = props.def
+	if (props.user?.role != "admin") {
+		defs = defs.filter(d => d.key != "legacyData")
+	}
+
+	let uiRows = splitDefsIntoRows(defs)
 
 
 	return uiRows.map((uiRow, rowIndex) => {
-		let meta = rowMeta(uiRow, props.def, props.fields)
+		let meta = rowMeta(uiRow, defs, props.fields)
 		let afterRow = null;
 		let addMore: any[] = []
 
@@ -472,12 +448,12 @@ export function Inputs<T>(props: InputsProps<T>) {
 			<div className={meta.className}>
 				{uiRow.defs.map((def, defIndex) => {
 					if (def.repeatable) {
-						let index = props.def.findIndex((d) => d.key == def.key)
+						let index = defs.findIndex((d) => d.key == def.key)
 						let shouldAdd = false
 						let g = def.repeatable.group
 						let repIndex = def.repeatable.index
-						if (index < props.def.length - 1) {
-							let next = props.def[index + 1]
+						if (index < defs.length - 1) {
+							let next = defs[index + 1]
 							if (next.repeatable && (next.repeatable.group != g || next.repeatable.index != repIndex)) {
 								shouldAdd = true
 							}
@@ -723,7 +699,7 @@ export function Input(props: InputProps) {
 					</>
 				)
 			}
-		case "textarea":
+		case "textarea": {
 			let defaultValueTextArea = "";
 			if (props.value !== null && props.value !== undefined) {
 				let v = props.value as string;
@@ -737,6 +713,22 @@ export function Input(props: InputProps) {
 					onChange={props.onChange}
 				/>
 			);
+		}
+		case "json": {
+			let defaultValueTextArea = "";
+			if (props.value !== null && props.value !== undefined) {
+				let v = JSON.stringify(props.value)
+				defaultValueTextArea = v;
+			}
+			return wrapInput(
+				<textarea
+					required={props.def.required}
+					name={props.name}
+					defaultValue={defaultValueTextArea}
+					onChange={props.onChange}
+				/>
+			);
+		}
 		case "date_optional_precision":
 			{
 				let vsInit = (props.value || "") as string
@@ -981,16 +973,22 @@ export interface FieldsViewProps<T> {
 	fields: T
 	elementsAfter?: Record<string, ReactElement>
 	override?: Record<string, ReactElement | undefined | null>
+	user?: UserForFrontend
 }
 
 export function FieldsView<T>(props: FieldsViewProps<T>) {
 	if (!props.def) {
 		throw new Error("props.def not passed to view")
 	}
+	let defs = props.def
+	if (props.user?.role != "admin") {
+		defs = defs.filter(d => d.key != "legacyData")
+	}
 
-	let uiRows = splitDefsIntoRows(props.def)
+
+	let uiRows = splitDefsIntoRows(defs)
 	return uiRows.map((uiRow, rowIndex) => {
-		let meta = rowMeta(uiRow, props.def, props.fields)
+		let meta = rowMeta(uiRow, defs, props.fields)
 		let afterRow = null;
 		return <React.Fragment key={rowIndex}>
 			{!meta.emptyRepeatables && meta.header}
@@ -1017,7 +1015,7 @@ export function FieldsView<T>(props: FieldsViewProps<T>) {
 					if (def.repeatable) {
 						// check if all are empty in this group and index
 						let empty = true
-						for (let d of props.def) {
+						for (let d of defs) {
 							if (d.repeatable && d.repeatable.group == def.repeatable.group && d.repeatable.index == def.repeatable.index) {
 								let v = props.fields[d.key]
 								if (v !== null && v !== undefined && v !== "") {
@@ -1050,6 +1048,12 @@ export interface FieldViewProps {
 }
 
 export function FieldView(props: FieldViewProps) {
+	const [isClient, setIsClient] = useState(false)
+
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
 	if (props.value === null || props.value === undefined) {
 		return <p>{props.def.label}: -</p>;
 	}
@@ -1121,6 +1125,23 @@ export function FieldView(props: FieldViewProps) {
 					{props.def.label}: {enumItem.label}
 				</p>
 			);
+		}
+		case "json": {
+			if (!isClient) {
+				let data = JSON.stringify(props.value)
+				return (
+					<>
+						<p>{props.def.label}</p>
+						<pre>{data}</pre>
+					</>
+				)
+			}
+			return (
+				<>
+					<p>{props.def.label}</p>
+					<JsonView data={props.value} shouldExpandNode={allExpanded} style={defaultStyles} />
+				</>
+			)
 		}
 	}
 }
@@ -1202,21 +1223,22 @@ export function ViewScreenWithDef<T, X>(props: ViewScreenPropsWithDef<T, X>) {
 }
 
 interface ViewScreenPublicApprovedProps<T> {
-	viewComponent: React.ComponentType<{item: T; isPublic: boolean; auditLogs?: any[]}>;
+	viewComponent: React.ComponentType<{item: T; isPublic: boolean; auditLogs?: any[], user: UserForFrontend}>;
 }
 
 export function ViewScreenPublicApproved<T>(
 	props: ViewScreenPublicApprovedProps<T>
 ) {
 	let ViewComponent = props.viewComponent;
-	const ld = useLoaderData<{item: T; isPublic: boolean; auditLogs?: any[]}>();
+	const ld = useLoaderData<{item: T; isPublic: boolean; auditLogs?: any[], user: UserForFrontend}>();
+	console.log("ld", ld)
 	if (!ld.item) {
 		throw "invalid";
 	}
 	if (ld.isPublic === undefined) {
 		throw "loader does not expose isPublic";
 	}
-	return <ViewComponent isPublic={ld.isPublic} item={ld.item} auditLogs={ld.auditLogs} />;
+	return <ViewComponent isPublic={ld.isPublic} item={ld.item} auditLogs={ld.auditLogs} user={ld.user} />;
 }
 
 interface ViewComponentProps {
@@ -1353,31 +1375,6 @@ interface ActionLinksProps {
 }
 
 export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
-	//const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-	const dialogRef = useRef<HTMLDialogElement>(null);
-
-	const handleDeleteClick = (event: React.MouseEvent) => {
-		event.preventDefault();
-		//setShowConfirmDelete(true);
-		if (dialogRef.current) {
-			dialogRef.current.showModal(); // Show as a modal with backdrop
-		}
-	};
-
-	const confirmDelele = async () => {
-		try {
-			await fetch(`${route}/delete/${id}`, {
-				method: "GET", // Todo. change the method to DELETE and add action in the delete.$id.tsx file
-			});
-			window.location.reload();
-		} catch (error) {
-			console.error("Error deleting hazardous event: ", error);
-		}
-		//setShowConfirmDelete(false);
-		if (dialogRef.current) {
-			dialogRef.current.close(); // Close modal
-		}
-	};
 	return (
 		<>
 			<div style={{display: "flex", justifyContent: "space-evenly"}}>
@@ -1395,49 +1392,7 @@ export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
 						</svg>
 					</button>
 				</Link>
-				<button
-					type="button"
-					className="mg-button mg-button-outline"
-					style={{color: "red"}}
-					onClick={handleDeleteClick}
-				>
-					<svg aria-hidden="true" focusable="false" role="img">
-						<use href="/assets/icons/trash-alt.svg#delete"></use>
-					</svg>
-				</button>
-
-				{/* Delete confirmation popup  */}
-				<dialog ref={dialogRef} className="dts-dialog">
-					<div className="dts-dialog__content">
-						<div className="dts-form__intro">
-							<h2>Confirm Deletion</h2>
-						</div>
-						<div className="dts-form__body">
-							<p>
-								{deleteMessage || "Are you sure you want to delete this item?"}
-							</p>
-						</div>
-						<div className="dts-form__actions">
-							<button
-								onClick={confirmDelele}
-								className="mg-button mg-button-primary"
-							>
-								Yes
-							</button>
-							<button
-								onClick={() => {
-									//setShowConfirmDelete(false);
-									if (dialogRef.current) {
-										dialogRef.current.close();
-									}
-								}}
-								className="mg-button mg-button-outline"
-							>
-								No
-							</button>
-						</div>
-					</div>
-				</dialog>
+				<DeleteButton key={id} action={`${route}/delete/${id}`} useIcon={true} confirmMessage={deleteMessage} />
 			</div>
 		</>
 	);

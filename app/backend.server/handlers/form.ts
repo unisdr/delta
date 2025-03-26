@@ -580,6 +580,9 @@ function jsonPayloadExample<T>(
 			case "approval_status":
 				val = "draft"
 				break
+			case "json":
+				val = {"k": "any json"}
+				break
 			default:
 				val = null;
 		}
@@ -863,7 +866,8 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 			if (!item) {
 				throw new Response("Not Found", {status: 404});
 			}
-			return {item, isPublic: false, auditLogs: []};
+			let user = authLoaderGetUserForFrontend(loaderArgs)
+			return {item, isPublic: false, auditLogs: [], user};
 		});
 	}
 
@@ -899,42 +903,43 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 				)
 			)
 			.orderBy(desc(auditLogsTable.timestamp));
+		let user = authLoaderGetUserForFrontend(loaderArgs)
 
-		return {item, isPublic, auditLogs};
+		return {item, isPublic, auditLogs, user};
 	});
 }
 
-interface DeleteLoaderArgs {
-	delete: (id: string) => Promise<DeleteResult>;
-	baseRoute?: string;
-	tableName: string;
-	getById: (id: string) => Promise<any>;
-	postProcess?: (id: string, data: any) => Promise<void>;
-
-	redirectToSuccess?: (id: string, oldRecord?: any) => string;
-	redirectToError?: (id: string, oldRecord?: any) => string;
+interface DeleteActionArgs {
+	delete: (id: string) => Promise<DeleteResult>
+	baseRoute?: string
+	tableName: string
+	getById: (id: string) => Promise<any>
+	postProcess?: (id: string, data: any) => Promise<void>
+	redirectToSuccess?: (id: string, oldRecord?: any) => string
+	redirectToError?: (id: string, oldRecord?: any) => string
 }
 
-export function createDeleteLoader(args: DeleteLoaderArgs) {
-	return createDeleteLoaderWithPerm("EditData", args);
+export function createDeleteAction(args: DeleteActionArgs) {
+	return createDeleteActionWithPerm("EditData", args)
 }
 
-export function createDeleteLoaderWithPerm(
+export function createDeleteActionWithPerm(
 	perm: PermissionId,
-	args: DeleteLoaderArgs
+	args: DeleteActionArgs
 ) {
-	return authLoaderWithPerm(perm, async (loaderArgs) => {
+	return authActionWithPerm(perm, async (actionArgs) => {
 		return formDelete({
-			loaderArgs,
+			loaderArgs: actionArgs,
 			deleteFn: args.delete,
-			redirectToSuccess: args.redirectToSuccess ? args.redirectToSuccess : () => args.baseRoute || "",
-			redirectToError: args.redirectToError ? args.redirectToError : (id: string) => `${args.baseRoute}/${id}`,
+			redirectToSuccess: args.redirectToSuccess ?? (() => args.baseRoute || ""),
+			redirectToError: args.redirectToError ?? ((id: string) => `${args.baseRoute}/${id}`),
 			tableName: args.tableName,
 			getById: args.getById,
 			postProcess: args.postProcess,
-		});
-	});
+		})
+	})
 }
+
 
 export interface CsvCreateArgs<T> {
 	data: string[][];
@@ -1183,6 +1188,8 @@ export async function csvImportExample<T>(
 				return field.enumData && field.enumData.length > 0
 					? field.enumData[0].key
 					: "";
+			case "json":
+				return JSON.stringify({"k": "any json"})
 			default:
 				return "";
 		}

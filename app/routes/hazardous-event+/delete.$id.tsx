@@ -1,6 +1,6 @@
 import { getTableName } from "drizzle-orm";
 import {
-	createDeleteLoader,
+	createDeleteAction,
 } from "~/backend.server/handlers/form";
 
 
@@ -12,7 +12,7 @@ import { hazardousEventTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
-export const loader = createDeleteLoader({
+export const action = createDeleteAction({
 	baseRoute: "/hazardous-event",
 	delete: hazardousEventDelete,
 	tableName: getTableName(hazardousEventTable),

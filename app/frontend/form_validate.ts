@@ -27,9 +27,14 @@ function invalidDateFormatError(def: FormInputDefSpecific): FormError {
 	return {def, code: "invalid_date_format", message: `The field "${def.label}" must be a valid RFC3339 date string.`}
 }
 
+function invalidJsonFieldError(def: FormInputDefSpecific, jsonError: Error): FormError {
+	return {def, code: "invalid_json_field_value", message: `The field "${def.label}" must be valid JSON. Got error "${jsonError}".`}
+}
+
 function unknownFieldError(key: string): FormError {
 	return {data: key, code: "unknown_field", message: `The field "${key}" is not recognized.`}
 }
+
 
 function validateShared<T>(
 	data: any,
@@ -182,6 +187,8 @@ export function validateFromJson<T>(
 			case "date_optional_precision":
 			case "other":
 				return value
+			case "json":
+				return value
 			default:
 				throw new Error("server error: unknown type defined: " + field.type)
 		}
@@ -294,6 +301,24 @@ export function validateFromMap<T>(
 					return null
 				}
 				return vs
+			case "json":
+				if (typeof value != "string") {
+					if (value !== undefined && value !== null) {
+						throw invalidTypeError(field, "json")
+					}
+					return value
+				}
+				if (value === ""){
+					return null
+				}
+				try {
+					let obj = JSON.parse(value)
+					return obj
+				} catch (e) {
+					if (e instanceof Error) throw invalidJsonFieldError(field, e)
+					throw e
+				}
+
 			default:
 				throw new Error("server error: unknown type defined: " + field.type)
 		}

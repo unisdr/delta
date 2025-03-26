@@ -9,7 +9,7 @@ import {
 
 import {
 	useLoaderData,
-	Link
+	Link,
 } from "@remix-run/react";
 
 import {
@@ -41,6 +41,7 @@ import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 import {contentPickerConfig} from "./content-picker-config";
 
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
+import {DeleteButton} from "~/frontend/components/delete-dialog"
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
@@ -60,7 +61,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let user = authLoaderGetUserForFrontend(loaderArgs)
 
-    const divisionGeoJSON = await dr.execute(`
+	const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson
 		FROM division
 		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
@@ -177,7 +178,8 @@ export default function Screen() {
 							</div>
 							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">
-									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>
+									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>&nbsp;
+									<DeleteButton action={`/disaster-record/edit-sub/${ld.item.id}/human-effects/delete-all-data`} label="[ Delete all records ]" />
 								</div>
 								<div className="mg-grid mg-grid__col-1">
 									<div className="dts-form-component">

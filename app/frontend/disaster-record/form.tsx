@@ -32,7 +32,8 @@ import {HipHazardInfo} from "~/frontend/hip/hip";
 
 import SpatialFootprintMapViewer from "~/components/SpatialFootprintMapViewer";
 
-import { rewindGeoJSON } from '~/utils/spatialUtils'
+import {rewindGeoJSON} from '~/utils/spatialUtils'
+import {UserForFrontend} from "~/util/auth";
 
 export const route = "/disaster-record"
 
@@ -50,6 +51,7 @@ export const fieldsDefCommon = [
 	{key: "validatedBy", label: "Validated by", type: "text", required: true},
 	{key: "checkedBy", label: "Checked by", type: "text", uiRow: {}},
 	{key: "dataCollector", label: "Data collector", type: "text"},
+	{key: "legacyData", label: "Legacy Data", type: "json", uiRow: {colOverride: 1}},
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
 ] as const;
@@ -514,6 +516,7 @@ interface DisasterRecordsViewProps {
 	item: DisasterRecordsViewModel;
 	isPublic: boolean;
 	auditLogs?: any[];
+	user: UserForFrontend
 }
 
 export function DisasterRecordsView(props: DisasterRecordsViewProps) {
@@ -545,6 +548,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 			<FieldsView
 				def={fieldsDefView}
 				fields={item}
+				user={props.user}
 				override={{
 					hipHazard: (
 						<HipHazardInfo key="hazard" model={item} />

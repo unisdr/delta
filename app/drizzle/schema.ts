@@ -206,6 +206,7 @@ export const devExample1Table = pgTable("dev_example1", {
 	repeatableText2: text("repeatable_text2"),
 	repeatableNum3: integer("repeatable_num3"),
 	repeatableText3: text("repeatable_text3"),
+	jsonData: jsonb("json_data")
 });
 
 export type DevExample1 = typeof devExample1Table.$inferSelect;
@@ -506,6 +507,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 
 	attachments: jsonb("attachments"),
 	spatialFootprint: jsonb("spatial_footprint"),
+
+	legacyData: jsonb("legacy_data")
 });
 
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
@@ -1032,6 +1035,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	// 	.references((): AnyPgColumn => sectorTable.id),
 	// sectorName: text("sector_name"), // Direct name of the sector involved
 	// subSector: text("sub_sector"), // Sub-sector detail
+	legacyData: jsonb("legacy_data"),
 	spatialFootprint: jsonb("spatial_footprint"),
 	attachments: jsonb("attachments"),
 	...approvalFields,

@@ -1,13 +1,13 @@
 import {getTableName} from "drizzle-orm"
-import {createDeleteLoader} from "~/backend.server/handlers/form"
 import {damagesById, damagesDeleteById} from "~/backend.server/models/damages"
 import {damagesTable} from "~/drizzle/schema"
 
 import {route, route2} from "~/frontend/damages"
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
+import {createDeleteAction} from "~/backend.server/handlers/form";
 
-export const loader = createDeleteLoader({
+export const action = createDeleteAction({
 	redirectToSuccess: (_id: string, oldRecord: any) => route2(oldRecord.recordId) + "?sectorId=" + oldRecord.sectorId,
 	redirectToError: (id: string) => route + "/" + id,
 	delete: damagesDeleteById,
