@@ -143,3 +143,19 @@ export async function getSectorFullPathById(sectorId: number) {
 	return rows[0]?.full_path || "No sector found";
 }
 
+
+export async function getSectorAncestorById(sectorId: number, sectorLevel: number = 2) {
+	const { rows } = await dr.execute(sql`
+		WITH RECURSIVE ParentCTE AS (
+			SELECT id, sectorname, parent_id, level
+			FROM sector
+			WHERE id = ${sectorId}
+			UNION ALL
+			SELECT t.id, t.sectorname, t.parent_id, t.level
+			FROM sector t
+			INNER JOIN ParentCTE p ON t.id = p.parent_id
+		)
+		SELECT id, sectorname, level FROM ParentCTE WHERE level = ${sectorLevel}
+	`);
+	return rows[0] || null;
+}
