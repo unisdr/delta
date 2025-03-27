@@ -55,7 +55,7 @@ export const fieldsDefCommon = [
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
-	{key: "disasterEventId", label: "", type: "other"},
+	{key: "disasterEventId", label: "", type: "uuid"},
 	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
 	{key: "hipClusterId", label: "", type: "other"},
 	{key: "hipTypeId", label: "", type: "other"},
@@ -68,7 +68,7 @@ export const fieldsDefApi: FormInputDef<DisasterRecordsFields>[] = [
 ];
 
 export const fieldsDefView: FormInputDef<DisasterRecordsViewModel>[] = [
-	{key: "disasterEventId", label: "", type: "other"},
+	{key: "disasterEventId", label: "", type: "uuid"},
 	{key: "hipHazard", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},

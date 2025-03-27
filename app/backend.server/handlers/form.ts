@@ -557,6 +557,9 @@ function jsonPayloadExample<T>(
 			case "other":
 				val = "example string";
 				break;
+			case "uuid":
+				val = "f41bd013-23cc-41ba-91d2-4e325f785171"
+				break;
 			case "date":
 				val = new Date().toISOString();
 				break;
@@ -1191,6 +1194,8 @@ export async function csvImportExample<T>(
 					: "";
 			case "json":
 				return JSON.stringify({"k": "any json"})
+			case "uuid":
+				return "f41bd013-23cc-41ba-91d2-4e325f785171"
 			default:
 				return "";
 		}

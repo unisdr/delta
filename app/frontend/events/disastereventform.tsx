@@ -234,8 +234,8 @@ export const fieldsDefCommon = [
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
-	{key: "hazardousEventId", label: "", type: "other"},
-	{key: "disasterEventId", label: "", type: "other"},
+	{key: "hazardousEventId", label: "", type: "uuid"},
+	{key: "disasterEventId", label: "", type: "uuid"},
 	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
 	{key: "hipClusterId", label: "", type: "other"},
 	{key: "hipTypeId", label: "", type: "other"},
@@ -243,8 +243,8 @@ export const fieldsDef: FormInputDef<DisasterEventFields>[] = [
 ];
 
 export const fieldsDefApi: FormInputDef<DisasterEventFields>[] = [
-	{key: "hazardousEventId", label: "", type: "other"},
-	{key: "disasterEventId", label: "", type: "other"},
+	{key: "hazardousEventId", label: "", type: "uuid"},
+	{key: "disasterEventId", label: "", type: "uuid"},
 	{key: "hipHazardId", label: "", type: "other"},
 	{key: "hipClusterId", label: "", type: "other"},
 	{key: "hipTypeId", label: "", type: "other"},
@@ -253,8 +253,8 @@ export const fieldsDefApi: FormInputDef<DisasterEventFields>[] = [
 ];
 
 export const fieldsDefView: FormInputDef<DisasterEventViewModel>[] = [
-	{key: "hazardousEventId", label: "", type: "other"},
-	{key: "disasterEventId", label: "", type: "other"},
+	{key: "hazardousEventId", label: "", type: "uuid"},
+	{key: "disasterEventId", label: "", type: "uuid"},
 	{key: "hipHazard", label: "", type: "other"},
 	...fieldsDefCommon,
 	{key: "createdAt", label: "", type: "other"},

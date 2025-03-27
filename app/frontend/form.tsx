@@ -278,6 +278,7 @@ export type FormInputType =
 	| "enum"
 	| "enum-flex" // enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
 	| "json"
+	| "uuid"
 
 export interface EnumEntry {
 	key: string;
@@ -884,6 +885,7 @@ export function Input(props: InputProps) {
 		case "datetime":
 		case "number":
 		case "money":
+		case "uuid":
 			let defaultValue = "";
 			if (props.value !== null && props.value !== undefined) {
 				switch (props.def.type) {
@@ -1073,6 +1075,7 @@ export function FieldView(props: FieldViewProps) {
 					{props.def.label}: {String(n)}
 				</p>
 			);
+		case "uuid":
 		case "textarea":
 		case "text":
 		case "money":

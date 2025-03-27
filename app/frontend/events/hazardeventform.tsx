@@ -63,7 +63,7 @@ export const fieldsDefCommon = [
 ] as const;
 
 export const fieldsDef: FormInputDef<HazardousEventFields>[] = [
-	{key: "parent", label: "", type: "other"},
+	{key: "parent", label: "", type: "uuid"},
 	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
 	{key: "hipClusterId", label: "", type: "other"},
 	{key: "hipTypeId", label: "", type: "other"},

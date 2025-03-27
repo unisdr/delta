@@ -8,7 +8,7 @@ import {deleteByIdForStringId} from "./common";
 export interface NonecoLossesFields extends Omit<nonecoLosses, "id"> {}
 
 export const fieldsDefCommon = [
-	{key: "disasterRecordId", label: "Disaster Record", type: "text", required: true},
+	{key: "disasterRecordId", label: "Disaster Record", type: "uuid", required: true},
 	{key: "categoryId", label: "Category", type: "text", required: true},
 	{key: "description", label: "Description", type: "text", required: true},
 ] as const;
