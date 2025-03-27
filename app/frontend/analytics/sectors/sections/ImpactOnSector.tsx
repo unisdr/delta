@@ -413,41 +413,50 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         })
         .sort((a, b) => a.year - b.year);
 
-    // Fix damage data transformation to ensure it properly handles string values
-    const damageData = Object.entries(data.damageOverTime || {})
-        .map(([year, amount]) => {
-            const parsedAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
-            return {
-                year: parseInt(year),
-                amount: isNaN(parsedAmount) ? 0 : parsedAmount,
-            };
-        })
-        .filter((entry) => {
-            if (!filters.fromDate && !filters.toDate) return true;
-            const yearNum = entry.year;
-            const fromYear = filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) : 0;
-            const toYear = filters.toDate ? parseInt(filters.toDate.split('-')[0]) : 9999;
-            return yearNum >= fromYear && yearNum <= toYear;
-        })
-        .sort((a, b) => a.year - b.year);
+    // Get the reference year from events data or filters
+    const referenceYear = eventsData.length > 0 ? eventsData[0].year :
+        filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) :
+        new Date().getFullYear();
 
-    // Fix loss data transformation to ensure it properly handles string values
-    const lossData = Object.entries(data.lossOverTime || {})
-        .map(([year, amount]) => {
-            const parsedAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
-            return {
-                year: parseInt(year),
-                amount: isNaN(parsedAmount) ? 0 : parsedAmount,
-            };
-        })
-        .filter((entry) => {
-            if (!filters.fromDate && !filters.toDate) return true;
-            const yearNum = entry.year;
-            const fromYear = filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) : 0;
-            const toYear = filters.toDate ? parseInt(filters.toDate.split('-')[0]) : 9999;
-            return yearNum >= fromYear && yearNum <= toYear;
-        })
-        .sort((a, b) => a.year - b.year);
+    // Fix damage data transformation to ensure it properly handles string values and zero impact
+    const damageData = data?.dataAvailability?.damage === 'zero'
+        ? [{ year: referenceYear, amount: 0 }]
+        : Object.entries(data.damageOverTime || {})
+            .map(([year, amount]) => {
+                const parsedAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
+                return {
+                    year: parseInt(year),
+                    amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+                };
+            })
+            .filter((entry) => {
+                if (!filters.fromDate && !filters.toDate) return true;
+                const yearNum = entry.year;
+                const fromYear = filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) : 0;
+                const toYear = filters.toDate ? parseInt(filters.toDate.split('-')[0]) : 9999;
+                return yearNum >= fromYear && yearNum <= toYear;
+            })
+            .sort((a, b) => a.year - b.year);
+
+    // Fix loss data transformation to ensure it properly handles string values and zero impact
+    const lossData = data?.dataAvailability?.loss === 'zero'
+        ? [{ year: referenceYear, amount: 0 }]
+        : Object.entries(data.lossOverTime || {})
+            .map(([year, amount]) => {
+                const parsedAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
+                return {
+                    year: parseInt(year),
+                    amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+                };
+            })
+            .filter((entry) => {
+                if (!filters.fromDate && !filters.toDate) return true;
+                const yearNum = entry.year;
+                const fromYear = filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) : 0;
+                const toYear = filters.toDate ? parseInt(filters.toDate.split('-')[0]) : 9999;
+                return yearNum >= fromYear && yearNum <= toYear;
+            })
+            .sort((a, b) => a.year - b.year);
 
     console.log('Final transformed data:', {
         eventsData,
