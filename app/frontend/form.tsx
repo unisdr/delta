@@ -431,9 +431,10 @@ export function Inputs<T>(props: InputsProps<T>) {
 	}
 
 	let defs = props.def
-	if (props.user?.role != "admin") {
-		defs = defs.filter(d => d.key != "legacyData")
-	}
+	//if (props.user?.role != "admin") {
+	// only show this in view
+	defs = defs.filter(d => d.key != "legacyData")
+	//}
 
 	let uiRows = splitDefsIntoRows(defs)
 
