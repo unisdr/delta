@@ -19,7 +19,8 @@ import {
   hipTypeTable,
   hipClusterTable,
   divisionTable,
-  hipHazardTable
+  hipHazardTable,
+  sectorTable
 } from "~/drizzle/schema";
 import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
@@ -28,97 +29,36 @@ import LRUCache from "lru-cache";
 import { getSectorsByParentId } from "./sectors";
 
 /**
- * Gets all subsector IDs for a given sector following international standards.
- * This implementation uses the proper hierarchical structure defined in the sector table.
- * 
+ * Gets all subsector IDs for a given sector
  * @param sectorId - The ID of the sector to get subsectors for
  * @returns Array of sector IDs including the input sector and all its subsectors
  */
 const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
-  const numericSectorId = parseInt(sectorId, 10);
-  if (isNaN(numericSectorId)) {
-    return []; // Return empty array if invalid ID
-  }
+  const result = await db
+    .select({
+      id: sectorTable.id,
+      level: sectorTable.level
+    })
+    .from(sectorTable)
+    .where(
+      or(
+        eq(sectorTable.id, Number(sectorId)),
+        and(
+          sql`${sectorTable.id}::text LIKE ${sectorId}::text || '%'`,
+          sql`LENGTH(${sectorTable.id}::text) > LENGTH(${sectorId}::text)`
+        )
+      )
+    );
 
-  // Get immediate subsectors
-  const subsectors = await getSectorsByParentId(numericSectorId);
-
-  // Initialize result with the current sector ID
-  const result: number[] = [numericSectorId];
-
-  // Recursively get all subsectors at all levels
-  if (subsectors.length > 0) {
-    // Add immediate subsector IDs
-    result.push(...subsectors.map((s: { id: number }) => s.id));
-
-    // For each subsector, recursively get its subsectors
-    for (const subsector of subsectors) {
-      const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
-      // Filter out the subsector ID itself as it's already included
-      const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
-      result.push(...uniqueChildIds);
-    }
-  }
-
-  // Remove duplicates and return
-  return [...new Set(result)];
+  return result.map(r => r.id);
 };
 
-export type SortColumn = 'damages' | 'losses' | 'eventName' | 'createdAt';
-export type SortDirection = 'asc' | 'desc';
-
-export interface MostDamagingEventsParams {
-  sectorId: string | null;
-  subSectorId: string | null;
-  hazardTypeId: string | null;
-  hazardClusterId: string | null;
-  specificHazardId: string | null;
-  geographicLevelId: string | null;
-  fromDate: string | null;
-  toDate: string | null;
-  disasterEventId: string | null;
-  page: number;
-  pageSize: number;
-  sortBy: SortColumn;
-  sortDirection: SortDirection;
-  assessmentType?: 'rapid' | 'detailed';
-  confidenceLevel?: 'low' | 'medium' | 'high';
-}
-
-interface QueryResult {
-  eventId: string;
-  eventName: string;
-  createdAt: Date;
-  totalDamages: number;
-  totalLosses: number;
-  total: number;
-}
-
-interface PaginatedResult {
-  events: Array<Omit<QueryResult, 'total'>>;
-  pagination: {
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-  };
-  metadata: {
-    assessmentType: string;
-    confidenceLevel: string;
-    currency: string;
-    assessmentDate: string;
-    assessedBy: string;
-    notes: string;
-  };
-}
-
-// Initialize LRU cache with a max of 100 items and 15 minute TTL
-const resultsCache = new LRUCache<string, PaginatedResult>({
-  max: 100,
-  ttl: 1000 * 60 * 15 // 15 minutes
-});
-
-// Helper function to normalize text for matching
+/**
+ * Helper function to normalize text for matching
+ * 
+ * @param text - The text to normalize
+ * @returns Normalized text
+ */
 const normalizeText = (text: string): string => {
   return text
     .toLowerCase()
@@ -138,45 +78,29 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
 
   if (params.sectorId) {
     try {
-      const numericSectorId = parseInt(params.sectorId, 10);
-      if (!isNaN(numericSectorId)) {
-        // Get immediate subsectors
-        const subsectors = await getSectorsByParentId(numericSectorId);
+      // Get the sector IDs based on the level
+      const allSectorIds = await getAllSubsectorIds(params.sectorId);
 
-        // Initialize result with the current sector ID
-        const allSectorIds = [numericSectorId];
+      // Convert numeric IDs to strings for return value
+      sectorIds = allSectorIds.map(id => id.toString());
 
-        // Recursively get all subsectors at all levels
-        if (subsectors.length > 0) {
-          // Add immediate subsector IDs
-          allSectorIds.push(...subsectors.map((s: { id: number }) => s.id));
+      console.log('Most Damaging Events - Sector IDs:', sectorIds);
 
-          // For each subsector, recursively get its subsectors
-          for (const subsector of subsectors) {
-            const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
-            // Filter out the subsector ID itself as it's already included
-            const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
-            allSectorIds.push(...uniqueChildIds);
-          }
-        }
+      // Convert string IDs back to numbers for the SQL query
+      const numericSectorIds = allSectorIds.map(id => Number(id));
 
-        // Remove duplicates
-        const uniqueSectorIds = [...new Set(allSectorIds)];
-
-        // Convert numeric IDs to strings for return value
-        sectorIds = uniqueSectorIds.map(id => id.toString());
-
-        conditions.push(
-          exists(
-            db.select()
-              .from(sectorDisasterRecordsRelationTable)
-              .where(and(
+      conditions.push(
+        exists(
+          db.select()
+            .from(sectorDisasterRecordsRelationTable)
+            .where(
+              and(
                 eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
-                inArray(sectorDisasterRecordsRelationTable.sectorId, uniqueSectorIds)
-              ))
-          )
-        );
-      }
+                inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+              )
+            )
+        )
+      );
     } catch (error) {
       console.error('Error in sector handling:', error);
     }
@@ -213,9 +137,9 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
   );
 
   // Extract hazard ID values for debug
-  console.log('HazardType:', params.hazardTypeId);
-  console.log('HazardCluster:', params.hazardClusterId);
-  console.log('SpecificHazard:', params.specificHazardId);
+  // console.log('HazardType:', params.hazardTypeId);
+  // console.log('HazardCluster:', params.hazardClusterId);
+  // console.log('SpecificHazard:', params.specificHazardId);
 
   // Check actual hazard values in query
   const debugHazards = await db
@@ -230,7 +154,7 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     .innerJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
     .where(and(...conditions));
 
-  console.log(' Matching record hazard fields:', debugHazards);
+  // console.log(' Matching record hazard fields:', debugHazards);
 
   // Apply geographic level filter
   if (params.geographicLevelId) {
@@ -277,10 +201,10 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
 
     // Generate cache key from params
     const cacheKey = JSON.stringify(params);
-    const cached = resultsCache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
+    // const cached = resultsCache.get(cacheKey);
+    // if (cached) {
+    //   return cached;
+    // }
 
     // Build filter conditions with improved geographic filtering
     const { conditions, sectorIds } = await buildFilterConditions(params);
@@ -355,8 +279,54 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         eventId: disasterEventTable.id,
         eventName: disasterEventTable.nameNational,
         createdAt: disasterEventTable.createdAt,
-        totalDamages: sql<number>`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) ), 0)`,
-        totalLosses: sql<number>`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`
+        totalDamages: sql<number>`
+          COALESCE(SUM(
+            CASE 
+              WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
+              ELSE
+                COALESCE((
+                  SELECT 
+                    CASE 
+                      WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                        COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                      ELSE
+                        COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                        COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                    END
+                  FROM ${damagesTable}
+                  WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
+                  AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                  LIMIT 1
+                ), 0)::numeric
+            END
+          ), 0)`,
+        totalLosses: sql<number>`COALESCE(SUM(
+            CASE 
+              WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
+              ELSE
+                COALESCE((
+                  SELECT 
+                    CASE 
+                      WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                        COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+                      ELSE
+                        COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
+                    END +
+                    CASE 
+                      WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                        COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                      ELSE
+                        COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                    END
+                  FROM ${lossesTable}
+                  WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
+                  AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                  LIMIT 1
+                ), 0)::numeric
+            END
+        ), 0)`
       })
       .from(disasterRecordsTable)
       .innerJoin(
@@ -373,7 +343,12 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       )
       .leftJoin(
         sectorDisasterRecordsRelationTable,
-        eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id)
+        and(
+          eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+          sectorIds && sectorIds.length > 0
+            ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds.map(id => Number(id)))
+            : sql`1=1` // No sector filter if no sectorIds
+        )
       )
       .where(and(...conditions))
       .groupBy(
@@ -387,8 +362,8 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     if (sortBy === 'damages') {
       sortedQuery = query.orderBy(
         sortDirection === 'desc'
-          ? desc(sql`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`)
-          : sql`COALESCE(SUM(COALESCE(${damagesTable.totalRepairReplacement}, 0) + COALESCE(${damagesTable.totalRecovery}, 0)), 0)`
+          ? desc(sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)), 0)`)
+          : sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)), 0)`
       );
     } else if (sortBy === 'losses') {
       sortedQuery = query.orderBy(
@@ -468,6 +443,9 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       totalLosses: Number(row.totalLosses || 0)
     }));
 
+    console.log(' [Results] Events:', events);
+
+
     const metadata = createAssessmentMetadata(
       params.assessmentType || 'rapid',
       params.confidenceLevel || 'medium'
@@ -491,9 +469,8 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       }
     };
 
-    // Cache the results
-    resultsCache.set(cacheKey, paginatedResult);
-    console.log('[Completed] Result cached and returned.');
+    // resultsCache.set(cacheKey, paginatedResult);
+    console.log('[Completed] Result returned.');
 
     return paginatedResult;
   } catch (error) {
@@ -523,4 +500,52 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       }
     };
   }
+}
+
+export type SortColumn = 'damages' | 'losses' | 'eventName' | 'createdAt';
+export type SortDirection = 'asc' | 'desc';
+
+export interface MostDamagingEventsParams {
+  sectorId: string | null;
+  subSectorId: string | null;
+  hazardTypeId: string | null;
+  hazardClusterId: string | null;
+  specificHazardId: string | null;
+  geographicLevelId: string | null;
+  fromDate: string | null;
+  toDate: string | null;
+  disasterEventId: string | null;
+  page: number;
+  pageSize: number;
+  sortBy: SortColumn;
+  sortDirection: SortDirection;
+  assessmentType?: 'rapid' | 'detailed';
+  confidenceLevel?: 'low' | 'medium' | 'high';
+}
+
+interface QueryResult {
+  eventId: string;
+  eventName: string;
+  createdAt: Date;
+  totalDamages: number;
+  totalLosses: number;
+  total: number;
+}
+
+interface PaginatedResult {
+  events: Array<Omit<QueryResult, 'total'>>;
+  pagination: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+  metadata: {
+    assessmentType: string;
+    confidenceLevel: string;
+    currency: string;
+    assessmentDate: string;
+    assessedBy: string;
+    notes: string;
+  };
 }
