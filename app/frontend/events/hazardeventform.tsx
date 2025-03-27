@@ -279,7 +279,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 					),
 					spatialFootprint: (
 						<SpatialFootprintView
-							initialData={item?.spatialFootprint || []}
+							initialData={(item?.spatialFootprint as any[]) || []}
 							mapViewerOption={0}
 							mapViewerDataSources={[]}
 						/>
@@ -287,7 +287,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 					attachments: (
 						<AttachmentsView
 							id={item.id}
-							initialData={item?.attachments || []}
+							initialData={(item?.attachments as any[]) || []}
 							file_viewer_url="/hazardous-event/file-viewer"
 						/>
 					),
