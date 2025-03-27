@@ -24,6 +24,11 @@ import {
 } from "~/backend.server/models/event";
 
 import {
+	getSectorAncestorById,
+} from "~/backend.server/models/sector";
+
+
+import {
 	getAllChildren,
   getDivisionByLevel,
 } from "~/backend.server/models/division";
@@ -33,6 +38,8 @@ import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/af
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Rectangle, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Sector, Cell } from 'recharts';
+import CustomPieChart from '~/components/PieChart';
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -54,6 +61,14 @@ interface interfaceMap {
   colorPercentage: number;
   geojson: any;
 }
+
+interface interfaceSector {
+  id: number;
+  sectorname: string;
+  level: number;
+  ids: [];
+}
+
 
 
 // Loader with public access or specific permission check for "ViewData"
@@ -77,8 +92,13 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let humanEffectsGeoData:interfaceMap[] = [];
   let totalAffectedPeople:any = {};
   let totalAffectedPeople2:any = {};
+  let sectorBarChart:any = {};
 
-  
+  // Initialize arrays to store filtered values
+let sectorParentArray: interfaceSector[] = [];
+let x: any = {};
+let sectorIdsArray: number[] = [];
+
 
   if (xId) {
     record = await disasterEventById(xId).catch(console.error);
@@ -92,7 +112,40 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // getSectorFullPathById()
 
         // get all related sectors
-        recordsRelatedSectors = await disasterEventSectorsById(xId);
+        recordsRelatedSectors = await disasterEventSectorsById(xId, true);
+        for (const item of recordsRelatedSectors) {
+          // console.log( item.relatedAncestorsDecentants );
+          // const sectorParentArray = (item.relatedAncestorsDecentants as interfaceSector[]).filter(item2 => item2.level === 2);
+          // const sectorIdsArray = (item.relatedAncestorsDecentants as interfaceSector[]).map(item2 => item2.id);
+
+          if (item.relatedAncestorsDecentants) {
+            // Filter for level 2 and save to sectorParentArray
+            const filteredAncestors = (item.relatedAncestorsDecentants as interfaceSector[]).filter(
+              ancestor => ancestor.level === 2
+            );
+            x = filteredAncestors[0];
+            //sectorParentArray.push(...filteredAncestors);
+
+            x.myChildren = [];
+            // console.log(x.myChildren);
+
+            // Map IDs and save to sectorIdsArray
+            const ancestorIds = (item.relatedAncestorsDecentants as interfaceSector[]).map(ancestor => ancestor.id);
+            // sectorIdsArray.push(...ancestorIds);
+            // console.log('ancestorIds', ancestorIds );
+            x.myChildren = ancestorIds;
+            x.effects = {};
+            x.effects = await disasterEventSectorTotal__ById(xId, ancestorIds);
+            sectorParentArray.push(x.effects);
+          }
+        }
+
+        console.log('Sector Parent Array:', sectorParentArray);
+        // console.log('Sector IDs Array:', sectorIdsArray);
+
+        //console.log( recordsRelatedSectors[0].sectorParent[0].id );
+        // console.log( mapSectorArray );
+        // console.log( sectorBarChart );
         // get the count of Disaster Records linked to the disaster event
         countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(xId);
 
@@ -264,6 +317,14 @@ function DisasterEventsAnalysisContent() {
       senior: ageData["65+"]
     }
   }
+
+  const data1 = [
+    { name: 'Group A', value: 400 },
+    { name: 'Group B', value: 300 },
+    { name: 'Group C', value: 300 },
+    { name: 'Group D', value: 200 },
+  ];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   return (
     <MainContainer title="Disaster Events Analysis" headerExtra={<NavSettings />}>
@@ -683,10 +744,33 @@ function DisasterEventsAnalysisContent() {
 
                   <div className="mg-grid mg-grid__col-3">
                     <div className="dts-data-box">
-                      <div className="dts-indicator dts-indicator--target-box-b">
-                        <span>Damage pie chart</span>
+                      <h3 className="dts-body-label">
+                        <span>Damage</span>
+                      </h3>
+                      <div className="dts-placeholder" style={{height: '300px'}}>
+                          <CustomPieChart data={data1} title={'fasfasf'} />
+
+                        {/* <PieChart width={300} height={400}>
+                            <Pie
+                              data={data1}
+                              cx={120}
+                              cy={200}
+                              innerRadius={60}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              paddingAngle={0}
+                              dataKey="value"
+                            >
+                              {data1.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Legend />
+                            <Tooltip />
+                        </PieChart> */}
                       </div>
                     </div>
+
                     <div className="dts-data-box">
                       <div className="dts-indicator dts-indicator--target-box-c">
                         <span>Losses pie chart</span>
