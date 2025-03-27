@@ -60,9 +60,9 @@ export function createScreen(args: CreateScreenArgs) {
 										<span>Type</span>
 									</div>
 									<select name="import_type">
-										<option value="upsert"> Upsert </option>
-										<option value="create"> Create </option>
 										<option value="update"> Update </option>
+										<option value="create"> Create </option>
+										<option value="upsert"> Upsert </option>
 									</select>
 								</label>
 							</div>

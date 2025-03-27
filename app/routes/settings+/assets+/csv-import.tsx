@@ -31,5 +31,5 @@ export let action = createAction({
 export default createScreen({
   title: "Asset",
   apiBaseUrl: "/api/asset",
-  listUrl: "/settings/asset"
+  listUrl: "/settings/assets"
 })
