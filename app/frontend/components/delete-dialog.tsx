@@ -45,8 +45,6 @@ export function DeleteButton(props: DeleteButtonProps) {
 
 	let submitting = fetcher.state != 'idle'
 
-	console.log("Delete action", props.action)
-
 	return (
 		<>
 			{props.useIcon ? (
