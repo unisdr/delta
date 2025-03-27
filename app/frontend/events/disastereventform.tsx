@@ -549,7 +549,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 		),
 		spatialFootprint: (
 			<SpatialFootprintView
-				initialData={item?.spatialFootprint || []}
+				initialData={(item?.spatialFootprint as any[]) || []}
 				mapViewerOption={0}
 				mapViewerDataSources={[]}
 			/>
@@ -557,7 +557,7 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 		attachments: (
 			<AttachmentsView
 				id={item.id}
-				initialData={item?.attachments || []}
+				initialData={(item?.attachments as any[]) || []}
 				file_viewer_url="/disaster-event/file-viewer"
 			/>
 		),
