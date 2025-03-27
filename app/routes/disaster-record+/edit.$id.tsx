@@ -10,7 +10,6 @@ import {
 import {
 	useLoaderData,
 	Link,
-	useFetcher,
 } from "@remix-run/react";
 
 import {
@@ -42,14 +41,13 @@ import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 import {contentPickerConfig} from "./content-picker-config";
 
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
-import {useEffect} from "react";
+import {DeleteButton} from "~/frontend/components/delete-dialog"
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
 	if (!params.id) {
 		throw "Route does not have $id param";
 	}
-
 
 	const initializeNewTreeView = async (): Promise<any[]> => {
 		const idKey = "id";
@@ -155,16 +153,6 @@ export const action = createAction({
 
 export default function Screen() {
 	const ld = useLoaderData<typeof loader>();
-	let deleteFetcher = useFetcher()
-
-	useEffect(() => {
-		let data = deleteFetcher.data as any
-		if (deleteFetcher.state == 'idle' && data && !data.ok) {
-			console.error(`Delete failed ${data}`)
-			alert(`Delete failed`)
-		}
-	}, [deleteFetcher.state, deleteFetcher.data])
-
 
 	return (
 		<>
@@ -191,11 +179,7 @@ export default function Screen() {
 							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">
 									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>&nbsp;
-									<deleteFetcher.Form method="post" action={`/disaster-record/edit-sub/${ld.item.id}/human-effects/delete-all-data`} onSubmit={e => {
-										if (!window.confirm('Are you sure you want to delete all records?')) e.preventDefault()
-									}}>
-										<button type="submit">[ Delete all records ]</button>
-									</deleteFetcher.Form>
+									<DeleteButton action={`/disaster-record/edit-sub/${ld.item.id}/human-effects/delete-all-data`} label="[ Delete all records ]" />
 								</div>
 								<div className="mg-grid mg-grid__col-1">
 									<div className="dts-form-component">

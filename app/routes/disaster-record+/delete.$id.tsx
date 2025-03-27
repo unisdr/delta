@@ -1,5 +1,5 @@
 import { getTableName } from "drizzle-orm";
-import { createDeleteLoader } from "~/backend.server/handlers/form";
+import { createDeleteAction } from "~/backend.server/handlers/form";
 import {
   disasterRecordsById,
   disasterRecordsDeleteById,
@@ -10,7 +10,7 @@ import { route } from "~/frontend/disaster-record/form";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
-export const loader = createDeleteLoader({
+export const action = createDeleteAction({
   baseRoute: route,
   delete: disasterRecordsDeleteById,
   tableName: getTableName(disasterRecordsTable),

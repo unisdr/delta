@@ -106,7 +106,7 @@ const getDisasterRecordsForSector = async (
 
     // Get all relevant sector IDs (including subsectors if parent sector)
     const sectorIds = await getAllSubsectorIds(sectorId);
-    const numericSectorIds = sectorIds.map(id => parseInt(id));
+    const numericSectorIds = sectorIds;
     console.log("Found Sector IDs:", numericSectorIds);
 
 
@@ -114,6 +114,20 @@ const getDisasterRecordsForSector = async (
     let conditions: SQL[] = [
       sql`${disasterRecordsTable.approvalStatus} = 'published'`
     ];
+
+    // Handle sector filtering using proper hierarchy
+    if (sectorIds.length > 0) {
+      conditions.push(
+        exists(
+          dr.select()
+            .from(sectorDisasterRecordsRelationTable)
+            .where(and(
+              eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+              inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+            ))
+        )
+      );
+    }
 
     // Apply geographic level filter
     if (filters?.geographicLevel) {
@@ -283,37 +297,36 @@ const getDisasterRecordsForSector = async (
  * @param sectorId - The ID of the sector to get subsectors for
  * @returns Array of sector IDs including the input sector and all its subsectors
  */
-const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
-  try {
-    const numericSectorId = validateSectorId(sectorId);
-    const allSectorIds = [sectorId];
+const getAllSubsectorIds = async (sectorId: string | number | undefined): Promise<number[]> => {
+  if (sectorId === undefined || sectorId === null) return [];
 
-    // Recursively get all subsectors at all levels
-    const fetchSubsectors = async (parentId: number): Promise<void> => {
-      // Get direct children
-      const directSubsectors = await dr
-        .select({
-          id: sectorTable.id
-        })
-        .from(sectorTable)
-        .where(eq(sectorTable.parentId, parentId));
+  const rootId = Number(sectorId);
+  if (isNaN(rootId)) return [];
 
-      // Add each direct child to the result array
-      for (const subsector of directSubsectors) {
-        allSectorIds.push(subsector.id.toString());
-        // Recursively get children of this subsector
-        await fetchSubsectors(subsector.id);
-      }
-    };
+  console.log("Starting traversal from sectorId:", rootId);
 
-    // Start the recursive fetch
-    await fetchSubsectors(numericSectorId);
+  const result: number[] = [];
+  const seen = new Set<number>();
+  const queue: number[] = [rootId];
 
-    return allSectorIds;
-  } catch (error) {
-    console.error('Error in getAllSubsectorIds:', error);
-    throw error;
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    if (seen.has(currentId)) continue;
+    seen.add(currentId);
+    result.push(currentId);
+
+    console.debug("Visiting sectorId:", currentId);
+
+    const children = await getSectorsByParentId(currentId);
+    console.debug("Found children for", currentId, ":", children.map(c => c.id));
+
+    for (const child of children) {
+      if (!seen.has(child.id)) queue.push(child.id);
+    }
   }
+
+  console.log("Traversal complete. Collected sector IDs:", result);
+  return result;
 };
 
 // Helper function to validate sector ID
@@ -334,7 +347,7 @@ const aggregateDamagesData = async (
   sectorId: string
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriDamage?: any }> => {
   const sectorIds = await getAllSubsectorIds(sectorId);
-  const numericSectorIds = sectorIds.map(id => parseInt(id));
+  const numericSectorIds = sectorIds;
 
   // First check sectorDisasterRecordsRelation for overrides
   const sectorOverrides = await dr
@@ -500,7 +513,7 @@ const aggregateLossesData = async (
   sectorId: string | undefined
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: any }> => {
   const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : undefined;
-  const numericSectorIds = sectorIds?.map(id => parseInt(id));
+  const numericSectorIds = sectorIds;
 
   // First check sectorDisasterRecordsRelation for overrides
   const sectorOverrides = await dr
@@ -674,6 +687,26 @@ export async function fetchSectorImpactData(
 
     const recordIds = await getDisasterRecordsForSector(sectorId, filters);
     console.log("Record IDs retrieved:", recordIds.length);
+
+    // If no records found, return null values
+    if (recordIds.length === 0) {
+      return {
+        eventCount: 0,
+        totalDamage: null,
+        totalLoss: null,
+        eventsOverTime: {},
+        damageOverTime: {},
+        lossOverTime: {},
+        metadata: createAssessmentMetadata(
+          filters?.assessmentType || 'detailed',
+          filters?.confidenceLevel || 'medium'
+        ),
+        dataAvailability: {
+          damage: 'no_data',
+          loss: 'no_data'
+        }
+      };
+    }
 
     const [damagesResult, lossesResult, eventCounts] = await Promise.all([
       aggregateDamagesData(recordIds, sectorId),

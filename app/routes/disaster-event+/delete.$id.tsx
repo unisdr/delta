@@ -1,6 +1,6 @@
 import { getTableName } from "drizzle-orm";
 import {
-	createDeleteLoader,
+	createDeleteAction,
 } from "~/backend.server/handlers/form";
 
 import {
@@ -15,7 +15,7 @@ import {
 	route,
 } from "~/frontend/events/disastereventform";
 
-export const loader = createDeleteLoader({
+export const action = createDeleteAction({
 	baseRoute: route,
 	delete: disasterEventDelete,
 	tableName: getTableName(disasterEventTable),

@@ -20,6 +20,7 @@ import {notifyError} from "./utils/notifications";
 import {JsonView, allExpanded, defaultStyles} from 'react-json-view-lite';
 
 import 'react-json-view-lite/dist/index.css';
+import {DeleteButton} from "./components/delete-dialog";
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -1371,95 +1372,40 @@ interface ActionLinksProps {
 	route: string;
 	id: string | number;
 	deleteMessage?: string;
+	hideViewButton?: boolean
+	hideEditButton?: boolean
+	hideDeleteButton?: boolean
 }
 
-export function ActionLinks({route, id, deleteMessage}: ActionLinksProps) {
-	//const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-	const dialogRef = useRef<HTMLDialogElement>(null);
-
-	const handleDeleteClick = (event: React.MouseEvent) => {
-		event.preventDefault();
-		//setShowConfirmDelete(true);
-		if (dialogRef.current) {
-			dialogRef.current.showModal(); // Show as a modal with backdrop
-		}
-	};
-
-	const confirmDelele = async () => {
-		try {
-			await fetch(`${route}/delete/${id}`, {
-				method: "GET", // Todo. change the method to DELETE and add action in the delete.$id.tsx file
-			});
-			window.location.reload();
-		} catch (error) {
-			console.error("Error deleting hazardous event: ", error);
-		}
-		//setShowConfirmDelete(false);
-		if (dialogRef.current) {
-			dialogRef.current.close(); // Close modal
-		}
-	};
+export function ActionLinks(props: ActionLinksProps) {
 	return (
-		<>
-			<div style={{display: "flex", justifyContent: "space-evenly"}}>
-				<Link to={`${route}/${id}`}>
+		<div style={{display: 'flex', justifyContent: 'space-evenly'}}>
+			{!props.hideViewButton && (
+				<Link to={`${props.route}/${props.id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="/assets/icons/eye-show-password.svg#eye-show"></use>
+							<use href="/assets/icons/eye-show-password.svg#eye-show" />
 						</svg>
 					</button>
 				</Link>
-				<Link to={`${route}/edit/${id}`}>
+			)}
+			{!props.hideEditButton && (
+				<Link to={`${props.route}/edit/${props.id}`}>
 					<button type="button" className="mg-button mg-button-outline">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="/assets/icons/edit.svg#edit"></use>
+							<use href="/assets/icons/edit.svg#edit" />
 						</svg>
 					</button>
 				</Link>
-				<button
-					type="button"
-					className="mg-button mg-button-outline"
-					style={{color: "red"}}
-					onClick={handleDeleteClick}
-				>
-					<svg aria-hidden="true" focusable="false" role="img">
-						<use href="/assets/icons/trash-alt.svg#delete"></use>
-					</svg>
-				</button>
-
-				{/* Delete confirmation popup  */}
-				<dialog ref={dialogRef} className="dts-dialog">
-					<div className="dts-dialog__content">
-						<div className="dts-form__intro">
-							<h2>Confirm Deletion</h2>
-						</div>
-						<div className="dts-form__body">
-							<p>
-								{deleteMessage || "Are you sure you want to delete this item?"}
-							</p>
-						</div>
-						<div className="dts-form__actions">
-							<button
-								onClick={confirmDelele}
-								className="mg-button mg-button-primary"
-							>
-								Yes
-							</button>
-							<button
-								onClick={() => {
-									//setShowConfirmDelete(false);
-									if (dialogRef.current) {
-										dialogRef.current.close();
-									}
-								}}
-								className="mg-button mg-button-outline"
-							>
-								No
-							</button>
-						</div>
-					</div>
-				</dialog>
-			</div>
-		</>
-	);
+			)}
+			{!props.hideDeleteButton && (
+				<DeleteButton
+					key={props.id}
+					action={`${props.route}/delete/${props.id}`}
+					useIcon
+					confirmMessage={props.deleteMessage}
+				/>
+			)}
+		</div>
+	)
 }
