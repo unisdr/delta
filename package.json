@@ -13,7 +13,7 @@
     "start2": "remix-serve ./build/server/index.js",
     "startprod": "cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc",
-    "dbsync": "yarn run drizzle-kit push",
+    "dbsync": "yarn run drizzle-kit push && yarn run drizzle-kit migrate",
     "dbmigrate": "yarn drizzle-kit migrate",
     "db:backup": "tsx app/utils/sync-db.ts backup",
     "db:sync": "tsx app/utils/sync-db.ts",
