@@ -25,6 +25,8 @@ export default function Data() {
 	const {filters} = ld;
 	let {items, pagination} = ld.data;
 
+
+
 	return DataScreen({
 		plural: "Assets",
 		resourceName: "Asset",
@@ -56,21 +58,35 @@ export default function Data() {
 				</div>
 			}
 		/>,
-		renderRow: (item, route) => (
-			<tr key={item.id}>
-				<td>
-					<Link to={`${route}/${item.id}`}>{item.id.slice(0, 8)}</Link>
-				</td>
-				<td>{item.name}</td>
-				<td>{item.sectorIds}</td>
-				<td>{!item.isBuiltIn ? "Yes" : "No"}</td>
-				<td>
-					{item.isBuiltIn ?
-						<ActionLinks route={route} id={item.id} hideEditButton={true} hideDeleteButton={true} />
-						: <ActionLinks route={route} id={item.id} />
-					}
-				</td>
-			</tr>
-		),
+		renderRow: (item, route) => {
+			/*
+			 we don't have a page for sector nothing to link to
+			let sectorIdList = item.sectorIds?.split(',').map(s => s.trim()) ?? []
+			let sectorNameList = item.sectorNames?.split(',').map(s => s.trim()) ?? []
+			let sectors = sectorIdList.map((id, i) => ({
+				id,
+				name: sectorNameList[i] ?? ''
+			}))
+		 */
+			return (
+				<tr key={item.id}>
+					<td>
+						<Link to={`${route}/${item.id}`}>{item.id.slice(0, 8)}</Link>
+					</td>
+					<td>{item.name}</td>
+					<td>
+						{item.sectorNames}
+					</td>
+					<td>{!item.isBuiltIn ? "Yes" : "No"}</td>
+					<td>
+						{item.isBuiltIn ? (
+							<ActionLinks route={route} id={item.id} hideEditButton hideDeleteButton />
+						) : (
+							<ActionLinks route={route} id={item.id} />
+						)}
+					</td>
+				</tr>
+			)
+		}
 	});
 }

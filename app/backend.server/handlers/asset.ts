@@ -1,5 +1,6 @@
 import {
 	assetTable,
+	sectorTable,
 } from '~/drizzle/schema';
 
 import {dr} from "~/db.server";
@@ -58,6 +59,15 @@ export async function assetLoader(args: assetLoaderArgs) {
 				name: true,
 				sectorIds: true,
 				isBuiltIn: true
+			},
+			extras: {
+				sectorNames: sql`
+		(
+			SELECT string_agg(s.sectorname, ', ')
+			FROM ${sectorTable} s
+			WHERE s.id = ANY(string_to_array(${assetTable.sectorIds}, ',')::int[])
+		)
+	`.as('sector_names'),
 			},
 			orderBy: [asc(assetTable.name)],
 			where: condition
