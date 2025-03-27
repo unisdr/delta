@@ -1,11 +1,13 @@
 export function AttachmentsView({
     id="",
     initialData = [],
-    file_viewer_url = ""
+    file_viewer_url = "",
+    location=""
   }: {
     id: string;
     initialData: any[];
 	  file_viewer_url: string;
+    location?: string;
   }) {
     if (initialData) {
         return (
@@ -47,7 +49,7 @@ export function AttachmentsView({
 													const fileOrUrl =
 														attachment.file_option === "File" && attachment.file
 															? (
-																<a href={`${file_viewer_url}/?name=${id}/${attachment.file.name.split("/").pop()}&loc=record`} target="_blank" rel="noopener noreferrer">
+																<a href={`${file_viewer_url}/?name=${id}/${attachment.file.name.split("/").pop()}&loc=${location}`} target="_blank" rel="noopener noreferrer">
 																	{attachment.file.name.split("/").pop()}
 																</a>
 															)

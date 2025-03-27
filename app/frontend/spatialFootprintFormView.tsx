@@ -5,16 +5,18 @@ import { TreeView } from "~/components/TreeView";
 import { rewindGeoJSON } from "~/utils/spatialUtils";
 
 export function SpatialFootprintFormView({
-  divisions,
-  ctryIso3,
-  treeData,
-  initialData,
+  divisions = [],
+  ctryIso3 = "",
+  treeData = [],
+  initialData = [],
+  geographicLevel = true,
   onChange
 }: {
   divisions: any;
   ctryIso3: string;
   treeData: any[];
   initialData: any;
+  geographicLevel?: boolean;
   onChange?: (items: any) => void;
 }) {
   const dialogTreeViewRef = useRef<any>(null);
@@ -110,7 +112,7 @@ export function SpatialFootprintFormView({
                             geoLevelFieldComponent.style.setProperty("display", "block");
                         }
                     },
-                    show: true
+                    show: geographicLevel
                 },
                 {id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
                 {
