@@ -242,6 +242,31 @@
   font-weight: 600;
 }
 
+.map-error {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #cf1322;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-error svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #ff4d4f;
+}
+
+.map-error-message {
+  flex: 1;
+}
+
 /* Only move legend below on small screens */
 @media screen and (max-width: 768px) {
   .legend {

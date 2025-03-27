@@ -1,4 +1,4 @@
-import { eq, sql, SQL, and, count, desc, inArray, gte, lte, exists, or } from "drizzle-orm";
+import { eq, sql, SQL, and, count, desc, inArray, gte, lte, exists, or, not } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     disasterRecordsTable,
@@ -246,7 +246,7 @@ async function findMatchingDivision(locationName: string, divisions: Division[],
         }
 
         const normalizedLocation = normalizeText(locationName);
-        console.log("Processing location:", normalizedLocation);
+        // console.log("Processing location:", normalizedLocation);
 
         // Get all potential matches with confidence scores
         const matchesWithScores = divisions.map(division => {
@@ -443,23 +443,45 @@ function parseSectorId(sectorId: string | number | undefined): number | undefine
 // @param sectorId - The ID of the sector to get subsectors for
 // @returns Array of sector IDs including the input sector and all its subsectors
 const getAllSubsectorIds = async (sectorId: string | number): Promise<number[]> => {
-    const seen = new Set<number>();
-    const toVisit = [parseInt(sectorId.toString(), 10)];
+    // First get the level of the input sector
+    const sectorInfo = await dr
+        .select({
+            id: sectorTable.id,
+            level: sectorTable.level
+        })
+        .from(sectorTable)
+        .where(eq(sectorTable.id, Number(sectorId)))
+        .limit(1);
 
-    while (toVisit.length > 0) {
-        const currentId = toVisit.pop()!;
-        if (seen.has(currentId)) continue;
-        seen.add(currentId);
-
-        const children = await getSectorsByParentId(currentId);
-        for (const child of children) {
-            if (!seen.has(child.id)) {
-                toVisit.push(child.id);
-            }
-        }
+    if (sectorInfo.length === 0) {
+        return [];
     }
 
-    return Array.from(seen);
+    const level = sectorInfo[0].level;
+
+    // If it's already a level 4 sector (most detailed), just return itself
+    if (level === 4) {
+        return [Number(sectorId)];
+    }
+
+    // For other levels, get all subsectors
+    const result = await dr
+        .select({
+            id: sectorTable.id,
+            level: sectorTable.level
+        })
+        .from(sectorTable)
+        .where(
+            or(
+                eq(sectorTable.id, Number(sectorId)),
+                and(
+                    sql`${sectorTable.id}::text LIKE ${sectorId}::text || '%'`,
+                    sql`LENGTH(${sectorTable.id}::text) > LENGTH(${sectorId}::text)`
+                )
+            )
+        );
+
+    return result.map(r => r.id);
 };
 
 /**
@@ -510,8 +532,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             const parsedSubSectorId = parseInt(filters.subSectorId, 10);
             sectorIds = await getAllSubsectorIds(parsedSubSectorId);
             console.log('Expanded sector IDs from subSector:', sectorIds);
-            // sectorIds = !isNaN(parsedSubSectorId) ? [parsedSubSectorId] : [];
-            // console.log('Using specific subsector ID:', parsedSubSectorId);
+            console.log('Using specific subsector ID:', parsedSubSectorId);
         } else if (filters.sectorId) {
             // If only parent sector is selected, get all its subsectors
             sectorIds = await getAllSubsectorIds(filters.sectorId);
@@ -540,7 +561,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
 
         // Add sector filtering using sectorDisasterRecordsRelationTable
         if (sectorIds.length > 0) {
-            // console.log('Adding sector filter for IDs:', sectorIds);
+            console.log('Adding sector filter for IDs:', sectorIds);
             const sectorCondition = exists(
                 dr.select()
                     .from(sectorDisasterRecordsRelationTable)
@@ -605,8 +626,8 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             .select()
             .from(disasterRecordsTable);
 
-        console.log("🧾 [PASSING FILTERS]: GeographicImpactFilters");
-        console.table(filters);
+        // console.log("🧾 [PASSING FILTERS]: GeographicImpactFilters");
+        // console.table(filters);
 
         // Hazard filtering with improved hierarchical structure handling
         await applyHazardFilters(
@@ -634,9 +655,9 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         const filteredDisasterQuery = queryBuilder.where(and(...baseConditions));
 
         // ✅ Extract hazard ID values for debug
-        console.log('HazardType:', filters.hazardTypeId);
-        console.log('HazardCluster:', filters.hazardClusterId);
-        console.log('SpecificHazard:', filters.specificHazardId);
+        // console.log('HazardType:', filters.hazardTypeId);
+        // console.log('HazardCluster:', filters.hazardClusterId);
+        // console.log('SpecificHazard:', filters.specificHazardId);
         // console.log('Hazard-related WHERE clause:', filteredDisasterQuery.toSQL().sql);
 
         // ✅ Check actual hazard values in query
@@ -658,7 +679,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             )
             .where(and(...baseConditions));
 
-        console.log('🧪 Matching record hazard fields:', debugHazards);
+        // console.log('🧪 Matching record hazard fields:', debugHazards);
 
         // Get divisions with complete fields and apply geographic level filter
         const baseDivisionsQuery = dr
@@ -736,8 +757,23 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                 }
 
                 // Calculate impact values
-                const { total: totalDamage } = await aggregateDamagesData(disasterRecords);
-                const { total: totalLoss } = await aggregateLossesData(disasterRecords);
+                const damageResult = await aggregateDamagesData(disasterRecords, sectorIds);
+                const lossResult = await aggregateLossesData(disasterRecords, sectorIds);
+                const { total: totalDamage } = damageResult;
+                const { total: totalLoss } = lossResult;
+
+                // Merge the yearly breakdowns
+                const byYear: Map<number, number> = new Map();
+                for (const [year, value] of damageResult.byYear) {
+                    byYear.set(year, value);
+                }
+                for (const [year, value] of lossResult.byYear) {
+                    if (byYear.has(year)) {
+                        byYear.set(year, byYear.get(year)! + value);
+                    } else {
+                        byYear.set(year, value);
+                    }
+                }
 
                 values[division.id.toString()] = {
                     totalDamage,
@@ -862,7 +898,7 @@ async function getDisasterRecordsForDivision(
             conditions.push(
                 inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
             );
-            console.log(`✔ Sector filter applied: ${sectorIds.length} sectors`);
+            // console.log(`✔ Sector filter applied: ${sectorIds.length} sectors`);
         }
 
         // Add date filters if specified
@@ -956,18 +992,105 @@ async function getDisasterRecordsForDivision(
         console.log(`✔ Division path filter applied: ${descendantIds.length} divisions`);
 
         const pathCondition = sql.raw(
-            `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.features[0].properties.division_ids[*] ? (${quoted})')`
+            `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.properties.division_ids[*] ? (${quoted})')`
         );
         console.log("✔ JSONB path condition constructed for spatial filter");
-
 
         // First try to get records with spatial data
         const spatialQuery = query.where(
             and(
                 ...conditions,
                 sql`${disasterRecordsTable.spatialFootprint} IS NOT NULL`,
-                sql.raw(
-                    `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.features[0].properties.division_ids[*] ? (${quoted})')`
+                or(
+                    sql.raw(
+                        `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.properties.division_ids[*] ? (${quoted})')`
+                    ),
+                    sql.raw(
+                        `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_ids[*] ? (${quoted})')`
+                    ),
+                    sql.raw(
+                        `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_id ? (@ == ${divisionId})')`
+                    ),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+WHERE footprint->>'geographic_level' IN (
+    SELECT name->>'en' 
+    FROM "division"
+    WHERE id = ${divisionId}
+)
+                    )`),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+WHERE footprint->'map_coords'->>'mode' = 'markers'
+AND EXISTS (
+    SELECT 1 FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+    WHERE ST_Contains(
+        (SELECT geom FROM "division" WHERE id = ${divisionId}),
+        ST_SetSRID(ST_MakePoint(
+            (coord->>1)::float,  -- longitude (second element)
+            (coord->>0)::float   -- latitude (first element)
+        ), 4326)
+    )
+)
+                    )`),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+WHERE footprint->'map_coords'->>'mode' = 'circle'
+AND ST_Intersects(
+    (SELECT geom FROM "division" WHERE id = ${divisionId}),
+    ST_Buffer(
+        ST_SetSRID(ST_MakePoint(
+            (footprint->'map_coords'->'center'->>1)::float,
+            (footprint->'map_coords'->'center'->>0)::float
+        ), 4326),
+        (footprint->'map_coords'->>'radius')::float / 111320.0  -- Convert meters to degrees (approximate)
+    )
+)
+                    )`),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+WHERE footprint->'map_coords'->>'mode' = 'rectangle'
+AND ST_Intersects(
+    (SELECT geom FROM "division" WHERE id = ${divisionId}),
+    ST_MakeEnvelope(
+        (footprint->'map_coords'->'coordinates'->0->1)::float,  -- lon1
+        (footprint->'map_coords'->'coordinates'->0->0)::float,  -- lat1
+        (footprint->'map_coords'->'coordinates'->1->1)::float,  -- lon2
+        (footprint->'map_coords'->'coordinates'->1->0)::float,  -- lat2
+        4326
+    )
+)
+                    )`),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+WHERE footprint->'map_coords'->>'mode' = 'polygon'
+AND ST_Intersects(
+    (SELECT geom FROM "division" WHERE id = ${divisionId}),
+    ST_SetSRID(ST_MakePolygon(
+        ST_MakeLine(
+            ARRAY(
+                SELECT ST_MakePoint(
+                    (coord->>1)::float,
+                    (coord->>0)::float
+                )
+                FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+            )
+        )
+    ), 4326)
+)
+                    )`),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
+                        jsonb_array_elements(footprint->'geojson'->'features') AS feature
+                        WHERE feature->'geometry'->>'type' = 'Point'
+                        AND ST_Contains(
+                            (SELECT geom FROM "division" WHERE id = ${divisionId}),
+                            ST_SetSRID(ST_MakePoint(
+                                (feature->'geometry'->'coordinates'->>0)::float,
+                                (feature->'geometry'->'coordinates'->>1)::float
+                            ), 4326)
+                        )
+                    )`)
                 )
             )
         );
@@ -978,74 +1101,61 @@ async function getDisasterRecordsForDivision(
         // console.log("🚀 Executing spatial query (SQL + params)");
         // console.log(spatialQuery.toSQL());
 
-
         // Execute spatial query
         const spatialRecords = await spatialQuery;
-        // console.log(`Spatial query returned ${spatialRecords.length} records`);
-        // console.log("Matching disaster record IDs:", spatialRecords.map(r => r.id));
+        console.log(`Spatial query returned ${spatialRecords.length} records`);
+        console.log("Matching disaster record IDs:", spatialRecords.map(r => r.id));
         console.log(`✔ Found ${spatialRecords.length} matching disaster records`);
 
         const divisionIdStr = divisionId.toString();
+        const regionResult = await dr.execute(sql`
+            SELECT name->>'en' as name FROM "division" WHERE name->>'en' IS NOT NULL
+          `);
+        const regionNames = regionResult.rows.map(r => r.name);
+        const regionNameSet = new Set(regionNames);
+        const descendantStrSet = new Set(descendantIds.map(String));
 
         const confirmed = spatialRecords.filter((record) => {
             const footprint = record.spatialFootprint;
-            if (!Array.isArray(footprint)) return false;
+            if (!Array.isArray(footprint)) {
+                console.warn(`[SKIP ${record.id}] No valid spatial_footprint array`);
+                console.log(`Spatial footprint: ${footprint}`);
+                console.debug("[FilterFail] spatialFootprint is not an array", record);
+                return false;
+            }
 
             return footprint.some((feature) => {
-                const info = feature.geojson?.features?.[0]?.properties;
-                if (!info) return false;
+                const geojson = feature.geojson || {};
+                const props = geojson.properties || {};
+                const dts = geojson.dts_info || {};
 
-                const ids = info.division_ids || [info.division_id];
-                return Array.isArray(ids) ? ids.includes(divisionIdStr) : ids === divisionIdStr;
+                // Check all possible division ID locations
+                const ids1 = Array.isArray(props.division_ids) ? props.division_ids.map(String) : [];
+                const ids2 = Array.isArray(dts.division_ids) ? dts.division_ids.map(String) : [];
+                const id2 = dts.division_id ? String(dts.division_id) : null;
+
+                const matchedId = [...ids1, ...ids2, id2].some(id => id && descendantStrSet.has(id));
+                const geographicLevel = feature.geographic_level;
+                const matchedName = regionNameSet.has(geographicLevel);
+
+                if (!matchedId && !matchedName) {
+                    console.debug(`[NO ID MATCH] record ${record.id}`, {
+                        geographic_level: geographicLevel,
+                        props_ids: ids1,
+                        dts_ids: ids2,
+                        dts_single_id: id2
+                    });
+                    return false;
+                }
+
+                // If we have a division ID match, that's sufficient
+                return true;
             });
         });
 
-        // console.log('Sample footprint:', JSON.stringify(spatialRecords[0]?.spatialFootprint, null, 2));
-
-        // console.dir(spatialRecords[0]?.spatialFootprint, { depth: null });
-
-
-        console.log("After verification:", confirmed.length, "records confirmed to contain division", divisionId);
-
-        // Verify each record actually contains the division ID in its footprint
-        const verifiedRecords = [];
-        for (const record of spatialRecords) {
-            if (!record.spatialFootprint) continue;
-
-            try {
-                const footprint = typeof record.spatialFootprint === 'string'
-                    ? JSON.parse(record.spatialFootprint)
-                    : record.spatialFootprint;
-
-                // Check if any item in the footprint contains this division ID
-                // const hasMatchingDivision = footprint.some((item: any) => 
-                //     item?.geojson?.features?.[0]?.properties?.division_ids?.includes(parseInt(divisionId))
-                // );
-
-                // Convert allIds to strings to match JSON content
-                const allIds = new Set(descendantIds.map((id) => String(id)));
-
-                const hasMatchingDivision = footprint.some((item: any) => {
-                    const ids = item?.geojson?.features?.[0]?.properties?.division_ids;
-                    if (!Array.isArray(ids)) return false;
-                    return ids.some((id: any) => allIds.has(String(id)));
-                });
-
-                if (hasMatchingDivision) {
-                    verifiedRecords.push({
-                        id: record.id,
-                        spatialFootprint: record.spatialFootprint
-                    });
-                }
-            } catch (err) {
-                console.warn(`Error parsing spatialFootprint for record ${record.id}:`, err);
-                continue;
-            }
-        }
-
         // Use verified records for the rest of the function
         spatialRecords.length = 0;
-        spatialRecords.push(...verifiedRecords);
+        spatialRecords.push(...confirmed);
         console.log(`✔ Verified ${confirmed.length} records for Division ${divisionId}`);
 
         // If no spatial matches, try text matching as fallback
@@ -1078,11 +1188,11 @@ async function getDisasterRecordsForDivision(
                     ));
 
                     const textQueryStr = textQuery.toSQL();
-                    console.log(`[TEXT MATCH] SQL Query: ${textQueryStr.sql}`);
-                    console.log('Query parameters:', textQueryStr.params);
+                    // console.log(`[TEXT MATCH] SQL Query: ${textQueryStr.sql}`);
+                    // console.log('Query parameters:', textQueryStr.params);
 
                     const textRecords = await textQuery;
-                    console.log(`[TEXT MATCH] ➜ Returned ${textRecords.length} additional records`);
+                    // console.log(`[TEXT MATCH] ➜ Returned ${textRecords.length} additional records`);
 
                     return [...spatialRecords, ...textRecords].map(r => r.id);
                 }
@@ -1097,9 +1207,6 @@ async function getDisasterRecordsForDivision(
         return [];
     }
 }
-
-
-
 
 /**
  * Fetches comprehensive geographic impact data
@@ -1153,15 +1260,18 @@ export async function fetchGeographicImpactData(
         }
 
         // Aggregate damages and losses with proper numeric handling
-        const { total: totalDamage } = await aggregateDamagesData(recordIds);
-        const { total: totalLoss } = await aggregateLossesData(recordIds);
+        const damageResult = await aggregateDamagesData(recordIds, []);
+        const lossResult = await aggregateLossesData(recordIds, []);
+
+        const { total: totalDamage } = damageResult;
+        const { total: totalLoss } = lossResult;
 
         // Merge the yearly breakdowns
         const byYear: Map<number, number> = new Map();
-        for (const [year, value] of await aggregateDamagesData(recordIds).then(result => result.byYear)) {
+        for (const [year, value] of damageResult.byYear) {
             byYear.set(year, value);
         }
-        for (const [year, value] of await aggregateLossesData(recordIds).then(result => result.byYear)) {
+        for (const [year, value] of lossResult.byYear) {
             if (byYear.has(year)) {
                 byYear.set(year, byYear.get(year)! + value);
             } else {
@@ -1202,44 +1312,74 @@ export async function fetchGeographicImpactData(
  * @param recordIds - Disaster record IDs to aggregate
  * @returns Total damage and yearly breakdown
  */
-async function aggregateDamagesData(recordIds: string[]): Promise<{ total: number, byYear: Map<number, number> }> {
+async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): Promise<{ total: number, byYear: Map<number, number> }> {
     try {
         if (recordIds.length === 0) {
             return { total: 0, byYear: new Map() };
         }
 
-        // Query damage data with proper numeric casting
-        const damageData = await dr
+        // First get sector overrides
+        const sectorOverrides = await dr
             .select({
                 year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
                 totalDamage: sql<string>`COALESCE(SUM(
                     CASE 
                         WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
                             COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
-                        ELSE
-                            COALESCE((
-                                SELECT 
-                                    CASE 
-                                        WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
-                                            COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
-                                        ELSE
-                                            COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
-                                            COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
-                                    END
-                                FROM ${damagesTable}
-                                WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
-                                AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
-                                LIMIT 1
-                            ), 0)::numeric
+                        ELSE 0
                     END
                 ), 0)`
             })
-            .from(sectorDisasterRecordsRelationTable)
+            .from(disasterRecordsTable)
             .innerJoin(
-                disasterRecordsTable,
+                sectorDisasterRecordsRelationTable,
                 eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id)
             )
-            .where(inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds))
+            .where(
+                and(
+                    inArray(disasterRecordsTable.id, recordIds),
+                    sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
+                )
+            )
+            .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
+            .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
+
+        // Then get detailed damages
+        const detailedDamages = await dr
+            .select({
+                year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
+                totalDamage: sql<string>`COALESCE(SUM(
+                    CASE 
+                        WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                            COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                        ELSE
+                            COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                            COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                    END
+                ), 0)`
+            })
+            .from(disasterRecordsTable)
+            .innerJoin(
+                damagesTable,
+                eq(damagesTable.recordId, disasterRecordsTable.id)
+            )
+            .where(
+                and(
+                    inArray(disasterRecordsTable.id, recordIds),
+                    sectorIds ? inArray(damagesTable.sectorId, sectorIds) : undefined,
+                    not(exists(
+                        dr.select()
+                            .from(sectorDisasterRecordsRelationTable)
+                            .where(
+                                and(
+                                    eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                                    eq(sectorDisasterRecordsRelationTable.withDamage, true),
+                                    sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
+                                )
+                            )
+                    ))
+                )
+            )
             .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
             .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
 
@@ -1247,13 +1387,24 @@ async function aggregateDamagesData(recordIds: string[]): Promise<{ total: numbe
         let total = 0;
         const byYear = new Map<number, number>();
 
-        for (const row of damageData) {
+        // Process sector overrides first
+        for (const row of sectorOverrides) {
             const year = parseInt(row.year);
             if (isNaN(year)) continue;
 
             const damage = safeMoneyToNumber(row.totalDamage);
             total += damage;
-            byYear.set(year, damage);
+            byYear.set(year, (byYear.get(year) || 0) + damage);
+        }
+
+        // Then add detailed damages where there are no overrides
+        for (const row of detailedDamages) {
+            const year = parseInt(row.year);
+            if (isNaN(year)) continue;
+
+            const damage = safeMoneyToNumber(row.totalDamage);
+            total += damage;
+            byYear.set(year, (byYear.get(year) || 0) + damage);
         }
 
         return { total, byYear };
@@ -1273,49 +1424,80 @@ async function aggregateDamagesData(recordIds: string[]): Promise<{ total: numbe
  * @param recordIds - Disaster record IDs to aggregate
  * @returns Total losses and yearly breakdown
  */
-async function aggregateLossesData(recordIds: string[]): Promise<{ total: number, byYear: Map<number, number> }> {
+async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): Promise<{ total: number, byYear: Map<number, number> }> {
     try {
         if (recordIds.length === 0) {
             return { total: 0, byYear: new Map() };
         }
 
-        // Query loss data with proper numeric casting
-        const lossData = await dr
+        // First get sector overrides
+        const sectorOverrides = await dr
             .select({
                 year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
                 totalLoss: sql<string>`COALESCE(SUM(
                     CASE 
                         WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
                             COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
-                        ELSE
-                            COALESCE((
-                                SELECT 
-                                    CASE 
-                                        WHEN ${lossesTable.publicCostTotalOverride} = true THEN
-                                            COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
-                                        ELSE
-                                            COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
-                                    END +
-                                    CASE 
-                                        WHEN ${lossesTable.privateCostTotalOverride} = true THEN
-                                            COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
-                                        ELSE
-                                            COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
-                                    END
-                                FROM ${lossesTable}
-                                WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
-                                AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
-                                LIMIT 1
-                            ), 0)::numeric
+                        ELSE 0
                     END
                 ), 0)`
             })
-            .from(sectorDisasterRecordsRelationTable)
+            .from(disasterRecordsTable)
             .innerJoin(
-                disasterRecordsTable,
+                sectorDisasterRecordsRelationTable,
                 eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id)
             )
-            .where(inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds))
+            .where(
+                and(
+                    inArray(disasterRecordsTable.id, recordIds),
+                    sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
+                )
+            )
+            .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
+            .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
+
+        // Then get detailed losses
+        const detailedLosses = await dr
+            .select({
+                year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
+                totalLoss: sql<string>`COALESCE(SUM(
+                    CASE 
+                        WHEN ${lossesTable.publicCostTotalOverride} = true THEN
+                            COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
+                        ELSE
+                            COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric +
+                            COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                    END +
+                    CASE 
+                        WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                            COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                        ELSE
+                            COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                    END
+                ), 0)`
+            })
+            .from(disasterRecordsTable)
+            .innerJoin(
+                lossesTable,
+                eq(lossesTable.recordId, disasterRecordsTable.id)
+            )
+            .where(
+                and(
+                    inArray(disasterRecordsTable.id, recordIds),
+                    sectorIds ? inArray(lossesTable.sectorId, sectorIds) : undefined,
+                    not(exists(
+                        dr.select()
+                            .from(sectorDisasterRecordsRelationTable)
+                            .where(
+                                and(
+                                    eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
+                                    eq(sectorDisasterRecordsRelationTable.withLosses, true),
+                                    sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
+                                )
+                            )
+                    ))
+                )
+            )
             .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
             .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
 
@@ -1323,13 +1505,24 @@ async function aggregateLossesData(recordIds: string[]): Promise<{ total: number
         let total = 0;
         const byYear = new Map<number, number>();
 
-        for (const row of lossData) {
+        // Process sector overrides first
+        for (const row of sectorOverrides) {
             const year = parseInt(row.year);
             if (isNaN(year)) continue;
 
             const loss = safeMoneyToNumber(row.totalLoss);
             total += loss;
-            byYear.set(year, loss);
+            byYear.set(year, (byYear.get(year) || 0) + loss);
+        }
+
+        // Then add detailed losses where there are no overrides
+        for (const row of detailedLosses) {
+            const year = parseInt(row.year);
+            if (isNaN(year)) continue;
+
+            const loss = safeMoneyToNumber(row.totalLoss);
+            total += loss;
+            byYear.set(year, (byYear.get(year) || 0) + loss);
         }
 
         return { total, byYear };

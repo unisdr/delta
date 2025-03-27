@@ -486,6 +486,16 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters }: Impact
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
           <h3 className="mt-2 text-sm font-medium">No geographic data available</h3>
+          <p className="mt-1 text-sm text-gray-400">
+            {filters?.sectorId 
+              ? 'No geographic impact data found for the selected filters. Try adjusting your selection.' 
+              : 'Please select a sector to view geographic impact data.'}
+          </p>
+          {filters?.sectorId && (
+            <p className="mt-2 text-xs text-gray-400">
+              This could mean either no impacts were recorded, or the data is still being processed.
+            </p>
+          )}
         </div>
       </div>
     );

@@ -112,65 +112,53 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
       try {
         const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
         const activeFilters = filters || DEFAULT_FILTERS;
-
-        // Add all non-null filters to URL
+  
         Object.entries(activeFilters).forEach(([key, value]) => {
           if (value !== null && value !== '') {
             url.searchParams.append(key, value);
           }
         });
-
+  
         const response = await fetch(url.toString());
         const data = await response.json();
-
-        if (!response.ok) {
-          // Handle specific error cases
-          if (response.status === 404) {
-            setGeoData({ type: "FeatureCollection", features: [] });
-            return;
-          }
-          throw new Error(data.message || 'Failed to fetch geographic data');
+  
+        // Handle both 404 and explicit error messages
+        if (!response.ok || data.error) {
+          const errorMessage = data.error === "No divisions found for the given criteria"
+            ? "No administrative divisions are available in the system. Please contact your administrator to set up geographic boundaries."
+            : data.message || data.error || "Failed to fetch geographic data";
+          setError(errorMessage);
+          setGeoData({ type: "FeatureCollection", features: [] });
+          return;
         }
-
-        // Validate response format
+  
         if (!data || !data.features) {
           setGeoData({ type: "FeatureCollection", features: [] });
           return;
         }
-
+  
         setGeoData(data);
       } catch (error) {
         console.error('Error fetching geographic data:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch geographic data');
-        // Set empty data to trigger no-data UI
         setGeoData({ type: "FeatureCollection", features: [] });
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [filters]);
-
-  if (error) {
-    return (
-      <section className="dts-page-section">
-        <div className="mg-container">
-          <div className="alert alert-error">
-            {error}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
+  
   return (
     <section className="dts-page-section">
       <div className="mg-container">
         <h2 className="dts-heading-2">{sectionTitle()}</h2>
         <p className="dts-body-text mb-6">Distribution of impacts across different geographic levels</p>
+  
         <div className="map-section">
           <h2 className="mg-u-sr-only" id="tablist01">Geographic Impact View</h2>
+  
           <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
             <li role="presentation">
               <button
@@ -201,8 +189,18 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
               </button>
             </li>
           </ul>
+  
           <div id="tabpanel01" role="tabpanel" aria-labelledby="tab01" hidden={selectedTab !== 'tab01'}>
-            {loading ? (
+            {error ? (
+              <div className="map-error">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+                <div className="map-error-message">
+                  {error}
+                </div>
+              </div>
+            ) : loading ? (
               <div className="map-loading">
                 <div className="loading-spinner"></div>
                 <p>Loading map data...</p>
@@ -219,8 +217,18 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
               />
             )}
           </div>
+  
           <div id="tabpanel02" role="tabpanel" aria-labelledby="tab02" hidden={selectedTab !== 'tab02'}>
-            {loading ? (
+            {error ? (
+              <div className="map-error">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+                <div className="map-error-message">
+                  {error}
+                </div>
+              </div>
+            ) : loading ? (
               <div className="map-loading">
                 <div className="loading-spinner"></div>
                 <p>Loading map data...</p>
@@ -241,4 +249,5 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
       </div>
     </section>
   );
+  
 }
