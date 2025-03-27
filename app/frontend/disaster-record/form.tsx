@@ -20,22 +20,16 @@ import {
 import {useEffect, useState, useRef} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
-import {ContentRepeater} from "~/components/ContentRepeater";
-import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
-import {TreeView} from "~/components/TreeView";
-
 import {ContentPicker} from "~/components/ContentPicker";
 import {contentPickerConfig} from "~/routes/disaster-record+/content-picker-config.js";
 import AuditLogHistory from "~/components/AuditLogHistory";
 import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
 import {HipHazardInfo} from "~/frontend/hip/hip";
 
-import SpatialFootprintMapViewer from "~/components/SpatialFootprintMapViewer";
-
-import {rewindGeoJSON} from '~/utils/spatialUtils'
-
 import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
-import { AttachmentsFormView } from "~/frontend/attachementsFormView";
+import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
+import { AttachmentsFormView } from "~/frontend/attachmentsFormView";
+import { AttachmentsView } from "~/frontend/attachmentsView";
 
 import {UserForFrontend} from "~/util/auth";
 
@@ -123,31 +117,6 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 	useEffect(() => {
 	}, []);
 
-	const dialogTreeViewRef = useRef<any>(null);
-	const treeViewRef = useRef<any>(null);
-	const contentReapeaterRef = useRef<any>(null);
-	const treeViewDiscard = (e?: any) => {
-		if (e) e.preventDefault();
-		dialogTreeViewRef.current?.close();
-		treeViewRef.current.treeViewClear();
-	}
-	const treeViewOpen = (e: any) => {
-		e.preventDefault();
-		dialogTreeViewRef.current?.showModal();
-
-		let contHeight = [] as number[];
-		contHeight[0] = (dialogTreeViewRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[1] = (dialogTreeViewRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[2] = (dialogTreeViewRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[3] = (dialogTreeViewRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
-		let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - 100;
-
-		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-		if (dtsFormBody) {
-			dtsFormBody.style.height = `${getHeight - (window.innerHeight - getHeight)}px`;
-		}
-	}
-
 	let hazardousEventLinkInitial: "none" | "disaster_event" = "none"
 	if (props.fields.disasterEventId) {
 		hazardousEventLinkInitial = "disaster_event"
@@ -229,12 +198,7 @@ interface DisasterRecordsViewProps {
 export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 	const item = props.item;
 	const auditLogs = props.auditLogs;
-	const dataSource = (item as any)?.disasterRecord || []; console.log('item', item);
-
-	const handlePreviewMap = (e: any) => {
-		e.preventDefault();
-		previewMap(JSON.stringify((props.item.spatialFootprint)));
-	};
+	const dataSource = (item as any)?.disasterRecord || [];
 
 	return (
 		<ViewComponent
@@ -270,143 +234,18 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 						<p key="disasterEventId">Disaster Event: {(item as any).cpDisplayName || ""}</p>
 					),
 					spatialFootprint: (
-						<div>
-							<p>Spatial Footprint:</p>
-							{(() => {
-								try {
-									let footprints: any[] = [];
-
-									if (props?.item?.spatialFootprint) {
-										if (Array.isArray(props.item.spatialFootprint)) {
-											footprints = props.item.spatialFootprint;
-										} else if (typeof props.item.spatialFootprint === "string") {
-											try {
-												const parsed = JSON.parse(props.item.spatialFootprint);
-												footprints = Array.isArray(parsed) ? parsed : [];
-											} catch (error) {
-												console.error("Invalid JSON in spatialFootprint:", error);
-												footprints = [];
-											}
-										} else {
-											console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
-											footprints = [];
-										}
-									}
-									return (
-										<>
-											<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
-												<thead>
-													<tr style={{backgroundColor: "#f4f4f4"}}>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Title</th>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Option</th>
-													</tr>
-												</thead>
-												<tbody>
-													{footprints.map((footprint: any, index: number) => {
-														try {
-															const option = footprint.map_option || "Unknown Option";
-															return (
-																<tr key={footprint.id || index}>
-																	<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = [{"geojson": footprint.geojson}]; previewMap(JSON.stringify(newGeoJson));}}>
-																			{footprint.title}
-																		</a>
-																	</td>
-																	<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
-																			{option}
-																		</a>
-																	</td>
-																</tr>
-															);
-														} catch {
-															return (
-																<tr key={index}>
-																	<td style={{border: "1px solid #ddd", padding: "8px"}}>{footprint.title}</td>
-																	<td style={{border: "1px solid #ddd", padding: "8px", color: "red"}}>Invalid Data</td>
-																</tr>
-															);
-														}
-													})}
-												</tbody>
-											</table>
-											<SpatialFootprintMapViewer dataSource={dataSource} filterCaption="Spatial Footprint" />
-										</>
-									);
-
-								} catch (error) {
-									console.error("Error processing spatialFootprint:", error);
-									return <p>Error loading spatialFootprint data.</p>;
-								}
-							})()}
-						</div>
+						<SpatialFootprintView
+							initialData={item?.spatialFootprint || []}
+							mapViewerOption={1}
+							mapViewerDataSources={dataSource}
+						/>
 					),
 					attachments: (
-						<>
-							<p>Attachments:</p>
-							{(() => {
-								try {
-									let attachments: any[] = []; // Ensure it's always an array
-
-									if (props?.item?.attachments) {
-										if (Array.isArray(props.item.attachments)) {
-											attachments = props.item.attachments;
-										} else if (typeof props.item.attachments === "string") {
-											try {
-												const parsed = JSON.parse(props.item.attachments);
-												attachments = Array.isArray(parsed) ? parsed : [];
-											} catch (error) {
-												console.error("Invalid JSON in attachments:", error);
-												attachments = [];
-											}
-										} else {
-											console.warn("Unexpected type for attachments:", typeof props.item.attachments);
-											attachments = [];
-										}
-									}
-
-									return attachments.length > 0 ? (
-										<table style={{border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem'}}>
-											<thead>
-												<tr style={{backgroundColor: '#f2f2f2'}}>
-													<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Title</th>
-													<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>Tags</th>
-													<th style={{border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal'}}>File/URL</th>
-												</tr>
-											</thead>
-											<tbody>
-												{(attachments).map((attachment: any) => {
-													const tags = attachment.tag
-														? (attachment.tag).map((tag: any) => tag.name).join(", ")
-														: "N/A";
-													const fileOrUrl =
-														attachment.file_option === "File" && attachment.file
-															? (
-																<a href={`/disaster-record/file-viewer/?name=${props.item.id}/${attachment.file.name.split("/").pop()}&loc=record`} target="_blank" rel="noopener noreferrer">
-																	{attachment.file.name.split("/").pop()}
-																</a>
-															)
-															: attachment.file_option === "Link"
-																? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
-																: "N/A";
-
-													return (
-														<tr key={attachment.id} style={{borderBottom: '1px solid gray'}}>
-															<td style={{border: '1px solid #ddd', padding: '8px'}}>{attachment.title || "N/A"}</td>
-															<td style={{border: '1px solid #ddd', padding: '8px'}}>{tags}</td>
-															<td style={{border: '1px solid #ddd', padding: '8px'}}>{fileOrUrl}</td>
-														</tr>
-													);
-												})}
-											</tbody>
-										</table>
-									) : (<></>);
-								} catch (error) {
-									console.error("Error processing attachments:", error);
-									return <p>Error loading attachments.</p>;
-								}
-							})()}
-						</>
+						<AttachmentsView
+							id={item.id}
+							initialData={item?.attachments || []}
+							file_viewer_url="/disaster-record/file-viewer"
+						/>
 					),
 				}}
 			/>

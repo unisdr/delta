@@ -10,11 +10,11 @@ import {
 import {DisruptionFields, DisruptionViewModel} from "~/backend.server/models/disruption"
 
 import {useRef} from 'react';
-import {ContentRepeater} from "~/components/ContentRepeater";
-import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
-import {TreeView} from "~/components/TreeView";
 
-import { rewindGeoJSON } from '~/utils/spatialUtils'
+import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
+import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
+import { AttachmentsFormView } from "~/frontend/attachmentsFormView";
+import { AttachmentsView } from "~/frontend/attachmentsView";
 
 export const route = "/disaster-record/edit-sub/_/disruptions"
 
@@ -33,30 +33,6 @@ export function DisruptionForm(props: DisruptionFormProps) {
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
 	const divisionGeoJSON = props.divisionGeoJSON;
-	const dialogTreeViewRef = useRef<any>(null);
-	const treeViewRef = useRef<any>(null);
-	const contentReapeaterRef = useRef<any>(null);
-	const treeViewDiscard = (e?: any) => {
-		if (e) e.preventDefault();
-		dialogTreeViewRef.current?.close();
-		treeViewRef.current.treeViewClear();
-	}
-	const treeViewOpen = (e: any) => {
-		e.preventDefault();
-		dialogTreeViewRef.current?.showModal();
-
-		let contHeight = [] as number[];
-		contHeight[0] = (dialogTreeViewRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[1] = (dialogTreeViewRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[2] = (dialogTreeViewRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[3] = (dialogTreeViewRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
-		let getHeight = contHeight[0] - contHeight[1] - contHeight[2];
-
-		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-		if (dtsFormBody) {
-			dtsFormBody.style.height = `${window.innerHeight-getHeight}px`;
-		}
-	}
 
 	return (
 		<FormView
@@ -78,319 +54,23 @@ export function DisruptionForm(props: DisruptionFormProps) {
 				),
 				spatialFootprint: (
 					<Field key="spatialFootprint" label="">
-						<ContentRepeater
+						<SpatialFootprintFormView
 							divisions={divisionGeoJSON}
-							ctryIso3={ctryIso3}
-							caption="Spatial Footprint"
-							ref={contentReapeaterRef}
-							id="spatialFootprint"
-							mapper_preview={true}
-							table_columns={[
-								{type: "dialog_field", dialog_field_id: "title", caption: "Title", width: "40%"},
-								{
-									type: "custom",
-									caption: "Option",
-									render: (item) => {
-										if (item.map_option === "Map Coordinates") {
-											return (
-												<>
-													<span>Map Coordinates</span>
-												</>
-											);
-										} else if (item.map_option === "Geographic Level") {
-											return (
-												<>
-													<span>Geographic Level</span>
-												</>
-											);
-										}
-									},
-									width: "40%",
-								},
-								{type: "action", caption: "Action", width: "20%"},
-							]}
-							dialog_fields={[
-								{id: "title", caption: "Title", type: "input", required: true},
-								{
-									id: "map_option",
-									caption: "Option",
-									type: "option",
-									options: ["Map Coordinates", "Geographic Level"],
-									onChange: (e: any) => {
-										const value = e.target.value;
-
-										const mapsCoordsField = document.getElementById("spatialFootprint_map_coords") as HTMLInputElement;
-										const geoLevelField = document.getElementById("spatialFootprint_geographic_level") as HTMLInputElement;
-										const mapsCoordsFieldComponent = mapsCoordsField.closest(".dts-form-component") as HTMLElement;
-										const geoLevelFieldComponent = geoLevelField.closest(".dts-form-component") as HTMLElement;
-										if (value === "Map Coordinates") {
-											mapsCoordsFieldComponent.style.setProperty("display", "block");
-											geoLevelFieldComponent.style.setProperty("display", "none");
-										} else if (value === "Geographic Level") {
-											mapsCoordsFieldComponent.style.setProperty("display", "none");
-											geoLevelFieldComponent.style.setProperty("display", "block");
-										}
-									},
-									show: false
-								},
-								{id: "map_coords", caption: "Map Coordinates", type: "mapper", placeholder: "", mapperGeoJSONField: "geojson"},
-								{
-									id: "geographic_level", caption: "Geographic Level", type: "custom",
-									render: (data: any, _handleFieldChange: any, formData: any) => {
-										return (
-											<>
-												<div className="input-group">
-													<div id="spatialFootprint_geographic_level_container" className="wrapper">
-														<span onClick={() => {previewGeoJSON(formData['geojson'])}}>{data}</span>
-														<a href="#" className="btn" onClick={treeViewOpen}><img src="/assets/icons/globe.svg" alt="Globe SVG File" title="Globe SVG File" />Select</a>
-													</div>
-													<textarea id="spatialFootprint_geographic_level" name="spatialFootprint_geographic_level" className="dts-hidden-textarea" style={{display: "none"}}></textarea>
-												</div>
-											</>
-										);
-									}
-								},
-								{id: "geojson", caption: "Map Coordinates / Geographic Level", type: "hidden", required: true},
-							]}
-							data={(() => {
-								try {
-								  let spatialFootprint: any[] = []; // Ensure it's always an array
-							  
-								  if (props?.fields?.spatialFootprint) {
-									if (Array.isArray(props.fields.spatialFootprint)) {
-									  spatialFootprint = props.fields.spatialFootprint;
-									} else if (typeof props.fields.spatialFootprint === "string") {
-									  try {
-										const parsed = JSON.parse(props.fields.spatialFootprint);
-										spatialFootprint = Array.isArray(parsed) ? parsed : [];
-									  } catch (error) {
-										console.error("Invalid JSON in spatialFootprint:", error);
-										spatialFootprint = [];
-									  }
-									} else {
-									  console.warn("Unexpected type for spatialFootprint:", typeof props.fields.spatialFootprint);
-									  spatialFootprint = [];
-									}
-								  }
-							  
-								  return spatialFootprint;
-								} catch (error) {
-								  console.error("Error processing spatialFootprint:", error);
-								  return [];
-								}
-							  })()}
-							onChange={(items: any) => {
-								try {
-									const parsedItems = Array.isArray(items) ? items : (items);
-								} catch {
-									console.error("Failed to process items.");
-								}
-							}}
+							ctryIso3={ctryIso3 || ""}
+							treeData={treeData ?? []}
+							initialData={props?.fields?.spatialFootprint}
+							geographicLevel={false}
 						/>
-						<dialog ref={dialogTreeViewRef} className="dts-dialog tree-dialog">
-							<div className="dts-dialog__content">
-								<div className="dts-dialog__header" style={{justifyContent: "space-between"}}>
-									<h2 className="dts-heading-2" style={{marginBottom: "0px"}}>Select Geographic level</h2>
-									<a type="button" aria-label="Close dialog" onClick={treeViewDiscard}>
-										<svg aria-hidden="true" focusable="false" role="img">
-											<use href={`/assets/icons/close.svg#close`}></use>
-										</svg>
-									</a>
-								</div>
-								<TreeView
-									dialogMode={false}
-									ref={treeViewRef}
-									treeData={treeData ?? []}
-									caption="Select Geographic level"
-									rootCaption="Geographic levels"
-									onApply={
-										(selectedItems: any) => {
-											if (contentReapeaterRef.current.getDialogRef()) {
-												contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level_container span').textContent = selectedItems.names;
-												selectedItems.data.map((item: any) => {
-													if (item.id == selectedItems.selectedId) {
-														let geometry = JSON.parse(item.geojson);
-														let arrValue = {
-															type: "Feature",
-															geometry: geometry,
-															properties: {
-																division_id: selectedItems.selectedId || null,
-																division_ids: selectedItems.dataIds ? selectedItems.dataIds.split(',') : [],
-																import_id: (item?.importId || null) ? JSON.parse(item.importId) : null,
-																level: (item?.level || null) ? JSON.parse(item.level) : null,
-																name: (item?.name || null) ? JSON.parse(item.name) : null,
-																national_id: (item?.nationalId || null) ? JSON.parse(item.nationalId) : null,
-															}
-														};
-														arrValue = rewindGeoJSON(arrValue);
-														contentReapeaterRef.current.getDialogRef().querySelector('#spatialFootprint_geographic_level').value = JSON.stringify(arrValue);
-														const setField = {id: "geojson", value: arrValue};
-														contentReapeaterRef.current.handleFieldChange(setField, arrValue);
-														const setFieldGoeLevel = {id: "geographic_level", value: selectedItems.names};
-														contentReapeaterRef.current.handleFieldChange(setFieldGoeLevel, selectedItems.names);
-													}
-												});
-												treeViewDiscard();
-											}
-										}
-									}
-									onClose={
-										() => {
-											treeViewDiscard();
-										}
-									}
-									onRenderItemName={
-										(item: any) => {
-											return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
-										}
-									}
-									appendCss={
-										`
-											ul.tree li div[disable="true"] {
-												color: #ccc;
-											}
-											ul.tree li div[disable="true"] .btn-face.select {
-												display: none;
-											}
-										`
-									}
-									disableButtonSelect={true}
-									showActionFooter={true}
-								/>
-							</div>
-						</dialog>
 					</Field>
 				),
 				attachments: (
 					<Field key="attachments" label="">
-						<ContentRepeater
-							id="attachments"
-							caption="Attachments"
-							dnd_order={true}
+						<AttachmentsFormView
 							save_path_temp="/uploads/temp"
 							file_viewer_temp_url="/disaster-record/file-temp-viewer"
 							file_viewer_url="/disaster-record/file-viewer?loc=disruptions"
 							api_upload_url="/disaster-record/file-pre-upload"
-							table_columns={[
-								{ type: "dialog_field", dialog_field_id: "title", caption: "Title" },
-								{ 
-									type: "custom", caption: "Tags",
-									render: (item: any) => {
-										try {
-											if (!item.tag) {
-												return "N/A"; // Return "N/A" if no tags exist
-											}
-											
-											const tags = (item.tag); // Parse the JSON string
-											if (Array.isArray(tags) && tags.length > 0) {
-												// Map the names and join them with commas
-												return tags.map(tag => tag.name).join(", ");
-											}
-											return "N/A"; // If no tags exist
-										} catch (error) {
-											console.error("Failed to parse tags:", error);
-											return "N/A"; // Return "N/A" if parsing fails
-										}
-									} 
-								},
-								{
-								type: "custom",
-								caption: "File/URL",
-								render: (item) => {
-									let strRet = "N/A"; // Default to "N/A"		
-
-									const fileOption = item?.file_option || "";
-
-									if (fileOption === "File") {
-										// Get the file name or fallback to URL
-										const fullFileName = item.file?.name ? item.file.name.split('/').pop() : item.url;
-									
-										// Truncate long file names while preserving the file extension
-										const maxLength = 30; // Adjust to fit your design
-										strRet = fullFileName;
-									
-										if (fullFileName && fullFileName.length > maxLength) {
-											const extension = fullFileName.includes('.')
-												? fullFileName.substring(fullFileName.lastIndexOf('.'))
-												: '';
-											const baseName = fullFileName.substring(0, maxLength - extension.length - 3); // Reserve space for "..."
-											strRet = `${baseName}...${extension}`;
-										}
-									} else if (fileOption === "Link") {
-										strRet = item.url || "N/A";
-									}
-								
-									return strRet || "N/A"; // Return the truncated name or fallback to "N/A"
-								},
-								},                        
-								{ type: "action", caption: "Action" },
-							]}
-							dialog_fields={[
-								{ id: "title", caption: "Title", type: "input" },
-								{id: "tag", caption: "Tags", type: "tokenfield", dataSource: "/api/disaster-event/tags-sectors"},
-								{
-								id: "file_option",
-								caption: "Option",
-								type: "option",
-								options: ["File", "Link"],
-								onChange: (e) => {
-									const value = e.target.value;
-									const fileField = document.getElementById("attachments_file") as HTMLInputElement;
-									const urlField = document.getElementById("attachments_url") as HTMLInputElement;
-
-									if (fileField && urlField) {
-										const fileDiv = fileField.closest(".dts-form-component") as HTMLElement;
-										const urlDiv = urlField.closest(".dts-form-component") as HTMLElement;
-
-										if (value === "File") {
-											fileDiv?.style.setProperty("display", "block");
-											urlDiv?.style.setProperty("display", "none");
-										} else if (value === "Link") {
-											fileDiv?.style.setProperty("display", "none");
-											urlDiv?.style.setProperty("display", "block");
-										}
-									}
-								},
-								},
-								{ id: "file", caption: "File Upload", type: "file"  }, 
-								{ id: "url", caption: "Link", type: "input", placeholder: "Enter URL" },
-							]}
-							data={(() => {
-								try {
-								  let attachments: any[] = []; // Ensure it's always an array
-							  
-								  if (props?.fields?.attachments) {
-									if (Array.isArray(props.fields.attachments)) {
-									  attachments = props.fields.attachments;
-									} else if (typeof props.fields.attachments === "string") {
-									  try {
-										const parsed = JSON.parse(props.fields.attachments);
-										attachments = Array.isArray(parsed) ? parsed : [];
-									  } catch (error) {
-										console.error("Invalid JSON in attachments:", error);
-										attachments = [];
-									  }
-									} else {
-									  console.warn("Unexpected type for attachments:", typeof props.fields.attachments);
-									  attachments = [];
-									}
-								  }
-							  
-								  return attachments;
-								} catch (error) {
-								  console.error("Error processing attachments:", error);
-								  return [];
-								}
-							  })()}
-							onChange={(items: any) => {
-								try {
-									const parsedItems = Array.isArray(items) ? items : (items);
-									//console.log("Updated Items:", parsedItems);
-									// Save or process `parsedItems` here, e.g., updating state or making an API call
-								} catch {
-									console.error("Failed to process items.");
-								}
-							}}
+							initialData={props?.fields?.attachments}
 						/>
 					</Field>
 				)
@@ -405,11 +85,6 @@ interface DisruptionViewProps {
 }
 
 export function DisruptionView(props: DisruptionViewProps) {
-	const handlePreviewMap = (e: any) => {
-		e.preventDefault();
-		previewMap(JSON.stringify((props.item.spatialFootprint)));
-	};
-
 	return (
 		<ViewComponent
 			path={route}
@@ -429,157 +104,19 @@ export function DisruptionView(props: DisruptionViewProps) {
 						<p key="sectorId">Sector ID: {props.item.sectorId}</p>
 					),
 					spatialFootprint: (
-						<div>
-							<p>Spatial Footprint:</p>
-							{(() => {
-								try {
-									let footprints: any[] = []; // Ensure it's always an array
-
-									if (props?.item?.spatialFootprint) {
-									  if (Array.isArray(props.item.spatialFootprint)) {
-										footprints = props.item.spatialFootprint;
-									  } else if (typeof props.item.spatialFootprint === "string") {
-										try {
-										  const parsed = JSON.parse(props.item.spatialFootprint);
-										  footprints = Array.isArray(parsed) ? parsed : [];
-										} catch (error) {
-										  console.error("Invalid JSON in spatialFootprint:", error);
-										  footprints = [];
-										}
-									  } else {
-										console.warn("Unexpected type for spatialFootprint:", typeof props.item.spatialFootprint);
-										footprints = [];
-									  }
-									}								
-
-									return (
-										<>
-											<table style={{borderCollapse: "collapse", width: "100%", border: "1px solid #ddd", marginBottom: "2rem"}}>
-												<thead>
-													<tr style={{backgroundColor: "#f4f4f4"}}>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Title</th>
-														<th style={{border: "1px solid #ddd", padding: "8px", textAlign: "left", fontWeight: "normal"}}>Option</th>
-													</tr>
-												</thead>
-												<tbody>
-													{footprints.map((footprint: any, index: number) => {
-														try {
-															const option = footprint.map_option || "Unknown Option";
-															return (
-																<tr key={footprint.id || index}>
-																	<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = [{"geojson": footprint.geojson}]; previewMap(JSON.stringify(newGeoJson));}}>
-																			{footprint.title}
-																		</a>
-																	</td>
-																	<td style={{border: "1px solid #ddd", padding: "8px"}}>
-																		<a href="#" onClick={(e) => {e.preventDefault(); const newGeoJson = footprint.geojson; previewGeoJSON(JSON.stringify(newGeoJson));}}>
-																			{option}
-																		</a>
-																	</td>
-																</tr>
-															);
-														} catch {
-															return (
-																<tr key={index}>
-																	<td style={{border: "1px solid #ddd", padding: "8px"}}>{footprint.title}</td>
-																	<td style={{border: "1px solid #ddd", padding: "8px", color: "red"}}>Invalid Data</td>
-																</tr>
-															);
-														}
-													})}
-												</tbody>
-											</table>
-											<button
-												onClick={handlePreviewMap}
-												style={{
-													padding: "10px 16px",
-													border: "1px solid #ddd",
-													backgroundColor: "#f4f4f4",
-													color: "#333",
-													fontSize: "14px",
-													fontWeight: "normal",
-													borderRadius: "4px",
-													marginBottom: "2rem",
-													cursor: "pointer"
-												}}
-											>
-												Map Preview
-											</button>
-										</>
-									);
-
-								} catch {
-									return <p>Invalid JSON format in spatialFootprint.</p>;
-								}
-							})()}
-						</div>
+						<SpatialFootprintView
+							initialData={props?.item?.spatialFootprint || []}
+							mapViewerOption={0}
+							mapViewerDataSources={[]}
+						/>
 					),
 					attachments: (
-						<>
-						{(() => {
-							try {
-							let attachments: any[] = []; // Ensure it's always an array
-
-							if (props?.item?.attachments) {
-								if (Array.isArray(props.item.attachments)) {
-								attachments = props.item.attachments;
-								} else if (typeof props.item.attachments === "string") {
-								try {
-									const parsed = JSON.parse(props.item.attachments);
-									attachments = Array.isArray(parsed) ? parsed : [];
-								} catch (error) {
-									console.error("Invalid JSON in attachments:", error);
-									attachments = [];
-								}
-								} else {
-								console.warn("Unexpected type for attachments:", typeof props.item.attachments);
-								attachments = [];
-								}
-							}
-
-							return attachments.length > 0 ? (
-						  <table style={{ border: '1px solid #ddd', width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
-						  <thead>
-							  <tr style={{ backgroundColor: '#f2f2f2' }}>
-								  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Title</th>
-								  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>Tags</th>
-								  <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left', fontWeight: 'normal' }}>File/URL</th>
-							  </tr>
-						  </thead>
-							<tbody>
-							  {(attachments).map((attachment: any) => {
-								const tags = attachment.tag
-								  ? (attachment.tag).map((tag: any) => tag.name).join(", ")
-								  : "N/A";
-								const fileOrUrl =
-								  attachment.file_option === "File" && attachment.file
-									? (
-									  <a href={`/disaster-record/file-viewer/?name=${props.item.id}/${attachment.file.name.split("/").pop()}&loc=disruptions`} target="_blank" rel="noopener noreferrer">
-										{attachment.file.name.split("/").pop()}
-									  </a>
-									)
-									: attachment.file_option === "Link"
-									? <a href={attachment.url} target="_blank" rel="noopener noreferrer">{attachment.url}</a>
-									: "N/A";
-					
-								return (
-								  <tr key={attachment.id} style={{ borderBottom: '1px solid gray' }}>
-									  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{attachment.title || "N/A"}</td>
-									  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{tags}</td>
-									  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{fileOrUrl}</td>
-								  </tr>
-								);
-							  })}
-							</tbody>
-						  </table>
-							) : (<></>);
-							} catch (error) {
-							console.error("Error processing attachments:", error);
-							return <p>Error loading attachments.</p>;
-							}
-						})()}
-						</>
+						<AttachmentsView
+							id={props.item.id}
+							initialData={props.item?.attachments || []}
+							file_viewer_url="/disaster-record/file-viewer"
+							location="disruptions"
+						/>
 					  ),
 				}}
 
