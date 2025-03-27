@@ -256,7 +256,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
     // Parse divisions and build a map of geodata filenames for quick lookup
     const divisions: {
       [key: string]: {
-				nationalId: string;
+        nationalId: string;
         parent: string;
         geodata: string;
         name: Record<string, string>;
@@ -290,7 +290,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
       });
 
       divisions[id] = {
-				nationalId,
+        nationalId,
         parent,
         geodata,
         name
@@ -568,7 +568,7 @@ async function importDivision(
       parent: string;
       geodata: string;
       name: Record<string, string>;
-			nationalId: string;
+      nationalId: string;
     }
   },
   importId: string,
@@ -645,7 +645,7 @@ async function importDivision(
       await tx
         .update(divisionTable)
         .set({
-					nationalId: division.nationalId != "" ? division.nationalId: null,
+          nationalId: division.nationalId != "" ? division.nationalId : null,
           parentId: parentDbId,
           name: division.name,
           level,
@@ -659,7 +659,7 @@ async function importDivision(
       const [result] = await tx
         .insert(divisionTable)
         .values({
-					nationalId: division.nationalId != "" ? division.nationalId: null,
+          nationalId: division.nationalId != "" ? division.nationalId : null,
           importId,
           parentId: parentDbId,
           name: division.name,
@@ -697,14 +697,15 @@ export function fromForm(formData: Record<string, string>): DivisionInsert {
   const { parentId, ...nameFields } = formData;
 
   const names = Object.entries(nameFields)
-    .filter(([key]) => key.startsWith("name_"))
+    .filter(([key]) => key.startsWith("names[") && key.endsWith("]"))
     .reduce((acc, [key, value]) => {
-      acc[key.slice(5)] = value;
+      const lang = key.slice(6, -1);
+      acc[lang] = value;
       return acc;
-    }, {} as Record<string, string>);
+    }, {} as { [key: string]: string });
 
   return {
-    parentId: parentId ? parseInt(parentId) : null,
+    parentId: parentId ? Number(parentId) : null,
     name: names,
   };
 }
