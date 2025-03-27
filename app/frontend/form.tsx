@@ -19,7 +19,6 @@ import {notifyError} from "./utils/notifications";
 
 import {JsonView, allExpanded, defaultStyles} from 'react-json-view-lite';
 
-import 'react-json-view-lite/dist/index.css';
 import {DeleteButton} from "./components/delete-dialog";
 
 export type FormResponse<T> =

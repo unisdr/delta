@@ -5,7 +5,4 @@
 @import "~/frontend/dtsmap/styles.css";
 @import "../../node_modules/react-toastify/dist/ReactToastify.css";
 @import "~/frontend/editabletable/styles.css";
-
-
-
-
+@import 'react-json-view-lite/dist/index.css';
