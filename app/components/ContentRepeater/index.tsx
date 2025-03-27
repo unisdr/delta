@@ -371,6 +371,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
     } | null,
     marker: any[]; // Add marker as an array of Leaflet markers
     startMarker: any | null; // Add startMarker as a single Leaflet marker
+    popups: any[];
   }>({
     mode: "moveMap",
     polygon: null,
@@ -383,6 +384,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
     rectangleHandle: null,
     marker: [], // Initialize as an empty array
     startMarker: null, // Initialize as null
+    popups: []
   });    
   type InitialDataType = object | null;
   const defaultMapLocation = async (): Promise<{ coords: [number, number]; bounds?: [[number, number], [number, number]] }> => {

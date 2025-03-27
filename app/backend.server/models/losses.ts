@@ -36,7 +36,7 @@ export function fieldsForPubOrPriv(pub: boolean): FormInputDef<LossesFields>[] {
 }
 
 export const fieldsDef: FormInputDef<LossesFields>[] = [
-	{key: "recordId", label: "", type: "other"},
+	{key: "recordId", label: "", type: "uuid"},
 	{key: "sectorId", label: "", type: "other"},
 	{key: "sectorIsAgriculture", label: "", type: "bool"},
 	{

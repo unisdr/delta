@@ -557,6 +557,9 @@ function jsonPayloadExample<T>(
 			case "other":
 				val = "example string";
 				break;
+			case "uuid":
+				val = "f41bd013-23cc-41ba-91d2-4e325f785171"
+				break;
 			case "date":
 				val = new Date().toISOString();
 				break;
@@ -663,7 +666,6 @@ interface FormDeleteArgs {
 	loaderArgs: LoaderFunctionArgs;
 	deleteFn: (id: string) => Promise<DeleteResult>;
 	redirectToSuccess: (id: string, oldRecord?: any) => string;
-	redirectToError?: (id: string, oldRecord?: any) => string;
 	tableName: string;
 	getById: (id: string) => Promise<any>;
 	postProcess?: (id: string, data: any) => Promise<void>;
@@ -677,33 +679,35 @@ export async function formDelete(args: FormDeleteArgs) {
 	}
 	const user = authLoaderGetAuth(args.loaderArgs);
 	const oldRecord = await args.getById(id);
-	let res = await args.deleteFn(id);
-	if (!res.ok) {
-		let u = "";
-		if (args.redirectToError) {
-			u = args.redirectToError(id, oldRecord);
-		} else {
-			u = args.redirectToSuccess(id, oldRecord);
+	try {
+		let res = await args.deleteFn(id);
+		if (!res.ok) {
+			return {
+				error: `Got an error "${res.error}"`
+			}
 		}
-		return redirectWithMessage(request, u, {
-			type: "error",
-			text: "Could not delete item: " + res.error,
+		await logAudit({
+			tableName: args.tableName,
+			recordId: id,
+			userId: user.user.id,
+			action: "delete",
+			oldValues: oldRecord,
 		});
+		if (args.postProcess) {
+			await args.postProcess(id, oldRecord);
+		}
+		return redirectWithMessage(request, args.redirectToSuccess(id, oldRecord), {
+			type: "info",
+			text: "Record deleted",
+		});
+	} catch (e) {
+		if (typeof e === 'object' && e !== null && 'detail' in e && typeof e.detail == "string") {
+			return {
+				error: `Got a database error "${e.detail}"`
+			}
+		}
+		throw e
 	}
-	await logAudit({
-		tableName: args.tableName,
-		recordId: id,
-		userId: user.user.id,
-		action: "delete",
-		oldValues: oldRecord,
-	});
-	if (args.postProcess) {
-		await args.postProcess(id, oldRecord);
-	}
-	return redirectWithMessage(request, args.redirectToSuccess(id, oldRecord), {
-		type: "info",
-		text: "Record deleted",
-	});
 }
 
 interface CreateLoaderArgs<T, E extends Record<string, any> = {}> {
@@ -916,7 +920,6 @@ interface DeleteActionArgs {
 	getById: (id: string) => Promise<any>
 	postProcess?: (id: string, data: any) => Promise<void>
 	redirectToSuccess?: (id: string, oldRecord?: any) => string
-	redirectToError?: (id: string, oldRecord?: any) => string
 }
 
 export function createDeleteAction(args: DeleteActionArgs) {
@@ -932,7 +935,6 @@ export function createDeleteActionWithPerm(
 			loaderArgs: actionArgs,
 			deleteFn: args.delete,
 			redirectToSuccess: args.redirectToSuccess ?? (() => args.baseRoute || ""),
-			redirectToError: args.redirectToError ?? ((id: string) => `${args.baseRoute}/${id}`),
 			tableName: args.tableName,
 			getById: args.getById,
 			postProcess: args.postProcess,
@@ -1191,6 +1193,8 @@ export async function csvImportExample<T>(
 					: "";
 			case "json":
 				return JSON.stringify({"k": "any json"})
+			case "uuid":
+				return "f41bd013-23cc-41ba-91d2-4e325f785171"
 			default:
 				return "";
 		}

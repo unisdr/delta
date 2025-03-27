@@ -14,7 +14,8 @@ import {
 	sql,
 	and,
 	isNull,
-	or
+	or,
+	inArray
 } from "drizzle-orm";
 
 import { configCurrencies } from "~/util/config";
@@ -64,7 +65,7 @@ export const fetchDisasterEvents = async (query?: string) => {
 
 
 
-export async function disasterEventSectorsById(id: any) {
+export async function disasterEventSectorsById(id: any, incAnsestorsDecentants: boolean = false) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -74,6 +75,15 @@ export async function disasterEventSectorsById(id: any) {
 		{
 			sectorname: sectorTable.sectorname,
 			id: sectorTable.id,
+			relatedAncestorsDecentants: incAnsestorsDecentants ? 
+				sql`(
+					dts_get_sector_ancestors_decentants(${sectorTable.id})
+				)`.as('relatedAncestorsDecentants')
+			 : 
+				sql`(
+					undefinded
+				)`.as('relatedAncestorsDecentants')
+			 ,
 			// name: sql`(
 			// 	1
 			// )`.as('name'),
@@ -417,7 +427,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 
 }
 
-export async function disasterEventSectorTotal__ById(disasterEventId: string) {
+export async function disasterEventSectorTotal__ById(disasterEventId: string, isInSectorIds: number[] = []) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -451,7 +461,8 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string) {
 				or(
 					eq(sectorDisasterRecordsRelationTable.withDamage, true),
 					eq(sectorDisasterRecordsRelationTable.withLosses, true),
-				)
+				),
+				isInSectorIds.length > 0 ? inArray(sectorDisasterRecordsRelationTable.sectorId, isInSectorIds) : undefined
 			),
 		);
 

@@ -87,45 +87,52 @@ export function createAction<T extends ObjectWithImportId>(args: CreateActionArg
 			let all = await parseCSV(fileString);
 			console.log("got csv", "importType", importType, "rowCount", all.length);
 			let imported = all.length - 1;
-			switch (importType) {
-				case "create":
-					{
-						let res = await csvCreate({
-							data: all,
-							fieldsDef,
-							create: args.create
-						})
-						if (!res.ok) {
-							return {res}
+			try {
+				switch (importType) {
+					case "create":
+						{
+							let res = await csvCreate({
+								data: all,
+								fieldsDef,
+								create: args.create
+							})
+							if (!res.ok) {
+								return {res}
+							}
+							return {imported, res}
 						}
-						return {imported, res}
-					}
-				case "update":
-					{
-						let res = await csvUpdate({
-							data: all,
-							fieldsDef,
-							update: args.update
-						})
-						if (!res.ok) {
-							return {res}
+					case "update":
+						{
+							let res = await csvUpdate({
+								data: all,
+								fieldsDef,
+								update: args.update
+							})
+							if (!res.ok) {
+								return {res}
+							}
+							return {imported, res}
 						}
-						return {imported, res}
-					}
-				case "upsert":
-					{
-						let res = await csvUpsert({
-							data: all,
-							fieldsDef,
-							create: args.create,
-							update: args.update,
-							idByImportId: args.idByImportId
-						})
-						if (!res.ok) {
-							return {res}
+					case "upsert":
+						{
+							let res = await csvUpsert({
+								data: all,
+								fieldsDef,
+								create: args.create,
+								update: args.update,
+								idByImportId: args.idByImportId
+							})
+							if (!res.ok) {
+								return {res}
+							}
+							return {imported, res}
 						}
-						return {imported, res}
-					}
+				}
+			} catch (e) {
+				if (typeof e === 'object' && e !== null && 'detail' in e && typeof e.detail == "string") {
+					return {res: {ok: false, error: {code: "pg_error", message: e.detail}}}
+				}
+				throw e
 			}
 			return {res: {ok: false, error: {code: "invalid_import_type", message: "Invalid import_type"}}}
 		} catch (err) {

@@ -73,14 +73,14 @@ export default function SpatialFootprintsMap() {
                         <a 
                         type="button" 
                         className="mg-button mg-button--small mg-button-outline" 
-                        onClick={(e) => handleSwitchData(e, geoData1, "#208f04")}>
+                        onClick={(e: any) => handleSwitchData(e, geoData1, "#208f04")}>
                         Data 1
                         </a>
 
                         <a 
                         type="button" 
                         className="mg-button mg-button--small mg-button-outline" 
-                        onClick={(e) => handleSwitchData(e, geoData2, "#ed1d0e")}>
+                        onClick={(e: any) => handleSwitchData(e, geoData2, "#ed1d0e")}>
                         Data 2
                         </a>
                     </div>

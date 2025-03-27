@@ -51,9 +51,9 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 	}
 
 	return [
-		{key: "recordId", label: "", type: "other"},
+		{key: "recordId", label: "", type: "uuid"},
 		{key: "sectorId", label: "", type: "other"},
-		{key: "assetId", label: "Assets", type: "other"},
+		{key: "assetId", label: "Assets", type: "uuid"},
 
 		{key: "unit", label: "Unit", type: "enum", enumData: unitsEnum},
 		{key: "totalDamageAmount", label: "Total number of assets affected (partially damaged + totally destroyed)", type: "number", uiRow: {}},

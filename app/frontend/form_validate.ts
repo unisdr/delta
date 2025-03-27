@@ -1,3 +1,4 @@
+import {isValidUUID} from "~/util/id"
 import {
 	FormInputDef,
 	Errors,
@@ -8,27 +9,32 @@ import {
 
 
 function fieldRequiredError(def: FormInputDefSpecific): FormError {
-	return {def, code: "required", message: `The field "${def.label}" is required.`}
+	let label = def.label || def.key
+	return {def, code: "required", message: `The field "${label}" is required.`}
 }
 
 function unknownEnumValueError(def: FormInputDefSpecific, value: string, valid: string[]): FormError {
+	let label = def.label || def.key
 	return {
 		def,
 		code: "unknown_enum_value",
-		message: `The field "${def.label}" contains an unknown enum value "${value}". Valid values are: ${valid.join(", ")}.`
+		message: `The field "${label}" contains an unknown enum value "${value}". Valid values are: ${valid.join(", ")}.`
 	}
 }
 
-function invalidTypeError(def: FormInputDefSpecific, expectedType: string): FormError {
-	return {def, code: "invalid_type", message: `The field "${def.label}" must be of type ${expectedType}.`}
+function invalidTypeError(def: FormInputDefSpecific, expectedType: string, value: any): FormError {
+	let label = def.label || def.key
+	return {def, code: "invalid_type", message: `The field "${label}" must be of type ${expectedType}. Got "${value}".`}
 }
 
-function invalidDateFormatError(def: FormInputDefSpecific): FormError {
-	return {def, code: "invalid_date_format", message: `The field "${def.label}" must be a valid RFC3339 date string.`}
+function invalidDateFormatError(def: FormInputDefSpecific, value: any): FormError {
+	let label = def.label || def.key
+	return {def, code: "invalid_date_format", message: `The field "${label}" must be a valid RFC3339 date string. Got "${value}".`}
 }
 
-function invalidJsonFieldError(def: FormInputDefSpecific, jsonError: Error): FormError {
-	return {def, code: "invalid_json_field_value", message: `The field "${def.label}" must be valid JSON. Got error "${jsonError}".`}
+function invalidJsonFieldError(def: FormInputDefSpecific, jsonError: Error, value: any): FormError {
+	let label = def.label || def.key
+	return {def, code: "invalid_json_field_value", message: `The field "${label}" must be valid JSON. Got error "${jsonError}". Got "${value}."`}
 }
 
 function unknownFieldError(key: string): FormError {
@@ -152,15 +158,26 @@ export function validateFromJson<T>(
 		switch (field.type) {
 			case "number":
 				if (typeof value != "number" && value !== undefined && value !== null) {
-					throw invalidTypeError(field, "number")
+					throw invalidTypeError(field, "number", value)
 				}
 				return value ?? null
+			case "uuid":
+				if (value === undefined && value === null) {
+					return value
+				}
+				if (typeof value != "string") {
+					throw invalidTypeError(field, "uuid", value)
+				}
+				if (!isValidUUID(value)) {
+					throw invalidTypeError(field, "uuid", value)
+				}
+				return value
 			case "text":
 			case "textarea":
 			case "money":
 			case "enum-flex":
 				if (typeof value != "string" && value !== undefined && value !== null) {
-					throw invalidTypeError(field, "string")
+					throw invalidTypeError(field, "string", value)
 				}
 				return value || ""
 			case "date":
@@ -168,14 +185,14 @@ export function validateFromJson<T>(
 				if (value !== undefined && value !== null) {
 					const parsedDate = new Date(value)
 					if (isNaN(parsedDate.getTime())) {
-						throw invalidDateFormatError(field)
+						throw invalidDateFormatError(field, value)
 					}
 					return parsedDate
 				}
 				return null
 			case "bool":
 				if (typeof value !== "boolean" && value !== undefined && value !== null) {
-					throw invalidTypeError(field, "boolean")
+					throw invalidTypeError(field, "boolean", value)
 				}
 				return value ?? false
 			case "enum":
@@ -221,7 +238,7 @@ export function validateFromMap<T>(
 					vs = JSON.stringify(value);
 				} else {
 					console.error(`Invalid JSONB value for field '${field.key}':`, value);
-					throw invalidTypeError(field, "valid JSON");
+					throw invalidTypeError(field, "valid JSON", value);
 				}
 
 				// Parse JSON & Recursively parse nested JSON
@@ -230,7 +247,7 @@ export function validateFromMap<T>(
 				return parsedValue;
 			} catch (error) {
 				console.error(`Invalid JSON format for field '${field.key}':`, error);
-				throw invalidTypeError(field, "valid JSON");
+				throw invalidTypeError(field, "valid JSON", value);
 			}
 		}
 		// If `psqlType` exists but isn't handled, return value as is
@@ -251,7 +268,7 @@ export function validateFromMap<T>(
 			case "number":
 				parsedValue = vs === "" ? null : Number(value);
 				if (isNaN(parsedValue)) {
-					throw invalidTypeError(field, "number");
+					throw invalidTypeError(field, "number", value);
 				}
 				return parsedValue
 			case "money":
@@ -264,6 +281,15 @@ export function validateFromMap<T>(
 			case "enum-flex":
 			case "date_optional_precision":
 				return vs;
+			case "uuid":
+				if (vs === "") {
+					return null
+				}
+				console.log("field", field)
+				if (!isValidUUID(vs)) {
+					throw invalidTypeError(field, "uuid", value);
+				}
+				return vs;
 			case "date":
 			case "datetime":
 				if (vs === "") {
@@ -271,7 +297,7 @@ export function validateFromMap<T>(
 				}
 				parsedValue = new Date(value);
 				if (isNaN(parsedValue.getTime())) {
-					throw invalidDateFormatError(field);
+					throw invalidDateFormatError(field, value);
 				}
 				return parsedValue;
 			case "bool":
@@ -285,7 +311,7 @@ export function validateFromMap<T>(
 					case "false":
 						return false
 					default:
-						throw invalidTypeError(field, "bool")
+						throw invalidTypeError(field, "bool", value)
 				}
 			case "enum":
 				if (!field.required && vs === "") {
@@ -304,18 +330,18 @@ export function validateFromMap<T>(
 			case "json":
 				if (typeof value != "string") {
 					if (value !== undefined && value !== null) {
-						throw invalidTypeError(field, "json")
+						throw invalidTypeError(field, "json", value)
 					}
 					return value
 				}
-				if (value === ""){
+				if (value === "") {
 					return null
 				}
 				try {
 					let obj = JSON.parse(value)
 					return obj
 				} catch (e) {
-					if (e instanceof Error) throw invalidJsonFieldError(field, e)
+					if (e instanceof Error) throw invalidJsonFieldError(field, e, value)
 					throw e
 				}
 

@@ -7,7 +7,6 @@ interface DeleteButtonProps {
 	label?: string
 	useIcon?: boolean
 	confirmMessage?: string
-	errorMessage?: string
 }
 
 export function DeleteButton(props: DeleteButtonProps) {
@@ -18,7 +17,7 @@ export function DeleteButton(props: DeleteButtonProps) {
 		let data = fetcher.data as any
 		if (fetcher.state == 'idle' && data && !data.ok) {
 			console.error(`Delete failed`, data)
-			notifyError(props.errorMessage || 'Delete failed')
+			notifyError(data.error || "Delete failed")
 		}
 	}, [fetcher.state, fetcher.data])
 
@@ -44,8 +43,6 @@ export function DeleteButton(props: DeleteButtonProps) {
 	}
 
 	let submitting = fetcher.state != 'idle'
-
-	console.log("Delete action", props.action)
 
 	return (
 		<>

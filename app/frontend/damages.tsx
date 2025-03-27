@@ -388,7 +388,7 @@ export function DamagesView(props: DamagesViewProps) {
 
 		spatialFootprint: (
 			<SpatialFootprintView
-				initialData={props?.item?.spatialFootprint || []}
+				initialData={(props?.item?.spatialFootprint as any[]) || []}
 				mapViewerOption={0}
 				mapViewerDataSources={[]}
 			/>
@@ -396,7 +396,7 @@ export function DamagesView(props: DamagesViewProps) {
 		attachments: (
 			<AttachmentsView
 				id={props.item.id}
-				initialData={props.item?.attachments || []}
+				initialData={(props?.item?.attachments as any[]) || []}
 				file_viewer_url="/disaster-record/file-viewer"
 				location="damages"
 			/>

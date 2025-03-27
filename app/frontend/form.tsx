@@ -19,7 +19,6 @@ import {notifyError} from "./utils/notifications";
 
 import {JsonView, allExpanded, defaultStyles} from 'react-json-view-lite';
 
-import 'react-json-view-lite/dist/index.css';
 import {DeleteButton} from "./components/delete-dialog";
 
 export type FormResponse<T> =
@@ -279,6 +278,7 @@ export type FormInputType =
 	| "enum"
 	| "enum-flex" // enum-flex - similar to enum but allows values that are not in the list, useful for when list of allowed values changed due to configuration changes
 	| "json"
+	| "uuid"
 
 export interface EnumEntry {
 	key: string;
@@ -431,9 +431,10 @@ export function Inputs<T>(props: InputsProps<T>) {
 	}
 
 	let defs = props.def
-	if (props.user?.role != "admin") {
-		defs = defs.filter(d => d.key != "legacyData")
-	}
+	//if (props.user?.role != "admin") {
+	// only show this in view
+	defs = defs.filter(d => d.key != "legacyData")
+	//}
 
 	let uiRows = splitDefsIntoRows(defs)
 
@@ -885,6 +886,7 @@ export function Input(props: InputProps) {
 		case "datetime":
 		case "number":
 		case "money":
+		case "uuid":
 			let defaultValue = "";
 			if (props.value !== null && props.value !== undefined) {
 				switch (props.def.type) {
@@ -1074,6 +1076,7 @@ export function FieldView(props: FieldViewProps) {
 					{props.def.label}: {String(n)}
 				</p>
 			);
+		case "uuid":
 		case "textarea":
 		case "text":
 		case "money":
@@ -1270,12 +1273,7 @@ export function ViewComponent(props: ViewComponentProps) {
 							>
 								Edit
 							</Link>
-							<Link
-								to={`${props.path}/delete/${String(props.id)}`}
-								className="mg-button mg-button-secondary"
-							>
-								Delete
-							</Link>
+							<DeleteButton useIcon={true} action={`${props.path}/delete/${String(props.id)}`} />
 						</div>
 						{props.extraActions}
 					</>
