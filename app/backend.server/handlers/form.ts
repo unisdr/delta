@@ -1054,12 +1054,13 @@ export async function csvUpdate<T>(
 				if (!item.id) {
 					return rerr(jsonUpdateMissingIDError);
 				}
+				let id = item.id
 				delete item.id;
 				const validateRes = validateFromMap(item, args.fieldsDef, true, true);
 				if (!validateRes.ok) {
 					return rerr(firstError(validateRes.errors)!);
 				}
-				const one = await args.update(tx, item.id, validateRes.resOk!);
+				const one = await args.update(tx, id, validateRes.resOk!);
 				if (!one.ok) {
 					return rerr(firstError(one.errors)!);
 				}

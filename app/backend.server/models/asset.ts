@@ -93,7 +93,7 @@ export async function assetUpdate(
 		where: eq(assetTable.id, id),
 	})
 	if (!res) {
-		throw new Error("Id is invalid")
+		throw new Error(`Id is invalid: ${id}`)
 	}
 
 	if (res.isBuiltIn) {

@@ -554,7 +554,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 			path={route}
 			id={item.id}
 			plural="Hazardous events"
-			singular="Hazard event"
+			singular="Hazardous event"
 			extraActions={
 				<>
 					<p>

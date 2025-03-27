@@ -90,6 +90,7 @@ export async function devExample1Update(tx: Tx, idStr: string, fields: Partial<D
 	if (hasErrors(errors)) {
 		return {ok: false, errors};
 	}
+	console.log("dev example1 update", idStr, fields)
 	let id = Number(idStr);
 	await tx.update(devExample1Table)
 		.set({
