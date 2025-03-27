@@ -1273,12 +1273,7 @@ export function ViewComponent(props: ViewComponentProps) {
 							>
 								Edit
 							</Link>
-							<Link
-								to={`${props.path}/delete/${String(props.id)}`}
-								className="mg-button mg-button-secondary"
-							>
-								Delete
-							</Link>
+							<DeleteButton useIcon={true} action={`${props.path}/delete/${String(props.id)}`} />
 						</div>
 						{props.extraActions}
 					</>
