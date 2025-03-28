@@ -9,7 +9,6 @@ import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile
 
 export const action = createDeleteAction({
 	redirectToSuccess: (_id: string, oldRecord: any) => route2(oldRecord.recordId) + "?sectorId=" + oldRecord.sectorId,
-	redirectToError: (id: string) => route + "/" + id,
 	baseRoute: route,
 	delete: lossesDeleteById,
 	tableName: getTableName(lossesTable),
