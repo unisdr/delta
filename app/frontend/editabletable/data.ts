@@ -73,6 +73,7 @@ export class DataManager {
 	}
 
 
+
 	init(cols: DataManagerCols, initialData: any[][], ids: string[], previousUpdatesFromJson: PreviousUpdatesFromJson = {}) {
 
 		console.log("prev data", previousUpdatesFromJson)
@@ -137,6 +138,14 @@ export class DataManager {
 		}
 
 		this.sortDefault()
+	}
+
+	hasUnsavedChanges(): boolean {
+		return (
+			this.updates.size > 0 ||
+			this.deletes.size > 0 ||
+			this.newRows.size > 0
+		)
 	}
 
 	getTotals() {
