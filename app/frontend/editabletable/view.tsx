@@ -54,10 +54,19 @@ interface tableError {
 const storageVersion = "v3"
 
 function TableClient(props: TableProps) {
+	function makeLocalStorageKey(recordId: string, table: string) {
+		return `table-${recordId}-${table}-${storageVersion}`
+	}
 
 	let [localStorageKey, setLocalStorageKey] = useState(
-		"table-" + props.recordId + "-" + props.table + "-" + storageVersion
+		makeLocalStorageKey(props.recordId, props.table)
 	)
+
+	function setLocalStorageKeyFromVars(recordId: string, table: string): string{
+		let key = makeLocalStorageKey(recordId, table)
+		setLocalStorageKey(key)
+		return key
+	}
 
 	let initDataManager = (key: string) => {
 		let previousUpdates: any = {}
@@ -70,7 +79,7 @@ function TableClient(props: TableProps) {
 				console.log("Error parsing previous update data", storedData, err)
 			}
 			let defNames = props.defs.map(d => d.dbName)
-			if (!previousUpdates.defName || !eqArr(defNames, previousUpdates.defNames)) {
+			if (!previousUpdates.defNames || !eqArr(defNames, previousUpdates.defNames)) {
 				console.warn("custom definitions for disaggregations changed, ignoring/deleting old data")
 				previousUpdates = {}
 			}
@@ -97,8 +106,7 @@ function TableClient(props: TableProps) {
 
 	useEffect(() => {
 		console.log("useEffect, props data changed")
-		let key = "table-" + props.recordId + "-" + props.table
-		setLocalStorageKey(key)
+		let key = setLocalStorageKeyFromVars(props.recordId, props.table)
 		setData(initDataManager(key))
 	}, [props.defs, props.initialData, props.initialIds, props.recordId, props.table])
 

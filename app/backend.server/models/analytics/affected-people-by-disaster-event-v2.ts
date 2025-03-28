@@ -3,14 +3,10 @@ import {Tx} from "~/db.server";
 import {
 	disasterRecordsTable,
 	humanDsgTable,
-	missingTable,
-	injuredTable,
-	deathsTable,
-	affectedTable,
-	displacedTable,
 	disasterEventTable,
 	humanCategoryPresenceTable,
 } from "~/drizzle/schema";
+import {affectedTablesAndCols} from "./affected-people-tables";
 
 
 interface Conditions {
@@ -38,27 +34,21 @@ type Total = {
 
 type humanEffectsDataCode = "deaths"|"injured"|"missing"|"directlyAffected"|"indirectlyAffected"|"displaced"
 
-const totalsTablesAndCols = [
-	{code: "deaths", table: deathsTable, col: deathsTable.deaths, presenceCol: humanCategoryPresenceTable.deaths},
-	{code: "injured", table: injuredTable, col: injuredTable.injured, presenceCol: humanCategoryPresenceTable.injured},
-	{code: "missing", table: missingTable, col: missingTable.missing, presenceCol: humanCategoryPresenceTable.missing},
-	{code: "directlyAffected", table: affectedTable, col: affectedTable.direct, presenceCol: humanCategoryPresenceTable.affectedDirect},
-	{code: "indirectlyAffected", table: affectedTable, col: affectedTable.indirect, presenceCol: humanCategoryPresenceTable.affectedIndirect},
-	{code: "displaced", table: displacedTable, col: displacedTable.displaced, presenceCol: humanCategoryPresenceTable.displaced}
-]
-
+const totalsTablesAndCols = affectedTablesAndCols
 
 async function totalsForEachTable(tx: Tx, disasterEventId: string, conditions?: Conditions): Promise<Total> {
-	let vars: any = {}
-	let total = 0
-	for (let a of totalsTablesAndCols) {
-		let v = await totalsForOneTable(tx, disasterEventId, a.table, a.col, a.presenceCol, conditions)
-		vars[a.code] = v
-		total += v
-	}
-	return {total, tables: vars} as Total
-}
+	let entries = await Promise.all(
+		totalsTablesAndCols.map(async a => {
+			let v = await totalsForOneTable(tx, disasterEventId, a.table, a.col, a.presenceCol, conditions)
+			return [a.code, v] as const
+		})
+	)
 
+	let tables = Object.fromEntries(entries)
+	let total = Object.values(tables).reduce((sum, v) => sum + v, 0)
+
+	return { total, tables } as Total
+}
 
 // The code for deaths, injured, missing, displaced is exactly the same.
 // For directlyAffected has a minor variation that a table has both direct and indirect columns, we only need direct from there.
@@ -263,14 +253,15 @@ type ByColAndTableTotalsOnly = {
 }
 
 async function byColAndTableTotalsOnly(tx: Tx, disasterEventId: string, conditions?: Conditions): Promise<ByColAndTableTotalsOnly> {
-	let res: any = {}
-	for (let t of tables) {
-		let v = await byTable(tx, disasterEventId, t.col, conditions)
-		res[t.code] = v.total
-	}
-	return res as ByColAndTableTotalsOnly
-}
+	let entries = await Promise.all(
+		tables.map(async t => {
+			let v = await byTable(tx, disasterEventId, t.col, conditions)
+			return [t.code, v.total] as const
+		})
+	)
 
+	return Object.fromEntries(entries) as ByColAndTableTotalsOnly
+}
 
 type ByColAndTableTotalsOnlyForFrontend = {
 	sex: Record<string, number>
