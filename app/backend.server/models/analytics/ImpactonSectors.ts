@@ -737,8 +737,16 @@ export async function fetchSectorImpactData(
       totalDamage: recordIds.length === 0 ? null : damagesResult.total.toString(),
       totalLoss: recordIds.length === 0 ? null : lossesResult.total.toString(),
       eventsOverTime: Object.fromEntries([...eventCounts].map(([year, count]) => [year.toString(), count.toString()])),
-      damageOverTime: Object.fromEntries([...damagesResult.byYear].map(([year, amount]) => [year.toString(), amount.toString()])),
-      lossOverTime: Object.fromEntries([...lossesResult.byYear].map(([year, amount]) => [year.toString(), amount.toString()])),
+      damageOverTime: Object.fromEntries(
+        [...new Set([...eventCounts.keys(), ...damagesResult.byYear.keys()])].map(year =>
+          [year.toString(), (damagesResult.byYear.get(year) || 0).toString()]
+        )
+      ),
+      lossOverTime: Object.fromEntries(
+        [...new Set([...eventCounts.keys(), ...lossesResult.byYear.keys()])].map(year =>
+          [year.toString(), (lossesResult.byYear.get(year) || 0).toString()]
+        )
+      ),
       metadata,
       faoAgriculturalImpact,
       dataAvailability: {
