@@ -8,6 +8,8 @@
 	- [Frontend](frontend.md)
 - [Form CSV API](form-csv-api.md)
 
+- [Dependencies](dependencies.md)
+
 ## Requirements
 - [IDs](ids.md) - Document IDs used for hazardous, disaster events and disaster records
 
