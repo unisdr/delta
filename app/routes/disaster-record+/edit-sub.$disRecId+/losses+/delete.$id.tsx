@@ -13,7 +13,7 @@ export const action = createDeleteAction({
 	delete: lossesDeleteById,
 	tableName: getTableName(lossesTable),
 	getById: lossesById,
-	postProcess: async (id, data) => {
+	postProcess: async (_id, data) => {
 		//console.log(`Post-processing record: ${id}`);
 		//console.log(`Data before deletion:`, data);
 

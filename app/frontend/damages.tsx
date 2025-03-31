@@ -16,8 +16,6 @@ import {unitName, UnitPicker} from "./unit_picker"
 
 import * as totaloverrides from "~/frontend/components/totaloverrides"
 
-import { rewindGeoJSON } from '~/utils/spatialUtils'
-
 import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
 import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
 import { AttachmentsFormView } from "~/frontend/attachmentsFormView";

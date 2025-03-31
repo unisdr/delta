@@ -132,7 +132,7 @@ export async function assetById(idStr: string) {
 	return assetByIdTx(dr, idStr)
 }
 
-export async function assetByName(nameStr: string, nationalIdStr: string = '') {
+export async function assetByName(nameStr: string) {
 	let res = await dr.query.assetTable.findFirst({
 		where: eq(sql`LOWER(${assetTable.name})`, nameStr.toLowerCase()),
 	});

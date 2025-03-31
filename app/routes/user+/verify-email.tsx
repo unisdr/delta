@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react"; // Import useState and useEffect
-
 import { json, MetaFunction } from "@remix-run/node";
 
 import {
@@ -95,15 +93,6 @@ export default function Data() {
 
   const actionData = useActionData<typeof action>();
   const errors = actionData?.errors;
-  const data = actionData?.data;
-
-  // State to manage the enable/disable state of the submit button
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false); // Initialize as true to disable when JS is enabled
-
-  useEffect(() => {
-    // Disable the button when JS is enabled
-    setIsButtonDisabled(true);
-  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
     <div className="dts-page-container">

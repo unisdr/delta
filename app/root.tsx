@@ -191,7 +191,7 @@ const queryClient = new QueryClient({
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, userRole, env} = loaderData
+	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, userRole} = loaderData
 	
 	// Display toast for flash messages
 	useEffect(() => {

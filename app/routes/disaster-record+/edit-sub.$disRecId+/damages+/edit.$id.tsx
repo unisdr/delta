@@ -33,7 +33,7 @@ import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
-async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number, treeData?: any[], ctryIso3?: string, divisionGeoJSON?: any[], p0?: any[]) {
+async function getResponseData(item: DamagesViewModel | null, recordId: string, sectorId: number, treeData?: any[], ctryIso3?: string, divisionGeoJSON?: any[], _p0?: any[]) {
 	let assets = (await assetsForSector(dr, sectorId)).map((a: any) => {
 		return {
 			id: a.id,

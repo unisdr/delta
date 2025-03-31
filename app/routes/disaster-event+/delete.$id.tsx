@@ -20,7 +20,7 @@ export const action = createDeleteAction({
 	delete: disasterEventDelete,
 	tableName: getTableName(disasterEventTable),
 	getById: disasterEventById,
-	postProcess: async (id, data) => {
+	postProcess: async (_id, data) => {
 		//console.log(`Post-processing record: ${id}`);
 		//console.log(`Data before deletion:`, data);
 

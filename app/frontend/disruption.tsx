@@ -9,8 +9,6 @@ import {
 
 import {DisruptionFields, DisruptionViewModel} from "~/backend.server/models/disruption"
 
-import {useRef} from 'react';
-
 import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
 import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
 import { AttachmentsFormView } from "~/frontend/attachmentsFormView";

@@ -3,7 +3,7 @@ import {createDeleteAction} from "~/backend.server/handlers/form/form"
 import {disruptionById, disruptionDeleteById} from "~/backend.server/models/disruption"
 import {disruptionTable} from "~/drizzle/schema"
 
-import {route, route2} from "~/frontend/disruption"
+import {route2} from "~/frontend/disruption"
 
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
 
@@ -12,7 +12,7 @@ export const action = createDeleteAction({
 	delete: disruptionDeleteById,
 	tableName: getTableName(disruptionTable),
 	getById: disruptionById,
-	postProcess: async (id, data) => {
+	postProcess: async (_id, data) => {
 		//console.log(`Post-processing record: ${id}`);
 		//console.log(`Data before deletion:`, data);
 

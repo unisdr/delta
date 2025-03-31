@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from "react";
+import {useEffect, useRef} from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
@@ -8,7 +8,7 @@ import GeoJSON from "ol/format/GeoJSON";
 import {OSM} from "ol/source";
 import {fromLonLat} from "ol/proj";
 
-import {Circle, Fill, Stroke, Style} from 'ol/style.js';
+import {Fill, Stroke, Style} from 'ol/style.js';
 
 type DTSMapProps = {
 	geoData: any;
