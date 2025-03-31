@@ -1,12 +1,9 @@
 import {
 	useLoaderData,
 	Link,
-	Form
 } from "@remix-run/react";
 
 import {Pagination} from "~/frontend/pagination/view"
-
-import {formatDate} from "~/util/date"
 
 import {ActionLinks} from "~/frontend/form"
 

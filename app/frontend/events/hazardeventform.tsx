@@ -16,7 +16,7 @@ import {
 
 import {formatDate} from "~/util/date";
 
-import {useEffect, useState, useRef} from 'react';
+import {useEffect, useState} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
 import AuditLogHistory from "~/components/AuditLogHistory";

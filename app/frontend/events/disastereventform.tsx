@@ -2,7 +2,7 @@ import {
 	Link
 } from "@remix-run/react";
 
-import {useEffect, useState, useRef, ReactElement} from 'react';
+import {useEffect, useState,  ReactElement} from 'react';
 
 import {DisasterEventFields, DisasterEventViewModel, HazardousEventBasicInfoViewModel, DisasterEventBasicInfoViewModel} from "~/backend.server/models/event"
 
@@ -317,31 +317,6 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
 	const divisionGeoJSON = props.divisionGeoJSON;
-
-	const dialogTreeViewRef = useRef<any>(null);
-	const treeViewRef = useRef<any>(null);
-	const contentReapeaterRef = useRef<any>(null);
-	const treeViewDiscard = (e?: any) => {
-		if (e) e.preventDefault();
-		dialogTreeViewRef.current?.close();
-		treeViewRef.current.treeViewClear();
-	}
-	const treeViewOpen = (e: any) => {
-		e.preventDefault();
-		dialogTreeViewRef.current?.showModal();
-
-		let contHeight = [] as number[];
-		contHeight[0] = (dialogTreeViewRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[1] = (dialogTreeViewRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[2] = (dialogTreeViewRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[3] = (dialogTreeViewRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
-		let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - 100;
-
-		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-		if (dtsFormBody) {
-			dtsFormBody.style.height = `${getHeight - (window.innerHeight - getHeight)}px`;
-		}
-	}
 
 	let hazardousEventLinkInitial: "none" | "hazardous_event" | "disaster_event" = "none"
 	if (props.fields.hazardousEventId) {
