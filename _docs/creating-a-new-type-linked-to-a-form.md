@@ -1,4 +1,8 @@
 # Adding a new type linked to a form
+- [form csv api](form-csv-api.md)
+This pattern supports form UI, API, and CSV import/export using shared fieldDefs.
+
+Start with dev_example1.
 
 ## Database table
 `app/drizzle/schema.ts`
@@ -33,7 +37,7 @@ CSV handling related files
 Adding/modifying records
 - add.ts
 - update.ts
-- upsert-ts
+- upsert.ts
 
 Getting the records
 - list.ts

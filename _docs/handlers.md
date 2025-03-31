@@ -1,26 +1,24 @@
-- [Code organization](code-organization.md)
+- [Code structure](code-structure.md)
 
 ### Request Handlers
 `app/backend.server/handlers`
 
-Learn about remix [routes](routes.md) before checking this.
+Handlers contain logic shared between multiple Remix routes. If a routes had repeating code, that logic was moved here.
 
-The handlers contain code that is shared between multiple routes. So the same as for routes apply, but if the code is duplicated across routes, it went into this folder instead.
+Read about remix [routes](routes.md) first.
 
-The following are the largest parts.
+## Main handler files
 
 ## Form, CSV, API code
-- `form.ts`
-- `csv_export.ts`
-- `csv_import.ts`
+- form.ts, csv_export.ts, csv_import.ts
 
-Handling form or API requests, doing basic validation and calling related database functions.
+These handle form submissions, API requests, and CSV imports/exports. They do basic validation and call DB functions from models. See related tests.
 
-See tests as well.
+- formSave - Used to create or update records from an HTML form.
 
-- formSave - The function for creating new records and updating records when using a HTML form.
+Mainly used by createAction, which creates a Remix action function with EditData permission checks and DB integation.
 
-Main use of this is in createAction, which creates a remix action function with EditData permission and calls provided database queries when needed. But formSave is also called from hazardous form directly, since it uses a different pattern of having separate new and edit page, not a shared one as. (This could be refactored to follow the same pattern as others)
+The hazardous form doesn't use createAction, because it splits new and edit into separate files.
 
 API related code
 - jsonCreate
@@ -30,11 +28,11 @@ API related code
 CSV related code
 - csvCreate
 - csvUpdate
-- csvImportExample - Creates an sample CSV with dummy data as a stating point for updates.
+- csvImportExample - Creates an sample CSV as a stating point for updates.
 
 Self generated field list for API
-- jsonPayloadExample
-- jsonApiDocs
+- jsonPayloadExample - Generates field examples for docs
+- jsonApiDocs - Returns API documentation
 
 
 

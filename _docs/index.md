@@ -1,7 +1,7 @@
 # Developer documentation
 
 ## General
-- [Code organization](code-organization.md)
+- [Code structure](code-structure.md)
 	- [Models](models.md)
 	- [Handlers](handlers.md)
 	- [Routes](routes.md)

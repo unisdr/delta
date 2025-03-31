@@ -1,17 +1,4 @@
-# 2024-12-08
-
-Have to use 2 letter relationship names. Otherwise running into this bug, with 7 level deep nested with queries.
-
-https://github.com/drizzle-team/drizzle-orm/issues/2066
-
-```
-export const eventRel = relations(eventTable, ({one, many}) => ({
-	ps: many(eventRelationshipTable, {relationName: "child"}),
-	cs: many(eventRelationshipTable, {relationName: "parent"})
-}));
-```
-
-# 2025-01-30
+## 2025-01-30
 Drizzle custom migration using sql commands.
 https://orm.drizzle.team/docs/drizzle-config-file
 
@@ -50,4 +37,17 @@ change_audit_logs.user_id_to_integer.sql
 
 ```
 yarn drizzle-kit migrate 
+```
+
+## 2024-12-08
+
+Have to use 2 letter relationship names. Otherwise running into this bug, with 7 level deep nested with queries.
+
+https://github.com/drizzle-team/drizzle-orm/issues/2066
+
+```
+export const eventRel = relations(eventTable, ({one, many}) => ({
+	ps: many(eventRelationshipTable, {relationName: "child"}),
+	cs: many(eventRelationshipTable, {relationName: "parent"})
+}));
 ```
