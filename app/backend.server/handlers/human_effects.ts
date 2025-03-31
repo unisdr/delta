@@ -108,7 +108,7 @@ export async function saveData(req: Request, recordId: string) {
 					ids.push(id)
 					data.push(row)
 				}
-				let res = await create(tx, d.table, recordId, defs, [], data, false)
+				let res = await create(tx, d.table, recordId, defs, data, false)
 				if (!res.ok) {
 					if (res.error) {
 						throw res.error

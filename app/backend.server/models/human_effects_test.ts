@@ -93,7 +93,7 @@ describe("human_effects - number data", async () => {
 	it("create basic", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", 1], ["f", 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, [["m", 1], ["f", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -107,7 +107,7 @@ describe("human_effects - number data", async () => {
 
 	it("create - validation - no duplicates", async () => {
 		let defs = defs1
-		let res1 = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [
+		let res1 = await create(dr, "Injured", rid1, defs, [
 			["m", 1],
 			["m", 2]
 		], false)
@@ -125,7 +125,7 @@ describe("human_effects - number data", async () => {
 	it("create custom", async () => {
 		let defs = defsCustom
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["g1", 1]], false)
+			let res = await create(dr, "Injured", rid1, defs, [["g1", 1]], false)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -159,7 +159,7 @@ describe("human_effects - number data", async () => {
 			}
 		]
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["above", 1], ["below", 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, [["above", 1], ["below", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -173,7 +173,7 @@ describe("human_effects - number data", async () => {
 	it("type mismatch", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [[1, 1], [1, 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, [[1, 1], [1, 2]], false)
 			console.log(res)
 			assert(!res.ok)
 			assert.equal(res.error!.code, "invalid_value")
@@ -182,7 +182,7 @@ describe("human_effects - number data", async () => {
 	it("non string data (for json)", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", 1], ["f", 2]], false)
+			let res = await create(dr, "Injured", rid1, defs, [["m", 1], ["f", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -196,7 +196,7 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv)", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -210,7 +210,7 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv) - unset", async () => {
 		let defs = defs1
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["", ""]], true)
+			let res = await create(dr, "Injured", rid1, defs, [["", ""]], true)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -224,7 +224,7 @@ describe("human_effects - number data", async () => {
 	it("non string data (for json) - date", async () => {
 		let defs = defs2
 		{
-			let res = await create(dr, "Missing", rid1, defs, ["t1", "t2"], [["2025-01-29", 1], ["2025-01-30", 2]], false)
+			let res = await create(dr, "Missing", rid1, defs, [["2025-01-29", 1], ["2025-01-30", 2]], false)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -241,7 +241,7 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv) - date", async () => {
 		let defs = defs2
 		{
-			let res = await create(dr, "Missing", rid1, defs, ["t1", "t2"], [["2025-01-29", "1"], ["2025-01-30", "2"]], true)
+			let res = await create(dr, "Missing", rid1, defs, [["2025-01-29", "1"], ["2025-01-30", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 		}
@@ -258,7 +258,7 @@ describe("human_effects - number data", async () => {
 	it("string data (for csv) - date - wrong format", async () => {
 		let defs = defs2
 		{
-			let res = await create(dr, "Missing", rid1, defs, ["t1", "t2"], [["xxxx", "1"]], true)
+			let res = await create(dr, "Missing", rid1, defs, [["xxxx", "1"]], true)
 			console.log(res)
 			assert(!res.ok)
 			assert.equal(res.error!.code, "invalid_value")
@@ -268,7 +268,7 @@ describe("human_effects - number data", async () => {
 		let defs = defs1
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
@@ -289,7 +289,7 @@ describe("human_effects - number data", async () => {
 		let defs = defsCustom
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["g1", 1]], false)
+			let res = await create(dr, "Injured", rid1, defs, [["g1", 1]], false)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
@@ -311,7 +311,7 @@ describe("human_effects - number data", async () => {
 		let defs = defs1
 		let ids = []
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, [["m", "1"], ["f", "2"]], true)
 			assert(res.ok)
 			ids = res.ids
 		}
@@ -367,7 +367,7 @@ describe("human_effects - number data", async () => {
 		let defs = defsCustom2
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2", "t3"], [["g1", "g2", 1]], false)
+			let res = await create(dr, "Injured", rid1, defs, [["g1", "g2", 1]], false)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
@@ -390,7 +390,7 @@ describe("human_effects - number data", async () => {
 		let defs = defs1
 		let ids: string[] = []
 		{
-			let res = await create(dr, "Injured", rid1, defs, ["t1", "t2"], [["m", "1"], ["f", "2"]], true)
+			let res = await create(dr, "Injured", rid1, defs, [["m", "1"], ["f", "2"]], true)
 			console.log(res)
 			assert(res.ok)
 			ids = res.ids
