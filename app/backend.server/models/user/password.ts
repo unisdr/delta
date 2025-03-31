@@ -1,39 +1,3 @@
-import {dr} from '~/db.server';
-import {commonPasswordsTable} from '~/drizzle/schema';
-import { eq } from 'drizzle-orm';
-
-
-
-// Password rules
-// - at least 12 characters long
-// - different from initial password
-// - not same as the username
-// - character classes
-// two of the following required
-// Character classes
-// upper case letters
-// lower case letters
-// numbers
-// punctuation marks
-// - not based on words in any language or simple patters
-// prevent reuse of previous five passwords
-
-export async function isCommonPassword(password: string) {
-
-	const tableCheck = await dr.select().from(commonPasswordsTable).limit(1);
-	if (tableCheck.length === 0) {
-		throw new Error("Common passwords table was not imported");
-	}
-
-	const result = await dr
-		.select()
-		.from(commonPasswordsTable)
-		.where(eq(commonPasswordsTable.password, password))
-		.limit(1);
-
-	return result.length > 0;
-}
-
 export enum PasswordCharClass {
 	Uppercase = "UPPERCASE",
 	Lowercase = "LOWERCASE",
