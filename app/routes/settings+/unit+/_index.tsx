@@ -28,8 +28,7 @@ export let loader = createPaginatedLoader(
       columns: {id: true, name: true, type: true},
       orderBy: [desc(unitTable.name)],
     });
-  },
-  [desc(unitTable.name)]
+  }
 );
 
 export default function Data() {
