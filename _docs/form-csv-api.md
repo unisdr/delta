@@ -1,6 +1,6 @@
 # Form-CSV-API Pattern
-- [creating a new type](creating-a-new-type-linked-to-a-form.md)
 
+- [Creating a new type](creating-a-new-type-linked-to-a-form.md)
 ## Overview
 
 This app is form-heavy. To make adding new form/data types easier, and also expose them as API and CSV, we have added an abstraction which is based on `fieldDefs`.
