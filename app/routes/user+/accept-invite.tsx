@@ -20,15 +20,10 @@ import {
 	createUserSession
 } from "~/util/session";
 import { 
-	configSsoAzureB2C,
 	configAuthSupportedAzureSSOB2C
 } from "~/util/config";
-import {
-	acceptInvite,
-	AcceptInviteFieldsFromMap,
-	validateInviteCode,
-} from "~/backend.server/models/user"
 import { MainContainer } from "~/frontend/container";
+import {acceptInvite, AcceptInviteFieldsFromMap, validateInviteCode} from "~/backend.server/models/user/invite";
 
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const confAuthSupportedAzureSSOB2C:boolean = configAuthSupportedAzureSSOB2C();

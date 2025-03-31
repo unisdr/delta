@@ -8,12 +8,8 @@ import {
 } from "~/util/auth";
 
 import {
-		useLoaderData,
-} from "@remix-run/react";
-
-import {
 	sendEmailVerification
-} from "~/backend.server/models/user";
+} from "~/backend.server/models/user/verify_email";
 
 export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
 	const { user } = authLoaderGetAuth(loaderArgs)

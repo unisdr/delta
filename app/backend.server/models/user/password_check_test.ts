@@ -6,7 +6,7 @@ import {
 	PasswordErrorType,
 	characterClasses,
 	PasswordCharClass
-} from './password';
+} from './password_check';
 
 describe('characterClasses', () => {
 	const fn = characterClasses;

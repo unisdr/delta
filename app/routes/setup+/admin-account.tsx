@@ -14,12 +14,8 @@ interface ActionData {
     };
   };
 }
-
-import {
-  setupAdminAccount,
-  setupAdminAccountFieldsFromMap,
-} from "~/backend.server/models/user";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import {setupAdminAccount, setupAdminAccountFieldsFromMap} from "~/backend.server/models/user/admin";
 
 export const meta: MetaFunction = () => {
   return [
@@ -60,7 +56,6 @@ export default function Screen() {
   // Function to check if all form fields are valid
   const isFormValid = () => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /\d/.test(password);
@@ -86,10 +81,6 @@ export default function Screen() {
       submitButton.disabled = !isFormValid(); // Initially disable submit if form is not valid
     }
   }, [email, firstname, secondname, password, passwordRepeat]); // Re-run when these dependencies change
-
-  const handleInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setter(event.target.value);
-  };
 
   const togglePasswordVisibility = () => {
     setPasswordType(passwordType === "password" ? "text" : "password");

@@ -1,23 +1,27 @@
 import { useEffect, useState } from "react"; // Import useState and useEffect
 
-import { json, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import { json, MetaFunction } from "@remix-run/node";
 
 import {
-  authLoader,
   authLoaderGetAuth,
-  authAction,
   authActionGetAuth,
   authLoaderAllowUnverifiedEmail,
   authActionAllowUnverifiedEmail,
 } from "~/util/auth";
 
-import { useLoaderData, useActionData, Link } from "@remix-run/react";
+import { useLoaderData, useActionData } from "@remix-run/react";
 
-import { verifyEmail } from "~/backend.server/models/user";
+import { verifyEmail } from "~/backend.server/models/user/verify_email";
 
 import { formStringData } from "~/util/httputil";
 
 import { errorToString } from "~/frontend/form";
+
+import { redirect } from "@remix-run/node";
+
+import { formatTimestamp } from "~/util/time";
+import { sendEmail } from "~/util/email";
+import { configCountryName, configSiteName, configSiteURL } from "~/util/config";
 
 export const meta: MetaFunction = () => {
   return [
@@ -25,14 +29,6 @@ export const meta: MetaFunction = () => {
     { name: "description", content: "Admin setup." },
   ];
 };
-
-import { redirect } from "@remix-run/node";
-
-import { Form, Field, FieldErrors, SubmitButton } from "~/frontend/form";
-
-import { formatTimestamp } from "~/util/time";
-import { sendEmail } from "~/util/email";
-import { configCountryName, configSiteName, configSiteURL } from "~/util/config";
 
 export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
   const { request } = actionArgs;

@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "~/frontend/form";
 
-import { resetPassword } from "~/backend.server/models/user";
+import { resetPassword } from "~/backend.server/models/user/password";
 
 import { formStringData } from "~/util/httputil";
 import PasswordInput from "~/components/PasswordInput";
@@ -48,7 +48,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     confirmPassword: formData.confirmPassword || "",
   };
 
-  let errors: FormErrors<FormData> = {};
   let res = await resetPassword(
     email,
     token,

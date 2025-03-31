@@ -1,24 +1,15 @@
 import {
-    ActionFunctionArgs,
     json,
     LoaderFunctionArgs,
-    redirect
 } from "@remix-run/node";
 import {
-    useActionData,
     useLoaderData,
 } from "@remix-run/react";
+import {validateInviteCode} from "~/backend.server/models/user/invite";
 import { 
     SSOAzureB2C as interfaceSSOAzureB2C, 
-    baseURL,
-    decodeToken,
     loginGetCode
 } from "~/util/ssoauzeb2c";
-import {
-    acceptInvite,
-    AcceptInviteFieldsFromMap,
-    validateInviteCode,
-} from "~/backend.server/models/user"
 
 
 export const loader = async ({request}:LoaderFunctionArgs) => {

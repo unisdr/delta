@@ -6,7 +6,6 @@ import {
 
 import { 
 	useLoaderData,
-	Link
  } from "@remix-run/react";
 
 import { createUserSession } from "~/util/session";
@@ -20,18 +19,10 @@ import {
 	SSOAzureB2C as interfaceSSOAzureB2C, 
 	baseURL,
 	decodeToken,
-	loginGetCode
 } from "~/util/ssoauzeb2c";
+import {loginAzureB2C, registerAzureB2C} from "~/backend.server/models/user/auth";
+import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
 
-import {
-	setupAdminAccountSSOAzureB2C,
-	setupAdminAccountFieldsFromMap,
-	loginAzureB2C,
-    registerAzureB2C,
-} from "~/backend.server/models/user";
-
-
-import { object } from "prop-types";
 
 interface interfaceQueryStringState {
     action: string;
@@ -148,22 +139,16 @@ export const loader:LoaderFunction = async ( { request } ) => {
 	// console.log("NODE_ENV", process.env.SSO_AZURE_B2C_CLIENT_SECRET)
 
 	const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
-	const urlSSOCode2Token = `${ baseURL() }/token?p=${ jsonAzureB2C.login_userflow }`;
     const confAuthSupportedAzureSSOB2C:boolean = configAuthSupportedAzureSSOB2C();
 	const url = new URL(request.url);
 	const queryStringCode = url.searchParams.get('code') || '';
-	const queryStringError = url.searchParams.get('error') || '';
 	const queryStringDesc = url.searchParams.get('error_description') || '';
-	const queryStringAction = url.searchParams.get('action') || '';
 	const queryStringState = url.searchParams.get('state') || '';
 	let data: { [key: string]: string } = {};
 	data['email'] = '';
 	data['password'] = '';
 	data['firstName'] = '';
 	data['lastName'] = '';
-
-	let token:object = {};
-	let token_idp:object = {};
 
     console.log( queryStringState );
 
