@@ -5,12 +5,12 @@ import {
 	CreateResult,
 	UpdateResult,
 	ErrorResult,
-	errorForField
-} from "~/backend.server/handlers/form";
+} from "~/backend.server/handlers/form/form";
 
 import {
 	FormError
 } from "~/frontend/form";
+import {errorForField} from "../handlers/form/form_utils";
 
 export function selectTranslated<T extends string>(field: Column, fieldName: T, langs: string[]) {
 	const name: SQL[] = [];

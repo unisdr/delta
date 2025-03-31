@@ -2,7 +2,7 @@ import { HazardousEventView } from "~/frontend/events/hazardeventform";
 
 import {
 	createViewLoaderPublicApprovedWithAuditLog,
-} from "~/backend.server/handlers/form";
+} from "~/backend.server/handlers/form/form";
 
 import { ViewScreenPublicApproved } from "~/frontend/form";
 import { hazardousEventById } from "~/backend.server/models/event";

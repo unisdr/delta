@@ -2,7 +2,7 @@ import {dr, Tx} from "~/db.server";
 import {disasterRecordsTable, disasterRecords, humanCategoryPresenceTable} from "~/drizzle/schema";
 import {eq, sql} from "drizzle-orm";
 
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
+import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
 import {Errors, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator";

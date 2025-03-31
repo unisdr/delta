@@ -6,7 +6,7 @@ import {
 } from "~/drizzle/schema";
 import {eq, sql, and, aliasedTable} from "drizzle-orm";
 
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
+import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator";

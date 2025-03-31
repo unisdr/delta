@@ -5,7 +5,7 @@ import {damagesTable} from "~/drizzle/schema"
 import {route, route2} from "~/frontend/damages"
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import {createDeleteAction} from "~/backend.server/handlers/form";
+import {createDeleteAction} from "~/backend.server/handlers/form/form";
 
 export const action = createDeleteAction({
 	redirectToSuccess: (_id: string, oldRecord: any) => route2(oldRecord.recordId) + "?sectorId=" + oldRecord.sectorId,

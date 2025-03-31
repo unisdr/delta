@@ -3,7 +3,7 @@ import {
 	DeleteResult,
 	ObjectWithImportId,
 	UpdateResult
-} from "~/backend.server/handlers/form";
+} from "~/backend.server/handlers/form/form";
 import {
 	Errors,
 	hasErrors,

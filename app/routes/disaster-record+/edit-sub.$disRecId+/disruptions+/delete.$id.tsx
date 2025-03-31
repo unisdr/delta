@@ -1,5 +1,5 @@
 import {getTableName} from "drizzle-orm"
-import {createDeleteAction} from "~/backend.server/handlers/form"
+import {createDeleteAction} from "~/backend.server/handlers/form/form"
 import {disruptionById, disruptionDeleteById} from "~/backend.server/models/disruption"
 import {disruptionTable} from "~/drizzle/schema"
 

@@ -2,7 +2,7 @@ import {dr, Tx} from "~/db.server"
 import {damagesTable, DamagesInsert} from "~/drizzle/schema"
 import {eq} from "drizzle-orm"
 
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form"
+import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form"
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {configCurrencies} from "~/util/config"

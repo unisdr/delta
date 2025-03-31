@@ -1,5 +1,5 @@
 import {getTableName} from "drizzle-orm"
-import {createDeleteAction} from "~/backend.server/handlers/form"
+import {createDeleteAction} from "~/backend.server/handlers/form/form"
 import {lossesById, lossesDeleteById} from "~/backend.server/models/losses"
 import {lossesTable} from "~/drizzle/schema"
 

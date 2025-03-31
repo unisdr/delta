@@ -2,7 +2,7 @@ import { disasterEventById } from "~/backend.server/models/event";
 
 import { DisasterEventView } from "~/frontend/events/disastereventform";
 
-import { createViewLoaderPublicApprovedWithAuditLog } from "~/backend.server/handlers/form";
+import { createViewLoaderPublicApprovedWithAuditLog } from "~/backend.server/handlers/form/form";
 
 import { ViewScreenPublicApproved } from "~/frontend/form";
 import { getTableName } from "drizzle-orm";
