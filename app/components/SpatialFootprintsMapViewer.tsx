@@ -1,7 +1,7 @@
 import React from "react";
 
 type SpatialFootprintsMapViewerProps = {
-    dataSource: any; // Replace with a stricter type if available
+    dataSource: { id: string }[]; // Define a stricter type for dataSource
     filterCaption?: string;
     ctryIso3?: string;
 };
@@ -530,6 +530,12 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
     const hasValidGeometry = (g: any) =>
       g?.type === "Feature" && g.geometry && Object.keys(g.geometry).length ||
       g?.type === "FeatureCollection" && g.features?.some((f: any) => f.geometry && Object.keys(f.geometry).length);
+
+      console.log('dataSource:',dataSource);
+
+    if (dataSource.length > 0) {
+      eventId = dataSource[0]?.id.slice(0, 5); // Add optional chaining to handle undefined cases
+    }
   
     dataSource.forEach((event: any) => {
       event.event_spatial_footprint?.forEach((sf: any) => {
@@ -545,10 +551,6 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
           }
         }
       });
-
-      if (structuredData.event.length && event.id) {
-        eventId = event.id.slice(0, 5); // or full if needed
-      }
   
       event.disaster_records?.forEach((record: any) => {
         const id = record.id;
