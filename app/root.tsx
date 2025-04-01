@@ -71,7 +71,8 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 		confFooterURLPrivPolicy: configFooterURLPrivPolicy(),
 		confFooterURLTermsConds: configFooterURLTermsConds(),
 		env: {
-			CURRENCY_CODES: process.env.CURRENCY_CODES || ''
+			CURRENCY_CODES: process.env.CURRENCY_CODES || '',
+			DTS_INSTANCE_CTRY_ISO3: process.env.DTS_INSTANCE_CTRY_ISO3 || ''
 		}
 	}, {
 		headers: {
