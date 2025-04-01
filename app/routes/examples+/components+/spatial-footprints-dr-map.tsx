@@ -80,32 +80,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     `);
 
     console.log(disasterEvents.rows);
-
-    const disasterEventsMod = disasterEvents.rows.map((event: any) => {
-        const records = event.disaster_records.map((record: any) => {
-          return {
-            ...record,
-            spatial_footprint: record.spatial_footprint.map((sf: any) => {
-              if (sf.geojson.properties.division_id) {
-                return {
-                  ...sf,
-                  geojson: {
-                    ...sf.geojson,
-                    geometry: {},
-                  },
-                };
-              }
-              return sf;
-            }),
-          };
-        });
-  
-        return {
-          ...event,
-          disaster_records: records,
-        };
-      }
-    );
   
     return json({ disasterEvents: disasterEvents.rows });
   };

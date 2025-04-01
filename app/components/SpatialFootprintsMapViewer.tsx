@@ -83,7 +83,7 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
         }
     };
 
-  const previewMap = async (items: any[], legendData: any[], defaultKeys: string[], missing: any[] = []) => {
+  const previewMap = async (items: any[], legendData: any[], defaultKeys: string[], missing: any[] = [], eventId: string = "") => {
     const newTab = window.open("", "_blank");
     if (!newTab) {
       alert("Popup blocker is preventing the map from opening.");
@@ -158,7 +158,7 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
             <div class="legend-body">
                 <div class="legend-item">
                 <input type="checkbox" id="layer-event" ${defaultKeys.includes("event") ? "checked" : ""} />
-                <label for="layer-event">Disaster Event</label>
+                <label for="layer-event">Disaster Event - ${eventId}</label>
                 </div>
                 ${(legendData.length > 0) ? '<div for="layer-record" style="margin-top: 0.5rem; padding-left: 0.2rem">Disaster Records</div>' : ""}
                 ${legendData
@@ -517,6 +517,7 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
     } = { event: [], records: [] };
   
     const legendData: { id: string }[] = [];
+    let eventId: string | null = null;
     const defaultKeys: string[] = [];
   
     const missing: {
@@ -544,6 +545,10 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
           }
         }
       });
+
+      if (structuredData.event.length && event.id) {
+        eventId = event.id.slice(0, 5); // or full if needed
+      }
   
       event.disaster_records?.forEach((record: any) => {
         const id = record.id;
@@ -634,10 +639,13 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
 
     const s_legendData = sanitizeLegendData(legendData);
 
-    console.log("legendData:", s_legendData); // ← Log here
+    // console.log("flatItems:", flatItems);
+    // console.log("legendData:", s_legendData);
+    // console.log("defaultKeys:", defaultKeys);
+    console.log("eventId:", eventId);
   
    //console.log("🧩 Missing geometries to be lazily loaded:", missing); // ← Log here
-    previewMap(flatItems, s_legendData, defaultKeys, missing);
+    previewMap(flatItems, s_legendData, defaultKeys, missing, eventId || "");
   };  
 
   return (
