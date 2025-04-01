@@ -272,6 +272,7 @@ export async function getEffectDetails(filters: FilterParams) {
       durationDays: disruptionTable.durationDays,
       durationHours: disruptionTable.durationHours,
       usersAffected: disruptionTable.usersAffected,
+      peopleAffected: disruptionTable.peopleAffected,
       responseCost: disruptionTable.responseCost,
       comment: disruptionTable.comment,
       sectorId: disruptionTable.sectorId,
