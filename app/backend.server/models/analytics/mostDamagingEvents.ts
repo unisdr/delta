@@ -25,7 +25,6 @@ import {
 import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
-import LRUCache from "lru-cache";
 import { getSectorsByParentId } from "./sectors";
 
 /**
@@ -280,51 +279,53 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         eventName: disasterEventTable.nameNational,
         createdAt: disasterEventTable.createdAt,
         totalDamages: sql<number>`
-          COALESCE(SUM(
-            CASE 
-              WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
-                COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
-              ELSE
-                COALESCE((
-                  SELECT 
-                    CASE 
-                      WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
-                        COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
-                      ELSE
-                        COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
-                        COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
-                    END
-                  FROM ${damagesTable}
-                  WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
-                  AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
-                  LIMIT 1
-                ), 0)::numeric
-            END
-          ), 0)`,
+      COALESCE(SUM(
+        CASE 
+          WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+            COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
+          ELSE
+            COALESCE(
+              (SELECT 
+                CASE 
+                  WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
+                    COALESCE(${damagesTable.totalRepairReplacement}, 0)::numeric
+                  ELSE
+                    COALESCE(${damagesTable.pdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.pdRepairCostUnit}, 0)::numeric +
+                    COALESCE(${damagesTable.tdDamageAmount}, 0)::numeric * COALESCE(${damagesTable.tdReplacementCostUnit}, 0)::numeric
+                END
+              FROM ${damagesTable}
+              WHERE ${damagesTable.recordId} = ${disasterRecordsTable.id}
+              AND ${damagesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+              LIMIT 1
+              ), 0)::numeric
+        END
+      ), 0)`,
         totalLosses: sql<number>`COALESCE(SUM(
             CASE 
               WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
                 COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
               ELSE
-                COALESCE((
-                  SELECT 
+                COALESCE(
+                  (SELECT 
                     CASE 
                       WHEN ${lossesTable.publicCostTotalOverride} = true THEN
                         COALESCE(${lossesTable.publicCostTotal}, 0)::numeric
                       ELSE
                         COALESCE(${lossesTable.publicUnits}, 0)::numeric * COALESCE(${lossesTable.publicCostUnit}, 0)::numeric
-                    END +
-                    CASE 
-                      WHEN ${lossesTable.privateCostTotalOverride} = true THEN
-                        COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
-                      ELSE
-                        COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                      END +
+                      CASE 
+                        WHEN ${lossesTable.privateCostTotalOverride} = true THEN
+                          COALESCE(${lossesTable.privateCostTotal}, 0)::numeric
+                        ELSE
+                          COALESCE(${lossesTable.privateUnits}, 0)::numeric * COALESCE(${lossesTable.privateCostUnit}, 0)::numeric
+                        END
                     END
                   FROM ${lossesTable}
                   WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
                   AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
+                  AND ${sectorDisasterRecordsRelationTable.withLosses} = false
                   LIMIT 1
-                ), 0)::numeric
+                  ), 0)::numeric
             END
         ), 0)`
       })
@@ -338,10 +339,6 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
       )
       .leftJoin(
-        damagesTable,
-        eq(damagesTable.recordId, disasterRecordsTable.id)
-      )
-      .leftJoin(
         sectorDisasterRecordsRelationTable,
         and(
           eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
@@ -350,6 +347,14 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
             : sql`1=1` // No sector filter if no sectorIds
         )
       )
+      // .leftJoin(
+      //   damagesTable,
+      //   eq(damagesTable.recordId, disasterRecordsTable.id)
+      // )
+      // .leftJoin(
+      //   lossesTable,
+      //   eq(lossesTable.recordId, disasterRecordsTable.id)
+      // )
       .where(and(...conditions))
       .groupBy(
         disasterEventTable.id,
