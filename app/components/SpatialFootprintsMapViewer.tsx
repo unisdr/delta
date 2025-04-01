@@ -631,9 +631,13 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
       const firstValidRecord = structuredData.records.find((r) => r.footprint.length > 0);
       if (firstValidRecord) defaultKeys.push(firstValidRecord.id);
     }
+
+    const s_legendData = sanitizeLegendData(legendData);
+
+    console.log("legendData:", s_legendData); // ← Log here
   
-    console.log("🧩 Missing geometries to be lazily loaded:", missing); // ← Log here
-    previewMap(flatItems, legendData, defaultKeys, missing);
+   //console.log("🧩 Missing geometries to be lazily loaded:", missing); // ← Log here
+    previewMap(flatItems, s_legendData, defaultKeys, missing);
   };  
 
   return (
@@ -655,6 +659,17 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
     </button>
   );
 };
+
+function sanitizeLegendData(data: any[]): any[] {
+    if (
+      Array.isArray(data) &&
+      data.length === 1 &&
+      data[0]?.id === null
+    ) {
+      return [];
+    }
+    return data;
+}
   
 export default SpatialFootprintsMapViewer;
   

@@ -1,5 +1,6 @@
 import {
-	Link
+	Link,
+	useMatches
 } from "@remix-run/react";
 
 import {useEffect, useState,  ReactElement} from 'react';
@@ -481,6 +482,12 @@ interface DisasterEventViewProps {
 }
 
 export function DisasterEventView(props: DisasterEventViewProps) {
+	const matches = useMatches();
+	// Find the route where the loader returned `env`
+	const rootData = matches.find((match: any) =>
+	  match.id === "root" // 👈 or the actual route ID if not in root
+	)?.data as { env?: { DTS_INSTANCE_CTRY_ISO3?: string } };
+	const ctryIso3 = rootData?.env?.DTS_INSTANCE_CTRY_ISO3;
 
 	console.log("Disaster even tview got user", props.user)
 	const {item, auditLogs} = props;
@@ -525,8 +532,9 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 		spatialFootprint: (
 			<SpatialFootprintView
 				initialData={(item?.spatialFootprint as any[]) || []}
-				mapViewerOption={0}
-				mapViewerDataSources={[]}
+				mapViewerOption={2}
+				mapViewerDataSources={((item as any)?.spatialFootprintsDataSource as any[]) || []}
+				ctryIso3={ctryIso3}
 			/>
 		),
 		attachments: (
