@@ -28,8 +28,7 @@ export const loader = createPaginatedLoader(
 			columns: {id: true, name: true},
 			orderBy: [desc(measureTable.name)],
 		});
-	},
-	[desc(measureTable.name)]
+	}
 );
 
 export default function Data() {

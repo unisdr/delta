@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 import {
 	createDeleteAction,
-} from "~/backend.server/handlers/form";
+} from "~/backend.server/handlers/form/form";
 
 
 import {
@@ -17,7 +17,7 @@ export const action = createDeleteAction({
 	delete: hazardousEventDelete,
 	tableName: getTableName(hazardousEventTable),
 	getById: hazardousEventById,
-	postProcess: async (id, data) => {
+	postProcess: async (_id, data) => {
 		//console.log(`Post-processing record: ${id}`);
 		//console.log(`data: `, data);
 		ContentRepeaterUploadFile.delete(data.attachments);

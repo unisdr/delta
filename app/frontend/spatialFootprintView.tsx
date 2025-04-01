@@ -1,14 +1,17 @@
 import {previewMap, previewGeoJSON} from "~/components/ContentRepeater/controls/mapper";
 import SpatialFootprintMapViewer from "~/components/SpatialFootprintMapViewer";
+import SpatialFootprintsMapViewer from "~/components/SpatialFootprintsMapViewer";
 
 export function SpatialFootprintView({
     initialData = [],
     mapViewerOption = 0,
-    mapViewerDataSources = []
+    mapViewerDataSources = [],
+    ctryIso3 = ""
   }: {
     initialData: any[];
     mapViewerOption?: any;
     mapViewerDataSources?: any[];
+    ctryIso3?: string;
   }) {
     if (initialData) {
         const handlePreviewMap = (e: any) => {
@@ -96,6 +99,7 @@ export function SpatialFootprintView({
                                                     Map Preview
                                         </button>
                                     )}
+                                    {mapViewerOption === 2 && <SpatialFootprintsMapViewer dataSource={mapViewerDataSources} filterCaption="Spatial Footprint" ctryIso3={ctryIso3} />}
                                 </>
                             );
 

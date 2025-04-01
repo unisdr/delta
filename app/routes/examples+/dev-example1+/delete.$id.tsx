@@ -1,5 +1,5 @@
 import { getTableName } from "drizzle-orm";
-import { createDeleteAction } from "~/backend.server/handlers/form";
+import { createDeleteAction } from "~/backend.server/handlers/form/form";
 import { devExample1ById, devExample1DeleteById } from "~/backend.server/models/dev_example1";
 import { devExample1Table } from "~/drizzle/schema";
 

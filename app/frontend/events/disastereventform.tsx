@@ -1,8 +1,9 @@
 import {
-	Link
+	Link,
+	useMatches
 } from "@remix-run/react";
 
-import {useEffect, useState, useRef, ReactElement} from 'react';
+import {useEffect, useState,  ReactElement} from 'react';
 
 import {DisasterEventFields, DisasterEventViewModel, HazardousEventBasicInfoViewModel, DisasterEventBasicInfoViewModel} from "~/backend.server/models/event"
 
@@ -318,31 +319,6 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 	const ctryIso3 = props.ctryIso3;
 	const divisionGeoJSON = props.divisionGeoJSON;
 
-	const dialogTreeViewRef = useRef<any>(null);
-	const treeViewRef = useRef<any>(null);
-	const contentReapeaterRef = useRef<any>(null);
-	const treeViewDiscard = (e?: any) => {
-		if (e) e.preventDefault();
-		dialogTreeViewRef.current?.close();
-		treeViewRef.current.treeViewClear();
-	}
-	const treeViewOpen = (e: any) => {
-		e.preventDefault();
-		dialogTreeViewRef.current?.showModal();
-
-		let contHeight = [] as number[];
-		contHeight[0] = (dialogTreeViewRef.current.querySelector(".dts-dialog__content") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[1] = (dialogTreeViewRef.current.querySelector(".dts-dialog__header") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[2] = (dialogTreeViewRef.current.querySelector(".tree-filters") as HTMLElement | null)?.offsetHeight || 0;
-		contHeight[3] = (dialogTreeViewRef.current.querySelector(".tree-footer") as HTMLElement | null)?.offsetHeight || 0;
-		let getHeight = contHeight[0] - contHeight[1] - contHeight[2] - 100;
-
-		const dtsFormBody = dialogTreeViewRef.current.querySelector(".dts-form__body") as HTMLElement | null;
-		if (dtsFormBody) {
-			dtsFormBody.style.height = `${getHeight - (window.innerHeight - getHeight)}px`;
-		}
-	}
-
 	let hazardousEventLinkInitial: "none" | "hazardous_event" | "disaster_event" = "none"
 	if (props.fields.hazardousEventId) {
 		hazardousEventLinkInitial = "hazardous_event"
@@ -506,6 +482,12 @@ interface DisasterEventViewProps {
 }
 
 export function DisasterEventView(props: DisasterEventViewProps) {
+	const matches = useMatches();
+	// Find the route where the loader returned `env`
+	const rootData = matches.find((match: any) =>
+	  match.id === "root" // 👈 or the actual route ID if not in root
+	)?.data as { env?: { DTS_INSTANCE_CTRY_ISO3?: string } };
+	const ctryIso3 = rootData?.env?.DTS_INSTANCE_CTRY_ISO3;
 
 	console.log("Disaster even tview got user", props.user)
 	const {item, auditLogs} = props;
@@ -550,8 +532,9 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 		spatialFootprint: (
 			<SpatialFootprintView
 				initialData={(item?.spatialFootprint as any[]) || []}
-				mapViewerOption={0}
-				mapViewerDataSources={[]}
+				mapViewerOption={2}
+				mapViewerDataSources={((item as any)?.spatialFootprintsDataSource as any[]) || []}
+				ctryIso3={ctryIso3}
 			/>
 		),
 		attachments: (

@@ -28,12 +28,6 @@ import {
 } from "~/frontend/form";
 
 import {
-	AdminUpdateUserFields,
-	adminUpdateUser,
-	adminUpdateUserFieldsFromMap,
-} from "~/backend.server/models/user";
-
-import {
 	ValidRoles
 } from "~/frontend/user/roles";
 
@@ -49,12 +43,12 @@ import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
 import { redirectWithMessage, sessionCookie } from "~/util/session";
-import { toast } from "react-toastify"; // Importing toast notification library
 import "react-toastify/dist/ReactToastify.css"; // Toast styles
 
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { useNavigate } from "@remix-run/react";
+import {adminUpdateUser, AdminUpdateUserFields, adminUpdateUserFieldsFromMap} from "~/backend.server/models/user/update_user";
 
 
 export const meta: MetaFunction = () => {

@@ -13,17 +13,17 @@ import {
 	UserSession
 } from "~/util/session";
 
-import * as user from "~/backend.server/models/user"
+import {LoginResult, LoginTotpResult, login as modelLogin, loginTotp as modelLoginTotp} from "~/backend.server/models/user/auth"
 import {apiAuth} from "~/backend.server/models/api_key"
 import {PermissionId, roleHasPermission, RoleId} from "~/frontend/user/roles";
 import {configApprovedRecordsArePublic} from "./config";
 
-export async function login(email: string, password: string): Promise<user.LoginResult> {
-	return await user.login(email, password)
+export async function login(email: string, password: string): Promise<LoginResult> {
+	return await modelLogin(email, password)
 }
 
-export async function loginTotp(userId: number, sessionId: string, code: string): Promise<user.LoginTotpResult> {
-	const res = await user.loginTotp(userId, code);
+export async function loginTotp(userId: number, sessionId: string, code: string): Promise<LoginTotpResult> {
+	const res = await modelLoginTotp(userId, code);
 	if (!res.ok) {
 		return res
 	}

@@ -50,7 +50,7 @@ export function Header({ loggedIn, siteName, siteLogo, userRole }: HeaderProps) 
   );
 }
 
-function navItemsNotLoggedIn(userRole:string): Lvl1Item[] {
+function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
   return [
     {
       name: "Data",

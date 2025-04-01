@@ -31,8 +31,7 @@ export const loader = createPaginatedLoader(
 				managedByUser: true
 			}
 		});
-	},
-	[desc(apiKeyTable.createdAt)]
+	}
 );
 
 export default function Data() {

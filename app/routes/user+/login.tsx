@@ -17,7 +17,6 @@ import {
 	Field,
 	Errors as FormErrors,
 	SubmitButton,
-	FieldErrors
 } from "~/frontend/form"
 import { formStringData } from "~/util/httputil";
 import {
@@ -26,7 +25,7 @@ import {
 } from "~/util/session";
 import {
 	login,
-} from "~/backend.server/models/user"
+} from "~/backend.server/models/user/auth"
 import {
 	errorToString
 } from "~/frontend/form"
@@ -100,9 +99,6 @@ export default function Screen() {
 	const errors = actionData?.errors || {};
 	const data = actionData?.data
 
-	const [email, setEmail] = useState(data?.email || "");
-
-	const [password, setPassword] = useState(data?.password || "");
 	const [passwordVisible, setPasswordVisible] = useState(false);
 
 	// Ensure password visibility is initialized on the client to avoid mismatch
@@ -264,8 +260,5 @@ export default function Screen() {
 			</div>
 		</>
 	);
-}
-function isFormValid() {
-	throw new Error('Function not implemented.');
 }
 

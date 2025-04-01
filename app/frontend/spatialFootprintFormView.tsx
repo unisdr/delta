@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { ContentRepeater } from "~/components/ContentRepeater";
 import { previewGeoJSON } from "~/components/ContentRepeater/controls/mapper";
 import { TreeView } from "~/components/TreeView";
@@ -10,7 +10,6 @@ export function SpatialFootprintFormView({
   treeData = [],
   initialData = [],
   geographicLevel = true,
-  onChange
 }: {
   divisions: any;
   ctryIso3: string;

@@ -2,7 +2,6 @@ import {
 	ActionFunctionArgs,
 	json,
 	MetaFunction,
-	redirect
 } from "@remix-run/node";
 import {
 	useActionData,
@@ -12,18 +11,15 @@ import {
 	Field,
 	Errors as FormErrors,
 	SubmitButton,
-	FieldErrors,
 	FormMessage,
 	errorToString
 } from "~/frontend/form"
-import { login } from "~/util/auth"
 import { formStringData } from "~/util/httputil";
 import {
 	resetPasswordSilentIfNotFound
-} from "~/backend.server/models/user";
-import { sessionCookie, redirectWithMessage } from "~/util/session";
+} from "~/backend.server/models/user/password";
+import { redirectWithMessage } from "~/util/session";
 
-import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 interface FormFields {

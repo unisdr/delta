@@ -1,17 +1,21 @@
-- [Code organization](code-organization.md)
+- [Code structure](code-structure.md)
 
 # Models
 `app/backend.server/models`
 
-This folder contains a collection of database models or a database access layer. Most files map to a table in the database. These files provide functions for reading and writing data.
+This forlder is the database access layer. Most files map directly to ta database table and provide function to read and write data.
 
-You can check dev_example1.ts for a common structure.
+Use `dev_example1.ts` as a template.
 
-fieldsDef defines the mapping of the fields between form and the database table. It defines types and database related information, as well as some UI configuration for the form itself.
+## Common pattern
 
-These definition can be a function in models folder, in that case it can query the database to get acceptable values for enums. If the database access is not needed, this can go in the frontend folder instead.
+Each model typically contains the following parts:
 
-See more info in [Form/CSV/API](form-csv-api.md)
+- `fieldsDef` - Maps form fields to DB columns. Includes type info and UI configuration, such as labels.
+
+This can be a function if it needs to query the DB (for example for enum options), in that case it would be better to keep it in models folder. Otherwise if no database access needed, could be in the frontend.
+
+More info in [Form/CSV/API](form-csv-api.md)
 
 The pattern used to support database operation for common form based data is to provide the following functions:
 
@@ -20,17 +24,18 @@ The pattern used to support database operation for common form based data is to 
 - update(tx, id, fields)
 - byId(id)
 - deleteById(id)
-- idByImportId(tx, importId) - This is used to allow CSV and API updated based on import id field.
+- idByImportId(tx, importId) - This is used to allow CSV and API updates based on import id field.
 
-In addition, queries related to those tables normally go the same file.
+Other queries related to the table usually go in the same file.
 
-## Other code that does not match to the pattern above
+
+## Other model files
 
 ## user.ts
-User management and auth related code. This one also includes some email text when resetting/changing passwords, would be better to move that out to another file.
+User management and auth related code. Includes email content for invites, password resets and similar, could be moved to a separate file.
 
 ## human_effects.ts
-We store human direct effect data across different tables, but following the same structure and editing functionality. This file covers all db related code. Tests cover most of it functionality.
+Hnadles DB logic for human direct effects stored across multiple tables with shared structure. Test cover most functionality.
 
 ## common.ts
 selectTranslated

@@ -1,15 +1,15 @@
-- [Code organization](code-organization.md)
+- [Code structure](code-structure.md)
 
 # Remix routes
 `app/routes`
 
-The code structure for routes mostly follow the standard Remix pattern. Please read Remix docs on those first.
+Follows standard Remix routing.
 
 https://remix.run/docs/en/main/route/action
 
 We also use remix-flat-routes plugin to organize routes into folders.
 
-In the routes folders, folder names ending with + are the ones handled by this plugin, and allow grouping routes in folders following url structure.
+Folders ending with `+` are special, these are handled by this plugin and are grouped in folders with paths matching url structure.
 
 https://github.com/kiliman/remix-flat-routes
 
@@ -18,5 +18,6 @@ https://github.com/kiliman/remix-flat-routes
 
 ### API
 
-Folder for routes that returns JSON or qr code image, not a regular remix data fetch results.
+Contains routes that return JSON or QR code images, not standard Remix loader results.
+
 

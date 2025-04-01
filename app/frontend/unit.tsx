@@ -4,7 +4,6 @@ import {
 	ViewComponent,
 	FormView,
 	ViewPropsBase,
-	Field
 } from "~/frontend/form";
 
 import {UnitFields, UnitViewModel} from "~/backend.server/models/unit"

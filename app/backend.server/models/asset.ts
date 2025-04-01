@@ -1,7 +1,7 @@
 import {dr, Tx} from "~/db.server";
 import {assetTable, AssetInsert} from "~/drizzle/schema";
 import {eq, sql, inArray} from "drizzle-orm";
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
+import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 
@@ -132,7 +132,7 @@ export async function assetById(idStr: string) {
 	return assetByIdTx(dr, idStr)
 }
 
-export async function assetByName(nameStr: string, nationalIdStr: string = '') {
+export async function assetByName(nameStr: string) {
 	let res = await dr.query.assetTable.findFirst({
 		where: eq(sql`LOWER(${assetTable.name})`, nameStr.toLowerCase()),
 	});

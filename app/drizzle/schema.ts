@@ -212,13 +212,6 @@ export const devExample1Table = pgTable("dev_example1", {
 export type DevExample1 = typeof devExample1Table.$inferSelect;
 export type DevExample1Insert = typeof devExample1Table.$inferInsert;
 
-export const commonPasswordsTable = pgTable("commonPasswords", {
-	password: text("password").primaryKey(),
-});
-
-export type CommonPassword = typeof commonPasswordsTable.$inferSelect;
-export type CommonPasswordInsert = typeof commonPasswordsTable.$inferInsert;
-
 export const country1Table = pgTable("country1", {
 	id: ourSerial("id").primaryKey(),
 	name: zeroStrMap("name"),

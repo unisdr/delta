@@ -9,7 +9,7 @@ import {
 import {
 	fieldsDefView
 } from "~/backend.server/models/damages"
-import {createViewLoader} from "~/backend.server/handlers/form"
+import {createViewLoader} from "~/backend.server/handlers/form/form"
 import {ViewScreenWithDef} from "~/frontend/form"
 
 export const loader = createViewLoader({

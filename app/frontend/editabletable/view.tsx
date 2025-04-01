@@ -62,7 +62,7 @@ function TableClient(props: TableProps) {
 		makeLocalStorageKey(props.recordId, props.table)
 	)
 
-	function setLocalStorageKeyFromVars(recordId: string, table: string): string{
+	function setLocalStorageKeyFromVars(recordId: string, table: string): string {
 		let key = makeLocalStorageKey(recordId, table)
 		setLocalStorageKey(key)
 		return key
@@ -275,6 +275,9 @@ function TableClient(props: TableProps) {
 						csvExportUrl="./human-effects/csv-export"
 						csvImportUrl={"./human-effects/csv-import?table=" + props.table}
 					/>
+					{childProps.data.hasUnsavedChanges() &&
+						<p>You have unsaved changes</p>
+					}
 					<TableContent
 						tableErrors={tableErrors}
 						sort={sort}

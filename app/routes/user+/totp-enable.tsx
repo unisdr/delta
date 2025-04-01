@@ -21,7 +21,7 @@ import {
 import {
 	setTotpEnabled,
 	generateTotpIfNotSet
-} from "~/backend.server/models/user";
+} from "~/backend.server/models/user/totp";
 import {
 	redirectWithMessage,
 } from "~/util/session";

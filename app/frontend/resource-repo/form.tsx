@@ -8,7 +8,6 @@ import {formatDate} from "~/util/date";
 
 import {
 	Field,
-	FieldErrors,
 	UserFormProps,
 	FormInputDef,
 	FieldsView,
@@ -16,7 +15,7 @@ import {
 	ViewComponent
 } from "~/frontend/form";
 
-import {useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
 import { ContentRepeater } from "~/components/ContentRepeater";

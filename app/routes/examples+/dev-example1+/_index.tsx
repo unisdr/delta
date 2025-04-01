@@ -29,7 +29,6 @@ export const loader = createPaginatedLoader(
 			orderBy: [desc(devExample1Table.field1)],
 		});
 	},
-	[desc(devExample1Table.field1)]
 );
 
 export default function Data() {

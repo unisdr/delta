@@ -11,10 +11,9 @@ import { authAction, authActionGetAuth } from "~/util/auth";
 import {
   ChangePasswordFields,
   changePassword,
-} from "~/backend.server/models/user";
+} from "~/backend.server/models/user/password";
 import { redirectWithMessage } from "~/util/session";
 import { MainContainer } from "~/frontend/container";
-import { useState } from "react";
 import PasswordInput from "~/components/PasswordInput";
 
 export const action = authAction(

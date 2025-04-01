@@ -1,38 +1,35 @@
-- [Code organization](code-organization.md)
+- [Code structure](code-structure.md)
 
 # Frontend
 `app/frontend`
-Contains code that runs on both the server and browser. Primarily UI-related with no direct database access.
+Contains UI logic shared between server and browser. No direct DB access here.
 
 ## Form, CSV, API code
 
 ### form.tsx
-Shared form components
+Shared code for form rendering and viewing.
 
-- FormInputDef - Defines the field
-- Inputs - Converts field definitions, values, errors into form elements
-- Input - Same for one element
-- FieldView - Converts field definitions, values into a view page. It contains information about one row in the database.
-- FormScreen... - Helpers that call useLoaderData and passed form components to render the form screen
-- ViewScreen... - Similar for view screens
+- FormInputDef - Field definition type
+- Inputs - Renders all fields based on field definitions, values and errors.
+- Input - Renders a sinle form input
+- FieldView -  Renders a single field value for read only display in view page.
+- FormScreen... - Screen components that load data using useLoaderData and render form screen.
+- ViewScreen... - View-only screen
 
 ### form_validate.tsx
-Checks that passed JSON or map data matches the expected types based on field definitions. Also checks presence of required fields, but no other validation.
+Type checks data agains fieldsDef, ensures required fields are present. All other validation is in models instead.
 
 ### Dev example1
-- `dev_example1.tsx` - Example of form and view using field definitions
+- `dev_example1.tsx` - Example of form and view using field definitions. Use as a reference when addinga new data types.
 
-## Editable Table (Human effects)
-Editable table with each row representing a database row. Stores edits in localStorage until save button is called. Updates are stored in localStorage based on fields and ids.
+## Editable Table: Human effects
+Implements an editable table where each row maps to a DB row. Edits are stored in `localStorage` until the user clicks Save.
 
-`view.tsx`
-View component for the table itself.
-
-`data.ts`
-`data_test.ts`
-Data manager, here are most important data fields.
+- `view.tsx` - Table UI
+- `data.ts`, `data_test.ts` - Manages data and local state
 
 ```
+// Local state format
 // map<id, map<field, value>
 private updates: Map<string, Map<number, any>>
 // set<id>

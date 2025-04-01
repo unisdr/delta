@@ -1,0 +1,239 @@
+import {dr} from "~/db.server";
+import {eq} from "drizzle-orm";
+
+import {userTable, User} from "~/drizzle/schema";
+
+import {Errors, hasErrors} from "~/frontend/form";
+
+import {sendEmail} from "~/util/email";
+import {addHours} from "~/util/time";
+import {errorIsNotUnique} from "~/util/db";
+
+import {randomBytes} from "crypto";
+
+import {configSiteName, configSiteURL} from "~/util/config";
+import {validateName, validatePassword} from "./user_utils";
+import {passwordHash} from "./password";
+
+type AdminInviteUserResult =
+	| {ok: true}
+	| {ok: false; errors: Errors<AdminInviteUserFields>};
+
+export interface AdminInviteUserFields {
+	firstName: string;
+	lastName: string;
+	email: string;
+	organization: string;
+	hydrometCheUser: boolean;
+	role: string;
+}
+
+export function adminInviteUserFieldsFromMap(data: {
+	[key: string]: string;
+}): AdminInviteUserFields {
+	const fields: (keyof AdminInviteUserFields)[] = [
+		"email",
+		"firstName",
+		"lastName",
+		"organization",
+		"role",
+	];
+	let res = Object.fromEntries(
+		fields.map((field) => [field, data[field] || ""])
+	) as Omit<AdminInviteUserFields, "hydrometCheUser">;
+	const result: AdminInviteUserFields = {
+		...res,
+		hydrometCheUser: data.hydrometCheUser === "on",
+	};
+	return result;
+}
+
+export async function adminInviteUser(
+	fields: AdminInviteUserFields
+): Promise<AdminInviteUserResult> {
+	let errors: Errors<AdminInviteUserFields> = {};
+	errors.form = [];
+	errors.fields = {};
+
+	if (fields.email == "") {
+		errors.fields.email = ["Email is required"];
+	}
+	if (fields.firstName == "") {
+		errors.fields.firstName = ["First name is required"];
+	}
+	if (fields.role == "") {
+		errors.fields.role = ["Role is required"];
+	}
+	if (fields.organization == "") {
+		errors.fields.organization = ["Organization is required"];
+	}
+
+	if (hasErrors(errors)) {
+		return {ok: false, errors};
+	}
+
+	try {
+		const res = await dr
+			.insert(userTable)
+			.values({
+				email: fields.email,
+				firstName: fields.firstName,
+				lastName: fields.lastName,
+				role: fields.role,
+				organization: fields.organization,
+				hydrometCheUser: fields.hydrometCheUser,
+			})
+			.returning();
+		const user = res[0];
+		await sendInvite(user);
+	} catch (e: any) {
+		if (errorIsNotUnique(e, "user", "email")) {
+			errors.fields.email = ["A user with this email already exists"];
+			return {ok: false, errors};
+		}
+		throw e;
+	}
+
+	return {ok: true};
+}
+
+export async function sendInvite(user: User) {
+	const inviteCode = randomBytes(32).toString("hex");
+	const expirationTime = addHours(new Date(), 7 * 24);
+
+	await dr
+		.update(userTable)
+		.set({
+			inviteSentAt: new Date(),
+			inviteCode: inviteCode,
+			inviteExpiresAt: expirationTime,
+		})
+		.where(eq(userTable.id, user.id));
+
+	const inviteURL =
+		configSiteURL() + "/user/accept-invite?inviteCode=" + inviteCode;
+	const subject = `Invitation to join DTS ${configSiteName()}`;
+	const html = `<p>You have been invited to join the DTS ${configSiteName()} system as 
+                   a ${user.role} user.
+                </p>
+                <p>Click on the link below to create your account.</p>
+                <p>
+                  <a href="${inviteURL}" 
+                    style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+                    background-color: #007BFF; text-decoration: none; border-radius: 5px;">
+                    Set up account
+                  </a>
+                </p>
+                <p><a href="${inviteURL}">${inviteURL}</a></p>`;
+
+	const text = `You have been invited to join the DTS ${configSiteName()} system as 
+                a ${user.role} user. 
+                Copy and paste the following link into your browser url to create your account:
+                ${inviteURL}`;
+	await sendEmail(user.email, subject, text, html);
+}
+
+type ValidateInviteCodeResult =
+	| {ok: true; userId: number}
+	| {ok: false; error: string};
+
+export async function validateInviteCode(
+	code: string
+): Promise<ValidateInviteCodeResult> {
+	if (!code) {
+		return {ok: false, error: "Invite code is required"};
+	}
+
+	const res = await dr
+		.select()
+		.from(userTable)
+		.where(eq(userTable.inviteCode, code));
+
+	if (!res.length) {
+		return {ok: false, error: "Invalid invite code"};
+	}
+
+	const user = res[0];
+	const now = new Date();
+
+	if (user.inviteExpiresAt < now) {
+		return {ok: false, error: "Invite code has expired"};
+	}
+
+	return {
+		ok: true,
+		userId: user.id,
+	};
+}
+
+type AcceptInviteResult =
+	| {ok: true; userId: number}
+	| {ok: false; errors: Errors<AcceptInviteFields>};
+
+interface AcceptInviteFields {
+	firstName: string;
+	lastName: string;
+	password: string;
+	passwordRepeat: string;
+}
+
+export function AcceptInviteFieldsFromMap(data: {
+	[key: string]: string;
+}): AcceptInviteFields {
+	const fields: (keyof AcceptInviteFields)[] = [
+		"firstName",
+		"lastName",
+		"password",
+		"passwordRepeat",
+	];
+	return Object.fromEntries(
+		fields.map((field) => [field, data[field] || ""])
+	) as unknown as AcceptInviteFields;
+}
+
+export async function acceptInvite(
+	inviteCode: string,
+	fields: AcceptInviteFields
+): Promise<AcceptInviteResult> {
+	let errors: Errors<AcceptInviteFields> = {};
+	errors.form = [];
+	errors.fields = {};
+
+	const codeRes = await validateInviteCode(inviteCode);
+	if (!codeRes.ok) {
+		errors.form = [codeRes.error];
+		return {ok: false, errors};
+	}
+
+	const userId = codeRes.userId;
+
+	validateName(fields, errors);
+	validatePassword(fields, errors);
+
+	if (hasErrors(errors)) {
+		return {ok: false, errors};
+	}
+
+	let user: User;
+
+	const res = await dr
+		.update(userTable)
+		.set({
+			inviteCode: "",
+			password: passwordHash(fields.password),
+			firstName: fields.firstName,
+			lastName: fields.lastName,
+			emailVerified: true,
+		})
+		.where(eq(userTable.id, userId))
+		.returning();
+
+	if (res.length === 0) {
+		errors.form = ["Application Error. User not found"];
+		return {ok: false, errors};
+	}
+
+	user = res[0];
+
+	return {ok: true, userId: user.id};
+}

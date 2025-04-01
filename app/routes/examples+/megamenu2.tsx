@@ -36,7 +36,7 @@ export default function Screen() {
 	return (
 		<>
 			<p>Hello!</p>
-			<Header loggedIn={false} siteLogo="" siteName={configSiteName} />
+			<Header loggedIn={false} siteLogo="" siteName={configSiteName} userRole="admin" />
 		</>
 	)
 }

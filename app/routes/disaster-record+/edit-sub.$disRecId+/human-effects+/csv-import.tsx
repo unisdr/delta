@@ -106,7 +106,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs): Promise
 				}
 			}
 			{
-				let res = await create(tx, table, recordId, defs, [], all.slice(1), true)
+				let res = await create(tx, table, recordId, defs, all.slice(1), true)
 				if (!res.ok) {
 					if (res.error) {
 						throw new UserError(String(res.error))

@@ -197,8 +197,6 @@ export async function create(
 	tblId: HumanEffectsTable,
 	recordId: string,
 	defs: Def[],
-	// TODO: unused, delete
-	_: string[],
 	data: any[][],
 	dataStrings: boolean
 ): Promise<Res> {

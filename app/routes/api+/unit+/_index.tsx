@@ -7,7 +7,7 @@ import {
 } from "~/util/auth";
 import {
   jsonApiDocs,
-} from "~/backend.server/handlers/form";
+} from "~/backend.server/handlers/form/form_api";
 
 export let loader = authLoaderApiDocs(async () => {
   let docs = jsonApiDocs({

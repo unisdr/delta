@@ -1,4 +1,4 @@
-# Code Organization
+# Code Structure
 
 ## Important concepts
 - [Form CSV API](form-csv-api.md)
@@ -10,11 +10,11 @@
 
 ### Database Access
 `app/backend.server/models`
-- [Models](models.md)
+- [Models](models.md) - Database models (or database access layer). Most files map to a table in the database.
 
 ### Request Handlers
 `app/backend.server/handlers`
-- [Handlers](handlers.md)
+- [Handlers](handlers.md) - Code that is shared between multiple remix routes. 
 
 ### Remix Routes
 - [Routes](routes.md)

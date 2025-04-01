@@ -1,12 +1,14 @@
 # Developer documentation
 
 ## General
-- [Code organization](code-organization.md)
+- [Code structure](code-structure.md)
 	- [Models](models.md)
 	- [Handlers](handlers.md)
 	- [Routes](routes.md)
 	- [Frontend](frontend.md)
 - [Form CSV API](form-csv-api.md)
+
+- [Dependencies](dependencies.md)
 
 ## Requirements
 - [IDs](ids.md) - Document IDs used for hazardous, disaster events and disaster records

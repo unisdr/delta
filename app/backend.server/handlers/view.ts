@@ -53,11 +53,9 @@ export async function getItem2<T>(
 	return res;
 }
 
-// TODO: defaultOrderBy is not working, remove
 export function createPaginatedLoader<T>(
 	table: any,
 	fetchData: (offsetLimit: OffsetLimit) => Promise<T[]>,
-	defaultOrderBy: any[] = [],
 ) {
 	return authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		const {request} = loaderArgs;
@@ -68,7 +66,7 @@ export function createPaginatedLoader<T>(
 			return await fetchData(offsetLimit);
 		};
 
-		const res = await executeQueryForPagination3(request, count, dataFetcher, defaultOrderBy);
+		const res = await executeQueryForPagination3(request, count, dataFetcher, [])
 
 		return {data: res};
 	});

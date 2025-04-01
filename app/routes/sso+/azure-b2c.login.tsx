@@ -21,15 +21,8 @@ import {
 	decodeToken,
 	loginGetCode
 } from "~/util/ssoauzeb2c";
-
-import {
-	setupAdminAccountSSOAzureB2C,
-	setupAdminAccountFieldsFromMap,
-	loginAzureB2C
-} from "~/backend.server/models/user";
-
-
-import { object } from "prop-types";
+import {loginAzureB2C} from "~/backend.server/models/user/auth";
+import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
 
 export const loader:LoaderFunction = async ( { request } ) => {
 	console.log("NODE_ENV", process.env.NODE_ENV)
@@ -39,9 +32,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 	const urlSSOCode2Token = `${ baseURL() }/token?p=${ jsonAzureB2C.login_userflow }`;
 	const url = new URL(request.url);
 	const queryStringCode = url.searchParams.get('code') || '';
-	const queryStringError = url.searchParams.get('error') || '';
 	const queryStringDesc = url.searchParams.get('error_description') || '';
-	const queryStringAction = url.searchParams.get('action') || '';
 	let data: { [key: string]: string } = {};
 	data['email'] = '';
 	data['password'] = '';

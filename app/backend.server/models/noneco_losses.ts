@@ -1,7 +1,7 @@
 import {dr, Tx} from "~/db.server";
 import {nonecoLossesTable, nonecoLosses, categoriesTable} from "~/drizzle/schema";
 import {eq,sql,aliasedTable} from "drizzle-orm";
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form";
+import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
 import {deleteByIdForStringId} from "./common";
 

@@ -71,7 +71,8 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 		confFooterURLPrivPolicy: configFooterURLPrivPolicy(),
 		confFooterURLTermsConds: configFooterURLTermsConds(),
 		env: {
-			CURRENCY_CODES: process.env.CURRENCY_CODES || ''
+			CURRENCY_CODES: process.env.CURRENCY_CODES || '',
+			DTS_INSTANCE_CTRY_ISO3: process.env.DTS_INSTANCE_CTRY_ISO3 || ''
 		}
 	}, {
 		headers: {
@@ -191,7 +192,7 @@ const queryClient = new QueryClient({
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, userRole, env} = loaderData
+	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, userRole} = loaderData
 	
 	// Display toast for flash messages
 	useEffect(() => {
