@@ -166,7 +166,7 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
                     (rec) => `
                     <div class="legend-item">
                         <input type="checkbox" id="layer-${rec.id}" ${defaultKeys.includes(rec.id) ? "checked" : ""} />
-                        <label for="layer-${rec.id}">${rec.id.slice(0, 5)}</label>
+                        <label for="layer-${rec.id}">${rec.id.slice(0, 8)}</label>
                         ${["damages", "losses", "disruptions"]
                         .map(
                             (sub) => `
@@ -247,9 +247,9 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
                             return {
                             color: "gray",    // Set color to gray
                             weight: 1,        // Line weight (thickness)
-                            dashArray: "2,2",  // Dotted line (5px dash, 5px gap)
-                            fillColor: 'transparent', // optional
-                            fillOpacity: 0       // make the inside transparent
+                            // dashArray: "2,2",  // Dotted line (5px dash, 5px gap)
+                            fillColor: 'gray', // optional
+                            fillOpacity: 0.1       // make the inside transparent
                             };
                         }
 
@@ -534,7 +534,7 @@ const SpatialFootprintsMapViewer: React.FC<SpatialFootprintsMapViewerProps> = ({
       console.log('dataSource:',dataSource);
 
     if (dataSource.length > 0) {
-      eventId = dataSource[0]?.id.slice(0, 5); // Add optional chaining to handle undefined cases
+      eventId = dataSource[0]?.id.slice(0, 8); // Add optional chaining to handle undefined cases
     }
   
     dataSource.forEach((event: any) => {
