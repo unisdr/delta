@@ -15,6 +15,7 @@ import {
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
+import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 /**
  * Gets all subsector IDs for a given sector following international standards.
@@ -165,11 +166,23 @@ export async function getEffectDetails(filters: FilterParams) {
 
   // Handle dates in UTC for consistency across timezones
   if (filters.fromDate) {
-    baseConditions.push(sql`${disasterRecordsTable.startDate}::date >= ${filters.fromDate}::date`);
+    const parsedFromDate = parseFlexibleDate(filters.fromDate);
+    if (parsedFromDate) {
+      baseConditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
+    } else {
+      console.error('Invalid fromDate format:', filters.fromDate);
+    }
   }
   if (filters.toDate) {
-    baseConditions.push(sql`${disasterRecordsTable.endDate}::date <= ${filters.toDate}::date`);
+    const parsedToDate = parseFlexibleDate(filters.toDate);
+    if (parsedToDate) {
+      baseConditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
+    } else {
+      console.error('Invalid toDate format:', filters.toDate);
+    }
   }
+
+  // Handle disaster event ID filter
   if (filters.disasterEventId) {
     baseConditions.push(eq(disasterRecordsTable.disasterEventId, filters.disasterEventId));
   }
