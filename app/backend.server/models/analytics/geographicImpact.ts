@@ -18,6 +18,8 @@ import { getSectorsByParentId } from "./sectors";
 import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
+import { parseFlexibleDate, createDateCondition, extractYearFromDate } from "~/backend.server/utils/dateFilters";
+
 
 
 
@@ -576,10 +578,20 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
 
         // Add date range filters if provided
         if (filters.fromDate) {
-            baseConditions.push(gte(disasterRecordsTable.startDate, filters.fromDate));
+            const parsedFromDate = parseFlexibleDate(filters.fromDate);
+            if (parsedFromDate) {
+                baseConditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
+            } else {
+                console.error('Invalid from date format:', filters.fromDate);
+            }
         }
         if (filters.toDate) {
-            baseConditions.push(lte(disasterRecordsTable.endDate, filters.toDate));
+            const parsedToDate = parseFlexibleDate(filters.toDate);
+            if (parsedToDate) {
+                baseConditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
+            } else {
+                console.error('Invalid to date format:', filters.toDate);
+            }
         }
 
         // Add disaster event filter if provided
@@ -679,7 +691,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             )
             .where(and(...baseConditions));
 
-        // console.log('🧪 Matching record hazard fields:', debugHazards);
+        console.log(' Matching record hazard fields:', debugHazards);
 
         // Get divisions with complete fields and apply geographic level filter
         const baseDivisionsQuery = dr
@@ -898,7 +910,7 @@ async function getDisasterRecordsForDivision(
             conditions.push(
                 inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
             );
-            // console.log(`✔ Sector filter applied: ${sectorIds.length} sectors`);
+            console.log(`✔ Sector filter applied: ${sectorIds.length} sectors`);
         }
 
         // Add date filters if specified
@@ -1119,7 +1131,7 @@ AND ST_Intersects(
             const footprint = record.spatialFootprint;
             if (!Array.isArray(footprint)) {
                 console.warn(`[SKIP ${record.id}] No valid spatial_footprint array`);
-                console.log(`Spatial footprint: ${footprint}`);
+                // console.log(`Spatial footprint: ${footprint}`);
                 console.debug("[FilterFail] spatialFootprint is not an array", record);
                 return false;
             }
@@ -1192,7 +1204,7 @@ AND ST_Intersects(
                     // console.log('Query parameters:', textQueryStr.params);
 
                     const textRecords = await textQuery;
-                    // console.log(`[TEXT MATCH] ➜ Returned ${textRecords.length} additional records`);
+                    console.log(`[TEXT MATCH] ➜ Returned ${textRecords.length} additional records`);
 
                     return [...spatialRecords, ...textRecords].map(r => r.id);
                 }
@@ -1318,10 +1330,12 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
             return { total: 0, byYear: new Map() };
         }
 
+        const yearExpr = extractYearFromDate(disasterRecordsTable.startDate);
+
         // First get sector overrides
         const sectorOverrides = await dr
             .select({
-                year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
+                year: yearExpr.as("year"),
                 totalDamage: sql<string>`COALESCE(SUM(
                     CASE 
                         WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
@@ -1341,13 +1355,13 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
                     sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
                 )
             )
-            .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
-            .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
+            .groupBy(disasterRecordsTable.startDate)
+            .orderBy(yearExpr);
 
         // Then get detailed damages
         const detailedDamages = await dr
             .select({
-                year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
+                year: yearExpr.as("year"),
                 totalDamage: sql<string>`COALESCE(SUM(
                     CASE 
                         WHEN ${damagesTable.totalRepairReplacementOverride} = true THEN
@@ -1380,8 +1394,8 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
                     ))
                 )
             )
-            .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
-            .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
+            .groupBy(disasterRecordsTable.startDate)
+            .orderBy(yearExpr);
 
         // Process results with safe numeric conversion
         let total = 0;
@@ -1389,7 +1403,7 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
 
         // Process sector overrides first
         for (const row of sectorOverrides) {
-            const year = parseInt(row.year);
+            const year = Number(row.year);
             if (isNaN(year)) continue;
 
             const damage = safeMoneyToNumber(row.totalDamage);
@@ -1399,7 +1413,7 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
 
         // Then add detailed damages where there are no overrides
         for (const row of detailedDamages) {
-            const year = parseInt(row.year);
+            const year = Number(row.year);
             if (isNaN(year)) continue;
 
             const damage = safeMoneyToNumber(row.totalDamage);
@@ -1430,10 +1444,12 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
             return { total: 0, byYear: new Map() };
         }
 
+        const yearExpr = extractYearFromDate(disasterRecordsTable.startDate);
+
         // First get sector overrides
         const sectorOverrides = await dr
             .select({
-                year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
+                year: yearExpr.as("year"),
                 totalLoss: sql<string>`COALESCE(SUM(
                     CASE 
                         WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
@@ -1453,13 +1469,13 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
                     sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
                 )
             )
-            .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
-            .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
+            .groupBy(disasterRecordsTable.startDate)
+            .orderBy(yearExpr);
 
         // Then get detailed losses
         const detailedLosses = await dr
             .select({
-                year: sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`,
+                year: yearExpr.as("year"),
                 totalLoss: sql<string>`COALESCE(SUM(
                     CASE 
                         WHEN ${lossesTable.publicCostTotalOverride} = true THEN
@@ -1498,8 +1514,8 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
                     ))
                 )
             )
-            .groupBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`)
-            .orderBy(sql<string>`SUBSTRING(${disasterRecordsTable.startDate}, 1, 4)`);
+            .groupBy(disasterRecordsTable.startDate)
+            .orderBy(yearExpr);
 
         // Process results with safe numeric conversion
         let total = 0;
@@ -1507,7 +1523,7 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
 
         // Process sector overrides first
         for (const row of sectorOverrides) {
-            const year = parseInt(row.year);
+            const year = Number(row.year);
             if (isNaN(year)) continue;
 
             const loss = safeMoneyToNumber(row.totalLoss);
@@ -1517,7 +1533,7 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
 
         // Then add detailed losses where there are no overrides
         for (const row of detailedLosses) {
-            const year = parseInt(row.year);
+            const year = Number(row.year);
             if (isNaN(year)) continue;
 
             const loss = safeMoneyToNumber(row.totalLoss);
