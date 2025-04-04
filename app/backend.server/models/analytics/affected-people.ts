@@ -18,6 +18,7 @@ type FilterValues = {
 	specificHazardId?: string | null | undefined;
 	fromDate?: string | null | undefined;
 	toDate?: string | null | undefined;
+	geographicLevelId?: string | null;
 };
 
 // Define the return type with individual totals

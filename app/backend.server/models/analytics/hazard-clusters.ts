@@ -10,8 +10,10 @@ export async function fetchHazardClusters(typeId: string | null) {
     .select({
       id: hipClusterTable.id,
       name: hipClusterTable.nameEn,
+      typeId: hipClusterTable.typeId,
     })
-    .from(hipClusterTable);
+    .from(hipClusterTable)
+    .orderBy(hipClusterTable.nameEn)
 
   if (typeId !== null) {
     query.where(eq(hipClusterTable.typeId, typeId));
