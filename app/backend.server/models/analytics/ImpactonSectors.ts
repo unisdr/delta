@@ -15,6 +15,7 @@ import { and, eq, inArray, ilike, SQL, exists, like, or } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import { configCurrencies } from "~/util/config";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
+import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 type AssessmentType = 'rapid' | 'detailed';
 type ConfidenceLevel = 'low' | 'medium' | 'high';
@@ -146,20 +147,9 @@ const getDisasterRecordsForSector = async (
     if (filters) {
       if (filters.startDate) {
         try {
-          const startDate = new Date(filters.startDate);
-          if (!isNaN(startDate.getTime())) {
-            conditions.push(sql`
-              ${disasterRecordsTable.startDate} IS NOT NULL AND 
-              CASE 
-                WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' 
-                THEN ${disasterRecordsTable.startDate}::date >= ${filters.startDate}::date
-                WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}' 
-                THEN ${disasterRecordsTable.startDate}::date >= date_trunc('month', ${filters.startDate}::date)
-                WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}' 
-                THEN ${disasterRecordsTable.startDate}::date >= date_trunc('year', ${filters.startDate}::date)
-                ELSE false
-              END
-            `);
+          const startDate = parseFlexibleDate(filters.startDate);
+          if (startDate) {
+            conditions.push(createDateCondition(disasterRecordsTable.startDate, startDate, 'gte'));
           } else {
             console.error('Invalid start date format:', filters.startDate);
           }
@@ -169,20 +159,9 @@ const getDisasterRecordsForSector = async (
       }
       if (filters.endDate) {
         try {
-          const endDate = new Date(filters.endDate);
-          if (!isNaN(endDate.getTime())) {
-            conditions.push(sql`
-              ${disasterRecordsTable.endDate} IS NOT NULL AND 
-              CASE 
-                WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' 
-                THEN ${disasterRecordsTable.endDate}::date <= ${filters.endDate}::date
-                WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{2}' 
-                THEN ${disasterRecordsTable.endDate}::date <= (date_trunc('month', ${filters.endDate}::date) + interval '1 month - 1 day')
-                WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}' 
-                THEN ${disasterRecordsTable.endDate}::date <= (date_trunc('year', ${filters.endDate}::date) + interval '1 year - 1 day')
-                ELSE false
-              END
-            `);
+          const endDate = parseFlexibleDate(filters.endDate);
+          if (endDate) {
+            conditions.push(createDateCondition(disasterRecordsTable.endDate, endDate, 'lte'));
           } else {
             console.error('Invalid end date format:', filters.endDate);
           }
@@ -422,7 +401,25 @@ const aggregateDamagesData = async (
           // Get year and update yearly breakdown
           const record = await dr
             .select({
-              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+              year: sql<number>`
+                CASE
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}$' 
+                    THEN ${disasterRecordsTable.startDate}::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM (${disasterRecordsTable.startDate} || '-01')::date)::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)::integer
+                  -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+                  WHEN ${disasterRecordsTable.startDate} ~ '^([0-9]{4})-' 
+                    THEN (substring(${disasterRecordsTable.startDate} from '^([0-9]{4})-'))::integer
+                  WHEN ${disasterRecordsTable.startDate} IS NOT NULL
+                    THEN COALESCE(
+                      EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date),
+                      EXTRACT(YEAR FROM NOW())
+                    )
+                  ELSE EXTRACT(YEAR FROM NOW())
+                END
+              `.as("year")
             })
             .from(disasterRecordsTable)
             .where(eq(disasterRecordsTable.id, recordId))
@@ -489,7 +486,25 @@ const aggregateDamagesData = async (
           // Get year and update yearly breakdown
           const record = await dr
             .select({
-              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+              year: sql<number>`
+                CASE
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}$' 
+                    THEN ${disasterRecordsTable.startDate}::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM (${disasterRecordsTable.startDate} || '-01')::date)::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)::integer
+                  -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+                  WHEN ${disasterRecordsTable.startDate} ~ '^([0-9]{4})-' 
+                    THEN (substring(${disasterRecordsTable.startDate} from '^([0-9]{4})-'))::integer
+                  WHEN ${disasterRecordsTable.startDate} IS NOT NULL
+                    THEN COALESCE(
+                      EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date),
+                      EXTRACT(YEAR FROM NOW())
+                    )
+                  ELSE EXTRACT(YEAR FROM NOW())
+                END
+              `.as("year")
             })
             .from(disasterRecordsTable)
             .where(eq(disasterRecordsTable.id, recordId))
@@ -574,7 +589,25 @@ const aggregateLossesData = async (
           // Get year and update yearly breakdown
           const record = await dr
             .select({
-              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+              year: sql<number>`
+                CASE
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}$' 
+                    THEN ${disasterRecordsTable.startDate}::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM (${disasterRecordsTable.startDate} || '-01')::date)::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)::integer
+                  -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+                  WHEN ${disasterRecordsTable.startDate} ~ '^([0-9]{4})-' 
+                    THEN (substring(${disasterRecordsTable.startDate} from '^([0-9]{4})-'))::integer
+                  WHEN ${disasterRecordsTable.startDate} IS NOT NULL
+                    THEN COALESCE(
+                      EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date),
+                      EXTRACT(YEAR FROM NOW())
+                    )
+                  ELSE EXTRACT(YEAR FROM NOW())
+                END
+              `.as("year")
             })
             .from(disasterRecordsTable)
             .where(eq(disasterRecordsTable.id, recordId))
@@ -616,7 +649,25 @@ const aggregateLossesData = async (
           // Get year and update yearly breakdown
           const record = await dr
             .select({
-              year: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterRecordsTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`.as("year")
+              year: sql<number>`
+                CASE
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}$' 
+                    THEN ${disasterRecordsTable.startDate}::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM (${disasterRecordsTable.startDate} || '-01')::date)::integer
+                  WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+                    THEN EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date)::integer
+                  -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+                  WHEN ${disasterRecordsTable.startDate} ~ '^([0-9]{4})-' 
+                    THEN (substring(${disasterRecordsTable.startDate} from '^([0-9]{4})-'))::integer
+                  WHEN ${disasterRecordsTable.startDate} IS NOT NULL
+                    THEN COALESCE(
+                      EXTRACT(YEAR FROM ${disasterRecordsTable.startDate}::date),
+                      EXTRACT(YEAR FROM NOW())
+                    )
+                  ELSE EXTRACT(YEAR FROM NOW())
+                END
+              `.as("year")
             })
             .from(disasterRecordsTable)
             .where(eq(disasterRecordsTable.id, recordId))
@@ -644,15 +695,87 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
   const eventYearSpans = await dr
     .select({
       eventId: disasterEventTable.id,
-      startYear: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`,
-      endYear: sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.endDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`
+      startYear: sql<number>`
+        CASE
+          WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}$' 
+            THEN ${disasterEventTable.startDate}::integer
+          WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM (${disasterEventTable.startDate} || '-01')::date)::integer
+          WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM ${disasterEventTable.startDate}::date)::integer
+          -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+          WHEN ${disasterEventTable.startDate} ~ '^([0-9]{4})-' 
+            THEN (substring(${disasterEventTable.startDate} from '^([0-9]{4})-'))::integer
+          WHEN ${disasterEventTable.startDate} IS NOT NULL
+            THEN COALESCE(
+              EXTRACT(YEAR FROM ${disasterEventTable.startDate}::date),
+              EXTRACT(YEAR FROM NOW())
+            )
+          ELSE EXTRACT(YEAR FROM NOW())
+        END
+      `,
+      endYear: sql<number>`
+        CASE
+          WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}$' 
+            THEN ${disasterEventTable.endDate}::integer
+          WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM (${disasterEventTable.endDate} || '-01')::date)::integer
+          WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM ${disasterEventTable.endDate}::date)::integer
+          -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+          WHEN ${disasterEventTable.endDate} ~ '^([0-9]{4})-' 
+            THEN (substring(${disasterEventTable.endDate} from '^([0-9]{4})-'))::integer
+          WHEN ${disasterEventTable.endDate} IS NOT NULL
+            THEN COALESCE(
+              EXTRACT(YEAR FROM ${disasterEventTable.endDate}::date),
+              EXTRACT(YEAR FROM NOW())
+            )
+          ELSE EXTRACT(YEAR FROM NOW())
+        END
+      `
     })
     .from(disasterRecordsTable)
     .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
     .where(inArray(disasterRecordsTable.id, recordIds))
     .groupBy(disasterEventTable.id,
-      sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.startDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`,
-      sql<number>`EXTRACT(YEAR FROM to_timestamp(${disasterEventTable.endDate}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))::integer`);
+      sql<number>`
+        CASE
+          WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}$' 
+            THEN ${disasterEventTable.startDate}::integer
+          WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM (${disasterEventTable.startDate} || '-01')::date)::integer
+          WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM ${disasterEventTable.startDate}::date)::integer
+          -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+          WHEN ${disasterEventTable.startDate} ~ '^([0-9]{4})-' 
+            THEN (substring(${disasterEventTable.startDate} from '^([0-9]{4})-'))::integer
+          WHEN ${disasterEventTable.startDate} IS NOT NULL
+            THEN COALESCE(
+              EXTRACT(YEAR FROM ${disasterEventTable.startDate}::date),
+              EXTRACT(YEAR FROM NOW())
+            )
+          ELSE EXTRACT(YEAR FROM NOW())
+        END
+      `,
+      sql<number>`
+        CASE
+          WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}$' 
+            THEN ${disasterEventTable.endDate}::integer
+          WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM (${disasterEventTable.endDate} || '-01')::date)::integer
+          WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' 
+            THEN EXTRACT(YEAR FROM ${disasterEventTable.endDate}::date)::integer
+          -- Handle malformed dates like "2020-03-01-01" by extracting just the year
+          WHEN ${disasterEventTable.endDate} ~ '^([0-9]{4})-' 
+            THEN (substring(${disasterEventTable.endDate} from '^([0-9]{4})-'))::integer
+          WHEN ${disasterEventTable.endDate} IS NOT NULL
+            THEN COALESCE(
+              EXTRACT(YEAR FROM ${disasterEventTable.endDate}::date),
+              EXTRACT(YEAR FROM NOW())
+            )
+          ELSE EXTRACT(YEAR FROM NOW())
+        END
+      `);
 
   // Process events and count them for each year they span
   const yearCounts = new Map<number, number>();

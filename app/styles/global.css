@@ -1,169 +1,187 @@
-.top-nav > nav > a {
-	margin-left: 10px;
-	text-decoration: none;
-	color: blue;
-}
-.top-nav > nav > a.active {
-	text-decoration: underline;
-}
-.secondary-nav > nav > a {
-	margin-left: 10px;
-	text-decoration: none;
-	color: blue;
-}
-.secondary-nav > nav > a.active {
-	text-decoration: underline;
+.top-nav>nav>a {
+  margin-left: 10px;
+  text-decoration: none;
+  color: blue;
 }
 
-form > label {
-	display: block;
+.top-nav>nav>a.active {
+  text-decoration: underline;
 }
+
+.secondary-nav>nav>a {
+  margin-left: 10px;
+  text-decoration: none;
+  color: blue;
+}
+
+.secondary-nav>nav>a.active {
+  text-decoration: underline;
+}
+
+form>label {
+  display: block;
+}
+
 .map {
-	width: 300px;
-	height: 300px;
+  width: 300px;
+  height: 300px;
 }
 
 .flex {
-	display: flex;
-	flex-direction: row;
-	flex-basis: 100%;
-	flex: 1;
-  }
-  
+  display: flex;
+  flex-direction: row;
+  flex-basis: 100%;
+  flex: 1;
+}
+
 .flex .box {
-	padding: 20px;
-	border: 1px solid gainsboro;
-	margin: 10px;
+  padding: 20px;
+  border: 1px solid gainsboro;
+  margin: 10px;
 }
 
 .dts-sub-navigation ul li a.active {
-	border-color: #004f91;
+  border-color: #004f91;
 }
 
 .dts-status--draft {
-	background-color: #FFA500;
+  background-color: #FFA500;
 }
 
 
 .dts-status--completed-waiting-for-approval {
-	background-color: #1E90FF;
+  background-color: #1E90FF;
 }
 
 
 .dts-status--approved {
-	background-color: #28A745;
+  background-color: #28A745;
 }
 
 
 .dts-status--sent-for-review {
-	background-color: #FFC107;
+  background-color: #FFC107;
 }
 
 .dts-status--published {
-	background-color: #6F42C1;
+  background-color: #6F42C1;
 }
 
 .dts-status--rejected {
-	background-color: #990000;
+  background-color: #990000;
 }
 
 .input-error {
-	border: 2px solid red !important; /* Error border with higher specificity */
+  border: 2px solid red !important;
+  /* Error border with higher specificity */
 }
 
 .input-normal {
-	border: 1px solid #ccc; /* Default border to ensure visibility change */
+  border: 1px solid #ccc;
+  /* Default border to ensure visibility change */
 }
 
 /* Scope styles specifically to the sectors.tsx page */
 .sectors-page .dts-page-section {
-	padding: 0; 
-	margin-top: 4rem; 
-  }
-  
-  .sectors-page .mg-container {
-	padding: 0; 
-	max-width: 100%; 
-	width: 100%; 
-	overflow-x: hidden; 
-  }
+  padding: 0;
+  margin-top: 4rem;
+}
 
-  .dts-tablist__button.active {
-	color: #333333;
-	font-weight: bold; /* Makes the active tab text bold */
-	background-color: white; /* Active tab background */
-  }
-  
-  .dts-tablist__button.inactive {
-	opacity: 0.6; /* Lower opacity for inactive tabs */
-  }
+.sectors-page .mg-container {
+  padding: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.dts-tablist__button.active {
+  color: #333333;
+  font-weight: bold;
+  /* Makes the active tab text bold */
+  background-color: white;
+  /* Active tab background */
+}
+
+.dts-tablist__button.inactive {
+  opacity: 0.6;
+  /* Lower opacity for inactive tabs */
+}
 
 
-  .damaging-events-section {
-	margin-top: 2rem;
-  }
-  
-  .events-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-	gap: 1.5rem;
-  }
-  
-  .event-card {
-	background-color: #f9f9f9;
-	padding: 1.6rem;
-	border-radius: 8px;
-	border: 1px solid #ddd;
-	box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .event-card h3 {
-	font-size: 1.6rem;
-	margin-bottom: 1rem;
-	font-weight: 600;
-	color: #333;
-  }
-  
-  .event-card p {
-	font-size: 1.2rem;
-	line-height: 1.5;
-	color: #555;
-  }
-  
-  .event-card .recharts-wrapper {
-	margin-top: 1rem;
-  }
+.damaging-events-section {
+  margin-top: 2rem;
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.event-card {
+  background-color: #f9f9f9;
+  padding: 1.6rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.event-card h3 {
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.event-card p {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: #555;
+}
+
+.event-card .recharts-wrapper {
+  margin-top: 1rem;
+}
 
 /* Disaster Event Search Input */
 .filter-search {
   width: 100%;
   box-sizing: border-box;
   padding: 8px;
-  border: 1px solid #ddd; /* Neutral border */
+  border: 1px solid #ddd;
+  /* Neutral border */
   border-radius: 4px;
   font-size: 14px;
-  outline: none; /* Remove default browser focus style */
-  box-shadow: none; /* No shadow by default */
+  outline: none;
+  /* Remove default browser focus style */
+  box-shadow: none;
+  /* No shadow by default */
 }
 
 .filter-search:focus {
-  border-color: #004f91; /* UNDRR Blue for focus */
-  box-shadow: 0 0 5px rgba(0, 79, 145, 0.25); /* Subtle shadow for focus */
+  border-color: #004f91;
+  /* UNDRR Blue for focus */
+  box-shadow: 0 0 5px rgba(0, 79, 145, 0.25);
+  /* Subtle shadow for focus */
 }
 
 /* Dropdown list container */
 .autocomplete-list {
   position: absolute;
-  top: calc(100% + 0.4rem); /* Position below the input */
+  top: calc(100% + 0.4rem);
+  /* Position below the input */
   left: 0;
   width: 100%;
   max-height: 200px;
   overflow-y: auto;
-  background-color: #fff; /* White dropdown background */
-  border: none; /* No border around the dropdown */
+  background-color: #fff;
+  /* White dropdown background */
+  border: none;
+  /* No border around the dropdown */
   border-radius: 6px;
   z-index: 10;
-  box-shadow: none; /* Remove shadow entirely */
+  box-shadow: none;
+  /* Remove shadow entirely */
   padding: 0;
   margin: 0;
   list-style: none;
@@ -174,32 +192,43 @@ form > label {
   padding: 8px 12px;
   cursor: pointer;
   font-size: 14px;
-  color: #333; /* Neutral text */
+  color: #333;
+  /* Neutral text */
 }
 
 .autocomplete-list li:hover {
-  background-color: #e6f0fa; /* Light blue for hover (aligned with UNDRR Blue) */
-  color: #004f91; /* UNDRR Blue for hover text */
+  background-color: #e6f0fa;
+  /* Light blue for hover (aligned with UNDRR Blue) */
+  color: #004f91;
+  /* UNDRR Blue for hover text */
 }
 
 /* "No matching events found" placeholder */
 .autocomplete-list .no-results {
-  display: block; /* Ensure it behaves as a block-level element */
+  display: block;
+  /* Ensure it behaves as a block-level element */
   padding: 8px 12px;
   font-size: 14px;
-  color: #6c757d; /* Subtle gray for no results */
+  color: #6c757d;
+  /* Subtle gray for no results */
   text-align: left;
-  background-color: transparent; /* No background */
-  border: none; /* No border */
-  box-shadow: none; /* No shadow */
-  cursor: default; /* Indicate non-interactivity */
+  background-color: transparent;
+  /* No background */
+  border: none;
+  /* No border */
+  box-shadow: none;
+  /* No shadow */
+  cursor: default;
+  /* Indicate non-interactivity */
 }
 
 /* Remove hover/active styles for "No matching events found" */
 .autocomplete-list .no-results:hover,
 .autocomplete-list .no-results:focus {
-  background-color: transparent; /* No background on hover */
-  color: #6c757d; /* Keep subtle gray */
+  background-color: transparent;
+  /* No background on hover */
+  color: #6c757d;
+  /* Keep subtle gray */
 }
 
 /* Scrollbar styles for dropdown (optional) */
@@ -208,18 +237,20 @@ form > label {
 }
 
 .autocomplete-list::-webkit-scrollbar-thumb {
-  background-color: #ccc; /* Neutral gray for scrollbar */
+  background-color: #ccc;
+  /* Neutral gray for scrollbar */
   border-radius: 4px;
 }
 
 .autocomplete-list::-webkit-scrollbar-thumb:hover {
-  background-color: #999; /* Darker gray on hover */
+  background-color: #999;
+  /* Darker gray on hover */
 }
 
 /* ======================================================
      Label Styling
    ======================================================== */
-  
+
 .dts-form-component__label {
   font-size: 14px;
   /* Consistent font size */
@@ -237,66 +268,90 @@ form > label {
 
 /* UNDRR Blue - Corporate blue */
 :root {
-  --undrr-blue-primary: #004f91; /* Main blue for focus/active states */
-  --undrr-blue-light: #e6f0fa; /* Light blue for hover/backgrounds */
-  --undrr-blue-lighter: #f0f4f8; /* Very light blue for highlights */
-  --undrr-blue-dark: #003569; /* Darker blue for emphasis */
+  --undrr-blue-primary: #004f91;
+  /* Main blue for focus/active states */
+  --undrr-blue-light: #e6f0fa;
+  /* Light blue for hover/backgrounds */
+  --undrr-blue-lighter: #f0f4f8;
+  /* Very light blue for highlights */
+  --undrr-blue-dark: #003569;
+  /* Darker blue for emphasis */
 }
 
 /* Neutral Shades */
 :root {
-  --neutral-gray-dark: #181823; /* For text */
-  --neutral-gray-medium: #6c757d; /* For muted text */
-  --neutral-gray-light: #ddd; /* For borders */
-  --neutral-gray-lighter: #f8f9fa; /* For backgrounds */
+  --neutral-gray-dark: #181823;
+  /* For text */
+  --neutral-gray-medium: #6c757d;
+  /* For muted text */
+  --neutral-gray-light: #ddd;
+  /* For borders */
+  --neutral-gray-lighter: #f8f9fa;
+  /* For backgrounds */
 }
 
 /* Scrollbar Colors */
 :root {
-  --scrollbar-thumb: #ccc; /* Neutral gray for scrollbar */
-  --scrollbar-thumb-hover: #999; /* Darker gray on hover */
+  --scrollbar-thumb: #ccc;
+  /* Neutral gray for scrollbar */
+  --scrollbar-thumb-hover: #999;
+  /* Darker gray on hover */
 }
-  
+
 
 /* ======================================================
      SweetAlert Styles
    ======================================================== */
-    
+
 /* Popup styling aligned with UNDRR Blue */
 .swal2-custom-popup {
-  border: 2px solid #005EB8; /* UNDRR Primary Blue */
+  border: 2px solid #005EB8;
+  /* UNDRR Primary Blue */
   border-radius: 12px;
   padding: 20px;
   font-family: 'Roboto', 'Noto Sans SC', 'Noto Sans Arabic', sans-serif;
-  background-color: #E6EEF9; /* Light Blue for better readability */
-  color: #004F91; /* Dark Blue for text contrast */
-  font-size: 1.6rem; /* Increase base font size */
-  line-height: 1.8rem; /* Better spacing for readability */
-  text-align: center; /* Center align text for better UX */
+  background-color: #E6EEF9;
+  /* Light Blue for better readability */
+  color: #004F91;
+  /* Dark Blue for text contrast */
+  font-size: 1.6rem;
+  /* Increase base font size */
+  line-height: 1.8rem;
+  /* Better spacing for readability */
+  text-align: center;
+  /* Center align text for better UX */
 }
 
 /* Button styling aligned with UNDRR Teal */
 .swal2-custom-button {
-  background-color: #008675 !important; /* UNDRR Teal */
-  color: #FFFFFF !important; /* White text */
+  background-color: #008675 !important;
+  /* UNDRR Teal */
+  color: #FFFFFF !important;
+  /* White text */
   font-family: 'Roboto', sans-serif;
   font-size: 1.4rem;
   font-weight: 500;
   border-radius: 8px;
-  padding: 12px 24px; /* Larger padding for better usability */
-  border: none; /* Clean design */
+  padding: 12px 24px;
+  /* Larger padding for better usability */
+  border: none;
+  /* Clean design */
   transition: background-color 0.3s ease;
 }
 
 .swal2-custom-button:hover {
-  background-color: #006F62 !important; /* Darker teal for hover state */
+  background-color: #006F62 !important;
+  /* Darker teal for hover state */
 }
 
 /* Toast styling aligned with Neutral shades */
 .custom-toast {
-  background-color: #F7F8F9; /* Light neutral shade */
-  color: #333333; /* Dark neutral text */
-  border: 1px solid #D1D1D1; /* Subtle border for clarity */
+  background-color: #F7F8F9;
+  /* Light neutral shade */
+  color: #333333;
+  /* Dark neutral text */
+  border: 1px solid #D1D1D1;
+  /* Subtle border for clarity */
   font-family: 'Arial', sans-serif;
   font-size: 1.2rem;
   padding: 1rem;
@@ -307,43 +362,49 @@ form > label {
 /* ======================================================
      Search icon
    ======================================================== */
-   .search-icon {
-    position: absolute;
-    right: 10px; /* Align to the right end of the input */
-    top: 50%; /* Center vertically */
-    transform: translateY(-50%); /* Adjust for perfect centering */
-    color: #aaa; /* Light grey color for the icon */
-    font-size: 1.5rem; /* Icon size */
-    pointer-events: none; /* Prevent clicks on the icon */
-  }
-  
+.search-icon {
+  position: absolute;
+  right: 10px;
+  /* Align to the right end of the input */
+  top: 50%;
+  /* Center vertically */
+  transform: translateY(-50%);
+  /* Adjust for perfect centering */
+  color: #aaa;
+  /* Light grey color for the icon */
+  font-size: 1.5rem;
+  /* Icon size */
+  pointer-events: none;
+  /* Prevent clicks on the icon */
+}
+
 
 table.table-border {
-	border: 1px solid #aaa;
+  border: 1px solid #aaa;
 }
 
 table.table-border th {
-	border: 1px solid #aaa;
-	background-color: #ddd;
+  border: 1px solid #aaa;
+  background-color: #ddd;
 }
 
 table.table-border th.center {
-	text-align: center;
+  text-align: center;
 }
 
 .dts-form-component ul {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-	gap: 10px;
-	/* list-style-type: none; */
-	padding: 0;
-  }
-  
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  /* list-style-type: none; */
+  padding: 0;
+}
+
 .dts-form-component li {
-	/* background: #f0f0f0; */
-	padding: 0;
-	margin-left: 20px;
-	/* border-radius: 4px */
+  /* background: #f0f0f0; */
+  padding: 0;
+  margin-left: 20px;
+  /* border-radius: 4px */
 }
 
 .no-border-bottom {
@@ -351,19 +412,93 @@ table.table-border th.center {
 }
 
 .dts-spinner {
-	width: 1em;
-	height: 1em;
-	border: 2px solid currentColor;
-	border-top-color: transparent;
-	border-radius: 50%;
-	animation: dts-spin 0.6s linear infinite;
-	display: inline-block;
-	vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: dts-spin 0.6s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 @keyframes dts-spin {
-	to {
-		transform: rotate(360deg);
-	}
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+
+/* Dashboard Error States */
+.dts-data-box--error {
+  position: relative;
+  border-color: var(--neutral-gray-light);
+}
+
+.dts-error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 16px;
+  background-color: rgba(211, 47, 47, 0.05);
+  border-radius: 4px;
+}
+
+.dts-error-text {
+  color: #d32f2f;
+  font-size: 1rem;
+  line-height: 1.4;
+  text-align: center;
+  margin: 0;
+  margin-bottom: 8px;
+}
+
+.dts-error-hint {
+  color: var(--neutral-gray-medium);
+  font-size: 0.875rem;
+  margin-top: 4px;
+  text-align: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Error states for different components */
+.dts-indicator--error .dts-error-content {
+  min-height: 40px;
+  background-color: rgba(211, 47, 47, 0.05);
+}
+
+.dts-chart--error .dts-error-content {
+  min-height: 200px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Maintain component structure during error states */
+.dts-data-box--error .dts-body-label {
+  opacity: 1;
+  color: var(--neutral-gray-dark);
+}
+
+.dts-data-box--error .dts-indicator {
+  background-color: transparent;
+}
+
+/* Error message animations */
+@keyframes errorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dts-error-content {
+  animation: errorFadeIn 0.2s ease-out;
+}
