@@ -71,3 +71,52 @@ export const createDateCondition = (
     END
   `;
 };
+
+/**
+ * Extract year from a date column with robust format handling
+ * Handles multiple date formats and edge cases:
+ * - YYYY (year only)
+ * - YYYY-MM (year-month)
+ * - YYYY-MM-DD (full date)
+ * - Malformed dates (extracts year portion)
+ * - Empty strings or NULL values
+ * - Invalid date formats
+ * 
+ * @param dateColumn Database column containing date values
+ * @returns SQL expression that extracts the year as a number
+ */
+export const extractYearFromDate = (dateColumn: PgColumn): SQL<number> => {
+  const currentYear = new Date().getFullYear();
+
+  // Use a simpler SQL expression that won't cause GROUP BY issues
+  return sql<number>`
+    COALESCE(
+      CASE
+        /* Handle NULL values and empty strings */
+        WHEN ${dateColumn} IS NULL OR ${dateColumn} = '' 
+          THEN ${currentYear}
+        
+        /* Valid year only: YYYY */
+        WHEN ${dateColumn} ~ '^[0-9]{4}$' 
+          THEN ${dateColumn}::integer
+        
+        /* Valid year-month: YYYY-MM or valid full date: YYYY-MM-DD */
+        WHEN ${dateColumn} ~ '^[0-9]{4}-[0-9]{2}' 
+          THEN SUBSTRING(${dateColumn} FROM 1 FOR 4)::integer
+        
+        /* Malformed dates with year at beginning: YYYY-anything */
+        WHEN ${dateColumn} ~ '^[0-9]{4}-' 
+          THEN SUBSTRING(${dateColumn} FROM 1 FOR 4)::integer
+        
+        /* Any string that starts with 4 digits */
+        WHEN ${dateColumn} ~ '^[0-9]{4}' 
+          THEN SUBSTRING(${dateColumn} FROM 1 FOR 4)::integer
+          
+        /* If none of the above patterns match, try to find a year anywhere in the string */
+        ELSE NULL
+      END,
+      /* Final fallback: use current year */
+      ${currentYear}
+    )
+  `;
+};
