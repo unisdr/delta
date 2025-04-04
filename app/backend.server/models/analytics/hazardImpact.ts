@@ -25,6 +25,7 @@ import type {
     FaoAgriculturalLoss
 } from "~/types/disasterCalculations";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
+import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null => {
     if (!sectorId) return null;
@@ -133,9 +134,22 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     }
 
     // Add date filters if provided
-    if (fromDate && toDate) {
-        baseConditions.push(sql`${disasterRecordsTable.startDate} >= ${fromDate}`);
-        baseConditions.push(sql`${disasterRecordsTable.endDate} <= ${toDate}`);
+    if (fromDate) {
+        const parsedFromDate = parseFlexibleDate(fromDate);
+        if (parsedFromDate) {
+            baseConditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
+        } else {
+            console.error('Invalid from date format:', fromDate);
+        }
+    }
+
+    if (toDate) {
+        const parsedToDate = parseFlexibleDate(toDate);
+        if (parsedToDate) {
+            baseConditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
+        } else {
+            console.error('Invalid to date format:', toDate);
+        }
     }
 
     // Add hazard type filters if provided
