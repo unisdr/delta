@@ -1,80 +1,332 @@
+import { json, MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { useState } from "react";
-import type { MetaFunction } from "@remix-run/node";
-
+import { useLoaderData, useNavigate } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
-import { NavSettings } from "~/routes/settings/nav";
+import { fetchHazardTypes } from "~/backend.server/models/analytics/hazard-types";
+import { fetchAllSpecificHazards } from "~/backend.server/models/analytics/specific-hazards";
+import {
+	getAffectedPeopleByHazardFilters,
+	getAgeTotalsByHazardFilters,
+	getDisabilityTotalByHazardFilters,
+	getDisasterEventCount,
+	getDisasterEventCountByYear,
+	getGenderTotalsByHazardFilters,
+	getInternationalPovertyTotalByHazardFilters,
+	getNationalPovertyTotalByHazardFilters,
+	getTotalDamagesByHazardFilters,
+	getTotalDamagesByYear,
+	getTotalLossesByHazardFilters,
+	getTotalLossesByYear,
+} from "~/backend.server/models/analytics/hazard-analysis";
 import { MainContainer } from "~/frontend/container";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useLoaderData } from "@remix-run/react";
+import { NavSettings } from "~/routes/settings/nav";
 import HazardFilters from "~/frontend/analytics/hazards/sections/HazardFilters";
-import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
 import ImpactByHazard from "~/frontend/analytics/hazards/sections/ImpactByHazard";
-import HumanDirectEffects from "~/frontend/analytics/hazards/sections/HumanDirectEffects";
+import { getDivisionByLevel } from "~/backend.server/models/division";
+import { fetchHazardClusters } from "~/backend.server/models/analytics/hazard-clusters";
+import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
+import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
+import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
+import HazardImpactMap2 from "~/frontend/analytics/hazards/sections/HazardImpactMap2";
+import { config } from "process";
 
-// Create QueryClient instance
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			refetchOnWindowFocus: false,
-			retry: false,
-			staleTime: 5 * 60 * 1000, // 5 minutes
-		},
-	},
-});
-
-// Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
-	async (loaderArgs: any) => {
-		// Get currency from environment variable
-		const currency = process.env.CURRENCY_CODES?.split(",")[0] || "PHP";
+	async ({ request }: LoaderFunctionArgs) => {
+		const url = new URL(request.url);
+		const hazardTypeId = url.searchParams.get("hazardTypeId") || null;
+		const hazardClusterId = url.searchParams.get("hazardClusterId") || null;
+		const specificHazardId = url.searchParams.get("specificHazardId") || null;
+		const geographicLevelId = url.searchParams.get("geographicLevelId") || null;
+		const fromDate = url.searchParams.get("fromDate") || null;
+		const toDate = url.searchParams.get("toDate") || null;
 
-		return Response.json({
+		const currency = process.env.CURRENCY_CODES?.split(",")[0] || "PHP";
+		const hazardTypes = await fetchHazardTypes();
+		const hazardClusters = await fetchHazardClusters(null);
+		const specificHazards = await fetchAllSpecificHazards();
+		const geographicLevels = await getDivisionByLevel(1);
+
+		const disasterCount = await getDisasterEventCount({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		const yearlyDisasterCounts = await getDisasterEventCountByYear({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		console.log("yearly events = ", yearlyDisasterCounts);
+
+		const { totalMen, totalWomen, totalNonBinary } =
+			await getGenderTotalsByHazardFilters({
+				hazardTypeId,
+				hazardClusterId,
+				specificHazardId,
+				geographicLevelId,
+				fromDate,
+				toDate,
+			});
+
+		const {
+			totalDeaths,
+			totalInjured,
+			totalMissing,
+			totalDisplaced,
+			totalAffectedDirect,
+			totalAffectedIndirect,
+		} = await getAffectedPeopleByHazardFilters({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		const { totalChildren, totalAdults, totalSeniors } =
+			await getAgeTotalsByHazardFilters({
+				hazardTypeId,
+				hazardClusterId,
+				specificHazardId,
+				geographicLevelId,
+				fromDate,
+				toDate,
+			});
+
+		const totalDisability = await getDisabilityTotalByHazardFilters({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		const totalInternationalPoorPeople =
+			await getInternationalPovertyTotalByHazardFilters({
+				hazardTypeId,
+				hazardClusterId,
+				specificHazardId,
+				geographicLevelId,
+				fromDate,
+				toDate,
+			});
+
+		const totalNationalPoorPeople =
+			await getNationalPovertyTotalByHazardFilters({
+				hazardTypeId,
+				hazardClusterId,
+				specificHazardId,
+				geographicLevelId,
+				fromDate,
+				toDate,
+			});
+
+		const totalDamages = await getTotalDamagesByHazardFilters({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		const totalLosses = await getTotalLossesByHazardFilters({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		const totalDamagesByYear = await getTotalDamagesByYear({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		const totalLossesByYear = await getTotalLossesByYear({
+			hazardTypeId,
+			hazardClusterId,
+			specificHazardId,
+			geographicLevelId,
+			fromDate,
+			toDate,
+		});
+
+		return json({
 			currency,
-			loaderArgs,
+			hazardTypes,
+			hazardClusters,
+			specificHazards,
+			geographicLevels,
+			disasterCount,
+			yearlyDisasterCounts,
+			totalDeaths,
+			totalInjured,
+			totalMissing,
+			totalDisplaced,
+			totalAffectedDirect,
+			totalAffectedIndirect,
+			totalMen,
+			totalWomen,
+			totalNonBinary,
+			totalChildren,
+			totalAdults,
+			totalSeniors,
+			totalDisability,
+			totalInternationalPoorPeople,
+			totalNationalPoorPeople,
+			totalDamages,
+			totalLosses,
+			totalDamagesByYear,
+			totalLossesByYear
 		});
 	}
 );
 
-function HazardAnalysisContent() {
-	const { currency } = useLoaderData<typeof loader>();
+export default function HazardAnalysis() {
+	const {
+		currency,
+		hazardTypes,
+		hazardClusters,
+		specificHazards,
+		geographicLevels,
+		disasterCount,
+		yearlyDisasterCounts,
+		totalDeaths,
+		totalInjured,
+		totalMissing,
+		totalDisplaced,
+		totalAffectedDirect,
+		totalMen,
+		totalWomen,
+		totalNonBinary,
+		totalChildren,
+		totalAdults,
+		totalSeniors,
+		totalDisability,
+		totalInternationalPoorPeople,
+		totalNationalPoorPeople,
+		totalDamages,
+		totalLosses,
+		totalDamagesByYear,
+		totalLossesByYear
+	} = useLoaderData<typeof loader>();
+	const navigate = useNavigate();
 
-	const [filters, setFilters] = useState<{
+	const [appliedFilters, setAppliedFilters] = useState<{
 		hazardTypeId: string | null;
 		hazardClusterId: string | null;
 		specificHazardId: string | null;
 		geographicLevelId: string | null;
 		fromDate: string | null;
 		toDate: string | null;
-	} | null>(null);
+	}>({
+		hazardTypeId: null,
+		hazardClusterId: null,
+		specificHazardId: null,
+		geographicLevelId: null,
+		fromDate: null,
+		toDate: null,
+	});
 
-	// Event handlers for Filters component
-	const handleApplyFilters = (newFilters: typeof filters) => {
-		setFilters(newFilters);
-	};
+	const handleApplyFilters = (filters: {
+		hazardTypeId: string | null;
+		hazardClusterId: string | null;
+		specificHazardId: string | null;
+		geographicLevelId: string | null;
+		fromDate: string | null;
+		toDate: string | null;
+	}) => {
+		setAppliedFilters(filters);
 
-	const handleAdvancedSearch = () => {
-		// TODO: Implement advanced search functionality
-		console.log("Advanced search clicked");
+		// Build search params
+		const searchParams = new URLSearchParams();
+		if (filters.hazardTypeId)
+			searchParams.set("hazardTypeId", filters.hazardTypeId);
+		if (filters.hazardClusterId)
+			searchParams.set("hazardClusterId", filters.hazardClusterId);
+		if (filters.specificHazardId)
+			searchParams.set("specificHazardId", filters.specificHazardId);
+		if (filters.geographicLevelId)
+			searchParams.set("geographicLevelId", filters.geographicLevelId);
+		if (filters.fromDate) searchParams.set("fromDate", filters.fromDate);
+		if (filters.toDate) searchParams.set("toDate", filters.toDate);
+
+		// Use navigate to trigger loader re-run
+		navigate(`?${searchParams.toString()}`, { replace: true });
 	};
 
 	const handleClearFilters = () => {
-		setFilters(null);
+		setAppliedFilters({
+			hazardTypeId: null,
+			hazardClusterId: null,
+			specificHazardId: null,
+			geographicLevelId: null,
+			fromDate: null,
+			toDate: null,
+		});
+		navigate(window.location.pathname, { replace: true }); // Clear URL params
 	};
+
+	const hazardName =
+		appliedFilters.specificHazardId && specificHazards.length > 0
+			? specificHazards.find((h) => h.id === appliedFilters.specificHazardId)
+					?.nameEn || "Unknown Hazard"
+			: appliedFilters.hazardClusterId && hazardClusters.length > 0
+			? hazardClusters.find((c) => c.id === appliedFilters.hazardClusterId)
+					?.name || "Unknown Cluster"
+			: appliedFilters.hazardTypeId
+			? hazardTypes.find((t) => t.id === appliedFilters.hazardTypeId)?.name ||
+			  "Unknown Type"
+			: null;
+
+	const geographicName =
+		appliedFilters.geographicLevelId && geographicLevels.length > 0
+			? geographicLevels.find(
+					(g) => g.id.toString() === appliedFilters.geographicLevelId
+			  )?.name["en"] || "Unknown Level"
+			: null;
+
+	const totalPeopleAffected =
+		Number(totalAffectedDirect) +
+		Number(totalDisplaced) +
+		Number(totalInjured) +
+		Number(totalMissing);
+
+	console.log("totalPeopleAffected", totalPeopleAffected);
 
 	return (
 		<MainContainer title="Hazards Analysis" headerExtra={<NavSettings />}>
 			<div style={{ maxWidth: "100%", overflow: "hidden" }}>
 				<div className="sectors-page">
-					{/* Filters Section */}
 					<HazardFilters
+						hazardTypes={hazardTypes}
+						hazardClusters={hazardClusters}
+						specificHazards={specificHazards}
+						geographicLevels={geographicLevels}
 						onApplyFilters={handleApplyFilters}
-						onAdvancedSearch={handleAdvancedSearch}
 						onClearFilters={handleClearFilters}
+						selectedHazardClusterId={appliedFilters.hazardClusterId}
+						selectedSpecificHazardId={appliedFilters.specificHazardId}
+						selectedGeographicLevelId={appliedFilters.geographicLevelId}
 					/>
-
-					{/* Conditional rendering: Display this message until filters are applied */}
-					{!filters && (
+					{!hazardName && (
 						<div
 							style={{
 								marginTop: "2rem",
@@ -99,9 +351,7 @@ function HazardAnalysisContent() {
 							<p>Please select and apply filters above to view the analysis.</p>
 						</div>
 					)}
-
-					{/* Dashboard sections */}
-					{filters && (
+					{hazardName && (
 						<div
 							className="sectors-content"
 							style={{
@@ -110,14 +360,42 @@ function HazardAnalysisContent() {
 								overflow: "hidden",
 							}}
 						>
-							{/* Impact by Geographic Level */}
-							<HazardImpactMap filters={filters} />
+							<HazardImpactMap2 />
+							<ImpactByHazard
+								hazardName={hazardName}
+								geographicName={geographicName}
+								fromDate={appliedFilters.fromDate}
+								toDate={appliedFilters.toDate}
+								disasterCount={disasterCount}
+								yearlyEventsCount={yearlyDisasterCounts}
+							/>
 
- 							{/* Impact by Hazard Section */}
-							<ImpactByHazard filters={filters} />
+							<HumanAffects
+								totalPeopleAffected={totalPeopleAffected}
+								totalDeaths={totalDeaths}
+								totalDisplaced={totalDisplaced}
+								totalInjured={totalInjured}
+								totalMissing={totalMissing}
+								totalPeopleDirectlyAffected={totalAffectedDirect}
+								noOfMen={totalMen}
+								noOfWomen={totalWomen}
+								noOfNonBinary={totalNonBinary}
+								totalChildren={totalChildren}
+								totalAdults={totalAdults}
+								totalSeniors={totalSeniors}
+								totalDisability={totalDisability}
+								totalInternationalPoorPeople={totalInternationalPoorPeople}
+								totalNationalPoorPeople={totalNationalPoorPeople}
+							/>
 
-							{/* Human direct effect */}
-							<HumanDirectEffects filters={filters}/>
+							<DamagesAndLoses
+								localCurrency={currency}
+								totalDamages={totalDamages}
+								totalLosses={totalLosses}
+								totalDamagesByYear={totalDamagesByYear}
+								totalLossesByYear={totalLossesByYear}
+							/>
+							<DisasterEventsList />
 						</div>
 					)}
 				</div>
@@ -126,19 +404,9 @@ function HazardAnalysisContent() {
 	);
 }
 
-// Meta function for page SEO
 export const meta: MetaFunction = ({ data }) => {
 	return [
 		{ title: "Hazards Analysis - DTS" },
 		{ name: "description", content: "Hazards analysis page under DTS." },
 	];
 };
-
-// Wrapper component that provides QueryClient
-export default function HazardAnalysis() {
-	return (
-		<QueryClientProvider client={queryClient}>
-			<HazardAnalysisContent />
-		</QueryClientProvider>
-	);
-}
