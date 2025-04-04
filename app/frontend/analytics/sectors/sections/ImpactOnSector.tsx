@@ -332,27 +332,92 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
         return (
             <section className="dts-page-section">
                 <div className="mg-container">
+                    <div className="dts-data-box">
+                    <div className="dts-error-content">
                     <div className="animate-pulse">
                         <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
                         <div className="h-64 bg-gray-200 rounded-lg"></div>
                     </div>
                 </div>
+            </div>
+            </div>
             </section>
         );
     }
 
+    const renderTitle = () => {
+        if (!sectorsData?.sectors) return "Sector Impact Analysis";
+
+        // First check if we're using a subsector ID from filters
+        if (filters.subSectorId) {
+            // Find the parent sector that contains this subsector
+            for (const sector of sectorsData.sectors) {
+                const subsector = sector.subsectors?.find(
+                    (sub: Sector) => sub.id.toString() === filters.subSectorId
+                );
+                if (subsector) {
+                    return `Impact in ${subsector.sectorname} (${sector.sectorname} Sector)`;
+                }
+            }
+        }
+
+        // If we're using the main sectorId
+        if (sectorId) {
+            const selectedSector = sectorsData.sectors.find((s: Sector) => s.id.toString() === sectorId);
+            if (selectedSector) {
+                return `Impact in ${selectedSector.sectorname} Sector`;
+            }
+        }
+
+        return "Sector Impact Analysis";
+    };
+
     // Error state
     if (error) {
         console.log('Debug - Error state:', error);
+
+        // Extract the actual error message from the error object
+        let errorMessage = "An error occurred while fetching the data.";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+
+        // Try to extract specific API errors if available
+        if (typeof (error as any).json === 'function') {
+            (error as any).json().then((json: any) => {
+                if (json.error) {
+                    errorMessage = json.error;
+                    console.log('Extracted API error:', errorMessage);
+                }
+            }).catch(() => { });
+        }
+
         return (
-            <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                    <span>Error</span>
-                </h3>
-                <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-gray-500">An error occurred while fetching the data. Please try again.</p>
+            <section className="dts-page-section" style={{ maxWidth: "100%", overflow: "hidden" }}>
+                <div className="mg-container" style={{ maxWidth: "100%", overflow: "hidden" }}>
+                    <h2 className="dts-heading-2">{renderTitle()}</h2>
+                    <p className="text-sm text-gray-600 mb-4">
+                        This dashboard shows the aggregated impact data for the selected sector, including all its subsectors.
+                    </p>
+
+                    <div className="mg-grid mg-grid--gap-default">
+                        {/* Error message box */}
+                        <div className="dts-data-box dts-data-box--error mg-grid__col--span-3">
+                            <div className="dts-error-content">
+                                <div className="dts-error-text">
+                                    {errorMessage?.includes("date") ?
+                                        "Invalid date format in the database" :
+                                        errorMessage || "Failed to load sector impact data"
+                                    }
+                                </div>
+                                <div className="dts-error-hint">
+                                    The system encountered an issue with the date format. Please contact your administrator to resolve this database issue.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </section>
         );
     }
 
@@ -360,7 +425,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     if (!targetSectorId) {
         console.log('Debug - No sector selected state');
         return (
-            <div className="dts-data-box">
+            <div className="dts-data-box dts-data-box--error">
                 <h3 className="dts-body-label">
                     <span>No Sector Selected</span>
                 </h3>
@@ -374,13 +439,15 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     if (!apiResponse?.data) {
         console.log('Debug - No data state');
         return (
-            <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                    <span>No Data Available</span>
-                </h3>
-                <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-gray-500">No impact data available for the selected filters.</p>
+            <div className="dts-data-box dts-data-box--error">
+            <div className="dts-error-content">
+                <div className="dts-error-text">
+                    No Data Available
                 </div>
+                <div className="dts-error-hint">
+                    No impact data available for the selected filters.
+                </div>
+            </div>
             </div>
         );
     }
@@ -416,7 +483,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     // Get the reference year from events data or filters
     const referenceYear = eventsData.length > 0 ? eventsData[0].year :
         filters.fromDate ? parseInt(filters.fromDate.split('-')[0]) :
-        new Date().getFullYear();
+            new Date().getFullYear();
 
     // Fix damage data transformation to ensure it properly handles string values and zero impact
     const damageData = data?.dataAvailability?.damage === 'zero'
@@ -469,33 +536,6 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
     const totalDamage = calculateTotal(damageData);
     const totalLoss = calculateTotal(lossData);
 
-    const renderTitle = () => {
-        if (!sectorsData?.sectors) return "Sector Impact Analysis";
-
-        // First check if we're using a subsector ID from filters
-        if (filters.subSectorId) {
-            // Find the parent sector that contains this subsector
-            for (const sector of sectorsData.sectors) {
-                const subsector = sector.subsectors?.find(
-                    (sub: Sector) => sub.id.toString() === filters.subSectorId
-                );
-                if (subsector) {
-                    return `Impact in ${subsector.sectorname} (${sector.sectorname} Sector)`;
-                }
-            }
-        }
-
-        // If we're using the main sectorId
-        if (sectorId) {
-            const selectedSector = sectorsData.sectors.find((s: Sector) => s.id.toString() === sectorId);
-            if (selectedSector) {
-                return `Impact in ${selectedSector.sectorname} Sector`;
-            }
-        }
-
-        return "Sector Impact Analysis";
-    };
-
     return (
         <section className="dts-page-section" style={{ maxWidth: "100%", overflow: "hidden" }}>
             <div className="mg-container" style={{ maxWidth: "100%", overflow: "hidden" }}>
@@ -503,6 +543,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
                 <p className="text-sm text-gray-600 mb-4">
                     This dashboard shows the aggregated impact data for the selected sector, including all its subsectors.
                 </p>
+
                 {/* Events impacting sectors */}
                 <div className="mg-grid mg-grid--gap-default">
                     <div className="dts-data-box">
