@@ -26,6 +26,7 @@ import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/b
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 import { getSectorsByParentId } from "./sectors";
+import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 /**
  * Gets all subsector IDs for a given sector
@@ -170,15 +171,25 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     }
   }
 
+  // Handle dates in UTC for consistency across timezones
   if (params.fromDate) {
-    const dateStr = params.fromDate.split('T')[0]; // Get just the date part
-    conditions.push(sql`${disasterRecordsTable.startDate}::date >= ${dateStr}::date`);
+    const parsedFromDate = parseFlexibleDate(params.fromDate.split('T')[0]);
+    if (parsedFromDate) {
+      conditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
+    } else {
+      console.error('Invalid fromDate format:', params.fromDate);
+    }
   }
 
   if (params.toDate) {
-    const dateStr = params.toDate.split('T')[0]; // Get just the date part
-    conditions.push(sql`${disasterRecordsTable.endDate}::date <= ${dateStr}::date`);
+    const parsedToDate = parseFlexibleDate(params.toDate.split('T')[0]);
+    if (parsedToDate) {
+      conditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
+    } else {
+      console.error('Invalid toDate format:', params.toDate);
+    }
   }
+
 
   if (params.disasterEventId) {
     conditions.push(eq(disasterEventTable.id, params.disasterEventId));
