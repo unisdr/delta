@@ -1,218 +1,170 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "react-query";
-import ImpactMapOl from "./Map/ImpactMapOl";
+import { useRef, useState } from "react";
+import MapChart, { MapChartRef } from "~/components/MapChart";
 
-// Define the filter shape
-type FilterValues = {
-	hazardTypeId: string | null;
-	hazardClusterId: string | null;
-	specificHazardId: string | null;
-	geographicLevelId: string | null;
-	fromDate: string | null;
-	toDate: string | null;
-};
-
-type Filters = FilterValues | null;
-
-type ImpactMapProps = {
-	filters: Filters;
-};
-
-const DEFAULT_FILTERS: FilterValues = {
-	hazardTypeId: null,
-	hazardClusterId: null,
-	specificHazardId: null,
-	geographicLevelId: null,
-	fromDate: null,
-	toDate: null,
-};
-
-interface Hazard {
-	id: string | number;
-	name: string;
+interface HazardImpactMap2Props {
+	localCurrency: string;
+	damagesGeoData: any[];
+	lossesGeoData: any[];
+	disasterEventGeoData: any[];
+	affectedPeopleGeoData: any[];
+	deathsGeoData: any[];
 }
 
-interface HazardTypesResponse {
-	hazardTypes: Hazard[];
-}
-interface HazardClustersResponse {
-	clusters: Hazard[];
-}
-interface SpecificHazardsResponse {
-	hazards: Hazard[];
-}
+const HazardImpactMap2: React.FC<HazardImpactMap2Props> = ({
+	localCurrency,
+	damagesGeoData,
+	lossesGeoData,
+	disasterEventGeoData,
+	affectedPeopleGeoData,
+	deathsGeoData,
+}) => {
+	const mapChartRef = useRef<MapChartRef>(null);
+	const [activeData, setActiveData] = useState(damagesGeoData);
 
-export default function HazardImpactMap({
-	filters = DEFAULT_FILTERS,
-}: ImpactMapProps) {
-	const [geoData, setGeoData] = useState<any>(null);
-	const [selectedMetric, setSelectedMetric] = useState<
-		| "totalDamage"
-		| "totalLoss"
-		| "numDisasterEvents"
-		| "affectedPeople"
-		| "numDeaths"
-	>("totalDamage");
-	const [selectedTab, setSelectedTab] = useState<string>("tab01");
-
-	// Fetch hazard types data
-	const { data: hazardTypesData } = useQuery<HazardTypesResponse>(
-		["hazardTypes", filters?.hazardTypeId],
-		async () => {
-			const response = await fetch(`/api/analytics/hazard-types`);
-			if (!response.ok) throw new Error("Failed to fetch hazard types");
-			return response.json();
-		}
-	);
-
-	// Fetch hazard clusters data
-	const { data: hazardClustersData } = useQuery<HazardClustersResponse>(
-		["hazardClusters", filters?.hazardClusterId],
-		async () => {
-			if (!filters?.hazardTypeId) return { clusters: [] };
-			const response = await fetch(
-				`/api/analytics/hazard-clusters?hazardTypeId=${filters.hazardTypeId}`
-			);
-			if (!response.ok) throw new Error("Failed to fetch hazard clusters");
-			return response.json();
-		},
-		{
-			enabled: !!filters?.hazardTypeId,
-		}
-	);
-
-	// Fetch specific hazards data
-	const { data: specificHazardsData } = useQuery<SpecificHazardsResponse>(
-		["specificHazards", filters?.hazardClusterId],
-		async () => {
-			if (!filters?.hazardClusterId) return { hazards: [] };
-			const response = await fetch(
-				`/api/analytics/specific-hazards?clusterId=${filters.hazardClusterId}`
-			);
-			if (!response.ok) throw new Error("Failed to fetch specific hazards");
-			return response.json();
-		},
-		{
-			enabled: !!filters?.hazardClusterId,
-		}
-	);
-
-	// Function to get section title based on selected sector
-	const sectionTitle = () => {
-		if (filters?.specificHazardId && specificHazardsData?.hazards) {
-			const hazard = specificHazardsData.hazards.find(
-				(h) => h.id.toString() === filters.specificHazardId
-			);
-			return `${hazard?.name} impacts across the country`;
-		}
-		if (filters?.hazardClusterId && hazardClustersData?.clusters) {
-			const cluster = hazardClustersData.clusters.find(
-				(c) => c.id.toString() === filters.hazardClusterId
-			);
-			return `${cluster?.name} impacts across the country`;
-		}
-		if (filters?.hazardTypeId && hazardTypesData?.hazardTypes) {
-			const type = hazardTypesData.hazardTypes.find(
-				(t) => t.id.toString() === filters.hazardTypeId
-			);
-			return `${type?.name} impacts across the country`;
+	const handleSwitchMapData = (
+		e: React.MouseEvent<HTMLButtonElement>,
+		data: any,
+		legendMaxColor: string
+	) => {
+		if (!e || !e.currentTarget) {
+			console.error("Event is undefined or does not have a target.");
+			return;
 		}
 
-		return "All hazards impact across the country";
+		e.preventDefault();
+
+		document.getElementById("tab01")?.setAttribute("aria-selected", "false");
+		document.getElementById("tab02")?.setAttribute("aria-selected", "false");
+		document.getElementById("tab03")?.setAttribute("aria-selected", "false");
+		document.getElementById("tab04")?.setAttribute("aria-selected", "false");
+		document.getElementById("tab05")?.setAttribute("aria-selected", "false");
+
+		const buttonText = e.currentTarget.textContent?.trim() || "Legend";
+
+		e.currentTarget.ariaSelected = "true";
+
+		setActiveData(data);
+		mapChartRef.current?.setDataSource(data);
+		mapChartRef.current?.setLegendTitle(buttonText);
+		mapChartRef.current?.setLegendMaxColor(legendMaxColor);
 	};
-
-	// Handle tab selection
-	const handleSelectTab = (tabId: string, metric: string) => {
-		setSelectedTab(tabId);
-		// setSelectedMetric(tabId === "tab01" ? "totalDamage" : "totalLoss");
-		setSelectedMetric(metric as any);
-	};
-
-	// Fetch geographic impact data
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				const url = new URL(
-					"/api/analytics/geographic-impacts",
-					window.location.origin
-				);
-				const activeFilters = filters || DEFAULT_FILTERS;
-
-				// Add all non-null filters to URL
-				Object.entries(activeFilters).forEach(([key, value]) => {
-					if (value !== null && value !== "") {
-						url.searchParams.append(key, value);
-					}
-				});
-
-				const response = await fetch(url.toString());
-				if (!response.ok) throw new Error("Failed to fetch geographic data");
-				const data = await response.json();
-				setGeoData(data);
-			} catch (error) {
-				console.error("Error fetching geographic data:", error);
-			}
-		};
-
-		fetchData();
-	}, [filters]);
 
 	return (
-		<section className="dts-page-section">
-			<div className="mg-container">
-				<h2 className="dts-heading-2">Hazard Impact Map</h2>
+		<>
+			<section
+				className="dts-page-section"
+				style={{ maxWidth: "100%", overflow: "hidden" }}
+			>
+				<h2>TODO - Add five different maps</h2>
 				<div className="map-section">
 					<h2 className="mg-u-sr-only" id="tablist01">
 						Geographic Impact View
 					</h2>
+
 					<ul
 						className="dts-tablist"
 						role="tablist"
 						aria-labelledby="tablist01"
 					>
-						{[
-							{ id: "tab01", label: "Total Damages", metric: "totalDamage" },
-							{ id: "tab02", label: "Total Losses", metric: "totalLoss" },
-							// {
-							// 	id: "tab03",
-							// 	label: "Number of Disaster Events",
-							// 	metric: "numDisasterEvents",
-							// },
-							// {
-							// 	id: "tab04",
-							// 	label: "Affected People",
-							// 	metric: "affectedPeople",
-							// },
-							// { id: "tab05", label: "Number of Deaths", metric: "numDeaths" },
-						].map(({ id, label, metric }) => (
-							<li key={id} role="presentation">
-								<button
-									className="dts-tablist__button"
-									type="button"
-									role="tab"
-									id={id}
-									aria-controls={`tabpanel${id}`}
-									aria-selected={selectedTab === id}
-									tabIndex={selectedTab === id ? 0 : -1}
-									onClick={() => handleSelectTab(id, metric)}
-								>
-									<span>{label}</span>
-								</button>
-							</li>
-						))}
+						<li role="presentation">
+							<button
+								onClick={(e) =>
+									handleSwitchMapData(e, damagesGeoData, "#208f04")
+								}
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab01"
+								aria-controls="tabpanel01"
+								aria-selected="false"
+							>
+								<span>Total damages in {localCurrency}</span>
+							</button>
+						</li>
+
+						<li role="presentation">
+							<button
+								onClick={(e) =>
+									handleSwitchMapData(e, lossesGeoData, "#ff1010")
+								}
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab02"
+								aria-controls="tabpanel02"
+								aria-selected="false"
+							>
+								<span>Total losses</span>
+							</button>
+						</li>
+						<li role="presentation">
+							<button
+								onClick={(e) =>
+									handleSwitchMapData(e, disasterEventGeoData, "#58508d")
+								}
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab03"
+								aria-controls="tabpanel03"
+								aria-selected="false"
+							>
+								<span>Number of disaster event</span>
+							</button>
+						</li>
+						<li role="presentation">
+							<button
+								onClick={(e) =>
+									handleSwitchMapData(e, affectedPeopleGeoData, "#208f04")
+								}
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab04"
+								aria-controls="tabpanel04"
+								aria-selected="false"
+							>
+								<span>Affected people</span>
+							</button>
+						</li>
+						<li role="presentation">
+							<button
+								onClick={(e) =>
+									handleSwitchMapData(e, deathsGeoData, "#ff1010")
+								}
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab05"
+								aria-controls="tabpanel05"
+								aria-selected="false"
+							>
+								<span>Number of deaths</span>
+							</button>
+						</li>
 					</ul>
 
-					{geoData ? (
-						<ImpactMapOl
-							geoData={geoData}
-							selectedMetric={selectedMetric}
-							filters={filters || DEFAULT_FILTERS}
-						/>
-					) : (
-						<div className="map-loading">Loading map...</div>
-					)}
+					<div id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
+						<div
+							className="dts-tablist__panel"
+							id="tabpanel01"
+							role="tabpanel"
+							aria-labelledby="tab01"
+						>
+							<div>
+								<MapChart
+									ref={mapChartRef}
+									id="map_viewer"
+									dataSource={activeData}
+									legendMaxColor="#208f04"
+								/>
+							</div>
+						</div>
+					</div>
 				</div>
-			</div>
-		</section>
+			</section>
+		</>
 	);
-}
+};
+
+export default HazardImpactMap2;

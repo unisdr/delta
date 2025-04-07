@@ -9,12 +9,17 @@ import {
 	getAgeTotalsByHazardFilters,
 	getDisabilityTotalByHazardFilters,
 	getDisasterEventCount,
+	getDisasterEventCountByDivision,
 	getDisasterEventCountByYear,
 	getGenderTotalsByHazardFilters,
 	getInternationalPovertyTotalByHazardFilters,
 	getNationalPovertyTotalByHazardFilters,
+	getTotalAffectedPeopleByDivision,
+	getTotalDamagesByDivision,
 	getTotalDamagesByHazardFilters,
 	getTotalDamagesByYear,
+	getTotalDeathsByDivision,
+	getTotalLossesByDivision,
 	getTotalLossesByHazardFilters,
 	getTotalLossesByYear,
 } from "~/backend.server/models/analytics/hazard-analysis";
@@ -27,8 +32,16 @@ import { fetchHazardClusters } from "~/backend.server/models/analytics/hazard-cl
 import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
 import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
-import HazardImpactMap2 from "~/frontend/analytics/hazards/sections/HazardImpactMap2";
-import { config } from "process";
+import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
+
+// Define an interface for the structure of the JSON objects
+interface interfaceMap {
+	total: number;
+	name: string;
+	description: string;
+	colorPercentage: number;
+	geojson: any;
+}
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
@@ -45,37 +58,23 @@ export const loader = authLoaderPublicOrWithPerm(
 		const hazardTypes = await fetchHazardTypes();
 		const hazardClusters = await fetchHazardClusters(null);
 		const specificHazards = await fetchAllSpecificHazards();
-		const geographicLevels = await getDivisionByLevel(1);
+		const geographicLevel1 = await getDivisionByLevel(1);
 
-		const disasterCount = await getDisasterEventCount({
+		const filters = {
 			hazardTypeId,
 			hazardClusterId,
 			specificHazardId,
 			geographicLevelId,
 			fromDate,
 			toDate,
-		});
+		};
 
-		const yearlyDisasterCounts = await getDisasterEventCountByYear({
-			hazardTypeId,
-			hazardClusterId,
-			specificHazardId,
-			geographicLevelId,
-			fromDate,
-			toDate,
-		});
+		const disasterCount = await getDisasterEventCount(filters);
 
-		console.log("yearly events = ", yearlyDisasterCounts);
+		const yearlyDisasterCounts = await getDisasterEventCountByYear(filters);
 
 		const { totalMen, totalWomen, totalNonBinary } =
-			await getGenderTotalsByHazardFilters({
-				hazardTypeId,
-				hazardClusterId,
-				specificHazardId,
-				geographicLevelId,
-				fromDate,
-				toDate,
-			});
+			await getGenderTotalsByHazardFilters(filters);
 
 		const {
 			totalDeaths,
@@ -84,24 +83,10 @@ export const loader = authLoaderPublicOrWithPerm(
 			totalDisplaced,
 			totalAffectedDirect,
 			totalAffectedIndirect,
-		} = await getAffectedPeopleByHazardFilters({
-			hazardTypeId,
-			hazardClusterId,
-			specificHazardId,
-			geographicLevelId,
-			fromDate,
-			toDate,
-		});
+		} = await getAffectedPeopleByHazardFilters(filters);
 
 		const { totalChildren, totalAdults, totalSeniors } =
-			await getAgeTotalsByHazardFilters({
-				hazardTypeId,
-				hazardClusterId,
-				specificHazardId,
-				geographicLevelId,
-				fromDate,
-				toDate,
-			});
+			await getAgeTotalsByHazardFilters(filters);
 
 		const totalDisability = await getDisabilityTotalByHazardFilters({
 			hazardTypeId,
@@ -113,14 +98,7 @@ export const loader = authLoaderPublicOrWithPerm(
 		});
 
 		const totalInternationalPoorPeople =
-			await getInternationalPovertyTotalByHazardFilters({
-				hazardTypeId,
-				hazardClusterId,
-				specificHazardId,
-				geographicLevelId,
-				fromDate,
-				toDate,
-			});
+			await getInternationalPovertyTotalByHazardFilters(filters);
 
 		const totalNationalPoorPeople =
 			await getNationalPovertyTotalByHazardFilters({
@@ -132,48 +110,138 @@ export const loader = authLoaderPublicOrWithPerm(
 				toDate,
 			});
 
-		const totalDamages = await getTotalDamagesByHazardFilters({
-			hazardTypeId,
-			hazardClusterId,
-			specificHazardId,
-			geographicLevelId,
-			fromDate,
-			toDate,
+		const totalDamages = await getTotalDamagesByHazardFilters(filters);
+
+		const totalLosses = await getTotalLossesByHazardFilters(filters);
+
+		const totalDamagesByYear = await getTotalDamagesByYear(filters);
+
+		const totalLossesByYear = await getTotalLossesByYear(filters);
+
+		// Get damages by division
+		const damagesByDivision = await getTotalDamagesByDivision(filters);
+
+		// Get losses by division
+		const lossesByDivision = await getTotalLossesByDivision(filters);
+
+		// Get deaths by division
+		const deathsByDivision = await getTotalDeathsByDivision(filters);
+
+		// Get affected people by division
+		const affectedPeopleByDivision = await getTotalAffectedPeopleByDivision(
+			filters
+		);
+
+		// Get disaster event count by division
+		const disasterEventCountByDivision = await getDisasterEventCountByDivision(
+			filters
+		);
+
+		// Build damagesGeoData
+		const maxDamages = Math.max(
+			...damagesByDivision.map((d) => d.totalDamages),
+			1
+		); // Avoid division by 0
+		const damagesGeoData: interfaceMap[] = geographicLevel1.map((division) => {
+			const divisionDamage = damagesByDivision.find(
+				(d) => d.divisionId === division.id.toString()
+			);
+			const total = divisionDamage ? divisionDamage.totalDamages : 0;
+			return {
+				total,
+				name: division.name["en"] || "Unknown",
+				description: `Total Damages: ${total} ${currency}`,
+				colorPercentage: total / maxDamages, // Normalized 0-1 for coloring
+				geojson: division.geojson || {}, // Assuming division has a geojson field
+			};
 		});
 
-		const totalLosses = await getTotalLossesByHazardFilters({
-			hazardTypeId,
-			hazardClusterId,
-			specificHazardId,
-			geographicLevelId,
-			fromDate,
-			toDate,
+		// Build lossesGeoData
+		const maxLosses = Math.max(
+			...lossesByDivision.map((l) => l.totalLosses),
+			1
+		); // Avoid division by 0
+		const lossesGeoData: interfaceMap[] = geographicLevel1.map((division) => {
+			const divisionLoss = lossesByDivision.find(
+				(l) => l.divisionId === division.id.toString()
+			);
+			const total = divisionLoss ? divisionLoss.totalLosses : 0;
+			return {
+				total,
+				name: division.name["en"] || "Unknown",
+				description: `Total Losses: ${total} ${currency}`,
+				colorPercentage: total / maxLosses,
+				geojson: division.geojson || {},
+			};
 		});
 
-		const totalDamagesByYear = await getTotalDamagesByYear({
-			hazardTypeId,
-			hazardClusterId,
-			specificHazardId,
-			geographicLevelId,
-			fromDate,
-			toDate,
+		// Build deathsGeoData
+		const maxDeaths = Math.max(
+			...deathsByDivision.map((d) => d.totalDeaths),
+			1
+		);
+		const deathsGeoData: interfaceMap[] = geographicLevel1.map((division) => {
+			const divisionDeaths = deathsByDivision.find(
+				(d) => d.divisionId === division.id.toString()
+			);
+			const total = divisionDeaths ? divisionDeaths.totalDeaths : 0;
+			return {
+				total,
+				name: division.name["en"] || "Unknown",
+				description: `Total Deaths: ${total}`,
+				colorPercentage: total / maxDeaths,
+				geojson: division.geojson || {},
+			};
 		});
 
-		const totalLossesByYear = await getTotalLossesByYear({
-			hazardTypeId,
-			hazardClusterId,
-			specificHazardId,
-			geographicLevelId,
-			fromDate,
-			toDate,
-		});
+		// Build affectedPeopleGeoData
+		const maxAffected = Math.max(
+			...affectedPeopleByDivision.map((a) => a.totalAffected),
+			1
+		);
+		const affectedPeopleGeoData: interfaceMap[] = geographicLevel1.map(
+			(division) => {
+				const divisionAffected = affectedPeopleByDivision.find(
+					(a) => a.divisionId === division.id.toString()
+				);
+				const total = divisionAffected ? divisionAffected.totalAffected : 0;
+				return {
+					total,
+					name: division.name["en"] || "Unknown",
+					description: `Total Affected People: ${total}`,
+					colorPercentage: total / maxAffected,
+					geojson: division.geojson || {},
+				};
+			}
+		);
+
+		// Build disasterEventGeoData
+		const maxEvents = Math.max(
+			...disasterEventCountByDivision.map((e) => e.eventCount),
+			1
+		);
+		const disasterEventGeoData: interfaceMap[] = geographicLevel1.map(
+			(division) => {
+				const divisionEvents = disasterEventCountByDivision.find(
+					(e) => e.divisionId === division.id.toString()
+				);
+				const total = divisionEvents ? divisionEvents.eventCount : 0;
+				return {
+					total,
+					name: division.name["en"] || "Unknown",
+					description: `Disaster Events: ${total}`,
+					colorPercentage: total / maxEvents,
+					geojson: division.geojson || {},
+				};
+			}
+		);
 
 		return json({
 			currency,
 			hazardTypes,
 			hazardClusters,
 			specificHazards,
-			geographicLevels,
+			geographicLevels: geographicLevel1,
 			disasterCount,
 			yearlyDisasterCounts,
 			totalDeaths,
@@ -194,7 +262,12 @@ export const loader = authLoaderPublicOrWithPerm(
 			totalDamages,
 			totalLosses,
 			totalDamagesByYear,
-			totalLossesByYear
+			totalLossesByYear,
+			damagesGeoData,
+			lossesGeoData,
+			deathsGeoData,
+			affectedPeopleGeoData,
+			disasterEventGeoData,
 		});
 	}
 );
@@ -225,7 +298,12 @@ export default function HazardAnalysis() {
 		totalDamages,
 		totalLosses,
 		totalDamagesByYear,
-		totalLossesByYear
+		totalLossesByYear,
+		damagesGeoData,
+		lossesGeoData,
+		deathsGeoData,
+		affectedPeopleGeoData,
+		disasterEventGeoData,
 	} = useLoaderData<typeof loader>();
 	const navigate = useNavigate();
 
@@ -360,7 +438,14 @@ export default function HazardAnalysis() {
 								overflow: "hidden",
 							}}
 						>
-							<HazardImpactMap2 />
+							<HazardImpactMap
+								localCurrency={currency}
+								damagesGeoData={damagesGeoData}
+								lossesGeoData={lossesGeoData}
+								disasterEventGeoData={disasterEventGeoData}
+								affectedPeopleGeoData={affectedPeopleGeoData}
+								deathsGeoData={deathsGeoData}
+							/>
 							<ImpactByHazard
 								hazardName={hazardName}
 								geographicName={geographicName}
