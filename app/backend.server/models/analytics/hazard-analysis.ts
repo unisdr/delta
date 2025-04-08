@@ -455,7 +455,6 @@ export async function getGenderTotalsByHazardFilters(
 		.where(and(...disasterConditions, humanDsgBaseConditions));
 
 	const result = await query.execute();
-	console.log("Raw query result:", result);
 
 	return {
 		totalMen: result[0].totalMen,
@@ -577,7 +576,6 @@ export async function getAgeTotalsByHazardFilters(
 		.where(and(...disasterConditions, humanDsgBaseConditions));
 
 	const result = await query.execute();
-	console.log("Raw query result:", result);
 
 	return {
 		totalChildren: result[0].totalChildren,
@@ -686,7 +684,6 @@ export async function getDisabilityTotalByHazardFilters(
 		.where(and(...disasterConditions, humanDsgBaseConditions));
 
 	const result = await query.execute();
-	console.log("Raw query result:", result);
 
 	return result[0].totalDisability;
 }
@@ -790,7 +787,6 @@ export async function getInternationalPovertyTotalByHazardFilters(
 		.where(and(...disasterConditions, humanDsgBaseConditions));
 
 	const result = await query.execute();
-	console.log("Raw query result:", result);
 
 	return result[0].totalPoverty;
 }
@@ -894,7 +890,6 @@ export async function getNationalPovertyTotalByHazardFilters(
 		.where(and(...disasterConditions, humanDsgBaseConditions));
 
 	const result = await query.execute();
-	console.log("Raw query result:", result);
 
 	return result[0].totalPoverty;
 }
@@ -979,7 +974,6 @@ export async function getTotalDamagesByHazardFilters(
 		.where(and(...disasterConditions));
 
 	const result = await query.execute();
-	console.log("Raw query result:", result);
 
 	return result[0].totalDamages;
 }
@@ -1064,7 +1058,6 @@ export async function getTotalLossesByHazardFilters(
 		.where(and(...disasterConditions));
 
 	const result = await query.execute();
-	console.log("Raw query result:", result);
 
 	return result[0].totalLosses;
 }
@@ -1413,7 +1406,6 @@ export async function getTotalDamagesByDivision(
 		.groupBy(sql`damages_subquery.division_id`);
 
 	const result = await damagesByDivisionQuery.execute();
-	console.log("Damages by Division from function:", result); // Debug log
 
 	return result;
 }
@@ -1549,7 +1541,6 @@ export async function getTotalLossesByDivision(
 		.groupBy(sql`losses_subquery.division_id`);
 
 	const result = await lossesByDivisionQuery.execute();
-	console.log("Losses by Division from function:", result); // Debug log
 
 	return result;
 }
@@ -1658,7 +1649,6 @@ export async function getTotalDeathsByDivision(
 		.groupBy(sql`deaths_subquery.division_id`);
 
 	const result = await deathsByDivisionQuery.execute();
-	console.log("Deaths by Division from function:", result); // Debug log
 
 	return result;
 }
@@ -1778,7 +1768,6 @@ export async function getTotalAffectedPeopleByDivision(
 		.groupBy(sql`affected_subquery.division_id`);
 
 	const result = await affectedByDivisionQuery.execute();
-	console.log("Affected People by Division from function:", result); // Debug log
 
 	return result;
 }
@@ -1856,7 +1845,6 @@ export async function getDisasterEventCountByDivision(
 		.groupBy(sql`event_subquery.division_id`);
 
 	const result = await eventCountQuery.execute();
-	console.log("Disaster Event Count by Division from function:", result); // Debug log
 
 	return result;
 }

@@ -152,7 +152,7 @@ export const loader = authLoaderPublicOrWithPerm(
 				name: division.name["en"] || "Unknown",
 				description: `Total Damages: ${total} ${currency}`,
 				colorPercentage: total / maxDamages, // Normalized 0-1 for coloring
-				geojson: division.geojson || {}, // Assuming division has a geojson field
+				geojson: division.geojson || {}, 
 			};
 		});
 
@@ -387,8 +387,6 @@ export default function HazardAnalysis() {
 		Number(totalInjured) +
 		Number(totalMissing);
 
-	console.log("totalPeopleAffected", totalPeopleAffected);
-
 	return (
 		<MainContainer title="Hazards Analysis" headerExtra={<NavSettings />}>
 			<div style={{ maxWidth: "100%", overflow: "hidden" }}>
@@ -439,6 +437,8 @@ export default function HazardAnalysis() {
 							}}
 						>
 							<HazardImpactMap
+								hazardName={hazardName}
+								geographicName={geographicName}
 								localCurrency={currency}
 								damagesGeoData={damagesGeoData}
 								lossesGeoData={lossesGeoData}

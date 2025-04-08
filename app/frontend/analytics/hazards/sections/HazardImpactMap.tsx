@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import MapChart, { MapChartRef } from "~/components/MapChart";
 
 interface HazardImpactMap2Props {
+	hazardName: string;
+	geographicName: string | null;
 	localCurrency: string;
 	damagesGeoData: any[];
 	lossesGeoData: any[];
@@ -11,6 +13,8 @@ interface HazardImpactMap2Props {
 }
 
 const HazardImpactMap2: React.FC<HazardImpactMap2Props> = ({
+	hazardName,
+	geographicName,
 	localCurrency,
 	damagesGeoData,
 	lossesGeoData,
@@ -55,7 +59,10 @@ const HazardImpactMap2: React.FC<HazardImpactMap2Props> = ({
 				className="dts-page-section"
 				style={{ maxWidth: "100%", overflow: "hidden" }}
 			>
-				<h2>TODO - Add five different maps</h2>
+				<h2>
+					{hazardName} impacts across{" "}
+					{geographicName == null ? "country" : geographicName}
+				</h2>
 				<div className="map-section">
 					<h2 className="mg-u-sr-only" id="tablist01">
 						Geographic Impact View
