@@ -253,7 +253,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							<BarChart
 								width={500}
 								height={500}
-								layout="horizontal"
+								layout="vertical"
 								data={data}
 								margin={{
 									top: 5,
@@ -264,7 +264,8 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							>
 								<CartesianGrid strokeDasharray="3 3" />
 								<Tooltip />
-								<YAxis />
+								<XAxis type="number"/>
+								<YAxis type="category" dataKey="name"/>
 								<Legend />
 								<Bar dataKey="Male" fill="#A64696" />
 								<Bar dataKey="Female" fill="#E660CF" />
@@ -301,7 +302,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							<BarChart
 								width={500}
 								height={500}
-								layout="horizontal"
+								layout="vertical"
 								data={disbilityAndPovertyData}
 								margin={{
 									top: 5,
@@ -312,7 +313,8 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							>
 								<CartesianGrid strokeDasharray="3 3" />
 								<Tooltip />
-								<YAxis />
+								<XAxis type="number"/>
+								<YAxis type="category" dataKey="name"/>
 								<Legend />
 								<Bar dataKey="Persons with disabilities" fill="#436EA9" />
 								<Bar
@@ -356,7 +358,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							<BarChart
 								width={500}
 								height={500}
-								layout="horizontal"
+								layout="vertical"
 								data={ageData}
 								margin={{
 									top: 5,
@@ -367,7 +369,8 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							>
 								<CartesianGrid strokeDasharray="3 3" />
 								<Tooltip />
-								<YAxis />
+								<XAxis type="number"/>
+								<YAxis type="category" dataKey="name"/>
 								<Legend />
 								<Bar dataKey="Children (0 - 15)" fill="#A64696" />
 								<Bar dataKey="Adults (15 - 54)" fill="#E660CF" />
