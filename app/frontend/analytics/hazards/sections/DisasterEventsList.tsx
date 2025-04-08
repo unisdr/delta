@@ -1,56 +1,57 @@
 import React from "react";
-import {
-	Bar,
-	BarChart,
-	CartesianGrid,
-	Legend,
-	ResponsiveContainer,
-	Tooltip,
-	XAxis,
-	YAxis,
-} from "recharts";
+import { DisasterSummary } from "~/backend.server/models/analytics/hazard-analysis";
 
 interface DisasterEventsListProps {
+	hazardName: string;
+	geographicName: string | null;
+	disasterSummaryTable: DisasterSummary[];
 }
 
 const DisasterEventsList: React.FC<DisasterEventsListProps> = ({
+	hazardName,
+	geographicName,
+	disasterSummaryTable,
 }) => {
-	
 	return (
 		<>
 			<section className="dts-page-section">
-				<h2 className="dts-heading-2">Most recent [selected hazards] events in [instance name]</h2>
-
-				<div className="mg-grid mg-grid__col-1">
-					<div className="dts-data-box">
-						<h3 className="dts-body-label">
-							<span id="elementId011"></span>
-							<button
-								type="button"
-								className="dts-tooltip__button"
-								aria-labelledby="elementId011"
-								aria-describedby="tooltip011"
-							>
-								<svg aria-hidden="true" focusable="false" role="img">
-									<use href="/assets/icons/information_outline.svg#information"></use>
-								</svg>
-							</button>
-							<div id="tooltip011" role="tooltip">
-								<span>
-									Total people affected is the sum of deaths, injured, missing,
-									directly affected people and displaced
-								</span>
-								<div className="dts-tooltip__arrow"></div>
-							</div>
-						</h3>
-						<div className="dts-indicator dts-indicator--target-box-g">
-							<span></span>
-						</div>
-					</div>
+				<h2 className="dts-heading-2">
+					Most recent {hazardName} events in{" "}
+					{geographicName == null ? " across country" : geographicName}
+				</h2>
+				<div className="table-container">
+					<table className="dts-table">
+						<thead>
+							<tr>
+								<th>UUID</th>
+								<th>Event name</th>
+								<th>Start Date</th>
+								<th>End Date</th>
+								<th>Province Affected</th>
+								<th>Damages</th>
+								<th>Lossese</th>
+								<th>People Affected</th>
+							</tr>
+						</thead>
+						<tbody>
+							{disasterSummaryTable.map((disasterSummaryRecord) => {
+								return (
+									<tr key={disasterSummaryRecord.disasterId}>
+										<td>{disasterSummaryRecord.disasterId}</td>
+										<td>{disasterSummaryRecord.disasterName}</td>
+										<td>{disasterSummaryRecord.startDate}</td>
+										<td>{disasterSummaryRecord.endDate}</td>
+										<td>{disasterSummaryRecord.provinceAffected}</td>
+										<td>{disasterSummaryRecord.totalDamages}</td>
+										<td>{disasterSummaryRecord.totalLosses}</td>
+										<td>{disasterSummaryRecord.totalAffectedPeople}</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
 				</div>
-
 			</section>
-
 		</>
 	);
 };

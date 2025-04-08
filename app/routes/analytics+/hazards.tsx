@@ -11,6 +11,7 @@ import {
 	getDisasterEventCount,
 	getDisasterEventCountByDivision,
 	getDisasterEventCountByYear,
+	getDisasterSummary,
 	getGenderTotalsByHazardFilters,
 	getInternationalPovertyTotalByHazardFilters,
 	getNationalPovertyTotalByHazardFilters,
@@ -152,7 +153,7 @@ export const loader = authLoaderPublicOrWithPerm(
 				name: division.name["en"] || "Unknown",
 				description: `Total Damages: ${total} ${currency}`,
 				colorPercentage: total / maxDamages, // Normalized 0-1 for coloring
-				geojson: division.geojson || {}, 
+				geojson: division.geojson || {},
 			};
 		});
 
@@ -236,6 +237,10 @@ export const loader = authLoaderPublicOrWithPerm(
 			}
 		);
 
+		// Get disaster event count by division
+		const disasterSummary = await getDisasterSummary(filters);
+
+		// console.log("Disaster summary",disasterSummary)
 		return json({
 			currency,
 			hazardTypes,
@@ -268,6 +273,7 @@ export const loader = authLoaderPublicOrWithPerm(
 			deathsGeoData,
 			affectedPeopleGeoData,
 			disasterEventGeoData,
+			disasterSummary
 		});
 	}
 );
@@ -304,6 +310,7 @@ export default function HazardAnalysis() {
 		deathsGeoData,
 		affectedPeopleGeoData,
 		disasterEventGeoData,
+		disasterSummary
 	} = useLoaderData<typeof loader>();
 	const navigate = useNavigate();
 
@@ -359,7 +366,7 @@ export default function HazardAnalysis() {
 			fromDate: null,
 			toDate: null,
 		});
-		navigate(window.location.pathname, { replace: true }); // Clear URL params
+		navigate(window.location.pathname, { replace: true });
 	};
 
 	const hazardName =
@@ -480,7 +487,11 @@ export default function HazardAnalysis() {
 								totalDamagesByYear={totalDamagesByYear}
 								totalLossesByYear={totalLossesByYear}
 							/>
-							<DisasterEventsList />
+							<DisasterEventsList
+								hazardName={hazardName}
+								geographicName={geographicName}
+								disasterSummaryTable={disasterSummary}
+							/>
 						</div>
 					)}
 				</div>

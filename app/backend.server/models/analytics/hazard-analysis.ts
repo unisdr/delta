@@ -1848,3 +1848,155 @@ export async function getDisasterEventCountByDivision(
 
 	return result;
 }
+
+
+export interface DisasterSummary {
+	disasterId: string;
+	disasterName: string;
+	startDate: string;
+	endDate: string;
+	provinceAffected: string; 
+	totalDamages: number;
+	totalLosses: number;
+	totalAffectedPeople: number;
+  }
+  
+  export async function getDisasterSummary(filters: HazardFilters): Promise<DisasterSummary[]> {
+	const {
+	  hazardTypeId,
+	  hazardClusterId,
+	  specificHazardId,
+	  geographicLevelId,
+	  fromDate,
+	  toDate,
+	} = filters;
+  
+	// Build WHERE conditions for disaster_event
+	const eventConditions = [
+	  eq(disasterEventTable.approvalStatus, "published"),
+	];
+  
+	if (hazardTypeId) eventConditions.push(eq(disasterEventTable.hipTypeId, hazardTypeId));
+	if (hazardClusterId) eventConditions.push(eq(disasterEventTable.hipClusterId, hazardClusterId));
+	if (specificHazardId) eventConditions.push(eq(disasterEventTable.hipHazardId, specificHazardId));
+	if (geographicLevelId) {
+	  eventConditions.push(
+		sql`EXISTS (
+		  SELECT 1
+		  FROM jsonb_array_elements(${disasterEventTable.spatialFootprint}) AS elem
+		  WHERE (elem->'geojson'->'properties'->>'division_id') = ${geographicLevelId}
+		)`
+	  );
+	}
+	if (fromDate || toDate) {
+	  const from = fromDate || "0001-01-01";
+	  const to = toDate || "9999-12-31";
+	  eventConditions.push(
+		sql`${disasterEventTable.startDate} >= ${from} AND ${disasterEventTable.endDate} <= ${to}`
+	  );
+	}
+  
+	// Conditions for human_dsg
+	const humanDsgConditions = and(
+	  isNull(humanDsgTable.sex),
+	  isNull(humanDsgTable.age),
+	  isNull(humanDsgTable.disability),
+	  isNull(humanDsgTable.globalPovertyLine),
+	  isNull(humanDsgTable.nationalPovertyLine),
+	  sql`${humanDsgTable.custom} = '{}'::jsonb`
+	);
+  
+	// Subquery for affected people, grouped by disasterEventId
+	const affectedSubquery = dr
+	  .select({
+		disasterEventId: disasterRecordsTable.disasterEventId,
+		totalAffected: sql<number>`COALESCE(SUM(
+		  COALESCE(${missingTable.missing}, 0) +
+		  COALESCE(${displacedTable.displaced}, 0) +
+		  COALESCE(${injuredTable.injured}, 0) +
+		  COALESCE(${affectedTable.direct}, 0)
+		), 0)`.as("total_affected"),
+	  })
+	  .from(disasterRecordsTable)
+	  .leftJoin(humanDsgTable, eq(disasterRecordsTable.id, humanDsgTable.recordId))
+	  .leftJoin(missingTable, eq(humanDsgTable.id, missingTable.dsgId))
+	  .leftJoin(displacedTable, eq(humanDsgTable.id, displacedTable.dsgId))
+	  .leftJoin(injuredTable, eq(humanDsgTable.id, injuredTable.dsgId))
+	  .leftJoin(affectedTable, eq(humanDsgTable.id, affectedTable.dsgId))
+	  .where(and(eq(disasterRecordsTable.approvalStatus, "published"), humanDsgConditions))
+	  .groupBy(disasterRecordsTable.disasterEventId)
+	  .as("affected_subquery");
+  
+	// Subquery for provinces
+	const provincesSubquery = dr
+	  .select({
+		disasterId: disasterEventTable.id,
+		provinceName: sql<string>`jsonb_array_elements(${disasterEventTable.spatialFootprint})->'geojson'->'properties'->'name'->>'en'`.as("province_name"),
+	  })
+	  .from(disasterEventTable)
+	  .where(and(...eventConditions))
+	  .as("provinces_subquery");
+  
+	const provincesAggQuery = dr
+	  .select({
+		disasterId: provincesSubquery.disasterId,
+		provinceAffected: sql<string>`string_agg(DISTINCT ${provincesSubquery.provinceName}, ', ')`.as("province_affected"),
+	  })
+	  .from(provincesSubquery)
+	  .where(sql`${provincesSubquery.provinceName} IS NOT NULL`)
+	  .groupBy(provincesSubquery.disasterId)
+	  .as("provinces_agg");
+  
+	// Main query
+	const query = dr
+	  .select({
+		disasterId: disasterEventTable.id,
+		disasterName: disasterEventTable.nameNational,
+		startDate: disasterEventTable.startDate,
+		endDate: disasterEventTable.endDate,
+		provinceAffected: provincesAggQuery.provinceAffected,
+		totalDamages: sql<number>`COALESCE(SUM(${sectorDisasterRecordsRelationTable.damageCost}), 0)`.as("total_damages"),
+		totalLosses: sql<number>`COALESCE(SUM(${sectorDisasterRecordsRelationTable.lossesCost}), 0)`.as("total_losses"),
+		totalAffectedPeople: sql<number>`COALESCE(${affectedSubquery.totalAffected}, 0)`.as("total_affected_people"),
+	  })
+	  .from(disasterEventTable)
+	  .leftJoin(
+		provincesAggQuery,
+		eq(disasterEventTable.id, provincesAggQuery.disasterId)
+	  )
+	  .leftJoin(
+		disasterRecordsTable,
+		eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
+	  )
+	  .leftJoin(
+		sectorDisasterRecordsRelationTable,
+		eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
+	  )
+	  .leftJoin(
+		affectedSubquery,
+		eq(disasterEventTable.id, affectedSubquery.disasterEventId)
+	  )
+	  .where(and(...eventConditions))
+	  .groupBy(
+		disasterEventTable.id,
+		disasterEventTable.nameNational,
+		disasterEventTable.startDate,
+		disasterEventTable.endDate,
+		provincesAggQuery.provinceAffected,
+		affectedSubquery.totalAffected
+	  );
+  
+	const result = await query.execute();
+	console.log("Disaster Summary:", result);
+  
+	return result.map((row) => ({
+	  disasterId: row.disasterId,
+	  disasterName: row.disasterName || "Unnamed Disaster",
+	  startDate: row.startDate,
+	  endDate: row.endDate,
+	  provinceAffected: row.provinceAffected || "",
+	  totalDamages: row.totalDamages,
+	  totalLosses: row.totalLosses,
+	  totalAffectedPeople: row.totalAffectedPeople,
+	}));
+  }
