@@ -325,6 +325,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 									<Legend />
 									<Bar dataKey="Male" fill="#A64696" />
 									<Bar dataKey="Female" fill="#E660CF" />
+									<Bar dataKey="Other non-Binary" fill="#A6469680" />
 								</BarChart>
 							</ResponsiveContainer>
 						</div>
