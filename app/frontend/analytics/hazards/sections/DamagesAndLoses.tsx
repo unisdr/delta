@@ -1,3 +1,4 @@
+import React from "react";
 import {
 	Area,
 	AreaChart,
@@ -11,6 +12,7 @@ import {
 	DamageByYear,
 	LossByYear,
 } from "~/backend.server/models/analytics/hazard-analysis";
+import { createFloatingTooltip } from "~/util/tooltip";
 
 interface DamagesAndLosesProps {
 	localCurrency: string;
@@ -35,20 +37,19 @@ const DamagesAndLoses: React.FC<DamagesAndLosesProps> = ({
 				<div className="mg-grid mg-grid__col-2">
 					<div className="dts-data-box">
 						<h3 className="dts-body-label">
-							<span id="elementId011">Damages in {localCurrency}</span>
-							<button
-								type="button"
+							<span>Damages in {localCurrency}</span>
+							<div
 								className="dts-tooltip__button"
-								aria-labelledby="elementId011"
-								aria-describedby="tooltip011"
+								onPointerEnter={(e) => createFloatingTooltip({
+									content: "Total monetary value of damages caused by hazards",
+									target: e.currentTarget,
+									placement: "top",
+									offsetValue: 8,
+								})}
 							>
 								<svg aria-hidden="true" focusable="false" role="img">
 									<use href="/assets/icons/information_outline.svg#information"></use>
 								</svg>
-							</button>
-							<div id="tooltip011" role="tooltip">
-								<span>Tooltip text</span>
-								<div className="dts-tooltip__arrow"></div>
 							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
@@ -96,20 +97,19 @@ const DamagesAndLoses: React.FC<DamagesAndLosesProps> = ({
 
 					<div className="dts-data-box">
 						<h3 className="dts-body-label">
-							<span id="elementId012">Losses in {localCurrency}</span>
-							<button
-								type="button"
+							<span>Losses in {localCurrency}</span>
+							<div
 								className="dts-tooltip__button"
-								aria-labelledby="elementId012"
-								aria-describedby="tooltip012"
+								onPointerEnter={(e) => createFloatingTooltip({
+									content: "Total monetary value of losses caused by hazards",
+									target: e.currentTarget,
+									placement: "top",
+									offsetValue: 8,
+								})}
 							>
 								<svg aria-hidden="true" focusable="false" role="img">
 									<use href="/assets/icons/information_outline.svg#information"></use>
 								</svg>
-							</button>
-							<div id="tooltip012" role="tooltip">
-								<span>Tooltip text</span>
-								<div className="dts-tooltip__arrow"></div>
 							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
