@@ -484,7 +484,7 @@ function SectorsAnalysisContent() {
                   <FaFileDownload />
                   {isGeneratingReport ? "Generating Report..." : "Generate Report"}
                 </button> */}
-                <button
+                {/* <button
                   className="mg-button mg-button--small mg-button-primary"
                   onClick={handleExportToExcel}
                   disabled={isExportingExcel}
@@ -497,7 +497,7 @@ function SectorsAnalysisContent() {
                 >
                   <FaFileDownload />
                   {isExportingExcel ? "Exporting Data..." : "Download Data"}
-                </button>
+                </button> */}
               </div>
               <div className="sectors-content" style={{ marginTop: "1rem", maxWidth: "100%", overflow: "hidden" }}>
                 {/* Impact on Selected Sector */}
