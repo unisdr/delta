@@ -62,6 +62,11 @@ interface interfaceMap {
   geojson: any;
 }
 
+interface interfaceChart {
+  name: string;
+  value: number;
+}
+
 interface interfaceSector {
   id: number;
   sectorname: string;
@@ -87,6 +92,9 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let countRelatedDisasterRecords:any = undefined;
   let totalSectorEffects:any = undefined;
   let cpDisplayName:string = '';
+  let sectorDamagePieChartData:interfaceChart[] = [];
+  let sectorLossesPieChartData:interfaceChart[] = [];
+  let sectorRecoveryPieChartData:interfaceChart[] = [];
   let datamageGeoData:interfaceMap[] = [];
   let lossesGeoData:interfaceMap[] = [];
   let humanEffectsGeoData:interfaceMap[] = [];
@@ -137,10 +145,22 @@ let sectorIdsArray: number[] = [];
             x.effects = {};
             x.effects = await disasterEventSectorTotal__ById(xId, ancestorIds);
             sectorParentArray.push(x.effects);
+            if (x.effects.damages.total > 0) {
+              sectorDamagePieChartData.push({name: x.sectorname, value: x.effects.damages.total});
+            }
+            if (x.effects.losses.total > 0) {
+              sectorLossesPieChartData.push({name: x.sectorname, value: x.effects.losses.total});
+            }
+            if (x.effects.recovery.total > 0) {
+              sectorRecoveryPieChartData.push({name: x.sectorname, value: x.effects.recovery.total});
+            }
+            
+            // console.log('x:', x);
           }
         }
 
-        console.log('Sector Parent Array:', sectorParentArray);
+        // console.log('Sector Parent Array:', sectorParentArray);
+        // console.log('sectorDamagePieChartData Array:', sectorDamagePieChartData);
         // console.log('Sector IDs Array:', sectorIdsArray);
 
         //console.log( recordsRelatedSectors[0].sectorParent[0].id );
@@ -212,6 +232,9 @@ let sectorIdsArray: number[] = [];
     humanEffectsGeoData: humanEffectsGeoData,
     totalAffectedPeople: totalAffectedPeople,
     totalAffectedPeople2: totalAffectedPeople2,
+    sectorDamagePieChartData: sectorDamagePieChartData,
+    sectorLossesPieChartData: sectorLossesPieChartData,
+    sectorRecoveryPieChartData: sectorRecoveryPieChartData,
   });
 });
 
@@ -240,6 +263,9 @@ function DisasterEventsAnalysisContent() {
     humanEffectsGeoData: any,
     totalAffectedPeople: any,
     totalAffectedPeople2: any,
+    sectorDamagePieChartData: interfaceChart[],
+    sectorLossesPieChartData: interfaceChart[],
+    sectorRecoveryPieChartData: interfaceChart[],
   }>();
   let disaggregationsAge2:{
     children:number|undefined, adult: number|undefined, senior: number|undefined
@@ -587,7 +613,8 @@ function DisasterEventsAnalysisContent() {
                           >
                             <CartesianGrid strokeDasharray="3 3" />
                             <Tooltip wrapperStyle={{ fontSize:'17px' }} />
-                            <Legend align="left" wrapperStyle={{ fontSize:'14px', paddingTop:'10px' }} />
+                            <XAxis type="category" dataKey="name" />
+                            <Legend align="left" wrapperStyle={{ fontSize:'14px' }} />
                             <Bar dataKey="Men" fill="#58508d" />
                             <Bar dataKey="Women" fill="#bc5090" />
                             <Bar dataKey="Other non-Binary" fill="#879e82" />
@@ -630,7 +657,8 @@ function DisasterEventsAnalysisContent() {
                           >
                             <CartesianGrid strokeDasharray="3 3" />
                             <Tooltip wrapperStyle={{ fontSize:'17px' }} />
-                            <Legend align="left" wrapperStyle={{ fontSize:'14px', paddingTop:'10px' }} />
+                            <XAxis type="category" dataKey="name" />
+                            <Legend align="left" wrapperStyle={{ fontSize:'14px' }} />
                             <Bar dataKey="Persons with disabilities" fill="#00202e" />
                             <Bar dataKey="Persons living in poverty (national)" fill="#003f5c" />
                             <Bar dataKey="Persons living in poverty (international)" fill="#2c4875" />
@@ -653,6 +681,7 @@ function DisasterEventsAnalysisContent() {
                           <BarChart
                             width={500}
                             height={300}
+                            // layout="vertical"
                             data={
                               [
                                 { 
@@ -672,7 +701,9 @@ function DisasterEventsAnalysisContent() {
                           >
                             <CartesianGrid strokeDasharray="3 3" />
                             <Tooltip wrapperStyle={{ fontSize:'17px' }} />
-                            <Legend align="left" wrapperStyle={{ fontSize:'14px', paddingTop:'10px' }} />
+                            <XAxis type="category" dataKey="name" />
+                            {/* <YAxis type="number" /> */}
+                            <Legend align="left" wrapperStyle={{ fontSize:'14px' }} />
                             <Bar dataKey="Children" fill="#58508d" />
                             <Bar dataKey="Adults" fill="#bc5090" />
                             <Bar dataKey="Seniors" fill="#879e82" />
@@ -747,39 +778,26 @@ function DisasterEventsAnalysisContent() {
                       <h3 className="dts-body-label">
                         <span>Damage</span>
                       </h3>
-                      <div className="dts-placeholder" style={{height: '300px'}}>
-                          <CustomPieChart data={data1} title={'fasfasf'} />
-
-                        {/* <PieChart width={300} height={400}>
-                            <Pie
-                              data={data1}
-                              cx={120}
-                              cy={200}
-                              innerRadius={60}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              paddingAngle={0}
-                              dataKey="value"
-                            >
-                              {data1.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Legend />
-                            <Tooltip />
-                        </PieChart> */}
+                      <div className="dts-placeholder" style={{height: '400px'}}>
+                          <CustomPieChart data={ ld.sectorDamagePieChartData } />
                       </div>
                     </div>
 
                     <div className="dts-data-box">
-                      <div className="dts-indicator dts-indicator--target-box-c">
-                        <span>Losses pie chart</span>
+                      <h3 className="dts-body-label">
+                        <span>Losses</span>
+                      </h3>
+                      <div className="dts-placeholder" style={{height: '400px'}}>
+                          <CustomPieChart data={ ld.sectorLossesPieChartData } />
                       </div>
                     </div>
 
                     <div className="dts-data-box">
-                      <div className="dts-indicator dts-indicator--target-box-d">
-                        <span>Recovery pie chart</span>
+                      <h3 className="dts-body-label">
+                        <span>Recovery need</span>
+                      </h3>
+                      <div className="dts-placeholder" style={{height: '400px'}}>
+                          <CustomPieChart data={ ld.sectorRecoveryPieChartData } />
                       </div>
                     </div>
                   </div>
