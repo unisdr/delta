@@ -40,6 +40,7 @@ import { getAffected } from "~/backend.server/models/analytics/affected-people-b
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Rectangle, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { PieChart, Pie, Sector, Cell } from 'recharts';
 import CustomPieChart from '~/components/PieChart';
+import CustomBarChart from '~/components/BarChart';
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -62,9 +63,15 @@ interface interfaceMap {
   geojson: any;
 }
 
-interface interfaceChart {
+interface interfacePieChart {
   name: string;
   value: number;
+}
+
+interface interfaceBarChart {
+  name: string;
+  damage: number;
+  losses: number;
 }
 
 interface interfaceSector {
@@ -92,9 +99,10 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let countRelatedDisasterRecords:any = undefined;
   let totalSectorEffects:any = undefined;
   let cpDisplayName:string = '';
-  let sectorDamagePieChartData:interfaceChart[] = [];
-  let sectorLossesPieChartData:interfaceChart[] = [];
-  let sectorRecoveryPieChartData:interfaceChart[] = [];
+  let sectorDamagePieChartData:interfacePieChart[] = [];
+  let sectorLossesPieChartData:interfacePieChart[] = [];
+  let sectorRecoveryPieChartData:interfacePieChart[] = [];
+  let sectorBarChartData:interfaceBarChart[] = [];
   let datamageGeoData:interfaceMap[] = [];
   let lossesGeoData:interfaceMap[] = [];
   let humanEffectsGeoData:interfaceMap[] = [];
@@ -154,7 +162,14 @@ let sectorIdsArray: number[] = [];
             if (x.effects.recovery.total > 0) {
               sectorRecoveryPieChartData.push({name: x.sectorname, value: x.effects.recovery.total});
             }
-            
+
+            if (x.effects.damages.total > 0 || x.effects.losses.total > 0) {
+              sectorBarChartData.push({
+                name: x.sectorname,
+                damage: x.effects.damages.total,
+                losses: x.effects.losses.total,
+              });
+            }
             // console.log('x:', x);
           }
         }
@@ -235,6 +250,7 @@ let sectorIdsArray: number[] = [];
     sectorDamagePieChartData: sectorDamagePieChartData,
     sectorLossesPieChartData: sectorLossesPieChartData,
     sectorRecoveryPieChartData: sectorRecoveryPieChartData,
+    sectorBarChartData: sectorBarChartData,
   });
 });
 
@@ -263,9 +279,10 @@ function DisasterEventsAnalysisContent() {
     humanEffectsGeoData: any,
     totalAffectedPeople: any,
     totalAffectedPeople2: any,
-    sectorDamagePieChartData: interfaceChart[],
-    sectorLossesPieChartData: interfaceChart[],
-    sectorRecoveryPieChartData: interfaceChart[],
+    sectorDamagePieChartData: interfacePieChart[],
+    sectorLossesPieChartData: interfacePieChart[],
+    sectorRecoveryPieChartData: interfacePieChart[],
+    sectorBarChartData: interfaceBarChart[],
   }>();
   let disaggregationsAge2:{
     children:number|undefined, adult: number|undefined, senior: number|undefined
@@ -343,14 +360,6 @@ function DisasterEventsAnalysisContent() {
       senior: ageData["65+"]
     }
   }
-
-  const data1 = [
-    { name: 'Group A', value: 400 },
-    { name: 'Group B', value: 300 },
-    { name: 'Group C', value: 300 },
-    { name: 'Group D', value: 200 },
-  ];
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   return (
     <MainContainer title="Disaster Events Analysis" headerExtra={<NavSettings />}>
@@ -804,8 +813,8 @@ function DisasterEventsAnalysisContent() {
 
                   <div className="mg-grid mg-grid__col-1">
                     <div className="dts-data-box">
-                      <div className="dts-indicator dts-indicator--target-box-a">
-                        <span>Bar chart</span>
+                      <div className="dts-placeholder" style={{height: '400px'}}>
+                          <CustomBarChart data={ ld.sectorBarChartData } />
                       </div>
                     </div>
                   </div>
