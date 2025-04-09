@@ -120,8 +120,20 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-						<div className="dts-indicator dts-indicator--target-box-b">
-							<span>{totalDeaths}</span>
+						<div className="dts-indicator dts-indicator--target-box-b"
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'flex-start',
+								width: '100%',
+							}}
+						>
+							<img
+								src="/assets/icons/Dead.svg"
+								alt="Dead Icon"
+								style={{ width: '60px', height: '60px' }}
+							/>
+							<span style={{ marginLeft: '130px', fontSize: '1.2em' }}>{totalDeaths}</span>
 						</div>
 					</div>
 
@@ -142,8 +154,20 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-						<div className="dts-indicator dts-indicator--target-box-b">
-							<span>{totalInjured}</span>
+						<div className="dts-indicator dts-indicator--target-box-b"
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'flex-start',
+								width: '100%',
+							}}
+						>
+							<img
+								src="/assets/icons/Injured.svg"
+								alt="Injured Icon"
+								style={{ width: '60px', height: '60px' }}
+							/>
+							<span style={{ marginLeft: '150px', fontSize: '1.2em' }}>{totalInjured}</span>
 						</div>
 					</div>
 
@@ -164,8 +188,20 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-						<div className="dts-indicator dts-indicator--target-box-b">
-							<span>{totalMissing}</span>
+						<div className="dts-indicator dts-indicator--target-box-b"
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'flex-start',
+								width: '100%',
+							}}
+						>
+							<img
+								src="/assets/icons/Missing.svg"
+								alt="Missing Icon"
+								style={{ width: '60px', height: '60px' }}
+							/>
+							<span style={{ marginLeft: '150px', fontSize: '1.2em' }}>{totalMissing}</span>
 						</div>
 					</div>
 				</div>
@@ -188,8 +224,20 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-						<div className="dts-indicator dts-indicator--target-box-b">
-							<span>{totalPeopleDirectlyAffected}</span>
+						<div className="dts-indicator dts-indicator--target-box-b"
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'flex-start',
+								width: '100%',
+							}}
+						>
+							<img
+								src="/assets/icons/AffectedPopulation.svg"
+								alt="Affected Population Icon"
+								style={{ width: '60px', height: '60px' }}
+							/>
+							<span style={{ marginLeft: '250px', fontSize: '1.2em' }}>{totalPeopleDirectlyAffected}</span>
 						</div>
 					</div>
 
@@ -210,8 +258,20 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-						<div className="dts-indicator dts-indicator--target-box-b">
-							<span>{totalDisplaced}</span>
+						<div className="dts-indicator dts-indicator--target-box-b"
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'flex-start',
+								width: '100%',
+							}}
+						>
+							<img
+								src="/assets/icons/Internally-displaced.svg"
+								alt="Internally displaced Icon"
+								style={{ width: '60px', height: '60px' }}
+							/>
+							<span style={{ marginLeft: '250px', fontSize: '1.2em' }}>{totalDisplaced}</span>
 						</div>
 					</div>
 				</div>
@@ -237,29 +297,37 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-
-						<ResponsiveContainer width="100%" height="100%">
-							<BarChart
-								width={500}
-								height={500}
-								layout="vertical"
-								data={data}
-								margin={{
-									top: 5,
-									right: 30,
-									left: 20,
-									bottom: 5,
-								}}
-							>
-								<CartesianGrid strokeDasharray="3 3" />
-								<Tooltip />
-								<XAxis type="number" />
-								<YAxis type="category" dataKey="name" />
-								<Legend />
-								<Bar dataKey="Male" fill="#A64696" />
-								<Bar dataKey="Female" fill="#E660CF" />
-							</BarChart>
-						</ResponsiveContainer>
+						<div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+							<div style={{ marginRight: '-50px', display: 'flex', alignItems: 'center', height: '100%' }}>
+								<img
+									src="/assets/icons/Male&Female.svg"
+									alt="Male and Female Icon"
+									style={{ width: '60px', height: '60px' }}
+								/>
+							</div>
+							<ResponsiveContainer width="100%" height="100%">
+								<BarChart
+									width={500}
+									height={500}
+									layout="vertical"
+									data={data}
+									margin={{
+										top: 5,
+										right: 30,
+										left: 20,
+										bottom: 5,
+									}}
+								>
+									<CartesianGrid strokeDasharray="3 3" />
+									<Tooltip />
+									<XAxis type="number" />
+									<YAxis type="category" dataKey="name" />
+									<Legend />
+									<Bar dataKey="Male" fill="#A64696" />
+									<Bar dataKey="Female" fill="#E660CF" />
+								</BarChart>
+							</ResponsiveContainer>
+						</div>
 					</div>
 
 					{/* Persons with disabilities and living in poverty affected*/}
@@ -280,36 +348,44 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-
-						<ResponsiveContainer width="100%" height="100%">
-							<BarChart
-								width={500}
-								height={500}
-								layout="vertical"
-								data={disbilityAndPovertyData}
-								margin={{
-									top: 5,
-									right: 30,
-									left: 20,
-									bottom: 5,
-								}}
-							>
-								<CartesianGrid strokeDasharray="3 3" />
-								<Tooltip />
-								<XAxis type="number" />
-								<YAxis type="category" dataKey="name" />
-								<Legend />
-								<Bar dataKey="Persons with disabilities" fill="#436EA9" />
-								<Bar
-									dataKey="Persons living in poverty (national)"
-									fill="#8EB4E9"
+						<div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+							<div style={{ marginRight: '-50px', display: 'flex', alignItems: 'center', height: '100%' }}>
+								<img
+									src="/assets/icons/People-with-physical-impairments.svg"
+									alt="Persons with disabilities Icon"
+									style={{ width: '60px', height: '60px' }}
 								/>
-								<Bar
-									dataKey="Persons living in poverty (international)"
-									fill="#436EA980"
-								/>
-							</BarChart>
-						</ResponsiveContainer>
+							</div>
+							<ResponsiveContainer width="100%" height="100%">
+								<BarChart
+									width={500}
+									height={500}
+									layout="vertical"
+									data={disbilityAndPovertyData}
+									margin={{
+										top: 5,
+										right: 30,
+										left: 20,
+										bottom: 5,
+									}}
+								>
+									<CartesianGrid strokeDasharray="3 3" />
+									<Tooltip />
+									<XAxis type="number" />
+									<YAxis type="category" dataKey="name" />
+									<Legend />
+									<Bar dataKey="Persons with disabilities" fill="#436EA9" />
+									<Bar
+										dataKey="Persons living in poverty (national)"
+										fill="#8EB4E9"
+									/>
+									<Bar
+										dataKey="Persons living in poverty (international)"
+										fill="#436EA980"
+									/>
+								</BarChart>
+							</ResponsiveContainer>
+						</div>
 					</div>
 
 					{/* Children adult and senior affected*/}
@@ -330,30 +406,38 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-
-						<ResponsiveContainer width="100%" height="100%">
-							<BarChart
-								width={500}
-								height={500}
-								layout="vertical"
-								data={ageData}
-								margin={{
-									top: 5,
-									right: 30,
-									left: 20,
-									bottom: 5,
-								}}
-							>
-								<CartesianGrid strokeDasharray="3 3" />
-								<Tooltip />
-								<XAxis type="number" />
-								<YAxis type="category" dataKey="name" />
-								<Legend />
-								<Bar dataKey="Children (0 - 15)" fill="#A64696" />
-								<Bar dataKey="Adults (15 - 54)" fill="#E660CF" />
-								<Bar dataKey="Seniors (65+)" fill="#A6469680" />
-							</BarChart>
-						</ResponsiveContainer>
+						<div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+							<div style={{ marginRight: '-50px', display: 'flex', alignItems: 'center', height: '100%' }}>
+								<img
+									src="/assets/icons/Male&Female.svg"
+									alt="Male and Female Icon"
+									style={{ width: '60px', height: '45px' }}
+								/>
+							</div>
+							<ResponsiveContainer width="100%" height="100%">
+								<BarChart
+									width={500}
+									height={500}
+									layout="vertical"
+									data={ageData}
+									margin={{
+										top: 5,
+										right: 30,
+										left: 20,
+										bottom: 5,
+									}}
+								>
+									<CartesianGrid strokeDasharray="3 3" />
+									<Tooltip />
+									<XAxis type="number" />
+									<YAxis type="category" dataKey="name" />
+									<Legend />
+									<Bar dataKey="Children (0 - 15)" fill="#A64696" />
+									<Bar dataKey="Adults (15 - 54)" fill="#E660CF" />
+									<Bar dataKey="Seniors (65+)" fill="#A6469680" />
+								</BarChart>
+							</ResponsiveContainer>
+						</div>
 					</div>
 				</div>
 			</section>
