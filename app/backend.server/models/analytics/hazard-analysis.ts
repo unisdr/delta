@@ -750,13 +750,13 @@ export async function getInternationalPovertyTotalByHazardFilters(
 		);
 	}
 
-	// Base conditions: Only count where global_poverty_line = "above"
+	// Base conditions: Only count where global_poverty_line = "below"
 	const humanDsgBaseConditions = and(
 		isNull(humanDsgTable.age),
 		isNull(humanDsgTable.disability),
 		isNull(humanDsgTable.nationalPovertyLine),
 		sql`${humanDsgTable.custom} = '{}'::jsonb`,
-		eq(humanDsgTable.globalPovertyLine, "above") // Only "above" counts
+		eq(humanDsgTable.globalPovertyLine, "below") // Only "below" counts
 	);
 
 	const totalSql = sql<number>`(
@@ -853,13 +853,13 @@ export async function getNationalPovertyTotalByHazardFilters(
 		);
 	}
 
-	// Base conditions: Only count where national_poverty_line = "above"
+	// Base conditions: Only count where national_poverty_line = "below"
 	const humanDsgBaseConditions = and(
 		isNull(humanDsgTable.age),
 		isNull(humanDsgTable.disability),
 		isNull(humanDsgTable.globalPovertyLine),
 		sql`${humanDsgTable.custom} = '{}'::jsonb`,
-		eq(humanDsgTable.nationalPovertyLine, "above") // Only "above" counts
+		eq(humanDsgTable.nationalPovertyLine, "below") // Only "below" counts
 	);
 
 	const totalSql = sql<number>`(
