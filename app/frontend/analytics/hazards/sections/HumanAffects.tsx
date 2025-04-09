@@ -322,7 +322,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 									<Tooltip />
 									<XAxis type="number" />
 									<YAxis type="category" dataKey="name" />
-									<Legend />
+									<Legend align="left"/>
 									<Bar dataKey="Male" fill="#A64696" />
 									<Bar dataKey="Female" fill="#E660CF" />
 									<Bar dataKey="Other non-Binary" fill="#A6469680" />
@@ -374,7 +374,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 									<Tooltip />
 									<XAxis type="number" />
 									<YAxis type="category" dataKey="name" />
-									<Legend />
+									<Legend align="left"/>
 									<Bar dataKey="Persons with disabilities" fill="#436EA9" />
 									<Bar
 										dataKey="Persons living in poverty (national)"
@@ -432,7 +432,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 									<Tooltip />
 									<XAxis type="number" />
 									<YAxis type="category" dataKey="name" />
-									<Legend />
+									<Legend align="left"/>
 									<Bar dataKey="Children (0 - 15)" fill="#A64696" />
 									<Bar dataKey="Adults (15 - 54)" fill="#E660CF" />
 									<Bar dataKey="Seniors (65+)" fill="#A6469680" />
