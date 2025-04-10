@@ -54,7 +54,6 @@ export async function loader({ request }: { request: Request }) {
 
     return json(data, {
       headers: {
-        'Cache-Control': 'private, max-age=300', // Cache for 5 minutes
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block'
