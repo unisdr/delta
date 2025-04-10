@@ -4,6 +4,7 @@ import { ClientOnly } from "remix-utils/client-only";
 import { formatCurrencyWithCode, formatNumber } from "~/frontend/utils/formatters";
 import "~/frontend/styles/analytics/sectors/effect-details.css";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
+import { typeEnumAgriculture, typeEnumNotAgriculture } from "~/frontend/losses_enums";
 
 interface Props {
   filters: {
@@ -101,10 +102,19 @@ export function EffectDetails({ filters, currency }: Props) {
   const { data: sectorsData } = useQuery<{ sectors: Sector[] }>({
     queryKey: ["sectors"],
     queryFn: async () => {
-      const response = await fetch("/api/analytics/sectors");
+      const response = await fetch("/api/analytics/sectors", {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) throw new Error("Failed to fetch sectors");
       return response.json();
-    }
+    },
+    gcTime: 0, // Disable garbage collection (formerly cacheTime)
+    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnWindowFocus: true // Refetch when window regains focus
   });
 
   // Function to find a sector and its parent by ID
@@ -166,7 +176,13 @@ export function EffectDetails({ filters, currency }: Props) {
           }
         });
 
-        const response = await fetch(`/api/analytics/effect-details?${searchParams}`);
+        const response = await fetch(`/api/analytics/effect-details?${searchParams}`, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
         if (!response.ok) {
           if (response.status === 404) {
             throw new Error("No data found for the selected criteria");
@@ -180,8 +196,25 @@ export function EffectDetails({ filters, currency }: Props) {
       }
     },
     retry: 1,
+    gcTime: 0, // Disable garbage collection (formerly cacheTime)
+    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnWindowFocus: true, // Refetch when window regains focus
     enabled: !!(debouncedFilters.sectorId || debouncedFilters.subSectorId || debouncedFilters.hazardTypeId || debouncedFilters.hazardClusterId || debouncedFilters.specificHazardId || debouncedFilters.geographicLevelId || debouncedFilters.fromDate || debouncedFilters.toDate || debouncedFilters.disasterEventId),
   });
+
+  const getTypeLabel = (type: string | null) => {
+    if (!type) return '-';
+
+    // First check agriculture types
+    const agricultureType = typeEnumAgriculture.find(t => t.type === type);
+    if (agricultureType) return agricultureType.type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+    // Then check non-agriculture types
+    const nonAgricultureType = typeEnumNotAgriculture.find(t => t.type === type);
+    if (nonAgricultureType) return nonAgricultureType.type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+    return type;
+  };
 
   return (
     <ClientOnly>
@@ -253,7 +286,7 @@ export function EffectDetails({ filters, currency }: Props) {
                         { key: 'privateCostTotal', label: 'Private Cost' },
                       ]}
                       data={effectDetailsResponse.data.losses.map(loss => ({
-                        type: loss.type,
+                        type: getTypeLabel(loss.type),
                         description: loss.description,
                         publicCostTotal: loss.publicCostTotal || '-',
                         privateCostTotal: loss.privateCostTotal || '-',
