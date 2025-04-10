@@ -89,27 +89,13 @@ export const loader = authLoaderPublicOrWithPerm(
 		const { totalChildren, totalAdults, totalSeniors } =
 			await getAgeTotalsByHazardFilters(filters);
 
-		const totalDisability = await getDisabilityTotalByHazardFilters({
-			hazardTypeId,
-			hazardClusterId,
-			specificHazardId,
-			geographicLevelId,
-			fromDate,
-			toDate,
-		});
+		const totalDisability = await getDisabilityTotalByHazardFilters(filters);
 
 		const totalInternationalPoorPeople =
 			await getInternationalPovertyTotalByHazardFilters(filters);
 
 		const totalNationalPoorPeople =
-			await getNationalPovertyTotalByHazardFilters({
-				hazardTypeId,
-				hazardClusterId,
-				specificHazardId,
-				geographicLevelId,
-				fromDate,
-				toDate,
-			});
+			await getNationalPovertyTotalByHazardFilters(filters);
 
 		const totalDamages = await getTotalDamagesByHazardFilters(filters);
 
