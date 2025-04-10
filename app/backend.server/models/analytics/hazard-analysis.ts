@@ -1738,7 +1738,35 @@ export async function getDisasterEventCountByDivision(filters: HazardFilters): P
 	if (fromDate || toDate) {
 	  const from = fromDate || "0001-01-01";
 	  const to = toDate || "9999-12-31";
-	  whereConditions.push(sql`"start_date" >= ${from} AND "end_date" <= ${to}`);
+	  whereConditions.push(sql`
+		(
+		  CASE 
+			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM-DD')
+			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM')
+			WHEN "start_date" ~ '^[0-9]{4}$' THEN TO_DATE("start_date", 'YYYY')
+			ELSE NULL
+		  END IS NULL OR 
+		  CASE 
+			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM-DD')
+			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM')
+			WHEN "start_date" ~ '^[0-9]{4}$' THEN TO_DATE("start_date", 'YYYY')
+			ELSE NULL
+		  END <= ${to}::date
+		) AND (
+		  CASE 
+			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM-DD')
+			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM')
+			WHEN "end_date" ~ '^[0-9]{4}$' THEN TO_DATE("end_date", 'YYYY')
+			ELSE NULL
+		  END IS NULL OR 
+		  CASE 
+			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM-DD')
+			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM')
+			WHEN "end_date" ~ '^[0-9]{4}$' THEN TO_DATE("end_date", 'YYYY')
+			ELSE NULL
+		  END >= ${from}::date
+		)
+	  `);
 	}
   
 	// Combine conditions into a single WHERE clause for the subquery
@@ -1753,7 +1781,7 @@ export async function getDisasterEventCountByDivision(filters: HazardFilters): P
 		UNION ALL
 		SELECT d.id, d.parent_id, dh.level1_id
 		FROM "division" d
-		INNER JOIN division_hierarchy dh ON d.parent_id = dh.id~
+		INNER JOIN division_hierarchy dh ON d.parent_id = dh.id
 	  )
 	  SELECT 
 		dh.level1_id::text AS division_id,
@@ -1782,17 +1810,6 @@ export async function getDisasterEventCountByDivision(filters: HazardFilters): P
 	  eventCount: Number(row.event_count),
 	}));
   }
-
-export interface DisasterSummary {
-	disasterId: string;
-	disasterName: string;
-	startDate: string;
-	endDate: string;
-	provinceAffected: string;
-	totalDamages: number;
-	totalLosses: number;
-	totalAffectedPeople: number;
-}
 
 export async function getDisasterSummary(
 	filters: HazardFilters
