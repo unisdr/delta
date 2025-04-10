@@ -498,25 +498,30 @@ function DisasterEventsAnalysisContent() {
               </p>
             </>   
           }
-          
-          
+
           <div className="mg-grid mg-grid__col-3">
-            <div className="dts-data-box">
-              <h3 className="dts-body-label">
-                <span id="elementId03">Damage in { ld.total.damages.currency }</span>
-              </h3>
-              <div className="dts-indicator dts-indicator--target-box-b">
-                <span>{ ld.total.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+            { Number(ld.total.damages.total) > 0 && (
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span id="elementId03">Damage in { ld.total.damages.currency }</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-b">
+                  <span>{ ld.total.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+                </div>
               </div>
-            </div>
-            <div className="dts-data-box">
-              <h3 className="dts-body-label">
-                <span id="elementId04">Losses in { ld.total.losses.currency }</span>
-              </h3>
-              <div className="dts-indicator dts-indicator--target-box-c">
-                <span>{ ld.total.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+            )}
+
+            { Number(ld.total.losses.total) > 0 && (
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span id="elementId04">Losses in { ld.total.losses.currency }</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-c">
+                  <span>{ ld.total.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+                </div>
               </div>
-            </div>
+            )}
+
             { Number(ld.total.recovery.total) > 0 && (
                 <>
                   <div className="dts-data-box">
@@ -800,41 +805,58 @@ function DisasterEventsAnalysisContent() {
                 <h2 className="dts-heading-2">{ ld.cpDisplayName } impacts on sectors</h2>
 
                   <div className="mg-grid mg-grid__col-3">
-                    <div className="dts-data-box">
-                      <h3 className="dts-body-label">
-                        <span>Damage</span>
-                      </h3>
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomPieChart data={ ld.sectorDamagePieChartData } />
-                      </div>
-                    </div>
+                    {
+                      Object.keys(ld.sectorDamagePieChartData).length > 0 && (
+                        <div className="dts-data-box">
+                          <h3 className="dts-body-label">
+                            <span>Damage</span>
+                          </h3>
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomPieChart data={ ld.sectorDamagePieChartData } />
+                          </div>
+                        </div>
+                      )
+                    }
 
-                    <div className="dts-data-box">
-                      <h3 className="dts-body-label">
-                        <span>Losses</span>
-                      </h3>
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomPieChart data={ ld.sectorLossesPieChartData } />
-                      </div>
-                    </div>
+                    {
+                      Object.keys(ld.sectorLossesPieChartData).length > 0 && (
+                        <div className="dts-data-box">
+                          <h3 className="dts-body-label">
+                            <span>Losses</span>
+                          </h3>
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomPieChart data={ ld.sectorLossesPieChartData } />
+                          </div>
+                        </div>
+                      )
+                    }
 
-                    <div className="dts-data-box">
-                      <h3 className="dts-body-label">
-                        <span>Recovery need</span>
-                      </h3>
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomPieChart data={ ld.sectorRecoveryPieChartData } />
-                      </div>
-                    </div>
+                    {
+                      Object.keys(ld.sectorRecoveryPieChartData).length > 0 && (
+                        <div className="dts-data-box">
+                          <h3 className="dts-body-label">
+                            <span>Recovery need</span>
+                          </h3>
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } />
+                          </div>
+                        </div>
+                      )
+                    }                   
                   </div>
 
-                  <div className="mg-grid mg-grid__col-1">
-                    <div className="dts-data-box">
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomBarChart data={ ld.sectorBarChartData } />
+                  {
+                    Object.keys(ld.sectorBarChartData).length > 0 && (
+                      <div className="mg-grid mg-grid__col-1">
+                        <div className="dts-data-box">
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomBarChart data={ ld.sectorBarChartData } />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    )
+                  }
+                  
               </div>
           </section>
 
