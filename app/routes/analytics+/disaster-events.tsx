@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Outlet } from "@remix-run/react";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
@@ -77,8 +77,8 @@ interface interfaceBarChart {
 interface interfaceSector {
   id: number;
   sectorname: string;
-  level: number;
-  ids: [];
+  level?: number;
+  ids?: [];
 }
 
 
@@ -102,20 +102,24 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let sectorDamagePieChartData:interfacePieChart[] = [];
   let sectorLossesPieChartData:interfacePieChart[] = [];
   let sectorRecoveryPieChartData:interfacePieChart[] = [];
-  let sectorBarChartData:interfaceBarChart[] = [];
   let datamageGeoData:interfaceMap[] = [];
   let lossesGeoData:interfaceMap[] = [];
   let humanEffectsGeoData:interfaceMap[] = [];
   let totalAffectedPeople:any = {};
   let totalAffectedPeople2:any = {};
-  let sectorBarChart:any = {};
+    const sectorPieChartData: Record<number, { damage: interfacePieChart; losses: interfacePieChart; recovery: interfacePieChart }> = {};
+  let sectorBarChartData: Record<number, interfaceBarChart> = {};
 
+  
   // Initialize arrays to store filtered values
-let sectorParentArray: interfaceSector[] = [];
-let x: any = {};
-let sectorIdsArray: number[] = [];
+  let sectorParentArray: interfaceSector[] = [];
+  let x: any = {};
+  let sectorIdsArray: number[] = [];
 
-
+  const sectorExistsInSectorParentArray = (id: number): boolean => {
+    return sectorParentArray.some(item => item.id === id);
+  };
+  
   if (xId) {
     record = await disasterEventById(xId).catch(console.error);
     if  ( record ) {
@@ -152,28 +156,51 @@ let sectorIdsArray: number[] = [];
             x.myChildren = ancestorIds;
             x.effects = {};
             x.effects = await disasterEventSectorTotal__ById(xId, ancestorIds);
-            sectorParentArray.push(x.effects);
-            if (x.effects.damages.total > 0) {
-              sectorDamagePieChartData.push({name: x.sectorname, value: x.effects.damages.total});
+
+            // Check does NOT if Sector 'id' exists
+            if (!sectorPieChartData[x.id]) {
+              sectorPieChartData[x.id] = {
+                damage: { name: x.sectorname, value: x.effects.damages.total },
+                losses: { name: x.sectorname, value: x.effects.losses.total },
+                recovery: { name: x.sectorname, value: x.effects.recovery.total }
+              }
             }
-            if (x.effects.losses.total > 0) {
-              sectorLossesPieChartData.push({name: x.sectorname, value: x.effects.losses.total});
-            }
-            if (x.effects.recovery.total > 0) {
-              sectorRecoveryPieChartData.push({name: x.sectorname, value: x.effects.recovery.total});
+            else {
+              sectorPieChartData[x.id].damage.value += x.effects.damages.total;
+              sectorPieChartData[x.id].losses.value += x.effects.losses.total; 
+              sectorPieChartData[x.id].recovery.value += x.effects.recovery.total;
             }
 
-            if (x.effects.damages.total > 0 || x.effects.losses.total > 0) {
-              sectorBarChartData.push({
+            // Check does NOT if Sector 'id' exists
+            if (!sectorBarChartData[x.id]) {
+              sectorBarChartData[x.id] = {
                 name: x.sectorname,
                 damage: x.effects.damages.total,
                 losses: x.effects.losses.total,
-              });
+              };
             }
+            else {
+              sectorBarChartData[x.id].damage += x.effects.damages.total;
+              sectorBarChartData[x.id].losses += x.effects.losses.total;
+            }
+
             // console.log('x:', x);
           }
         }
 
+        // const sorted = sectorParentArray.sort((a, b) => {
+        //   return a.sectorname.localeCompare(b.sectorname);
+        // });
+
+        // Extract values only for damage, losses, and recovery
+        sectorDamagePieChartData = Object.values(sectorPieChartData).map(entry => entry.damage);
+        sectorLossesPieChartData = Object.values(sectorPieChartData).map(entry => entry.losses);
+        sectorRecoveryPieChartData = Object.values(sectorPieChartData).map(entry => entry.recovery);
+
+        // Remove the associate ID of the array to align to the format required by the chart.
+        sectorBarChartData = Object.values(sectorBarChartData);
+
+        // console.log('Sector Array:', sectorBarChartData);
         // console.log('Sector Parent Array:', sectorParentArray);
         // console.log('sectorDamagePieChartData Array:', sectorDamagePieChartData);
         // console.log('Sector IDs Array:', sectorIdsArray);
@@ -471,25 +498,30 @@ function DisasterEventsAnalysisContent() {
               </p>
             </>   
           }
-          
-          
+
           <div className="mg-grid mg-grid__col-3">
-            <div className="dts-data-box">
-              <h3 className="dts-body-label">
-                <span id="elementId03">Damage in { ld.total.damages.currency }</span>
-              </h3>
-              <div className="dts-indicator dts-indicator--target-box-b">
-                <span>{ ld.total.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+            { Number(ld.total.damages.total) > 0 && (
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span id="elementId03">Damage in { ld.total.damages.currency }</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-b">
+                  <span>{ ld.total.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+                </div>
               </div>
-            </div>
-            <div className="dts-data-box">
-              <h3 className="dts-body-label">
-                <span id="elementId04">Losses in { ld.total.losses.currency }</span>
-              </h3>
-              <div className="dts-indicator dts-indicator--target-box-c">
-                <span>{ ld.total.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+            )}
+
+            { Number(ld.total.losses.total) > 0 && (
+              <div className="dts-data-box">
+                <h3 className="dts-body-label">
+                  <span id="elementId04">Losses in { ld.total.losses.currency }</span>
+                </h3>
+                <div className="dts-indicator dts-indicator--target-box-c">
+                  <span>{ ld.total.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+                </div>
               </div>
-            </div>
+            )}
+
             { Number(ld.total.recovery.total) > 0 && (
                 <>
                   <div className="dts-data-box">
@@ -763,16 +795,6 @@ function DisasterEventsAnalysisContent() {
                       <MapChart ref={mapChartRef} id="map_viewer" dataSource={activeData} legendMaxColor="#208f04" />
                   </div>
                 </div>
-                {/* <div className="dts-tablist__panel hidden" id="tabpanel02" role="tabpanel" aria-labelledby="tab02">
-                  <div className="dts-placeholder">
-                    <span>Placeholder map 2</span>
-                  </div>
-                </div>
-                <div className="dts-tablist__panel hidden" id="tabpanel03" role="tabpanel" aria-labelledby="tab03">
-                  <div className="dts-placeholder">
-                    <span>Placeholder map 3</span>
-                  </div>
-                </div> */}
               </div>
             </section>
           </>
@@ -783,115 +805,63 @@ function DisasterEventsAnalysisContent() {
                 <h2 className="dts-heading-2">{ ld.cpDisplayName } impacts on sectors</h2>
 
                   <div className="mg-grid mg-grid__col-3">
-                    <div className="dts-data-box">
-                      <h3 className="dts-body-label">
-                        <span>Damage</span>
-                      </h3>
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomPieChart data={ ld.sectorDamagePieChartData } />
-                      </div>
-                    </div>
+                    {
+                      Object.keys(ld.sectorDamagePieChartData).length > 0 && (
+                        <div className="dts-data-box">
+                          <h3 className="dts-body-label">
+                            <span>Damage</span>
+                          </h3>
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomPieChart data={ ld.sectorDamagePieChartData } />
+                          </div>
+                        </div>
+                      )
+                    }
 
-                    <div className="dts-data-box">
-                      <h3 className="dts-body-label">
-                        <span>Losses</span>
-                      </h3>
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomPieChart data={ ld.sectorLossesPieChartData } />
-                      </div>
-                    </div>
+                    {
+                      Object.keys(ld.sectorLossesPieChartData).length > 0 && (
+                        <div className="dts-data-box">
+                          <h3 className="dts-body-label">
+                            <span>Losses</span>
+                          </h3>
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomPieChart data={ ld.sectorLossesPieChartData } />
+                          </div>
+                        </div>
+                      )
+                    }
 
-                    <div className="dts-data-box">
-                      <h3 className="dts-body-label">
-                        <span>Recovery need</span>
-                      </h3>
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomPieChart data={ ld.sectorRecoveryPieChartData } />
-                      </div>
-                    </div>
+                    {
+                      Object.keys(ld.sectorRecoveryPieChartData).length > 0 && (
+                        <div className="dts-data-box">
+                          <h3 className="dts-body-label">
+                            <span>Recovery need</span>
+                          </h3>
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } />
+                          </div>
+                        </div>
+                      )
+                    }                   
                   </div>
 
-                  <div className="mg-grid mg-grid__col-1">
-                    <div className="dts-data-box">
-                      <div className="dts-placeholder" style={{height: '400px'}}>
-                          <CustomBarChart data={ ld.sectorBarChartData } />
+                  {
+                    Object.keys(ld.sectorBarChartData).length > 0 && (
+                      <div className="mg-grid mg-grid__col-1">
+                        <div className="dts-data-box">
+                          <div className="dts-placeholder" style={{height: '400px'}}>
+                              <CustomBarChart data={ ld.sectorBarChartData } />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    )
+                  }
+                  
               </div>
           </section>
 
+          <Outlet context={{name:'joel'}} />
 
-          <section className="dts-page-section">
-              <div className="mg-container">
-                <h2 className="dts-heading-3">Details of effects</h2>
-
-                <div className="mg-grid mg-grid__col-3">
-                  <div className="dts-data-box">
-                    <h3 className="dts-body-label">
-                      <span>Damage in [sector] in [currency]</span>
-                    </h3>
-                    <div className="dts-indicator dts-indicator--target-box-b">
-                      <span> todo </span>
-                    </div>
-                  </div>
-                  <div className="dts-data-box">
-                    <h3 className="dts-body-label">
-                      <span>Losses in [sector] in [currency]</span>
-                    </h3>
-                    <div className="dts-indicator dts-indicator--target-box-c">
-                      <span> todo </span>
-                    </div>
-                  </div>
-
-                  <div className="dts-data-box">
-                    <h3 className="dts-body-label">
-                      <span>Recovery in [sector] in [currency]</span>
-                    </h3>
-                    <div className="dts-indicator dts-indicator--target-box-d">
-                      <span> todo </span>
-                    </div>
-                  </div>
-
-
-                </div>
-
-                <div className="mg-grid mg-grid__col-3">
-                    <div className="dts-data-box">
-                      <div className="dts-indicator dts-indicator--target-box-b">
-                        <span>Sub-sector pie chart</span>
-                      </div>
-                    </div>
-                    <div className="dts-data-box">
-                      <div className="dts-indicator dts-indicator--target-box-c">
-                        <span>Sub-sector pie chart</span>
-                      </div>
-                    </div>
-
-                    <div className="dts-data-box">
-                      <div className="dts-indicator dts-indicator--target-box-d">
-                        <span>Sub-sector pie chart</span>
-                      </div>
-                    </div>
-                  </div>
-
-              </div>
-          </section>
-
-
-          <section className="dts-page-section">
-              <div className="mg-container">
-                <h2 className="dts-heading-3">Detailed effects in [selected sector]</h2>
-
-                <div className="mg-grid mg-grid__col-1">
-                  <div className="dts-data-box">
-                    <div className="dts-indicator dts-indicator--target-box-a">
-                      <span>Table raw data</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-          </section>
 
           
       
@@ -907,8 +877,6 @@ function DisasterEventsAnalysisContent() {
 // Wrapper component that provides QueryClient
 export default function DisasterEventsAnalysis() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <DisasterEventsAnalysisContent />
-    </QueryClientProvider>
+    <DisasterEventsAnalysisContent />
   );
 }
