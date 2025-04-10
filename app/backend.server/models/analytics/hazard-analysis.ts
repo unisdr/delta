@@ -1811,6 +1811,17 @@ export async function getDisasterEventCountByDivision(filters: HazardFilters): P
 	}));
   }
 
+  export interface DisasterSummary {
+	disasterId: string;
+	disasterName: string;
+	startDate: string;
+	endDate: string;
+	provinceAffected: string;
+	totalDamages: number;
+	totalLosses: number;
+	totalAffectedPeople: number;
+}
+
 export async function getDisasterSummary(
 	filters: HazardFilters
 ): Promise<DisasterSummary[]> {
