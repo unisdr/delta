@@ -1,59 +1,133 @@
 import { useEffect, useState, useCallback } from "react";
 import { PieChart, Pie, Tooltip, Legend, Cell, ResponsiveContainer } from "recharts";
+import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
 
-// Curated color palette
+// Note: The colors below are sourced from the UNDRR Visual Identity Guide (colors-typography) as a temporary palette, pending the designer's input for a more aligned and less confusing color set.
 const COLORS = [
-  "#205375", // Dark blue
-  "#FAA635", // Vivid orange
-  "#F45D01", // Deeper orange
-  "#68B3C8", // Light blue
-  "#F7B32B", // Bright yellow
+  "#205375", // A dark blue from UNDRR Blue (corporate blue)
+  "#FAA635", // A vivid orange from Target C (loss)
+  "#F45D01", // A deeper orange from Target C
+  "#68B3C8", // A light blue from UNDRR Teal (secondary shades)
+  "#F7B32B", // A bright yellow from Target C
+  "#A04300", // Darkest orange
+  "#999999", // Gray (UNDRR base) - using a medium gray for better contrast
+  "#B36800", // Darkest yellow
+  "#A0CED9", // Light teal
+  "#FDC68A", // Light orange
+  "#FFF8E1", // Lightest yellow
+  "#EBF6F5", // Lightest teal
+  "#FFF0E3", // Lightest orange
 ];
 
-// Custom Tooltip component
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    const formattedPercentage = `${Math.round(data.value)}%`;
-    const segmentColor = COLORS[data.index % COLORS.length];
+// Define the expected shape of each data item
+interface PieChartData {
+  name: string;
+  value: number; // Percentage value for the pie slice
+  rawValue: number; // Original value (count or monetary amount)
+  index: number; // For color mapping
+}
 
-    // Simple brightness check for text color
-    const isLightColor = (color: string) => {
-      try {
-        const hex = color.replace("#", "");
-        const r = parseInt(hex.substr(0, 2), 16);
-        const g = parseInt(hex.substr(2, 2), 16);
-        const b = parseInt(hex.substr(4, 2), 16);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        return brightness > 128;
-      } catch {
-        return false;
-      }
-    };
-    const textColor = isLightColor(segmentColor) ? "#000000" : "#FFFFFF";
+// Define the props for CustomTooltip, compatible with recharts
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ payload: PieChartData }>;
+  data: PieChartData[]; // Full dataset for percentage calculation
+}
 
-    return (
-      <div
+// Helper function to determine if a color is light (for text contrast)
+const isLightColor = (color: string): boolean => {
+  try {
+    const hex = color.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128;
+  } catch {
+    return false;
+  }
+};
+
+
+// Helper function to infer chart type from data
+const inferChartType = (rawValue: number | string | undefined): "number" | "monetary" => {
+  if (rawValue === undefined) {
+    return "number"; // Fallback to number if no rawValue
+  }
+  // If rawValue is a number or a string that can be parsed as a number, assume monetary
+  const numericValue = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;
+  return isNaN(numericValue) ? "number" : "monetary";
+};
+
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, data }) => {
+  const defaultCurrency = useDefaultCurrency();
+
+  if (!active || !payload || !payload.length) {
+    return null;
+  }
+
+  const item = payload[0].payload;
+  const { name, value, rawValue, index } = item;
+
+  // Calculate total value for percentage
+  const total = data.reduce((sum, entry) => sum + entry.value, 0);
+  const percentage = total > 0 ? (value / total) * 100 : 0;
+  const formattedPercentage = `${Math.round(percentage)}%`;
+
+  const segmentColor = COLORS[index % COLORS.length];
+  const textColor = isLightColor(segmentColor) ? "#000000" : "#FFFFFF";
+
+  // Infer chart type based on rawValue
+  const chartType = inferChartType(rawValue);
+
+  // Format rawValue as a monetary amount
+  const numericValue = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;
+  const formattedValue = formatCurrencyWithCode(
+    numericValue,
+    defaultCurrency,
+    {},
+    numericValue >= 1_000_000_000
+      ? "billions"
+      : numericValue >= 1_000_000
+        ? "millions"
+        : numericValue >= 1_000
+          ? "thousands"
+          : undefined
+  );
+
+  return (
+    <div
+      style={{
+        backgroundColor: segmentColor,
+        padding: "10px",
+        border: `2px solid ${segmentColor}`,
+        borderRadius: "6px",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+        color: textColor,
+        minWidth: "150px",
+      }}
+    >
+      <p
         style={{
-          backgroundColor: segmentColor,
-          padding: "10px",
-          border: `2px solid ${segmentColor}`,
-          borderRadius: "6px",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-          color: textColor,
-          minWidth: "150px",
+          margin: "0 0 4px 0",
+          fontWeight: "bold",
+          fontSize: "14px",
         }}
       >
-        <p style={{ margin: "0 0 4px 0", fontWeight: "bold", fontSize: "14px" }}>
-          {`${data.name}: ${formattedPercentage}`}
-        </p>
-        <p style={{ margin: 0, fontSize: "13px", opacity: 0.9 }}>
-          Value: {data.rawValue || data.value}
-        </p>
-      </div>
-    );
-  }
-  return null;
+        {`${name}: ${formattedPercentage}`}
+      </p>
+      <p
+        style={{
+          margin: 0,
+          fontSize: "13px",
+          opacity: 0.9,
+        }}
+      >
+        Value: {formattedValue}
+      </p>
+    </div>
+  );
 };
 
 // Main PieChart component
@@ -162,12 +236,15 @@ export default function CustomPieChart({ data, title }: { data: any[]; title?: s
   }
 
   // Add index to data for consistent color mapping
-  const dataWithIndex = data.map((item, index) => ({
-    ...item,
-    index,
-    value: Number(item.value) || 0, // Ensure value is a number
-    rawValue: item.rawValue || item.value, // Preserve original value for tooltip
-  }));
+  const dataWithIndex = data
+    .map((item) => ({
+      ...item,
+      value: Number(item.value) || 0,
+      rawValue: item.rawValue || item.value,
+    }))
+    .sort((a, b) => b.value - a.value) // Sort descending by value
+    .map((item, index) => ({ ...item, index })); // Reassign index after sorting
+
 
   return (
     <div style={{ width: "100%", maxWidth: "100%", overflow: "hidden" }}>
@@ -182,6 +259,8 @@ export default function CustomPieChart({ data, title }: { data: any[]; title?: s
             cy="50%"
             innerRadius={60}
             outerRadius={120}
+            startAngle={90}
+            endAngle={-270}
             label={renderCustomizedLabel}
             labelLine={true}
             onMouseEnter={onPieEnter}
@@ -200,7 +279,7 @@ export default function CustomPieChart({ data, title }: { data: any[]; title?: s
               />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip data={dataWithIndex} />} />
           <Legend
             align="left"
             verticalAlign="bottom"
