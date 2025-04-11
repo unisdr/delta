@@ -40,20 +40,8 @@ import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/af
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Rectangle, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { PieChart, Pie, Sector, Cell } from 'recharts';
 import CustomPieChart from '~/components/PieChart';
-import CustomBarChart from '~/components/BarChart';
-
-// Create QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+import CustomStackedBarChart from '~/components/StackedBarChart';
 
 
 // Define an interface for the structure of the JSON objects
@@ -369,9 +357,11 @@ function DisasterEventsAnalysisContent() {
 
     if(filteredSubSectors.length === 0) { 
       setSubSectors([]);
+      setSelectedSubSector('');
     }
     else {
       setSubSectors(filteredSubSectors[0].subSector || []);
+      setSelectedSubSector('');
     }
   };
 
@@ -898,7 +888,7 @@ function DisasterEventsAnalysisContent() {
                       <div className="mg-grid mg-grid__col-1">
                         <div className="dts-data-box">
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomBarChart data={ ld.sectorBarChartData } />
+                              <CustomStackedBarChart data={ ld.sectorBarChartData } />
                           </div>
                         </div>
                       </div>
