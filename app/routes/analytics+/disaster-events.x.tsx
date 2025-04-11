@@ -30,47 +30,7 @@ export default function DetailSectorEffectScreen() {
   return (
     <>
         <fetcher.Form method="post" action="#">
-          <section className="dts-page-section">
-            <div className="mg-grid mg-grid__col-2">
-              <div className="dts-form-component"><label>Sector *</label>
-                <select id="sector-select" className="filter-select" name="sector" required>
-                  <option value="">Select Sector</option>
-                  <option value="11">Agriculture</option>
-                  <option value="14">Commerce and Trade</option>
-                  <option value="36">Community infrastructure</option>
-                  <option value="24">Culture</option>
-                  <option value="45">Disaster Risk Management</option>
-                  <option value="22">Education</option>
-                  <option value="44">Employment, Livelihoods and social protection</option>
-                  <option value="32">Energy and Electricity</option>
-                  <option value="41">Environment</option>
-                  <option value="42">Gender</option>
-                  <option value="43">Governance</option>
-                  <option value="21">Health</option>
-                  <option value="23">Housing</option>
-                  <option value="12">Industry</option>
-                  <option value="33">Information and Communication</option>
-                  <option value="35">Sanitation</option>
-                  <option value="15">Services</option>
-                  <option value="13">Tourism</option>
-                  <option value="31">Transportation</option>
-                  <option value="34">Water</option>
-                </select>
-              </div>
-              <div className="dts-form-component">
-                  <label>Sub Sector</label>
-                  <select id="sub-sector-select" className="filter-select"  name="sub-sector">
-                    <option  value="">Select Sector First</option>
-                </select>
-              </div>
-            </div>  
-            <div className="mg-grid mg-grid__col-2">
-              <div className="mg-grid mg-grid__col-2 dts-form__actions">
-                <button className="mg-button mg-button--small mg-button-outline" type="reset">Clear</button>
-                <button className="mg-button mg-button--small mg-button-primary" type="submit">Apply filters</button>
-              </div>
-            </div>
-          </section>
+
         </fetcher.Form>
 
         <section className="dts-page-section">

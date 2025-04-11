@@ -127,6 +127,20 @@ export async function sectorById(id: number, includeParentObject:boolean = false
 	}
 }
 
+export async function sectorChildrenById(id: number) {
+	const res = await dr.query.sectorTable.findMany({
+		columns: {
+			id: true,
+			sectorname: true,
+		},
+		where: eq(sectorTable.parentId, id),
+		orderBy: (sectorTable) => [
+			asc(sectorTable.sectorname),
+		],
+	});
+	return res;
+}
+
 export async function getSectorFullPathById(sectorId: number) {
 	const { rows } = await dr.execute(sql`
 		WITH RECURSIVE ParentCTE AS (
