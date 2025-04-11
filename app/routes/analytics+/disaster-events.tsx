@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
+import { Link } from "@remix-run/react";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { json } from "@remix-run/node";
 import { useLoaderData, Outlet } from "@remix-run/react";
@@ -24,7 +25,8 @@ import {
 } from "~/backend.server/models/event";
 
 import {
-	getSectorAncestorById,
+	getSectorAncestorById, 
+  sectorChildrenById
 } from "~/backend.server/models/sector";
 
 
@@ -79,6 +81,7 @@ interface interfaceSector {
   sectorname: string;
   level?: number;
   ids?: [];
+  subSector?: interfaceSector[];
 }
 
 
@@ -107,14 +110,15 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let humanEffectsGeoData:interfaceMap[] = [];
   let totalAffectedPeople:any = {};
   let totalAffectedPeople2:any = {};
-    const sectorPieChartData: Record<number, { damage: interfacePieChart; losses: interfacePieChart; recovery: interfacePieChart }> = {};
+  const sectortData: Record<number, { id: number; sectorname: string; subSector?: interfaceSector[]; }> = {};
+  
+  const sectorPieChartData: Record<number, { damage: interfacePieChart; losses: interfacePieChart; recovery: interfacePieChart }> = {};
   let sectorBarChartData: Record<number, interfaceBarChart> = {};
 
-  
-  // Initialize arrays to store filtered values
+    // Initialize arrays to store filtered values
   let sectorParentArray: interfaceSector[] = [];
   let x: any = {};
-  let sectorIdsArray: number[] = [];
+  
 
   const sectorExistsInSectorParentArray = (id: number): boolean => {
     return sectorParentArray.some(item => item.id === id);
@@ -136,7 +140,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         for (const item of recordsRelatedSectors) {
           // console.log( item.relatedAncestorsDecentants );
           // const sectorParentArray = (item.relatedAncestorsDecentants as interfaceSector[]).filter(item2 => item2.level === 2);
-          // const sectorIdsArray = (item.relatedAncestorsDecentants as interfaceSector[]).map(item2 => item2.id);
+          
 
           if (item.relatedAncestorsDecentants) {
             // Filter for level 2 and save to sectorParentArray
@@ -149,13 +153,25 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
             x.myChildren = [];
             // console.log(x.myChildren);
 
-            // Map IDs and save to sectorIdsArray
+            
             const ancestorIds = (item.relatedAncestorsDecentants as interfaceSector[]).map(ancestor => ancestor.id);
-            // sectorIdsArray.push(...ancestorIds);
+            
             // console.log('ancestorIds', ancestorIds );
             x.myChildren = ancestorIds;
             x.effects = {};
             x.effects = await disasterEventSectorTotal__ById(xId, ancestorIds);
+
+            // const y = await sectorChildrenById(x.id) as interfaceSector[];
+            // console.log('y:', y);
+
+            // Populate sectorData - will be used for the sector filter
+            if (!sectortData[x.id]) {
+              sectortData[x.id] = {
+                id: x.id,
+                sectorname: x.sectorname,
+                subSector:  await sectorChildrenById(x.id) as interfaceSector[],
+              }
+            }
 
             // Check does NOT if Sector 'id' exists
             if (!sectorPieChartData[x.id]) {
@@ -192,6 +208,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         //   return a.sectorname.localeCompare(b.sectorname);
         // });
 
+        // Convert object to array and sort sectorname in ascending order
+        sectorParentArray = Object.values(sectortData).sort((a, b) =>
+          a.sectorname.localeCompare(b.sectorname)
+        );
+
         // Extract values only for damage, losses, and recovery
         sectorDamagePieChartData = Object.values(sectorPieChartData).map(entry => entry.damage);
         sectorLossesPieChartData = Object.values(sectorPieChartData).map(entry => entry.losses);
@@ -200,10 +221,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // Remove the associate ID of the array to align to the format required by the chart.
         sectorBarChartData = Object.values(sectorBarChartData);
 
+        // console.log('sectortData Array:', sectortData);
+        // console.log('sectorParentArray Array:', sectorParentArray);
         // console.log('Sector Array:', sectorBarChartData);
         // console.log('Sector Parent Array:', sectorParentArray);
         // console.log('sectorDamagePieChartData Array:', sectorDamagePieChartData);
-        // console.log('Sector IDs Array:', sectorIdsArray);
 
         //console.log( recordsRelatedSectors[0].sectorParent[0].id );
         // console.log( mapSectorArray );
@@ -278,6 +300,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     sectorLossesPieChartData: sectorLossesPieChartData,
     sectorRecoveryPieChartData: sectorRecoveryPieChartData,
     sectorBarChartData: sectorBarChartData,
+    sectorParentArray: sectorParentArray,
   });
 });
 
@@ -294,6 +317,9 @@ function DisasterEventsAnalysisContent() {
   const btnCancelRef = useRef<HTMLButtonElement>(null);
   const btnSubmitRef = useRef<HTMLButtonElement>(null);
   const mapChartRef = useRef<MapChartRef>(null); //  Reference to MapChart
+  const [selectedSector, setSelectedSector] = useState("");
+  const [selectedSubSector, setSelectedSubSector] = useState("");
+  const [subSectors, setSubSectors] = useState<{ id: number; sectorname: string }[]>([]);
 
   const ld = useLoaderData<{
     record: DisasterEventViewModel | null, 
@@ -310,6 +336,7 @@ function DisasterEventsAnalysisContent() {
     sectorLossesPieChartData: interfacePieChart[],
     sectorRecoveryPieChartData: interfacePieChart[],
     sectorBarChartData: interfaceBarChart[],
+    sectorParentArray: interfaceSector[],
   }>();
   let disaggregationsAge2:{
     children:number|undefined, adult: number|undefined, senior: number|undefined
@@ -332,6 +359,27 @@ function DisasterEventsAnalysisContent() {
     event.preventDefault(); // Prevent the default form submission
     window.location.href = '/analytics/disaster-events';
   };
+
+  const handleSectorChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const sectorId = event.target.value;
+    setSelectedSector(sectorId);
+
+    // Filter sub-sectors based on selected sector ID
+    const filteredSubSectors = ld.sectorParentArray.filter( item => item.id === Number(sectorId));
+
+    if(filteredSubSectors.length === 0) { 
+      setSubSectors([]);
+    }
+    else {
+      setSubSectors(filteredSubSectors[0].subSector || []);
+    }
+  };
+
+  const handleSubSectorChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const subSectorId = event.target.value;
+    setSelectedSubSector(subSectorId);
+  };
+
 
   const handleSwitchMapData = (e: React.MouseEvent<HTMLButtonElement>, data: any, legendMaxColor: string) => {
     if (!e || !e.currentTarget) {
@@ -860,6 +908,45 @@ function DisasterEventsAnalysisContent() {
               </div>
           </section>
 
+          {
+            ld.sectorParentArray.length > 0 && (
+              <>
+                <section className="dts-page-section">
+                  <div className="mg-grid mg-grid__col-2">
+                    <div className="dts-form-component"><label>Sector *</label>
+                      <select id="sector-select" className="filter-select" name="sector" required onChange={handleSectorChange}>
+                        <option value="">Select Sector</option>
+                        {
+                          ld.sectorParentArray.map((item, index) => (
+                            <option key={index} value={item.id}>{item.sectorname}</option>
+                          ))
+                        }
+                      </select>
+                    </div>
+                    <div className="dts-form-component">
+                        <label>Sub Sector</label>
+                        <select id="sub-sector-select" className="filter-select"  name="sub-sector" onChange={handleSubSectorChange}>
+                          <option  value="">Select Sector First</option>
+                          {subSectors.map((sub: { id: number; sectorname: string }) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.sectorname}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>  
+                  <div className="mg-grid mg-grid__col-2">
+                    <div className="mg-grid mg-grid__col-2 dts-form__actions">
+                      <Link to={`/analytics/disaster-events/?disasterEventId=${ld.record.id}`} className="mg-button mg-button--small mg-button-outline">Clear</Link>
+                      <Link to={`/analytics/disaster-events/x/?disasterEventId=${ld.record.id}&sectorid=${selectedSector}&subsectorid=${selectedSubSector}`} className="mg-button mg-button--small mg-button-primary">Apply filters</Link>
+                    </div>
+                  </div>
+                </section>
+              </>
+            )
+          }
+          
+
           <Outlet context={{name:'joel'}} />
 
 
@@ -867,6 +954,12 @@ function DisasterEventsAnalysisContent() {
       
 
       </>)}
+
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <div className="dts-caption mt-4">
+          * Data shown is based on published records
+        </div>
 
       </div>
       
