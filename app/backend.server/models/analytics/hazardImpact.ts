@@ -262,7 +262,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
             value: sql<string>`
                 SUM(
                     CASE 
-                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true AND ${sectorDisasterRecordsRelationTable.damageCost} IS NOT NULL THEN
                             COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
                         ELSE
                             COALESCE((
@@ -306,7 +306,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
         .orderBy(desc(sql<string>`SUM(
             CASE 
-                WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true AND ${sectorDisasterRecordsRelationTable.damageCost} IS NOT NULL THEN
                     COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
                 ELSE
                     COALESCE((
@@ -335,7 +335,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
             value: sql<string>`
                 SUM(
                     CASE 
-                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true AND ${sectorDisasterRecordsRelationTable.lossesCost} IS NOT NULL THEN
                             COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
                         ELSE
                             COALESCE((
@@ -384,7 +384,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
         .orderBy(desc(sql<string>`SUM(
             CASE 
-                WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true AND ${sectorDisasterRecordsRelationTable.lossesCost} IS NOT NULL THEN
                     COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
                 ELSE
                     COALESCE((
