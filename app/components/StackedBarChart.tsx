@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-export default function CustomBarChart({ data }: { data: any[]; }) {
+export default function CustomStackedBarChart({ data }: { data: any[]; }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

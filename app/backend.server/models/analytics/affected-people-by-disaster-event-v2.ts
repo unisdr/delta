@@ -123,6 +123,7 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
 					WHERE elem->'geojson'->'properties'->>'division_id' = ${conditions.divisionId}
 					OR elem->'geojson'->'properties'->'division_ids' @> ${conditions.divisionId}::jsonb
+					OR jsonb_path_exists(disaster_records.spatial_footprint, ${`$[*].geojson.properties.division_ids  ? (@ == "${conditions.divisionId}")`})
 				)` : undefined
 			)
 		)

@@ -58,8 +58,8 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 	const ageData = [
 		{
 			name: "",
-			"Children (0 - 15)": totalChildren,
-			"Adults (15 - 54)": totalAdults,
+			"Children (0 - 14)": totalChildren,
+			"Adults (15 - 64)": totalAdults,
 			"Seniors (65+)": totalSeniors,
 		},
 	];
@@ -433,8 +433,8 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 									<XAxis type="number" />
 									<YAxis type="category" dataKey="name" />
 									<Legend align="left"/>
-									<Bar dataKey="Children (0 - 15)" fill="#A64696" />
-									<Bar dataKey="Adults (15 - 54)" fill="#E660CF" />
+									<Bar dataKey="Children (0 - 14)" fill="#A64696" />
+									<Bar dataKey="Adults (15 - 64)" fill="#E660CF" />
 									<Bar dataKey="Seniors (65+)" fill="#A6469680" />
 								</BarChart>
 							</ResponsiveContainer>

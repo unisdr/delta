@@ -40,20 +40,8 @@ import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/af
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Rectangle, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { PieChart, Pie, Sector, Cell } from 'recharts';
 import CustomPieChart from '~/components/PieChart';
-import CustomBarChart from '~/components/BarChart';
-
-// Create QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+import CustomStackedBarChart from '~/components/StackedBarChart';
 
 
 // Define an interface for the structure of the JSON objects
@@ -112,7 +100,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let totalAffectedPeople2:any = {};
   const sectortData: Record<number, { id: number; sectorname: string; subSector?: interfaceSector[]; }> = {};
   
-  const sectorPieChartData: Record<number, { damage: interfacePieChart; losses: interfacePieChart; recovery: interfacePieChart }> = {};
+  const sectorPieChartData: Record<number, { damages: interfacePieChart; losses: interfacePieChart; recovery: interfacePieChart }> = {};
   let sectorBarChartData: Record<number, interfaceBarChart> = {};
 
     // Initialize arrays to store filtered values
@@ -140,29 +128,22 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         for (const item of recordsRelatedSectors) {
           // console.log( item.relatedAncestorsDecentants );
           // const sectorParentArray = (item.relatedAncestorsDecentants as interfaceSector[]).filter(item2 => item2.level === 2);
-          
 
           if (item.relatedAncestorsDecentants) {
-            // Filter for level 2 and save to sectorParentArray
+            // Filter for level 2 and save to filteredAncestors
             const filteredAncestors = (item.relatedAncestorsDecentants as interfaceSector[]).filter(
               ancestor => ancestor.level === 2
             );
             x = filteredAncestors[0];
-            //sectorParentArray.push(...filteredAncestors);
 
             x.myChildren = [];
             // console.log(x.myChildren);
 
-            
             const ancestorIds = (item.relatedAncestorsDecentants as interfaceSector[]).map(ancestor => ancestor.id);
-            
-            // console.log('ancestorIds', ancestorIds );
+
             x.myChildren = ancestorIds;
             x.effects = {};
             x.effects = await disasterEventSectorTotal__ById(xId, ancestorIds);
-
-            // const y = await sectorChildrenById(x.id) as interfaceSector[];
-            // console.log('y:', y);
 
             // Populate sectorData - will be used for the sector filter
             if (!sectortData[x.id]) {
@@ -173,21 +154,21 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
               }
             }
 
-            // Check does NOT if Sector 'id' exists
+            // Populate Sector Pie Chart Data
             if (!sectorPieChartData[x.id]) {
               sectorPieChartData[x.id] = {
-                damage: { name: x.sectorname, value: x.effects.damages.total },
+                damages: { name: x.sectorname, value: x.effects.damages.total },
                 losses: { name: x.sectorname, value: x.effects.losses.total },
                 recovery: { name: x.sectorname, value: x.effects.recovery.total }
               }
             }
             else {
-              sectorPieChartData[x.id].damage.value += x.effects.damages.total;
+              sectorPieChartData[x.id].damages.value += x.effects.damages.total;
               sectorPieChartData[x.id].losses.value += x.effects.losses.total; 
               sectorPieChartData[x.id].recovery.value += x.effects.recovery.total;
             }
 
-            // Check does NOT if Sector 'id' exists
+            // Populate Sector Bar Chart Data
             if (!sectorBarChartData[x.id]) {
               sectorBarChartData[x.id] = {
                 name: x.sectorname,
@@ -214,7 +195,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         );
 
         // Extract values only for damage, losses, and recovery
-        sectorDamagePieChartData = Object.values(sectorPieChartData).map(entry => entry.damage);
+        sectorDamagePieChartData = Object.values(sectorPieChartData).map(entry => entry.damages);
         sectorLossesPieChartData = Object.values(sectorPieChartData).map(entry => entry.losses);
         sectorRecoveryPieChartData = Object.values(sectorPieChartData).map(entry => entry.recovery);
 
@@ -245,7 +226,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         for (const item of divisionLevel1) {
           const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(xId, [item.id]);
           const humanEffectsPerDivision = await getAffected(dr, xId, {divisionId: item.id});
-          
+
+          // Populate the geoData for the map for the human effects
           humanEffectsGeoData.push({
             total: humanEffectsPerDivision.noDisaggregations.total,
             name: String(item.name['en']),
@@ -254,7 +236,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
             geojson: item.geojson,
           });
 
-          // scores[item.id] = {};
+          // Populate the geoData for the map for losses
           lossesGeoData.push({
             total: totalPerDivision.losses.total,
             name: String(item.name['en']),
@@ -263,6 +245,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
             geojson: item.geojson,
           });
 
+          // Populate the geoData for the map for damages
           datamageGeoData.push({
             total: totalPerDivision.damages.total,
             name: String(item.name['en']),
@@ -366,12 +349,25 @@ function DisasterEventsAnalysisContent() {
 
     // Filter sub-sectors based on selected sector ID
     const filteredSubSectors = ld.sectorParentArray.filter( item => item.id === Number(sectorId));
+    const element = document.getElementById("sector-apply-filter");
 
     if(filteredSubSectors.length === 0) { 
       setSubSectors([]);
+      setSelectedSubSector('');
+
+      if (element) {
+        element.style.pointerEvents = "none"; // Enables interaction
+        element.style.opacity = "0.5"; // Set opacity to 50%
+      }
     }
     else {
       setSubSectors(filteredSubSectors[0].subSector || []);
+      setSelectedSubSector('');
+
+      if (element) {
+        element.style.pointerEvents = "auto"; // Enables interaction
+        element.style.opacity = "1"; // Set opacity to normal
+      }
     }
   };
 
@@ -860,7 +856,7 @@ function DisasterEventsAnalysisContent() {
                             <span>Damage</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorDamagePieChartData } />
+                              <CustomPieChart data={ ld.sectorDamagePieChartData } boolRenderLabel={false} />
                           </div>
                         </div>
                       )
@@ -873,7 +869,7 @@ function DisasterEventsAnalysisContent() {
                             <span>Losses</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorLossesPieChartData } />
+                              <CustomPieChart data={ ld.sectorLossesPieChartData } boolRenderLabel={false} />
                           </div>
                         </div>
                       )
@@ -886,7 +882,7 @@ function DisasterEventsAnalysisContent() {
                             <span>Recovery need</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } />
+                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } boolRenderLabel={false} />
                           </div>
                         </div>
                       )
@@ -898,7 +894,7 @@ function DisasterEventsAnalysisContent() {
                       <div className="mg-grid mg-grid__col-1">
                         <div className="dts-data-box">
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomBarChart data={ ld.sectorBarChartData } />
+                              <CustomStackedBarChart data={ ld.sectorBarChartData } />
                           </div>
                         </div>
                       </div>
@@ -937,8 +933,8 @@ function DisasterEventsAnalysisContent() {
                   </div>  
                   <div className="mg-grid mg-grid__col-2">
                     <div className="mg-grid mg-grid__col-2 dts-form__actions">
-                      <Link to={`/analytics/disaster-events/?disasterEventId=${ld.record.id}`} className="mg-button mg-button--small mg-button-outline">Clear</Link>
-                      <Link to={`/analytics/disaster-events/x/?disasterEventId=${ld.record.id}&sectorid=${selectedSector}&subsectorid=${selectedSubSector}`} className="mg-button mg-button--small mg-button-primary">Apply filters</Link>
+                      <Link id="sector-clear-filter" to={`/analytics/disaster-events/?disasterEventId=${ld.record.id}`} className="mg-button mg-button--small mg-button-outline">Clear</Link>
+                      <Link id="sector-apply-filter" style={{ pointerEvents: 'none', opacity: 0.5 }} to={`/analytics/disaster-events/x/?disasterEventId=${ld.record.id}&sectorid=${selectedSector}&subsectorid=${selectedSubSector}`} className="mg-button mg-button--small mg-button-primary">Apply filters</Link>
                     </div>
                   </div>
                 </section>
