@@ -292,7 +292,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
         totalDamages: sql<number>`
       COALESCE(SUM(
         CASE 
-          WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+          WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true AND ${sectorDisasterRecordsRelationTable.damageCost} IS NOT NULL THEN
             COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
           ELSE
             COALESCE(
@@ -313,7 +313,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       ), 0)`,
         totalLosses: sql<number>`COALESCE(SUM(
             CASE 
-              WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+              WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true AND ${sectorDisasterRecordsRelationTable.lossesCost} IS NOT NULL THEN
                 COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
               ELSE
                 COALESCE(
@@ -334,7 +334,6 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
                   FROM ${lossesTable}
                   WHERE ${lossesTable.recordId} = ${disasterRecordsTable.id}
                   AND ${lossesTable.sectorId} = ${sectorDisasterRecordsRelationTable.sectorId}
-                  AND ${sectorDisasterRecordsRelationTable.withLosses} = false
                   LIMIT 1
                   ), 0)::numeric
             END
