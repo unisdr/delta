@@ -323,9 +323,9 @@ const validateSectorId = (sectorId: string): number => {
 // Update aggregateDamagesData function
 const aggregateDamagesData = async (
   recordIds: string[],
-  sectorId: string
+  sectorId: string | undefined
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriDamage?: any }> => {
-  const sectorIds = await getAllSubsectorIds(sectorId);
+  const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : [];
   const numericSectorIds = sectorIds;
 
   // First check sectorDisasterRecordsRelation for overrides
@@ -335,13 +335,14 @@ const aggregateDamagesData = async (
       sectorId: sectorDisasterRecordsRelationTable.sectorId,
       damageCost: sectorDisasterRecordsRelationTable.damageCost,
       withDamage: sectorDisasterRecordsRelationTable.withDamage
-      // damageRecoveryCost: sectorDisasterRecordsRelationTable.damageRecoveryCost
     })
     .from(sectorDisasterRecordsRelationTable)
     .where(
       and(
         inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
-        inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+        numericSectorIds.length > 0 
+          ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+          : undefined
       )
     );
 
@@ -352,133 +353,70 @@ const aggregateDamagesData = async (
       sectorId: damagesTable.sectorId,
       totalRepairReplacement: damagesTable.totalRepairReplacement,
       totalRepairReplacementOverride: damagesTable.totalRepairReplacementOverride,
-      totalRecovery: damagesTable.totalRecovery,
-      totalRecoveryOverride: damagesTable.totalRecoveryOverride,
       pdDamageAmount: damagesTable.pdDamageAmount,
       pdRepairCostUnit: damagesTable.pdRepairCostUnit,
-      pdRepairCostTotal: damagesTable.pdRepairCostTotal,
-      pdRepairCostTotalOverride: damagesTable.pdRepairCostTotalOverride,
-      pdRecoveryCostUnit: damagesTable.pdRecoveryCostUnit,
-      pdRecoveryCostTotal: damagesTable.pdRecoveryCostTotal,
-      pdRecoveryCostTotalOverride: damagesTable.pdRecoveryCostTotalOverride,
       tdDamageAmount: damagesTable.tdDamageAmount,
-      tdReplacementCostUnit: damagesTable.tdReplacementCostUnit,
-      tdReplacementCostTotal: damagesTable.tdReplacementCostTotal,
-      tdReplacementCostTotalOverride: damagesTable.tdReplacementCostTotalOverride,
-      tdRecoveryCostUnit: damagesTable.tdRecoveryCostUnit,
-      tdRecoveryCostTotal: damagesTable.tdRecoveryCostTotal,
-      tdRecoveryCostTotalOverride: damagesTable.tdRecoveryCostTotalOverride
+      tdReplacementCostUnit: damagesTable.tdReplacementCostUnit
     })
     .from(damagesTable)
     .where(
       and(
         inArray(damagesTable.recordId, recordIds),
-        inArray(damagesTable.sectorId, numericSectorIds)
+        numericSectorIds.length > 0 
+          ? inArray(damagesTable.sectorId, numericSectorIds)
+          : undefined
       )
     );
 
-  // Calculate totals and yearly breakdown
   let total = 0;
   const byYear = new Map<number, number>();
 
   // Process each record
   for (const recordId of recordIds) {
-    for (const sectorId of numericSectorIds) {
-      // Check sector override first
-      const sectorOverride = sectorOverrides.find(
-        so => so.recordId === recordId && so.sectorId === sectorId
-      );
+    let recordDamageAmount = 0;
+    
+    // Check sector override first
+    const sectorOverride = sectorOverrides.find(
+      so => so.recordId === recordId && numericSectorIds.includes(so.sectorId)
+    );
 
-      if (sectorOverride?.withDamage) {
-        // Use sector override values if they exist
-        const damageAmount =
-          (Number(sectorOverride.damageCost) || 0);
-        // (Number(sectorOverride.damageRecoveryCost) || 0);
-
-        if (damageAmount > 0) {
-          total += damageAmount;
-
-          // Get year and update yearly breakdown
-          const record = await dr
-            .select({
-              year: extractYearFromDate(disasterRecordsTable.startDate).as("year")
-            })
-            .from(disasterRecordsTable)
-            .where(eq(disasterRecordsTable.id, recordId))
-            .limit(1);
-
-          if (record && record[0]?.year) {
-            const year = Number(record[0].year);
-            byYear.set(year, (byYear.get(year) || 0) + damageAmount);
-          }
-          continue;
-        }
-      }
-
+    if (sectorOverride?.withDamage && sectorOverride?.damageCost !== null) {
+      // Use sector override value
+      recordDamageAmount = Number(sectorOverride.damageCost) || 0;
+    } else {
       // If no sector override, check detailed damages
       const damage = detailedDamages.find(
-        d => d.recordId === recordId && d.sectorId === sectorId
+        d => d.recordId === recordId && numericSectorIds.includes(d.sectorId)
       );
 
       if (damage) {
-        let damageAmount = 0;
-
-        // Check total overrides first
+        // Match HazardImpact.ts logic exactly
         if (damage.totalRepairReplacementOverride) {
-          damageAmount += Number(damage.totalRepairReplacement) || 0;
+          recordDamageAmount = Number(damage.totalRepairReplacement) || 0;
         } else {
-          // Calculate from PD and TD details
-          // PD Repair Cost
-          if (damage.pdRepairCostTotalOverride) {
-            damageAmount += Number(damage.pdRepairCostTotal) || 0;
-          } else {
-            damageAmount += (Number(damage.pdDamageAmount) || 0) * (Number(damage.pdRepairCostUnit) || 0);
-          }
-
-          // PD Recovery Cost
-          if (damage.pdRecoveryCostTotalOverride) {
-            damageAmount += Number(damage.pdRecoveryCostTotal) || 0;
-          } else {
-            damageAmount += (Number(damage.pdDamageAmount) || 0) * (Number(damage.pdRecoveryCostUnit) || 0);
-          }
-
-          // TD Replacement Cost
-          if (damage.tdReplacementCostTotalOverride) {
-            damageAmount += Number(damage.tdReplacementCostTotal) || 0;
-          } else {
-            damageAmount += (Number(damage.tdDamageAmount) || 0) * (Number(damage.tdReplacementCostUnit) || 0);
-          }
-
-          // TD Recovery Cost
-          if (damage.tdRecoveryCostTotalOverride) {
-            damageAmount += Number(damage.tdRecoveryCostTotal) || 0;
-          } else {
-            damageAmount += (Number(damage.tdDamageAmount) || 0) * (Number(damage.tdRecoveryCostUnit) || 0);
-          }
+          // Only include PD repair and TD replacement costs
+          recordDamageAmount = 
+            (Number(damage.pdDamageAmount) || 0) * (Number(damage.pdRepairCostUnit) || 0) +
+            (Number(damage.tdDamageAmount) || 0) * (Number(damage.tdReplacementCostUnit) || 0);
         }
+      }
+    }
 
-        // Add recovery costs if total override exists
-        if (damage.totalRecoveryOverride) {
-          damageAmount += Number(damage.totalRecovery) || 0;
-        }
+    if (recordDamageAmount > 0) {
+      total += recordDamageAmount;
 
-        if (damageAmount > 0) {
-          total += damageAmount;
+      // Get year and update yearly breakdown
+      const record = await dr
+        .select({
+          year: extractYearFromDate(disasterRecordsTable.startDate).as("year")
+        })
+        .from(disasterRecordsTable)
+        .where(eq(disasterRecordsTable.id, recordId))
+        .limit(1);
 
-          // Get year and update yearly breakdown
-          const record = await dr
-            .select({
-              year: extractYearFromDate(disasterRecordsTable.startDate).as("year")
-            })
-            .from(disasterRecordsTable)
-            .where(eq(disasterRecordsTable.id, recordId))
-            .limit(1);
-
-          if (record && record[0]?.year) {
-            const year = Number(record[0].year);
-            byYear.set(year, (byYear.get(year) || 0) + damageAmount);
-          }
-        }
+      if (record && record[0]?.year) {
+        const year = Number(record[0].year);
+        byYear.set(year, (byYear.get(year) || 0) + recordDamageAmount);
       }
     }
   }
@@ -491,7 +429,7 @@ const aggregateLossesData = async (
   recordIds: string[],
   sectorId: string | undefined
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: any }> => {
-  const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : undefined;
+  const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : [];
   const numericSectorIds = sectorIds;
 
   // First check sectorDisasterRecordsRelation for overrides
@@ -506,7 +444,9 @@ const aggregateLossesData = async (
     .where(
       and(
         inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
-        numericSectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds) : undefined
+        numericSectorIds.length > 0 
+          ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+          : undefined
       )
     );
 
@@ -528,7 +468,9 @@ const aggregateLossesData = async (
     .where(
       and(
         inArray(lossesTable.recordId, recordIds),
-        numericSectorIds ? inArray(lossesTable.sectorId, numericSectorIds) : undefined
+        numericSectorIds.length > 0 
+          ? inArray(lossesTable.sectorId, numericSectorIds)
+          : undefined
       )
     );
 
@@ -537,75 +479,53 @@ const aggregateLossesData = async (
 
   // Process each record
   for (const recordId of recordIds) {
-    for (const sectorId of numericSectorIds || []) {
-      // Check sector override first
-      const sectorOverride = sectorOverrides.find(
-        so => so.recordId === recordId && so.sectorId === sectorId
-      );
+    let recordLossAmount = 0;
 
-      if (sectorOverride?.withLosses) {
-        // Use sector override value if it exists
-        const lossAmount = Number(sectorOverride.lossesCost) || 0;
+    // Check sector override first
+    const sectorOverride = sectorOverrides.find(
+      so => so.recordId === recordId && numericSectorIds.includes(so.sectorId)
+    );
 
-        if (lossAmount > 0) {
-          total += lossAmount;
-
-          // Get year and update yearly breakdown
-          const record = await dr
-            .select({
-              year: extractYearFromDate(disasterRecordsTable.startDate).as("year")
-            })
-            .from(disasterRecordsTable)
-            .where(eq(disasterRecordsTable.id, recordId))
-            .limit(1);
-
-          if (record && record[0]?.year) {
-            const year = Number(record[0].year);
-            byYear.set(year, (byYear.get(year) || 0) + lossAmount);
-          }
-          continue;
-        }
-      }
-
+    if (sectorOverride?.withLosses && sectorOverride?.lossesCost !== null) {
+      // Use sector override value
+      recordLossAmount = Number(sectorOverride.lossesCost) || 0;
+    } else {
       // If no sector override, check detailed losses
       const loss = detailedLosses.find(
-        l => l.recordId === recordId && l.sectorId === sectorId
+        l => l.recordId === recordId && numericSectorIds.includes(l.sectorId)
       );
 
       if (loss) {
-        let lossAmount = 0;
-
-        // Public losses
+        // Calculate from public and private costs
         if (loss.publicCostTotalOverride) {
-          lossAmount += Number(loss.publicCostTotal) || 0;
-        } else if (loss.publicUnits && loss.publicCostUnit) {
-          lossAmount += (Number(loss.publicUnits) || 0) * (Number(loss.publicCostUnit) || 0);
+          recordLossAmount += Number(loss.publicCostTotal) || 0;
+        } else {
+          recordLossAmount += (Number(loss.publicUnits) || 0) * (Number(loss.publicCostUnit) || 0);
         }
 
-        // Private losses
         if (loss.privateCostTotalOverride) {
-          lossAmount += Number(loss.privateCostTotal) || 0;
-        } else if (loss.privateUnits && loss.privateCostUnit) {
-          lossAmount += (Number(loss.privateUnits) || 0) * (Number(loss.privateCostUnit) || 0);
+          recordLossAmount += Number(loss.privateCostTotal) || 0;
+        } else {
+          recordLossAmount += (Number(loss.privateUnits) || 0) * (Number(loss.privateCostUnit) || 0);
         }
+      }
+    }
 
-        if (lossAmount > 0) {
-          total += lossAmount;
+    if (recordLossAmount > 0) {
+      total += recordLossAmount;
 
-          // Get year and update yearly breakdown
-          const record = await dr
-            .select({
-              year: extractYearFromDate(disasterRecordsTable.startDate).as("year")
-            })
-            .from(disasterRecordsTable)
-            .where(eq(disasterRecordsTable.id, recordId))
-            .limit(1);
+      // Get year and update yearly breakdown
+      const record = await dr
+        .select({
+          year: extractYearFromDate(disasterRecordsTable.startDate).as("year")
+        })
+        .from(disasterRecordsTable)
+        .where(eq(disasterRecordsTable.id, recordId))
+        .limit(1);
 
-          if (record && record[0]?.year) {
-            const year = Number(record[0].year);
-            byYear.set(year, (byYear.get(year) || 0) + lossAmount);
-          }
-        }
+      if (record && record[0]?.year) {
+        const year = Number(record[0].year);
+        byYear.set(year, (byYear.get(year) || 0) + recordLossAmount);
       }
     }
   }
