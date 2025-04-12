@@ -65,7 +65,7 @@ export const fetchDisasterEvents = async (query?: string) => {
 
 
 
-export async function disasterEventSectorsById(id: any, incAnsestorsDecentants: boolean = false) {
+export async function disasterEventSectorsById(id: any, incAnsestorsDecentants: boolean = false, sectorIdExistInAnsestorsDecentants: number = 0) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -81,9 +81,9 @@ export async function disasterEventSectorsById(id: any, incAnsestorsDecentants: 
 				)`.as('relatedAncestorsDecentants')
 			 : 
 				sql`(
-					undefinded
+					NULL
 				)`.as('relatedAncestorsDecentants')
-			 ,
+			,
 			// name: sql`(
 			// 	1
 			// )`.as('name'),
