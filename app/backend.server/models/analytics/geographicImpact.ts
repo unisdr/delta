@@ -318,6 +318,24 @@ function ensureRightHandRule(ring: number[][]): number[][] {
     return ring;
 }
 
+// Helper function to ensure polygon coordinates form a closed ring
+function ensureClosedRing(coordinates: any[]): any[] {
+    if (!Array.isArray(coordinates) || coordinates.length < 3) {
+        return coordinates;
+    }
+
+    const first = coordinates[0];
+    const last = coordinates[coordinates.length - 1];
+
+    // Check if first and last points are identical
+    if (first[0] !== last[0] || first[1] !== last[1]) {
+        // Add the first point to the end to close the ring
+        return [...coordinates, [...first]];
+    }
+
+    return coordinates;
+}
+
 // Parse PostgreSQL geometry to GeoJSON
 function parseGeometry(geojson: any): GeoJSONGeometry | null {
     try {
@@ -719,7 +737,10 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
 
         let divisions: Division[] = [];
         try {
+            console.time("baseDivisionsQuery"); // Start timing for baseDivisionsQuery
             divisions = await baseDivisionsQuery;
+            console.timeEnd("baseDivisionsQuery"); // End timing for baseDivisionsQuery
+            console.log("Number of Divisions Fetched:", divisions.length); // Log number of divisions
 
             if (!divisions || divisions.length === 0) {
                 return {
@@ -742,20 +763,23 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         // Create a map to store values for each division
         const values: { [key: string]: CleanDivisionValues } = {};
 
-        for (const division of divisions) {
+        await Promise.all(divisions.map(async (division) => {
             try {
-                const disasterRecords = await getDisasterRecordsForDivision(division.id.toString(), {
-                    startDate: filters.fromDate,
-                    endDate: filters.toDate,
-                    hazardType: filters.hazardTypeId,
-                    hazardCluster: filters.hazardClusterId,
-                    specificHazard: filters.specificHazardId,
-                    disasterEvent: filters.disasterEventId,
-                    assessmentType: filters.assessmentType,
-                    confidenceLevel: filters.confidenceLevel,
-                    baseQuery: queryBuilder.where(and(...baseConditions))
-                },
-                    sectorIds
+                const disasterRecords = await getDisasterRecordsForDivision(
+                    division.id.toString(),
+                    {
+                        startDate: filters.fromDate,
+                        endDate: filters.toDate,
+                        hazardType: filters.hazardTypeId,
+                        hazardCluster: filters.hazardClusterId,
+                        specificHazard: filters.specificHazardId,
+                        disasterEvent: filters.disasterEventId,
+                        assessmentType: filters.assessmentType,
+                        confidenceLevel: filters.confidenceLevel,
+                        baseQuery: queryBuilder.where(and(...baseConditions)),
+                    },
+                    sectorIds,
+                    division.geom as GeoJSON.Geometry
                 );
 
                 if (!disasterRecords || disasterRecords.length === 0) {
@@ -765,26 +789,20 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                         metadata,
                         dataAvailability: 'no_data'
                     };
-                    continue;
+                    return;
                 }
 
-                // Calculate impact values
-                const damageResult = await aggregateDamagesData(disasterRecords, sectorIds);
-                const lossResult = await aggregateLossesData(disasterRecords, sectorIds);
-                const { total: totalDamage } = damageResult;
-                const { total: totalLoss } = lossResult;
+                const [damageResult, lossResult] = await Promise.all([
+                    aggregateDamagesData(disasterRecords, sectorIds),
+                    aggregateLossesData(disasterRecords, sectorIds),
+                ]);
 
-                // Merge the yearly breakdowns
-                const byYear: Map<number, number> = new Map();
-                for (const [year, value] of damageResult.byYear) {
-                    byYear.set(year, value);
-                }
+                const totalDamage = damageResult.total;
+                const totalLoss = lossResult.total;
+
+                const byYear: Map<number, number> = new Map(damageResult.byYear);
                 for (const [year, value] of lossResult.byYear) {
-                    if (byYear.has(year)) {
-                        byYear.set(year, byYear.get(year)! + value);
-                    } else {
-                        byYear.set(year, value);
-                    }
+                    byYear.set(year, (byYear.get(year) || 0) + value);
                 }
 
                 values[division.id.toString()] = {
@@ -802,7 +820,11 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                     dataAvailability: 'no_data'
                 };
             }
-        }
+        }));
+
+        // console.timeEnd("DivisionLoop"); // End timing for the loop
+
+
 
         return {
             success: true,
@@ -866,7 +888,8 @@ export async function getDescendantDivisionIds(divisionId: number): Promise<numb
 async function getDisasterRecordsForDivision(
     divisionId: string,
     filters?: GeographicFilters,
-    sectorIds: number[] = []
+    sectorIds: number[] = [],
+    divisionGeom?: GeoJSON.Geometry
 ): Promise<string[]> {
     try {
         console.log(`[Start] Fetching disaster records for Division ID: ${divisionId}`);
@@ -1032,18 +1055,15 @@ WHERE footprint->>'geographic_level' IN (
 )
                     )`),
                     sql.raw(`EXISTS (
-                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
-WHERE footprint->'map_coords'->>'mode' = 'markers'
-AND EXISTS (
-    SELECT 1 FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
-    WHERE ST_Contains(
-        (SELECT geom FROM "division" WHERE id = ${divisionId}),
-        ST_SetSRID(ST_MakePoint(
-            (coord->>1)::float,  -- longitude (second element)
-            (coord->>0)::float   -- latitude (first element)
-        ), 4326)
-    )
-)
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
+                        jsonb_array_elements(footprint->'map_coords'->'coordinates') AS coord
+                        WHERE ST_Contains(
+                            (SELECT geom FROM "division" WHERE id = ${divisionId}),
+                            ST_SetSRID(ST_MakePoint(
+                                (coord->>1)::float,  -- longitude (first element)
+                                (coord->>0)::float   -- latitude (second element)
+                            ), 4326)
+                        )
                     )`),
                     sql.raw(`EXISTS (
                         SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
@@ -1085,11 +1105,73 @@ AND ST_Intersects(
                     (coord->>1)::float,
                     (coord->>0)::float
                 )
-                FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+                FROM (
+                    SELECT CASE 
+                        WHEN array_position(ARRAY(
+                            SELECT jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
+                        ), coord) = (
+                            SELECT COUNT(*) 
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
+                        )
+                        AND (
+                            SELECT element->0 
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                            LIMIT 1
+                        ) != coord->0
+                        OR (
+                            SELECT element->1 
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                            LIMIT 1
+                        ) != coord->1
+                        THEN (
+                            SELECT jsonb_build_array(
+                                element->0,
+                                element->1
+                            )::jsonb
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                            LIMIT 1
+                        )
+                        ELSE coord
+                    END AS coord
+                    FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+                ) AS coords
             )
         )
     ), 4326)
 )
+                    )`),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+                        WHERE footprint->'map_coords'->>'mode' = 'lines'
+                        AND ST_Intersects(
+                            (SELECT geom FROM "division" WHERE id = ${divisionId}),
+                            ST_SetSRID(ST_MakeLine(
+                                ARRAY(
+                                    SELECT ST_MakePoint(
+                                        (coord->>1)::float,  -- longitude
+                                        (coord->>0)::float   -- latitude
+                                    )
+                                    FROM jsonb_array_elements(footprint->'map_coords'->'coordinates') AS coord
+                                )
+                            ), 4326)
+                        )
+                    )`),
+                    sql.raw(`EXISTS (
+                        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
+                        jsonb_array_elements(footprint->'geojson'->'features') AS feature
+                        WHERE feature->'geometry'->>'type' = 'LineString'
+                        AND ST_Intersects(
+                            (SELECT geom FROM "division" WHERE id = ${divisionId}),
+                            ST_SetSRID(ST_MakeLine(
+                                ARRAY(
+                                    SELECT ST_MakePoint(
+                                        (coord->>0)::float,  -- longitude
+                                        (coord->>1)::float   -- latitude
+                                    )
+                                    FROM jsonb_array_elements(feature->'geometry'->'coordinates') AS coord
+                                )
+                            ), 4326)
+                        )
                     )`),
                     sql.raw(`EXISTS (
                         SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
@@ -1140,6 +1222,7 @@ AND ST_Intersects(
                 const geojson = feature.geojson || {};
                 const props = geojson.properties || {};
                 const dts = geojson.dts_info || {};
+                const mapCoords = feature.map_coords || {};
 
                 // Check all possible division ID locations
                 const ids1 = Array.isArray(props.division_ids) ? props.division_ids.map(String) : [];
@@ -1150,17 +1233,38 @@ AND ST_Intersects(
                 const geographicLevel = feature.geographic_level;
                 const matchedName = regionNameSet.has(geographicLevel);
 
-                if (!matchedId && !matchedName) {
-                    console.debug(`[NO ID MATCH] record ${record.id}`, {
+                // Check for spatial matches based on geometry type
+                const hasValidGeometry = (
+                    // GeoJSON Point Features
+                    (geojson.features?.some((f: { geometry?: { type: string } }) =>
+                        f.geometry?.type === 'Point' || f.geometry?.type === 'LineString'
+                    )) ||
+                    // Map Coordinates Points
+                    (mapCoords.mode === 'markers' && Array.isArray(mapCoords.coordinates)) ||
+                    // Lines
+                    (mapCoords.mode === 'lines' && Array.isArray(mapCoords.coordinates)) ||
+                    // Circle Areas
+                    (mapCoords.mode === 'circle' && mapCoords.center && mapCoords.radius) ||
+                    // Rectangle Areas
+                    (mapCoords.mode === 'rectangle' && Array.isArray(mapCoords.coordinates) && mapCoords.coordinates.length >= 2) ||
+                    // Polygon Areas
+                    (mapCoords.mode === 'polygon' && Array.isArray(mapCoords.coordinates) && mapCoords.coordinates.length >= 3)
+                );
+
+                // Record is valid if it has either:
+                // 1. Matching metadata (division IDs or geographic level)
+                // 2. Valid spatial geometry that was matched by SQL spatial queries
+                if (!matchedId && !matchedName && !hasValidGeometry) {
+                    console.debug(`[NO MATCH] record ${record.id}`, {
                         geographic_level: geographicLevel,
                         props_ids: ids1,
                         dts_ids: ids2,
-                        dts_single_id: id2
+                        dts_single_id: id2,
+                        geometry_type: mapCoords.mode || geojson.features?.[0]?.geometry?.type
                     });
                     return false;
                 }
 
-                // If we have a division ID match, that's sufficient
                 return true;
             });
         });
@@ -1259,7 +1363,7 @@ export async function fetchGeographicImpactData(
         }
 
         // Get disaster records for the division with improved spatial handling
-        const recordIds = await getDisasterRecordsForDivision(divisionId, filters);
+        const recordIds = await getDisasterRecordsForDivision(divisionId, filters,);
 
         if (recordIds.length === 0) {
             console.log(`No disaster records found for division ${divisionId}`);
@@ -1338,7 +1442,8 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
                 year: yearExpr.as("year"),
                 totalDamage: sql<string>`COALESCE(SUM(
                     CASE 
-                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true THEN
+                        WHEN ${sectorDisasterRecordsRelationTable.withDamage} = true AND ${sectorDisasterRecordsRelationTable.damageCost} IS NOT NULL
+ THEN
                             COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)::numeric
                         ELSE 0
                     END
@@ -1388,6 +1493,7 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
                                 and(
                                     eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
                                     eq(sectorDisasterRecordsRelationTable.withDamage, true),
+                                    sql`${sectorDisasterRecordsRelationTable.damageCost} IS NOT NULL`,
                                     sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
                                 )
                             )
@@ -1452,7 +1558,7 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
                 year: yearExpr.as("year"),
                 totalLoss: sql<string>`COALESCE(SUM(
                     CASE 
-                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true THEN
+                        WHEN ${sectorDisasterRecordsRelationTable.withLosses} = true AND ${sectorDisasterRecordsRelationTable.lossesCost} IS NOT NULL THEN
                             COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)::numeric
                         ELSE 0
                     END
@@ -1508,6 +1614,7 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
                                 and(
                                     eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
                                     eq(sectorDisasterRecordsRelationTable.withLosses, true),
+                                    sql`${sectorDisasterRecordsRelationTable.lossesCost} IS NOT NULL`,
                                     sectorIds ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds) : undefined
                                 )
                             )
