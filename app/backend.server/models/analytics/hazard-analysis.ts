@@ -2096,19 +2096,8 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 	  whereConditions.push(sql`"start_date" >= ${from} AND "end_date" <= ${to}`);
 	}
   
-	// Combine all conditions (including geographicLevelId) into a single WHERE clause
-	const allConditions = [
-	  ...whereConditions,
-	  sql`(sf->'geojson'->'properties'->>'division_id' IS NOT NULL OR sf->'geojson'->'properties'->'division_ids' IS NOT NULL)`,
-	];
-	if (geographicLevelId) {
-	  allConditions.push(sql`dh.level1_id IN (
-		SELECT level1_id 
-		FROM division_hierarchy 
-		WHERE id = ${geographicLevelId}
-	  )`);
-	}
-	const combinedWhereClause = allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
+	// Combine conditions for disaster_event (excluding geographicLevelId for now)
+	const eventWhereClause = whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
   
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -2132,7 +2121,12 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 			FROM jsonb_array_elements_text(sf->'geojson'->'properties'->'division_ids') AS div_id 
 			WHERE div_id = dh.id::text
 		  )
-		${combinedWhereClause}
+		${eventWhereClause}
+		${geographicLevelId ? sql`AND dh.level1_id IN (
+		  SELECT level1_id 
+		  FROM division_hierarchy 
+		  WHERE id = ${geographicLevelId}
+		)` : sql``}
 	  ),
 	  affected_people AS (
 		SELECT 
@@ -2176,9 +2170,29 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 			FROM jsonb_array_elements_text(sf->'geojson'->'properties'->'division_ids') AS div_id 
 			WHERE div_id = dh.id::text
 		  )
-		${combinedWhereClause}
+		${eventWhereClause}
+		${geographicLevelId ? sql`AND dh.level1_id IN (
+		  SELECT level1_id 
+		  FROM division_hierarchy 
+		  WHERE id = ${geographicLevelId}
+		)` : sql``}
 		GROUP BY de."id"
 		HAVING STRING_AGG(DISTINCT (sf->'geojson'->'properties'->'name'->>'en'), ', ') IS NOT NULL
+	  ),
+	  filtered_records AS (
+		SELECT 
+		  dr."disaster_event_id",
+		  dr."id" AS record_id
+		FROM "disaster_records" dr
+		CROSS JOIN jsonb_array_elements(dr."spatial_footprint") AS sf
+		LEFT JOIN division_hierarchy dh 
+		  ON (sf->'geojson'->'properties'->>'division_id') = dh.id::text
+		WHERE dr."approvalStatus" = 'published'
+		${geographicLevelId ? sql`AND dh.level1_id IN (
+		  SELECT level1_id 
+		  FROM division_hierarchy 
+		  WHERE id = ${geographicLevelId}
+		)` : sql``}
 	  )
 	  SELECT 
 		de."id" AS disaster_id,
@@ -2194,10 +2208,10 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 		ON fe."disaster_id" = de."id"
 	  LEFT JOIN provinces pv 
 		ON de."id" = pv."disaster_id"
-	  LEFT JOIN "disaster_records" dr 
-		ON de."id" = dr."disaster_event_id"
+	  LEFT JOIN filtered_records fr 
+		ON de."id" = fr."disaster_event_id"
 	  LEFT JOIN "sector_disaster_records_relation" sdr 
-		ON dr."id" = sdr."disaster_record_id"
+		ON fr."record_id" = sdr."disaster_record_id"
 	  LEFT JOIN affected_people ap 
 		ON de."id" = ap."disaster_event_id"
 	  GROUP BY 
