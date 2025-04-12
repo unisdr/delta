@@ -131,7 +131,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, data }) 
 };
 
 // Main PieChart component
-export default function CustomPieChart({ data, title }: { data: any[]; title?: string }) {
+export default function CustomPieChart({ data, title, chartHeight = 350, boolRenderLabel = true }: { data: any[]; title?: string; chartHeight?:number; boolRenderLabel?: boolean }) {
   const [mounted, setMounted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
@@ -163,6 +163,8 @@ export default function CustomPieChart({ data, title }: { data: any[]; title?: s
     const radius = outerRadius * 1.4; // Push labels further out
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    if (!boolRenderLabel) return null; // Disable label rendering if boolRenderLabel is false
 
     // Hide labels for small percentages
     if (percent < 0.03) return null;
@@ -249,7 +251,7 @@ export default function CustomPieChart({ data, title }: { data: any[]; title?: s
   return (
     <div style={{ width: "100%", maxWidth: "100%", overflow: "hidden" }}>
       {title && <h3 style={{ marginBottom: "10px", fontSize: "16px", fontWeight: "bold" }}>{title}</h3>}
-      <ResponsiveContainer width="100%" height={350}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <PieChart>
           <Pie
             data={dataWithIndex}
