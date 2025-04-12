@@ -1,8 +1,13 @@
-import {asc, eq, sql, isNull, aliasedTable} from 'drizzle-orm';
+import {asc, and, eq, sql, isNull, aliasedTable} from 'drizzle-orm';
 
 import {
 	sectorTable
 } from '~/drizzle/schema';
+
+import {
+	or,
+	inArray
+} from "drizzle-orm";
 
 import {dr, Tx} from '~/db.server';
 
@@ -127,17 +132,27 @@ export async function sectorById(id: number, includeParentObject:boolean = false
 	}
 }
 
-export async function sectorChildrenById(id: number) {
-	const res = await dr.query.sectorTable.findMany({
-		columns: {
-			id: true,
-			sectorname: true,
-		},
-		where: eq(sectorTable.parentId, id),
-		orderBy: (sectorTable) => [
-			asc(sectorTable.sectorname),
-		],
-	});
+export async function sectorChildrenById(parentId: number) {
+	const res = await dr.selectDistinctOn(
+		[sectorTable.sectorname],
+		{
+			sectorname: sectorTable.sectorname,
+			id: sectorTable.id,
+			relatedAncestorsDecendants: 
+				sql`(
+					dts_get_sector_ancestors_decentants(${sectorTable.id})
+				)`.as('relatedAncestorsDecendants'),
+		}).from(sectorTable)
+		.where(
+			and(
+				eq(sectorTable.parentId, parentId),
+			)
+		)
+		.orderBy(
+			asc(sectorTable.sectorname)
+		)
+		.execute();
+
 	return res;
 }
 
@@ -156,7 +171,6 @@ export async function getSectorFullPathById(sectorId: number) {
 	`);
 	return rows[0]?.full_path || "No sector found";
 }
-
 
 export async function getSectorAncestorById(sectorId: number, sectorLevel: number = 2) {
 	const { rows } = await dr.execute(sql`
