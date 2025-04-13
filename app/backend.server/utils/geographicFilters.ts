@@ -73,6 +73,12 @@ export function debugMatchedGeoFormat(spatialFootprint: any, divisionId: number)
     if (elem.geographic_level) {
       matches.push("geographic_level match");
     }
+    if (elem.geographic_level) {
+      matches.push("geographic_level");
+    }
+    if (elem.map_option) {
+      matches.push("map_option");
+    }
     if (mapCoords?.mode === 'markers') {
       matches.push("map_coords.mode = markers");
     }
@@ -87,6 +93,9 @@ export function debugMatchedGeoFormat(spatialFootprint: any, divisionId: number)
     }
     if (geojson?.features?.some((f: any) => f.geometry?.type === 'Point')) {
       matches.push("geojson.features.geometry = Point");
+    }
+    if (geojson?.features?.some((f: any) => f.geometry?.type === 'LineString')) {
+      matches.push("geojson.features.geometry = LineString");
     }
   }
 
@@ -112,7 +121,10 @@ export async function applyGeographicFilters(
     const preferred = matchedFormats.find((f) => [
       "geojson.properties.division_ids",
       "geojson.dts_info.division_ids",
-      "geojson.dts_info.division_id"
+      "geojson.dts_info.division_id",
+      "geographic_level match",
+      "map_option",
+      "geographic_level"
     ].includes(f));
 
     if (preferred) {
@@ -124,7 +136,7 @@ export async function applyGeographicFilters(
 
   const jsonbCondition = sql`${disasterRecordsTable.spatialFootprint} IS NOT NULL AND (
     ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.properties.division_ids[*] ? (@ == ${quotedJson})')`)} OR
-${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_ids[*] ? (@ == ${quotedJson})')`)} OR
+    ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_ids[*] ? (@ == ${quotedJson})')`)} OR
 ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_id ? (@ == ${quotedJson})')`)} OR
     ${sql.raw(`EXISTS (
       SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
@@ -186,7 +198,36 @@ ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojs
                 (coord->>1)::float,
                 (coord->>0)::float
               )
-              FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+              FROM (
+                    SELECT CASE 
+                        WHEN array_position(ARRAY(
+                            SELECT jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
+                        ), coord) = (
+                            SELECT COUNT(*) 
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
+                        )
+                        AND (
+                            SELECT element->0 
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                            LIMIT 1
+                        ) != coord->0
+                        OR (
+                            SELECT element->1 
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                            LIMIT 1
+                        ) != coord->1
+                        THEN (
+                            SELECT jsonb_build_array(
+                                element->0,
+                                element->1
+                            )::jsonb
+                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                            LIMIT 1
+                        )
+                        ELSE coord
+                    END AS coord
+                    FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+                ) AS coords
             )
           )
         ), 4326)
@@ -201,6 +242,37 @@ ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojs
         ST_SetSRID(ST_MakePoint(
           (feature->'geometry'->'coordinates'->>0)::float,
           (feature->'geometry'->'coordinates'->>1)::float
+        ), 4326)
+      )
+    )`)} OR
+    ${sql.raw(`EXISTS (
+      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
+                   jsonb_array_elements(footprint->'geojson'->'features') AS feature
+      WHERE feature->'geometry'->>'type' = 'LineString'
+      AND ST_Intersects(
+        (SELECT geom FROM division WHERE id = ${divisionId}),
+        ST_SetSRID(ST_MakeLine(ARRAY(
+          SELECT ST_MakePoint(
+            (coord->>0)::float,  -- longitude
+            (coord->>1)::float   -- latitude
+          )
+          FROM jsonb_array_elements(feature->'geometry'->'coordinates') AS coord
+        )), 4326)
+      )
+    )`)} OR
+    ${sql.raw(`EXISTS (
+      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+      WHERE footprint->'map_coords'->>'mode' = 'lines'
+      AND ST_Intersects(
+        (SELECT geom FROM division WHERE id = ${divisionId}),
+        ST_SetSRID(ST_MakeLine(
+          ARRAY(
+            SELECT ST_MakePoint(
+              (coord->>1)::float,
+              (coord->>0)::float
+            )
+            FROM jsonb_array_elements(footprint->'map_coords'->'coordinates') AS coord
+          )
         ), 4326)
       )
     )`)}
