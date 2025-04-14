@@ -50,7 +50,7 @@ import {notifyError, notifyInfo} from "./frontend/utils/notifications";
 
 
 export const links: LinksFunction = () => [
-	{rel: "stylesheet", href: 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/css/style-dts.css'},
+	{rel: "stylesheet", href: '/assets/css/style-dts.css?asof=20250414'},
 	{rel: "stylesheet", href: allStylesHref},
 ];
 

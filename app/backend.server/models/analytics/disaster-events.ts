@@ -6,7 +6,9 @@ import {
 	sectorDisasterRecordsRelationTable,
 	damagesTable,
 	lossesTable,
-	sectorTable
+	sectorTable,
+	disruptionTable,
+	assetTable
 } from "~/drizzle/schema";
 
 import {
@@ -586,3 +588,211 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 		
 	};
 }
+
+
+
+export async function disasterEventSectorDamageDetails__ById(disasterEventId: string, isInSectorIds: number[] = []) {
+	if (typeof disasterEventId !== "string") {
+		throw new Error("Invalid ID: must be a string");
+	}
+
+	const queryRecordSectorTable = dr.selectDistinctOn(
+		[disasterEventTable.id, disasterRecordsTable.id, sectorDisasterRecordsRelationTable.id, damagesTable.id],
+		{
+			recordId: disasterRecordsTable.id,
+			// relDisrecordSector_Id: sectorDisasterRecordsRelationTable.id,
+			// relDisrecordSector_SectorId: sectorDisasterRecordsRelationTable.sectorId,
+			// relDisrecordSector_WithDamage: sectorDisasterRecordsRelationTable.withDamage,
+			// relDisrecordSector_DamageCost: sectorDisasterRecordsRelationTable.damageCost,
+			// relDisrecordSector_DamageCostCurrency: sectorDisasterRecordsRelationTable.damageCostCurrency,
+			// relDisrecordSector_DamageRecoveryCost: sectorDisasterRecordsRelationTable.damageRecoveryCost,
+			// relDisrecordSector_DamageRecoveryCostCurrency: sectorDisasterRecordsRelationTable.damageRecoveryCostCurrency,
+			// relDisrecordSector_WithLosses: sectorDisasterRecordsRelationTable.withLosses,
+			// relDisrecordSector_LossesCost: sectorDisasterRecordsRelationTable.lossesCost,
+			// relDisrecordSector_LossesCostCurrency: sectorDisasterRecordsRelationTable.lossesCostCurrency,
+			// eventDisasterEventId: disasterEventTable.id,
+			damageId: damagesTable.id,
+			// damageSectorId: damagesTable.sectorId,
+			damageTotalRepairReplacementCost: damagesTable.totalRepairReplacement,
+			damageTotalRecoveryCost: damagesTable.totalRecovery,
+			damageTotalNumberAssetAffected: damagesTable.totalDamageAmount,
+			damageUnit: damagesTable.unit,
+			// assetId: assetTable.id,
+			assetName: assetTable.name,
+			// name: sql`(
+			// 	1
+			// )`.as('name'),
+		}).from(sectorDisasterRecordsRelationTable)
+		.innerJoin(disasterRecordsTable, 
+			and(
+				eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId),
+				eq(sectorDisasterRecordsRelationTable.withDamage, true),
+			)
+		)
+		.innerJoin(disasterEventTable, eq(disasterEventTable.id, disasterRecordsTable.disasterEventId))
+		.innerJoin(damagesTable, 
+			and(
+				eq(damagesTable.recordId, disasterRecordsTable.id),
+				eq(damagesTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
+			)
+		)
+		.innerJoin(assetTable, eq(assetTable.id, damagesTable.assetId))
+		.where(
+			and(
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
+				eq(disasterEventTable.id, disasterEventId),
+				// or(
+				// 	eq(sectorDisasterRecordsRelationTable.withDamage, true),
+				// 	// eq(sectorDisasterRecordsRelationTable.withLosses, true),
+				// ),
+				isInSectorIds.length > 0 ? inArray(damagesTable.sectorId, isInSectorIds) : undefined
+			),
+		);
+
+	// const rawSQL2 = queryRecordSectorTable.toSQL();
+	// console.log(rawSQL2 );
+	
+
+	// Execute the query
+	const record = await queryRecordSectorTable.execute();
+
+	return record;
+}
+
+
+export async function disasterEventSectorLossesDetails__ById(disasterEventId: string, isInSectorIds: number[] = []) {
+	if (typeof disasterEventId !== "string") {
+		throw new Error("Invalid ID: must be a string");
+	}
+
+	const queryRecordSectorTable = dr.selectDistinctOn(
+		[disasterEventTable.id, disasterRecordsTable.id, sectorDisasterRecordsRelationTable.id, lossesTable.id],
+		{
+			recordId: disasterRecordsTable.id,
+			// relDisrecordSector_Id: sectorDisasterRecordsRelationTable.id,
+			// relDisrecordSector_SectorId: sectorDisasterRecordsRelationTable.sectorId,
+			// relDisrecordSector_WithDamage: sectorDisasterRecordsRelationTable.withDamage,
+			// relDisrecordSector_DamageCost: sectorDisasterRecordsRelationTable.damageCost,
+			// relDisrecordSector_DamageCostCurrency: sectorDisasterRecordsRelationTable.damageCostCurrency,
+			// relDisrecordSector_DamageRecoveryCost: sectorDisasterRecordsRelationTable.damageRecoveryCost,
+			// relDisrecordSector_DamageRecoveryCostCurrency: sectorDisasterRecordsRelationTable.damageRecoveryCostCurrency,
+			// relDisrecordSector_WithLosses: sectorDisasterRecordsRelationTable.withLosses,
+			// relDisrecordSector_LossesCost: sectorDisasterRecordsRelationTable.lossesCost,
+			// relDisrecordSector_LossesCostCurrency: sectorDisasterRecordsRelationTable.lossesCostCurrency,
+			// eventDisasterEventId: disasterEventTable.id,
+			lossesId: lossesTable.id,
+			lossesDesc: lossesTable.description,
+			lossesTotalPrivateCost: lossesTable.privateCostTotal,
+			lossesTotalPrivateUnit: lossesTable.privateUnit,
+			lossesTotalPrivateCostCurrency: lossesTable.privateCostUnitCurrency,
+			lossesTotalPublicCost: lossesTable.publicCostTotal,
+			lossesTotalPublicUnit: lossesTable.publicUnit,
+			lossesTotalPublicCostCurrency: lossesTable.publicCostUnitCurrency,
+			lossesSectorIsAgriculture: lossesTable.sectorIsAgriculture,
+			lossesType: lossesTable.sectorIsAgriculture ? lossesTable.typeAgriculture : lossesTable.typeNotAgriculture,
+			lossesRelatedTo: lossesTable.sectorIsAgriculture ? lossesTable.relatedToAgriculture : lossesTable.relatedToNotAgriculture,
+			// lossesSectorId: lossesTable.sectorId,
+			// name: sql`(
+			// 	1
+			// )`.as('name'),
+		}).from(sectorDisasterRecordsRelationTable)
+		.innerJoin(disasterRecordsTable,
+			and(
+				eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId),
+				eq(sectorDisasterRecordsRelationTable.withLosses, true),
+			)
+		)
+		.innerJoin(disasterEventTable, eq(disasterEventTable.id, disasterRecordsTable.disasterEventId))
+		.innerJoin(lossesTable, 
+			and(
+				eq(lossesTable.recordId, disasterRecordsTable.id),
+				eq(lossesTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
+			)
+		)
+		.where(
+			and(
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
+				eq(disasterEventTable.id, disasterEventId),
+				isInSectorIds.length > 0 ? inArray(lossesTable.sectorId, isInSectorIds) : undefined
+			),
+		);
+
+	// const rawSQL2 = queryRecordSectorTable.toSQL();
+	// console.log(rawSQL2 );
+	
+
+	// Execute the query
+	const record = await queryRecordSectorTable.execute();
+
+
+	return record;
+}
+
+
+export async function disasterEventSectorDisruptionDetails__ById(disasterEventId: string, isInSectorIds: number[] = []) {
+	if (typeof disasterEventId !== "string") {
+		throw new Error("Invalid ID: must be a string");
+	}
+
+	const queryRecordSectorTable = dr.selectDistinctOn(
+		[disasterEventTable.id, disasterRecordsTable.id, sectorDisasterRecordsRelationTable.id, disruptionTable.id],
+		{
+			recordId: disasterRecordsTable.id,
+			// relDisrecordSector_Id: sectorDisasterRecordsRelationTable.id,
+			// relDisrecordSector_SectorId: sectorDisasterRecordsRelationTable.sectorId,
+			// relDisrecordSector_WithDamage: sectorDisasterRecordsRelationTable.withDamage,
+			// relDisrecordSector_DamageCost: sectorDisasterRecordsRelationTable.damageCost,
+			// relDisrecordSector_DamageCostCurrency: sectorDisasterRecordsRelationTable.damageCostCurrency,
+			// relDisrecordSector_DamageRecoveryCost: sectorDisasterRecordsRelationTable.damageRecoveryCost,
+			// relDisrecordSector_DamageRecoveryCostCurrency: sectorDisasterRecordsRelationTable.damageRecoveryCostCurrency,
+			// relDisrecordSector_WithLosses: sectorDisasterRecordsRelationTable.withLosses,
+			// relDisrecordSector_LossesCost: sectorDisasterRecordsRelationTable.lossesCost,
+			// relDisrecordSector_LossesCostCurrency: sectorDisasterRecordsRelationTable.lossesCostCurrency,
+			// eventDisasterEventId: disasterEventTable.id,
+			disruptionId: disruptionTable.id,
+			disruptionDurationDays: disruptionTable.durationDays,
+			disruptionDurationHours: disruptionTable.durationHours,
+			disruptionUsersAffected: disruptionTable.usersAffected,
+			disruptionPeopleAffected: disruptionTable.peopleAffected,
+			disruptionResponseCost: disruptionTable.responseCost,
+			disruptionResponseCurrency: disruptionTable.responseCurrency,
+			// name: sql`(
+			// 	1
+			// )`.as('name'),
+		}).from(sectorDisasterRecordsRelationTable)
+		.innerJoin(disasterRecordsTable,
+			and(
+				eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId),
+				eq(sectorDisasterRecordsRelationTable.withDisruption, true),
+			)
+		)
+		.innerJoin(disasterEventTable, eq(disasterEventTable.id, disasterRecordsTable.disasterEventId))
+		.innerJoin(disruptionTable, 
+			and(
+				eq(disruptionTable.recordId, disasterRecordsTable.id),
+				eq(disruptionTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
+			)
+		)
+		.where(
+			and(
+				eq(disasterRecordsTable.approvalStatus, "published"),
+				eq(disasterEventTable.approvalStatus, "published"),
+				eq(disasterEventTable.id, disasterEventId),
+				isInSectorIds.length > 0 ? inArray(disruptionTable.sectorId, isInSectorIds) : undefined
+			),
+		);
+
+	// const rawSQL2 = queryRecordSectorTable.toSQL();
+	// console.log(rawSQL2 );
+	
+
+	// Execute the query
+	const record = await queryRecordSectorTable.execute();
+
+
+	return record;
+}
+
+

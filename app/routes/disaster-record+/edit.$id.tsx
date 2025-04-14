@@ -22,6 +22,7 @@ import {nonecoLossesFilderBydisasterRecordsId} from "~/backend.server/models/non
 import {
 	sectorsFilderBydisasterRecordsId,
 } from "~/backend.server/models/disaster_record__sectors";
+import { getAffectedByDisasterRecord } from "~/backend.server/models/analytics/affected-people-by-disaster-record"
 
 import {
 	FormScreen
@@ -42,6 +43,7 @@ import {contentPickerConfig} from "./content-picker-config";
 
 import {ContentRepeaterUploadFile} from "~/components/ContentRepeater/UploadFile";
 import {DeleteButton} from "~/frontend/components/delete-dialog"
+
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {params} = loaderArgs;
@@ -81,7 +83,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			cpDisplayName: null,
 			ctryIso3: ctryIso3,
 			divisionGeoJSON: divisionGeoJSON?.rows,
-			user
+			user,
+			dbDisRecHumanEffectsSummaryTable: null
 		};
 	}
 
@@ -93,7 +96,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
 	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
 	const dbDisRecHumanEffects = await getHumanEffectRecordsById(params.id);
-
+	const dbDisRecHumanEffectsSummaryTable = await getAffectedByDisasterRecord(dr, params.id);
+	
 	// console.log("recordsNonecoLosses", dbNonecoLosses);
 	// console.log("recordsNonecoLosses", dbDisRecSectors);
 	//console.log("Human Effects: ", dbDisRecHumanEffects);
@@ -116,7 +120,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		cpDisplayName: cpDisplayName,
 		ctryIso3: ctryIso3,
 		divisionGeoJSON: divisionGeoJSON?.rows,
-		user
+		user,
+		dbDisRecHumanEffectsSummaryTable: dbDisRecHumanEffectsSummaryTable,
 	};
 });
 
@@ -179,31 +184,115 @@ export default function Screen() {
 							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">
 									<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects`}>[ Add new record ]</Link>&nbsp;
-									<DeleteButton action={`/disaster-record/edit-sub/${ld.item.id}/human-effects/delete-all-data`} label="[ Delete all records ]" />
 								</div>
 								<div className="mg-grid mg-grid__col-1">
 									<div className="dts-form-component">
-										{ld.recordsHumanEffects && (
-											<>
-												<ul>
-													{ld.recordsHumanEffects.deaths && (
-														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}>Deaths</Link></li>
-													)}
-													{ld.recordsHumanEffects.injured && (
-														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}>Injured</Link></li>
-													)}
-													{ld.recordsHumanEffects.missing && (
-														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}>Missing</Link></li>
-													)}
-													{(ld.recordsHumanEffects.affectedDirect || ld.recordsHumanEffects.affectedIndirect) && (
-														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Affected</Link></li>
-													)}
-													{(ld.recordsHumanEffects.displaced) && (
-														<li><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>Displaced</Link></li>
-													)}
-												</ul>
-											</>
-										)}
+										<table className="dts-table table-border">
+											<thead>
+												<tr>
+													<th></th>
+													<th></th>
+													<th></th>
+													<th className="center" colSpan={2}>Affected (Old DesInventar)</th>
+													<th></th>
+													<th></th>
+												</tr>
+												<tr>
+													<th>Deaths</th>
+													<th>Injured</th>
+													<th>Missing</th>
+													<th>Directly</th>
+													<th>Indirectly</th>
+													<th>Displaced</th>
+													<th>Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.deaths == 'number') && (
+															<>
+																<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}>{ld.dbDisRecHumanEffectsSummaryTable.deaths}</Link>
+															</>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.deaths == 'boolean' && ld.dbDisRecHumanEffectsSummaryTable.deaths) && (
+															<><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}>Yes</Link></>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.deaths == 'boolean' && !ld.dbDisRecHumanEffectsSummaryTable.deaths) && (
+															<>-</>
+														)}
+													</td>
+													<td>
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.injured == 'number') && (
+															<>
+																<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}>{ld.dbDisRecHumanEffectsSummaryTable.injured}</Link>
+															</>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.injured == 'boolean' && ld.dbDisRecHumanEffectsSummaryTable.injured) && (
+															<><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}>Yes</Link></>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.injured == 'boolean' && !ld.dbDisRecHumanEffectsSummaryTable.injured) && (
+															<>-</>
+														)}
+													</td>
+													<td>
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.missing == 'number') && (
+															<>
+																<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}>{ld.dbDisRecHumanEffectsSummaryTable.missing}</Link>
+															</>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.missing == 'boolean' && ld.dbDisRecHumanEffectsSummaryTable.missing) && (
+															<><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}>Yes</Link></>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.missing == 'boolean' && !ld.dbDisRecHumanEffectsSummaryTable.missing) && (
+															<>-</>
+														)}
+													</td>
+													<td>
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.directlyAffected == 'number') && (
+															<>
+																<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>{ld.dbDisRecHumanEffectsSummaryTable.directlyAffected}</Link>
+															</>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.directlyAffected == 'boolean' && ld.dbDisRecHumanEffectsSummaryTable.directlyAffected) && (
+															<><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Yes</Link></>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.directlyAffected == 'boolean' && !ld.dbDisRecHumanEffectsSummaryTable.directlyAffected) && (
+															<>-</>
+														)}
+													</td>
+													<td>
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.indirectlyAffected == 'number') && (
+															<>
+																<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>{ld.dbDisRecHumanEffectsSummaryTable.indirectlyAffected}</Link>
+															</>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.indirectlyAffected == 'boolean' && ld.dbDisRecHumanEffectsSummaryTable.indirectlyAffected) && (
+															<><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}>Yes</Link></>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.indirectlyAffected == 'boolean' && !ld.dbDisRecHumanEffectsSummaryTable.indirectlyAffected) && (
+															<>-</>
+														)}
+													</td>
+													<td>
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.displaced == 'number') && (
+															<>
+																<Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>{ld.dbDisRecHumanEffectsSummaryTable.displaced}</Link>
+															</>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.displaced == 'boolean' && ld.dbDisRecHumanEffectsSummaryTable.displaced) && (
+															<><Link to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}>Yes</Link></>
+														)}
+														{(typeof ld.dbDisRecHumanEffectsSummaryTable.displaced == 'boolean' && !ld.dbDisRecHumanEffectsSummaryTable.displaced) && (
+															<>-</>
+														)}
+													</td>
+													<td>
+														<DeleteButton action={`/disaster-record/edit-sub/${ld.item.id}/human-effects/delete-all-data`} label="Delete" />
+													</td>
+												</tr>
+											</tbody>
+										</table>
 									</div>
 								</div>
 							</div>

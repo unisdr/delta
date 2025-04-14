@@ -138,10 +138,10 @@ export async function sectorChildrenById(parentId: number) {
 		{
 			sectorname: sectorTable.sectorname,
 			id: sectorTable.id,
-			relatedAncestorsDecendants: 
+			relatedDecendants: 
 				sql`(
-					dts_get_sector_ancestors_decentants(${sectorTable.id})
-				)`.as('relatedAncestorsDecendants'),
+					dts_get_sector_decendants(${sectorTable.id})
+				)`.as('relatedDecendants'),
 		}).from(sectorTable)
 		.where(
 			and(
