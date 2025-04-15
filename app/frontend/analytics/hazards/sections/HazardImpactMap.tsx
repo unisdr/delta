@@ -83,7 +83,7 @@ const HazardImpactMap2: React.FC<HazardImpactMap2Props> = ({
 								role="tab"
 								id="tab01"
 								aria-controls="tabpanel01"
-								aria-selected="false"
+								aria-selected="true"
 							>
 								<span>Total damages in {localCurrency}</span>
 							</button>
