@@ -85,7 +85,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							<div
 								className="dts-tooltip__button"
 								onPointerEnter={(e) => createFloatingTooltip({
-									content: "Total people affected is the sum of deaths, injured, missing, directly affected people and displaced",
+									content: "Total people affected is the sum of injured, missing, directly affected people and displaced",
 									target: e.currentTarget,
 									placement: "top",
 									offsetValue: 8,
