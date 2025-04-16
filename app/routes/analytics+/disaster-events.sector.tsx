@@ -33,6 +33,7 @@ interface interfaceSectorDamage {
   damageTotalNumberAssetAffected: number;
   damageUnit: string;
   assetName: string;
+  sectorName: string;
 }
 
 interface interfaceSectorLosses {
@@ -48,6 +49,7 @@ interface interfaceSectorLosses {
     lossesSectorIsAgriculture: boolean;
   lossesType: string;
   lossesRelatedTo: string;
+  sectorName: string;
 }
 
 interface interfaceSectorDisruptions {
@@ -58,7 +60,8 @@ interface interfaceSectorDisruptions {
   disruptionUsersAffected: number;
   disruptionPeopleAffected: number;
   disruptionResponseCost: string;
-  disruptionResponseCurrency: string; 
+  disruptionResponseCurrency: string;
+  sectorName: string;
 }
 
 interface interfaceSector {
@@ -199,7 +202,7 @@ export default function DetailSectorEffectScreen() {
       sectorDamagePieChartData: interfacePieChart[],
       sectorLossesPieChartData: interfacePieChart[],
       sectorRecoveryPieChartData: interfacePieChart[],
-      confCurrencies: any,
+      confCurrencies: string,
       dbDisasterEventDamage: interfaceSectorDamage[],
       dbDisasterEventLosses: interfaceSectorLosses[],
       dbDisasterEventDisruptions: interfaceSectorDisruptions[],
@@ -217,7 +220,6 @@ export default function DetailSectorEffectScreen() {
     <>
           <section className="dts-page-section">
               <div className="mg-container">
-                <h3 className="dts-heading-3">Details of effects</h3>
 
                 {
                   Object.keys(ld.sectorDamagePieChartData).length == 0 && Object.keys(ld.sectorLossesPieChartData).length == 0 && Object.keys(ld.sectorRecoveryPieChartData).length == 0 && (
@@ -292,6 +294,7 @@ export default function DetailSectorEffectScreen() {
                               <tr>
                                 <th role="columnheader" aria-label="Disaster Record ID">Disaster Record ID</th>
                                 <th role="columnheader" aria-label="Damage ID">Damage ID</th>
+                                <th role="columnheader" aria-label="Sector classification">Sector classification</th>
                                 <th role="columnheader" aria-label="Asset">Asset</th>
                                 <th role="columnheader" aria-label="Total number of assets">Number of assets</th>
                                 <th role="columnheader" aria-label="Repair/Replacement">Repair/Replacement Cost</th>
@@ -304,6 +307,7 @@ export default function DetailSectorEffectScreen() {
                                   <tr role="row" key={index} >
                                     <td role="gridcell">{item.recordId.slice(0, 8)}</td>
                                     <td role="gridcell">{item.damageId.slice(0, 8)}</td>
+                                    <td role="gridcell">{item.sectorName}</td>
                                     <td role="gridcell">{item.assetName}</td>
                                     <td role="gridcell">
                                       { Number(item.damageTotalNumberAssetAffected).toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }
@@ -312,8 +316,16 @@ export default function DetailSectorEffectScreen() {
                                         unitName(item.damageUnit)
                                       )}
                                     </td>
-                                    <td role="gridcell">{ Number(item.damageTotalRepairReplacementCost).toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</td>
-                                    <td role="gridcell">{ Number(item.damageTotalRecoveryCost).toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</td>
+                                    <td role="gridcell">
+                                      { ld.confCurrencies }
+                                      {' '}
+                                      { Number(item.damageTotalRepairReplacementCost).toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }
+                                    </td>
+                                    <td role="gridcell">
+                                      { ld.confCurrencies }
+                                      {' '}
+                                      { Number(item.damageTotalRecoveryCost).toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }
+                                    </td>
                                   </tr>
                                 ))
                               }
@@ -341,6 +353,7 @@ export default function DetailSectorEffectScreen() {
                               <tr>
                                 <th role="columnheader" aria-label="Disaster Record ID">Disaster Record ID</th>
                                 <th role="columnheader" aria-label="Losses ID">Losses ID</th>
+                                <th role="columnheader" aria-label="Sector classification">Sector classification</th>
                                 <th role="columnheader" aria-label="Description">Description</th>
                                 <th role="columnheader" aria-label="Public Cost">Public Cost</th>
                                 <th role="columnheader" aria-label="Private Cost">Private Cost</th>
@@ -352,6 +365,7 @@ export default function DetailSectorEffectScreen() {
                                   <tr role="row" key={index} >
                                     <td role="gridcell">{item.recordId.slice(0, 8)}</td>
                                     <td role="gridcell">{item.lossesId.slice(0, 8)}</td>
+                                    <td role="gridcell">{item.sectorName}</td>
                                     <td role="gridcell">{item.lossesDesc}</td>
                                     <td role="gridcell">
                                       { item.lossesTotalPublicCostCurrency }
@@ -395,6 +409,7 @@ export default function DetailSectorEffectScreen() {
                               <tr>
                                 <th role="columnheader" aria-label="Disaster Record ID">Disaster Record ID</th>
                                 <th role="columnheader" aria-label="Disruption ID">Disruption ID</th>
+                                <th role="columnheader" aria-label="Sector classification">Sector classification</th>
                                 <th role="columnheader" aria-label="Duration (days)">Duration (days)</th>
                                 <th role="columnheader" aria-label="Duration (hours)">Duration (hours)</th>
                                 <th role="columnheader" aria-label="Number of users affected">Number of users affected</th>
@@ -408,6 +423,7 @@ export default function DetailSectorEffectScreen() {
                                   <tr role="row" key={index} >
                                     <td role="gridcell">{item.recordId.slice(0, 8)}</td>
                                     <td role="gridcell">{item.disruptionId.slice(0, 8)}</td>
+                                    <td role="gridcell">{item.sectorName}</td>
                                     <td role="gridcell">{item.disruptionDurationDays}</td>
                                     <td role="gridcell">{item.disruptionDurationHours}</td>
                                     <td role="gridcell">{item.disruptionUsersAffected}</td>
