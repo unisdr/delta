@@ -134,7 +134,7 @@ export default function Screen() {
 											type="email"
 											autoComplete="off"
 											name="email"
-											placeholder="Enter email address*"
+											placeholder="*Email address"
 											defaultValue={data?.email}
 											required
 											className={
@@ -164,7 +164,7 @@ export default function Screen() {
 												type={passwordVisible ? "text" : "password"}
 												autoComplete="off"
 												name="password"
-												placeholder="Enter password*"
+												placeholder="*Password"
 												defaultValue={data?.password}
 												required
 												className={
@@ -221,7 +221,7 @@ export default function Screen() {
 									</Field>
 								</div>
 							</div>
-							<Link to="/user/forgot-password">Forgot password</Link>
+							<u><Link to="/user/forgot-password">Forgot password?</Link></u>
 							<div className="dts-dialog__form-actions"
 								style={{
 									display: "flex", // Switch to horizontal layout
