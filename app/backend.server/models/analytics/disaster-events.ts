@@ -619,6 +619,7 @@ export async function disasterEventSectorDamageDetails__ById(disasterEventId: st
 			damageUnit: damagesTable.unit,
 			// assetId: assetTable.id,
 			assetName: assetTable.name,
+			sectorName: sectorTable.sectorname,
 			// name: sql`(
 			// 	1
 			// )`.as('name'),
@@ -637,6 +638,7 @@ export async function disasterEventSectorDamageDetails__ById(disasterEventId: st
 			)
 		)
 		.innerJoin(assetTable, eq(assetTable.id, damagesTable.assetId))
+		.innerJoin(sectorTable, eq(sectorTable.id, sectorDisasterRecordsRelationTable.sectorId))
 		.where(
 			and(
 				eq(disasterRecordsTable.approvalStatus, "published"),
@@ -693,6 +695,7 @@ export async function disasterEventSectorLossesDetails__ById(disasterEventId: st
 			lossesType: lossesTable.sectorIsAgriculture ? lossesTable.typeAgriculture : lossesTable.typeNotAgriculture,
 			lossesRelatedTo: lossesTable.sectorIsAgriculture ? lossesTable.relatedToAgriculture : lossesTable.relatedToNotAgriculture,
 			// lossesSectorId: lossesTable.sectorId,
+			sectorName: sectorTable.sectorname,
 			// name: sql`(
 			// 	1
 			// )`.as('name'),
@@ -710,6 +713,7 @@ export async function disasterEventSectorLossesDetails__ById(disasterEventId: st
 				eq(lossesTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
 			)
 		)
+		.innerJoin(sectorTable, eq(sectorTable.id, sectorDisasterRecordsRelationTable.sectorId))
 		.where(
 			and(
 				eq(disasterRecordsTable.approvalStatus, "published"),
@@ -758,6 +762,7 @@ export async function disasterEventSectorDisruptionDetails__ById(disasterEventId
 			disruptionPeopleAffected: disruptionTable.peopleAffected,
 			disruptionResponseCost: disruptionTable.responseCost,
 			disruptionResponseCurrency: disruptionTable.responseCurrency,
+			sectorName: sectorTable.sectorname,
 			// name: sql`(
 			// 	1
 			// )`.as('name'),
@@ -775,6 +780,7 @@ export async function disasterEventSectorDisruptionDetails__ById(disasterEventId
 				eq(disruptionTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
 			)
 		)
+		.innerJoin(sectorTable, eq(sectorTable.id, sectorDisasterRecordsRelationTable.sectorId))
 		.where(
 			and(
 				eq(disasterRecordsTable.approvalStatus, "published"),

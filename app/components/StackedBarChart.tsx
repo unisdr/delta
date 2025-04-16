@@ -18,8 +18,9 @@ export default function CustomStackedBarChart({ data }: { data: any[]; }) {
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
+          <Legend />
           <Bar dataKey="damage" stackId="a" fill="#8884d8" />
-          <Bar dataKey="losses" stackId="a" fill="#82ca9d" />
+          <Bar dataKey="losses" stackId="a" fill="#22aa9d" />
         </BarChart>
       </ResponsiveContainer>
     </>
