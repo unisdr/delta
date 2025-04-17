@@ -113,7 +113,7 @@ const Filters: React.FC<FiltersProps> = ({
   const { data: hazardClustersData, isFetching: isFetchingClusters } = useQuery(
     ["hazardClusters", filters.hazardClusterId],
     async () => {
-      const response = await fetch(`/api/analytics/hazard-clusters?hazardTypeId=${filters.hazardTypeId}`);
+      const response = await fetch(`/api/analytics/hazard-clusters?typeId=${filters.hazardTypeId}`);
       return response.json();
     },
     {
