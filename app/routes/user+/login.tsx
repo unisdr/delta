@@ -87,7 +87,7 @@ export function getSafeRedirectTo(redirectTo: string | null, defaultPath: string
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Login - DTS" },
+		{ title: "Sign-in - DTS" },
 		{ name: "description", content: "Login." },
 	];
 };
@@ -232,7 +232,7 @@ export default function Screen() {
 								}}
 
 							>
-								<SubmitButton className='mg-button mg-button-primary' label="Login"
+								<SubmitButton className='mg-button mg-button-primary' label="Sing in"
 									style={{
 										width: "100%", // Full width on small screens
 										padding: "10px 20px", // Ensure consistent padding
