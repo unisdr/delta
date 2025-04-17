@@ -95,7 +95,7 @@ export default function Screen() {
 								) : null}
 
 								<Field label="">
-									<input type="email" autoComplete="off" name="email" placeholder="*Enter email address"
+									<input type="email" autoComplete="off" name="email" placeholder="*E-mail address"
 										style={{
 											padding: "10px 20px", // Increased padding for larger height
 											fontSize: "16px", // Larger font size
