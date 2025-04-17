@@ -87,7 +87,7 @@ export function getSafeRedirectTo(redirectTo: string | null, defaultPath: string
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Login - DTS" },
+		{ title: "Sign-in - DTS" },
 		{ name: "description", content: "Login." },
 	];
 };
@@ -134,7 +134,7 @@ export default function Screen() {
 											type="email"
 											autoComplete="off"
 											name="email"
-											placeholder="Enter email address*"
+											placeholder="*Email address"
 											defaultValue={data?.email}
 											required
 											className={
@@ -164,7 +164,7 @@ export default function Screen() {
 												type={passwordVisible ? "text" : "password"}
 												autoComplete="off"
 												name="password"
-												placeholder="Enter password*"
+												placeholder="*Password"
 												defaultValue={data?.password}
 												required
 												className={
@@ -221,7 +221,7 @@ export default function Screen() {
 									</Field>
 								</div>
 							</div>
-							<Link to="/user/forgot-password">Forgot password</Link>
+							<u><Link to="/user/forgot-password">Forgot password?</Link></u>
 							<div className="dts-dialog__form-actions"
 								style={{
 									display: "flex", // Switch to horizontal layout
@@ -232,7 +232,7 @@ export default function Screen() {
 								}}
 
 							>
-								<SubmitButton className='mg-button mg-button-primary' label="Login"
+								<SubmitButton className='mg-button mg-button-primary' label="Sing in"
 									style={{
 										width: "100%", // Full width on small screens
 										padding: "10px 20px", // Ensure consistent padding

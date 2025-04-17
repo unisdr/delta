@@ -84,7 +84,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
   // Extract query string parameters
   const queryParams = parsedUrl.searchParams;
-  const xId = queryParams.get('disasterEventId') || ''; 
+  const qsDisEventId = queryParams.get('disasterEventId') || ''; 
   let record:any = undefined;
   let recordsRelatedSectors:any = undefined;
   let countRelatedDisasterRecords:any = undefined;
@@ -112,19 +112,19 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     return sectorParentArray.some(item => item.id === id);
   };
   
-  if (xId) {
-    record = await disasterEventById(xId).catch(console.error);
+  if (qsDisEventId) {
+    record = await disasterEventById(qsDisEventId).catch(console.error);
     if  ( record ) {
       try {
-        cpDisplayName = await contentPickerConfig.selectedDisplay(dr, xId);
+        cpDisplayName = await contentPickerConfig.selectedDisplay(dr, qsDisEventId);
 
-        // console.log( xId );
-        // console.log( typeof xId );
+        // console.log( qsDisEventId );
+        // console.log( typeof qsDisEventId );
         // console.log( record );
         // getSectorFullPathById()
 
         // get all related sectors
-        recordsRelatedSectors = await disasterEventSectorsById(xId, true);
+        recordsRelatedSectors = await disasterEventSectorsById(qsDisEventId, true);
         for (const item of recordsRelatedSectors) {
           // console.log( item.relatedAncestorsDecentants );
           // const sectorParentArray = (item.relatedAncestorsDecentants as interfaceSector[]).filter(item2 => item2.level === 2);
@@ -143,7 +143,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
             x.myChildren = ancestorIds;
             x.effects = {};
-            x.effects = await disasterEventSectorTotal__ById(xId, ancestorIds);
+            x.effects = await disasterEventSectorTotal__ById(qsDisEventId, ancestorIds);
 
             // Populate sectorData - will be used for the sector filter
             if (!sectortData[x.id]) {
@@ -212,20 +212,20 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // console.log( mapSectorArray );
         // console.log( sectorBarChart );
         // get the count of Disaster Records linked to the disaster event
-        countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(xId);
+        countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(qsDisEventId);
 
-        totalSectorEffects = await disasterEventSectorTotal__ById(xId);
+        totalSectorEffects = await disasterEventSectorTotal__ById(qsDisEventId);
 
         //retired, system is now using version 2
-        // totalAffectedPeople = await getAffectedByDisasterEvent(dr, xId); 
-        totalAffectedPeople2 = await getAffected(dr, xId);
+        // totalAffectedPeople = await getAffectedByDisasterEvent(dr, qsDisEventId); 
+        totalAffectedPeople2 = await getAffected(dr, qsDisEventId);
         // console.log( totalAffectedPeople );
         // console.log( totalAffectedPeople, totalAffectedPeople2 );
 
         const divisionLevel1 = await getDivisionByLevel(1);
         for (const item of divisionLevel1) {
-          const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(xId, [item.id]);
-          const humanEffectsPerDivision = await getAffected(dr, xId, {divisionId: item.id});
+          const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, [item.id]);
+          const humanEffectsPerDivision = await getAffected(dr, qsDisEventId, {divisionId: item.id});
 
           // Populate the geoData for the map for the human effects
           humanEffectsGeoData.push({
@@ -269,6 +269,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   }
 
   return ({
+    qsDisEventId: qsDisEventId,
     record: record,
     recordsRelatedSectors: recordsRelatedSectors,
     countRelatedDisasterRecords: countRelatedDisasterRecords,
@@ -305,6 +306,7 @@ function DisasterEventsAnalysisContent() {
   const [subSectors, setSubSectors] = useState<{ id: number; sectorname: string }[]>([]);
 
   const ld = useLoaderData<{
+    qsDisEventId: string,
     record: DisasterEventViewModel | null, 
     recordsRelatedSectors: any,
     countRelatedDisasterRecords: number | null,
@@ -509,7 +511,13 @@ function DisasterEventsAnalysisContent() {
         <section className="dts-page-section">
         <div className="mg-container">
           <h2 className="dts-heading-2">{ ld.cpDisplayName }</h2>
-          <p>Affiliated record(s): { ld.countRelatedDisasterRecords }</p>
+          <p><strong>Affiliated record(s)</strong>: 
+            { ld.countRelatedDisasterRecords }
+            { ' ' }
+            { ld.countRelatedDisasterRecords && ld.countRelatedDisasterRecords > 0 && (
+                <a href={`/disaster-record?search=${ld.qsDisEventId}`}>View records</a>
+            )}           
+          </p>
 
           {
             Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.length > 0 && <>
@@ -530,7 +538,7 @@ function DisasterEventsAnalysisContent() {
             
             (ld.record && (ld.record.startDate || ld.record.endDate)) && <>
               <p>
-                Date: { ld.record.startDate } to {ld.record.endDate}
+              <strong>Date</strong>: { ld.record.startDate } to {ld.record.endDate}
               </p>
               </>
           }
@@ -836,7 +844,7 @@ function DisasterEventsAnalysisContent() {
                 </ul>
                 <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
                   <div>
-                      <MapChart ref={mapChartRef} id="map_viewer" dataSource={activeData} legendMaxColor="#208f04" />
+                      <MapChart ref={mapChartRef} id="map_viewer" dataSource={activeData} legendTitle="Total Damage" legendMaxColor="#208f04" />
                   </div>
                 </div>
               </div>
@@ -907,37 +915,54 @@ function DisasterEventsAnalysisContent() {
           {
             ld.sectorParentArray.length > 0 && (
               <>
+
                 <section className="dts-page-section">
-                  <div className="mg-grid mg-grid__col-2">
-                    <div className="dts-form-component"><label>Sector *</label>
-                      <select id="sector-select" className="filter-select" name="sector" required onChange={handleSectorChange}>
-                        <option value="">Select Sector</option>
-                        {
-                          ld.sectorParentArray.map((item, index) => (
-                            <option key={index} value={item.id}>{item.sectorname}</option>
-                          ))
-                        }
-                      </select>
-                    </div>
-                    <div className="dts-form-component">
-                        <label>Sub Sector</label>
-                        <select id="sub-sector-select" className="filter-select"  name="sub-sector" onChange={handleSubSectorChange}>
-                          <option  value="">Select Sector First</option>
-                          {subSectors.map((sub: { id: number; sectorname: string }) => (
-                            <option key={sub.id} value={sub.id}>
-                              {sub.sectorname}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                  </div>  
-                  <div className="mg-grid mg-grid__col-2">
-                    <div className="mg-grid mg-grid__col-2 dts-form__actions">
-                      <Link id="sector-clear-filter" to={`/analytics/disaster-events/?disasterEventId=${ld.record.id}`} className="mg-button mg-button--small mg-button-outline">Clear</Link>
-                      <Link id="sector-apply-filter" style={{ pointerEvents: 'none', opacity: 0.5 }} to={`/analytics/disaster-events/x/?disasterEventId=${ld.record.id}&sectorid=${selectedSector}&subsectorid=${selectedSubSector}`} className="mg-button mg-button--small mg-button-primary">Apply filters</Link>
-                    </div>
+                  <div className="mg-container">
+                    <h2 className="dts-heading-2">Details of effects</h2>
+                    <form className="dts-form">
+                      <div className="dts-form__body">
+                        <div className="mg-grid mg-grid__col-auto">
+                          <div className="dts-form-component">
+                            <label>
+                              <div className="dts-form-component__label">
+                              <span>Sector *</span>
+                              </div>
+                              <select id="sector-select" className="filter-select" name="sector" required onChange={handleSectorChange}>
+                                <option value="">Select Sector</option>
+                                {
+                                  ld.sectorParentArray.map((item, index) => (
+                                    <option key={index} value={item.id}>{item.sectorname}</option>
+                                  ))
+                                }
+                              </select>
+                            </label>
+                          </div>
+                          <div className="dts-form-component">
+                            <label>
+                              <div className="dts-form-component__label">
+                              <span>Sub Sector</span>
+                              </div>
+                              <select id="sub-sector-select" className="filter-select"  name="sub-sector" onChange={handleSubSectorChange}>
+                                  <option  value="">Select Sector First</option>
+                                  {subSectors.map((sub: { id: number; sectorname: string }) => (
+                                    <option key={sub.id} value={sub.id}>
+                                      {sub.sectorname}
+                                    </option>
+                                  ))}
+                              </select>
+                            </label>
+                          </div>
+                        </div>
+                        <div className="dts-form__actions">
+                          <Link id="sector-apply-filter" style={{ pointerEvents: 'none', opacity: 0.5 }} to={`/analytics/disaster-events/sector/?disasterEventId=${ld.record.id}&sectorid=${selectedSector}&subsectorid=${selectedSubSector}`} className="mg-button mg-button--small mg-button-primary">Apply filters</Link>
+                          <Link id="sector-clear-filter" to={`/analytics/disaster-events/?disasterEventId=${ld.record.id}`} className="mg-button mg-button--small mg-button-outline">Clear</Link>
+                        </div>
+                      </div>
+                    </form>
                   </div>
                 </section>
+
+
               </>
             )
           }
