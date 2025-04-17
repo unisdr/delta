@@ -212,7 +212,7 @@ export function FieldErrors3({errors}: FieldErrors2Props) {
 			<div className="dts-form-component__hint">
 				<div className="dts-form-component__hint--error" aria-live="assertive">
 					{errors.map((error, index) => (
-						<span style={{color: "red"}} key={index}>
+						<span key={index}>
 							{error}
 						</span>
 					))}

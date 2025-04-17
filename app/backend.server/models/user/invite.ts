@@ -111,7 +111,7 @@ export async function sendInvite(user: User) {
 		.where(eq(userTable.id, user.id));
 
 	const inviteURL =
-		configSiteURL() + "/user/accept-invite?inviteCode=" + inviteCode;
+		configSiteURL() + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
 	const subject = `Invitation to join DTS ${configSiteName()}`;
 	const html = `<p>You have been invited to join the DTS ${configSiteName()} system as 
                    a ${user.role} user.
