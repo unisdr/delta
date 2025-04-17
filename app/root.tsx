@@ -13,7 +13,8 @@ import {
 	Outlet,
 	Scripts,
 	useNavigation,
-	useFetcher
+	useFetcher,
+	useMatches
 } from "@remix-run/react";
 
 import {LoaderFunctionArgs} from "react-router-dom";
@@ -193,6 +194,14 @@ const queryClient = new QueryClient({
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
 	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, userRole} = loaderData
+	let boolShowHeaderFooter:boolean = true;
+	const matches = useMatches();
+	const isUrlPathUserInvite = matches.some((match) => match.pathname.startsWith("/user/accept-invite"));
+
+	// Do not show header and foother for certain pages [user invitation]
+	if (isUrlPathUserInvite) {
+		boolShowHeaderFooter = false;
+	}
 	
 	// Display toast for flash messages
 	useEffect(() => {
@@ -228,7 +237,7 @@ export default function Screen() {
 					/>
 					<InactivityWarning loggedIn={loggedIn} />
 					<div className="dts-page-container">
-						{(hasPublicSite || loggedIn) && (
+						{(hasPublicSite || loggedIn) && boolShowHeaderFooter && (
 							<header>
 								<div className="mg-container">
 									<Header loggedIn={loggedIn} userRole={userRole} siteName={confSiteName} siteLogo={confSiteLogo} />
@@ -239,11 +248,13 @@ export default function Screen() {
 							<Outlet />
 						</main>
 						<footer>
-							<Footer
-								siteName={confSiteName}
-								urlPrivacyPolicy={confFooterURLPrivPolicy}
-								urlTermsConditions={confFooterURLTermsConds}
-							/>
+							{ boolShowHeaderFooter && (
+								<Footer
+									siteName={confSiteName}
+									urlPrivacyPolicy={confFooterURLPrivPolicy}
+									urlTermsConditions={confFooterURLTermsConds}
+								/>
+							)}
 						</footer>
 					</div>
 					<Scripts />

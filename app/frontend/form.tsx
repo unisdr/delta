@@ -124,22 +124,51 @@ export function FormMessage({children}: FormMessageProps) {
 interface FieldProps {
 	children: React.ReactNode;
 	label: string;
+	extraClassName?: string;
 }
 
-export function Field({children, label}: FieldProps) {
-	return (
-		<div className="form-field">
-			<label>
-				{label}
-				<div>{children}</div>
-			</label>
-		</div>
-	);
+export function Field({children, label, extraClassName}: FieldProps) {
+	if (extraClassName && extraClassName?.indexOf('dts-form-component') >= 0) {
+		return (
+			<div className={extraClassName}>
+				<label>
+					{label}
+					{children}
+				</label>
+			</div>
+		);	
+	}
+	else {
+		return (
+			<div className={extraClassName ? `form-field ${extraClassName}` : 'form-field'}>
+				<label>
+					{label}
+					<div>{children}</div>
+				</label>
+			</div>
+		);
+	}
 }
 
 interface FieldErrorsProps<T> {
 	errors?: Errors<T>;
 	field: keyof T;
+}
+
+export function FieldErrorsStandard<T>({errors, field}: FieldErrorsProps<T>) {
+	if (!errors || !errors.fields) {
+		return null;
+	}
+	const fieldErrors = errors.fields[field];
+	if (!fieldErrors || fieldErrors.length == 0) {
+		return null;
+	}
+
+	if (!errors) {
+		return null;
+	}
+
+	return FieldErrors3({errors: errorsToStrings(fieldErrors)});
 }
 
 export function FieldErrors<T>({errors, field}: FieldErrorsProps<T>) {
@@ -170,6 +199,26 @@ export function FieldErrors2({errors}: FieldErrors2Props) {
 				</li>
 			))}
 		</ul>
+	);
+}
+
+export function FieldErrors3({errors}: FieldErrors2Props) {
+	if (!errors) {
+		return null;
+	}
+
+	return (
+		<>
+			<div className="dts-form-component__hint">
+				<div className="dts-form-component__hint--error" aria-live="assertive">
+					{errors.map((error, index) => (
+						<span key={index}>
+							{error}
+						</span>
+					))}
+				</div>
+			</div>
+		</>
 	);
 }
 
