@@ -281,6 +281,10 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
 
   // Handle feature click for drill-down
   const handleFeatureClick = async (feature: Feature<Geometry>) => {
+    // Drilldown functionality temporarily disabled
+    return;
+
+    /* Commented out drilldown functionality
     const level = feature.get("level");
     const id = feature.get("id");
 
@@ -324,6 +328,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
     } finally {
       setLoading(false);
     }
+    */
   };
 
   // Calculate color ranges
@@ -562,10 +567,33 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
     const moveListener = map.on("pointermove", pointerMoveHandler);
     const startListener = map.on("movestart", moveStartHandler);
 
+    // --- ADDED: Mobile/tablet tap support for tooltip ---
+    const singleClickHandler = (event: any) => {
+      const pixel = map.getEventPixel(event.originalEvent || event);
+      let tappedFeature: FeatureLike | null = null;
+      map.forEachFeatureAtPixel(pixel, (feature) => {
+        tappedFeature = feature as FeatureLike;
+      });
+      if (tappedFeature) {
+        updateTooltip(tappedFeature, event.coordinate);
+        // Optionally auto-hide after 3 seconds
+        setTimeout(() => {
+          if (tooltip) tooltip.style.display = "none";
+        }, 3000);
+      } else if (tooltip) {
+        tooltip.style.display = "none";
+      }
+    };
+    const clickListener = map.on("singleclick", singleClickHandler);
+    // --- END ADDED ---
+
     // Cleanup event listeners
     return () => {
       unByKey(moveListener);
       unByKey(startListener);
+      // --- ADDED: cleanup for singleclick ---
+      unByKey(clickListener);
+      // --- END ADDED ---
       if (tooltip) {
         tooltip.style.display = "none";
       }
