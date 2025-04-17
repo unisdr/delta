@@ -39,7 +39,6 @@ import {
 
 import { formStringData } from "~/util/httputil";
 
-import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
 import { redirectWithMessage, sessionCookie } from "~/util/session";
@@ -48,7 +47,7 @@ import "react-toastify/dist/ReactToastify.css"; // Toast styles
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { useNavigate } from "@remix-run/react";
-import {adminUpdateUser, AdminUpdateUserFields, adminUpdateUserFieldsFromMap} from "~/backend.server/models/user/update_user";
+import { adminUpdateUser, AdminUpdateUserFields, adminUpdateUserFieldsFromMap } from "~/backend.server/models/user/update_user";
 
 
 export const meta: MetaFunction = () => {
@@ -230,9 +229,13 @@ export default function Screen() {
 
 
 	return (
-		<MainContainer title="Access management" headerExtra={<NavSettings />}>
+		<MainContainer title="Edit User">
+			<div className="dts-form__header">
+				<Link to="/settings/access-mgmnt/" className="mg-button mg-button--small mg-button-system">
+					Back
+				</Link>
+			</div>
 			<>
-				<h2>Edit User</h2>
 				<div
 					style={{
 						display: "flex",
@@ -272,7 +275,7 @@ export default function Screen() {
 						onClick={handleDeleteUser}
 					>
 						<img
-							src="/public/assets/icons/trash-alt.svg"
+							src="/assets/icons/trash-alt.svg"
 							alt="Trash Icon"
 							style={{ marginRight: "8px" }}
 						/>
@@ -282,116 +285,81 @@ export default function Screen() {
 				<Form errors={errors}>
 					{/* First Name, Last Name, and Email */}
 					<div
-						style={{
-							display: "flex",
-							flexWrap: "wrap",
-							gap: "20px",
-							marginBottom: "20px",
-						}}
+						className="mg-grid mg-grid__col-3"
 					>
-						<div style={{ flex: "1 1 30%" }}>
-							<Field label="">
-								<label style={{ marginBottom: "5px", display: "block" }}>
-									<span style={{ color: "red" }}>*</span> First Name
-								</label>
+						<div className="dts-form-component">
+							<label>
+								<div className="dts-form-component__label">
+									<span style={{ color: "red" }}>*</span>First Name
+								</div>
 								<input
 									type="text"
 									name="firstName"
 									defaultValue={fields.firstName}
 									required
-									style={{
-										width: "100%",
-										padding: "10px",
-										borderRadius: "4px",
-										fontSize: "14px",
-									}}
+									autoComplete="given-name"
 								/>
 								<FieldErrors errors={errors} field="firstName"></FieldErrors>
-							</Field>
+							</label>
 						</div>
-						<div style={{ flex: "1 1 30%" }}>
-							<Field label="">
-								<label style={{ marginBottom: "5px", display: "block" }}>Last Name</label>
+						<div className="dts-form-component">
+							<label>
+								<div className="dts-form-component__label">
+									<span style={{ color: "red" }}>*</span>Last Name
+								</div>
 								<input
 									type="text"
 									name="lastName"
 									defaultValue={fields.lastName}
-									style={{
-										width: "100%",
-										padding: "10px",
-										borderRadius: "4px",
-										fontSize: "14px",
-									}}
+									autoComplete="family-name"
 								/>
 								<FieldErrors errors={errors} field="lastName"></FieldErrors>
-							</Field>
+							</label>
 						</div>
-						<div style={{ flex: "1 1 30%" }}>
-							<Field label="">
-								<label style={{ marginBottom: "5px", display: "block" }}>
-									<span style={{ color: "red" }}>*</span> Email
-								</label>
+						<div className="dts-form-component">
+							<label>
+								<div className="dts-form-component__label">
+									<span style={{ color: "red" }}>*</span>Email
+								</div>
 								<input
 									type="email"
 									name="email"
 									defaultValue={fields.email}
 									required
-									style={{
-										width: "100%",
-										padding: "10px",
-										borderRadius: "4px",
-										fontSize: "14px",
-									}}
+									autoComplete="email"
 								/>
 								<FieldErrors errors={errors} field="email"></FieldErrors>
-							</Field>
+							</label>
+						</div>
+					</div>
+					<div className="mg-grid mg-grid__col-3">
+						<div className="dts-form-component mg-grid__col--span-2">
+							<label>
+								<div className="dts-form-component__label">
+									<span style={{ color: "red" }}>*</span> Organization
+								</div>
+								<input
+									type="text"
+									name="organization"
+									defaultValue={fields.organization}
+									required
+									autoComplete="organization"
+								/>
+								<FieldErrors errors={errors} field="organization"></FieldErrors>
+							</label>
 						</div>
 					</div>
 
-					<div style={{ marginBottom: "20px" }}>
-						<Field label="">
-							<label style={{ marginBottom: "5px", display: "block" }}>
-								<span style={{ color: "red" }}>*</span> Organization
-							</label>
-							<input
-								type="text"
-								name="organization"
-								defaultValue={fields.organization}
-								required
-								style={{
-									width: "100%",
-									padding: "10px",
-									borderRadius: "4px",
-									fontSize: "14px",
-								}}
-							/>
-							<FieldErrors errors={errors} field="organization"></FieldErrors>
-						</Field>
-					</div>
-
-					<div
-						style={{
-							display: "flex",
-							justifyContent: "space-between",
-							alignItems: "center",
-							marginBottom: "20px",
-						}}
-					>
+					<div className="mg-grid mg-grid__col-3">
 						{/* Role Field */}
-						<div style={{ flex: "1", marginRight: "10px" }}>
-							<Field label="">
-								<label style={{ marginBottom: "5px", display: "block" }}>
+						<div className="dts-form-component">
+							<label>
+								<div className="dts-form-component__label">
 									<span style={{ color: "red" }}>*</span> Role
-								</label>
+								</div>
 								<select
 									name="role"
 									defaultValue={fields.role}
-									style={{
-										width: "100%",
-										padding: "10px",
-										borderRadius: "4px",
-										fontSize: "14px",
-									}}
 								>
 									<option value="" disabled>
 										Select a role
@@ -403,43 +371,38 @@ export default function Screen() {
 									))}
 								</select>
 								<FieldErrors errors={errors} field="role"></FieldErrors>
-							</Field>
+							</label>
 						</div>
 
 						{/* Generated System Identifier Field */}
-						<div style={{ flex: "1", marginLeft: "10px" }}>
-							<Field label="">
-								<label style={{ marginBottom: "5px", display: "block" }}>
-									Generated system identifier
-								</label>
+						<div className="dts-form-component">
+							<label>
+								<div className="dts-form-component__label">
+									<span>Generated system identifier</span>
+								</div>
 								<input
 									type="text"
 									name="generatedSystemIdentifier"
 									value={fields.generatedSystemIdentifier}
 									disabled
-									style={{
-										width: "100%",
-										padding: "10px",
-										borderRadius: "4px",
-										fontSize: "14px",
-									}}
 								/>
-							</Field>
+							</label>
 						</div>
 					</div>
 
-					<div
-						style={{
-							display: "flex",
-							justifyContent: "flex-end",
-							gap: "20px",
-							marginTop: "20px",
-						}}
-					>
-						<Link to="/settings/access-mgmnt/" className="mg-button mg-button-outline">
-							Discard
-						</Link>
-						<SubmitButton className="mg-button mg-button-primary" label="Save Changes" />
+					<div className="dts-form__actions">
+						<div
+							style={{
+								display: "flex",
+								justifyContent: "flex-end",
+								gap: "20px",
+							}}
+						>
+							<Link to="/settings/access-mgmnt/" className="mg-button mg-button-outline">
+								Discard
+							</Link>
+							<SubmitButton className="mg-button mg-button-primary" label="Save Changes" />
+						</div>
 					</div>
 				</Form>
 			</>
