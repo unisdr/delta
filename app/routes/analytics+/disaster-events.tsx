@@ -39,9 +39,9 @@ import MapChart, { MapChartRef } from "~/components/MapChart";
 import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Rectangle, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import CustomPieChart from '~/components/PieChart';
 import CustomStackedBarChart from '~/components/StackedBarChart';
+import HorizontalBarChart from '~/components/HorizontalBarChart';
 
 
 // Define an interface for the structure of the JSON objects
@@ -682,12 +682,8 @@ function DisasterEventsAnalysisContent() {
                     <h3 className="dts-body-label">
                       <span>Men and women affected</span>
                     </h3>
-                    <div className="dts-indicator" style={{height: '300px'}}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            width={500}
-                            height={300}
-                            data={
+                    <div style={{height: '300px'}}>
+                        <HorizontalBarChart data={
                               [
                                 { 
                                   name: '',
@@ -697,22 +693,9 @@ function DisasterEventsAnalysisContent() {
                                 }
                               ]
                             }
-                            margin={{
-                              top: 5,
-                              right: 30,
-                              left: 20,
-                              bottom: 5,
-                            }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <Tooltip wrapperStyle={{ fontSize:'17px' }} />
-                            <XAxis type="category" dataKey="name" />
-                            <Legend align="left" wrapperStyle={{ fontSize:'14px' }} />
-                            <Bar dataKey="Men" fill="#58508d" />
-                            <Bar dataKey="Women" fill="#bc5090" />
-                            <Bar dataKey="Other non-Binary" fill="#879e82" />
-                          </BarChart>
-                        </ResponsiveContainer>
+                            colorScheme="violet"
+                            imgSrc="/assets/icons/Male&Female.svg"
+                          />
                     </div>
                 </div>
               )}
@@ -728,12 +711,8 @@ function DisasterEventsAnalysisContent() {
                     <h3 className="dts-body-label">
                       <span>Persons with disabilities and living in poverty affected</span>
                     </h3>
-                    <div className="dts-placeholder" style={{height: '330px'}}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            width={500}
-                            height={300}
-                            data={
+                    <div style={{height: '350px'}}>
+                        <HorizontalBarChart data={
                               [{
                                 name: '',
                                 'Persons with disabilities': ld.totalAffectedPeople2.disaggregations.disability.disability,
@@ -741,22 +720,9 @@ function DisasterEventsAnalysisContent() {
                                 'Persons living in poverty (international)': ld.totalAffectedPeople2.disaggregations.globalPovertyLine.below,
                               }]
                             }
-                            margin={{
-                              top: 5,
-                              right: 30,
-                              left: 20,
-                              bottom: 5,
-                            }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <Tooltip wrapperStyle={{ fontSize:'17px' }} />
-                            <XAxis type="category" dataKey="name" />
-                            <Legend align="left" wrapperStyle={{ fontSize:'14px' }} />
-                            <Bar dataKey="Persons with disabilities" fill="#00202e" />
-                            <Bar dataKey="Persons living in poverty (national)" fill="#003f5c" />
-                            <Bar dataKey="Persons living in poverty (international)" fill="#2c4875" />
-                          </BarChart>
-                        </ResponsiveContainer>
+                            colorScheme="cerulean"
+                            imgSrc="/assets/icons/People-with-physical-impairments.svg"
+                          />
                     </div>
                 </div>
               )}
@@ -769,39 +735,18 @@ function DisasterEventsAnalysisContent() {
                     <h3 className="dts-body-label">
                       <span>Children, adults, and seniors affected</span>
                     </h3>
-                    <div className="dts-placeholder" style={{height: '300px'}}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            width={500}
-                            height={300}
-                            // layout="vertical"
-                            data={
-                              [
-                                { 
-                                  name: '',
-                                  'Children': disaggregationsAge2?.children,
-                                  'Adults': disaggregationsAge2?.adult,
-                                  'Seniors': disaggregationsAge2?.senior,
-                                }
-                              ]
+                    <div style={{height: '300px'}}>
+                        <HorizontalBarChart data={
+                              [{
+                                name: '',
+                                'Children': Number(disaggregationsAge2?.children),
+                                'Adults': Number(disaggregationsAge2?.adult),
+                                'Seniors': Number(disaggregationsAge2?.senior),
+                              }]
                             }
-                            margin={{
-                              top: 5,
-                              right: 30,
-                              left: 20,
-                              bottom: 5,
-                            }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <Tooltip wrapperStyle={{ fontSize:'17px' }} />
-                            <XAxis type="category" dataKey="name" />
-                            {/* <YAxis type="number" /> */}
-                            <Legend align="left" wrapperStyle={{ fontSize:'14px' }} />
-                            <Bar dataKey="Children" fill="#58508d" />
-                            <Bar dataKey="Adults" fill="#bc5090" />
-                            <Bar dataKey="Seniors" fill="#879e82" />
-                          </BarChart>
-                        </ResponsiveContainer>
+                            colorScheme="violet"
+                            imgSrc="/assets/icons/Male&Female.svg"
+                          />
                     </div>
                 </div>
               )}
