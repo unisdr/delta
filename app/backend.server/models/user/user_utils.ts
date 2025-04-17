@@ -39,6 +39,12 @@ export function validatePassword(
   let password = initErrorField(errors, "password");
   let passwordRepeat = initErrorField(errors, "passwordRepeat");
   errors.form = errors.form || [];
+  if (data.password.length > 0 && data.password.length < 12) {
+    password.push("Minimum password length is 12");
+  }
+  else if (data.password.length >= 12 && !passwordStrengthCondition(data.password)) {
+    password.push("Must include two of the following: uppercase/lowercase letters, numbers, special characters");
+  }
   if (data.password == "") {
     password.push("Password is empty");
   }
@@ -55,4 +61,20 @@ export function validatePassword(
     password.push(msg);
     passwordRepeat.push(msg);
   }
+}
+
+function passwordStrengthCondition(text: string): boolean {
+  const hasUppercase = /[A-Z]/.test(text);
+  const hasLowercase = /[a-z]/.test(text);
+  const hasNumber = /[0-9]/.test(text);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(text);
+  
+  const conditionsMet = [
+    hasUppercase,
+    hasLowercase,
+    hasNumber,
+    hasSpecialChar
+  ].filter(Boolean).length;
+  
+  return conditionsMet >= 2; // Must meet at least two conditions
 }

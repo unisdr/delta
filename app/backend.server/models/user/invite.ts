@@ -235,5 +235,27 @@ export async function acceptInvite(
 
 	user = res[0];
 
+	const accessAccountURL = configSiteURL() + '/user/settings/';
+	const subject = `Welcome to DTS ${configSiteName()}`;
+	const html = `<p>Dear ${user.firstName} ${user.lastName},</p>
+
+			<p>Welcome to the DTS ${configSiteName()} system. Your user account has been successfully created.</p>
+
+			<p>Click the link below to access your account.</p>
+
+			<p><a href="${accessAccountURL}" 
+				style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+				background-color: #000000; text-decoration: none; border-radius: 5px;">Access account</a></p>`;
+
+	const text = `Dear ${user.firstName} ${user.lastName},
+
+			Welcome to the DTS ${configSiteName()} system. Your user account has been successfully created.
+
+			Click the link below to access your account.
+
+			${accessAccountURL}`;
+
+	await sendEmail(user.email, subject, text, html);
+
 	return {ok: true, userId: user.id};
 }

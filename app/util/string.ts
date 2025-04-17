@@ -20,3 +20,11 @@ export function lowercaseFirstLetter(str: string): string {
 	}
 	return str.charAt(0).toLowerCase() + str.slice(1)
 }
+
+export function stripHTML(html: string): string {
+	// Use a regular expression to strip HTML tags
+	const text = html.replace(/<[^>]*>/g, ""); 
+	
+	// Remove tabs and extra spaces
+	return text.replace(/\t/g, "").trim();
+} 

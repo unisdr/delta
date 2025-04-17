@@ -46,7 +46,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const inviteCode = data["inviteCode"] || "";
 	const data2 = AcceptInviteFieldsFromMap(data) 
 	const res = await acceptInvite(inviteCode, data2);
-	if (!res.ok){
+	if (!res.ok) {
 		return json({ data, errors: res.errors });
 	}
 	const headers = await createUserSession(res.userId);
