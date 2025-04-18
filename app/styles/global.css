@@ -428,6 +428,23 @@ table.table-border th.center {
   }
 }
 
+.dts-data-box {
+  margin-top: 0 !important;
+  margin-left: 0 !important;
+  padding-top: 0 !important;
+  padding-left: 0 !important;
+}
+
+.dts-data-box.mg-grid__col--span-2 {
+  margin-top: 0 !important;
+  margin-left: 0 !important;
+  padding-top: 0 !important;
+  padding-left: 0 !important;
+}
+
+.dts-data-box h3.dts-body-label {
+  margin-bottom: 0 !important;
+}
 
 /* Dashboard Error States */
 .dts-data-box--error {
