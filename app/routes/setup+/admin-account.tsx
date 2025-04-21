@@ -59,7 +59,7 @@ export default function Screen() {
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /\d/.test(password);
-    const hasSpecialChar = /[@$!%*?&]/.test(password);
+    const hasSpecialChar = /[@$!%*?&_]/.test(password);
 
     const hasTwoOfTheFollowing = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length >= 2;
 
