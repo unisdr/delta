@@ -134,7 +134,7 @@ export async function sendInvite(user: User) {
 }
 
 type ValidateInviteCodeResult =
-	| {ok: true; userId: number}
+	| {ok: true; userId: number; email: string}
 	| {ok: false; error: string};
 
 export async function validateInviteCode(
@@ -163,6 +163,7 @@ export async function validateInviteCode(
 	return {
 		ok: true,
 		userId: user.id,
+		email: user.email,
 	};
 }
 

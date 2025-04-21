@@ -33,11 +33,17 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 	const queryStringCode = url.searchParams.get("code") || "";
 	const res = await validateInviteCode(inviteCode);
 
+	var email="";
+	if(res.ok==true){
+		email=res.email;
+	}
+
 	return json({
 		inviteCode: inviteCode,
 		inviteCodeValidation: res,
 		code: queryStringCode,
 		state: state,
+		email: email,
 	});
 };
 
@@ -56,10 +62,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
 	const inviteCode = loaderData.inviteCode;
+	const email = loaderData.email;
 	const actionData = useActionData<typeof action>();
 
 	const errors = actionData?.errors
 	const data = actionData?.data
+
+	
+	console.log("code=", inviteCode)
 
 	if (!loaderData.inviteCodeValidation.ok) {
 		return (
@@ -88,8 +98,13 @@ export default function Screen() {
 						<p>* Required information</p>
 						
 							<input name="inviteCode" type="hidden" defaultValue={inviteCode}></input>
+							
+							<Field label="E-mail" extraClassName="dts-form-component">
+								<input type="text" name="email" defaultValue={email} readOnly ></input>
+							</Field>
+
 							<Field label="First name *" extraClassName="dts-form-component">
-								<input type="text" name="firstName" defaultValue={data?.firstName}></input>
+								<input type="text" name="firstName" defaultValue={data?.firstName} autoFocus></input>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="firstName"></FieldErrorsStandard>
 
