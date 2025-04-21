@@ -15,7 +15,7 @@ interface ActionData {
   };
 }
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import {setupAdminAccount, setupAdminAccountFieldsFromMap} from "~/backend.server/models/user/admin";
+import { setupAdminAccount, setupAdminAccountFieldsFromMap } from "~/backend.server/models/user/admin";
 
 export const meta: MetaFunction = () => {
   return [
@@ -30,11 +30,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const data2 = setupAdminAccountFieldsFromMap(data);
     const res = await setupAdminAccount(data2);
     if (!res.ok) {
-      //console.log('Errors in setupAdminAccount:', res.errors);
       return ({ data, errors: res.errors });
     }
     const headers = await createUserSession(res.userId);
-    //console.log('Redirecting to verify-email');
+    if (res.pendingActivation) {
+      return redirect("/user/verify-email", { headers });
+    }
     return redirect("/user/verify-email", { headers });
   } catch (error) {
     console.error('Error during form submission:', error);

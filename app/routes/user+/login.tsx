@@ -57,6 +57,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return json({ data, errors }, { status: 400 }); // Return as a valid Remix response
 	}
 
+	// --- PATCH: Check if user is pending activation and redirect to verify-email ---
+	const userSession = await getUserFromSession(request);
+	if (userSession && userSession.user && userSession.user.emailVerified === false) {
+		return redirect("/user/verify-email");
+	}
 
 	const headers = await createUserSession(res.userId);
 
@@ -261,4 +266,3 @@ export default function Screen() {
 		</>
 	);
 }
-

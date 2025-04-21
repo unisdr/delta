@@ -10,6 +10,7 @@ import {
 import { useLoaderData, useActionData } from "@remix-run/react";
 
 import { verifyEmail } from "~/backend.server/models/user/verify_email";
+import { sendEmailVerification } from "~/backend.server/models/user/verify_email";
 
 import { formStringData } from "~/util/httputil";
 
@@ -20,6 +21,8 @@ import { redirect } from "@remix-run/node";
 import { formatTimestamp } from "~/util/time";
 import { sendEmail } from "~/util/email";
 import { configCountryName, configSiteName, configSiteURL } from "~/util/config";
+
+import React from 'react';
 
 export const meta: MetaFunction = () => {
   return [
@@ -33,7 +36,15 @@ export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
   const { user } = authActionGetAuth(actionArgs);
   const data = formStringData(await request.formData());
   const code = data.code || "";
+  const resend = data.resend || "";
   const userId = user.id;
+
+  // Handle resend OTP
+  if (resend) {
+    await sendEmailVerification(user);
+    return json({ resend: true });
+  }
+
   const res = await verifyEmail(userId, code);
   if (!res.ok) {
     return Response.json({ data, errors: res.errors });
@@ -72,8 +83,6 @@ export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
                 Copy and paste the following link into your browser URL to access your account:
                 ${siteURL}/settings/access-mgmnt" 
                 `;
-  console.log("text=", text);
-
   await sendEmail(user.email, subject, text, html);
   return redirect("/");
 });
@@ -90,14 +99,57 @@ export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
 
 export default function Data() {
   const pageData = useLoaderData<typeof loader>();
-
   const actionData = useActionData<typeof action>();
   const errors = actionData?.errors;
+  const [resent, setResent] = React.useState(false);
+  const [otp, setOtp] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // On mount, always sync OTP state to the input value (even if empty)
+  React.useEffect(() => {
+    const input = document.querySelector('input[name="code"]') as HTMLInputElement | null;
+    setOtp(input?.value || "");
+  }, []);
+
+  React.useEffect(() => {
+    if (actionData && actionData.resend) {
+      setResent(true);
+      setTimeout(() => setResent(false), 5000);
+    }
+  }, [actionData]);
+
+  // Find the form submit and attach a handler to set loading
+  React.useEffect(() => {
+    const form = document.querySelector('form[action="/user/verify-email"]');
+    if (!form) return;
+    const handler = () => setIsSubmitting(true);
+    form.addEventListener('submit', handler);
+    return () => form.removeEventListener('submit', handler);
+  }, []);
+
+  // Handler to clear OTP when resending
+  const handleResend = React.useCallback(() => {
+    setOtp("");
+    const input = document.querySelector('input[name="code"]') as HTMLInputElement | null;
+    if (input) input.value = "";
+    // Submit the form programmatically as before
+    const form = document.querySelector('form[action="/user/verify-email"]') as HTMLFormElement | null;
+    if (form) {
+      const resendInput = document.createElement('input');
+      resendInput.type = 'hidden';
+      resendInput.name = 'resend';
+      resendInput.value = '1';
+      form.appendChild(resendInput);
+      form.submit();
+      form.removeChild(resendInput);
+    }
+  }, []);
 
   return (
     <div className="dts-page-container">
       <main className="dts-main-container">
         <div className="mg-container">
+
           <form
             action="/user/verify-email"
             className="dts-form dts-form--vertical"
@@ -131,13 +183,13 @@ export default function Data() {
                   </div>
                   <input
                     type="text"
+                    name="code"
+                    required
                     minLength={6}
                     maxLength={6}
-                    name="code"
+                    value={otp}
+                    onChange={e => setOtp(e.target.value)}
                     placeholder="Enter OTP code*"
-                    autoFocus
-                    required
-                    style={errors ? { border: "2px solid red" } : {}}
                   />
                 </label>
                 {errors &&
@@ -154,13 +206,32 @@ export default function Data() {
                 <button
                   type="button"
                   className="mg-button mg-button--small mg-button-ghost"
+                  onClick={() => {
+                    const form = document.querySelector('form[action="/user/verify-email"]') as HTMLFormElement;
+                    if (form) {
+                      const resendInput = document.createElement('input');
+                      resendInput.type = 'hidden';
+                      resendInput.name = 'resend';
+                      resendInput.value = '1';
+                      form.appendChild(resendInput);
+                      form.submit();
+                      form.removeChild(resendInput);
+                    }
+                  }}
                 >
                   Send again
                 </button>
+                {resent && (
+                  <div style={{ color: 'green', marginTop: 8 }}>Verification code resent!</div>
+                )}
               </div>
             </div>
             <div className="dts-form__actions">
-              <button type="submit" className="mg-button mg-button-primary">
+              <button
+                type="submit"
+                className="mg-button mg-button-primary"
+                disabled={typeof window !== "undefined" ? isSubmitting || otp.length < 6 : undefined}
+              >
                 Complete account setup
               </button>
             </div>

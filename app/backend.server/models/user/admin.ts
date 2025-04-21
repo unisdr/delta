@@ -1,17 +1,17 @@
 import { dr } from "~/db.server";
-import { eq} from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { userTable, User } from "~/drizzle/schema";
 
 import { Errors, hasErrors } from "~/frontend/form";
 
 import { errorIsNotUnique } from "~/util/db";
-import {validateEmail, validateName, validatePassword} from "./user_utils";
-import {passwordHash} from "./password";
-import {sendEmailVerification} from "./verify_email";
+import { validateEmail, validateName, validatePassword } from "./user_utils";
+import { passwordHash } from "./password";
+import { sendEmailVerification } from "./verify_email";
 
 type SetupAdminAccountResult =
-  | { ok: true; userId: number }
+  | { ok: true; userId: number; pendingActivation?: boolean }
   | { ok: false; errors: Errors<SetupAdminAccountFields> };
 
 interface SetupAdminAccountFields {
@@ -55,6 +55,15 @@ export async function setupAdminAccount(
   let user: User;
 
   try {
+    const existing = await dr.select().from(userTable).where(eq(userTable.email, fields.email));
+    if (existing.length > 0) {
+      const existingUser = existing[0];
+      if (existingUser.emailVerified === false) {
+        return { ok: true, userId: existingUser.id, pendingActivation: true };
+      }
+      errors.fields.email = ["A user with this email already exists"];
+      return { ok: false, errors };
+    }
     const res = await dr
       .insert(userTable)
       .values({
@@ -164,4 +173,3 @@ export async function setupAccountSSOAzureB2C(
   // TODO: remove hardcoded userId
   return { ok: true, userId: 7 };
 }
-
