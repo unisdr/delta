@@ -111,6 +111,40 @@ export default function Screen() {
 
 	useEffect(() => {
 		setIsClient(true);
+
+		// Submit button enabling only when required fields are filled
+		const forms = document.querySelectorAll("form");
+		const submitButton = document.querySelector("[id='login-button']") as HTMLButtonElement;
+		if (submitButton) {
+			submitButton.disabled = true;
+
+			if (forms.length) {
+				for (let k = 0; k < forms.length; k++) {
+					const requiredFields:any[] = [];
+					requiredFields[k] = forms[k].querySelectorAll("input[required]");
+					
+					if (requiredFields[k].length) {
+						var requiredFilled;
+
+						for (let i = 0; i < requiredFields[k].length; i++) {
+							requiredFields[k][i].addEventListener("input", () => {
+								requiredFilled = true;
+								for (let j = 0; j < requiredFields[k].length; j++) {
+									if (!requiredFields[k][j].validity.valid) {
+										requiredFilled = false;
+									}
+								}
+								if (requiredFilled) {
+									submitButton.disabled = false;
+								} else {
+									submitButton.disabled = true;
+								}
+							});
+						}
+					}
+				}
+			}	
+		}
 	}, []);
 
 	const togglePasswordVisibility = () => {
@@ -238,6 +272,7 @@ export default function Screen() {
 
 							>
 								<SubmitButton className='mg-button mg-button-primary' label="Sign in"
+									id="login-button"
 									style={{
 										width: "100%", // Full width on small screens
 										padding: "10px 20px", // Ensure consistent padding

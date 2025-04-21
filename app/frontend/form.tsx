@@ -213,6 +213,7 @@ export function FieldErrors3({errors}: FieldErrors2Props) {
 				<div className="dts-form-component__hint--error" aria-live="assertive">
 					{errors.map((error, index) => (
 						<span key={index}>
+							{index > 0 && ", "}
 							{error}
 						</span>
 					))}
@@ -224,6 +225,7 @@ export function FieldErrors3({errors}: FieldErrors2Props) {
 
 interface SubmitButtonProps {
 	label: string;
+	id?: React.HTMLProps<HTMLButtonElement>["id"];
 	className?: string;
 	disabled?: boolean;
 	style?: React.CSSProperties; // Allow inline styles
@@ -231,11 +233,13 @@ interface SubmitButtonProps {
 
 export function SubmitButton({
 	label,
+	id = undefined,
 	className = "mg-button mg-button-primary",
 	style = {}, // Default to an empty style object
 }: SubmitButtonProps) {
 	return (
 		<button
+			id={id}
 			className={className}
 			style={{
 				...style, // Use passed styles
