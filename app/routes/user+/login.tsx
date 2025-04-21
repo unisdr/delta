@@ -237,7 +237,7 @@ export default function Screen() {
 								}}
 
 							>
-								<SubmitButton className='mg-button mg-button-primary' label="Sing in"
+								<SubmitButton className='mg-button mg-button-primary' label="Sign in"
 									style={{
 										width: "100%", // Full width on small screens
 										padding: "10px 20px", // Ensure consistent padding
