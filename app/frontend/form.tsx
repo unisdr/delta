@@ -1476,7 +1476,8 @@ export const validateFormAndToggleSubmitButton = (formId: string, submitButtonId
     
     // Select the submit button element using the provided ID
     const submitButton = document.querySelector<HTMLButtonElement>(`#${submitButtonId}`);
-    
+
+	// Check if the form and submit button elements are found
     if (formElement && submitButton) {
         // Select all input fields with the 'required' attribute within the form
         const requiredFields = formElement.querySelectorAll<HTMLInputElement>("input[required]");

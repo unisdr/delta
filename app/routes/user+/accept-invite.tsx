@@ -15,6 +15,7 @@ import {
 	SubmitButton,
 	FieldErrors,
 	FieldErrorsStandard,
+	validateFormAndToggleSubmitButton,
 } from "~/frontend/form";
 import { formStringData } from "~/util/httputil";
 import {
@@ -25,6 +26,8 @@ import {
 } from "~/util/config";
 import { MainContainer } from "~/frontend/container";
 import {acceptInvite, AcceptInviteFieldsFromMap, validateInviteCode} from "~/backend.server/models/user/invite";
+
+import { useEffect } from "react";
 
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const url = new URL(request.url);
@@ -69,7 +72,6 @@ export default function Screen() {
 	const data = actionData?.data
 
 	
-	console.log("code=", inviteCode)
 
 	if (!loaderData.inviteCodeValidation.ok) {
 		return (
@@ -79,6 +81,15 @@ export default function Screen() {
 		)
 		
 	}
+
+	useEffect(() => {
+		// Submit button enabling only when required fields are filled
+		const submitButton = document.querySelector("[id='setup-button']") as HTMLButtonElement;
+		if (submitButton) {
+			submitButton.disabled = true;
+			validateFormAndToggleSubmitButton('setup-form', 'setup-button');
+		}
+	}, []);
 
 	return (
 		<>
@@ -93,7 +104,7 @@ export default function Screen() {
 					</div>
 				</form>
 				
-				<Form className="dts-form dts-form--vertical" errors={errors}>
+				<Form id="setup-form" className="dts-form dts-form--vertical" errors={errors}>
 					<div className="dts-form__body">
 						<p>* Required information</p>
 						
@@ -104,7 +115,7 @@ export default function Screen() {
 							</Field>
 
 							<Field label="First name *" extraClassName="dts-form-component">
-								<input type="text" name="firstName" defaultValue={data?.firstName} autoFocus></input>
+								<input type="text" name="firstName" defaultValue={data?.firstName} autoFocus required></input>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="firstName"></FieldErrorsStandard>
 
@@ -114,12 +125,12 @@ export default function Screen() {
 							<FieldErrorsStandard errors={errors} field="lastName"></FieldErrorsStandard>
 
 							<Field label="Password *" extraClassName="dts-form-component">
-								<input type="password" name="password" defaultValue={data?.password}></input>
+								<input type="password" name="password" defaultValue={data?.password} required></input>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="password"></FieldErrorsStandard>
 
 							<Field label="Repeat password *" extraClassName="dts-form-component">
-								<input type="password" name="passwordRepeat" defaultValue={data?.passwordRepeat}></input>
+								<input type="password" name="passwordRepeat" defaultValue={data?.passwordRepeat} required></input>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="passwordRepeat"></FieldErrorsStandard>
 							
@@ -140,7 +151,7 @@ export default function Screen() {
 							</div>
 					</div>
 					<div className="dts-form__actions">
-						<SubmitButton label="Set up account"></SubmitButton>
+						<SubmitButton id="setup-button" label="Set up account"></SubmitButton>
 					</div>
 				</Form>
 			</div>

@@ -12,7 +12,8 @@ import {
 	Errors as FormErrors,
 	SubmitButton,
 	FormMessage,
-	errorToString
+	errorToString,
+	validateFormAndToggleSubmitButton
 } from "~/frontend/form"
 import { formStringData } from "~/util/httputil";
 import {
@@ -24,7 +25,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { useEffect } from "react";
 
-import { validateFormAndToggleSubmitButton } from "~/frontend/form";
 
 interface FormFields {
 	email: string
