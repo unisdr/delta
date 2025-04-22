@@ -21,10 +21,10 @@ export function NavSettings() {
 
     if (location.pathname.includes("/settings")) {
       return [
-        { link: "settings/access-mgmnt", text: "Access management" },
         { link: "settings/system", text: "System settings" },
         { link: "settings/geography", text: "Geographic levels" },
         { link: "settings/sectors", text: "Sectors" },
+        { link: "settings/access-mgmnt", text: "Access management" }
       ];
     }
 
@@ -54,20 +54,23 @@ export function NavSettings() {
       <div className="mg-container">
         <div className="dts-sub-navigation__container">
           <ul className="dts-sub-navigation__list">
-            {menu.map(({ link, text }) => (
-              <li key={link} className="dts-sub-navigation__item">
-                <NavLink
-                  to={`/${link}`}
-                  className={({ isActive }) =>
-                    isActive
-                      ? "dts-sub-navigation__link dts-sub-navigation__link--active"
-                      : "dts-sub-navigation__link"
-                  }
+            {menu.map(({ link, text }) => {
+              const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+              const isCurrent = currentPath.startsWith(`/${link}`);
+              return (
+                <li
+                  key={link}
+                  className={`dts-sub-navigation__item${isCurrent ? ' dts-sub-navigation__item--current' : ''}`}
                 >
-                  {text}
-                </NavLink>
-              </li>
-            ))}
+                  <NavLink
+                    to={`/${link}`}
+                    className="dts-sub-navigation__link"
+                  >
+                    {text}
+                  </NavLink>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

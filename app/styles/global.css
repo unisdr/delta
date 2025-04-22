@@ -519,3 +519,32 @@ table.table-border th.center {
 .dts-error-content {
   animation: errorFadeIn 0.2s ease-out;
 }
+
+
+.dts-sub-navigation__link--active {
+  border-bottom: 2px solid #1976d2;
+  font-weight: bold;
+  color: #1976d2;
+}
+
+.dts-sub-navigation__link {
+  color: #222;
+  text-decoration: none;
+  padding: 8px 16px;
+  display: inline-block;
+  transition: color 0.2s, border-bottom 0.2s;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;     /* Allows wrapping on smaller screens */
+  gap: 10px;
+}
+
+/* Optional tweak for very narrow screens */
+@media (max-width: 600px) {
+  .button-group {
+    flex-direction: column; /* Stack buttons vertically on phones */
+    gap: 8px;               /* Slightly smaller gap if needed */
+  }
+}
