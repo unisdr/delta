@@ -6,8 +6,8 @@ import { userTable } from "~/drizzle/schema";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { useEffect, useState } from "react";
-import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
+// import Swal from "sweetalert2";
+// import "sweetalert2/dist/sweetalert2.min.css";
 import { FaEye, FaTrashAlt, FaUserEdit } from "react-icons/fa";
 import { format } from 'date-fns';
 
@@ -88,17 +88,17 @@ export default function Settings() {
 	});
 
 	// Filter logic
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value.toLowerCase();
-		setFilteredItems(
-			items.filter(
-				(item) =>
-					item.email.toLowerCase().includes(value) ||
-					item.firstName.toLowerCase().includes(value) ||
-					item.lastName.toLowerCase().includes(value)
-			)
-		);
-	};
+	// const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+	// 	const value = e.target.value.toLowerCase();
+	// 	setFilteredItems(
+	// 		items.filter(
+	// 			(item) =>
+	// 				item.email.toLowerCase().includes(value) ||
+	// 				item.firstName.toLowerCase().includes(value) ||
+	// 				item.lastName.toLowerCase().includes(value)
+	// 		)
+	// 	);
+	// };
 
 	const handleOrganizationFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value.toLowerCase();
@@ -134,53 +134,53 @@ export default function Settings() {
 		(item) => !item.emailVerified
 	).length;
 
-	// Handle user deletion
-	const handleDeleteUser = (userId: number) => {
-		Swal.fire({
-			title: "Are you sure you want to delete this user?",
-			text: "This data cannot be recovered after being deleted.",
-			icon: "warning",
-			showCancelButton: true,
-			confirmButtonColor: "#d33",
-			cancelButtonColor: "#3085d6",
-			confirmButtonText: '<i class="fas fa-trash"></i> Delete user',
-			cancelButtonText: "Do not delete",
-			showClass: { popup: "swal2-show" },
-			hideClass: { popup: "swal2-hide" },
-		}).then(async (result) => {
-			if (result.isConfirmed) {
-				try {
-					const response = await fetch(
-						`/settings/access-mgmnt/delete/${userId}`,
-						{
-							method: "GET",
-						}
-					);
+	// // Handle user deletion
+	// const handleDeleteUser = (userId: number) => {
+	// 	Swal.fire({
+	// 		title: "Are you sure you want to delete this user?",
+	// 		text: "This data cannot be recovered after being deleted.",
+	// 		icon: "warning",
+	// 		showCancelButton: true,
+	// 		confirmButtonColor: "#d33",
+	// 		cancelButtonColor: "#3085d6",
+	// 		confirmButtonText: '<i class="fas fa-trash"></i> Delete user',
+	// 		cancelButtonText: "Do not delete",
+	// 		showClass: { popup: "swal2-show" },
+	// 		hideClass: { popup: "swal2-hide" },
+	// 	}).then(async (result) => {
+	// 		if (result.isConfirmed) {
+	// 			try {
+	// 				const response = await fetch(
+	// 					`/settings/access-mgmnt/delete/${userId}`,
+	// 					{
+	// 						method: "GET",
+	// 					}
+	// 				);
 
-					if (!response.ok) {
-						throw new Error(
-							`Failed to delete user. Status: ${response.status}`
-						);
-					}
+	// 				if (!response.ok) {
+	// 					throw new Error(
+	// 						`Failed to delete user. Status: ${response.status}`
+	// 					);
+	// 				}
 
-					Swal.fire({
-						title: "Deleted!",
-						text: "The user has been deleted.",
-						icon: "success",
-					}).then(() => {
-						window.location.href = "/settings/access-mgmnt/";
-					});
-				} catch (error) {
-					console.error("Error deleting user:", error);
-					Swal.fire(
-						"Error",
-						"Something went wrong while deleting the user.",
-						"error"
-					);
-				}
-			}
-		});
-	};
+	// 				Swal.fire({
+	// 					title: "Deleted!",
+	// 					text: "The user has been deleted.",
+	// 					icon: "success",
+	// 				}).then(() => {
+	// 					window.location.href = "/settings/access-mgmnt/";
+	// 				});
+	// 			} catch (error) {
+	// 				console.error("Error deleting user:", error);
+	// 				Swal.fire(
+	// 					"Error",
+	// 					"Something went wrong while deleting the user.",
+	// 					"error"
+	// 				);
+	// 			}
+	// 		}
+	// 	});
+	// };
 
 	return (
 		<MainContainer title="Access management" headerExtra={<NavSettings />}>
@@ -458,7 +458,7 @@ export default function Settings() {
 				</form>
 
 				{/* Search Form */}
-				<form method="get" className="search-form">
+				{/* <form method="get" className="search-form">
 					<input
 						type="text"
 						name="search"
@@ -681,7 +681,7 @@ export default function Settings() {
 														}}
 													/>
 												</button>
-												<button
+												{/* <button
 													className="icon-button"
 													onClick={() => handleDeleteUser(item.id)}
 												>
@@ -691,7 +691,7 @@ export default function Settings() {
 															cursor: "pointer",
 														}}
 													/>
-												</button>
+												</button> */}
 											</div>
 										</td>
 									</tr>
