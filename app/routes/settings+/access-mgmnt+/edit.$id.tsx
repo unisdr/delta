@@ -195,6 +195,12 @@ export default function Screen() {
 		}
 	}
 
+	const hasFields = (obj: any): obj is { fields: Record<string, string[]> } => {
+		return obj && typeof obj === 'object' && 'fields' in obj;
+	};
+
+	const safeErrors = hasFields(errors) ? errors : { fields: {} };
+
 	// Function to handle "Delete User"
 	const handleDeleteUser = () => {
 		Swal.fire({
@@ -282,13 +288,13 @@ export default function Screen() {
 						Delete User
 					</button>
 				</div>
-				<Form errors={errors}>
+				<Form errors={safeErrors}>
 					{/* First Name, Last Name, and Email */}
 					<div
 						className="mg-grid mg-grid__col-3"
 					>
 						<div className="dts-form-component">
-							<label>
+							<label aria-invalid={!!safeErrors.fields.firstName}>
 								<div className="dts-form-component__label">
 									<span style={{ color: "red" }}>*</span>First Name
 								</div>
@@ -298,26 +304,50 @@ export default function Screen() {
 									defaultValue={fields.firstName}
 									required
 									autoComplete="given-name"
+									className={safeErrors.fields.firstName ? "error" : ""}
+									aria-describedby={safeErrors.fields.firstName ? "firstNameError" : undefined}
 								/>
-								<FieldErrors errors={errors} field="firstName"></FieldErrors>
 							</label>
+							{safeErrors.fields.firstName && (
+								<div className="dts-form-component__hint">
+									<div
+										className="dts-form-component__hint--error"
+										id="firstNameError"
+										aria-live="assertive"
+									>
+										{safeErrors.fields.firstName[0]}
+									</div>
+								</div>
+							)}
 						</div>
 						<div className="dts-form-component">
-							<label>
+							<label aria-invalid={!!safeErrors.fields.lastName}>
 								<div className="dts-form-component__label">
-									<span style={{ color: "red" }}>*</span>Last Name
+									<span ></span>Last Name
 								</div>
 								<input
 									type="text"
 									name="lastName"
 									defaultValue={fields.lastName}
 									autoComplete="family-name"
+									className={safeErrors.fields.lastName ? "error" : ""}
+									aria-describedby={safeErrors.fields.lastName ? "lastNameError" : undefined}
 								/>
-								<FieldErrors errors={errors} field="lastName"></FieldErrors>
 							</label>
+							{safeErrors.fields.lastName && (
+								<div className="dts-form-component__hint">
+									<div
+										className="dts-form-component__hint--error"
+										id="lastNameError"
+										aria-live="assertive"
+									>
+										{safeErrors.fields.lastName[0]}
+									</div>
+								</div>
+							)}
 						</div>
 						<div className="dts-form-component">
-							<label>
+							<label aria-invalid={!!safeErrors.fields.email}>
 								<div className="dts-form-component__label">
 									<span style={{ color: "red" }}>*</span>Email
 								</div>
@@ -327,14 +357,26 @@ export default function Screen() {
 									defaultValue={fields.email}
 									required
 									autoComplete="email"
+									className={safeErrors.fields.email ? "error" : ""}
+									aria-describedby={safeErrors.fields.email ? "emailError" : undefined}
 								/>
-								<FieldErrors errors={errors} field="email"></FieldErrors>
 							</label>
+							{safeErrors.fields.email && (
+								<div className="dts-form-component__hint">
+									<div
+										className="dts-form-component__hint--error"
+										id="emailError"
+										aria-live="assertive"
+									>
+										{safeErrors.fields.email[0]}
+									</div>
+								</div>
+							)}
 						</div>
 					</div>
 					<div className="mg-grid mg-grid__col-3">
 						<div className="dts-form-component mg-grid__col--span-2">
-							<label>
+							<label aria-invalid={!!safeErrors.fields.organization}>
 								<div className="dts-form-component__label">
 									<span style={{ color: "red" }}>*</span> Organization
 								</div>
@@ -344,22 +386,36 @@ export default function Screen() {
 									defaultValue={fields.organization}
 									required
 									autoComplete="organization"
+									className={safeErrors.fields.organization ? "error" : ""}
+									aria-describedby={safeErrors.fields.organization ? "organizationError" : undefined}
 								/>
-								<FieldErrors errors={errors} field="organization"></FieldErrors>
 							</label>
+							{safeErrors.fields.organization && (
+								<div className="dts-form-component__hint">
+									<div
+										className="dts-form-component__hint--error"
+										id="organizationError"
+										aria-live="assertive"
+									>
+										{safeErrors.fields.organization[0]}
+									</div>
+								</div>
+							)}
 						</div>
 					</div>
 
 					<div className="mg-grid mg-grid__col-3">
 						{/* Role Field */}
 						<div className="dts-form-component">
-							<label>
+							<label aria-invalid={!!safeErrors.fields.role}>
 								<div className="dts-form-component__label">
 									<span style={{ color: "red" }}>*</span> Role
 								</div>
 								<select
 									name="role"
 									defaultValue={fields.role}
+									className={safeErrors.fields.role ? "error" : ""}
+									aria-describedby={safeErrors.fields.role ? "roleError" : undefined}
 								>
 									<option value="" disabled>
 										Select a role
@@ -370,8 +426,18 @@ export default function Screen() {
 										</option>
 									))}
 								</select>
-								<FieldErrors errors={errors} field="role"></FieldErrors>
 							</label>
+							{safeErrors.fields.role && (
+								<div className="dts-form-component__hint">
+									<div
+										className="dts-form-component__hint--error"
+										id="roleError"
+										aria-live="assertive"
+									>
+										{safeErrors.fields.role[0]}
+									</div>
+								</div>
+							)}
 						</div>
 
 						{/* Generated System Identifier Field */}

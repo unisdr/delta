@@ -22,6 +22,10 @@ import { redirectWithMessage } from "~/util/session";
 
 import "react-toastify/dist/ReactToastify.css";
 
+import { useEffect } from "react";
+
+import { validateFormAndToggleSubmitButton } from "~/frontend/form";
+
 interface FormFields {
 	email: string
 }
@@ -71,12 +75,21 @@ export default function Screen() {
 	const errors = actionData?.errors
 	const data = actionData?.data
 
+	useEffect(() => {
+		// Submit button enabling only when required fields are filled
+		const submitButton = document.querySelector("[id='reset-password-button']") as HTMLButtonElement;
+		if (submitButton) {
+			submitButton.disabled = true;
+			validateFormAndToggleSubmitButton('reset-password-form', 'reset-password-button');
+		}
+	}, []);
+
 	return (
 		<>
 			<div className="dts-page-container">
 				<main className="dts-main-container">
 					<div className="mg-container">
-						<Form className="dts-form dts-form--vertical" errors={errors}>
+						<Form id="reset-password-form" className="dts-form dts-form--vertical" errors={errors}>
 							<div className="dts-form__header">
 								<a href="/user/login" className="mg-button mg-button--small mg-button-system">
 									Back
@@ -95,7 +108,7 @@ export default function Screen() {
 								) : null}
 
 								<Field label="">
-									<input type="email" autoComplete="off" name="email" placeholder="*E-mail address"
+									<input type="email" autoComplete="off" name="email" placeholder="*E-mail address" required
 										style={{
 											padding: "10px 20px", // Increased padding for larger height
 											fontSize: "16px", // Larger font size
@@ -118,6 +131,7 @@ export default function Screen() {
 									)}
 								</Field>
 								<SubmitButton className='mg-button mg-button-primary' label="Reset Password"
+									id="reset-password-button"
 									style={{
 										width: "100%",
 										marginTop: "20px",

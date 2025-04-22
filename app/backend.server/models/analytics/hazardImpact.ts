@@ -238,8 +238,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         )
         .where(and(...baseConditions))
         .groupBy(hazardousEventTable.hipTypeId, hipTypeTable.nameEn)
-        .orderBy(desc(sql`COUNT(DISTINCT ${disasterEventTable.id})`))
-        .limit(10);
+        .orderBy(desc(sql`COUNT(DISTINCT ${disasterEventTable.id})`));
 
     // Calculate total events for percentage
     const total = eventsCount.reduce((sum, item) => sum + Number(item.value), 0);
@@ -324,8 +323,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
                         LIMIT 1
                     ), 0)::numeric
             END
-        )`))
-        .limit(10);
+        )`));
 
     // Query for losses by hazard type
     const losses = await dr
@@ -407,8 +405,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
                         LIMIT 1
                     ), 0)::numeric
             END
-        )`))
-        .limit(10);
+        )`));
 
     // Calculate total damages and losses for percentage
     const totalDamages = damages.reduce((sum, item) => sum + Number(item.value), 0);
@@ -447,4 +444,3 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         }
     };
 }
-
