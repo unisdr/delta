@@ -349,38 +349,18 @@ export default function Settings() {
 				{/* Add User Button */}
 				<div className="top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
 					<div>Currently there are {totalUsers} users in the system.</div>
-					<div className="button-group" style={{ display: 'flex', gap: '10px' }}>
+					<div className="button-group">
 						<button
 							type="button"
-							style={{
-								padding: '10px 15px',
-								borderRadius: '4px',
-								cursor: 'pointer',
-								fontSize: '14px',
-								backgroundColor: 'white',
-								color: '#007bff',
-								border: '1px solid #007bff'
-							}}
+							className="mg-button mg-button-outline"
 							onClick={() => (window.location.href = "/about/technical-specifications")}
-							onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e6f0ff')}
-							onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'white')}
 						>
 							Technical Specification
 						</button>
 						<button
 							type="button"
-							style={{
-								padding: '10px 15px',
-								borderRadius: '4px',
-								cursor: 'pointer',
-								fontSize: '14px',
-								backgroundColor: '#007bff',
-								color: 'white',
-								border: 'none'
-							}}
+							className="mg-button mg-button-primary"
 							onClick={() => (window.location.href = "/settings/access-mgmnt/invite")}
-							onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#007bff')}
-							onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#0056b3')}
 						>
 							Add User
 						</button>

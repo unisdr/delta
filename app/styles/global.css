@@ -534,3 +534,17 @@ table.table-border th.center {
   display: inline-block;
   transition: color 0.2s, border-bottom 0.2s;
 }
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;     /* Allows wrapping on smaller screens */
+  gap: 10px;
+}
+
+/* Optional tweak for very narrow screens */
+@media (max-width: 600px) {
+  .button-group {
+    flex-direction: column; /* Stack buttons vertically on phones */
+    gap: 8px;               /* Slightly smaller gap if needed */
+  }
+}
