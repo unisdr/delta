@@ -1,5 +1,5 @@
 import { dr } from "~/db.server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { userTable } from "~/drizzle/schema";
 
@@ -78,6 +78,7 @@ export async function adminUpdateUser(
         lastName: fields.lastName,
         organization: fields.organization,
         role: fields.role,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where(eq(userTable.id, id))
       .returning();

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { FaEye, FaTrashAlt, FaUserEdit } from "react-icons/fa";
+import { format } from 'date-fns';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -31,9 +32,15 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		organization: userTable.organization,
 		emailVerified: userTable.emailVerified,
 		authType: userTable.authType,
+		modifiedAt: userTable.updatedAt,
 	};
 
-	const res = await executeQueryForPagination<UserRes>(request, userTable, select, null);
+	const res = await executeQueryForPagination<UserRes>(
+		request,
+		userTable,
+		select,
+		null
+	);
 
 	return {
 		...res,
@@ -51,8 +58,8 @@ interface UserRes {
 	emailVerified: string;
 	auth: string;
 	authType: string;
+	modifiedAt: Date;
 }
-
 
 export default function Settings() {
 	const ld = useLoaderData<typeof loader>();
@@ -97,9 +104,7 @@ export default function Settings() {
 		const value = e.target.value.toLowerCase();
 		setOrganizationFilter(value);
 		setFilteredItems(
-			items.filter((item) =>
-				item.organization.toLowerCase().includes(value)
-			)
+			items.filter((item) => item.organization.toLowerCase().includes(value))
 		);
 	};
 
@@ -125,7 +130,9 @@ export default function Settings() {
 	}).length;
 
 	//const pendingUsers = totalUsers - activatedUsers;
-	const pendingUsers = filteredItems.filter(item => !item.emailVerified).length;
+	const pendingUsers = filteredItems.filter(
+		(item) => !item.emailVerified
+	).length;
 
 	// Handle user deletion
 	const handleDeleteUser = (userId: number) => {
@@ -143,12 +150,17 @@ export default function Settings() {
 		}).then(async (result) => {
 			if (result.isConfirmed) {
 				try {
-					const response = await fetch(`/settings/access-mgmnt/delete/${userId}`, {
-						method: "GET",
-					});
+					const response = await fetch(
+						`/settings/access-mgmnt/delete/${userId}`,
+						{
+							method: "GET",
+						}
+					);
 
 					if (!response.ok) {
-						throw new Error(`Failed to delete user. Status: ${response.status}`);
+						throw new Error(
+							`Failed to delete user. Status: ${response.status}`
+						);
 					}
 
 					Swal.fire({
@@ -160,12 +172,15 @@ export default function Settings() {
 					});
 				} catch (error) {
 					console.error("Error deleting user:", error);
-					Swal.fire("Error", "Something went wrong while deleting the user.", "error");
+					Swal.fire(
+						"Error",
+						"Something went wrong while deleting the user.",
+						"error"
+					);
 				}
 			}
 		});
 	};
-
 
 	return (
 		<MainContainer title="Access management" headerExtra={<NavSettings />}>
@@ -347,20 +362,32 @@ export default function Settings() {
 
 			<div className="access-management-container">
 				{/* Add User Button */}
-				<div className="top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+				<div
+					className="top-bar"
+					style={{
+						display: "flex",
+						justifyContent: "space-between",
+						alignItems: "center",
+						marginBottom: "20px",
+					}}
+				>
 					<div>Currently there are {totalUsers} users in the system.</div>
 					<div className="button-group">
 						<button
 							type="button"
 							className="mg-button mg-button-outline"
-							onClick={() => (window.location.href = "/about/technical-specifications")}
+							onClick={() =>
+								(window.location.href = "/about/technical-specifications")
+							}
 						>
 							Technical Specification
 						</button>
 						<button
 							type="button"
 							className="mg-button mg-button-primary"
-							onClick={() => (window.location.href = "/settings/access-mgmnt/invite")}
+							onClick={() =>
+								(window.location.href = "/settings/access-mgmnt/invite")
+							}
 						>
 							Add User
 						</button>
@@ -368,9 +395,24 @@ export default function Settings() {
 				</div>
 
 				{/* Filter Form */}
-				<form method="get" className="filter-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '20px' }}>
-					<div className="filter-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-						<div className="filter-column" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+				<form
+					method="get"
+					className="filter-form"
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						gap: "1rem",
+						marginBottom: "20px",
+					}}
+				>
+					<div
+						className="filter-row"
+						style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}
+					>
+						<div
+							className="filter-column"
+							style={{ display: "flex", flexDirection: "column", gap: "5px" }}
+						>
 							<span>Organisation</span>
 							<input
 								type="search"
@@ -379,17 +421,30 @@ export default function Settings() {
 								placeholder="Type organization name"
 								className="filter-input"
 								onChange={handleOrganizationFilter}
-								style={{ width: '220px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
+								style={{
+									width: "220px",
+									padding: "10px",
+									border: "1px solid #ccc",
+									borderRadius: "4px",
+								}}
 							/>
 						</div>
-						<div className="filter-column" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+						<div
+							className="filter-column"
+							style={{ display: "flex", flexDirection: "column", gap: "5px" }}
+						>
 							<span>Role</span>
 							<select
 								name="role"
 								className="filter-select"
 								value={roleFilter}
 								onChange={handleRoleFilter}
-								style={{ width: '220px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
+								style={{
+									width: "220px",
+									padding: "10px",
+									border: "1px solid #ccc",
+									borderRadius: "4px",
+								}}
 							>
 								<option value="">Select Role</option>
 								<option value="all">All Roles</option>
@@ -402,7 +457,6 @@ export default function Settings() {
 					</div>
 				</form>
 
-
 				{/* Search Form */}
 				<form method="get" className="search-form">
 					<input
@@ -412,7 +466,13 @@ export default function Settings() {
 						placeholder="Search by email, first name, or last name"
 						className="search-input"
 						onChange={handleSearch}
-						style={{ width: '460px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', marginBottom: '20px' }}
+						style={{
+							width: "460px",
+							padding: "10px",
+							border: "1px solid #ccc",
+							borderRadius: "4px",
+							marginBottom: "20px",
+						}}
 					/>
 				</form>
 
@@ -429,7 +489,9 @@ export default function Settings() {
 				>
 					{/* Total User Count */}
 					<div className="user-stats" style={{ marginBottom: "10px" }}>
-						<strong>{filteredItems.length} of {totalUsers} Users</strong>
+						<strong>
+							{filteredItems.length} of {totalUsers} Users
+						</strong>
 					</div>
 
 					{/* Status Legend */}
@@ -506,122 +568,116 @@ export default function Settings() {
 					</div>
 				</div>
 
-
-
 				{/* Users Table */}
 				{isClient && (
 					<div className="table-container">
-						<table className="table-styled" style={{ marginTop: '0px' }}>
+						<table className="table-styled" style={{ marginTop: "0px" }}>
 							<thead>
 								<tr>
 									<th>Status</th>
-									<th>
-										Email
-									</th>
-									<th>
-										First Name
-										{/* <span className="filter-icon">⬍</span> */}
-									</th>
-									<th>
-										Last Name
-										{/* <span className="filter-icon">⬍</span> */}
-									</th>
-									<th>
-										Role
-										{/* <span className="filter-icon">⬍</span> */}
-									</th>
-									<th>
-										Organization
-										{/* <span className="filter-icon">⬍</span> */}
-									</th>
-									<th>
-										Email Verified
-										{/* <span className="filter-icon">⬍</span> */}
-									</th>
-									<th>
-										Auth
-										{/* <span className="filter-icon">⬍</span> */}
-									</th>
+									<th>Name</th>
+									<th>Organization</th>
+									<th>Role</th>
+									<th>Modified</th>
+									<th>Email</th>
+									<th>Email Verified</th>
+									<th>Auth</th>
 									<th>Actions</th>
 								</tr>
 							</thead>
 							<tbody>
 								{filteredItems.map((item, index) => (
 									<tr key={index}>
-										<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+										<td
+											style={{ textAlign: "center", verticalAlign: "middle" }}
+										>
 											<span
-												className={`status-dot ${item.emailVerified ? 'activated' : 'pending'}`}
+												className={`status-dot ${
+													item.emailVerified ? "activated" : "pending"
+												}`}
 												style={{
 													// Inline styles to ensure consistent dot appearance
-													height: '10px',
-													width: '10px',
-													borderRadius: '50%',
-													display: 'inline-block',
-													position: 'relative',
+													height: "10px",
+													width: "10px",
+													borderRadius: "50%",
+													display: "inline-block",
+													position: "relative",
 												}}
 											>
 												{/* Tooltip message */}
-												<span
-													className="tooltip-text"
-												>
+												<span className="tooltip-text">
 													{/* Tooltip text dynamically changes based on status */}
-													{item.emailVerified ? 'Activated' : 'Pending'}
+													{item.emailVerified ? "Activated" : "Pending"}
 												</span>
 												{/* Tooltip pointer */}
 												<span className="tooltip-pointer"></span>
 											</span>
 										</td>
 
-
 										<td>
-											<Link to={`/settings/access-mgmnt/${item.id}`} className="link">
-												{item.email}
-											</Link>
+											{item.firstName} {item.lastName}
 										</td>
-										<td>{item.firstName}</td>
-										<td>{item.lastName}</td>
+										<td>{item.organization}</td>
 										{/* Updated Role Column with Badge */}
 										<td>
 											<span
 												style={{
-													display: 'inline-block',
-													padding: '5px 10px',
-													backgroundColor: '#fff3cd', // Light yellow
-													border: '1px solid #ffeeba', // Slightly darker yellow
-													borderRadius: '4px',
-													color: '#856404', // Darker yellow text
-													fontSize: '12px',
-													fontWeight: 'bold',
+													display: "inline-block",
+													padding: "5px 10px",
+													backgroundColor: "#fff3cd", // Light yellow
+													border: "1px solid #ffeeba", // Slightly darker yellow
+													borderRadius: "4px",
+													color: "#856404", // Darker yellow text
+													fontSize: "12px",
+													fontWeight: "bold",
 												}}
 											>
-												{item.role.charAt(0).toUpperCase() + item.role.slice(1)} {/* Capitalizes the first letter */}
+												{item.role.charAt(0).toUpperCase() + item.role.slice(1)}{" "}
+												{/* Capitalizes the first letter */}
 											</span>
 										</td>
-										<td>{item.organization}</td>
+										<td>{format(item.modifiedAt, 'dd-MM-yyyy')}</td>
+										<td>
+											<Link
+												to={`/settings/access-mgmnt/${item.id}`}
+												className="link"
+											>
+												{item.email}
+											</Link>
+										</td>
 										<td>{item.emailVerified.toString()}</td>
 										<td>{item.authType}</td>
 										<td>
-											<div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+											<div
+												style={{
+													display: "flex",
+													justifyContent: "center",
+													alignItems: "center",
+												}}
+											>
 												<button
 													className="icon-button"
-													onClick={() => (window.location.href = `/settings/access-mgmnt/${item.id}`)}
+													onClick={() =>
+														(window.location.href = `/settings/access-mgmnt/${item.id}`)
+													}
 												>
-
 													<FaEye
 														style={{
-															fontSize: '1.25rem', // Adjust the size of the icon if needed
-															cursor: 'pointer',
+															fontSize: "1.25rem", // Adjust the size of the icon if needed
+															cursor: "pointer",
 														}}
 													/>
 												</button>
 												<button
 													className="icon-button"
-													onClick={() => (window.location.href = `/settings/access-mgmnt/edit/${item.id}`)}
+													onClick={() =>
+														(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
+													}
 												>
 													<FaUserEdit
 														style={{
-															fontSize: '1.25rem', // Adjust the size of the icon if needed
-															cursor: 'pointer',
+															fontSize: "1.25rem", // Adjust the size of the icon if needed
+															cursor: "pointer",
 														}}
 													/>
 												</button>
@@ -631,8 +687,8 @@ export default function Settings() {
 												>
 													<FaTrashAlt
 														style={{
-															fontSize: '1.25rem', // Adjust the size of the icon if needed
-															cursor: 'pointer',
+															fontSize: "1.25rem", // Adjust the size of the icon if needed
+															cursor: "pointer",
 														}}
 													/>
 												</button>

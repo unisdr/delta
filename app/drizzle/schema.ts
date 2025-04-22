@@ -159,6 +159,7 @@ export const userTable = pgTable("user", {
 	organization: zeroText("organization"),
 	hydrometCheUser: zeroBool("hydromet_che_user"),
 	authType: text("auth_type").notNull().default("form"),
+	...createdUpdatedTimestamps,
 });
 
 export type User = typeof userTable.$inferSelect;
