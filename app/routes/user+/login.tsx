@@ -17,6 +17,7 @@ import {
 	Field,
 	Errors as FormErrors,
 	SubmitButton,
+	validateFormAndToggleSubmitButton,
 } from "~/frontend/form"
 import { formStringData } from "~/util/httputil";
 import {
@@ -31,8 +32,6 @@ import {
 } from "~/frontend/form"
 import { configAuthSupportedAzureSSOB2C } from "~/util/config"
 import { FaEyeSlash, FaEye } from 'react-icons/fa';
-
-
 
 
 interface LoginFields {
@@ -113,37 +112,11 @@ export default function Screen() {
 		setIsClient(true);
 
 		// Submit button enabling only when required fields are filled
-		const forms = document.querySelectorAll("form");
 		const submitButton = document.querySelector("[id='login-button']") as HTMLButtonElement;
 		if (submitButton) {
 			submitButton.disabled = true;
 
-			if (forms.length) {
-				for (let k = 0; k < forms.length; k++) {
-					const requiredFields:any[] = [];
-					requiredFields[k] = forms[k].querySelectorAll("input[required]");
-					
-					if (requiredFields[k].length) {
-						var requiredFilled;
-
-						for (let i = 0; i < requiredFields[k].length; i++) {
-							requiredFields[k][i].addEventListener("input", () => {
-								requiredFilled = true;
-								for (let j = 0; j < requiredFields[k].length; j++) {
-									if (!requiredFields[k][j].validity.valid) {
-										requiredFilled = false;
-									}
-								}
-								if (requiredFilled) {
-									submitButton.disabled = false;
-								} else {
-									submitButton.disabled = true;
-								}
-							});
-						}
-					}
-				}
-			}	
+			validateFormAndToggleSubmitButton('login-form', 'login-button');	
 		}
 	}, []);
 
@@ -158,7 +131,7 @@ export default function Screen() {
 			<div className="dts-page-container">
 				<main className="dts-main-container">
 					<div className="mg-container">
-						<Form className="dts-form dts-form--vertical" errors={errors}>
+						<Form id="login-form" className="dts-form dts-form--vertical" errors={errors}>
 							<input type="hidden" value={loaderData.redirectTo} />
 							<div className="dts-form__intro">
 								<h2 className="dts-heading-1">Sign in</h2>

@@ -253,6 +253,7 @@ export function SubmitButton({
 
 interface FormProps<T> {
 	children: React.ReactNode;
+	id?: React.HTMLProps<HTMLFormElement>["id"];
 	errors?: Errors<T>;
 	className?: string;
 	formRef?: React.Ref<HTMLFormElement>
@@ -263,7 +264,7 @@ export function Form<T>(props: FormProps<T>) {
 	errors.form = errors.form || [];
 
 	return (
-		<ReactForm ref={props.formRef} method="post" className={props.className}>
+		<ReactForm id={props.id} ref={props.formRef} method="post" className={props.className}>
 			{errors.form.length > 0 ? (
 				<>
 					<h2>Form Errors</h2>
@@ -1460,3 +1461,41 @@ export function ActionLinks(props: ActionLinksProps) {
 		</div>
 	)
 }
+
+
+
+/**
+ * Disables the submit button of a form until all required fields are valid.
+ *
+ * @param formId - The ID of the form element to validate.
+ * @param submitButtonId - The ID of the submit button element to disable/enable.
+ */
+export const validateFormAndToggleSubmitButton = (formId: string, submitButtonId: string): void => {
+    // Select the form element using the provided ID
+    const formElement = document.querySelector<HTMLFormElement>(`#${formId}`);
+    
+    // Select the submit button element using the provided ID
+    const submitButton = document.querySelector<HTMLButtonElement>(`#${submitButtonId}`);
+    
+    if (formElement && submitButton) {
+        // Select all input fields with the 'required' attribute within the form
+        const requiredFields = formElement.querySelectorAll<HTMLInputElement>("input[required]");
+        
+        if (requiredFields.length > 0) {
+            // Iterate over each required field and add an event listener to validate inputs
+            requiredFields.forEach(field => {
+                field.addEventListener("input", () => {
+                    // Check if all required fields are valid
+                    const allFieldsValid = Array.from(requiredFields).every(
+                        requiredField => requiredField.validity.valid
+                    );
+
+                    // Enable the submit button if all fields are valid, otherwise disable it
+                    submitButton.disabled = !allFieldsValid;
+                });
+            });
+        }
+    } else {
+        console.error("Form or submit button not found. Ensure the provided IDs are correct.");
+    }
+};
