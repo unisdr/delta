@@ -1,4 +1,4 @@
-export type IconId = "undp/calendar" | "undp/hamburger" | "undp/chevron-down" | "other/settings" | "other/about" | "other/analysis" | "other/data";
+export type IconId = "undp/calendar" | "undp/hamburger" | "undp/chevron-down" | "other/settings" | "other/about" | "other/analysis" | "other/data" | "other/user-profile";
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
 	icon: IconId
@@ -41,6 +41,10 @@ export function Icon(props:IconProps) {
 		case "other/about":
 			return (
 					<embed src="/assets/icons/help-outline.svg" type="image/svg+xml" />
+			);
+			case "other/user-profile":
+			return (
+					<embed src="/assets/icons/user-profile.svg" type="image/svg+xml" />
 			);
 	}
 

@@ -55,7 +55,7 @@ function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
     {
       name: "Data",
       title: "Data management",
-      icon: "undp/calendar",
+      icon: "other/data",
       lvl2: [
         {
           name: "Events and records",
@@ -72,7 +72,6 @@ function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
               title: "Records",
               lvl4: [
                 { name: "Disaster records", link: "/disaster-record" },
-                // { name: "PDNA resources repository", link: "/resource-repo" },
               ],
             },
           ],
@@ -82,7 +81,7 @@ function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
     {
       name: "Analysis",
       title: "Analysis",
-      icon: "undp/calendar",
+      icon: "other/analysis",
       lvl2: [
         {
           name: "Analysis",
@@ -91,10 +90,6 @@ function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
             {
               title: "Analysis",
               lvl4: [
-                // {
-                //   name: "Human Direct Effects",
-                //   link: "/analytics/human-direct-effects",
-                // },
                 { name: "Sectors", link: "/analytics/sectors" },
                 { name: "Hazards", link: "/analytics/hazards" },
                 { name: "Disaster Events", link: "/analytics/disaster-events" },
@@ -133,7 +128,7 @@ function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
     {
       name: "Log in",
       title: "User Login",
-      icon: "undp/calendar",
+      icon: "other/user-profile",
       link: "/user/login",
     },
   ];
@@ -161,7 +156,6 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
               title: "Records",
               lvl4: [
                 { name: "Disaster records", link: "/disaster-record" },
-                // { name: "PDNA resources repository", link: "/resource-repo" },
               ],
             },
           ],
@@ -180,10 +174,6 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
             {
               title: "Analysis",
               lvl4: [
-                // {
-                //   name: "Human Direct Effects",
-                //   link: "/analytics/human-direct-effects",
-                // },
                 { name: "Sectors", link: "/analytics/sectors" },
                 { name: "Hazards", link: "/analytics/hazards" },
                 { name: "Disaster Events", link: "/analytics/disaster-events" },
@@ -275,7 +265,7 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
     {
       name: "Log out",
       title: "User Login",
-      icon: "undp/calendar",
+      icon: "other/user-profile",
       link: "/user/logout",
     },
   ];
