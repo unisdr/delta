@@ -580,6 +580,7 @@ export default function Settings() {
 									<th>Role</th>
 									<th>Modified</th>
 									{/* <th>Email</th>
+									{/* <th>Email</th>
 									<th>Email Verified</th>
 									<th>Auth</th> */}
 									<th>Actions</th>
