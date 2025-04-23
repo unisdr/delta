@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 // import Swal from "sweetalert2";
 // import "sweetalert2/dist/sweetalert2.min.css";
 import { FaEye, FaTrashAlt, FaUserEdit } from "react-icons/fa";
-import { format } from 'date-fns';
+import { format } from "date-fns";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -615,7 +615,10 @@ export default function Settings() {
 										</td>
 
 										<td>
-											<Link to={`/settings/access-mgmnt/edit/${item.id}`} className="link">
+											<Link
+												to={`/settings/access-mgmnt/edit/${item.id}`}
+												className="link"
+											>
 												{item.firstName} {item.lastName}
 											</Link>
 										</td>
@@ -638,7 +641,7 @@ export default function Settings() {
 												{/* Capitalizes the first letter */}
 											</span>
 										</td>
-										<td>{format(item.modifiedAt, 'dd-MM-yyyy')}</td>
+										<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
 										{/* <td>
 											<Link to={`/settings/access-mgmnt/edit/${item.id}`} className="link">
 												{item.email}
