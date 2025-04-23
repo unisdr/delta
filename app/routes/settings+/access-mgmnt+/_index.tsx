@@ -579,9 +579,9 @@ export default function Settings() {
 									<th>Organization</th>
 									<th>Role</th>
 									<th>Modified</th>
-									<th>Email</th>
+									{/* <th>Email</th>
 									<th>Email Verified</th>
-									<th>Auth</th>
+									<th>Auth</th> */}
 									<th>Actions</th>
 								</tr>
 							</thead>
@@ -637,7 +637,7 @@ export default function Settings() {
 											</span>
 										</td>
 										<td>{format(item.modifiedAt, 'dd-MM-yyyy')}</td>
-										<td>
+										{/* <td>
 											<Link
 												to={`/settings/access-mgmnt/${item.id}`}
 												className="link"
@@ -646,7 +646,7 @@ export default function Settings() {
 											</Link>
 										</td>
 										<td>{item.emailVerified.toString()}</td>
-										<td>{item.authType}</td>
+										<td>{item.authType}</td> */}
 										<td>
 											<div
 												style={{
