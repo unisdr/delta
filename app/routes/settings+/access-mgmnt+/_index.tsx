@@ -372,25 +372,24 @@ export default function Settings() {
 					}}
 				>
 					<div>Currently there are {totalUsers} users in the system.</div>
-					<div className="button-group">
-						<button
-							type="button"
-							className="mg-button mg-button-outline"
-							onClick={() =>
-								(window.location.href = "/about/technical-specifications")
-							}
+					<div className="dts-external-links">
+						<a
+							href="/about/technical-specifications"
+							className="dts-link"
+							target="_blank"
+							rel="noopener noreferrer"
 						>
 							Technical Specification
-						</button>
-						<button
-							type="button"
-							className="mg-button mg-button-primary"
-							onClick={() =>
-								(window.location.href = "/settings/access-mgmnt/invite")
-							}
+							<svg aria-hidden="true" focusable="false" role="img" style={{ marginLeft: "4px" }}>
+								<use href="/assets/icons/external-link-open-new.svg#external"></use>
+							</svg>
+						</a>
+						<a
+							href="/settings/access-mgmnt/invite"
+							className="mg-button mg-button-secondary"
 						>
 							Add User
-						</button>
+						</a>
 					</div>
 				</div>
 
