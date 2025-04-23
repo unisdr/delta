@@ -92,11 +92,18 @@ export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
 
 export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
   const { user } = authLoaderGetAuth(loaderArgs);
+  // Calculate expiry time (30 minutes after sentAt)
+  const OTP_EXPIRY_MINUTES = 30;
+  const sentAtRaw = user.emailVerificationSentAt;
+  let expiresAt: string | null = null;
+  if (sentAtRaw) {
+    const sentAtDate = new Date(sentAtRaw);
+    expiresAt = new Date(sentAtDate.getTime() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
+  }
   return json({
     userEmail: user.email,
-    // passing this as date does not work in remix, the type of data received is string on the other end
-    // set it explicitly to string here so the type matches
-    sentAt: user.emailVerificationSentAt,
+    sentAt: sentAtRaw,
+    expiresAt, // may be null if sentAtRaw is null
   });
 });
 
@@ -164,6 +171,36 @@ export default function Data() {
     }
   }, []);
 
+  // --- OTP Countdown Component ---
+  function OTPCountdown({ expiresAt }: { expiresAt: string }) {
+    const [timeLeft, setTimeLeft] = React.useState(() => {
+      return Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+    });
+
+    React.useEffect(() => {
+      if (timeLeft <= 0) return;
+      const interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }, [timeLeft, expiresAt]);
+
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+
+    return (
+      <span>
+        Code expires in {minutes}:{seconds.toString().padStart(2, "0")}
+      </span>
+    );
+  }
+
   return (
     <div className="dts-page-container">
       <main className="dts-main-container">
@@ -221,7 +258,7 @@ export default function Data() {
                   )}
               </div>
               <div className="dts-form__additional-content dts-form__additional-content--centered">
-                <div>Code expires in 30:00</div>
+                {pageData.expiresAt ? <OTPCountdown expiresAt={pageData.expiresAt} /> : null}
                 <button
                   type="button"
                   className="mg-button mg-button--small mg-button-ghost"
