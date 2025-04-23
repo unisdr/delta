@@ -579,9 +579,9 @@ export default function Settings() {
 									<th>Organization</th>
 									<th>Role</th>
 									<th>Modified</th>
-									<th>Email</th>
+									{/* <th>Email</th>
 									<th>Email Verified</th>
-									<th>Auth</th>
+									<th>Auth</th> */}
 									<th>Actions</th>
 								</tr>
 							</thead>
@@ -615,7 +615,9 @@ export default function Settings() {
 										</td>
 
 										<td>
-											{item.firstName} {item.lastName}
+											<Link to={`/settings/access-mgmnt/edit/${item.id}`} className="link">
+												{item.firstName} {item.lastName}
+											</Link>
 										</td>
 										<td>{item.organization}</td>
 										{/* Updated Role Column with Badge */}
@@ -637,16 +639,13 @@ export default function Settings() {
 											</span>
 										</td>
 										<td>{format(item.modifiedAt, 'dd-MM-yyyy')}</td>
-										<td>
-											<Link
-												to={`/settings/access-mgmnt/${item.id}`}
-												className="link"
-											>
+										{/* <td>
+											<Link to={`/settings/access-mgmnt/edit/${item.id}`} className="link">
 												{item.email}
 											</Link>
-										</td>
-										<td>{item.emailVerified.toString()}</td>
-										<td>{item.authType}</td>
+										</td> */}
+										{/* <td>{item.emailVerified.toString()}</td> */}
+										{/* <td>{item.authType}</td> */}
 										<td>
 											<div
 												style={{
@@ -655,19 +654,19 @@ export default function Settings() {
 													alignItems: "center",
 												}}
 											>
-												<button
-													className="icon-button"
-													onClick={() =>
-														(window.location.href = `/settings/access-mgmnt/${item.id}`)
-													}
-												>
-													<FaEye
-														style={{
-															fontSize: "1.25rem", // Adjust the size of the icon if needed
-															cursor: "pointer",
-														}}
-													/>
-												</button>
+												{/* 
+													<button
+														className="icon-button"
+														onClick={() => (window.location.href = `/settings/access-mgmnt/${item.id}`)}
+													>
+														<FaEye
+															style={{
+																fontSize: "1.25rem", // Adjust the size of the icon if needed
+																cursor: "pointer",
+															}}
+														/>
+													</button>
+												*/}
 												<button
 													className="icon-button"
 													onClick={() =>
