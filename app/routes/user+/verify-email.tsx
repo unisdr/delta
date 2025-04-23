@@ -25,6 +25,7 @@ import { configCountryName, configSiteName, configSiteURL } from "~/util/config"
 import React from 'react';
 import { Link } from "@remix-run/react";
 import { useNavigate } from "@remix-run/react";
+import { notifyInfo, notifyError } from "~/frontend/utils/notifications";
 
 export const meta: MetaFunction = () => {
   return [
@@ -120,6 +121,21 @@ export default function Data() {
       setTimeout(() => setResent(false), 5000);
     }
   }, [actionData]);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      notifyInfo("Please verify your account. An one time password has been sent to your email.", { toastId: "verify-account-info" });
+      // Listen for offline event
+      function handleOffline() {
+        notifyError("Error - No internet connection. Please connect to wifi or try again later.");
+      }
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+    return undefined;
+  }, []);
 
   // Find the form submit and attach a handler to set loading
   React.useEffect(() => {

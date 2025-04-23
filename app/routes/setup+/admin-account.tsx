@@ -52,7 +52,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     const headers = await createUserSession(res.userId);
     if (res.pendingActivation) {
-      return redirect("/user/verify-email", { headers });
+      // Redirect with query param to show verify snackbar
+      return redirect("/user/verify-email?showVerifySnackbar=1", { headers });
     }
     return redirect("/user/verify-email", { headers });
   } catch (error) {
