@@ -133,6 +133,7 @@ export default function Screen() {
 					<div className="mg-container">
 						<Form id="login-form" className="dts-form dts-form--vertical" errors={errors}>
 							<input type="hidden" value={loaderData.redirectTo} />
+							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								<h2 className="dts-heading-1">Sign in</h2>
 								<p>Enter your credentials to access your account.</p>
