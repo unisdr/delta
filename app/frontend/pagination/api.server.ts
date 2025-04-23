@@ -1,9 +1,10 @@
-
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
 import {
 	count,
 } from "drizzle-orm";
+
+
 
 
 
@@ -14,7 +15,7 @@ const defaultPageSize = 50;
 export function paginationQueryFromURL(request: Request, extraParams: string[]) {
 	const url = new URL(request.url);
 	const page = parseInt(url.searchParams.get("page") || "1", 10);
-	const pageSize = defaultPageSize;
+	const pageSize = parseInt(url.searchParams.get("pageSize") || defaultPageSize.toString(), 10);
 
 	const params: Record<string, string[]> = {};
 	for (const param of extraParams) {
@@ -82,7 +83,7 @@ export async function executeQueryForPagination<T>(
 	const pagination = paginationQueryFromURL(request, []);
 
 
-	const totalItemsRes = await dr.select({count: count()}).from(table).where(where);
+	const totalItemsRes = await dr.select({ count: count() }).from(table).where(where);
 	const totalItems = totalItemsRes[0].count;
 
 	const items = await dr
@@ -110,7 +111,7 @@ export async function executeQueryForPagination2<T>(
 
 	const pagination = paginationQueryFromURL(request, extraParams);
 
-	const countQ = dr.select({count: count()});
+	const countQ = dr.select({ count: count() });
 	const totalItemsRes: any = await q2(countQ);
 	const totalItems = Number(totalItemsRes[0]?.count);
 
@@ -143,7 +144,7 @@ export async function executeQueryForPagination3<T>(
 
 	const pagination = paginationQueryFromURL(request, extraParams);
 
-	const items = await q({offset: pagination.query.skip, limit: pagination.query.take})
+	const items = await q({ offset: pagination.query.skip, limit: pagination.query.take })
 
 	return {
 		items: items,

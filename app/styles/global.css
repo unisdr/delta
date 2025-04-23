@@ -548,3 +548,26 @@ table.table-border th.center {
     gap: 8px;               /* Slightly smaller gap if needed */
   }
 }
+
+/* Pagination: Only highlight current page, do not affect other page numbers */
+.dts-pagination .mg-button--small.mg-button-ghost[aria-current="true"] {
+  background: #fff !important;
+  color: #1976d2 !important;
+  border: 2px solid #1976d2;
+  border-radius: 10px;
+  font-weight: 500;
+  box-shadow: none;
+  padding: 6px 16px;
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.dts-pagination .mg-button--small.mg-button-ghost[aria-current="true"]:hover {
+  background: #e3f0fd !important;
+  color: #1565c0 !important;
+  border-color: #1565c0;
+}
