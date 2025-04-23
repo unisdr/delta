@@ -37,9 +37,14 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
   if (confCtryInstanceISO !== '') {
     const url = "https://data.undrr.org/api/json/gis/countries/1.0.0/?cca3=" + confCtryInstanceISO.toUpperCase();
     const resp = await fetch(url);
-    const res = await resp.json();
-
-    ctryInstanceName = res.data[0].name;
+    let res:any = {};
+    try {
+      res = await resp.json();
+      ctryInstanceName = res.data[0].name;
+    } catch (error) {
+      console.error('Error:', error);
+    }
+    
   }
   
 
