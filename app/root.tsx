@@ -199,9 +199,10 @@ export default function Screen() {
 	const isUrlPathUserInvite = matches.some((match) => match.pathname.startsWith("/user/accept-invite"));
 	const isUrlPathUserVerifyEmail = matches.some((match) => match.pathname.startsWith("/user/verify-email"));
 	const isUrlPathAdminRegistration = matches.some((match) => match.pathname.startsWith("/setup/admin-account"));
+	const isUrlPathResetPassword = matches.some((match) => match.pathname.startsWith("/user/forgot-password"));
 
 	// Do not show header and foother for certain pages [user invitation | admin registration]
-	if (isUrlPathUserInvite || isUrlPathAdminRegistration || isUrlPathUserVerifyEmail) {
+	if (isUrlPathUserInvite || isUrlPathAdminRegistration || isUrlPathUserVerifyEmail || isUrlPathResetPassword) {
 		boolShowHeaderFooter = false;
 	}
 	
