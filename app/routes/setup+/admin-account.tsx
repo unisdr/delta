@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { useLocation } from "@remix-run/react";
 
 import { formStringData } from "~/util/httputil";
 import { createUserSession } from "~/util/session";
+import { getUserFromSession } from "~/util/session";
+
+import type { SetupAdminAccountFields } from "~/backend.server/models/user/admin";
 
 interface ActionData {
   errors?: {
@@ -22,6 +26,20 @@ export const meta: MetaFunction = () => {
     { title: "Account Setup - DTS" },
     { name: "description", content: "Admin setup." },
   ];
+};
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const userSession = await getUserFromSession(request);
+  let prefill: Partial<SetupAdminAccountFields> = {};
+  if (userSession && userSession.user && userSession.user.emailVerified === false) {
+    prefill = {
+      email: userSession.user.email || "",
+      firstName: userSession.user.firstName || "",
+      lastName: userSession.user.lastName || "",
+      // password and passwordRepeat cannot be prefilled for security reasons
+    };
+  }
+  return json({ prefill });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -44,9 +62,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Screen() {
-  const [email, setEmail] = useState("");
-  const [firstname, setFirstname] = useState("");
-  const [secondname, setSecondname] = useState("");
+  const loaderData = useLoaderData<{ prefill?: Partial<SetupAdminAccountFields> }>() || { prefill: {} };
+  const location = useLocation();
+  const [showSecurityMsg, setShowSecurityMsg] = useState(false);
+
+  useEffect(() => {
+    // If the user comes from the verify-email page, show the security message
+    if (location.state && location.state.fromVerifyEmail) {
+      setShowSecurityMsg(true);
+    }
+  }, [location.state]);
+
+  const [email, setEmail] = useState(loaderData.prefill?.email || "");
+  const [firstname, setFirstname] = useState(loaderData.prefill?.firstName || "");
+  const [secondname, setSecondname] = useState(loaderData.prefill?.lastName || "");
   const [password, setPassword] = useState("");
   const [passwordRepeat, setPasswordRepeat] = useState("");
   const [passwordType, setPasswordType] = useState("password");
@@ -82,6 +111,26 @@ export default function Screen() {
       submitButton.disabled = !isFormValid(); // Initially disable submit if form is not valid
     }
   }, [email, firstname, secondname, password, passwordRepeat]); // Re-run when these dependencies change
+
+  // Restore form fields from sessionStorage if available
+  useEffect(() => {
+    const saved = sessionStorage.getItem('dts-admin-account');
+    if (saved) {
+      try {
+        const { email, firstname, secondname, password, passwordRepeat } = JSON.parse(saved);
+        setEmail(email || "");
+        setFirstname(firstname || "");
+        setSecondname(secondname || "");
+        setPassword(password || "");
+        setPasswordRepeat(passwordRepeat || "");
+      } catch {}
+    }
+  }, []);
+
+  // Save form fields to sessionStorage on change
+  useEffect(() => {
+    sessionStorage.setItem('dts-admin-account', JSON.stringify({ email, firstname, secondname, password, passwordRepeat }));
+  }, [email, firstname, secondname, password, passwordRepeat]);
 
   const togglePasswordVisibility = () => {
     setPasswordType(passwordType === "password" ? "text" : "password");
@@ -239,6 +288,13 @@ export default function Screen() {
                 </div>
               </div>
             </div>
+
+            {/* Show security message if coming from verify-email */}
+            {showSecurityMsg && (
+              <div className="dts-form-component__hint dts-form-component__hint--error">
+                For your security, please re-enter your password and then confirm it to continue.
+              </div>
+            )}
 
             {/* Password Requirements */}
             <div className="dts-form-component__hint" style={{ fontSize: "14px" }}>

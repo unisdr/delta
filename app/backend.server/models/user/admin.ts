@@ -14,7 +14,7 @@ type SetupAdminAccountResult =
   | { ok: true; userId: number; pendingActivation?: boolean }
   | { ok: false; errors: Errors<SetupAdminAccountFields> };
 
-interface SetupAdminAccountFields {
+export interface SetupAdminAccountFields {
   email: string;
   firstName: string;
   lastName: string;

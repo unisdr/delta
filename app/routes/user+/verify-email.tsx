@@ -23,6 +23,8 @@ import { sendEmail } from "~/util/email";
 import { configCountryName, configSiteName, configSiteURL } from "~/util/config";
 
 import React from 'react';
+import { Link } from "@remix-run/react";
+import { useNavigate } from "@remix-run/react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -104,6 +106,7 @@ export default function Data() {
   const [resent, setResent] = React.useState(false);
   const [otp, setOtp] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const navigate = useNavigate();
 
   // On mount, always sync OTP state to the input value (even if empty)
   React.useEffect(() => {
@@ -156,13 +159,13 @@ export default function Data() {
             method="post"
           >
             <div className="dts-form__header">
-              {/* Update the href to point to the admin-account route */}
-              <a
-                href="/setup/admin-account"
+              <button
+                type="button"
                 className="mg-button mg-button--small mg-button-system"
+                onClick={() => navigate("/setup/admin-account", { state: { fromVerifyEmail: true } })}
               >
                 Back
-              </a>
+              </button>
               <span>Disaster Tracking System</span>
             </div>
             <div className="dts-form__intro">
