@@ -172,19 +172,14 @@ export default function Screen() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{
-                    border: actionData?.errors?.fields?.email ? "1px solid red" : "",
-                  }}
+                  className={
+                    actionData?.errors?.fields?.email 
+                      ? "input-error"
+                      : "input-normal"
+                  }
                 />
                 {actionData?.errors?.fields?.email && (
-                  <div
-                    style={{
-                      color: "red",
-                      fontSize: "12px",
-                      marginTop: "0px",
-                      marginBottom: "0px",
-                    }}
-                  >
+                  <div className="dts-form-component__hint--error">
                     {(actionData.errors.fields as any).email?.[0]}
                   </div>
                 )}

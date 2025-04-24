@@ -102,8 +102,6 @@ export default function Screen() {
 	const errors = actionData?.errors || {};
 	const data = actionData?.data;
 
-	const [passwordVisible, setPasswordVisible] = useState(false);
-
 	// Ensure password visibility is initialized on the client to avoid mismatch
 	const [isClient, setIsClient] = useState(false);
 
@@ -174,16 +172,8 @@ export default function Screen() {
 											errors={errors}
 											required={true}
 										/>
-										{/* <FieldErrors errors={errors} field="password"></FieldErrors> */}
 										{errors?.fields?.password && (
-											<div
-												style={{
-													color: "red",
-													fontSize: "12px",
-													marginTop: "0px",
-													marginBottom: "0px",
-												}}
-											>
+											<div className="dts-form-component__hint--error">
 												{errorToString(errors.fields.password[0])}
 											</div>
 										)}
