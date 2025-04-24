@@ -371,7 +371,7 @@ export default function Settings() {
 						marginBottom: "20px",
 					}}
 				>
-					<div>Currently there are {totalUsers} users in the system.</div>
+					<div>Currently there are [{totalUsers}] users in the system.</div>
 					<div className="dts-external-links">
 						<a
 							href="/about/technical-specifications"
