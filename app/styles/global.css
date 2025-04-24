@@ -72,7 +72,7 @@ form>label {
 }
 
 .input-error {
-  border: 2px solid red !important;
+  border: 1px solid #c10920 !important;
   /* Error border with higher specificity */
 }
 
