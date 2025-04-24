@@ -85,7 +85,6 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18",
-    "@types/recharts": "^1.8.29",
     "@types/ws": "^8.5.13",
     "drizzle-kit": "^0.30.5",
     "postcss-import": "^16.1.0",
