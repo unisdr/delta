@@ -380,7 +380,12 @@ export default function Settings() {
 							rel="noopener noreferrer"
 						>
 							Technical Specification
-							<svg aria-hidden="true" focusable="false" role="img" style={{ marginLeft: "4px" }}>
+							<svg
+								aria-hidden="true"
+								focusable="false"
+								role="img"
+								style={{ marginLeft: "4px" }}
+							>
 								<use href="/assets/icons/external-link-open-new.svg#external"></use>
 							</svg>
 						</a>
@@ -675,12 +680,20 @@ export default function Settings() {
 														(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
 													}
 												>
-													<FaUserEdit
+													<svg
+														aria-hidden="true"
+														focusable="false"
+														role="img"
+														style={{ marginLeft: "4px" }}
+													>
+														<use href="/assets/icons/edit.svg#edit"></use>
+													</svg>
+													{/* <FaUserEdit
 														style={{
 															fontSize: "1.25rem", // Adjust the size of the icon if needed
 															cursor: "pointer",
 														}}
-													/>
+													/> */}
 												</button>
 												{/* <button
 													className="icon-button"
