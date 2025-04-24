@@ -108,9 +108,17 @@ export default function Screen() {
 
   useEffect(() => {
     const submitButton = document.querySelector("button[type='submit']") as HTMLButtonElement;
+    const imgToggle = document.querySelector("[id='passwordToggleImg']") as HTMLImageElement;
+		const imgToggle2 = document.querySelector("[id='passwordToggleImg2']") as HTMLImageElement;
     if (submitButton) {
       submitButton.disabled = !isFormValid(); // Initially disable submit if form is not valid
     }
+    if (imgToggle) {
+			imgToggle.style.display='block';
+		}
+		if (imgToggle2) {
+			imgToggle2.style.display='block';
+		}
   }, [email, firstname, secondname, password, passwordRepeat]); // Re-run when these dependencies change
 
   // Restore form fields from sessionStorage if available
@@ -161,127 +169,111 @@ export default function Screen() {
             </div>
             <div className="dts-form__body">
               <p>*Required information</p>
-              <div className="dts-form-component" style={{ marginBottom: "10px" }}>
-                <label htmlFor="email"></label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Email address*"
-                  autoFocus
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={
-                    actionData?.errors?.fields?.email 
-                      ? "input-error"
-                      : "input-normal"
-                  }
-                />
+              <div className="dts-form-component">
+                <label htmlFor="email">
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Email address*"
+                    autoFocus
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={
+                      actionData?.errors?.fields?.email 
+                        ? "input-error"
+                        : "input-normal"
+                    }
+                  />
+                  </label>
                 {actionData?.errors?.fields?.email && (
                   <div className="dts-form-component__hint--error">
-                    {(actionData.errors.fields as any).email?.[0]}
+                    <div className="dts-form-component__hint--error" aria-live="assertive">
+                      {(actionData.errors.fields as any).email?.[0]}
+                    </div>
                   </div>
                 )}
+                
               </div>
-              <div className="dts-form-component" style={{ marginBottom: "10px" }}>
-                <label htmlFor="firstName"></label>
-                <input
-                  type="text"
-                  id="firstName"
-                  name="firstName"
-                  placeholder="First name*"
-                  required
-                  value={firstname}
-                  onChange={(e) => setFirstname(e.target.value)}
-                />
-              </div>
-              <div className="dts-form-component" style={{ marginBottom: "10px" }}>
-                <label htmlFor="secondname"></label>
-                <input
-                  type="text"
-                  id="secondname"
-                  name="secondname"
-                  placeholder="Last name"
-                  value={secondname}
-                  onChange={(e) => setSecondname(e.target.value)}
-                />
-              </div>
-              <div className="dts-form-component" style={{ marginBottom: '10px' }}>
-                <label htmlFor="password"></label>
-                <div className="password-container" style={{ marginBottom: "1px", position: "relative" }}>
+              <div className="dts-form-component">
+                <label htmlFor="firstName">
                   <input
-                    type={passwordType}
-                    id="password"
-                    name="password"
-                    placeholder="Enter password*"
-                    minLength={12}
+                    type="text"
+                    id="firstName"
+                    name="firstName"
+                    placeholder="First name*"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      paddingRight: "40px",
-                    }}
+                    value={firstname}
+                    onChange={(e) => setFirstname(e.target.value)}
                   />
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    aria-label="Toggle password visibility"
-                    className="password-toggle"
-                    style={{
-                      position: "absolute",
-                      right: "10px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {passwordType === "password" ?
-                      <FaEyeSlash style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} /> :
-                      <FaEye style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} />}
-                  </button>
-                </div>
+                </label>
               </div>
-              <div className="dts-form-component" style={{ marginBottom: "10px" }}>
-                <label htmlFor="passwordRepeat"></label>
-                <div className="password-container" style={{ marginBottom: "1px", position: "relative" }}>
+              <div className="dts-form-component">
+                <label htmlFor="secondname">
                   <input
-                    type={passwordRepeatType}
-                    id="passwordRepeat"
-                    name="passwordRepeat"
-                    placeholder="Confirm password*"
-                    minLength={12}
-                    required
-                    value={passwordRepeat}
-                    onChange={(e) => setPasswordRepeat(e.target.value)}
-                    style={{
-                      width: "100%",
-                      paddingRight: "40px",
-                    }}
+                    type="text"
+                    id="secondname"
+                    name="secondname"
+                    placeholder="Last name"
+                    value={secondname}
+                    onChange={(e) => setSecondname(e.target.value)}
                   />
-                  <button
-                    type="button"
-                    onClick={toggleConfirmPasswordVisibility}
-                    aria-label="Toggle confirm password visibility"
-                    className="password-toggle"
-                    style={{
-                      position: "absolute",
-                      right: "10px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {passwordRepeatType === "password" ?
-                      <FaEyeSlash style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} /> :
-                      <FaEye style={{ fontSize: '1rem', position: 'absolute', right: '0.1rem', transform: 'translateY(-39%)', top: '50%', cursor: 'pointer', }} />}
-                  </button>
-                </div>
+                </label>
+              </div>
+              <div className="dts-form-component">
+                <label htmlFor="password">
+                  <div className="dts-form-component__pwd">
+                      <input
+                        type={passwordType}
+                        id="password"
+                        name="password"
+                        placeholder="Enter password*"
+                        minLength={12}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        aria-label="Toggle password visibility"
+                        className="dts-form-component__pwd-toggle mg-button"
+                      >
+                        {passwordType === "password" ?
+                          <img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img> :
+											    <img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img>
+                        }
+                      </button>
+                  </div>
+                </label>
+              </div>
+              <div className="dts-form-component">
+                <label htmlFor="passwordRepeat">
+                  <div className="dts-form-component__pwd">
+                    <input
+                      type={passwordRepeatType}
+                      id="passwordRepeat"
+                      name="passwordRepeat"
+                      placeholder="Confirm password*"
+                      minLength={12}
+                      required
+                      value={passwordRepeat}
+                      onChange={(e) => setPasswordRepeat(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={toggleConfirmPasswordVisibility}
+                      aria-label="Toggle confirm password visibility"
+                      className="dts-form-component__pwd-toggle mg-button"
+                    >
+                      {passwordRepeatType === "password" ?
+												<img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img> :
+												<img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img>
+                      }
+                    </button>
+                  </div>
+                </label>
               </div>
             </div>
 
@@ -293,8 +285,8 @@ export default function Screen() {
             )}
 
             {/* Password Requirements */}
-            <div className="dts-form-component__hint" style={{ fontSize: "14px" }}>
-              <ul>
+            <div className="dts-form-component__hint">
+              <ul id="passwordDescription">
                 <li>At least 12 characters long</li>
                 <li>
                   Must include two of the following:
