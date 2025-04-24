@@ -6,9 +6,10 @@ interface Props {
   defaultValue?: string;
   errors?: Record<string, any>;
   style?: Record<string, any>;
+  required?: boolean;
 }
 
-const PasswordInput = ({ name, placeholder, defaultValue, errors,style }: Props) => {
+const PasswordInput = ({ name, placeholder, defaultValue, errors,style, required=false }: Props) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -30,12 +31,12 @@ const PasswordInput = ({ name, placeholder, defaultValue, errors,style }: Props)
           name={name}
           placeholder={placeholder}
           defaultValue={defaultValue}
-          className='{errors?.fields?.password?"input-error":""}'
-          style={{...style,
+          className={errors?.fields?.[name] ? "input-error" : ""}
+          style={{
+            ...style,
             paddingRight: "1rem",
-            height: "40px",
-            border: errors?.fields?.currentPassword ? "1px solid red" : "",
           }}
+          required={required}
         ></input>
         <img
           src={
