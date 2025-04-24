@@ -127,7 +127,7 @@ const validateFilter = (value: string | null): string | null => {
 };
 
 // Helper functions to get filter names
-export const getSectorName = async (id: string) => {
+const getSectorName = async (id: string) => {
   const result = await dr
     .select({ name: sectorTable.sectorname })
     .from(sectorTable)
