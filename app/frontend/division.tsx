@@ -10,14 +10,14 @@ import {
 	FieldErrors,
 	Errors
 } from "~/frontend/form";
-import {DivitionInsert} from "~/drizzle/schema";
+import {DivisionInsert} from "~/drizzle/schema";
 
 import {divisionBreadcrumb, DivisionBreadcrumbRow, divisionsAllLanguages} from "~/backend.server/models/division";
 
 
 interface DivisionFormProps {
 	edit: boolean;
-	fields: DivitionInsert;
+	fields: DivisionInsert;
 	errors: any
 	breadcrumbs: DivisionBreadcrumbRow[] | null
 	view?: string | null
