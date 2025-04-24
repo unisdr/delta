@@ -417,7 +417,7 @@ export default function Settings() {
 								type="search"
 								name="organization"
 								value={organizationFilter}
-								placeholder="Type organization name"
+								placeholder="Type organisation name"
 								className="filter-input"
 								onChange={handleOrganizationFilter}
 								style={{
@@ -575,7 +575,7 @@ export default function Settings() {
 								<tr>
 									<th>Status</th>
 									<th>Name</th>
-									<th>Organization</th>
+									<th>Organisation</th>
 									<th>Role</th>
 									<th>Modified</th>
 									{/* <th>Email</th>

@@ -41,7 +41,7 @@ export default function AuditLogHistory({ auditLogs }: AuditLogHistoryProps) {
 						<tr>
 							<th>Action Taken</th>
 							<th>By</th>
-							<th>Organization</th>
+							<th>Organisation</th>
 							<th>Date</th>
 							<th>Time</th>
 						</tr>

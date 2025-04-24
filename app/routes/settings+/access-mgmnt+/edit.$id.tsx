@@ -378,7 +378,7 @@ export default function Screen() {
 						<div className="dts-form-component mg-grid__col--span-2">
 							<label aria-invalid={!!safeErrors.fields.organization}>
 								<div className="dts-form-component__label">
-									<span style={{ color: "red" }}>*</span> Organization
+									<span style={{ color: "red" }}>*</span> Organisation
 								</div>
 								<input
 									type="text"

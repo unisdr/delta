@@ -67,7 +67,7 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 		errors.fields.email = ["Email is required"];
 	}
 	if (!data.organization) {
-		errors.fields.organization = ["Organization is required"];
+		errors.fields.organization = ["Organisation is required"];
 	}
 
 	if (Object.keys(errors.fields).length > 0) {

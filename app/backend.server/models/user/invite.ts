@@ -65,7 +65,7 @@ export async function adminInviteUser(
 		errors.fields.role = ["Role is required"];
 	}
 	if (fields.organization == "") {
-		errors.fields.organization = ["Organization is required"];
+		errors.fields.organization = ["Organisation is required"];
 	}
 
 	if (hasErrors(errors)) {

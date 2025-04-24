@@ -113,7 +113,7 @@ export default function Data() {
         <p>First Name: {item.firstName}</p>
         <p>Last Name: {item.lastName}</p>
         <p>Role: {item.role}</p>
-        <p>Organization: {item.organization}</p>
+        <p>Organisation: {item.organization}</p>
         <p>Email Verified: {String(item.emailVerified)}</p>
         <p>Auth Type: {item.authType}</p>
         <br />
@@ -125,7 +125,7 @@ export default function Data() {
               <tr>
                 <th>Action Taken</th>
                 <th>By</th>
-                <th>Organization</th>
+                <th>Organisation</th>
                 <th>Date</th>
                 <th>Time</th>
               </tr>
