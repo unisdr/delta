@@ -2,7 +2,8 @@ import {
 	ActionFunctionArgs,
 	json,
 	LoaderFunctionArgs,
-	redirect
+	redirect,
+	MetaFunction
 } from "@remix-run/node";
 import {
 	useActionData,
@@ -27,7 +28,14 @@ import {
 import { MainContainer } from "~/frontend/container";
 import {acceptInvite, AcceptInviteFieldsFromMap, validateInviteCode} from "~/backend.server/models/user/invite";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+
+export const meta: MetaFunction = () => {
+  return [
+	{ title: "Create your account - DTS" },
+	{ name: "description", content: "Create your account page." },
+  ];
+};
 
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const url = new URL(request.url);
@@ -71,7 +79,12 @@ export default function Screen() {
 	const errors = actionData?.errors
 	const data = actionData?.data
 
-	
+	const [firstname, setFirstname] = useState(data?.firstName || "");
+  	const [password, setPassword] = useState(data?.password || "");
+  	const [passwordRepeat, setPasswordRepeat] = useState(data?.passwordRepeat || "");
+
+	const [passwordType, setPasswordType] = useState("password");
+  	const [passwordRepeatType, setPasswordRepeatType] = useState("password");
 
 	if (!loaderData.inviteCodeValidation.ok) {
 		return (
@@ -79,17 +92,58 @@ export default function Screen() {
 			<p>{loaderData.inviteCodeValidation.error}</p>
 			</>
 		)
-		
 	}
+
+	
+	// Function to check if all form fields are valid
+	const isFormValid = () => {
+		const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+		const hasUppercase = /[A-Z]/.test(password);
+		const hasLowercase = /[a-z]/.test(password);
+		const hasNumber = /\d/.test(password);
+		const hasSpecialChar = /[@$!%*?&_]/.test(password);
+
+		const hasTwoOfTheFollowing = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length >= 2;
+
+		return (
+			emailRegex.test(email) &&
+			firstname &&
+			password &&
+			passwordRepeat &&
+			password === passwordRepeat &&
+			hasTwoOfTheFollowing &&
+			password.length >= 12 &&
+			password !== email
+		);
+	};
 
 	useEffect(() => {
 		// Submit button enabling only when required fields are filled
 		const submitButton = document.querySelector("[id='setup-button']") as HTMLButtonElement;
+		const imgToggle = document.querySelector("[id='passwordToggleImg']") as HTMLImageElement;
+		const imgToggle2 = document.querySelector("[id='passwordToggleImg2']") as HTMLImageElement;
 		if (submitButton) {
-			submitButton.disabled = true;
-			validateFormAndToggleSubmitButton('setup-form', 'setup-button');
+			// submitButton.disabled = true;
+			// validateFormAndToggleSubmitButton('setup-form', 'setup-button');
+			submitButton.disabled = !isFormValid(); // Initially disable submit if form is not valid
 		}
-	}, []);
+		if (imgToggle) {
+			imgToggle.style.display='block';
+		}
+		if (imgToggle2) {
+			imgToggle2.style.display='block';
+		}
+	}, [email, firstname, password, passwordRepeat]);
+
+
+
+	const togglePasswordVisibility = () => {
+		setPasswordType(passwordType === "password" ? "text" : "password");
+	};
+
+	const toggleConfirmPasswordVisibility = () => {
+		setPasswordRepeatType(passwordRepeatType === "password" ? "text" : "password");
+	};
 
 	return (
 		<>
@@ -110,27 +164,75 @@ export default function Screen() {
 						
 							<input name="inviteCode" type="hidden" defaultValue={inviteCode}></input>
 							
-							<Field label="E-mail" extraClassName="dts-form-component">
-								<input type="text" name="email" defaultValue={email} readOnly ></input>
+							<Field label="" extraClassName="dts-form-component">
+								<input type="text" 
+									name="email" 
+									placeholder="Email address*"
+									defaultValue={email} readOnly ></input>
 							</Field>
 
-							<Field label="First name *" extraClassName="dts-form-component">
-								<input type="text" name="firstName" defaultValue={data?.firstName} autoFocus required></input>
+							<Field label="" extraClassName="dts-form-component">
+								<input type="text" 
+									name="firstName" 
+									placeholder="First name*"
+									onChange={(e) => setFirstname(e.target.value)}
+									defaultValue={data?.firstName} autoFocus required></input>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="firstName"></FieldErrorsStandard>
 
-							<Field label="Last name" extraClassName="dts-form-component">
-								<input type="text" name="lastName" defaultValue={data?.lastName}></input>
+							<Field label="" extraClassName="dts-form-component">
+								<input type="text" 
+									name="lastName" 
+									placeholder="Last name"
+									defaultValue={data?.lastName}></input>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="lastName"></FieldErrorsStandard>
 
-							<Field label="Password *" extraClassName="dts-form-component">
-								<input type="password" name="password" defaultValue={data?.password} required></input>
+							<Field label="" extraClassName="dts-form-component">
+								<div className="dts-form-component__pwd">
+									<input type={passwordType} 
+										name="password" 
+										placeholder="Enter password*"
+										minLength={12}
+										id="password"
+										onChange={(e) => setPassword(e.target.value)}
+										defaultValue={data?.password} required></input>
+									<button
+										type="button"
+										onClick={togglePasswordVisibility}
+										aria-label="Toggle password visibility"
+										className="dts-form-component__pwd-toggle mg-button" 
+									>
+										{passwordType === "password" ?
+											<img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img> :
+											<img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img>
+										}
+									</button>
+								</div>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="password"></FieldErrorsStandard>
 
-							<Field label="Repeat password *" extraClassName="dts-form-component">
-								<input type="password" name="passwordRepeat" defaultValue={data?.passwordRepeat} required></input>
+							<Field label="" extraClassName="dts-form-component">
+								<div className="dts-form-component__pwd">
+									<input type={passwordRepeatType} 
+										placeholder="Confirm password*"
+										minLength={12}
+										id="passwordRepeat"
+										name="passwordRepeat" 
+										onChange={(e) => setPasswordRepeat(e.target.value)}
+										defaultValue={data?.passwordRepeat} required></input>
+									<button
+											type="button"
+											onClick={toggleConfirmPasswordVisibility}
+											aria-label="Toggle password visibility"
+											className="dts-form-component__pwd-toggle mg-button" 
+										>
+											{passwordRepeatType === "password" ?
+												<img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img> :
+												<img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img>
+											}
+									</button>
+								</div>
 							</Field>
 							<FieldErrorsStandard errors={errors} field="passwordRepeat"></FieldErrorsStandard>
 							
@@ -139,10 +241,10 @@ export default function Screen() {
 									<li>At least 12 characters long</li>
 									<li>Must include two of the following:
 									<ul>
-									<li>Uppercase letters</li>
-									<li>Lowercase letters</li>
-									<li>Numbers</li>
-									<li>Special characters</li>
+										<li>Uppercase letters</li>
+										<li>Lowercase letters</li>
+										<li>Numbers</li>
+										<li>Special characters</li>
 									</ul>
 									</li>
 									<li>Cannot be the same as the username</li>
