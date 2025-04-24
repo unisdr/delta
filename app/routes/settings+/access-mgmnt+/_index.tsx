@@ -445,7 +445,6 @@ export default function Settings() {
 									borderRadius: "4px",
 								}}
 							>
-								<option value="">Select Role</option>
 								<option value="all">All Roles</option>
 								<option value="data-viewer">Data Viewer</option>
 								<option value="data-collector">Data Collector</option>
