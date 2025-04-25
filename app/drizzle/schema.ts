@@ -4,6 +4,7 @@ import {
 	timestamp,
 	bigint,
 	bigserial,
+	serial, 
 	check,
 	unique,
 	boolean,
@@ -1187,16 +1188,9 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 		withLosses: boolean("with_losses"),
 		lossesCost: ourMoney("losses_cost"),
 		lossesCostCurrency: text("losses_cost_currency"),
-	},
-	(table) => {
-		return [
-			unique("disRecSectorsUniqueIdx").on(table.disasterRecordId, table.sectorId),
-			index("sector_disaster_records_relation_sector_id_idx").on(table.sectorId),
-			index("sector_disaster_records_relation_disaster_record_id_idx").on(
-				table.disasterRecordId
-			),
-		];
-	}
+	}, (table) => [
+		unique("sector_disaster_records_relation_sector_id_disaster_record_id").on(table.sectorId, table.disasterRecordId),
+	]
 );
 
 /** Relationships for `sectorTable` */
@@ -1239,3 +1233,11 @@ export type SectorDisasterRecordsRelation =
 	typeof sectorDisasterRecordsRelationTable.$inferSelect;
 export type SectorDisasterRecordsRelationInsert =
 	typeof sectorDisasterRecordsRelationTable.$inferInsert;
+
+
+// Declared the migrations table to avoid removal after drizzle db syncronization.
+export const drizzleMigrations = pgTable("__drizzle_migrations__", {
+	id: serial().primaryKey().notNull(),
+	hash: text().notNull(),
+	createdAt: bigint("created_at", { mode: "number" }),
+});

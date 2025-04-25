@@ -761,7 +761,7 @@ function DisasterEventsAnalysisContent() {
 
 
 
-        { Number(ld.total.damages.total) > 0 && (
+        { (Number(ld.total.damages.total) > 0 || Number(ld.total.losses.total) > 0 || Number(ld.total.recovery.total) > 0) && (
           <>
             <section className="dts-page-section">
               <div className="mg-container">
