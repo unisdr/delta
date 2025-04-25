@@ -14,30 +14,30 @@ export async function createTestDisasterRecord1(tx: Tx) {
 	await createTestData()
 
 	let res1 = await tx.insert(eventTable)
-		.values({})
+		.values({} as typeof eventTable.$inferInsert)
 		.returning({id: eventTable.id})
 	let id1 = res1[0].id
 	await tx.insert(hazardousEventTable)
 		.values({
 			id: id1,
 			hipTypeId: "type1",
-			startDate: new Date(),
-			endDate: new Date(),
-		})
+			startDate: new Date().toISOString().slice(0, 10),
+			endDate: new Date().toISOString().slice(0, 10),
+		} as typeof hazardousEventTable.$inferInsert)
 
 	let res2 = await tx.insert(eventTable)
-		.values({})
+		.values({} as typeof eventTable.$inferInsert)
 		.returning({id: eventTable.id})
 	let id2 = res2[0].id
 	await tx.insert(disasterEventTable)
 		.values({
 			id: id2,
 			hazardousEventId: id1
-		})
+		} as typeof disasterEventTable.$inferInsert)
 	await tx.insert(disasterRecordsTable)
 		.values({
 			id: testDisasterRecord1Id,
 			disasterEventId: id2
-		})
+		} as typeof disasterRecordsTable.$inferInsert)
 		.returning({id: disasterRecordsTable.id})
 }
