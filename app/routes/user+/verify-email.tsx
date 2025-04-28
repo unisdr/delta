@@ -56,41 +56,7 @@ export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
 		return Response.json({ data, errors: res.errors });
 	}
 
-	//Send confirmation email
-	const countryName = configCountryName();
-	const siteURL = configSiteURL();
-	const subject = `Welcome to DTS ${configSiteName()}`;
-	const html = `
-    <p>
-      Dear ${user.firstName} ${user.lastName},
-    </p>
-    <p>
-      Welcome to the DTS ${countryName} system. Your user account has been successfully created.
-    </p>
-    <p>
-      Click the link below to access your account:
-    </p>
-    <p>
-      <a href="${siteURL}/settings/access-mgmnt" 
-         style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
-         background-color: #007BFF; text-decoration: none; border-radius: 5px;">
-        Access My Account
-      </a>
-    </p>
-    <p>
-      If the button above does not work, copy and paste the following URL into your browser:
-      <br>
-      <a href="${siteURL}/settings/access-mgmnt">${siteURL}/settings/access-mgmnt</a>
-    </p>
-  `;
-
-	const text = `Dear ${user.firstName} ${user.lastName}
-                Welcome to the DTS ${countryName} system. Your user account has been successfully created.
-                Copy and paste the following link into your browser URL to access your account:
-                ${siteURL}/settings/access-mgmnt" 
-                `;
-	await sendEmail(user.email, subject, text, html);
-	return redirect("/");
+	return redirect("/user/verify-email-complete?step=0");
 });
 
 export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {

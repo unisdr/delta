@@ -93,9 +93,10 @@ async function processPage(page: number) {
 		throw "Exceeded max pages, likely infinite loop"
 	}
 	// const url = "https://tools.undrr.org/sso-undrr/api/integration/pw/hips?page=" + page;
-	// const resp = await fetch(url);
-	// const res = await resp.json() as HipApi;
-	const res = hipsDataJson as HipApi;
+	const url = "https://data.undrr.org/api/json/hips/hazards/1.0.0/?limit=500";
+	const resp = await fetch(url);
+	const res = await resp.json() as HipApi;
+	// const res = hipsDataJson as HipApi;
 	const data = res.data;
 	for (const item of data) {
 		await upsertHip(item);
