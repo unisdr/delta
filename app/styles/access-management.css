@@ -91,7 +91,8 @@
     border-radius: 50%;
     display: inline-block;
     position: relative;
-
+    margin: 0; /* Remove margin auto */
+    padding: 0; /* Remove padding */
 }
 
 .dts-access-management__status-dot--activated {
@@ -151,12 +152,7 @@
     margin-top: 0;
 }
 
-.dts-table__cell-centered {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
+
 
 
 
@@ -172,9 +168,9 @@
     position: relative;
   } */
 
-/* .dts-access-management__table tr:nth-child(even) {
+.dts-access-management__table tr:nth-child(even) {
     background-color: #f9f9f9;
-  } */
+  }
 
 /* Role badge */
 .dts-access-management__role-badge {
