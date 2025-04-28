@@ -99,7 +99,9 @@ export function Pagination(props: PaginationProps) {
 				)}
 			</ul>
 			<div className="dts-form-component">
-				<select value={pageSize} onChange={handlePageSizeChange} aria-label="Items per page">
+				<select value={pageSize} onChange={handlePageSizeChange} aria-label="Items per page"
+				  id="dts-pagination-page-size"
+				>
 					{PAGE_SIZE_OPTIONS.map((size) => (
 						<option key={size} value={size}>
 							{size} / page
