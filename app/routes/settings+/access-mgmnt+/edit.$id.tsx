@@ -48,6 +48,7 @@ import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { useNavigate } from "@remix-run/react";
 import { adminUpdateUser, AdminUpdateUserFields, adminUpdateUserFieldsFromMap } from "~/backend.server/models/user/update_user";
+import { format } from "date-fns";
 
 
 export const meta: MetaFunction = () => {
@@ -74,7 +75,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 			organization: userTable.organization,
 			emailVerified: userTable.emailVerified, // Include emailVerified
 			// Dynamically calculate dateAdded and addedBy
-			dateAdded: userTable.inviteSentAt, // Use invite_sent_at as the dateAdded
+			dateAdded: userTable.createdAt,
 			addedBy: sql<string>`'System Admin'`.as("addedBy"), // Ensure type is string
 		})
 		.from(userTable)
@@ -269,7 +270,7 @@ export default function Screen() {
 						</p>
 						<p style={{ marginBottom: "0.5em" }}>
 							<strong>Date added:</strong>{" "}
-							{fields.dateAdded ? new Date(fields.dateAdded).toLocaleDateString() : "N/A"}
+							{fields.dateAdded ? format(new Date(fields.dateAdded), "dd-MM-yyyy") : "N/A"}
 						</p>
 						<p>
 							<strong>Added by:</strong> {fields.addedBy || "System Admin"}
