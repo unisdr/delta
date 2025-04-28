@@ -1,0 +1,217 @@
+/**
+ * Access Management Component Styles
+ * Integrates with style-dts.css design system
+ */
+
+/* Container for the access management section */
+.dts-access-management {
+    padding: 2rem;
+}
+
+/* Top bar with user count and action links */
+.dts-access-management__top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+/* Filter form */
+.dts-access-management__filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.dts-access-management__filter-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.dts-access-management__filter-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dts-access-management__filter-input,
+.dts-access-management__filter-select {
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 0.4rem;
+    font-size: 1.4rem;
+}
+
+/* Specific widths */
+.dts-access-management__filter-input {
+    width: 26rem;
+}
+
+.dts-access-management__filter-select {
+    width: 26rem;
+}
+
+/* User stats section */
+.dts-access-management__user-stats-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+}
+
+.dts-access-management__user-stats {
+    margin-bottom: 1rem;
+}
+
+.dts-access-management__status-legend {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dts-access-management__status-legend-label {
+    font-weight: 700;
+    margin-right: 1rem;
+}
+
+.dts-access-management__status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.2;
+}
+
+/* Status dot */
+.dts-access-management__status-dot {
+    height: 1rem;
+    width: 1rem;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+
+}
+
+.dts-access-management__status-dot--activated {
+    background-color: #106CB8;
+    /* Matches .dts-status--activated from style-dts.css */
+}
+
+.dts-access-management__status-dot--pending {
+    background-color: #ccc;
+}
+
+/* Tooltip for status dot */
+.dts-access-management__status-dot:hover .dts-access-management__tooltip-text,
+.dts-access-management__status-dot:hover .dts-access-management__tooltip-pointer {
+    visibility: visible;
+}
+
+.dts-access-management__tooltip-text {
+    visibility: hidden;
+    position: absolute;
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+    top: -4.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    font-size: 1.4rem;
+}
+
+.dts-access-management__tooltip-pointer {
+    visibility: hidden;
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 0.5rem solid transparent;
+    border-right: 0.5rem solid transparent;
+    border-top: 0.5rem solid #000;
+    top: -1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+/* Table container */
+.dts-access-management__table-container {
+    overflow-x: auto;
+    margin-top: 2rem;
+}
+
+/* Table styles (extends .dts-table from style-dts.css) */
+.dts-access-management__table {
+    font-size: 1.4rem;
+    margin-top: 0;
+}
+
+.dts-table__cell-centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+
+
+/* .dts-access-management__table th,
+  .dts-access-management__table td {
+    padding: 1.2rem 1.5rem;
+    border: 1px solid #ddd;
+  } */
+
+/* .dts-access-management__table th {
+    background-color: #f4f4f4;
+    font-weight: 700;
+    position: relative;
+  } */
+
+/* .dts-access-management__table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  } */
+
+/* Role badge */
+.dts-access-management__role-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 0.4rem;
+    color: #856404;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .dts-access-management__filter-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .dts-access-management__filter-input,
+    .dts-access-management__filter-select {
+        width: 100%;
+    }
+
+    .dts-access-management__top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .dts-access-management__user-stats-container {
+        align-items: stretch;
+    }
+
+    .dts-access-management__status-legend {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}

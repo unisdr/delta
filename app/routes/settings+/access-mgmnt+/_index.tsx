@@ -183,195 +183,9 @@ export default function Settings() {
 	// };
 
 	return (
-		<MainContainer title="Access management" headerExtra={<NavSettings />}>
-			{/* Scoped Inline Styles */}
-			<style>{`
-		.access-management-container {
-		  padding: 20px;
-		}
-
-		.search-form {
-		  display: flex;
-		  align-items: center;
-		  gap: 10px;
-		  margin-bottom: 20px;
-		}
-
-		.search-input {
-		  padding: 8px;
-		  border: 1px solid #ccc;
-		  border-radius: 4px;
-		  width: 250px;
-		}
-
-		.action-button {
-		  padding: 10px 15px;
-		  background-color: #007bff;
-		  color: white;
-		  border: none;
-		  border-radius: 4px;
-		  cursor: pointer;
-		  font-size: 14px;
-		}
-
-		.action-button:hover {
-		  background-color: #0056b3;
-		}
-
-
-		.table-container {
-			overflow-x: auto; /* Enables horizontal scrolling for wide tables */
-			margin-top: 20px; /* Adds spacing above the table */
-		}
-
-		.table-styled {
-		  width: 100%;
-		  border-collapse: collapse;
-		  margin-top: 20px;
-		  font-size: 14px;
-		  overflow-x: auto;
-		}
-
-		.table-styled th,
-		.table-styled td {
-		  padding: 12px 15px;
-		  border: 1px solid #ddd;
-		  text-align: left;
-		}
-
-		.table-styled th {
-		  background-color: #f4f4f4;
-		  font-weight: bold;
-		  position: relative;
-		}
-
-		.filter-icon {
-		  position: absolute;
-		  right: 10px;
-		  top: 50%;
-		  transform: translateY(-50%);
-		  cursor: pointer;
-		}
-
-		.table-styled tr:nth-child(even) {
-		  background-color: #f9f9f9;
-		}
-
-		.icon-button {
-		  background: none;
-		  border: none;
-		  cursor: pointer;
-		  padding: 5px;
-		  margin: 0 5px;
-		}
-
-		.icon-button img {
-		  width: 16px;
-		  height: 16px;
-		}
-
-		.link {
-		  color: #007bff;
-		  text-decoration: none;
-		}
-
-		.link:hover {
-		  text-decoration: underline;
-		}
-
-		.user-stats {
-		  display: flex;
-		  gap: 20px;
-		  margin-bottom: 20px;
-		  font-size: 14px;
-		}
-
-		.user-stats span {
-		  font-weight: bold;
-		}
-
-		.status-dot {
-				height: 10px;
-				width: 10px;
-				border-radius: 50%;
-				display: inline-block;
-				margin-right: 5px;
-				position: relative; /* Ensure relative positioning for tooltip */
-			}
-
-			.status-dot.activated {
-				background-color: #007bff;
-			}
-
-			.status-dot.pending {
-				background-color: #ccc;
-			}
-
-			.user-stats {
-				display: flex;
-				gap: 10px;
-				align-items: center;
-			}
-
-			/* Tooltip styles */
-.status-dot {
-    position: relative; /* Required for positioning tooltip elements relative to the dot */
-}
-
-.status-dot:hover .tooltip-text,
-.status-dot:hover .tooltip-pointer {
-    visibility: visible; /* Show both the tooltip text and pointer on hover */
-}
-
-.tooltip-text {
-    visibility: hidden;
-    position: absolute;
-    background-color: black;
-    color: white;
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px 10px;
-    white-space: nowrap;
-    top: -45px; /* Position tooltip above the dot */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
-}
-
-.tooltip-pointer {
-    visibility: hidden;
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid black; /* Matches the tooltip background */
-    top: -10px; /* Adjusts the pointer to sit above the dot */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
-}
-
-
-    /* Responsive Table */
-    .table-container {
-        overflow-x: auto;
-    }
-			
-	  `}</style>
-
-			<div className="access-management-container">
-				{/* Add User Button */}
-				<div
-					className="top-bar"
-					style={{
-						display: "flex",
-						justifyContent: "space-between",
-						alignItems: "center",
-						marginBottom: "20px",
-					}}
-				>
-					<div>Currently there are [{totalUsers}] users in the system.</div>
+		<section className="dts-page-section">
+			<MainContainer title="Access management" headerExtra={<NavSettings />}>
+				<div className="dts-access-management mg-container">
 					<div className="dts-external-links">
 						<a
 							href="/about/technical-specifications"
@@ -396,72 +210,57 @@ export default function Settings() {
 							Add User
 						</a>
 					</div>
-				</div>
 
-				{/* Filter Form */}
-				<form
-					method="get"
-					className="filter-form"
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						gap: "1rem",
-						marginBottom: "20px",
-					}}
-				>
-					<div
-						className="filter-row"
-						style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}
-					>
-						<div
-							className="filter-column"
-							style={{ display: "flex", flexDirection: "column", gap: "5px" }}
-						>
-							<span>Organisation</span>
-							<input
-								type="search"
-								name="organization"
-								value={organizationFilter}
-								placeholder="Type organisation name"
-								className="filter-input"
-								onChange={handleOrganizationFilter}
-								style={{
-									width: "220px",
-									padding: "10px",
-									border: "1px solid #ccc",
-									borderRadius: "4px",
-								}}
-							/>
-						</div>
-						<div
-							className="filter-column"
-							style={{ display: "flex", flexDirection: "column", gap: "5px" }}
-						>
-							<span>Role</span>
-							<select
-								name="role"
-								className="filter-select"
-								value={roleFilter}
-								onChange={handleRoleFilter}
-								style={{
-									width: "220px",
-									padding: "10px",
-									border: "1px solid #ccc",
-									borderRadius: "4px",
-								}}
-							>
-								<option value="all">All Roles</option>
-								<option value="data-viewer">Data Viewer</option>
-								<option value="data-collector">Data Collector</option>
-								<option value="data-validator">Data Validator</option>
-								<option value="admin">Admin</option>
-							</select>
-						</div>
+					{/* Add User Button */}
+					<div className="dts-access-management__top-bar">
+						<h2 className="dts-element-summary__title">
+							<span>Currently there are [{totalUsers}] users in the system.</span>
+						</h2>
 					</div>
-				</form>
 
-				{/* Search Form */}
-				{/* <form method="get" className="search-form">
+					{/* Filter Form */}
+					<form method="get" className="dts-form dts-access-management__filter-form">
+						<div className="mg-grid mg-grid__col-5">
+							{/* Organisation Filter */}
+							<div className="dts-form-component">
+								<label className="dts-form-component__label">
+									Organisation
+									<input
+										type="search"
+										name="organization"
+										value={organizationFilter}
+										placeholder="Type organisation name"
+										className="dts-access-management__filter-input"
+										onChange={handleOrganizationFilter}
+										autoComplete="organization"
+									/>
+								</label>
+							</div>
+
+							{/* Role Filter */}
+							<div className="dts-form-component">
+								<label className="dts-form-component__label">
+									Role
+									<select
+										name="role"
+										className="dts-access-management__filter-select"
+										value={roleFilter}
+										onChange={handleRoleFilter}
+									>
+										<option value="all">All Roles</option>
+										<option value="data-viewer">Data Viewer</option>
+										<option value="data-collector">Data Collector</option>
+										<option value="data-validator">Data Validator</option>
+										<option value="admin">Admin</option>
+									</select>
+								</label>
+							</div>
+						</div>
+					</form>
+
+
+					{/* Search Form */}
+					{/* <form method="get" className="search-form">
 					<input
 						type="text"
 						name="search"
@@ -480,188 +279,108 @@ export default function Settings() {
 				</form>
 
 				{/* User Stats */}
-				<div
-					className="user-stats-container"
-					style={{
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "flex-start",
-						marginBottom: "5px",
-						fontSize: "14px",
-					}}
-				>
-					{/* Total User Count */}
-					<div className="user-stats" style={{ marginBottom: "10px" }}>
-						<strong>
-							{filteredItems.length} of {totalUsers} Users
-						</strong>
-					</div>
-
-					{/* Status Legend */}
 					<div
-						className="status-legend"
-						style={{
-							display: "flex",
-							alignItems: "center", // Ensures proper vertical alignment
-							gap: "10px",
-						}}
+						className="dts-access-management__user-stats-container"
 					>
-						{/* "Status legend" in bold */}
-						<div
-							style={{
-								fontWeight: "bold",
-								marginRight: "10px", // Creates spacing after "Status legend"
-							}}
-						>
-							Status legend:
+						{/* Total User Count */}
+						<div className="dts-access-management__user-stats">
+							<strong className="dts-body-label">
+								{filteredItems.length} of {totalUsers} Users
+							</strong>
 						</div>
 
-						{/* Status Items */}
-						<div
-							style={{
-								display: "flex",
-								alignItems: "center", // Ensures vertical alignment for all items
-								gap: "20px",
-							}}
-						>
-							{/* Account Activated */}
-							<div
-								className="status-item"
-								style={{
-									display: "flex",
-									alignItems: "center",
-									gap: "5px", // Space between dot and text
-									lineHeight: "1.2", // Ensures text aligns well with the dot
-								}}
-							>
-								<div
-									className="status-dot activated"
-									style={{
-										height: "10px",
-										width: "10px",
-										borderRadius: "50%",
-										backgroundColor: "#007bff",
-									}}
-								></div>
-								Account activated: {activatedUsers}
+						{/* Status Legend */}
+						<div className="dts-legend">
+							<span className="dts-body-label">Status legend</span>
+
+							<div className="dts-legend__item">
+								<span className="dts-status dts-status--activated" aria-labelledby="legend7"></span>
+								<span id="legend7">
+									Account activated: {activatedUsers}
+								</span>
 							</div>
 
-							{/* Account Activation Pending */}
-							<div
-								className="status-item"
-								style={{
-									display: "flex",
-									alignItems: "center",
-									gap: "5px", // Space between dot and text
-									lineHeight: "1.2", // Ensures text aligns well with the dot
-								}}
-							>
-								<div
-									className="status-dot pending"
-									style={{
-										height: "10px",
-										width: "10px",
-										borderRadius: "50%",
-										backgroundColor: "#ccc",
-									}}
-								></div>
-								Account activation pending: {pendingUsers}
+							<div className="dts-legend__item">
+								<span className="dts-access-management__status-dot dts-access-management__status-dot--pending" aria-labelledby="legend8"></span>
+								<span id="legend8">
+									Account activation pending: {pendingUsers}
+								</span>
 							</div>
 						</div>
+
 					</div>
-				</div>
 
-				{/* Users Table */}
-				{isClient && (
-					<div className="table-container">
-						<table className="table-styled" style={{ marginTop: "0px" }}>
-							<thead>
-								<tr>
-									<th>Status</th>
-									<th>Name</th>
-									<th>Organisation</th>
-									<th>Role</th>
-									<th>Modified</th>
-									{/* <th>Email</th>
+					{/* Users Table */}
+					{isClient && (
+						<div className="dts-access-management__table-container">
+							<table className="dts-table dts-access-management__table">
+								<thead>
+									<tr>
+										<th>Status</th>
+										<th>Name</th>
+										<th>Organisation</th>
+										<th>Role</th>
+										<th>Modified</th>
+										{/* <th>Email</th>
 									{/* <th>Email</th>
 									<th>Email Verified</th>
 									<th>Auth</th> */}
-									<th>Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{filteredItems.map((item, index) => (
-									<tr key={index}>
-										<td
-											style={{ textAlign: "center", verticalAlign: "middle" }}
-										>
-											<span
-												className={`status-dot ${
-													item.emailVerified ? "activated" : "pending"
-												}`}
-												style={{
-													// Inline styles to ensure consistent dot appearance
-													height: "10px",
-													width: "10px",
-													borderRadius: "50%",
-													display: "inline-block",
-													position: "relative",
-												}}
+										<th>Actions</th>
+									</tr>
+								</thead>
+								<tbody>
+									{filteredItems.map((item, index) => (
+										<tr key={index}>
+											<td
+												className="dts-table__cell-centered"
 											>
-												{/* Tooltip message */}
-												<span className="tooltip-text">
-													{/* Tooltip text dynamically changes based on status */}
-													{item.emailVerified ? "Activated" : "Pending"}
+												<span
+													className={`dts-access-management__status-dot ${item.emailVerified
+														? "dts-access-management__status-dot--activated"
+														: "dts-access-management__status-dot--pending"
+														}`}
+												>
+													{/* Tooltip message */}
+													<span className="dts-access-management__tooltip-text">
+														{/* Tooltip text dynamically changes based on status */}
+														{item.emailVerified ? "Activated" : "Pending"}
+													</span>
+													{/* Tooltip pointer */}
+													<span className="dts-access-management__tooltip-pointer"></span>
 												</span>
-												{/* Tooltip pointer */}
-												<span className="tooltip-pointer"></span>
-											</span>
-										</td>
+											</td>
 
-										<td>
-											<Link
-												to={`/settings/access-mgmnt/edit/${item.id}`}
-												className="link"
-											>
-												{item.firstName} {item.lastName}
-											</Link>
-										</td>
-										<td>{item.organization}</td>
-										{/* Updated Role Column with Badge */}
-										<td>
-											<span
-												style={{
-													display: "inline-block",
-													padding: "5px 10px",
-													backgroundColor: "#fff3cd", // Light yellow
-													border: "1px solid #ffeeba", // Slightly darker yellow
-													borderRadius: "4px",
-													color: "#856404", // Darker yellow text
-													fontSize: "12px",
-													fontWeight: "bold",
-												}}
-											>
-												{item.role.charAt(0).toUpperCase() + item.role.slice(1)}{" "}
-												{/* Capitalizes the first letter */}
-											</span>
-										</td>
-										<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
-										{/* <td>
+											<td>
+												<Link
+													to={`/settings/access-mgmnt/edit/${item.id}`}
+													className="link"
+												>
+													{item.firstName} {item.lastName}
+												</Link>
+											</td>
+											<td>{item.organization}</td>
+											{/* Updated Role Column with Badge */}
+											<td>
+												<span
+													className="dts-access-management__role-badge"
+												>
+													{item.role.charAt(0).toUpperCase() + item.role.slice(1)}{" "}
+													{/* Capitalizes the first letter */}
+												</span>
+											</td>
+											<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
+											{/* <td>
 											<Link to={`/settings/access-mgmnt/edit/${item.id}`} className="link">
 												{item.email}
 											</Link>
 										</td> */}
-										{/* <td>{item.emailVerified.toString()}</td> */}
-										{/* <td>{item.authType}</td> */}
-										<td>
-											<div
-												style={{
-													display: "flex",
-													justifyContent: "center",
-													alignItems: "center",
-												}}
-											>
-												{/* 
+											{/* <td>{item.emailVerified.toString()}</td> */}
+											{/* <td>{item.authType}</td> */}
+											<td>
+												<div
+													className="dts-access-management__action-cell"
+												>
+													{/* 
 													<button
 														className="icon-button"
 														onClick={() => (window.location.href = `/settings/access-mgmnt/${item.id}`)}
@@ -674,28 +393,28 @@ export default function Settings() {
 														/>
 													</button>
 												*/}
-												<button
-													className="icon-button"
-													onClick={() =>
-														(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
-													}
-												>
-													<svg
-														aria-hidden="true"
-														focusable="false"
-														role="img"
-														style={{ marginLeft: "4px" }}
+													<button
+														className="mg-icon-button dts-access-management__icon-button"
+														onClick={() =>
+															(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
+														}
 													>
-														<use href="/assets/icons/edit.svg#edit"></use>
-													</svg>
-													{/* <FaUserEdit
+														<svg
+															aria-hidden="true"
+															focusable="false"
+															role="img"
+															style={{ marginLeft: "4px" }}
+														>
+															<use href="/assets/icons/edit.svg#edit"></use>
+														</svg>
+														{/* <FaUserEdit
 														style={{
 															fontSize: "1.25rem", // Adjust the size of the icon if needed
 															cursor: "pointer",
 														}}
 													/> */}
-												</button>
-												{/* <button
+													</button>
+													{/* <button
 													className="icon-button"
 													onClick={() => handleDeleteUser(item.id)}
 												>
@@ -706,17 +425,19 @@ export default function Settings() {
 														}}
 													/>
 												</button> */}
-											</div>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
-				)}
-				{/* Pagination */}
-				{pagination}
-			</div>
-		</MainContainer>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+					{/* Pagination */}
+					{pagination}
+				</div>
+			</MainContainer>
+		</section>
+
 	);
 }
