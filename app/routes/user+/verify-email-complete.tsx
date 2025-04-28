@@ -347,7 +347,7 @@ export const meta: MetaFunction = (request) => {
 	return [
 		{ title: "System Taxonomy - DTS"},
 		{ name: "description", content: "Admin setup - System Taxonomy page." },
-		// { httpEquiv:"refresh", content: `10; URL='/user/verify-email-complete?step=${intStep}'` },
+		{ httpEquiv:"refresh", content: `10; URL='/user/verify-email-complete?step=${intStep}'` },
 	];
 };
 
