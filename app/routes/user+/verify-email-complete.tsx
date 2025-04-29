@@ -403,7 +403,11 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	let qsStep = url.searchParams.get("step") || "";
 
 	if (qsStep == '1') {
-
+		try {
+			await processAssets();
+		} catch (err) {
+			console.error(String(err));
+		}
 	}
 	else if (qsStep == '2') {
 		
