@@ -54,13 +54,13 @@
 }
 
 /* User stats section */
-.dts-access-management__user-stats-container {
+/* .dts-access-management__user-stats-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     margin-bottom: 0.5rem;
     font-size: 1.4rem;
-}
+} */
 
 .dts-access-management__user-stats {
     margin-bottom: 1rem;
