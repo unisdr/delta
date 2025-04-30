@@ -135,6 +135,20 @@ export default function Screen() {
 					Back
 				</Link>
 			</div>
+
+			{Array.isArray(errors.form) && errors.form.length > 0 && (
+				<div className="dts-alert dts-alert--error mg-space-b">
+					<div className="dts-alert__icon">
+						<svg aria-hidden="true" focusable="false" role="img">
+							<use href="/assets/icons/error.svg#error" />
+						</svg>
+					</div>
+					<div>
+						<p>{errors.form[0]}</p>
+					</div>
+				</div>
+			)}
+
 			<Form method="post" >
 				<div className="mg-grid mg-grid__col-3">
 					{/* First Name */}

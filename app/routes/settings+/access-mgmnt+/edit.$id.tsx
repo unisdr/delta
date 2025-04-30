@@ -200,7 +200,12 @@ export default function Screen() {
 		return obj && typeof obj === 'object' && 'fields' in obj;
 	};
 
-	const safeErrors = hasFields(errors) ? errors : { fields: {} };
+	type ErrorsType = {
+		fields: Partial<Record<keyof AdminUpdateUserFields, string[]>>;
+		form?: string[];
+	};
+
+	const safeErrors: ErrorsType = hasFields(errors) ? errors : { fields: {} };
 
 	// Function to handle "Delete User"
 	const handleDeleteUser = () => {
@@ -289,6 +294,20 @@ export default function Screen() {
 						Delete User
 					</button>
 				</div>
+
+				{Array.isArray(safeErrors.form) && safeErrors.form.length > 0 && (
+					<div className="dts-alert dts-alert--error mg-space-b">
+						<div className="dts-alert__icon">
+							<svg aria-hidden="true" focusable="false" role="img">
+								<use href="/assets/icons/error.svg#error" />
+							</svg>
+						</div>
+						<div>
+							<p>{safeErrors.form[0]}</p>
+						</div>
+					</div>
+				)}
+
 				<Form errors={safeErrors}>
 					{/* First Name, Last Name, and Email */}
 					<div
