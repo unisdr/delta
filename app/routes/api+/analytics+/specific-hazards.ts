@@ -12,7 +12,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   try {
     // Call the handler to fetch hazards
     const hazards = await getSpecificHazardsHandler(clusterId, searchQuery);
-    return json({ hazards });
+    return { hazards };
   } catch (error) {
     console.error("Error fetching specific hazards:", error);
     return new Response("Failed to fetch specific hazards", { status: 500 });

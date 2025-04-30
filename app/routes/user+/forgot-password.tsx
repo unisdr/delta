@@ -44,7 +44,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				email: ["Email is required"],
 			}
 		}
-		return json({ data, errors })
+		return { data, errors }
 	}
 
 
@@ -60,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async () => {
-	return json(null);
+	return null;
 };
 
 export const meta: MetaFunction = () => {

@@ -29,9 +29,9 @@ function getData(request: Request) {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const { token, email } = getData(request);
 	if (!token || !email) {
-		return json({ error: "Invalid password reset link" });
+		return { error: "Invalid password reset link" };
 	}
-	return json(null);
+	return null;
 };
 
 interface FormData {
@@ -56,7 +56,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	if (!res.ok) {
 		return { ok: false, data, errors: res.errors };
 	}
-	//   return json({ errors });
   return redirectWithMessage(request, "/user/login", {
       type: "info",
       text: "Password changed successfully!"

@@ -62,17 +62,17 @@ export async function loader({ request }: { request: Request }) {
 
       default:
         // Handle unsupported type
-        return json(
+        return Response.json(
           { error: `Invalid type parameter: ${type}. Supported types are hazard-types, hazard-clusters, specific-hazards, and hazard-classes.` },
           { status: 400 }
         );
     }
 
     // Return the fetched data
-    return json(data);
+    return (data);
 
   } catch (error) {
     console.error("Error fetching data:", error);
-    return json({ error: "Failed to fetch data" }, { status: 500 });
+    return Response.json({ error: "Failed to fetch data" }, { status: 500 });
   }
 }

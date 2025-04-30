@@ -87,7 +87,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 
 	const item = res[0];
 
-	return json({
+	return {
 		data: {
 			id: item.id,
 			email: item.email,
@@ -99,7 +99,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 			dateAdded: item.dateAdded || null, // Handle null or missing values
 			addedBy: item.addedBy || "System Admin", // Fallback if value is missing
 		},
-	});
+	};
 })
 
 type ActionResponse = FormResponse<AdminUpdateUserFields>

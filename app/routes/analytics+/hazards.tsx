@@ -227,7 +227,7 @@ export const loader = authLoaderPublicOrWithPerm(
 		const disasterSummary = await getDisasterSummary(filters);
 
 		// console.log("Disaster summary",disasterSummary)
-		return json({
+		return {
 			currency,
 			hazardTypes,
 			hazardClusters,
@@ -260,7 +260,7 @@ export const loader = authLoaderPublicOrWithPerm(
 			affectedPeopleGeoData,
 			disasterEventGeoData,
 			disasterSummary
-		});
+		};
 	}
 );
 

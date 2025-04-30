@@ -97,13 +97,13 @@ export interface EffectDetailsResponse {
 const handleError = (error: unknown) => {
   if (error instanceof Error) {
     if (error.message.includes('timeout')) {
-      return json({ error: 'Request timed out. Please try again.', timestamp: new Date().toISOString() }, { status: 504 });
+      return Response.json({ error: 'Request timed out. Please try again.', timestamp: new Date().toISOString() }, { status: 504 });
     }
     if (error.message.includes('database')) {
-      return json({ error: 'Database error occurred. Please try again later.', timestamp: new Date().toISOString() }, { status: 503 });
+      return Response.json({ error: 'Database error occurred. Please try again later.', timestamp: new Date().toISOString() }, { status: 503 });
     }
   }
-  return json(
+  return Response.json(
     {
       error: 'An unexpected error occurred',
       timestamp: new Date().toISOString()
@@ -209,7 +209,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (args: Loader
 
     const sectorId = url.searchParams.get("sectorId");
     if (!sectorId) {
-      return json(
+      return Response.json(
         { error: "Sector ID is required", timestamp: new Date().toISOString() },
         { status: 400 }
       );

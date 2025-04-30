@@ -48,7 +48,7 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
     )
     .orderBy(desc(auditLogsTable.timestamp));
 
-  return json({
+  return Response.json({
     item: {
       id: item.id,
       email: item.email,

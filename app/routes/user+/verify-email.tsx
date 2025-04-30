@@ -48,12 +48,12 @@ export const action = authActionAllowUnverifiedEmail(async (actionArgs) => {
 	// Handle resend OTP
 	if (resend) {
 		await sendEmailVerification(user);
-		return json({ resend: true });
+		return { resend: true };
 	}
 
 	const res = await verifyEmail(userId, code);
 	if (!res.ok) {
-		return Response.json({ data, errors: res.errors });
+		return { data, errors: res.errors };
 	}
 
 	return redirect("/user/verify-email-complete?step=0");
@@ -71,11 +71,11 @@ export const loader = authLoaderAllowUnverifiedEmail(async (loaderArgs) => {
 			sentAtDate.getTime() + OTP_EXPIRY_MINUTES * 60 * 1000
 		).toISOString();
 	}
-	return json({
+	return {
 		userEmail: user.email,
 		sentAt: sentAtRaw,
 		expiresAt, // may be null if sentAtRaw is null
-	});
+	};
 });
 
 export default function Data() {

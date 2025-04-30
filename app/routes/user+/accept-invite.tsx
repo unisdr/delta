@@ -49,13 +49,13 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 		email=res.email;
 	}
 
-	return json({
+	return {
 		inviteCode: inviteCode,
 		inviteCodeValidation: res,
 		code: queryStringCode,
 		state: state,
 		email: email,
-	});
+	};
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -64,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const data2 = AcceptInviteFieldsFromMap(data) 
 	const res = await acceptInvite(inviteCode, data2);
 	if (!res.ok) {
-		return json({ data, errors: res.errors });
+		return { data, errors: res.errors };
 	}
 	const headers = await createUserSession(res.userId);
 	return redirect("/", { headers });

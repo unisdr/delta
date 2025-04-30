@@ -44,7 +44,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 
 	// https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch
 	if (queryStringDesc) {
-		return json({ errors:queryStringDesc });
+		return { errors:queryStringDesc };
 	}
 	else if (queryStringCode) {
 		try {
@@ -94,12 +94,12 @@ export const loader:LoaderFunction = async ( { request } ) => {
 				}
 			}
 			else if ('error' in result && 'error_description' in result) {
-				return json({ errors: result.error_description }, { status: 500 });
+				return Response.json({ errors: result.error_description }, { status: 500 });
 			}
 
 			let retLogin = await loginAzureB2C(data['email'], data['firstName'], data['lastName']);
 			if (!retLogin.ok) {
-				return json({ errors:retLogin.error });
+				return { errors:retLogin.error };
 			}
 	
 			if (retLogin.userId == 0) {
@@ -107,7 +107,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 				const res = await setupAdminAccountSSOAzureB2C(data2);
 				if (!res.ok){
 					console.error( res.errors );
-					return json({ data, errors: res.errors });
+					return { data, errors: res.errors };
 				}
 				const headers = await createUserSession(res.userId);
 				return redirect("/user/verify-email", { headers });
@@ -119,14 +119,14 @@ export const loader:LoaderFunction = async ( { request } ) => {
 		}
 		catch (error) { 
 			console.error('Error:', error); 
-			return json({ errors:error });
+			return { errors:error };
 		}
 	}
     else {
         return loginGetCode('azure_sso_b2c-login');
     }
 
-	return json({ errors:'' });
+	return { errors:'' };
 };
 
 // https://app.dts.ddev.site/sso/azure-b2c/callback

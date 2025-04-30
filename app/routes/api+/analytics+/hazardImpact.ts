@@ -24,7 +24,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     // Validate date range if provided
     if ((fromDate && !toDate) || (!fromDate && toDate)) {
-        return json(
+        return Response.json(
             { success: false, error: "Both fromDate and toDate must be provided together" },
             { status: 400 }
         );
@@ -43,5 +43,5 @@ export const loader: LoaderFunction = async ({ request }) => {
     };
 
     const result = await getHazardImpact(filters);
-    return json(result);
+    return (result);
 }

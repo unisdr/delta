@@ -154,7 +154,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 
     // https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch
 	if (queryStringDesc) {
-		return json({ errors:queryStringDesc });
+		return { errors:queryStringDesc };
 	}
     else if (queryStringState.includes('%7B') && queryStringCode) { //data is a JSON encoded, data needs to be decoded
         let jsonQueryStringState:interfaceQueryStringState = {
@@ -174,12 +174,12 @@ export const loader:LoaderFunction = async ( { request } ) => {
             if (data2.okay) {
                 let retLogin = await registerAzureB2C(data2.email, data2.firstName, data2.lastName);
                 if (!retLogin.ok) {
-                    return json({ 
+                    return { 
                         errors:retLogin.error, 
                         inviteCode: '', 
                         inviteCodeValidation: { ok: false, error: '' },
                         confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
-                    });
+                    };
                 }
     
                 const headers = await createUserSession(retLogin.userId);
@@ -196,12 +196,12 @@ export const loader:LoaderFunction = async ( { request } ) => {
                 let retLogin = await loginAzureB2C(data2.email, data2.firstName, data2.lastName);
             
                 if (!retLogin.ok) {
-                    return json({ errors:retLogin.error });
+                    return { errors:retLogin.error };
                 }
     
                 if (retLogin.userId == 0) {
                     console.error('Error:', 'System error.'); 
-                    return json({ errors: 'System error.' });               
+                    return { errors: 'System error.' };               
                 }
                 else {
                     const headers = await createUserSession(retLogin.userId);
@@ -211,7 +211,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 		}
 		catch (error) { 
 			console.error('Error:', error); 
-			return json({ errors:error });
+			return { errors:error };
 		}
 	}
     else if (queryStringState == 'azure_sso_b2c-admin-setup' && queryStringCode) {
@@ -228,19 +228,19 @@ export const loader:LoaderFunction = async ( { request } ) => {
                 const res = await setupAdminAccountSSOAzureB2C(data3);
                 if (!res.ok){
                     console.error( res.errors );
-                    return json({ data, errors: res.errors });
+                    return { data, errors: res.errors };
                 }
                 const headers = await createUserSession(res.userId);
                 return redirect("/user/verify-email", { headers });
             }
             catch (error) { 
                 console.error('Error:', error); 
-                return json({ errors:error });
+                return { errors:error };
             }
         }
     }
 
-	return json({ errors:'' });
+	return { errors:'' };
 };
 
 // https://app.dts.ddev.site/sso/azure-b2c/callback

@@ -12,9 +12,9 @@ export const loader = async ({ request }: { request: Request }) => {
         const results = await fetchData(contentPickerConfig, searchQuery, page, limit);
         const totalRecords = await getTotalRecords(contentPickerConfig, searchQuery);
 
-        return json({ data: results, totalRecords, page, limit });
+        return { data: results, totalRecords, page, limit };
     } catch (error) {
         console.error("Error fetching disaster events:", error);
-        return json({ error: "Error fetching data" });
+        return { error: "Error fetching data" };
     }
 };

@@ -19,7 +19,7 @@ export async function loader({ request }: { request: Request }) {
   try {
     // Apply rate limiting
     if (!checkRateLimit(request)) {
-      return json(
+      return Response.json(
         {
           success: false,
           error: 'Too many requests from this IP, please try again later',
@@ -52,7 +52,7 @@ export async function loader({ request }: { request: Request }) {
 
     const data = await getEffectDetailsHandler(params);
 
-    return json(data, {
+    return Response.json(data, {
       headers: {
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
@@ -63,7 +63,7 @@ export async function loader({ request }: { request: Request }) {
     console.error('API Error:', error);
 
     if (error instanceof EffectDetailsError) {
-      return json(
+      return Response.json(
         {
           success: false,
           error: error.message,
@@ -79,7 +79,7 @@ export async function loader({ request }: { request: Request }) {
       );
     }
 
-    return json(
+    return Response.json(
       {
         success: false,
         error: 'Internal server error',

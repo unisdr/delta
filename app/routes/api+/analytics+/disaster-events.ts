@@ -12,7 +12,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const result = await getDisasterEvents(query);
 
     // Return the full QueryResult object in the response
-    return json({ disasterEvents: result }, { status: 200 });
+    return Response.json({ disasterEvents: result }, { status: 200 });
   } catch (error) {
     console.error("Error in API loader:", error);
     return new Response("Failed to fetch disaster events", { status: 500 });

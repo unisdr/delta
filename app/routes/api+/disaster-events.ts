@@ -26,10 +26,10 @@ export async function loader({ request }: { request: Request }) {
       .execute();
 
     // Return the disaster events as JSON
-    return json(disasterEvents);
+    return (disasterEvents);
   } catch (error) {
     console.error("Error fetching disaster events:", error);
-    return json(
+    return Response.json(
       { error: "An unexpected error occurred while fetching disaster events." },
       { status: 500 }
     );

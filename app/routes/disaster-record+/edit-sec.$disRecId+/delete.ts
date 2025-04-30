@@ -48,7 +48,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 		}
 	}
 	else {
-		return json({ }, { status: 404 });
+		return Response.json({ }, { status: 404 });
 	}
 });
 

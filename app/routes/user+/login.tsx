@@ -42,7 +42,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				password: ["Email or password do not match"],
 			},
 		};
-		return json({ data, errors }, { status: 400 }); // Return as a valid Remix response
+		return Response.json({ data, errors }, { status: 400 }); // Return as a valid Remix response
 	}
 
 	// --- PATCH: Check if user is pending activation and redirect to verify-email ---

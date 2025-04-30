@@ -12,9 +12,9 @@ export const loader = async ({ request }: { request: Request }) => {
         const results = await fetchData(contentPickerConfig, searchQuery, page, limit);
         const totalRecords = await getTotalRecords(contentPickerConfig, searchQuery);
 
-        return json({ data: results, totalRecords, page, limit }); // ✅ Use json()
+        return { data: results, totalRecords, page, limit }; // ✅ Use json()
     } catch (error) {
         console.error("Error fetching disaster events:", error);
-        return json({ error: "Error fetching data" }, { status: 500 }); // ✅ Ensure error is wrapped too
+        return Response.json({ error: "Error fetching data" }, { status: 500 }); // ✅ Ensure error is wrapped too
     }
 };

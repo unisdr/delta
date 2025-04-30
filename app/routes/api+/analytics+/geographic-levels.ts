@@ -40,7 +40,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     const levels = await query;
 
-    return json({ levels });
+    return Response.json({ levels });
   } catch (error) {
     console.error("Error fetching geographic levels:", error);
     throw new Response("Failed to fetch geographic levels", { status: 500 });

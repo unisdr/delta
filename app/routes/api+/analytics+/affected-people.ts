@@ -36,13 +36,13 @@ export const loader: LoaderFunction = async ({ request }) => {
     console.log("Filters received:", filters);
 
     const totals = await getTotalAffectedPeople(filters);
-    return json({
+    return {
       success: true,
       data: totals, // Return the full object with individual totals
-    });
+    };
   } catch (error) {
     console.error("Loader error:", error);
-    return json(
+    return Response.json(
       { success: false, error: "Failed to fetch total affected people" },
       { status: 500 }
     );

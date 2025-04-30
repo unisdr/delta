@@ -57,7 +57,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .where(eq(disasterRecordsTable.id, disasterId))
     .groupBy(disasterRecordsTable.id, disasterRecordsTable.spatialFootprint);
 
-  return json({ disasterRecord });
+  return { disasterRecord };
 };
 
 export default function MapPage() {

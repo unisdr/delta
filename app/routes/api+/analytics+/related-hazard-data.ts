@@ -19,7 +19,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   try {
     // Fetch related hazard data using the handler
     const relatedData = await getRelatedHazardDataHandler(specificHazardId);
-    return json(relatedData);
+    return (relatedData);
   } catch (error) {
     console.error("Error fetching related hazard data:", error);
     return new Response("Failed to fetch related hazard data", { status: 500 });

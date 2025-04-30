@@ -43,10 +43,10 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   // Get currency from environment variable
   const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
 
-  return json({
+  return {
     currency,
     loaderArgs
-  });
+  };
 });
 
 // Meta function for page SEO

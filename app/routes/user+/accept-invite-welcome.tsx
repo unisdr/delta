@@ -27,13 +27,13 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
 	const queryStringCode = url.searchParams.get("code") || "";
 	const res = await validateInviteCode(inviteCode);
 
-	return json({
+	return {
 		inviteCode: inviteCode,
 		inviteCodeValidation: res,
 		code: queryStringCode,
 		state: state,
 		confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
-	});
+	};
 };
 
 export default function Screen() {

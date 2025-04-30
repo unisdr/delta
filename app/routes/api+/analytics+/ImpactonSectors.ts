@@ -18,7 +18,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     // Input validation
     if (!sectorId) {
-      return json(
+      return Response.json(
         { success: false, error: "Sector ID is required" },
         { status: 400 }
       );
@@ -26,7 +26,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     // Validate that sectorId is a valid format (numeric string)
     if (!/^\d+$/.test(sectorId)) {
-      return json(
+      return Response.json(
         { success: false, error: "Invalid Sector ID format - must be numeric" },
         { status: 400 }
       );
@@ -36,14 +36,14 @@ export const loader: LoaderFunction = async ({ request }) => {
     const result = await getImpactOnSector(sectorId, filters);
 
     if (!result.success) {
-      return json(
+      return Response.json(
         { success: false, error: result.error },
         { status: 400 }
       );
     }
 
     // Return successful response
-    return json(
+    return Response.json(
       { success: true, data: result.data },
       {
         status: 200,
@@ -54,7 +54,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     );
   } catch (error) {
     console.error("Error in ImpactOnSectors loader:", error);
-    return json(
+    return Response.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
     );

@@ -5,7 +5,7 @@ export const loader: LoaderFunction = async ( request ) => {
     // console.log("Catch-all route path not found:", url.pathname);
     // return json({ message: "We couldn't find the page you were looking for." }, { status: 404 });
 
-    return json({ }, { status: 404 });
+    return Response.json({ }, { status: 404 });
   };
 
 export default function CatchAllRoute() {

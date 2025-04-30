@@ -144,10 +144,10 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		}
 	}
 	
-	return json({
+	return {
 		configSiteName: configSiteName(),
 		qsStep: qsStep,
-	});
+	};
 });
 
 export default function Data() {

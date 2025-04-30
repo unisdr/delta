@@ -24,10 +24,10 @@ export async function loader({ request }: { request: Request }) {
       .limit(10) // Limit to 10 results for efficiency
       .execute();
 
-    return json(geographicLevels); // Return results as JSON
+    return (geographicLevels); // Return results as JSON
   } catch (error) {
     console.error("Error fetching geographic levels:", error);
-    return json(
+    return Response.json(
       { error: "An unexpected error occurred while fetching geographic levels." },
       { status: 500 }
     );

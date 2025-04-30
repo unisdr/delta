@@ -5,7 +5,7 @@ import { loginGetCode }  from "~/util/ssoauzeb2c";
 import {configAuthSupportedAzureSSOB2C} from "~/util/config"
 
 export const action = async () => {
-	return json(null);
+	return null;
 }
 
 export const loader = async () => {

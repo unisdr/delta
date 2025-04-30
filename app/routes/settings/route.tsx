@@ -24,7 +24,7 @@ export const loader = authLoader(async ( request ) => {
 	}
 	// console.log( url.pathname );
 
-	return json({  });
+	return {  };
 });
 
 export default function SettingsLayout() {

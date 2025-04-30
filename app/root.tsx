@@ -62,7 +62,7 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 
 	const message = getFlashMessage(session);
 
-	return json({
+	return Response.json({
 		hasPublicSite: configApprovedRecordsArePublic(),
 		loggedIn: !!user,
 		userRole: user?.user.role || '',

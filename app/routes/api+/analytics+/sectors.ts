@@ -6,7 +6,7 @@ import { getSectorsWithSubsectors } from "~/backend.server/handlers/analytics/se
 export const loader: LoaderFunction = async () => {
   try {
     const sectors = await getSectorsWithSubsectors();
-    return json({ sectors });
+    return { sectors };
   } catch (error) {
     console.error("Error fetching sectors:", error);
     return new Response("Failed to fetch sectors", { status: 500 });

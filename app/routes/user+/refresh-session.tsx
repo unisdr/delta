@@ -5,7 +5,7 @@ import {
 } from "~/util/auth";
 
 export const loader = authLoader(async () => {
-	return json(null);
+	return null;
 });
 
 

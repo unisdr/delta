@@ -39,7 +39,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       // password and passwordRepeat cannot be prefilled for security reasons
     };
   }
-  return json({ prefill });
+  return { prefill };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {

@@ -12,7 +12,7 @@ export const loader: LoaderFunction = async () => {
     const hazardTypes = await getHazardTypes();
 
     // Return hazard types as a JSON response
-    return json({ hazardTypes });
+    return { hazardTypes };
   } catch (error) {
     console.error("[HazardTypesLoader] Error:", error);
     return new Response("Failed to fetch hazard types.", { status: 500 });

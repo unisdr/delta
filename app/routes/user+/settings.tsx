@@ -12,7 +12,7 @@ import {
 
 export const loader = authLoader(async (loaderArgs) => {
 		const { user } = authLoaderGetAuth(loaderArgs)
-	return json({totpEnabled: user.totpEnabled});
+	return {totpEnabled: user.totpEnabled};
 });
 
 export default function Screen() {

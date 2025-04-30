@@ -81,7 +81,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     console.log(disasterEvents.rows);
   
-    return json({ disasterEvents: disasterEvents.rows });
+    return { disasterEvents: disasterEvents.rows };
   };
 
 

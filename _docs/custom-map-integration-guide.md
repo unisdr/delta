@@ -203,7 +203,7 @@ export const loader = async ({ request }: { request: Request }) => {
   const params = Object.fromEntries(url.searchParams);
   const result = await handleGeographicImpactQuery(params);
   
-  return json({
+  return Response.json({
     type: "FeatureCollection",
     features: result.divisions.map(/* transform to GeoJSON */)
   });
@@ -248,7 +248,7 @@ import { getGeographicImpact } from "~/backend.server/models/geographicImpact";
 // In your Remix loader
 export async function loader() {
   const result = await getGeographicImpact({});
-  return json({ geoData: transformToGeoJSON(result) });
+  return Response.json({ geoData: transformToGeoJSON(result) });
 }
 
 // In your component

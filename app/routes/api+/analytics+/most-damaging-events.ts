@@ -6,7 +6,7 @@ import { handleMostDamagingEventsRequest } from "~/backend.server/handlers/analy
 export async function loader({ request }: LoaderFunctionArgs) {
   // Rate limiting check
   if (!checkRateLimit(request, 100, 15 * 60 * 1000)) {
-    return json({
+    return Response.json({
       success: false,
       error: "Rate limit exceeded. Please try again later.",
       code: 'RATE_LIMIT_EXCEEDED'
@@ -40,7 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const result = await handleMostDamagingEventsRequest(params);
 
-    return json({
+    return Response.json({
       success: true,
       data: result.data
     }, {
@@ -53,7 +53,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
   } catch (error) {
     console.error("Error in most-damaging-events loader:", error);
-    return json({
+    return Response.json({
       success: false,
       error: "Internal server error",
       code: 'INTERNAL_ERROR'

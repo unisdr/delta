@@ -10,7 +10,7 @@ import { configSiteName } from "~/util/config";
 import {configAuthSupportedAzureSSOB2C} from "~/util/config"
 
 export const action = async () => {
-	return json(null);
+	return (null);
 }
 
 export const loader = async () => {

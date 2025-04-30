@@ -264,7 +264,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
       }
     }
     else {
-      return json({ }, { status: 404 });
+      return Response.json({ }, { status: 404 });
     }
   }
 

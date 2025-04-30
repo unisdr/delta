@@ -22,7 +22,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
         return loginGetCode( queryStringB2CInvite );
     }
 
-    return json({ errors:'' });
+    return { errors:'' };
 
 };
 

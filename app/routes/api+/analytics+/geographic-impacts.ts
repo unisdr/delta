@@ -39,7 +39,7 @@ export const loader = async ({ request }: { request: Request }) => {
         const result = await handleGeographicImpactQuery(validParams);
 
         if (!result.success) {
-            return json({
+            return Response.json({
                 type: "FeatureCollection",
                 features: [],
                 error: result.error || "Failed to get geographic impact data"
@@ -74,7 +74,7 @@ export const loader = async ({ request }: { request: Request }) => {
         }));
 
         // Return the GeoJSON with proper content type
-        return json({
+        return Response.json({
             type: "FeatureCollection",
             features
         }, {
@@ -99,7 +99,7 @@ export const loader = async ({ request }: { request: Request }) => {
             }
         }
 
-        return json({
+        return Response.json({
             type: "FeatureCollection",
             features: [],
             error: message
