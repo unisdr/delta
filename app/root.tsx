@@ -161,19 +161,33 @@ function InactivityWarning(props: InactivityWarningProps) {
 	return (
 		<>
 			{showWarning ? (
-				<div style={{background: "red", position: "fixed", top: 0, width: "100%"}}>
-					{expiresInMinutes > 0.1 ? (
-						<>
-							<p>
-								Login session expires in {Math.round(expiresInMinutes)} minutes due to inactivity.
-							</p>
-							<button onClick={handleRefreshSession}>
-								Refresh session
-							</button>
-						</>
-					) : (
-						<p>Session expired</p>
-					)}
+				<div className="fixed top-0 left-0 w-full z-50">
+					<div className="container mx-auto">
+						<div className="dts-alert dts-alert--error">
+							<div className="dts-alert__icon">
+								<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+								</svg>
+							</div>
+							<span>
+								{expiresInMinutes > 0.1 ? (
+									<div className="flex flex-col gap-4">
+										<p className="text-base">Login session expires in {Math.round(expiresInMinutes)} minutes due to inactivity.</p>
+										<div>
+											<button 
+												onClick={handleRefreshSession}
+												className="mg-button mg-button-outline mg-button-sm"
+											>
+												Refresh session
+											</button>
+										</div>
+									</div>
+								) : (
+									<p>Session expired</p>
+								)}
+							</span>
+						</div>
+					</div>
 				</div>
 			) : null}
 		</>
