@@ -117,6 +117,37 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 	const formData = formStringData(await request.formData());
 	const updatedData = adminUpdateUserFieldsFromMap(formData);
 
+	// Trim fields to prevent whitespace-only input from being considered valid
+if (!updatedData.firstName || updatedData.firstName.trim() === "") {
+	return json<ActionResponse>({
+	  ok: false,
+	  data: updatedData,
+	  errors: {
+		fields: { firstName: ["First name is required"] },
+	  },
+	});
+  }
+  
+  if (!updatedData.email || updatedData.email.trim() === "") {
+	return json<ActionResponse>({
+	  ok: false,
+	  data: updatedData,
+	  errors: {
+		fields: { email: ["Email is required"] },
+	  },
+	});
+  }
+  
+  if (!updatedData.organization || updatedData.organization.trim() === "") {
+	return json<ActionResponse>({
+	  ok: false,
+	  data: updatedData,
+	  errors: {
+		fields: { organization: ["Organisation is required"] },
+	  },
+	});
+  }
+
 	// Retrieve the existing user data for comparison
 	const existingUser = await dr
 		.select({

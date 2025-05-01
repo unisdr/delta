@@ -60,13 +60,13 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const errors: ErrorsType = { fields: {} };
 
 	// Validate required fields
-	if (!data.firstName) {
+	if (!data.firstName || data.firstName.trim() === "") {
 		errors.fields.firstName = ["First name is required"];
 	}
-	if (!data.email) {
+	if (!data.email || data.email.trim() === "") {
 		errors.fields.email = ["Email is required"];
 	}
-	if (!data.organization) {
+	if (!data.organization || data.organization.trim() === "") {
 		errors.fields.organization = ["Organisation is required"];
 	}
 
