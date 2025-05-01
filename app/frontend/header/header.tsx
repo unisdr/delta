@@ -263,10 +263,24 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
       ],
     },
     {
-      name: "Log out",
-      title: "User Login",
+      name: " ",
+      title: "",
       icon: "other/user-profile",
-      link: "/user/logout",
+      lvl2: [
+        {
+          name: "Account",
+          id: "main-settings",
+          lvl3: [
+            {
+              title: "Account",
+              lvl4: [
+                { name: "My profile", link: "#" },
+                { name: "Log out", link: "/user/logout" },
+              ],
+            },
+          ],
+        },
+      ],
     },
   ];
 }
