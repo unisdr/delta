@@ -1,4 +1,4 @@
-import {Form as ReactForm} from "@remix-run/react";
+import {Form as ReactForm, useNavigation} from "@remix-run/react";
 import {useLoaderData} from "@remix-run/react";
 import {Link} from "@remix-run/react";
 
@@ -20,6 +20,8 @@ import {notifyError} from "./utils/notifications";
 import {JsonView, allExpanded, defaultStyles} from 'react-json-view-lite';
 
 import {DeleteButton} from "./components/delete-dialog";
+import { disable } from "ol/rotationconstraint";
+
 
 export type FormResponse<T> =
 	| {ok: true; data: T}
@@ -234,17 +236,20 @@ interface SubmitButtonProps {
 export function SubmitButton({
 	label,
 	id = undefined,
+	disabled = false,
 	className = "mg-button mg-button-primary",
 	style = {}, // Default to an empty style object
 }: SubmitButtonProps) {
 	return (
 		<button
 			id={id}
+			disabled={disabled}
 			className={className}
 			style={{
 				...style, // Use passed styles
 				flex: "none", // Prevent stretching within flex containers
 			}}
+			type="submit"
 		>
 			{label}
 		</button>
@@ -1365,16 +1370,45 @@ export function FormView(props: FormViewProps) {
 	}
 
 	const pluralCap = capitalizeFirstLetter(props.plural);
+	let inputsRef = useRef<HTMLDivElement>(null);
+	const navigation = useNavigation();
+	const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
+	let [intClickedCtr, setIntClickedCtr] = useState(0);
 
-	let inputsRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
+		const formElement = document.querySelector<HTMLFormElement>('.dts-form');
+		const formElementSubmit = document.querySelector<HTMLButtonElement>('#form-default-submit-button');
 		let opts = {inputsRef, defs: props.fieldsDef}
 		repeatablefields.attach(opts)
-		return () => {
-			repeatablefields.detach(opts)
+
+		if (formElement) {
+
+			const handleSubmit = (e: SubmitEvent) => {
+				if (formElementSubmit) {
+					formElementSubmit.setAttribute("disabled", "true");
+
+					// Call the function after 2 seconds, then remove the disabled attribute
+					setTimeout(()=>{
+						formElementSubmit.removeAttribute("disabled");
+						intClickedCtr++;
+						setIntClickedCtr(intClickedCtr);
+					}, 2000);
+				}
+			};
+
+			formElement.addEventListener("submit", handleSubmit);
+
+			return () => {
+				formElement.removeEventListener("submit", handleSubmit); // Cleanup on unmount'
+				repeatablefields.detach(opts);
+			};
 		}
-	})
+
+		return () => {
+			repeatablefields.detach(opts);
+		}
+	}, [intClickedCtr, isSubmitting]);
 
 	return (
 		<MainContainer title={pluralCap}>
@@ -1407,6 +1441,8 @@ export function FormView(props: FormViewProps) {
 					</div>
 					<div className="dts-form__actions">
 						<SubmitButton
+							id="form-default-submit-button"
+							disabled={isSubmitting}
 							label={
 								props.edit
 									? `Update ${props.singular}`

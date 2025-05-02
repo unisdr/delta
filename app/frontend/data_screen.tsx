@@ -181,6 +181,7 @@ export function DataMainLinks(props: DataMainLinksProps) {
 							className="mg-button mg-button--small mg-button-secondary"
 							role="button"
 							aria-label={b.label}
+							key={b.relPath}
 						>
 							{b.label}
 						</a>
