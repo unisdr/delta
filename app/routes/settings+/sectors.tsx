@@ -9,18 +9,18 @@ import { useState } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 import { aliasedTable, eq } from "drizzle-orm";
 
-const renderContent = (level:number) => {
+const renderContent = (level: number) => {
 	switch (level) {
 		case 1:
-			return 'Type';
+			return "Type";
 		case 2:
-			return 'Sector';
+			return "Sector";
 		case 3:
-			return 'Sub-sector';
+			return "Sub-sector";
 		case 4:
-			return 'Category';
+			return "Category";
 		default:
-			return ' - ';
+			return " - ";
 	}
 };
 
@@ -42,7 +42,7 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 				<tr key={sector.id}>
 					<td>{sector.id}</td>
 					<td>{sector.sectorname}</td>
-					<td>{ renderContent (sector.level) }</td>
+					<td>{renderContent(sector.level)}</td>
 					<td
 						// Replace newline characters with <br/> tags
 						dangerouslySetInnerHTML={{
@@ -143,25 +143,23 @@ export default function SectorsPage() {
 						role="tabpanel"
 						aria-labelledby="tab01"
 					>
-						<section>
-							<div className="mg-container">
-								<form>
-									<div className="fields">
-										<div className="form-field">
-											<TreeView
-												treeData={treeData as any}
-												rootCaption="Sectors"
-												dialogMode={false}
-												disableButtonSelect={true}
-												noSelect={true}
-												search={true}
-												expanded={true}
-											/>
-										</div>
+						<div className="dts-placeholder">
+							<form>
+								<div className="fields">
+									<div className="form-field">
+										<TreeView
+											treeData={treeData as any}
+											rootCaption="Sectors"
+											dialogMode={false}
+											disableButtonSelect={true}
+											noSelect={true}
+											search={true}
+											expanded={true}
+										/>
 									</div>
-								</form>
-							</div>
-						</section>
+								</div>
+							</form>
+						</div>
 					</div>
 					<div
 						className={
