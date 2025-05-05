@@ -390,8 +390,9 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                       <div className="dts-dialog__content">
                           <div className="dts-dialog__header" style={{ justifyContent: "space-between" }}>
                               <h2 className="dts-heading-2">{caption}</h2>
-                              <a type="button" aria-label="Close dialog" onClick={discardPicker}>
-                                  <svg aria-hidden="true" focusable="false" role="img">
+                              <a type="button" aria-label="Close dialog" onClick={discardPicker}
+                              >
+                                  <svg aria-hidden="true" focusable="false" role="img" style={{cursor: "pointer"}}>
                                       <use href={`${base_path}/assets/icons/close.svg#close`}></use>
                                   </svg>
                               </a>
@@ -531,7 +532,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
 
                           {(viewMode === "grid") && (
                           <div className="cp-view-mode grid" style={{ display: "none" }}>
-                              <div className="cp-filter">
+                              <div className="cp-filter dts-form-component">
                                   <input
                                       type="text"
                                       placeholder="Search..."
