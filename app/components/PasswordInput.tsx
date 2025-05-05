@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 
 interface Props {
   name: string;
@@ -7,9 +7,10 @@ interface Props {
   errors?: Record<string, any>;
   style?: Record<string, any>;
   required?: boolean;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-const PasswordInput = ({ name, placeholder, defaultValue, errors,style, required=false }: Props) => {
+const PasswordInput = ({ name, placeholder, defaultValue, errors, style, required=false, onChange }: Props) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -37,6 +38,7 @@ const PasswordInput = ({ name, placeholder, defaultValue, errors,style, required
             paddingRight: "1rem",
           }}
           required={required}
+          onChange={onChange}
         ></input>
         <img
           src={
