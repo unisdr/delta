@@ -125,6 +125,7 @@ export function HazardPicker(props: HazardPickerProps) {
 			<div className="dts-form-component">
 				<Field label="Filter By Hazard Name">
 					<input
+					    id="hazard-filter-input"
 						type="text"
 						value={searchTerm}
 						onChange={(e) => {
