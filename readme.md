@@ -12,13 +12,15 @@ The software tools and technologies used to build the DTS web application. This 
 * PostgreSQL (version 16 with PostGIS add-on)
 
 ## License
-This is an open source platform developed by UNDRR for country-level disaster tracking systems. The core platform is distributed under the MIT License.
+This is an open source platform developed by UNDRR for country-level disaster tracking systems. 
 
-The software uses several third-party open-source components under permissive licenses (MIT, Apache 2.0, etc.).
+The open-source license for this platform is currently under evaluation, with **MIT License** and **Apache License 2.0** as the primary options under consideration. The final choice will align with licensing best practices, compatibility requirements, and open-source community engagement goals.
+
+The software incorporates several third-party components under permissive licenses (MIT, Apache 2.0, PostgreSQL, etc.).
 
 For more details, see [LICENSE.md](LICENSE.md).
 
-This instance is an open source platform for country-level deployment by UNDRR, available for use by government agencies and other authorized organizations.
+This instance is intended for country-level deployment by UNDRR and is available for use by government agencies and other authorized organizations.
 
 
 ```

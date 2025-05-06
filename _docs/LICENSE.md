@@ -1,83 +1,53 @@
-# UNDRR Disaster Tracking System (DTS) License
+# UNDRR Disaster Tracking System (DTS) – License (Draft Under Review)
 
-## Software License
-This software is an open source platform developed by UNDRR for country-level disaster tracking systems. The core platform is distributed under the MIT License, allowing countries to:
+## License Status  
+This software is an open source platform developed by UNDRR for country-level disaster tracking systems. The licensing model is currently under evaluation to ensure alignment with the needs of country-level deployments, open-source community engagement, and compatibility with included dependencies.
 
-- Deploy their own instances
-- Customize the platform for their specific needs
-- Contribute improvements back to the community
+The two primary options under consideration are:
+- **MIT License**
+- **Apache License 2.0**
 
-Each country instance may have its own specific terms and conditions for local deployment and use.
+The final selection will be based on compatibility, legal clarity, and alignment with similar open-source projects across the UN system.
 
-## License Compatibility Analysis
-The software utilizes several third-party open-source components, all of which are under permissive licenses that are compatible with proprietary software distribution:
+## License Goals  
+Whichever license is selected, it must:
+- Allow countries to deploy and customize their own DTS instances  
+- Enable contributions from the open-source community  
+- Ensure legal clarity around third-party dependencies  
+- Maintain permissive terms while protecting the integrity of the platform  
 
-- **MIT License**: Used by React, Remix, and UNDP Icon Set
-- **Apache 2.0 License**: Used by TypeScript and some dependencies
-- **PostgreSQL License**: Used by PostgreSQL database
-- **Other Permissive Licenses**: All other dependencies use MIT, Apache 2.0, or similar permissive licenses
+## Third-Party Dependency Overview  
+The DTS platform includes multiple third-party components, each governed by permissive open-source licenses:
 
-These licenses are compatible because they:
-- Allow use in proprietary software
-- Do not require the main software to be open-sourced
-- Only require attribution and compliance with their specific terms
+| Dependency        | License         |
+|-------------------|------------------|
+| React             | MIT              |
+| Remix             | MIT              |
+| TypeScript        | Apache 2.0       |
+| PostgreSQL        | PostgreSQL       |
+| UNDP Icon Set     | MIT              |
+| Other Libraries   | MIT / Apache 2.0 |
 
-## Third-Party Dependencies
-This software includes or utilizes third-party components that are subject to their respective licenses. Below is a list of key dependencies and their licenses:
+These licenses are generally compatible with both MIT and Apache 2.0 options. They:
+- Allow reuse in commercial or proprietary systems  
+- Require attribution but no source disclosure (non-copyleft)  
+- Impose minimal legal restrictions  
 
-### UNDP Icon Set
-- **Component:** UNDP Icon Set
-- **License:** MIT License
-- **Source:** https://github.com/undp/design-system/tree/master/stories/assets/icons
-- **License Text:**
-```
-MIT License
+## Country-Level Deployment Terms  
+Each country instance may be subject to local terms and conditions. The selected license will include clear guidance for:
+- Customization rights  
+- Redistribution of modified versions  
+- Contribution pathways back to the main codebase  
 
-Copyright (c) United Nations Development Programme
+## Important Notes (Pre-Finalization)
+- This file is a draft pending final license selection.  
+- Use of this platform is subject to UNDRR authorization until the license is finalized.  
+- Final documentation will reflect the selected license and attribution obligations.  
+- Contributors should follow guidance in the [CONTRIBUTING.md] TODO once published.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## Next Steps  
+- Legal review of MIT vs Apache 2.0 licenses  
+- Approval of final license by project stakeholders  
+- Publication of definitive LICENSE.md and CONTRIBUTING.md files  
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-### Other Open Source Dependencies
-The software utilizes various open source libraries and frameworks, each subject to their respective licenses. The main dependencies include:
-- React (MIT License)
-- Remix (MIT License)
-- TypeScript (Apache 2.0 License)
-- PostgreSQL (PostgreSQL License)
-- And other libraries under MIT, Apache 2.0, and similar permissive licenses
-
-## License Compliance
-- The software may include open-source components under their respective licenses.
-- Users of this software must comply with the licenses of all included third-party components.
-- The inclusion of open-source components does not affect the proprietary status of the main software.
-
-## Important Notes
-- This software is for internal UNDRR use only unless explicitly authorized otherwise.
-- Any distribution or use of this software outside of authorized channels requires explicit written permission from UNDRR.
-- The software and its documentation are protected by copyright laws and international treaties.
-- This instance is an open source platform for country-level deployment by UNDRR, available for use by government agencies and other authorized organizations.
-
-## License Conflict Assessment
-Based on our current dependency stack, there are no license conflicts present. All third-party components are under permissive licenses that:
-- Allow use in proprietary software
-- Do not impose copyleft requirements
-- Only require attribution and compliance with their specific terms
-- Do not affect the proprietary status of the main software
-
-For any questions regarding licensing or permissions, please contact the UNDRR legal department.
+For legal inquiries, please contact the UNDRR legal department.
