@@ -12,9 +12,14 @@ The software tools and technologies used to build the DTS web application. This 
 * PostgreSQL (version 16 with PostGIS add-on)
 
 ## License
-TODO
+This software is proprietary and owned by UNDRR. All rights reserved.
 
-Contains the following 3rd party code/assets
+The software uses several third-party open-source components under permissive licenses (MIT, Apache 2.0, etc.). These licenses are compatible with proprietary distribution.
+
+For more details, see [LICENSE.md](LICENSE.md).
+
+This instance is built for country-level deployment by UNDRR and is intended for use by the designated country's government agencies.
+
 
 ```
 public/icons/undp-icon-set
