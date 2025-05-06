@@ -46,7 +46,7 @@ import {
 	Footer,
 } from "~/frontend/footer/footer"
 
-import {QueryClient, QueryClientProvider} from 'react-query';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {notifyError, notifyInfo} from "./frontend/utils/notifications";
 
 

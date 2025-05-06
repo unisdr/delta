@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery } from "react-query";
-import Swal from "sweetalert2";
+import { useQuery } from "@tanstack/react-query";
 import { AiOutlineSearch } from "react-icons/ai";
 
 interface DisasterEvent {

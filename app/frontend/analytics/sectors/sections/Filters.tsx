@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { AiOutlineSearch } from "react-icons/ai"; // Import the Search Icon from react-icons
 
@@ -101,35 +101,31 @@ const Filters: React.FC<FiltersProps> = ({
   });
 
   // React Query for fetching hazard types
-  const { data: hazardTypesData } = useQuery(
-    ["hazardTypes", filters.hazardTypeId],
-    async () => {
+  const { data: hazardTypesData } = useQuery({
+    queryKey: ["hazardTypes", filters.hazardTypeId],
+    queryFn: async () => {
       const response = await fetch(`/api/analytics/hazard-types`);
       return response.json();
-    }
-  );
+    },
+  });
 
   // React Query for fetching hazard clusters
-  const { data: hazardClustersData, isFetching: isFetchingClusters } = useQuery(
-    ["hazardClusters", filters.hazardClusterId],
-    async () => {
+  const { data: hazardClustersData, isFetching: isFetchingClusters } = useQuery({
+    queryKey: ["hazardClusters", filters.hazardClusterId],
+    queryFn: async () => {
       const response = await fetch(`/api/analytics/hazard-clusters?typeId=${filters.hazardTypeId}`);
       return response.json();
     },
-    {
-      enabled: !!filters.hazardTypeId, // Only run this query if hazardTypeId is set
-    }
-  );
-  // console.log("Selected Hazard Cluster ID:", filters.hazardClusterId);
+    enabled: !!filters.hazardTypeId, // Only run this query if hazardTypeId is set
+  });
 
   // React Query for fetching specific hazards
   const [searchQuery, setSearchQuery] = useState(""); // Add searchQuery state
-
-  const { data: specificHazardsData } = useQuery(
-    ["specificHazards", filters.hazardClusterId, searchQuery], // Include searchQuery
-    async () => {
+  const { data: specificHazardsData } = useQuery({
+    queryKey: ["specificHazards", filters.hazardClusterId, searchQuery],
+    queryFn: async () => {
       if (!filters.hazardClusterId) {
-        return { hazards: [] }; // Return empty results if hazardClusterId is invalid
+        return { hazards: [] };
       }
       const response = await fetch(
         `/api/analytics/specific-hazards?clusterId=${filters.hazardClusterId}&searchQuery=${searchQuery}`
@@ -137,24 +133,17 @@ const Filters: React.FC<FiltersProps> = ({
       if (!response.ok) throw new Error("Failed to fetch specific hazards");
       return response.json();
     },
-    {
-      enabled: !!filters.hazardClusterId, // Only run the query if hazardClusterId is set
-    }
-  );
-
-
-
-  // console.log("Selected Hazard Cluster ID:", filters.hazardClusterId);
-  // console.log("Specific Hazards Data:", specificHazardsData);
+    enabled: !!filters.hazardClusterId,
+  });
 
   // React Query for fetching geographic levels
-  const { data: geographicLevelsData } = useQuery(
-    ["geographicLevels", filters.geographicLevelId],
-    async () => {
+  const { data: geographicLevelsData } = useQuery({
+   queryKey: ["geographicLevels", filters.geographicLevelId],
+   queryFn: async () => {
       const response = await fetch(`/api/analytics/geographic-levels`);
       return response.json();
     }
-  );
+});
 
   // Function to handle specific hazard selection
   const handleSpecificHazardSelection = async (specificHazardId: string) => {
