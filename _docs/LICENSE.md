@@ -1,9 +1,13 @@
 # UNDRR Disaster Tracking System (DTS) License
 
 ## Software License
-This software is proprietary and is owned by UNDRR. All rights reserved.
+This software is an open source platform developed by UNDRR for country-level disaster tracking systems. The core platform is distributed under the MIT License, allowing countries to:
 
-The software is marked as "UNLICENSED" and is not distributed under any open source license. Any use, distribution, or modification of this software without explicit written permission from UNDRR is strictly prohibited.
+- Deploy their own instances
+- Customize the platform for their specific needs
+- Contribute improvements back to the community
+
+Each country instance may have its own specific terms and conditions for local deployment and use.
 
 ## License Compatibility Analysis
 The software utilizes several third-party open-source components, all of which are under permissive licenses that are compatible with proprietary software distribution:
@@ -67,7 +71,7 @@ The software utilizes various open source libraries and frameworks, each subject
 - This software is for internal UNDRR use only unless explicitly authorized otherwise.
 - Any distribution or use of this software outside of authorized channels requires explicit written permission from UNDRR.
 - The software and its documentation are protected by copyright laws and international treaties.
-- This instance is specifically built for country-level deployment by UNDRR and is intended for use by the designated country's government agencies.
+- This instance is an open source platform for country-level deployment by UNDRR, available for use by government agencies and other authorized organizations.
 
 ## License Conflict Assessment
 Based on our current dependency stack, there are no license conflicts present. All third-party components are under permissive licenses that:
