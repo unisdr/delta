@@ -780,6 +780,8 @@ nav ul {
   cursor: pointer;
   padding: 1.2rem 1.6rem;
   border: 1px solid transparent;
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
   /* medium design - 1024px up */
 }
 @media (width >= 1024px) {
@@ -923,6 +925,16 @@ nav ul {
   background: url(~/stories/assets/icons/tick-grey.svg) no-repeat left center;
 }
 
+.mg-button.mg-button-table, .mg-button-table.dts-tablist__button {
+  background-color: transparent;
+  color: #333333;
+  border-color: transparent;
+}
+.mg-button.mg-button-table:hover, .mg-button-table.dts-tablist__button:hover {
+  background-color: #E6E6E6;
+  color: #004f91;
+}
+
 .dts-chart-card {
   background-color: #F2F2F2;
   padding: 1.6rem;
@@ -956,6 +968,15 @@ nav ul {
 @media (width >= 1440px) {
   .mg-container {
     max-width: 1440px;
+  }
+}
+
+.dts-page-title .mg-container {
+  /* large design - 1164px up */
+}
+@media (width >= 1164px) {
+  .dts-page-title .mg-container {
+    padding: 0 6.4rem;
   }
 }
 
@@ -1144,6 +1165,12 @@ header .mg-container {
 
 .dts-element-summary {
   margin: 3.2rem 0;
+  /* large design - 1164px up */
+}
+@media (width >= 1164px) {
+  .dts-element-summary {
+    padding: 0 6.4rem 0 3.2rem;
+  }
 }
 .dts-element-summary__title {
   display: -ms-grid;
@@ -1418,6 +1445,14 @@ header .mg-container {
 .dts-form--spaced {
   gap: 4rem;
   text-align: center;
+}
+.dts-form:not(.dts-form--horizontal):not(.dts-form--vertical):not(.dts-form--spaced) {
+  /* large design - 1164px up */
+}
+@media (width >= 1164px) {
+  .dts-form:not(.dts-form--horizontal):not(.dts-form--vertical):not(.dts-form--spaced) {
+    padding: 0 6.4rem 0 3.2rem;
+  }
 }
 .dts-form__header {
   display: -webkit-box;
@@ -2930,6 +2965,12 @@ header .mg-container {
 
 .dts-page-intro {
   margin-bottom: 4.8rem;
+  /* large design - 1164px up */
+}
+@media (width >= 1164px) {
+  .dts-page-intro {
+    padding: 0 6.4rem 0 3.2rem;
+  }
 }
 
 .dts-page-section {
@@ -3027,8 +3068,14 @@ header .mg-container {
   background-color: #c10920;
 }
 
-.dts-sub-navigation .mg-container {
+.dts-sub-navigation {
   border-bottom: 1px solid #E3E3E3;
+  /* large design - 1164px up */
+}
+@media (width >= 1164px) {
+  .dts-sub-navigation {
+    margin: 0 6.4rem 0 3.2rem;
+  }
 }
 .dts-sub-navigation__container {
   display: -webkit-box;

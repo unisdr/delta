@@ -394,7 +394,7 @@ export default function Settings() {
 													</button>
 												*/}
 													<button
-														className="mg-button mg-button--small mg-button-system dts-access-management__icon-button"
+														className="mg-button mg-button-table"
 														onClick={() =>
 															(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
 														}
