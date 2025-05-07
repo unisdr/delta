@@ -331,9 +331,7 @@ export default function Settings() {
 								<tbody>
 									{filteredItems.map((item, index) => (
 										<tr key={index}>
-											<td
-												className="dts-table__cell-centered"
-											>
+											<td>
 												<span
 													className={`dts-access-management__status-dot ${item.emailVerified
 														? "dts-access-management__status-dot--activated"
