@@ -19,11 +19,12 @@ export function MainContainer(props: MainContainerProps) {
 				{props.headerExtra}
 			</div>
 			{props.headerAfter}
-			<section>
+			{/* <section> */}
 				<div className="mg-container">
-					<div>{props.children}</div>
+					{/* <div>{props.children}</div> */}
+					{props.children}
 				</div>
-			</section>
+			{/* </section> */}
 		</>
 	);
 }

@@ -6,9 +6,6 @@ import { userTable } from "~/drizzle/schema";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { useEffect, useState } from "react";
-// import Swal from "sweetalert2";
-// import "sweetalert2/dist/sweetalert2.min.css";
-import { FaEye, FaTrashAlt, FaUserEdit } from "react-icons/fa";
 import { format } from "date-fns";
 
 export const meta: MetaFunction = () => {
@@ -183,84 +180,83 @@ export default function Settings() {
 	// };
 
 	return (
-		<section className="dts-page-section">
-			<MainContainer title="Access management" headerExtra={<NavSettings />}>
-				<div className="dts-access-management mg-container">
-					<div className="dts-external-links">
-						<a
-							href="/about/technical-specifications"
-							className="dts-link"
-							target="_blank"
-							rel="noopener noreferrer"
+		// <section className="dts-page-section">
+		<MainContainer title="Access management" headerExtra={<NavSettings />}>
+			{/* <div className="dts-access-management mg-container"> */}
+			<div className="dts-page-intro">
+				<div className="dts-external-links">
+					<a
+						href="/about/technical-specifications"
+						className="dts-link"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						Technical Specification
+						<svg
+							aria-hidden="true"
+							focusable="false"
+							role="img"
+							style={{ marginLeft: "4px" }}
 						>
-							Technical Specification
-							<svg
-								aria-hidden="true"
-								focusable="false"
-								role="img"
-								style={{ marginLeft: "4px" }}
+							<use href="/assets/icons/external-link-open-new.svg#external"></use>
+						</svg>
+					</a>
+					<a
+						href="/settings/access-mgmnt/invite"
+						className="mg-button mg-button-secondary"
+					>
+						Add User
+					</a>
+				</div>
+			</div>
+
+			{/* Add User Button */}
+			<div className="dts-element-summary">
+				<h2 className="dts-element-summary__title">
+					<span>Currently there are [{totalUsers}] users in the system.</span>
+				</h2>
+			</div>
+
+			{/* Filter Form */}
+			<form method="get">
+				<div className="mg-grid mg-grid__col-3">
+					{/* Organisation Filter */}
+					<div className="dts-form-component">
+						<label className="dts-form-component__label">
+							Organisation
+							<input
+								type="search"
+								name="organization"
+								value={organizationFilter}
+								placeholder="Type organisation name"
+								onChange={handleOrganizationFilter}
+								autoComplete="organization"
+							/>
+						</label>
+					</div>
+
+					{/* Role Filter */}
+					<div className="dts-form-component">
+						<label className="dts-form-component__label">
+							Role
+							<select
+								name="role"
+								value={roleFilter}
+								onChange={handleRoleFilter}
 							>
-								<use href="/assets/icons/external-link-open-new.svg#external"></use>
-							</svg>
-						</a>
-						<a
-							href="/settings/access-mgmnt/invite"
-							className="mg-button mg-button-secondary"
-						>
-							Add User
-						</a>
+								<option value="all">All Roles</option>
+								<option value="data-viewer">Data Viewer</option>
+								<option value="data-collector">Data Collector</option>
+								<option value="data-validator">Data Validator</option>
+								<option value="admin">Admin</option>
+							</select>
+						</label>
 					</div>
+				</div>
+			</form>
 
-					{/* Add User Button */}
-					<div className="dts-access-management__top-bar">
-						<h2 className="dts-element-summary__title">
-							<span>Currently there are [{totalUsers}] users in the system.</span>
-						</h2>
-					</div>
-
-					{/* Filter Form */}
-					<form method="get" className="dts-form dts-access-management__filter-form">
-						<div className="mg-grid mg-grid__col-5">
-							{/* Organisation Filter */}
-							<div className="dts-form-component">
-								<label className="dts-form-component__label">
-									Organisation
-									<input
-										type="search"
-										name="organization"
-										value={organizationFilter}
-										placeholder="Type organisation name"
-										className="dts-access-management__filter-input"
-										onChange={handleOrganizationFilter}
-										autoComplete="organization"
-									/>
-								</label>
-							</div>
-
-							{/* Role Filter */}
-							<div className="dts-form-component">
-								<label className="dts-form-component__label">
-									Role
-									<select
-										name="role"
-										className="dts-access-management__filter-select"
-										value={roleFilter}
-										onChange={handleRoleFilter}
-									>
-										<option value="all">All Roles</option>
-										<option value="data-viewer">Data Viewer</option>
-										<option value="data-collector">Data Collector</option>
-										<option value="data-validator">Data Validator</option>
-										<option value="admin">Admin</option>
-									</select>
-								</label>
-							</div>
-						</div>
-					</form>
-
-
-					{/* Search Form */}
-					{/* <form method="get" className="search-form">
+			{/* Search Form */}
+			{/* <form method="get" className="search-form">
 					<input
 						type="text"
 						name="search"
@@ -279,106 +275,101 @@ export default function Settings() {
 				</form>
 
 				{/* User Stats */}
-					<div
-						className="dts-access-management__user-stats-container"
-					>
-						{/* Total User Count */}
-						<div className="dts-access-management__user-stats">
-							<strong className="dts-body-label">
-								{filteredItems.length} of {totalUsers} Users
-							</strong>
-						</div>
+			<div>
+				{/* Total User Count */}
+				<div>
+					<strong className="dts-body-label">
+						{filteredItems.length} of {totalUsers} Users
+					</strong>
+				</div>
 
-						{/* Status Legend */}
-						<div className="dts-legend">
-							<span className="dts-body-label">Status legend</span>
+				{/* Status Legend */}
+				<div className="dts-legend">
+					<span className="dts-body-label">Status legend</span>
 
-							<div className="dts-legend__item">
-								<span className="dts-status dts-status--activated" aria-labelledby="legend7"></span>
-								<span id="legend7">
-									Account activated: {activatedUsers}
-								</span>
-							</div>
-
-							<div className="dts-legend__item">
-								<span className="dts-access-management__status-dot dts-access-management__status-dot--pending" aria-labelledby="legend8"></span>
-								<span id="legend8">
-									Account activation pending: {pendingUsers}
-								</span>
-							</div>
-						</div>
-
+					<div className="dts-legend__item">
+						<span
+							className="dts-status dts-status--activated"
+							aria-labelledby="legend7"
+						></span>
+						<span id="legend7">Account activated: {activatedUsers}</span>
 					</div>
 
-					{/* Users Table */}
-					{isClient && (
-						<div className="dts-access-management__table-container">
-							<table className="dts-table dts-access-management__table">
-								<thead>
-									<tr>
-										<th>Status</th>
-										<th>Name</th>
-										<th>Organisation</th>
-										<th>Role</th>
-										<th>Modified</th>
-										{/* <th>Email</th>
+					<div className="dts-legend__item">
+						<span
+							aria-labelledby="legend8"
+						></span>
+						<span id="legend8">Account activation pending: {pendingUsers}</span>
+					</div>
+				</div>
+			</div>
+
+			{/* Users Table */}
+			{isClient && (
+				<div>
+					<table className="dts-table">
+						<thead>
+							<tr>
+								<th>Status</th>
+								<th>Name</th>
+								<th>Organisation</th>
+								<th>Role</th>
+								<th>Modified</th>
+								{/* <th>Email</th>
 									{/* <th>Email</th>
 									<th>Email Verified</th>
 									<th>Auth</th> */}
-										<th>Actions</th>
-									</tr>
-								</thead>
-								<tbody>
-									{filteredItems.map((item, index) => (
-										<tr key={index}>
-											<td>
-												<span
-													className={`dts-access-management__status-dot ${item.emailVerified
-														? "dts-access-management__status-dot--activated"
-														: "dts-access-management__status-dot--pending"
-														}`}
-												>
-													{/* Tooltip message */}
-													<span className="dts-access-management__tooltip-text">
-														{/* Tooltip text dynamically changes based on status */}
-														{item.emailVerified ? "Activated" : "Pending"}
-													</span>
-													{/* Tooltip pointer */}
-													<span className="dts-access-management__tooltip-pointer"></span>
-												</span>
-											</td>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{filteredItems.map((item, index) => (
+								<tr key={index}>
+									<td>
+										<span
+											className={`dts-access-management__status-dot ${
+												item.emailVerified
+													? "dts-access-management__status-dot--activated"
+													: "dts-access-management__status-dot--pending"
+											}`}
+										>
+											{/* Tooltip message */}
+											<span className="dts-access-management__tooltip-text">
+												{/* Tooltip text dynamically changes based on status */}
+												{item.emailVerified ? "Activated" : "Pending"}
+											</span>
+											{/* Tooltip pointer */}
+											<span className="dts-access-management__tooltip-pointer"></span>
+										</span>
+									</td>
 
-											<td>
-												<Link
-													to={`/settings/access-mgmnt/edit/${item.id}`}
-													className="link"
-												>
-													{item.firstName} {item.lastName}
-												</Link>
-											</td>
-											<td>{item.organization}</td>
-											{/* Updated Role Column with Badge */}
-											<td>
-												<span
-													className="dts-access-management__role-badge"
-												>
-													{item.role.charAt(0).toUpperCase() + item.role.slice(1)}{" "}
-													{/* Capitalizes the first letter */}
-												</span>
-											</td>
-											<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
-											{/* <td>
+									<td>
+										<Link
+											to={`/settings/access-mgmnt/edit/${item.id}`}
+											className="link"
+										>
+											{item.firstName} {item.lastName}
+										</Link>
+									</td>
+									<td>{item.organization}</td>
+									{/* Updated Role Column with Badge */}
+									<td>
+										<span>
+											{item.role.charAt(0).toUpperCase() + item.role.slice(1)}{" "}
+											{/* Capitalizes the first letter */}
+										</span>
+									</td>
+									<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
+									{/* <td>
 											<Link to={`/settings/access-mgmnt/edit/${item.id}`} className="link">
 												{item.email}
 											</Link>
 										</td> */}
-											{/* <td>{item.emailVerified.toString()}</td> */}
-											{/* <td>{item.authType}</td> */}
-											<td>
-												<div
-													className="dts-access-management__action-cell"
-												>
-													{/* 
+									{/* <td>{item.emailVerified.toString()}</td> */}
+									{/* <td>{item.authType}</td> */}
+									<td>
+										<div>
+											{/* 
 													<button
 														className="icon-button"
 														onClick={() => (window.location.href = `/settings/access-mgmnt/${item.id}`)}
@@ -391,28 +382,28 @@ export default function Settings() {
 														/>
 													</button>
 												*/}
-													<button
-														className="mg-button mg-button-table"
-														onClick={() =>
-															(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
-														}
-													>
-														<svg
-															aria-hidden="true"
-															focusable="false"
-															role="img"
-															style={{ marginLeft: "4px" }}
-														>
-															<use href="/assets/icons/edit.svg#edit"></use>
-														</svg>
-														{/* <FaUserEdit
+											<button
+												className="mg-button mg-button-table"
+												onClick={() =>
+													(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
+												}
+											>
+												<svg
+													aria-hidden="true"
+													focusable="false"
+													role="img"
+													style={{ marginLeft: "4px" }}
+												>
+													<use href="/assets/icons/edit.svg#edit"></use>
+												</svg>
+												{/* <FaUserEdit
 														style={{
 															fontSize: "1.25rem", // Adjust the size of the icon if needed
 															cursor: "pointer",
 														}}
 													/> */}
-													</button>
-													{/* <button
+											</button>
+											{/* <button
 													className="icon-button"
 													onClick={() => handleDeleteUser(item.id)}
 												>
@@ -423,19 +414,18 @@ export default function Settings() {
 														}}
 													/>
 												</button> */}
-												</div>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-					)}
-					{/* Pagination */}
-					{pagination}
+										</div>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
 				</div>
-			</MainContainer>
-		</section>
-
+			)}
+			{/* Pagination */}
+			{pagination}
+			{/* </div> */}
+		</MainContainer>
+		// </section>
 	);
 }
