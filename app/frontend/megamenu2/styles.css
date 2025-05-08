@@ -238,3 +238,8 @@ li.selected > .button-link > .dts-mobilemenu-expand-icon {
 .dts-mobilemenu-lvl1 > ul > li.selected > .button-link > .dts-mobilemenu-expand-icon {
 	transform: rotate(180deg);
 }
+
+.dts-megamenu-icon-alignment {
+	vertical-align: middle;
+    padding-right: 5px;
+}

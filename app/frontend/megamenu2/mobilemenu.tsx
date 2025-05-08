@@ -156,7 +156,12 @@ export function Lvl4({items}: Lvl4Props){
 	<ul>
 		{items.map((item, index) => (
 			<li key={index}>
-				<a href={item.link}>{item.name}</a>
+				<a href={item.link}>
+					{item.icon && (
+						<Icon icon={item.icon} />
+					)}
+					{item.name}
+				</a>
 			</li>
 		))}
 	</ul>

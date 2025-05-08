@@ -1,7 +1,9 @@
-export type IconId = "undp/calendar" | "undp/hamburger" | "undp/chevron-down" | "other/settings" | "other/about" | "other/analysis" | "other/data" | "other/user-profile";
+export type IconId = "undp/calendar" | "undp/hamburger" | "undp/chevron-down" | "other/settings" | "other/about" | 
+	"other/analysis" | "other/data" | "other/user-profile" | "other/logout";
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
-	icon: IconId
+	icon: IconId,
+	className?: string;
 }
 
 export function Icon(props:IconProps) {
@@ -28,23 +30,27 @@ export function Icon(props:IconProps) {
 			);
 		case "other/settings":
 			return (
-				<embed src="/assets/icons/settings.svg" type="image/svg+xml" />
+				<embed className={props.className} src="/assets/icons/settings.svg" type="image/svg+xml" />
 			);
 		case "other/data":
 			return (
-					<embed src="/assets/icons/information_outline.svg" type="image/svg+xml" />
+					<embed className={props.className} src="/assets/icons/information_outline.svg" type="image/svg+xml" />
 			);
 		case "other/analysis":
 			return (
-					<embed src="/assets/icons/eye-show-password.svg" type="image/svg+xml" />
+					<embed className={props.className} src="/assets/icons/eye-show-password.svg" type="image/svg+xml" />
 			);
 		case "other/about":
 			return (
-					<embed src="/assets/icons/help-outline.svg" type="image/svg+xml" />
+					<embed className={props.className} src="/assets/icons/help-outline.svg" type="image/svg+xml" />
 			);
-			case "other/user-profile":
+		case "other/user-profile":
 			return (
-					<embed src="/assets/icons/user-profile.svg" type="image/svg+xml" />
+					<embed className={props.className} src="/assets/icons/user-profile.svg" type="image/svg+xml" />
+			);
+		case "other/logout":
+			return (
+					<embed className={props.className} src="/assets/icons/logout.svg" type="image/svg+xml" />
 			);
 	}
 

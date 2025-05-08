@@ -247,19 +247,6 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
             },
           ],
         },
-        {
-          name: "User",
-          id: "user-settings",
-          lvl3: [
-            {
-              title: "Account",
-              lvl4: [
-                { name: "Change Password", link: "#" },
-                { name: "Change Email", link: "#" },
-              ],
-            },
-          ],
-        },
       ],
     },
     {
@@ -269,13 +256,20 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
       lvl2: [
         {
           name: "Account",
-          id: "main-settings",
+          id: "account",
           lvl3: [
             {
               title: "Account",
               lvl4: [
-                { name: "My profile", link: "#" },
-                { name: "Log out", link: "/user/logout" },
+                { 
+                  name: "My account", 
+                  link: "#",
+                  icon: "other/user-profile",
+                },
+                { name: "Sign out", 
+                  link: "/user/logout" ,
+                  icon: "other/logout",
+                },
               ],
             },
           ],

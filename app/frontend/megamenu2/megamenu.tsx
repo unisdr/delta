@@ -166,7 +166,12 @@ export function Lvl4({items}: Lvl4Props){
 	<ul className="dts-megamenu-lvl4">
 		{items.map((item, index) => (
 			<li key={index}>
-				<a href={item.link}>{item.name}</a>
+				<a href={item.link}>
+					{item.icon && (
+						<Icon icon={item.icon} className="dts-megamenu-icon-alignment" />
+					)}
+					{item.name}
+				</a>
 			</li>
 		))}
 	</ul>

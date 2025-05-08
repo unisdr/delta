@@ -22,6 +22,7 @@ export interface Lvl3Item {
 export interface Lvl4Item {
 	name: string;
 	link: string;
+	icon?: IconId;
 }
 
 export interface MegaMenuProps {
