@@ -1,55 +1,35 @@
 import { dr } from "~/db.server";
-import {
-	eq,
-	sql,
-} from "drizzle-orm";
-
-import {
-	userTable
-} from '~/drizzle/schema';
-
-import {
-	json,
-	MetaFunction,
-} from "@remix-run/node";
-
+import { eq, sql } from "drizzle-orm";
+import { userTable } from "~/drizzle/schema";
+import { json, MetaFunction } from "@remix-run/node";
 import {
 	useLoaderData,
 	useActionData,
-	Link
+	Link,
+	useNavigate,
+	useFetcher,
 } from "@remix-run/react";
-
 import {
 	Form,
 	Field,
 	SubmitButton,
 	FieldErrors,
-	FormResponse
+	FormResponse,
 } from "~/frontend/form";
-
-import {
-	ValidRoles
-} from "~/frontend/user/roles";
-
-
-import {
-	authLoaderWithPerm,
-	authActionWithPerm,
-} from "~/util/auth";
-
+import { ValidRoles } from "~/frontend/user/roles";
+import { authLoaderWithPerm, authActionWithPerm } from "~/util/auth";
 import { formStringData } from "~/util/httputil";
-
 import { MainContainer } from "~/frontend/container";
-
 import { redirectWithMessage, sessionCookie } from "~/util/session";
-import "react-toastify/dist/ReactToastify.css"; // Toast styles
-
-import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
-import { useNavigate } from "@remix-run/react";
-import { adminUpdateUser, AdminUpdateUserFields, adminUpdateUserFieldsFromMap } from "~/backend.server/models/user/update_user";
+import {
+	adminUpdateUser,
+	AdminUpdateUserFields,
+	adminUpdateUserFieldsFromMap,
+} from "~/backend.server/models/user/update_user";
 import { format } from "date-fns";
-
+import { ConfirmDialog } from "~/frontend/components/ConfirmDialog";
+import { notifyError } from "~/frontend/utils/notifications";
+import { useEffect, useRef } from "react";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -64,7 +44,6 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 		throw new Response("Missing item ID", { status: 400 });
 	}
 
-	//const res = await dr.select().from(userTable).where(eq(userTable.id, Number(id)));
 	const res = await dr
 		.select({
 			id: userTable.id,
@@ -73,10 +52,9 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 			lastName: userTable.lastName,
 			role: userTable.role,
 			organization: userTable.organization,
-			emailVerified: userTable.emailVerified, // Include emailVerified
-			// Dynamically calculate dateAdded and addedBy
+			emailVerified: userTable.emailVerified,
 			dateAdded: userTable.createdAt,
-			addedBy: sql<string>`'System Admin'`.as("addedBy"), // Ensure type is string
+			addedBy: sql<string>`'System Admin'`.as("addedBy"),
 		})
 		.from(userTable)
 		.where(eq(userTable.id, Number(id)));
@@ -95,60 +73,56 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 			lastName: item.lastName,
 			organization: item.organization,
 			role: item.role,
-			emailVerified: item.emailVerified, // Return emailVerified
-			dateAdded: item.dateAdded || null, // Handle null or missing values
-			addedBy: item.addedBy || "System Admin", // Fallback if value is missing
+			emailVerified: item.emailVerified,
+			dateAdded: item.dateAdded || null,
+			addedBy: item.addedBy || "System Admin",
 		},
 	};
-})
+});
 
-type ActionResponse = FormResponse<AdminUpdateUserFields>
+type ActionResponse = FormResponse<AdminUpdateUserFields>;
 
 export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 	const { request, params } = actionArgs;
 	const id = Number(params.id);
 
-	// Check if ID is missing
 	if (!id) {
 		throw new Response("Missing ID", { status: 400 });
 	}
 
-	// Parse form data and map to fields
 	const formData = formStringData(await request.formData());
 	const updatedData = adminUpdateUserFieldsFromMap(formData);
 
-	// Trim fields to prevent whitespace-only input from being considered valid
-if (!updatedData.firstName || updatedData.firstName.trim() === "") {
-	return json<ActionResponse>({
-	  ok: false,
-	  data: updatedData,
-	  errors: {
-		fields: { firstName: ["First name is required"] },
-	  },
-	});
-  }
-  
-  if (!updatedData.email || updatedData.email.trim() === "") {
-	return json<ActionResponse>({
-	  ok: false,
-	  data: updatedData,
-	  errors: {
-		fields: { email: ["Email is required"] },
-	  },
-	});
-  }
-  
-  if (!updatedData.organization || updatedData.organization.trim() === "") {
-	return json<ActionResponse>({
-	  ok: false,
-	  data: updatedData,
-	  errors: {
-		fields: { organization: ["Organisation is required"] },
-	  },
-	});
-  }
+	if (!updatedData.firstName || updatedData.firstName.trim() === "") {
+		return json<ActionResponse>({
+			ok: false,
+			data: updatedData,
+			errors: {
+				fields: { firstName: ["First name is required"] },
+			},
+		});
+	}
 
-	// Retrieve the existing user data for comparison
+	if (!updatedData.email || updatedData.email.trim() === "") {
+		return json<ActionResponse>({
+			ok: false,
+			data: updatedData,
+			errors: {
+				fields: { email: ["Email is required"] },
+			},
+		});
+	}
+
+	if (!updatedData.organization || updatedData.organization.trim() === "") {
+		return json<ActionResponse>({
+			ok: false,
+			data: updatedData,
+			errors: {
+				fields: { organization: ["Organisation is required"] },
+			},
+		});
+	}
+
 	const existingUser = await dr
 		.select({
 			email: userTable.email,
@@ -167,12 +141,12 @@ if (!updatedData.firstName || updatedData.firstName.trim() === "") {
 
 	const currentUser = existingUser[0];
 
-	// Dynamically compare existing user data with updated data
 	const hasChanges = Object.keys(updatedData).some(
-		key => (updatedData as Record<string, any>)[key] !== (currentUser as Record<string, any>)[key]
+		(key) =>
+			(updatedData as Record<string, any>)[key] !==
+			(currentUser as Record<string, any>)[key]
 	);
 
-	// If no changes detected, redirect with a "No changes made" message
 	if (!hasChanges) {
 		return redirectWithMessage(request, "/settings/access-mgmnt/", {
 			type: "info",
@@ -180,11 +154,11 @@ if (!updatedData.firstName || updatedData.firstName.trim() === "") {
 		});
 	}
 
-	// Perform the update
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
 	const res = await adminUpdateUser(id, updatedData, session.get("userId"));
 
-	// Handle errors
 	if (!res.ok) {
 		return json<ActionResponse>({
 			ok: false,
@@ -193,24 +167,40 @@ if (!updatedData.firstName || updatedData.firstName.trim() === "") {
 		});
 	}
 
-	// Redirect with a success message if changes were saved
 	return redirectWithMessage(request, "/settings/access-mgmnt/", {
 		type: "info",
 		text: "Changes saved",
 	});
 });
 
-
 export default function Screen() {
 	let fields: AdminUpdateUserFields;
 	const loaderData = useLoaderData<typeof loader>();
-	const navigate = useNavigate(); // For programmatic navigation
+	const navigate = useNavigate();
+	const fetcher = useFetcher();
+	const dialogRef = useRef<HTMLDialogElement>(null);
 
-	// Add derived fields like `activated` and use `id` as the Generated system identifier
+	useEffect(() => {
+		if (fetcher.state === "idle" && fetcher.data) {
+			const data = fetcher.data as any;
+			if (data.ok) {
+				navigate("/settings/access-mgmnt/", {
+					state: {
+						message: { type: "info", text: "The user has been deleted." },
+					},
+				});
+			} else {
+				notifyError(
+					data.error || "Something went wrong while deleting the user."
+				);
+			}
+		}
+	}, [fetcher.state, fetcher.data, navigate]);
+
 	fields = {
 		...loaderData.data,
-		activated: loaderData.data.emailVerified === true, // Derive activated from emailVerified
-		generatedSystemIdentifier: loaderData.data.id.toString(), // Use `id` as the dynamic value for generatedSystemIdentifier
+		activated: loaderData.data.emailVerified === true,
+		generatedSystemIdentifier: loaderData.data.id.toString(),
 	};
 
 	let errors = {};
@@ -228,7 +218,7 @@ export default function Screen() {
 	}
 
 	const hasFields = (obj: any): obj is { fields: Record<string, string[]> } => {
-		return obj && typeof obj === 'object' && 'fields' in obj;
+		return obj && typeof obj === "object" && "fields" in obj;
 	};
 
 	type ErrorsType = {
@@ -238,43 +228,28 @@ export default function Screen() {
 
 	const safeErrors: ErrorsType = hasFields(errors) ? errors : { fields: {} };
 
-	// Function to handle "Delete User"
-	const handleDeleteUser = () => {
-		Swal.fire({
-			title: "Are you sure you want to delete this user?",
-			text: "This data cannot be recovered after being deleted.",
-			icon: "warning",
-			showCancelButton: true,
-			confirmButtonColor: "#d33", // Red for "Delete user"
-			cancelButtonColor: "#3085d6", // Blue for "Do not delete"
-			confirmButtonText: '<i class="fas fa-trash"></i> Delete user',
-			cancelButtonText: "Do not delete",
-		}).then(async (result) => {
-			if (result.isConfirmed) {
-				try {
-					// Redirect to the delete route
-					await fetch(`/settings/access-mgmnt/delete/${fields.generatedSystemIdentifier}`, {
-						method: "GET",
-					});
-					Swal.fire({
-						title: "Deleted!",
-						text: "The user has been deleted.",
-						icon: "success",
-					}).then(() => {
-						navigate("/settings/access-mgmnt/"); // Redirect to access management page
-					});
-				} catch (error) {
-					Swal.fire("Error", "Something went wrong while deleting the user.", "error");
-				}
-			}
-		});
+	const handleDeleteClick = () => {
+		dialogRef.current?.showModal();
 	};
 
+	const handleConfirmDelete = () => {
+		dialogRef.current?.close();
+		fetcher.load(
+			`/settings/access-mgmnt/delete/${fields.generatedSystemIdentifier}`
+		);
+	};
+
+	const handleCancelDelete = () => {
+		dialogRef.current?.close();
+	};
 
 	return (
 		<MainContainer title="Edit User">
 			<div className="dts-form__header">
-				<Link to="/settings/access-mgmnt/" className="mg-button mg-button--small mg-button-system">
+				<Link
+					to="/settings/access-mgmnt/"
+					className="mg-button mg-button--small mg-button-system"
+				>
 					Back
 				</Link>
 			</div>
@@ -291,9 +266,17 @@ export default function Screen() {
 						<h2>
 							{fields.firstName} {fields.lastName}
 						</h2>
-						<p style={{ marginBottom: "0.5em", display: "flex", alignItems: "center" }}>
+						<p
+							style={{
+								marginBottom: "0.5em",
+								display: "flex",
+								alignItems: "center",
+							}}
+						>
 							<span
-								className={`status-dot ${fields.activated ? "activated" : "pending"}`}
+								className={`status-dot ${
+									fields.activated ? "activated" : "pending"
+								}`}
 								style={{
 									height: "10px",
 									width: "10px",
@@ -302,11 +285,15 @@ export default function Screen() {
 									marginRight: "8px",
 								}}
 							></span>
-							{fields.activated ? "Account activated" : "Account activation pending"}
+							{fields.activated
+								? "Account activated"
+								: "Account activation pending"}
 						</p>
 						<p style={{ marginBottom: "0.5em" }}>
 							<strong>Date added:</strong>{" "}
-							{fields.dateAdded ? format(new Date(fields.dateAdded), "dd-MM-yyyy") : "N/A"}
+							{fields.dateAdded
+								? format(new Date(fields.dateAdded), "dd-MM-yyyy")
+								: "N/A"}
 						</p>
 						<p>
 							<strong>Added by:</strong> {fields.addedBy || "System Admin"}
@@ -315,7 +302,7 @@ export default function Screen() {
 					<button
 						className="mg-button mg-button-system mg-button-system--transparent"
 						style={{ display: "flex", alignItems: "center" }}
-						onClick={handleDeleteUser}
+						onClick={handleDeleteClick}
 					>
 						<img
 							src="/assets/icons/trash-alt.svg"
@@ -340,10 +327,7 @@ export default function Screen() {
 				)}
 
 				<Form errors={safeErrors}>
-					{/* First Name, Last Name, and Email */}
-					<div
-						className="mg-grid mg-grid__col-3"
-					>
+					<div className="mg-grid mg-grid__col-3">
 						<div className="dts-form-component">
 							<label aria-invalid={!!safeErrors.fields.firstName}>
 								<div className="dts-form-component__label">
@@ -356,7 +340,9 @@ export default function Screen() {
 									required
 									autoComplete="given-name"
 									className={safeErrors.fields.firstName ? "error" : ""}
-									aria-describedby={safeErrors.fields.firstName ? "firstNameError" : undefined}
+									aria-describedby={
+										safeErrors.fields.firstName ? "firstNameError" : undefined
+									}
 								/>
 							</label>
 							{safeErrors.fields.firstName && (
@@ -374,7 +360,7 @@ export default function Screen() {
 						<div className="dts-form-component">
 							<label aria-invalid={!!safeErrors.fields.lastName}>
 								<div className="dts-form-component__label">
-									<span ></span>Last Name
+									<span></span>Last Name
 								</div>
 								<input
 									type="text"
@@ -382,7 +368,9 @@ export default function Screen() {
 									defaultValue={fields.lastName}
 									autoComplete="family-name"
 									className={safeErrors.fields.lastName ? "error" : ""}
-									aria-describedby={safeErrors.fields.lastName ? "lastNameError" : undefined}
+									aria-describedby={
+										safeErrors.fields.lastName ? "lastNameError" : undefined
+									}
 								/>
 							</label>
 							{safeErrors.fields.lastName && (
@@ -409,7 +397,9 @@ export default function Screen() {
 									required
 									autoComplete="email"
 									className={safeErrors.fields.email ? "error" : ""}
-									aria-describedby={safeErrors.fields.email ? "emailError" : undefined}
+									aria-describedby={
+										safeErrors.fields.email ? "emailError" : undefined
+									}
 								/>
 							</label>
 							{safeErrors.fields.email && (
@@ -438,7 +428,11 @@ export default function Screen() {
 									required
 									autoComplete="organization"
 									className={safeErrors.fields.organization ? "error" : ""}
-									aria-describedby={safeErrors.fields.organization ? "organizationError" : undefined}
+									aria-describedby={
+										safeErrors.fields.organization
+											? "organizationError"
+											: undefined
+									}
 								/>
 							</label>
 							{safeErrors.fields.organization && (
@@ -456,7 +450,6 @@ export default function Screen() {
 					</div>
 
 					<div className="mg-grid mg-grid__col-3">
-						{/* Role Field */}
 						<div className="dts-form-component">
 							<label aria-invalid={!!safeErrors.fields.role}>
 								<div className="dts-form-component__label">
@@ -466,7 +459,9 @@ export default function Screen() {
 									name="role"
 									defaultValue={fields.role}
 									className={safeErrors.fields.role ? "error" : ""}
-									aria-describedby={safeErrors.fields.role ? "roleError" : undefined}
+									aria-describedby={
+										safeErrors.fields.role ? "roleError" : undefined
+									}
 								>
 									<option value="" disabled>
 										Select a role
@@ -491,7 +486,6 @@ export default function Screen() {
 							)}
 						</div>
 
-						{/* Generated System Identifier Field */}
 						<div className="dts-form-component">
 							<label>
 								<div className="dts-form-component__label">
@@ -515,13 +509,35 @@ export default function Screen() {
 								gap: "20px",
 							}}
 						>
-							<Link to="/settings/access-mgmnt/" className="mg-button mg-button-outline">
+							<Link
+								to="/settings/access-mgmnt/"
+								className="mg-button mg-button-outline"
+							>
 								Discard
 							</Link>
-							<SubmitButton className="mg-button mg-button-primary" label="Save Changes" />
+							<SubmitButton
+								className="mg-button mg-button-primary"
+								label="Save Changes"
+							/>
 						</div>
 					</div>
 				</Form>
+
+				<ConfirmDialog
+					dialogRef={dialogRef}
+					confirmLabel="Delete user"
+					cancelLabel="Do not delete"
+					confirmIcon={
+						<svg aria-hidden="true" focusable="false" role="img">
+							<use href="/assets/icons/trash-alt.svg#delete" />
+						</svg>
+					}
+					confirmButtonFirst={false}
+					confirmMessage="This data cannot be recovered after being deleted."
+          title="Are you sure you want to delete this user?"
+					onConfirm={handleConfirmDelete}
+					onCancel={handleCancelDelete}
+				/>
 			</>
 		</MainContainer>
 	);
