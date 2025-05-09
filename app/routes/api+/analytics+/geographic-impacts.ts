@@ -1,6 +1,13 @@
-import { json } from "@remix-run/node";
+/**
+ * @fileoverview API endpoint for retrieving geographic impact data for disaster analysis.
+ * This route provides impact data aggregated by geographic divisions.
+ * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
+ */
+
+import { LoaderFunction, LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { handleGeographicImpactQuery } from "~/backend.server/handlers/analytics/geographicImpact";
 import { z } from "zod";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
 
 // Input validation schema aligned with handler's GeographicImpactQuerySchema
 const GeographicImpactQuerySchema = z.object({
@@ -25,17 +32,40 @@ const GeographicImpactQuerySchema = z.object({
     confidenceLevel: z.enum(['low', 'medium', 'high']).optional()
 });
 
-export const loader = async ({ request }: { request: Request }) => {
+/**
+ * Loader function for the geographic-impacts API endpoint.
+ * @route GET /api/analytics/geographic-impacts
+ * @param {Object} request - The incoming request object
+ * @authentication Requires ViewData permission if APPROVED_RECORDS_ARE_PUBLIC is false
+ * @queryParams
+ *   - sectorId {string}. Numeric ID of the sector to analyze
+ *   - subSectorId {string}. Numeric ID of the sub-sector
+ *   - hazardTypeId {string} Optional. Filter by hazard type
+ *   - hazardClusterId {string} Optional. Filter by hazard cluster
+ *   - specificHazardId {string} Optional. Filter by specific hazard
+ *   - geographicLevelId {string} Optional. Filter by geographic level
+ *   - fromDate {string} Optional. Start date for the analysis period
+ *   - toDate {string} Optional. End date for the analysis period
+ *   - disasterEventId {string} Optional. Filter by specific disaster event
+ *   - assessmentType {string} Optional. 'rapid' or 'detailed'
+ *   - confidenceLevel {string} Optional. 'low', 'medium', or 'high'
+ * @returns {Promise<Response>} GeoJSON response with geographic impact data or error message
+ */
+export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
     try {
+        /**
+         * Parameter Extraction & Validation
+         * Extracts query parameters and validates them against the Zod schema
+         */
         const url = new URL(request.url);
         const params = Object.fromEntries(url.searchParams);
-
-        // Validate parameters against schema
         const validParams = GeographicImpactQuerySchema.parse(params);
-
         console.log("Processing request with params:", JSON.stringify(validParams, null, 2));
 
-        // Get GeoJSON data with validated parameters
+        /**
+         * Data Retrieval
+         * Calls the domain layer handler to fetch and process geographic impact data
+         */
         const result = await handleGeographicImpactQuery(validParams);
 
         if (!result.success) {
@@ -52,7 +82,10 @@ export const loader = async ({ request }: { request: Request }) => {
             });
         }
 
-        // Transform the result into GeoJSON format
+        /**
+         * Response Construction
+         * Transforms the result data into GeoJSON format and constructs the response
+         */
         const features = result.divisions.map(division => ({
             type: "Feature",
             geometry: division.geojson,
@@ -73,7 +106,6 @@ export const loader = async ({ request }: { request: Request }) => {
             }
         }));
 
-        // Return the GeoJSON with proper content type
         return Response.json({
             type: "FeatureCollection",
             features
@@ -85,6 +117,10 @@ export const loader = async ({ request }: { request: Request }) => {
         });
 
     } catch (error) {
+        /**
+         * Error Handling
+         * Handles validation and runtime errors, returning appropriate error responses
+         */
         console.error("Error in geographic-impacts loader:", error);
 
         let status = 400;
@@ -111,4 +147,4 @@ export const loader = async ({ request }: { request: Request }) => {
             }
         });
     }
-};
+});
