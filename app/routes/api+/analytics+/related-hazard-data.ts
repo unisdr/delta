@@ -1,5 +1,4 @@
 import { LoaderFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { getRelatedHazardDataHandler } from "~/backend.server/handlers/analytics/related-hazard-data";
 
 /**
@@ -17,9 +16,11 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 
   try {
-    // Fetch related hazard data using the handler
+    // Fetch related hazard data using the handler and wrap response with Response.json()
     const relatedData = await getRelatedHazardDataHandler(specificHazardId);
-    return (relatedData);
+    return new Response(JSON.stringify(relatedData), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (error) {
     console.error("Error fetching related hazard data:", error);
     return new Response("Failed to fetch related hazard data", { status: 500 });
