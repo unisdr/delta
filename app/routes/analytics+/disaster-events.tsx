@@ -278,7 +278,6 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     datamageGeoData: datamageGeoData,
     lossesGeoData: lossesGeoData,
     humanEffectsGeoData: humanEffectsGeoData,
-    totalAffectedPeople: totalAffectedPeople,
     totalAffectedPeople2: totalAffectedPeople2,
     sectorDamagePieChartData: sectorDamagePieChartData,
     sectorLossesPieChartData: sectorLossesPieChartData,
@@ -315,7 +314,6 @@ function DisasterEventsAnalysisContent() {
     datamageGeoData: any,
     lossesGeoData: any,
     humanEffectsGeoData: any,
-    totalAffectedPeople: any,
     totalAffectedPeople2: any,
     sectorDamagePieChartData: interfacePieChart[],
     sectorLossesPieChartData: interfacePieChart[],
@@ -603,7 +601,7 @@ function DisasterEventsAnalysisContent() {
                     <span>Total people affected</span>
                   </h3>
                   <div className="dts-indicator dts-indicator--target-box-f">
-                    <span>{ ld.totalAffectedPeople2.noDisaggregations.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+                    <span>{ (ld.totalAffectedPeople2.noDisaggregations.total - ld.totalAffectedPeople2.noDisaggregations.tables.deaths).toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
                   </div>
                 </div>
             </div>
