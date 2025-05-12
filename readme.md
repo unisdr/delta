@@ -18,7 +18,7 @@ The open-source license for this platform is currently under evaluation, with **
 
 The software incorporates several third-party components under permissive licenses (MIT, Apache 2.0, PostgreSQL, etc.).
 
-For more details, see [LICENSE](./_docs/LICENSE.md).
+For more details, see [LICENSE](./_docs/License/LICENSE.md).
 
 This instance is intended for country-level deployment by UNDRR and is available for use by government agencies and other authorized organizations.
 
