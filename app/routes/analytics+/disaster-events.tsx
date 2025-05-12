@@ -268,7 +268,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     }
   }
 
-  return ({
+  return {
     qsDisEventId: qsDisEventId,
     record: record,
     recordsRelatedSectors: recordsRelatedSectors,
@@ -285,7 +285,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     sectorRecoveryPieChartData: sectorRecoveryPieChartData,
     sectorBarChartData: sectorBarChartData,
     sectorParentArray: sectorParentArray,
-  });
+  };
 });
 
 // Meta function for page SEO

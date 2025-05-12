@@ -22,7 +22,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
         const results = await fetchData(config, searchQuery, page, limit);
         const totalRecords = await getTotalRecords(config, searchQuery);
 
-        return { data: results, totalRecords, page, limit };
+        return Response.json({ data: results, totalRecords, page, limit });
     } catch (error) {
         console.error("Error fetching data:", error);
         return Response.json({ error: "Error fetching data" }, { status: 500 });
