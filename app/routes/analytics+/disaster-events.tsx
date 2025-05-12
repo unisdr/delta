@@ -268,7 +268,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     }
   }
 
-  return ({
+  return Response.json({
     qsDisEventId: qsDisEventId,
     record: record,
     recordsRelatedSectors: recordsRelatedSectors,
