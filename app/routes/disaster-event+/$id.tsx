@@ -2,12 +2,16 @@ import { disasterEventById } from "~/backend.server/models/event";
 
 import { DisasterEventView } from "~/frontend/events/disastereventform";
 
-import { createViewLoaderPublicApprovedWithAuditLog } from "~/backend.server/handlers/form/form";
+import {
+	createViewLoaderPublicApproved,
+	createViewLoaderPublicApprovedWithAuditLog,
+} from "~/backend.server/handlers/form/form";
 
 import { ViewScreenPublicApproved } from "~/frontend/form";
 import { getTableName } from "drizzle-orm";
 import { disasterEventTable } from "~/drizzle/schema";
 import { LoaderFunctionArgs } from "@remix-run/node";
+import { optionalUser } from "~/util/auth";
 
 import { dr } from "~/db.server";
 import { sql } from "drizzle-orm";
@@ -15,7 +19,8 @@ import { sql } from "drizzle-orm";
 interface LoaderData {
 	item: any;
 	isPublic: boolean;
-	auditLogs: any[];
+	auditLogs?: any[];
+	user?: any;
 }
 
 export const loader = async ({
@@ -28,11 +33,17 @@ export const loader = async ({
 		throw new Response("ID is required", { status: 400 });
 	}
 
-	const loaderFunction = createViewLoaderPublicApprovedWithAuditLog({
-		getById: disasterEventById,
-		recordId: id,
-		tableName: getTableName(disasterEventTable),
-	});
+	// Check if user is logged in
+	const session = await optionalUser(request);
+	const loaderFunction = session ? 
+		createViewLoaderPublicApprovedWithAuditLog({
+			getById: disasterEventById,
+			recordId: id,
+			tableName: getTableName(disasterEventTable),
+		}) :
+		createViewLoaderPublicApproved({
+			getById: disasterEventById,
+		});
 
 	const result = await loaderFunction({ request, params, context });
 

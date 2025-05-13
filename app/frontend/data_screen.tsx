@@ -1,5 +1,5 @@
-import {Pagination} from "~/frontend/pagination/view";
-import {MainContainer} from "./container";
+import { Pagination } from "~/frontend/pagination/view";
+import { MainContainer } from "./container";
 
 interface DataScreenProps<T> {
 	plural: string;
@@ -35,44 +35,46 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 				{props.beforeListElement}
 				{props.paginationData.totalItems ? (
 					<>
-						<div className="dts-legend">
-							<span className="dts-body-label">Status legend</span>
-							<div className="dts-legend__item">
-								<span
-									className="dts-status dts-status--draft"
-									aria-labelledby="legend1"
-								></span>
-								<span id="legend1">Draft</span>
+						{!props.isPublic && (
+							<div className="dts-legend">
+								<span className="dts-body-label">Status legend</span>
+								<div className="dts-legend__item">
+									<span
+										className="dts-status dts-status--draft"
+										aria-labelledby="legend1"
+									></span>
+									<span id="legend1">Draft</span>
+								</div>
+								<div className="dts-legend__item">
+									<span
+										className="dts-status dts-status--completed-waiting-for-approval"
+										aria-labelledby="legend2"
+									></span>
+									<span id="legend2">Completed / Waiting for approval</span>
+								</div>
+								<div className="dts-legend__item">
+									<span
+										className="dts-status dts-status--approved"
+										aria-labelledby="legend3"
+									></span>
+									<span id="legend3">Approved</span>
+								</div>
+								<div className="dts-legend__item">
+									<span
+										className="dts-status dts-status--sent-for-review"
+										aria-labelledby="legend4"
+									></span>
+									<span id="legend4">Sent for review</span>
+								</div>
+								<div className="dts-legend__item">
+									<span
+										className="dts-status dts-status--published"
+										aria-labelledby="legend5"
+									></span>
+									<span id="legend5">Published</span>
+								</div>
 							</div>
-							<div className="dts-legend__item">
-								<span
-									className="dts-status dts-status--completed-waiting-for-approval"
-									aria-labelledby="legend2"
-								></span>
-								<span id="legend2">Completed / Waiting for approval</span>
-							</div>
-							<div className="dts-legend__item">
-								<span
-									className="dts-status dts-status--approved"
-									aria-labelledby="legend2"
-								></span>
-								<span id="legend2">Approved</span>
-							</div>
-							<div className="dts-legend__item">
-								<span
-									className="dts-status dts-status--sent-for-review"
-									aria-labelledby="legend2"
-								></span>
-								<span id="legend2">Sent for review</span>
-							</div>
-							<div className="dts-legend__item">
-								<span
-									className="dts-status dts-status--published"
-									aria-labelledby="legend2"
-								></span>
-								<span id="legend2">Published</span>
-							</div>
-						</div>
+						)}
 						<table className="dts-table">
 							<thead>
 								<tr>
@@ -109,7 +111,7 @@ interface DataMainLinksProps {
 	csvExportLinks?: boolean;
 	searchParams?: URLSearchParams;
 
-	extraButtons?: {relPath: string, label: string}[]
+	extraButtons?: { relPath: string, label: string }[]
 }
 
 export function DataMainLinks(props: DataMainLinksProps) {
@@ -120,7 +122,7 @@ export function DataMainLinks(props: DataMainLinksProps) {
 			className="dts-main-container mg-grid mg-grid__col-auto"
 			role="region"
 			aria-label="Main container"
-			style={{marginBottom: "2rem"}}
+			style={{ marginBottom: "2rem" }}
 		>
 			<div
 				className="mg-grid__col--span-all"

@@ -1,13 +1,13 @@
-import {useLoaderData, Link} from "@remix-run/react";
-import {disasterEventsLoader} from "~/backend.server/handlers/events/disasterevent";
+import { useLoaderData, Link } from "@remix-run/react";
+import { disasterEventsLoader } from "~/backend.server/handlers/events/disasterevent";
 
-import {DataScreen} from "~/frontend/data_screen";
-import {ActionLinks} from "~/frontend/form";
+import { DataScreen } from "~/frontend/data_screen";
+import { ActionLinks } from "~/frontend/form";
 
-import {route} from "~/frontend/events/disastereventform";
+import { route } from "~/frontend/events/disastereventform";
 
-import {hazardousEventLink} from "~/frontend/events/hazardeventform"
-import {Filters} from "../components/list-page-filters";
+import { hazardousEventLink } from "~/frontend/events/hazardeventform"
+import { Filters } from "../components/list-page-filters";
 
 
 interface ListViewProps {
@@ -19,15 +19,20 @@ interface ListViewProps {
 
 export function ListView(props: ListViewProps) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof disasterEventsLoader>>>()
-	const {filters} = ld
-	const {items, pagination} = ld.data;
+	const { filters } = ld
+	const { items, pagination } = ld.data;
 	return DataScreen({
 		hideMainLinks: props.hideMainLinks,
 		isPublic: ld.isPublic,
 		plural: props.titleOverride ?? "Disaster events",
 		resourceName: "Disaster event",
 		baseRoute: route,
-		columns: [
+		columns: ld.isPublic ? [
+			"ID",
+			"Hazardous Event",
+			"Start Date",
+			"End Date",
+		] : [
 			"ID",
 			"Status",
 			"Hazardous Event",
