@@ -62,6 +62,7 @@ export function DeleteButton(props: DeleteButtonProps) {
       <ConfirmDialog
         dialogRef={dialogRef}
         confirmMessage={props.confirmMessage || "Please confirm deletion."}
+        title="Record Deletion"
         onConfirm={confirmDelete}
         onCancel={() => dialogRef.current?.close()}
       />

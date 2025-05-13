@@ -265,3 +265,35 @@ export function configCountryInstanceISO(): string {
 
 	return returnValue;
 };
+
+
+/**
+ * Application email settings from environment variables.
+ * 
+ * @returns An object containing email configuration details.
+ */
+export function configApplicationEmail() {
+    return {
+        /** Sender's email address */
+        EMAIL_FROM: process.env.EMAIL_FROM || "",
+
+        /** Email transport method (e.g., SMTP, SendGrid, etc.) */
+        EMAIL_TRANSPORT: process.env.EMAIL_TRANSPORT || "",
+
+        /** SMTP server hostname */
+        SMTP_HOST: process.env.SMTP_HOST || "",
+
+        /** SMTP server port */
+        SMTP_PORT: process.env.SMTP_PORT || "",
+
+        /** Indicates if SMTP should use a secure connection */
+        SMTP_SECURE: process.env.SMTP_SECURE || "",
+    };
+}
+
+
+export function config2FAIssuer(): string {
+	let returnValue:string = process.env.TOTP_ISSUER || "";
+
+	return returnValue;
+};

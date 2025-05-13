@@ -10,20 +10,32 @@ import { getCurrency } from "~/util/currency";
 import { 
   configCurrencies, 
   configApplicationVersion,
-  configCountryInstanceISO
+  configCountryInstanceISO,
+  configApplicationEmail,
+  configFooterURLPrivPolicy,
+  configFooterURLTermsConds,
+  config2FAIssuer,
+  configApprovedRecordsArePublic,
 } from  "~/util/config";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { Input } from "~/frontend/form";
 
+
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
   const { user } = authLoaderGetAuth(loaderArgs);
   const timeZones: string[] = getSupportedTimeZone();
   const currency: string[] = configCurrencies();
   const systemLanguage: string[] = ["English"];
-  let ctryInstanceName:string = '';
+  const confEmailObj = configApplicationEmail();
+  const confPageFooterPrivPolicy = configFooterURLPrivPolicy();
+  const confPageFooterTermsConds = configFooterURLTermsConds();
+  const conf2FAIssuer = config2FAIssuer();
+  const confInstanceTypePublic = configApprovedRecordsArePublic();
+  
 
+  let ctryInstanceName:string = '';
 
   const confAppVersion = await configApplicationVersion().then(version => {
     return version;
@@ -56,6 +68,12 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
     appVersion: confAppVersion,
     systemLanguage: systemLanguage,
     ctryInstanceName: ctryInstanceName,
+    confEmailObj: confEmailObj,
+    confCtryInstanceISO: confCtryInstanceISO,
+    confPageFooterPrivPolicy: confPageFooterPrivPolicy,
+    confPageFooterTermsConds: confPageFooterTermsConds,
+    conf2FAIssuer: conf2FAIssuer,
+    confInstanceTypePublic: confInstanceTypePublic,
   };
 });
 
@@ -142,16 +160,68 @@ export default function Settings() {
         </div>
         <div className="flex">
           <ul>
+            <li>
+              <strong>Country instance:</strong> 
+              <ul>
+                {
+                  loaderData.ctryInstanceName !== '' && (<>
+                      <li>
+                        <strong>Country:</strong> { loaderData.ctryInstanceName }
+                      </li>
+                  </>)
+                }
+                <li>
+                  <strong>ISO 3:</strong> { loaderData.confCtryInstanceISO }
+                </li>
+                <li>
+                  <strong>Instance type:</strong> { loaderData.confInstanceTypePublic ? 'Public' : 'Private' }
+                </li>
+              </ul>
+            </li>
+            
+            <li>
+              <strong>DTS software application version:</strong> { loaderData.appVersion }
+            </li>
+            <li>
+              <strong>System email routing configuration:</strong> 
+              <ul>
+                <li>
+                  <strong>Transport:</strong> { loaderData.confEmailObj.EMAIL_TRANSPORT }
+                </li>
+                {
+                  loaderData.confEmailObj.EMAIL_TRANSPORT == 'smtp' && (<>
+                    <li>
+                      <strong>Host:</strong> { loaderData.confEmailObj.SMTP_HOST }
+                    </li>
+                    <li>
+                      <strong>Port:</strong> { loaderData.confEmailObj.SMTP_PORT }
+                    </li>
+                    <li>
+                      <strong>Secure:</strong> { loaderData.confEmailObj.SMTP_SECURE }
+                    </li>
+                  </>
+                  )
+                }
+              </ul>
+            </li>
             {
-              loaderData.ctryInstanceName !== '' && (<>
+              loaderData.confPageFooterPrivPolicy !== '' && (<>
                   <li>
-                    <strong>Country instance:</strong> { loaderData.ctryInstanceName }
+                    <strong>Page Footer for Privacy Policy URL:</strong> { loaderData.confPageFooterPrivPolicy }
+                  </li>
+              </>)
+            }
+            {
+              loaderData.confPageFooterTermsConds !== '' && (<>
+                  <li>
+                    <strong>Page Footer for Terms and Condition URL:</strong> { loaderData.confPageFooterTermsConds }
                   </li>
               </>)
             }
             <li>
-              <strong>Current version of the application:</strong> { loaderData.appVersion }
+              <strong>2FA/TOTP Issuer Name:</strong> { loaderData.conf2FAIssuer }
             </li>
+            
             {/* <li>
               <strong>Update available:</strong> 00.00.02:{" "}
               <Link to={""}>
