@@ -1,16 +1,17 @@
-// app/routes/api+/analytics+/hazard-types.ts
 import { LoaderFunction } from "@remix-run/node";
 import { getHazardTypes } from "~/backend.server/handlers/analytics/hazard-types";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
+
 
 /**
- * Loader to fetch hazard types via the handler.
+ * This route is public only if APPROVED_RECORDS_ARE_PUBLIC env variable is true.
+ * Otherwise, it requires authentication with the "ViewData" permission.
+ * @returns {Promise<Response>} JSON response with hazard types or error details
  */
-export const loader: LoaderFunction = async () => {
-  try {
-    // Fetch hazard types using the handler
-    const hazardTypes = await getHazardTypes();
 
-    // Return hazard types as a JSON response using Response.json()
+export const loader: LoaderFunction = authLoaderPublicOrWithPerm("ViewData", async () => {
+  try {
+    const hazardTypes = await getHazardTypes();
     return new Response(JSON.stringify({ hazardTypes }), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -18,4 +19,4 @@ export const loader: LoaderFunction = async () => {
     console.error("[HazardTypesLoader] Error:", error);
     return new Response("Failed to fetch hazard types.", { status: 500 });
   }
-};
+});
