@@ -33,12 +33,12 @@ backup.sh
 backups/
 # utils/
 data/
-scripts/
+# scripts/
 
 # Drizzle
 app/drizzle/meta/
 migrations/
-*.sql
+# *.sql
 # drizzle.config.js
 # *_schema_snapshot.json
 app/utils/sync-db.ts
