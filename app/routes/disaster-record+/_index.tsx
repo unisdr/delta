@@ -40,10 +40,15 @@ export default function Data() {
 		plural: "Disaster records",
 		resourceName: "Disaster record",
 		baseRoute: route,
-		columns: [
+		columns: ld.isPublic ? [
+			"ID",
+			"Disaster Event",
+			"Start Date",
+			"End Date",
+		] : [
 			"ID",
 			"Status",
-			"Disaster Event / Hazard",
+			"Disaster Event",
 			"Start Date",
 			"End Date",
 			"Actions",

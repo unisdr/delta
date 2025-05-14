@@ -130,59 +130,8 @@ export default function Settings() {
 	const pendingUsers = filteredItems.filter(
 		(item) => !item.emailVerified
 	).length;
-
-	// // Handle user deletion
-	// const handleDeleteUser = (userId: number) => {
-	// 	Swal.fire({
-	// 		title: "Are you sure you want to delete this user?",
-	// 		text: "This data cannot be recovered after being deleted.",
-	// 		icon: "warning",
-	// 		showCancelButton: true,
-	// 		confirmButtonColor: "#d33",
-	// 		cancelButtonColor: "#3085d6",
-	// 		confirmButtonText: '<i class="fas fa-trash"></i> Delete user',
-	// 		cancelButtonText: "Do not delete",
-	// 		showClass: { popup: "swal2-show" },
-	// 		hideClass: { popup: "swal2-hide" },
-	// 	}).then(async (result) => {
-	// 		if (result.isConfirmed) {
-	// 			try {
-	// 				const response = await fetch(
-	// 					`/settings/access-mgmnt/delete/${userId}`,
-	// 					{
-	// 						method: "GET",
-	// 					}
-	// 				);
-
-	// 				if (!response.ok) {
-	// 					throw new Error(
-	// 						`Failed to delete user. Status: ${response.status}`
-	// 					);
-	// 				}
-
-	// 				Swal.fire({
-	// 					title: "Deleted!",
-	// 					text: "The user has been deleted.",
-	// 					icon: "success",
-	// 				}).then(() => {
-	// 					window.location.href = "/settings/access-mgmnt/";
-	// 				});
-	// 			} catch (error) {
-	// 				console.error("Error deleting user:", error);
-	// 				Swal.fire(
-	// 					"Error",
-	// 					"Something went wrong while deleting the user.",
-	// 					"error"
-	// 				);
-	// 			}
-	// 		}
-	// 	});
-	// };
-
 	return (
-		// <section className="dts-page-section">
 		<MainContainer title="Access management" headerExtra={<NavSettings />}>
-			{/* <div className="dts-access-management mg-container"> */}
 			<div className="dts-page-intro">
 				<div className="dts-external-links">
 					<a
@@ -296,9 +245,7 @@ export default function Settings() {
 					</div>
 
 					<div className="dts-legend__item">
-						<span
-							aria-labelledby="legend8"
-						></span>
+						<span aria-labelledby="legend8"></span>
 						<span id="legend8">Account activation pending: {pendingUsers}</span>
 					</div>
 				</div>
@@ -315,10 +262,6 @@ export default function Settings() {
 								<th>Organisation</th>
 								<th>Role</th>
 								<th>Modified</th>
-								{/* <th>Email</th>
-									{/* <th>Email</th>
-									<th>Email Verified</th>
-									<th>Auth</th> */}
 								<th>Actions</th>
 							</tr>
 						</thead>
@@ -360,28 +303,8 @@ export default function Settings() {
 										</span>
 									</td>
 									<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
-									{/* <td>
-											<Link to={`/settings/access-mgmnt/edit/${item.id}`} className="link">
-												{item.email}
-											</Link>
-										</td> */}
-									{/* <td>{item.emailVerified.toString()}</td> */}
-									{/* <td>{item.authType}</td> */}
 									<td>
 										<div>
-											{/* 
-													<button
-														className="icon-button"
-														onClick={() => (window.location.href = `/settings/access-mgmnt/${item.id}`)}
-													>
-														<FaEye
-															style={{
-																fontSize: "1.25rem", // Adjust the size of the icon if needed
-																cursor: "pointer",
-															}}
-														/>
-													</button>
-												*/}
 											<button
 												className="mg-button mg-button-table"
 												onClick={() =>
@@ -396,24 +319,7 @@ export default function Settings() {
 												>
 													<use href="/assets/icons/edit.svg#edit"></use>
 												</svg>
-												{/* <FaUserEdit
-														style={{
-															fontSize: "1.25rem", // Adjust the size of the icon if needed
-															cursor: "pointer",
-														}}
-													/> */}
 											</button>
-											{/* <button
-													className="icon-button"
-													onClick={() => handleDeleteUser(item.id)}
-												>
-													<FaTrashAlt
-														style={{
-															fontSize: "1.25rem", // Adjust the size of the icon if needed
-															cursor: "pointer",
-														}}
-													/>
-												</button> */}
 										</div>
 									</td>
 								</tr>
@@ -422,10 +328,7 @@ export default function Settings() {
 					</table>
 				</div>
 			)}
-			{/* Pagination */}
 			{pagination}
-			{/* </div> */}
 		</MainContainer>
-		// </section>
 	);
 }
