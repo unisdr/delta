@@ -326,6 +326,19 @@ export async function hazardousEventBasicInfoById(id: any) {
 
 export async function hazardousEventDelete(id: string): Promise<DeleteResult> {
 	try {
+		// First check if there are any disaster events linked to this hazard event
+		const linkedDisasterEvents = await dr
+			.select()
+			.from(disasterEventTable)
+			.where(eq(disasterEventTable.hazardousEventId, String(id)));
+
+		if (linkedDisasterEvents.length > 0) {
+			return {
+				ok: false,
+				error: "Cannot delete hazard event because it is linked to one or more disaster events. Please delete the associated disaster events first."
+			};
+		}
+		
 		await dr.transaction(async (tx) => {
 			await tx
 				.delete(hazardousEventTable)
