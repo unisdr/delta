@@ -1,65 +1,48 @@
+import { disasterRecordLoader } from "~/backend.server/handlers/disaster_record";
 
-import {disasterRecordLoader} from "~/backend.server/handlers/disaster_record";
+import { DataScreen } from "~/frontend/data_screen";
+import { ActionLinks } from "~/frontend/form";
 
-import {DataScreen} from "~/frontend/data_screen";
-import {ActionLinks} from "~/frontend/form";
+import { useLoaderData, MetaFunction, Link } from "@remix-run/react";
 
-import {
-	useLoaderData,
-	MetaFunction,
-	Link,
-} from "@remix-run/react";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
 
-import {
-	authLoaderPublicOrWithPerm,
-} from "~/util/auth";
+import { route } from "~/frontend/disaster-record/form";
+import { Filters } from "~/frontend/components/list-page-filters";
+import { disasterEventLink } from "~/frontend/events/disastereventform";
 
-import {route} from "~/frontend/disaster-record/form";
-import {Filters} from "~/frontend/components/list-page-filters";
-
-
-
-
-export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-	return disasterRecordLoader({loaderArgs})
-})
+export const loader = authLoaderPublicOrWithPerm(
+	"ViewData",
+	async (loaderArgs) => {
+		return disasterRecordLoader({ loaderArgs });
+	}
+);
 
 export const meta: MetaFunction = () => {
 	return [
-		{title: "Disaster Records - DTS"},
-		{name: "description", content: "Disaster Records Repository."},
+		{ title: "Disaster Records - DTS" },
+		{ name: "description", content: "Disaster Records Repository." },
 	];
 };
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
-	const {filters} = ld;
-	const {items, pagination} = ld.data;
+	const { filters } = ld;
+	const { items, pagination } = ld.data;
 	return DataScreen({
 		isPublic: ld.isPublic,
 		plural: "Disaster records",
 		resourceName: "Disaster record",
 		baseRoute: route,
-		columns: ld.isPublic ? [
-			"ID",
-			"Disaster Event",
-			"Start Date",
-			"End Date",
-		] : [
-			"ID",
-			"Status",
-			"Disaster Event",
-			"Start Date",
-			"End Date",
-			"Actions",
-		],
+		columns: ld.isPublic
+			? ["ID", "Disaster Event", "Start Date", "End Date"]
+			: ["ID", "Status", "Disaster Event", "Start Date", "End Date", "Actions"],
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
-		beforeListElement: <Filters
-			clearFiltersUrl={route}
-			search={filters.search}
-		/>,
+		beforeListElement: (
+			<Filters clearFiltersUrl={route} search={filters.search} />
+		),
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>
@@ -72,7 +55,10 @@ export default function Data() {
 						></span>
 					</td>
 				)}
-				<td>{item.disasterEventId}</td>
+				<td>
+					{item.disasterEventId &&
+						disasterEventLink({ id: item.disasterEventId })}
+				</td>
 				<td>{item.startDate}</td>
 				<td>{item.endDate}</td>
 				<td>
@@ -82,4 +68,3 @@ export default function Data() {
 		),
 	});
 }
-
