@@ -51,7 +51,7 @@ import {notifyError, notifyInfo} from "./frontend/utils/notifications";
 
 
 export const links: LinksFunction = () => [
-	{rel: "stylesheet", href: '/assets/css/style-dts.css?asof=20250414'},
+	{rel: "stylesheet", href: '/assets/css/style-dts.css?asof=20250513'},
 	{rel: "stylesheet", href: allStylesHref},
 ];
 
