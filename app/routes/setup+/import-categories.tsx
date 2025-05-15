@@ -70,7 +70,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
   let fileString:string = '';
   
   if (importType === 'all' || importType === 'sectors') {
-    filePath = filePath + '/app/hips/sectors2.csv'; // Replace with your file path
+    filePath = filePath + '/dts_imports/sectors2.csv'; // Replace with your file path
     try {
       fileString = await fs.readFile(filePath, 'utf8');
     } catch (error) {
@@ -137,7 +137,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
   if (importType === 'all' || importType === 'categories') {
     filePath = currentDirectory();
-    filePath = filePath + '/app/hips/categories.csv'; // Replace with your file path
+    filePath = filePath + '/dts_imports/categories.csv'; // Replace with your file path
     
     try {
       fileString = await fs.readFile(filePath, 'utf8');
@@ -192,7 +192,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
   }
 
   if (importType === 'all' || importType === 'assets') {
-    filePath = filePath + '/app/hips/assets.csv'; // Replace with your file path
+    filePath = filePath + '/dts_imports/assets.csv'; // Replace with your file path
     try {
       fileString = await fs.readFile(filePath, 'utf8');
     } catch (error) {

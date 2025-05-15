@@ -38,7 +38,7 @@ function addAssetData(key: string, name: string, sectors: number[]) {
  */
 export async function processAssetCsv(): Promise<void> {
     const currentDirectory = process.cwd(); // Get the current working directory
-    const filePath = `${currentDirectory}/app/hips/assets.csv`; // Define the file path
+    const filePath = `${currentDirectory}/dts_imports/assets.csv`; // Define the file path
     let fileString: string = '';
 
     try {

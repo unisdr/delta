@@ -14,7 +14,7 @@ import {parseCSV} from "~/util/csv";
  */
 export async function processSectorCsv(): Promise<void> {
     const currentDirectory = process.cwd(); // Get the current working directory
-    const filePath = `${currentDirectory}/app/hips/sectors2.csv`; // Define the file path
+    const filePath = `${currentDirectory}/dts_imports/sectors2.csv`; // Define the file path
     let fileString: string = '';
 
     try {

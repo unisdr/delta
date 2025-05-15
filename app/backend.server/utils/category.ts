@@ -13,7 +13,7 @@ import {parseCSV} from "~/util/csv"
  */
 export async function processCategoryCsv(): Promise<void> {
     const currentDirectory = process.cwd(); // Get the current working directory
-    const filePath = `${currentDirectory}/app/hips/categories.csv`; // Define the file path
+    const filePath = `${currentDirectory}/dts_imports/categories.csv`; // Define the file path
 
     let fileString: string = '';
 

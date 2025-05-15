@@ -2,7 +2,7 @@ import {vitePlugin as remix} from "@remix-run/dev";
 import {defineConfig} from "vite";
 import path from "path";
 import {flatRoutes} from "remix-flat-routes";
-import { viteStaticCopy } from "vite-plugin-static-copy";
+// import { viteStaticCopy } from "vite-plugin-static-copy";
 
 declare module "@remix-run/server-runtime" {
 	interface Future {
@@ -21,14 +21,14 @@ export default defineConfig({
 				v3_singleFetch: true,
 			},
 		}),
-		viteStaticCopy({
-			targets: [
-				{
-					src: "app/hips/*.csv", // Source: All CSV files in app/hip
-					dest: "../app/hips", // Destination: Will be in 'build/app/hip'
-				},
-			],
-		}),
+		// viteStaticCopy({
+		// 	targets: [
+		// 		{
+		// 			src: "app/hips/*.csv", // Source: All CSV files in app/hip
+		// 			dest: "../app/hips", // Destination: Will be in 'build/app/hip'
+		// 		},
+		// 	],
+		// }),
 	],
 	resolve: {
 		alias: {
