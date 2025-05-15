@@ -6,7 +6,7 @@ import { multiPolygon } from "@turf/helpers";
 import { booleanWithin } from "@turf/boolean-within";
 import { booleanClockwise } from "@turf/boolean-clockwise";
 import { booleanOverlap } from "@turf/boolean-overlap";
-import { Feature, Point, LineString, Polygon, MultiPolygon, Geometry, Position } from "geojson";
+import { Feature, Point, LineString, Polygon, MultiPolygon, Geometry, Position, FeatureCollection } from "geojson";
 
 export function convertTurfPolygon(
     polygonGeoJSON: Feature<Polygon | MultiPolygon>
@@ -155,94 +155,211 @@ export function convertMarkersToTurfPolygon(
     return polygon([polyCoords]);
 }
 
+export function validateCoordinateRanges(geoJson: any): { valid: boolean; error?: string } {
+  if (!geoJson) {
+    return { valid: false, error: 'No GeoJSON data provided' };
+  }
+
+  // Ensure we have a valid GeoJSON type
+  if (!geoJson.type || !['Feature', 'FeatureCollection', 'Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'].includes(geoJson.type)) {
+    return { valid: false, error: `Invalid GeoJSON type: ${geoJson.type}` };
+  }
+
+  // Validate coordinate ranges
+  if (geoJson.type === 'Feature' || geoJson.type === 'FeatureCollection') {
+    if (geoJson.geometry) {
+      return validateCoordinateRanges(geoJson.geometry);
+    } else {
+      return { valid: false, error: 'No geometry in GeoJSON feature' };
+    }
+  }
+
+  if (geoJson.type === 'Point' || geoJson.type === 'MultiPoint') {
+    if (!Array.isArray(geoJson.coordinates) || geoJson.coordinates.length < 2) {
+      return { valid: false, error: 'Invalid point coordinates' };
+    }
+    for (const coord of geoJson.coordinates) {
+      if (coord[0] < -180 || coord[0] > 180 || coord[1] < -90 || coord[1] > 90) {
+        return { valid: false, error: 'Coordinate out of range' };
+      }
+    }
+  }
+
+  if (geoJson.type === 'LineString' || geoJson.type === 'MultiLineString') {
+    if (!Array.isArray(geoJson.coordinates) || geoJson.coordinates.length < 2) {
+      return { valid: false, error: 'Invalid line string coordinates' };
+    }
+    for (const coord of geoJson.coordinates) {
+      if (coord[0] < -180 || coord[0] > 180 || coord[1] < -90 || coord[1] > 90) {
+        return { valid: false, error: 'Coordinate out of range' };
+      }
+    }
+  }
+
+  if (geoJson.type === 'Polygon' || geoJson.type === 'MultiPolygon') {
+    if (!Array.isArray(geoJson.coordinates) || geoJson.coordinates.length < 3) {
+      return { valid: false, error: 'Invalid polygon coordinates' };
+    }
+    for (const ring of geoJson.coordinates) {
+      if (ring.length < 4) {
+        return { valid: false, error: 'Invalid polygon ring' };
+      }
+      for (const coord of ring) {
+        if (coord[0] < -180 || coord[0] > 180 || coord[1] < -90 || coord[1] > 90) {
+          return { valid: false, error: 'Coordinate out of range' };
+        }
+      }
+    }
+  }
+
+  return { valid: true };
+}
+
 export function checkShapeAgainstDivisions(
     divisions: { id: string; name: string; geojson: any }[],
-    shapeGeoJSON: Feature<Geometry>
+    shapeGeoJSON: Feature<Point | LineString | Polygon | MultiPolygon>
 ) {
     if (divisions.length === 0) {
         return ""; // Return empty string if no divisions are provided
     }
 
-    console.log('shapeGeoJSON.geometry.type:', shapeGeoJSON.geometry.type);
-
-    // Step 1: Collect all division polygons
-    const divisionPolygons: Feature<Geometry>[] = [];
-
-    for (const division of divisions) {
-        const divisionGeoJSON = division.geojson;
-        const divisionPolygon: Feature<Geometry> =
-            divisionGeoJSON.type === "MultiPolygon"
-                ? polygon(divisionGeoJSON.coordinates)
-                : polygon(divisionGeoJSON.coordinates);
-
-        divisionPolygons.push(divisionPolygon);
+    // Early validation for invalid shapes
+    if (!shapeGeoJSON || !shapeGeoJSON.geometry) {
+        console.warn("Invalid shape provided");
+        return "⚠️ Invalid shape data";
     }
 
-    // Step 2: Merge all division polygons
-    let mergedDivisionPolygon: Feature<Geometry> | null = null;
+    // Step 1: Collect all division polygons with proper error handling
+    const divisionPolygons: Feature<Polygon | MultiPolygon>[] = [];
 
-    if (divisionPolygons.length === 1) {
-        mergedDivisionPolygon = divisionPolygons[0]; //If only one division, use it directly
-    } else if (divisionPolygons.length > 1) {
-        //Merge all polygons into one
-        const combined = combine({ type: 'FeatureCollection', features: divisionPolygons as any[] });
-        mergedDivisionPolygon = combined.features.length === 1 ? combined.features[0] : null;
+    try {
+        for (const division of divisions) {
+            if (!division.geojson || !division.geojson.coordinates) {
+                console.warn(`Invalid division data for ${division.name}`);
+                continue;
+            }
+
+            const divisionGeoJSON = division.geojson;
+            let divisionPolygon: Feature<Polygon | MultiPolygon>;
+
+            try {
+                divisionPolygon = divisionGeoJSON.type === "MultiPolygon"
+                    ? multiPolygon(divisionGeoJSON.coordinates)
+                    : polygon(divisionGeoJSON.coordinates);
+                divisionPolygons.push(divisionPolygon);
+            } catch (e) {
+                console.warn(`Error creating polygon for division ${division.name}:`, e);
+            }
+        }
+    } catch (e) {
+        console.error("Error processing divisions:", e);
+        return "⚠️ Error processing division boundaries";
     }
 
-    // Step 3: Debugging merged polygon
-    //console.log("Merged Division Polygon:", JSON.stringify(mergedDivisionPolygon, null, 2));
+    if (divisionPolygons.length === 0) {
+        return "⚠️ No valid division boundaries found";
+    }
+
+    // Step 2: Merge all division polygons with proper error handling
+    let mergedDivisionPolygon: Feature<Polygon | MultiPolygon> | null = null;
+
+    try {
+        if (divisionPolygons.length === 1) {
+            mergedDivisionPolygon = divisionPolygons[0];
+        } else {
+            const collection = featureCollection(divisionPolygons);
+            const combined = combine(collection);
+            mergedDivisionPolygon = combined.features.length === 1 ? combined.features[0] as Feature<Polygon | MultiPolygon> : null;
+        }
+    } catch (e) {
+        console.error("Error merging division polygons:", e);
+        return "⚠️ Error processing division boundaries";
+    }
 
     if (!mergedDivisionPolygon) {
         console.warn("⚠️ No valid divisions to check against!");
-        return ""; // Return empty if no valid divisions exist
+        return "";
     }
 
-    // Move Point Type Check Here (After `mergedDivisionPolygon` is Set)
-    if (shapeGeoJSON.geometry.type === "Point") {
-        if (booleanPointInPolygon(shapeGeoJSON as any, mergedDivisionPolygon as any)) {
-            console.log("The point is inside a division.");
-            return ""; // Do nothing if the point is inside
-        }
-        return "⚠️ The point is completely outside of all divisions!";
-    }
-
-    if (shapeGeoJSON.geometry.type === "LineString") {
-        const lineCoordinates = shapeGeoJSON.geometry.coordinates;
-        let lineSomePartOutside = false;
-        let lineCompletelyOutside = true;
-    
-        for (const [lng, lat] of lineCoordinates) {
-            const linePoint = point([lng, lat]); // Convert each coordinate to a Point
-    
-            if (booleanPointInPolygon(linePoint, mergedDivisionPolygon as any)) {
-                lineCompletelyOutside = false; //At least one point is inside
-            } else {
-                lineSomePartOutside = true; //Found a point outside
+    try {
+        // Handle Point shapes
+        if (shapeGeoJSON.geometry.type === "Point") {
+            try {
+                if (booleanPointInPolygon(shapeGeoJSON as Feature<Point>, mergedDivisionPolygon)) {
+                    return "";
+                }
+                return "⚠️ The point is outside of all divisions";
+            } catch (e) {
+                console.warn("Error checking point in polygon:", e);
+                return "";
             }
         }
-    
-        if (lineCompletelyOutside) {
-            return "⚠️ The entire line is outside of all divisions!";
-        } else if (lineSomePartOutside) {
-            return "⚠️ Some parts of the line extend outside the main divisions.";
+
+        // Handle LineString shapes
+        if (shapeGeoJSON.geometry.type === "LineString") {
+            try {
+                const lineCoordinates = shapeGeoJSON.geometry.coordinates;
+                if (!Array.isArray(lineCoordinates) || lineCoordinates.length < 2) {
+                    return "⚠️ Invalid line coordinates";
+                }
+
+                let pointsInside = 0;
+                for (const coord of lineCoordinates) {
+                    const testPoint = point(coord);
+                    if (booleanPointInPolygon(testPoint, mergedDivisionPolygon)) {
+                        pointsInside++;
+                    }
+                }
+
+                if (pointsInside === 0) {
+                    return "⚠️ The line is completely outside of divisions";
+                } else if (pointsInside < lineCoordinates.length) {
+                    return "⚠️ Parts of the line extend outside divisions";
+                }
+                return "";
+            } catch (e) {
+                console.warn("Error checking line coordinates:", e);
+                return "";
+            }
         }
-    
-        return ""; //Fully inside, no warning needed
-    }    
 
-    //Step 4: First check if the shape is fully inside
-    if (booleanWithin(shapeGeoJSON, mergedDivisionPolygon)) {
-        console.log("The shape is fully inside the divisions.");
-        return ""; // Do not return a warning message if fully inside
+        // Handle Polygon shapes
+        if (shapeGeoJSON.geometry.type === "Polygon") {
+            try {
+                const coords = shapeGeoJSON.geometry.coordinates[0];
+                if (!Array.isArray(coords) || coords.length < 4) {
+                    return "⚠️ Invalid polygon: requires at least 3 points plus closing point";
+                }
+
+                if (booleanWithin(shapeGeoJSON as Feature<Polygon>, mergedDivisionPolygon)) {
+                    return "";
+                }
+
+                // Check if any point of the polygon is inside the divisions
+                let hasPointInside = false;
+                for (const coord of coords) {
+                    const testPoint = point(coord);
+                    if (booleanPointInPolygon(testPoint, mergedDivisionPolygon)) {
+                        hasPointInside = true;
+                        break;
+                    }
+                }
+
+                if (!hasPointInside) {
+                    return "⚠️ The polygon is completely outside of divisions";
+                }
+                return "⚠️ Parts of the polygon extend outside divisions";
+            } catch (e) {
+                console.warn("Error checking polygon:", e);
+                return "";
+            }
+        }
+
+        return ""; // Return empty string for unsupported shape types
+    } catch (e) {
+        console.error("Error in shape validation:", e);
+        return "⚠️ Error validating shape";
     }
-
-    //Step 5: If NOT fully inside, check for partial overlaps
-    if (booleanOverlap(shapeGeoJSON, mergedDivisionPolygon)) {
-        return "⚠️ Some parts of the shape extend outside the main divisions.";
-    }
-
-    //Step 6: If neither condition is met, the shape is completely outside
-    return "⚠️ The drawn shape is completely outside of all divisions!";
 }
 
 export function rewindGeoJSON(feature: any): any {
