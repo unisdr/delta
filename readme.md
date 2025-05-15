@@ -38,7 +38,7 @@ Licensed under MIT License
 * [All Sectors Taxonomy and Assets] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7BD2395365-1B2D-4E11-BAE8-F40D0C6C8838%7D&file=All%20sectors_%20Taxonomies.xlsx&action=default&mobileredirect=true
 * [Excel master file to manage sectors] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/Shared%20Documents/Technology%20Track/Data%20Model/Entities%20DTS%20Database.xlsx?d=w544fc777f3994d2ea18389925503cbd7&csf=1&web=1&e=nE3pWa
 * [Excel master file to manage assets] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/Shared%20Documents/Technology%20Track/Data%20Model/assets.xlsx?d=w9655344ddd85470fb2e2a0e945f8aa31&csf=1&web=1&e=dx2QpX
-
+* [Decision logs - at the moment] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7B0F193113-B9F3-4931-996E-256CAC55E730%7D&file=4-DLDTS-MVP-Future-Feature-List-%20Copy-15-08-2024.xlsx&wdOrigin=TEAMS-MAGLEV.p2p_ns.rwc&action=default&mobileredirect=true
 ## Running locally
 
 ### Manual
