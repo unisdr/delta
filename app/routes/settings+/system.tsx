@@ -7,8 +7,8 @@ import { authLoaderGetAuth, authLoaderWithPerm } from "~/util/auth";
 import { getSupportedTimeZone } from "~/util/timezone";
 
 import { getCurrency } from "~/util/currency";
-import { 
-  configCurrencies, 
+import {
+  configCurrencies,
   configApplicationVersion,
   configCountryInstanceISO,
   configApplicationEmail,
@@ -16,7 +16,7 @@ import {
   configFooterURLTermsConds,
   config2FAIssuer,
   configApprovedRecordsArePublic,
-} from  "~/util/config";
+} from "~/util/config";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
@@ -33,9 +33,9 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
   const confPageFooterTermsConds = configFooterURLTermsConds();
   const conf2FAIssuer = config2FAIssuer();
   const confInstanceTypePublic = configApprovedRecordsArePublic();
-  
 
-  let ctryInstanceName:string = '';
+
+  let ctryInstanceName: string = '';
 
   const confAppVersion = await configApplicationVersion().then(version => {
     return version;
@@ -49,16 +49,16 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
   if (confCtryInstanceISO !== '') {
     const url = "https://data.undrr.org/api/json/gis/countries/1.0.0/?cca3=" + confCtryInstanceISO.toUpperCase();
     const resp = await fetch(url);
-    let res:any = {};
+    let res: any = {};
     try {
       res = await resp.json();
       ctryInstanceName = res.data[0].name;
     } catch (error) {
       console.error('Error:', error);
     }
-    
+
   }
-  
+
 
 
   return {
@@ -95,8 +95,8 @@ export default function Settings() {
 
   return (
     <MainContainer title="System settings" headerExtra={<NavSettings />}>
-      <>
-        <div className="flex">
+      <div className="mg-section">
+        <div className="mg-grid mg-grid__col-3 dts-form-component">
           {/* <label style={{ margin: "0px 20px" }}>
             <strong>Time zone</strong> &nbsp;
             <select
@@ -117,15 +117,12 @@ export default function Settings() {
               ))}
             </select>
           </label> */}
-          <label style={{ margin: "0px 20px" }}>
+          <label className="dts-form-component__label">
             <strong>System language</strong> &nbsp;
             <select
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "14px",
-              }}
+              id="system-language"
+              name="systemLanguage"
+              className="dts-form-component__select"
             >
               <option disabled value="">
                 Select from list
@@ -137,15 +134,12 @@ export default function Settings() {
               ))}
             </select>
           </label>
-          <label>
+          <label className="dts-form-component__label">
             <strong>Currency</strong> &nbsp;
             <select
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "14px",
-              }}
+              id="currency"
+              name="currency"
+              className="dts-form-component__select"
             >
               <option disabled value="">
                 Select from list
@@ -158,71 +152,71 @@ export default function Settings() {
             </select>
           </label>
         </div>
-        <div className="flex">
-          <ul>
-            <li>
-              <strong>Country instance:</strong> 
-              <ul>
-                {
-                  loaderData.ctryInstanceName !== '' && (<>
-                      <li>
-                        <strong>Country:</strong> { loaderData.ctryInstanceName }
-                      </li>
-                  </>)
-                }
-                <li>
-                  <strong>ISO 3:</strong> { loaderData.confCtryInstanceISO }
-                </li>
-                <li>
-                  <strong>Instance type:</strong> { loaderData.confInstanceTypePublic ? 'Public' : 'Private' }
-                </li>
-              </ul>
-            </li>
-            
-            <li>
-              <strong>DTS software application version:</strong> { loaderData.appVersion }
-            </li>
-            <li>
-              <strong>System email routing configuration:</strong> 
-              <ul>
-                <li>
-                  <strong>Transport:</strong> { loaderData.confEmailObj.EMAIL_TRANSPORT }
-                </li>
-                {
-                  loaderData.confEmailObj.EMAIL_TRANSPORT == 'smtp' && (<>
-                    <li>
-                      <strong>Host:</strong> { loaderData.confEmailObj.SMTP_HOST }
-                    </li>
-                    <li>
-                      <strong>Port:</strong> { loaderData.confEmailObj.SMTP_PORT }
-                    </li>
-                    <li>
-                      <strong>Secure:</strong> { loaderData.confEmailObj.SMTP_SECURE }
-                    </li>
-                  </>
-                  )
-                }
-              </ul>
-            </li>
-            {
-              loaderData.confPageFooterPrivPolicy !== '' && (<>
+
+        <ul style={{ paddingLeft: 20 }}>
+          <li>
+            <strong>Country instance:</strong>
+            <ul>
+              {
+                loaderData.ctryInstanceName !== '' && (<>
                   <li>
-                    <strong>Page Footer for Privacy Policy URL:</strong> { loaderData.confPageFooterPrivPolicy }
+                    <strong>Country:</strong> {loaderData.ctryInstanceName}
                   </li>
-              </>)
-            }
-            {
-              loaderData.confPageFooterTermsConds !== '' && (<>
+                </>)
+              }
+              <li>
+                <strong>ISO 3:</strong> {loaderData.confCtryInstanceISO}
+              </li>
+              <li>
+                <strong>Instance type:</strong> {loaderData.confInstanceTypePublic ? 'Public' : 'Private'}
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <strong>DTS software application version:</strong> {loaderData.appVersion}
+          </li>
+          <li>
+            <strong>System email routing configuration:</strong>
+            <ul>
+              <li>
+                <strong>Transport:</strong> {loaderData.confEmailObj.EMAIL_TRANSPORT}
+              </li>
+              {
+                loaderData.confEmailObj.EMAIL_TRANSPORT == 'smtp' && (<>
                   <li>
-                    <strong>Page Footer for Terms and Condition URL:</strong> { loaderData.confPageFooterTermsConds }
+                    <strong>Host:</strong> {loaderData.confEmailObj.SMTP_HOST}
                   </li>
-              </>)
-            }
-            <li>
-              <strong>2FA/TOTP Issuer Name:</strong> { loaderData.conf2FAIssuer }
-            </li>
-            
-            {/* <li>
+                  <li>
+                    <strong>Port:</strong> {loaderData.confEmailObj.SMTP_PORT}
+                  </li>
+                  <li>
+                    <strong>Secure:</strong> {loaderData.confEmailObj.SMTP_SECURE}
+                  </li>
+                </>
+                )
+              }
+            </ul>
+          </li>
+          {
+            loaderData.confPageFooterPrivPolicy !== '' && (<>
+              <li>
+                <strong>Page Footer for Privacy Policy URL:</strong> {loaderData.confPageFooterPrivPolicy}
+              </li>
+            </>)
+          }
+          {
+            loaderData.confPageFooterTermsConds !== '' && (<>
+              <li>
+                <strong>Page Footer for Terms and Condition URL:</strong> {loaderData.confPageFooterTermsConds}
+              </li>
+            </>)
+          }
+          <li>
+            <strong>2FA/TOTP Issuer Name:</strong> {loaderData.conf2FAIssuer}
+          </li>
+
+          {/* <li>
               <strong>Update available:</strong> 00.00.02:{" "}
               <Link to={""}>
                 <u>See release notes</u>{" "}
@@ -233,13 +227,14 @@ export default function Settings() {
                 />
               </Link>
             </li> */}
-            <li>
-              <strong>System up to date</strong>
-            </li>
-          </ul>
-          {/* <div className="box" style={box2colStyle}></div> */}
-        </div>
-      </>
+          <li>
+            <strong>System up to date</strong>
+          </li>
+        </ul>
+        {/* <div className="box" style={box2colStyle}></div> */}
+
+      </div>
+
     </MainContainer>
   );
 }
