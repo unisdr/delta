@@ -261,9 +261,9 @@ export default function Screen() {
 								</div>
 							</header>
 						)}
-						<main className="dts-main-container">
+						{/* <div className="dts-main-container"> */}
 							<Outlet />
-						</main>
+						{/* </div> */}
 						<footer>
 							{ boolShowHeaderFooter && (
 								<Footer

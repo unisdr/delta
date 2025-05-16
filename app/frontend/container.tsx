@@ -9,7 +9,7 @@ interface MainContainerProps {
 
 export function MainContainer(props: MainContainerProps) {
 	return (
-		<>
+		<div className="dts-main-container">
 			<div className="dts-page-header">
 				<header className="dts-page-title">
 					<div className="mg-container">
@@ -19,13 +19,10 @@ export function MainContainer(props: MainContainerProps) {
 				{props.headerExtra}
 			</div>
 			{props.headerAfter}
-			{/* <section> */}
 				<div className="mg-container">
-					{/* <div>{props.children}</div> */}
 					{props.children}
 				</div>
-			{/* </section> */}
-		</>
+		</div>
 	);
 }
 
