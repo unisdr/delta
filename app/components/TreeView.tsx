@@ -826,6 +826,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 						</a>
 						{search && (
 							<input
+							    id="search-input"
+								name="search"
 								type="text"
 								placeholder="Search..."
 								value={searchTerm}
