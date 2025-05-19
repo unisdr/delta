@@ -661,6 +661,24 @@ nav ul {
   background: rgba(0, 0, 0, 0.5);
 }
 
+.dts-additional-actions {
+  display: -ms-grid;
+  display: grid;
+  gap: 2.4rem;
+  margin: 1.6rem 0;
+  /* medium design - 768px up */
+}
+@media (width >= 768px) {
+  .dts-additional-actions {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: end;
+        -ms-flex-pack: end;
+            justify-content: flex-end;
+  }
+}
+
 .dts-alert {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -1165,12 +1183,6 @@ header .mg-container {
 
 .dts-element-summary {
   margin: 3.2rem 0;
-  /* large design - 1164px up */
-}
-@media (width >= 1164px) {
-  .dts-element-summary {
-    padding: 0 6.4rem 0 3.2rem;
-  }
 }
 .dts-element-summary__title {
   display: -ms-grid;
@@ -1229,24 +1241,6 @@ header .mg-container {
   display: -ms-flexbox;
   display: flex;
   gap: 1.6rem;
-}
-
-.dts-external-links {
-  display: -ms-grid;
-  display: grid;
-  gap: 2.4rem;
-  margin: 1.6rem 0;
-  /* medium design - 768px up */
-}
-@media (width >= 768px) {
-  .dts-external-links {
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-pack: end;
-        -ms-flex-pack: end;
-            justify-content: flex-end;
-  }
 }
 
 .mg-undrr-footer {
@@ -2976,26 +2970,48 @@ header .mg-container {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: right;
-      -ms-flex-pack: right;
-          justify-content: right;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
   gap: 0.8rem;
-  margin: 1.2rem 0;
+  margin: 1.2rem 0 0;
+  /* medium design - 768px up */
+}
+@media (width >= 768px) {
+  .dts-pagination {
+    -webkit-box-pack: right;
+        -ms-flex-pack: right;
+            justify-content: right;
+  }
 }
 .dts-pagination ul {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: right;
-      -ms-flex-pack: right;
-          justify-content: right;
+  -webkit-box-pack: start;
+      -ms-flex-pack: start;
+          justify-content: start;
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
-  margin-bottom: 1.6rem;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  /* medium design - 768px up */
+}
+@media (width >= 768px) {
+  .dts-pagination ul {
+    -webkit-box-pack: end;
+        -ms-flex-pack: end;
+            justify-content: end;
+  }
+}
+.dts-pagination .dts-form-component {
+  -ms-flex-negative: 0;
+      flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 .dts-placeholder {
