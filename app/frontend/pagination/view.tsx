@@ -13,7 +13,7 @@ interface PaginationProps {
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
 
 export function Pagination(props: PaginationProps) {
-	const {
+	let {
 		itemsOnThisPage,
 		totalItems,
 		page,
@@ -21,6 +21,11 @@ export function Pagination(props: PaginationProps) {
 		extraParams,
 		onPageSizeChange,
 	} = props;
+	const isPageSizeValid = PAGE_SIZE_OPTIONS.includes(pageSize);
+
+	if (!isPageSizeValid) {
+		pageSize = 50;
+	}
 
 	const navigate = useNavigate();
 	const totalPages = Math.ceil(totalItems / pageSize);
