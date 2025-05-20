@@ -4,7 +4,7 @@ import {
 	timestamp,
 	bigint,
 	bigserial,
-	serial, 
+	serial,
 	check,
 	unique,
 	boolean,
@@ -13,11 +13,12 @@ import {
 	index,
 	AnyPgColumn,
 	numeric,
-	integer
+	integer,
+	varchar,
 } from "drizzle-orm/pg-core";
 
-import {customType} from "drizzle-orm/pg-core/columns";
-import {sql, relations} from "drizzle-orm";
+import { customType } from "drizzle-orm/pg-core/columns";
+import { sql, relations } from "drizzle-orm";
 
 import {
 	HumanEffectsHidden,
@@ -40,28 +41,40 @@ function zeroStrMap(name: string) {
 	return jsonb(name).$type<Record<string, string>>().default({}).notNull();
 }
 function ourBigint(name: string) {
-	return bigint(name, {mode: "number"})
+	return bigint(name, { mode: "number" });
 }
 function ourSerial(name: string) {
-	return bigserial(name, {mode: "number"})
+	return bigserial(name, { mode: "number" });
 }
 function ourMoney(name: string) {
-	return numeric(name)
+	return numeric(name);
 }
 function ourRandomUUID() {
-	return uuid("id").primaryKey().default(sql`gen_random_uuid()`)
+	return uuid("id")
+		.primaryKey()
+		.default(sql`gen_random_uuid()`);
 }
 
 const createdUpdatedTimestamps = {
 	updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
-	createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+	createdAt: timestamp("created_at")
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
 };
 
 const approvalFields = {
 	// drizzle has broken postgres enum support
 	// using text column instead
 	// https://github.com/drizzle-team/drizzle-orm/issues/3485
-	approvalStatus: text({enum: ["draft", "completed-waiting-for-approval", "approved", "sent-for-review", "published"]})
+	approvalStatus: text({
+		enum: [
+			"draft",
+			"completed-waiting-for-approval",
+			"approved",
+			"sent-for-review",
+			"published",
+		],
+	})
 		.notNull()
 		.default("draft"),
 };
@@ -75,25 +88,30 @@ function apiImportIdField() {
 
 function hipRelationColumnsRequired() {
 	return {
-		hipHazardId: text("hip_hazard_id")
-			.references((): AnyPgColumn => hipHazardTable.id),
-		hipClusterId: text("hip_cluster_id")
-			.references((): AnyPgColumn => hipClusterTable.id),
+		hipHazardId: text("hip_hazard_id").references(
+			(): AnyPgColumn => hipHazardTable.id
+		),
+		hipClusterId: text("hip_cluster_id").references(
+			(): AnyPgColumn => hipClusterTable.id
+		),
 		hipTypeId: text("hip_type_id")
 			.references((): AnyPgColumn => hipTypeTable.id)
-			.notNull()
-	}
+			.notNull(),
+	};
 }
 
 function hipRelationColumnsOptional() {
 	return {
-		hipHazardId: text("hip_hazard_id")
-			.references((): AnyPgColumn => hipHazardTable.id),
-		hipClusterId: text("hip_cluster_id")
-			.references((): AnyPgColumn => hipClusterTable.id),
-		hipTypeId: text("hip_type_id")
-			.references((): AnyPgColumn => hipTypeTable.id)
-	}
+		hipHazardId: text("hip_hazard_id").references(
+			(): AnyPgColumn => hipHazardTable.id
+		),
+		hipClusterId: text("hip_cluster_id").references(
+			(): AnyPgColumn => hipClusterTable.id
+		),
+		hipTypeId: text("hip_type_id").references(
+			(): AnyPgColumn => hipTypeTable.id
+		),
+	};
 }
 
 function unitsEnum(name: string) {
@@ -114,9 +132,9 @@ function unitsEnum(name: string) {
 			"volume_gal",
 			"volume_bbl",
 			"duration_days",
-			"duration_hours"
-		]
-	})
+			"duration_hours",
+		],
+	});
 }
 
 export const sessionTable = pgTable("session", {
@@ -131,7 +149,7 @@ export const sessionTable = pgTable("session", {
 export type Session = typeof sessionTable.$inferSelect;
 export type SessionInsert = typeof sessionTable.$inferInsert;
 
-export const sessionsRelations = relations(sessionTable, ({one}) => ({
+export const sessionsRelations = relations(sessionTable, ({ one }) => ({
 	user: one(userTable, {
 		fields: [sessionTable.userId],
 		references: [userTable.id],
@@ -179,7 +197,7 @@ export const apiKeyTable = pgTable("api_key", {
 export type ApiKey = typeof apiKeyTable.$inferSelect;
 export type ApiKeyInsert = typeof apiKeyTable.$inferInsert;
 
-export const apiKeyRelations = relations(apiKeyTable, ({one}) => ({
+export const apiKeyRelations = relations(apiKeyTable, ({ one }) => ({
 	managedByUser: one(userTable, {
 		fields: [apiKeyTable.managedByUserId],
 		references: [userTable.id],
@@ -196,7 +214,7 @@ export const devExample1Table = pgTable("dev_example1", {
 	field3: ourBigint("field3").notNull(),
 	// optional
 	field4: ourBigint("field4"),
-	field6: text({enum: ["one", "two", "three"]})
+	field6: text({ enum: ["one", "two", "three"] })
 		.notNull()
 		.default("one"),
 	field7: timestamp("field7"),
@@ -208,7 +226,7 @@ export const devExample1Table = pgTable("dev_example1", {
 	repeatableText2: text("repeatable_text2"),
 	repeatableNum3: integer("repeatable_num3"),
 	repeatableText3: text("repeatable_text3"),
-	jsonData: jsonb("json_data")
+	jsonData: jsonb("json_data"),
 });
 
 export type DevExample1 = typeof devExample1Table.$inferSelect;
@@ -230,16 +248,16 @@ export const divisionTable = pgTable(
 		),
 		name: zeroStrMap("name"),
 		geojson: jsonb("geojson"),
-		level: ourBigint("level"),	// value is parent level + 1 otherwise 1
+		level: ourBigint("level"), // value is parent level + 1 otherwise 1
 
 		// Store geometry as a regular column that will be updated via trigger
 		geom: customType({
-			dataType: () => "geometry(GEOMETRY, 4326)"
+			dataType: () => "geometry(Geometry,4326)",
 		})(),
 
 		// Store bbox as a regular column that will be updated via trigger
 		bbox: customType({
-			dataType: () => "geometry(GEOMETRY, 4326)"
+			dataType: () => "geometry(Geometry,4326)",
 		})(),
 
 		// Spatial index will be updated via trigger
@@ -255,13 +273,16 @@ export const divisionTable = pgTable(
 			sql`CREATE INDEX IF NOT EXISTS "division_bbox_idx" ON "division" USING GIST ("bbox")`,
 
 			// Ensure all geometries are valid
-			check("valid_geom_check", sql`ST_IsValid(geom)`)
+			check("valid_geom_check", sql`ST_IsValid(geom)`),
 		];
 	}
 );
 
-export const divisionParent_Rel = relations(divisionTable, ({one}) => ({
-	divisionParent: one(divisionTable, {fields: [divisionTable.parentId], references: [divisionTable.id]}),
+export const divisionParent_Rel = relations(divisionTable, ({ one }) => ({
+	divisionParent: one(divisionTable, {
+		fields: [divisionTable.parentId],
+		references: [divisionTable.id],
+	}),
 }));
 
 export type Division = typeof divisionTable.$inferSelect;
@@ -277,7 +298,7 @@ export const eventTable = pgTable("event", {
 export type Event = typeof eventTable.$inferSelect;
 export type EventInsert = typeof eventTable.$inferInsert;
 
-export const eventRel = relations(eventTable, ({one, many}) => ({
+export const eventRel = relations(eventTable, ({ one, many }) => ({
 	// hazard event
 	he: one(hazardousEventTable, {
 		fields: [eventTable.id],
@@ -289,9 +310,9 @@ export const eventRel = relations(eventTable, ({one, many}) => ({
 		references: [disasterEventTable.id],
 	}),
 	// parents
-	ps: many(eventRelationshipTable, {relationName: "c"}),
+	ps: many(eventRelationshipTable, { relationName: "c" }),
 	// children
-	cs: many(eventRelationshipTable, {relationName: "p"}),
+	cs: many(eventRelationshipTable, { relationName: "p" }),
 }));
 
 export const eventRelationshipTable = pgTable("event_relationship", {
@@ -308,7 +329,7 @@ export const eventRelationshipTable = pgTable("event_relationship", {
 
 export const eventRelationshipRel = relations(
 	eventRelationshipTable,
-	({one}) => ({
+	({ one }) => ({
 		p: one(eventTable, {
 			fields: [eventRelationshipTable.parentId],
 			references: [eventTable.id],
@@ -348,7 +369,9 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	spatialFootprint: jsonb("spatial_footprint"),
 	attachments: jsonb("attachments"),
 	recordOriginator: zeroText("record_originator"),
-	hazardousEventStatus: text("hazardous_event_status", {enum: ["forecasted", "ongoing", "passed"]}),
+	hazardousEventStatus: text("hazardous_event_status", {
+		enum: ["forecasted", "ongoing", "passed"],
+	}),
 	dataSource: zeroText("data_source"),
 });
 
@@ -360,7 +383,7 @@ export const hazardousEventTableConstraits = {
 export type HazardousEvent = typeof hazardousEventTable.$inferSelect;
 export type HazardousEventInsert = typeof hazardousEventTable.$inferInsert;
 
-export const hazardousEventRel = relations(hazardousEventTable, ({one}) => ({
+export const hazardousEventRel = relations(hazardousEventTable, ({ one }) => ({
 	event: one(eventTable, {
 		fields: [hazardousEventTable.id],
 		references: [eventTable.id],
@@ -387,10 +410,12 @@ export const disasterEventTable = pgTable("disaster_event", {
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
-	hazardousEventId: uuid("hazardous_event_id")
-		.references((): AnyPgColumn => hazardousEventTable.id),
-	disasterEventId: uuid("disaster_event_id")
-		.references((): AnyPgColumn => disasterEventTable.id),
+	hazardousEventId: uuid("hazardous_event_id").references(
+		(): AnyPgColumn => hazardousEventTable.id
+	),
+	disasterEventId: uuid("disaster_event_id").references(
+		(): AnyPgColumn => disasterEventTable.id
+	),
 	nationalDisasterId: zeroText("national_disaster_id"),
 	// multiple other ids
 	otherId1: zeroText("other_id1"),
@@ -405,22 +430,36 @@ export const disasterEventTable = pgTable("disaster_event", {
 	startDateLocal: text("start_date_local"),
 	endDateLocal: text("end_date_local"),
 	durationDays: ourBigint("duration_days"),
-	disasterDeclaration: text("disaster_declaration", {enum: ["yes", "no", "unknown"]})
+	disasterDeclaration: text("disaster_declaration", {
+		enum: ["yes", "no", "unknown"],
+	})
 		.notNull()
 		.default("unknown"),
 	// multiple disaster declartions
-	disasterDeclarationTypeAndEffect1: zeroText("disaster_declaration_type_and_effect1"),
+	disasterDeclarationTypeAndEffect1: zeroText(
+		"disaster_declaration_type_and_effect1"
+	),
 	disasterDeclarationDate1: timestamp("disaster_declaration_date1"),
-	disasterDeclarationTypeAndEffect2: zeroText("disaster_declaration_type_and_effect2"),
+	disasterDeclarationTypeAndEffect2: zeroText(
+		"disaster_declaration_type_and_effect2"
+	),
 	disasterDeclarationDate2: timestamp("disaster_declaration_date2"),
-	disasterDeclarationTypeAndEffect3: zeroText("disaster_declaration_type_and_effect3"),
+	disasterDeclarationTypeAndEffect3: zeroText(
+		"disaster_declaration_type_and_effect3"
+	),
 	disasterDeclarationDate3: timestamp("disaster_declaration_date3"),
-	disasterDeclarationTypeAndEffect4: zeroText("disaster_declaration_type_and_effect4"),
+	disasterDeclarationTypeAndEffect4: zeroText(
+		"disaster_declaration_type_and_effect4"
+	),
 	disasterDeclarationDate4: timestamp("disaster_declaration_date4"),
-	disasterDeclarationTypeAndEffect5: zeroText("disaster_declaration_type_and_effect5"),
+	disasterDeclarationTypeAndEffect5: zeroText(
+		"disaster_declaration_type_and_effect5"
+	),
 	disasterDeclarationDate5: timestamp("disaster_declaration_date5"),
 
-	hadOfficialWarningOrWeatherAdvisory: zeroBool("had_official_warning_or_weather_advisory"),
+	hadOfficialWarningOrWeatherAdvisory: zeroBool(
+		"had_official_warning_or_weather_advisory"
+	),
 	officialWarningAffectedAreas: zeroText("official_warning_affected_areas"),
 
 	// multiple early actions fields
@@ -436,29 +475,59 @@ export const disasterEventTable = pgTable("disaster_event", {
 	earlyActionDate5: timestamp("early_action_date5"),
 
 	// multiple rapid or preliminary assessments
-	rapidOrPreliminaryAssessmentDescription1: text("rapid_or_preliminary_assesment_description1"),
-	rapidOrPreliminaryAssessmentDate1: timestamp("rapid_or_preliminary_assessment_date1"),
-	rapidOrPreliminaryAssessmentDescription2: text("rapid_or_preliminary_assesment_description2"),
-	rapidOrPreliminaryAssessmentDate2: timestamp("rapid_or_preliminary_assessment_date2"),
-	rapidOrPreliminaryAssessmentDescription3: text("rapid_or_preliminary_assesment_description3"),
-	rapidOrPreliminaryAssessmentDate3: timestamp("rapid_or_preliminary_assessment_date3"),
-	rapidOrPreliminaryAssessmentDescription4: text("rapid_or_preliminary_assesment_description4"),
-	rapidOrPreliminaryAssessmentDate4: timestamp("rapid_or_preliminary_assessment_date4"),
-	rapidOrPreliminaryAssessmentDescription5: text("rapid_or_preliminary_assesment_description5"),
-	rapidOrPreliminaryAssessmentDate5: timestamp("rapid_or_preliminary_assessment_date5"),
+	rapidOrPreliminaryAssessmentDescription1: text(
+		"rapid_or_preliminary_assesment_description1"
+	),
+	rapidOrPreliminaryAssessmentDate1: timestamp(
+		"rapid_or_preliminary_assessment_date1"
+	),
+	rapidOrPreliminaryAssessmentDescription2: text(
+		"rapid_or_preliminary_assesment_description2"
+	),
+	rapidOrPreliminaryAssessmentDate2: timestamp(
+		"rapid_or_preliminary_assessment_date2"
+	),
+	rapidOrPreliminaryAssessmentDescription3: text(
+		"rapid_or_preliminary_assesment_description3"
+	),
+	rapidOrPreliminaryAssessmentDate3: timestamp(
+		"rapid_or_preliminary_assessment_date3"
+	),
+	rapidOrPreliminaryAssessmentDescription4: text(
+		"rapid_or_preliminary_assesment_description4"
+	),
+	rapidOrPreliminaryAssessmentDate4: timestamp(
+		"rapid_or_preliminary_assessment_date4"
+	),
+	rapidOrPreliminaryAssessmentDescription5: text(
+		"rapid_or_preliminary_assesment_description5"
+	),
+	rapidOrPreliminaryAssessmentDate5: timestamp(
+		"rapid_or_preliminary_assessment_date5"
+	),
 
 	responseOperations: zeroText("response_oprations"),
 
 	// multiple post disaster assessments
-	postDisasterAssessmentDescription1: text("post_disaster_assessment_description1"),
+	postDisasterAssessmentDescription1: text(
+		"post_disaster_assessment_description1"
+	),
 	postDisasterAssessmentDate1: timestamp("post_disaster_assessment_date1"),
-	postDisasterAssessmentDescription2: text("post_disaster_assessment_description2"),
+	postDisasterAssessmentDescription2: text(
+		"post_disaster_assessment_description2"
+	),
 	postDisasterAssessmentDate2: timestamp("post_disaster_assessment_date2"),
-	postDisasterAssessmentDescription3: text("post_disaster_assessment_description3"),
+	postDisasterAssessmentDescription3: text(
+		"post_disaster_assessment_description3"
+	),
 	postDisasterAssessmentDate3: timestamp("post_disaster_assessment_date3"),
-	postDisasterAssessmentDescription4: text("post_disaster_assessment_description4"),
+	postDisasterAssessmentDescription4: text(
+		"post_disaster_assessment_description4"
+	),
 	postDisasterAssessmentDate4: timestamp("post_disaster_assessment_date4"),
-	postDisasterAssessmentDescription5: text("post_disaster_assessment_description5"),
+	postDisasterAssessmentDescription5: text(
+		"post_disaster_assessment_description5"
+	),
 	postDisasterAssessmentDate5: timestamp("post_disaster_assessment_date5"),
 
 	// multiple other assessments
@@ -480,30 +549,48 @@ export const disasterEventTable = pgTable("disaster_event", {
 	damagesSubtotalLocalCurrency: ourMoney("damages_subtotal_local_currency"),
 	lossesSubtotalUSD: ourMoney("losses_subtotal_usd"),
 	responseOperationsDescription: zeroText("response_operations_description"),
-	responseOperationsCostsLocalCurrency: ourMoney("response_operations_costs_local_currency"),
-	responseCostTotalLocalCurrency: ourMoney("response_cost_total_local_currency"),
+	responseOperationsCostsLocalCurrency: ourMoney(
+		"response_operations_costs_local_currency"
+	),
+	responseCostTotalLocalCurrency: ourMoney(
+		"response_cost_total_local_currency"
+	),
 	responseCostTotalUSD: ourMoney("response_cost_total_usd"),
 	humanitarianNeedsDescription: zeroText("humanitarian_needs_description"),
 	humanitarianNeedsLocalCurrency: ourMoney("humanitarian_needs_local_currency"),
 	humanitarianNeedsUSD: ourMoney("humanitarian_needs_usd"),
 
-	rehabilitationCostsLocalCurrencyCalc: ourMoney("rehabilitation_costs_local_currency_calc"),
-	rehabilitationCostsLocalCurrencyOverride: ourMoney("rehabilitation_costs_local_currency_override"),
+	rehabilitationCostsLocalCurrencyCalc: ourMoney(
+		"rehabilitation_costs_local_currency_calc"
+	),
+	rehabilitationCostsLocalCurrencyOverride: ourMoney(
+		"rehabilitation_costs_local_currency_override"
+	),
 	//rehabilitationCostsUSD: ourMoney("rehabilitation_costs_usd"),
 	repairCostsLocalCurrencyCalc: ourMoney("repair_costs_local_currency_calc"),
-	repairCostsLocalCurrencyOverride: ourMoney("repair_costs_local_currency_override"),
+	repairCostsLocalCurrencyOverride: ourMoney(
+		"repair_costs_local_currency_override"
+	),
 	//repairCostsUSD: ourMoney("repair_costs_usd"),
-	replacementCostsLocalCurrencyCalc: ourMoney("replacement_costs_local_currency_calc"),
-	replacementCostsLocalCurrencyOverride: ourMoney("replacement_costs_local_currency_override"),
+	replacementCostsLocalCurrencyCalc: ourMoney(
+		"replacement_costs_local_currency_calc"
+	),
+	replacementCostsLocalCurrencyOverride: ourMoney(
+		"replacement_costs_local_currency_override"
+	),
 	//replacementCostsUSD: ourMoney("replacement_costs_usd"),
-	recoveryNeedsLocalCurrencyCalc: ourMoney("recovery_needs_local_currency_calc"),
-	recoveryNeedsLocalCurrencyOverride: ourMoney("recovery_needs_local_currency_override"),
+	recoveryNeedsLocalCurrencyCalc: ourMoney(
+		"recovery_needs_local_currency_calc"
+	),
+	recoveryNeedsLocalCurrencyOverride: ourMoney(
+		"recovery_needs_local_currency_override"
+	),
 	//recoveryNeedsUSD: ourMoney("recovery_needs_usd"),
 
 	attachments: jsonb("attachments"),
 	spatialFootprint: jsonb("spatial_footprint"),
 
-	legacyData: jsonb("legacy_data")
+	legacyData: jsonb("legacy_data"),
 });
 
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
@@ -513,7 +600,7 @@ export const disasterEventTableConstraits = {
 	hazardousEventId: "disaster_event_hazardous_event_id_hazardous_event_id_fk",
 };
 
-export const disasterEventRel = relations(disasterEventTable, ({one}) => ({
+export const disasterEventRel = relations(disasterEventTable, ({ one }) => ({
 	event: one(eventTable, {
 		fields: [disasterEventTable.id],
 		references: [eventTable.id],
@@ -547,18 +634,10 @@ export const humanDsgTable = pgTable("human_dsg", {
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
 	sex: text("sex", {
-		enum: [
-			"m",
-			"f",
-			"o"
-		]
+		enum: ["m", "f", "o"],
 	}),
 	age: text("age", {
-		enum: [
-			"0-14",
-			"15-64",
-			"65+",
-		]
+		enum: ["0-14", "15-64", "65+"],
 	}),
 	disability: text("disability", {
 		enum: [
@@ -577,10 +656,10 @@ export const humanDsgTable = pgTable("human_dsg", {
 			"intellectual_cognitive",
 			"multiple_deaf_blindness",
 			"multiple_other_multiple",
-			"others"
+			"others",
 		],
 	}),
-	globalPovertyLine: text("global_poverty_line", {enum: ["below", "above"]}),
+	globalPovertyLine: text("global_poverty_line", { enum: ["below", "above"] }),
 	nationalPovertyLine: text("national_poverty_line", {
 		enum: ["below", "above"],
 	}),
@@ -685,7 +764,6 @@ export const displacedTable = pgTable("displaced", {
 export type Displaced = typeof displacedTable.$inferSelect;
 export type DisplacedInsert = typeof displacedTable.$inferInsert;
 
-
 export const disruptionTable = pgTable("disruption", {
 	...apiImportIdField(),
 	id: ourRandomUUID(),
@@ -705,17 +783,17 @@ export const disruptionTable = pgTable("disruption", {
 	responseCurrency: text("response_currency"),
 	spatialFootprint: jsonb("spatial_footprint"),
 	attachments: jsonb("attachments"),
-})
+});
 
-export const disruptionRel = relations(disruptionTable, ({one}) => ({
+export const disruptionRel = relations(disruptionTable, ({ one }) => ({
 	sector: one(sectorTable, {
 		fields: [disruptionTable.sectorId],
 		references: [sectorTable.id],
-	})
+	}),
 }));
 
-export type Disruption = typeof disruptionTable.$inferSelect
-export type DisruptionInsert = typeof disruptionTable.$inferInsert
+export type Disruption = typeof disruptionTable.$inferSelect;
+export type DisruptionInsert = typeof disruptionTable.$inferInsert;
 
 export const damagesTable = pgTable("damages", {
 	...apiImportIdField(),
@@ -760,7 +838,9 @@ export const damagesTable = pgTable("damages", {
 	tdReplacementCostUnit: ourMoney("td_replacement_cost_unit"),
 	tdReplacementCostUnitCurrency: text("td_replacement_cost_unit_currency"),
 	tdReplacementCostTotal: ourMoney("td_replacement_cost_total"),
-	tdReplacementCostTotalOverride: zeroBool("td_replacement_cost_total_override"),
+	tdReplacementCostTotalOverride: zeroBool(
+		"td_replacement_cost_total_override"
+	),
 	tdRecoveryCostUnit: ourMoney("td_recovery_cost_unit"),
 	tdRecoveryCostUnitCurrency: text("td_recovery_cost_unit_currency"),
 	tdRecoveryCostTotal: ourMoney("td_recovery_cost_total"),
@@ -773,9 +853,9 @@ export const damagesTable = pgTable("damages", {
 
 	spatialFootprint: jsonb("spatial_footprint"),
 	attachments: jsonb("attachments"),
-})
+});
 
-export const damagesRel = relations(damagesTable, ({one}) => ({
+export const damagesRel = relations(damagesTable, ({ one }) => ({
 	asset: one(assetTable, {
 		fields: [damagesTable.assetId],
 		references: [assetTable.id],
@@ -783,36 +863,36 @@ export const damagesRel = relations(damagesTable, ({one}) => ({
 	sector: one(sectorTable, {
 		fields: [damagesTable.sectorId],
 		references: [sectorTable.id],
-	})
+	}),
 }));
 
-export type Damages = typeof damagesTable.$inferSelect
-export type DamagesInsert = typeof damagesTable.$inferInsert
+export type Damages = typeof damagesTable.$inferSelect;
+export type DamagesInsert = typeof damagesTable.$inferInsert;
 
 export const measureTable = pgTable("measure", {
 	...apiImportIdField(),
 	id: ourRandomUUID(),
 	name: text("name").notNull(),
-	type: text({enum: ["number", "area", "volume", "duration"]})
+	type: text({ enum: ["number", "area", "volume", "duration"] })
 		.notNull()
 		.default("area"),
 	//	unit: text("unit").notNull()
-})
+});
 
-export type Measure = typeof measureTable.$inferSelect
-export type MeasureInsert = typeof measureTable.$inferInsert
+export type Measure = typeof measureTable.$inferSelect;
+export type MeasureInsert = typeof measureTable.$inferInsert;
 
 export const unitTable = pgTable("unit", {
 	...apiImportIdField(),
 	id: ourRandomUUID(),
-	type: text({enum: ["number", "area", "volume", "duration"]})
+	type: text({ enum: ["number", "area", "volume", "duration"] })
 		.notNull()
 		.default("area"),
-	name: text("name").notNull()
-})
+	name: text("name").notNull(),
+});
 
-export type Unit = typeof unitTable.$inferSelect
-export type UnitInsert = typeof unitTable.$inferInsert
+export type Unit = typeof unitTable.$inferSelect;
+export type UnitInsert = typeof unitTable.$inferInsert;
 
 export const assetTable = pgTable("asset", {
 	...apiImportIdField(),
@@ -882,17 +962,17 @@ export const lossesTable = pgTable("losses", {
 	//privateTotalCostCurrency: text("private_total_cost_currency")
 	spatialFootprint: jsonb("spatial_footprint"),
 	attachments: jsonb("attachments"),
-})
+});
 
-export const lossesRel = relations(lossesTable, ({one}) => ({
+export const lossesRel = relations(lossesTable, ({ one }) => ({
 	sector: one(sectorTable, {
 		fields: [lossesTable.sectorId],
 		references: [sectorTable.id],
-	})
+	}),
 }));
 
-export type Losses = typeof lossesTable.$inferSelect
-export type LossesInsert = typeof lossesTable.$inferInsert
+export type Losses = typeof lossesTable.$inferSelect;
+export type LossesInsert = typeof lossesTable.$inferInsert;
 
 // Hazard Information Profiles (HIPs)
 // https://www.preventionweb.net/publication/hazard-information-profiles-hips
@@ -925,7 +1005,7 @@ export const hipClusterTable = pgTable(
 	(table) => [check("name_en_not_empty", sql`${table.nameEn} <> ''`)]
 );
 
-export const hipClusterRel = relations(hipClusterTable, ({one}) => ({
+export const hipClusterRel = relations(hipClusterTable, ({ one }) => ({
 	class: one(hipTypeTable, {
 		fields: [hipClusterTable.typeId],
 		references: [hipTypeTable.id],
@@ -952,7 +1032,7 @@ export const hipHazardTable = pgTable(
 	]
 );
 
-export const hipHazardRel = relations(hipHazardTable, ({one}) => ({
+export const hipHazardRel = relations(hipHazardTable, ({ one }) => ({
 	cluster: one(hipClusterTable, {
 		fields: [hipHazardTable.clusterId],
 		references: [hipClusterTable.id],
@@ -971,7 +1051,7 @@ export const resourceRepoTable = pgTable("resource_repo", {
 export type resourceRepo = typeof resourceRepoTable.$inferSelect;
 export type resourceRepoInsert = typeof resourceRepoTable.$inferInsert;
 
-export const resourceRepoRel = relations(resourceRepoTable, ({many}) => ({
+export const resourceRepoRel = relations(resourceRepoTable, ({ many }) => ({
 	attachments: many(rrAttachmentsTable),
 }));
 
@@ -980,7 +1060,7 @@ export const rrAttachmentsTable = pgTable("rr_attachments", {
 	resourceRepoId: uuid("resource_repo_id")
 		.references((): AnyPgColumn => resourceRepoTable.id)
 		.notNull(),
-	type: text({enum: ["document", "other"]})
+	type: text({ enum: ["document", "other"] })
 		.notNull()
 		.default("document"),
 	typeOtherDesc: text("type_other_desc"),
@@ -989,7 +1069,7 @@ export const rrAttachmentsTable = pgTable("rr_attachments", {
 	...createdUpdatedTimestamps,
 });
 
-export const rrAttachmentsRel = relations(rrAttachmentsTable, ({one}) => ({
+export const rrAttachmentsRel = relations(rrAttachmentsTable, ({ one }) => ({
 	attachment: one(resourceRepoTable, {
 		fields: [rrAttachmentsTable.resourceRepoId],
 		references: [resourceRepoTable.id],
@@ -1007,8 +1087,9 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
 	id: ourRandomUUID(),
-	disasterEventId: uuid("disaster_event_id")
-		.references((): AnyPgColumn => disasterEventTable.id),
+	disasterEventId: uuid("disaster_event_id").references(
+		(): AnyPgColumn => disasterEventTable.id
+	),
 	locationDesc: text("location_desc"),
 	// yyyy or yyyy-mm or yyyy-mm-dd
 	startDate: text("start_date"),
@@ -1021,9 +1102,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	originatorRecorderInst: text("originator_recorder_inst")
 		.notNull()
 		.default(""),
-	validatedBy: text("validated_by")
-		.notNull()
-		.default(""),
+	validatedBy: text("validated_by").notNull().default(""),
 	checkedBy: text("checked_by"),
 	dataCollector: text("data_collector"),
 	// sectorId: ourBigint("sector_id") // Link to the sector involved
@@ -1039,7 +1118,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 
 export const disasterRecordsRel = relations(
 	disasterRecordsTable,
-	({one, many}) => ({
+	({ one, many }) => ({
 		//Relationship: Links each disaster record to a disaster event
 		disasterEvent: one(disasterEventTable, {
 			fields: [disasterRecordsTable.disasterEventId],
@@ -1073,11 +1152,11 @@ export const auditLogsTable = pgTable("audit_logs", {
 	recordId: text("record_id").notNull(),
 	userId: ourBigint("user_id")
 		.notNull()
-		.references(() => userTable.id, {onDelete: "cascade"}),
+		.references(() => userTable.id, { onDelete: "cascade" }),
 	action: text("action").notNull(), // INSERT, UPDATE, DELETE
 	oldValues: jsonb("old_values"),
 	newValues: jsonb("new_values"),
-	timestamp: timestamp("timestamp", {withTimezone: true})
+	timestamp: timestamp("timestamp", { withTimezone: true })
 		.defaultNow()
 		.notNull(),
 });
@@ -1095,9 +1174,15 @@ export const categoriesTable = pgTable("categories", {
 	...createdUpdatedTimestamps,
 });
 
-export const categoryCategoryParent_Rel = relations(categoriesTable, ({one}) => ({
-	categoryParent: one(categoriesTable, {fields: [categoriesTable.parentId], references: [categoriesTable.id]}),
-}));
+export const categoryCategoryParent_Rel = relations(
+	categoriesTable,
+	({ one }) => ({
+		categoryParent: one(categoriesTable, {
+			fields: [categoriesTable.parentId],
+			references: [categoriesTable.id],
+		}),
+	})
+);
 
 export type nonecoLosses = typeof nonecoLossesTable.$inferSelect;
 export type nonecoLossesInsert = typeof nonecoLossesTable.$inferInsert;
@@ -1119,14 +1204,23 @@ export const nonecoLossesTable = pgTable(
 	},
 	(table) => {
 		return [
-			unique("nonecolosses_sectorIdx").on(table.disasterRecordId, table.categoryId),
+			unique("nonecolosses_sectorIdx").on(
+				table.disasterRecordId,
+				table.categoryId
+			),
 		];
 	}
 );
 
-export const nonecoLossesCategory_Rel = relations(nonecoLossesTable, ({one}) => ({
-	category: one(categoriesTable, {fields: [nonecoLossesTable.categoryId], references: [categoriesTable.id]}),
-}));
+export const nonecoLossesCategory_Rel = relations(
+	nonecoLossesTable,
+	({ one }) => ({
+		category: one(categoriesTable, {
+			fields: [nonecoLossesTable.categoryId],
+			references: [categoriesTable.id],
+		}),
+	})
+);
 
 /**
  * This sector table is configured to support hierarchical relationships and sector-specific details.
@@ -1149,9 +1243,9 @@ export const sectorTable = pgTable(
 		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
 		description: text("description"), // Optional description for the sector | Additional details about the sector
 		// pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
-		level: ourBigint("level").notNull().default(1),	// value is parent level + 1 otherwise 1
+		level: ourBigint("level").notNull().default(1), // value is parent level + 1 otherwise 1
 		...createdUpdatedTimestamps,
-	},
+	}
 	// (table) => [
 	// 	// // Constraint: subsector cannot be empty
 	// 	// check("subsector_not_empty", sql`${table.subsector} <> ''`),
@@ -1163,8 +1257,11 @@ export const sectorTable = pgTable(
 	// ]
 );
 
-export const sectoryParent_Rel = relations(sectorTable, ({one}) => ({
-	sectorParent: one(sectorTable, {fields: [sectorTable.parentId], references: [sectorTable.id]}),
+export const sectoryParent_Rel = relations(sectorTable, ({ one }) => ({
+	sectorParent: one(sectorTable, {
+		fields: [sectorTable.parentId],
+		references: [sectorTable.id],
+	}),
 }));
 
 /** [SectorDisasterRecordsRelation] table links `sector` to `disaster_records` */
@@ -1188,13 +1285,17 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 		withLosses: boolean("with_losses"),
 		lossesCost: ourMoney("losses_cost"),
 		lossesCostCurrency: text("losses_cost_currency"),
-	}, (table) => [
-		unique("sector_disaster_records_relation_sector_id_disaster_record_id").on(table.sectorId, table.disasterRecordId),
+	},
+	(table) => [
+		unique("sector_disaster_records_relation_sector_id_disaster_record_id").on(
+			table.sectorId,
+			table.disasterRecordId
+		),
 	]
 );
 
 /** Relationships for `sectorTable` */
-export const sectorRel = relations(sectorTable, ({one, many}) => ({
+export const sectorRel = relations(sectorTable, ({ one, many }) => ({
 	// A self-referencing relationship for hierarchical sectors
 	parentSector: one(sectorTable, {
 		fields: [sectorTable.parentId],
@@ -1210,7 +1311,7 @@ export const sectorRel = relations(sectorTable, ({one, many}) => ({
 /** Relationships for `sectorDisasterRecordsRelationTable` */
 export const sectorDisasterRecordsRel = relations(
 	sectorDisasterRecordsRelationTable,
-	({one}) => ({
+	({ one }) => ({
 		// Linking each `sector_disaster_records_relation` to a sector
 		sector: one(sectorTable, {
 			fields: [sectorDisasterRecordsRelationTable.sectorId],
@@ -1234,10 +1335,44 @@ export type SectorDisasterRecordsRelation =
 export type SectorDisasterRecordsRelationInsert =
 	typeof sectorDisasterRecordsRelationTable.$inferInsert;
 
-
 // Declared the migrations table to avoid removal after drizzle db syncronization.
 export const drizzleMigrations = pgTable("__drizzle_migrations__", {
 	id: serial().primaryKey().notNull(),
 	hash: text().notNull(),
 	createdAt: bigint("created_at", { mode: "number" }),
+});
+
+// Custom URL type with regex constraint
+const url = customType<{
+	data: string;
+	driver: "string";
+}>({
+	dataType() {
+		return "varchar";
+	},
+	toDriver(value: string): string {
+		// Validate URL format
+		const urlRegex =
+			/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+		if (!urlRegex.test(value)) {
+			throw new Error("Invalid URL format");
+		}
+		return value;
+	},
+});
+
+export const dtsSystemInfo = pgTable("dts_system_info", {
+	id: ourRandomUUID(),
+	dbVersionNo: varchar("db_version_no", { length: 50 }).notNull(),
+	appVersionNo: varchar("app_version_no", { length: 50 }).notNull(),
+	installedAt: timestamp("installed_at")
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const instanceSystemSettings = pgTable("instance_system_settings", {
+	id: ourRandomUUID(),
+	footerUrlPrivacyPolicy: url("footer_url_privacy_policy"),
+	footerUrlTermsConditions: url("footer_url_terms_conditions"),
+	adminSetupComplete: boolean("admin_setup_complete").notNull().default(false),
 });
