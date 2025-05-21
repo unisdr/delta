@@ -571,3 +571,34 @@ table.table-border th.center {
   color: #1565c0 !important;
   border-color: #1565c0;
 }
+
+
+.dts-indicator img {
+  display: block;
+  margin: 0 auto 0.4rem;
+  opacity: 0.8;
+}
+
+.dts-chart-empty-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 300px; /* can be overridden */
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  text-align: center;
+  padding: 1rem;
+}
+
+.dts-chart-empty-state img {
+  width: 48px;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+.dts-chart-empty-state .dts-body-text {
+  color: #666;
+  font-size: 0.95rem;
+}
