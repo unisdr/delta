@@ -2429,6 +2429,12 @@ header .mg-container {
 
 .dts-page-section {
   margin-top: 4rem;
+  /* large design - 1164px up */
+}
+@media (width >= 1164px) {
+  .dts-page-section {
+    padding: 0 6.4rem 0 3.2rem;
+  }
 }
 
 .dts-page-title {
