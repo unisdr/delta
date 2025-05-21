@@ -79,23 +79,6 @@ const HazardFilters: React.FC<FiltersProps> = ({
       });
       return;
     }
-    if (!hazardClusterId) {
-      Swal.fire({
-        icon: "warning",
-        text: "Please select a hazard cluster first.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-    if (!specificHazardId) {
-      Swal.fire({
-        icon: "warning",
-        text: "Please select a specific hazard first.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
     // Validate that "To" date is not before "From" date if both are set
     if (fromDate && toDate) {
       const from = new Date(fromDate);
@@ -150,7 +133,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
         </select>
       </div>
       <div className="dts-form-component mg-grid__col--span-2">
-        <label htmlFor="hazard-cluster">Hazard Cluster *</label>
+        <label htmlFor="hazard-cluster">Hazard Cluster</label>
         <select
           id="hazard-cluster"
           value={hazardClusterId || ""}
@@ -166,7 +149,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
         </select>
       </div>
       <div className="dts-form-component mg-grid__col--span-2">
-        <label htmlFor="specific-hazard">Specific Hazard *</label>
+        <label htmlFor="specific-hazard">Specific Hazard</label>
         <select
           id="specific-hazard"
           value={specificHazardId || ""}
