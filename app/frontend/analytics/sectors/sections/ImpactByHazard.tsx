@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
 import { formatCurrencyWithCode, useDefaultCurrency, formatCurrency } from "~/frontend/utils/formatters";
+import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -504,7 +505,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                         ) : (
                             <>
                                 <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
-                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                                <EmptyChartPlaceholder height={300} />
                             </>
                         )}
                     </div>
@@ -521,7 +522,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                         ) : (
                             <>
                                 <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
-                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                                <EmptyChartPlaceholder height={300} />
                             </>
                         )}
                     </div>
@@ -538,7 +539,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                         ) : (
                             <>
                                 <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>
-                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                                <EmptyChartPlaceholder height={300} />
                             </>
                         )}
                     </div>
