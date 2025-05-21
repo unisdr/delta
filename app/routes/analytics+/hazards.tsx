@@ -46,7 +46,10 @@ interface interfaceMap {
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
+
+	
 	async ({ request }: LoaderFunctionArgs) => {
+		
 		const url = new URL(request.url);
 		const hazardTypeId = url.searchParams.get("hazardTypeId") || null;
 		const hazardClusterId = url.searchParams.get("hazardClusterId") || null;
@@ -85,7 +88,6 @@ export const loader = authLoaderPublicOrWithPerm(
 			totalAffectedDirect,
 			totalAffectedIndirect,
 		} = await getAffectedPeopleByHazardFilters(filters);
-
 		const { totalChildren, totalAdults, totalSeniors } =
 			await getAgeTotalsByHazardFilters(filters);
 
