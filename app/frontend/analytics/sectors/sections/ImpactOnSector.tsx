@@ -8,6 +8,7 @@ import {
 	useDefaultCurrency,
 } from "~/frontend/utils/formatters";
 import AreaChart from "~/components/AreaChart";
+import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 
 // Types
 interface ApiResponse {
@@ -405,10 +406,10 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 			value >= 1_000_000_000
 				? "billions"
 				: value >= 1_000_000
-				? "millions"
-				: value >= 1_000
-				? "thousands"
-				: undefined
+					? "millions"
+					: value >= 1_000
+						? "thousands"
+						: undefined
 		);
 	};
 
@@ -487,7 +488,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 						console.log("Extracted API error:", errorMessage);
 					}
 				})
-				.catch(() => {});
+				.catch(() => { });
 		}
 
 		return (
@@ -594,60 +595,60 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		eventsData.length > 0
 			? eventsData[0].year
 			: filters.fromDate
-			? parseInt(filters.fromDate.split("-")[0])
-			: new Date().getFullYear();
+				? parseInt(filters.fromDate.split("-")[0])
+				: new Date().getFullYear();
 
 	// Fix damage data transformation to ensure it properly handles string values and zero impact
 	const damageData =
 		data?.dataAvailability?.damage === "zero"
 			? [{ year: referenceYear, amount: 0 }]
 			: Object.entries(data.damageOverTime || {})
-					.map(([year, amount]) => {
-						const parsedAmount =
-							typeof amount === "string" ? parseFloat(amount) : Number(amount);
-						return {
-							year: parseInt(year),
-							amount: isNaN(parsedAmount) ? 0 : parsedAmount,
-						};
-					})
-					.filter((entry) => {
-						if (!filters.fromDate && !filters.toDate) return true;
-						const yearNum = entry.year;
-						const fromYear = filters.fromDate
-							? parseInt(filters.fromDate.split("-")[0])
-							: 0;
-						const toYear = filters.toDate
-							? parseInt(filters.toDate.split("-")[0])
-							: 9999;
-						return yearNum >= fromYear && yearNum <= toYear;
-					})
-					.sort((a, b) => a.year - b.year);
+				.map(([year, amount]) => {
+					const parsedAmount =
+						typeof amount === "string" ? parseFloat(amount) : Number(amount);
+					return {
+						year: parseInt(year),
+						amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+					};
+				})
+				.filter((entry) => {
+					if (!filters.fromDate && !filters.toDate) return true;
+					const yearNum = entry.year;
+					const fromYear = filters.fromDate
+						? parseInt(filters.fromDate.split("-")[0])
+						: 0;
+					const toYear = filters.toDate
+						? parseInt(filters.toDate.split("-")[0])
+						: 9999;
+					return yearNum >= fromYear && yearNum <= toYear;
+				})
+				.sort((a, b) => a.year - b.year);
 
 	// Fix loss data transformation to ensure it properly handles string values and zero impact
 	const lossData =
 		data?.dataAvailability?.loss === "zero"
 			? [{ year: referenceYear, amount: 0 }]
 			: Object.entries(data.lossOverTime || {})
-					.map(([year, amount]) => {
-						const parsedAmount =
-							typeof amount === "string" ? parseFloat(amount) : Number(amount);
-						return {
-							year: parseInt(year),
-							amount: isNaN(parsedAmount) ? 0 : parsedAmount,
-						};
-					})
-					.filter((entry) => {
-						if (!filters.fromDate && !filters.toDate) return true;
-						const yearNum = entry.year;
-						const fromYear = filters.fromDate
-							? parseInt(filters.fromDate.split("-")[0])
-							: 0;
-						const toYear = filters.toDate
-							? parseInt(filters.toDate.split("-")[0])
-							: 9999;
-						return yearNum >= fromYear && yearNum <= toYear;
-					})
-					.sort((a, b) => a.year - b.year);
+				.map(([year, amount]) => {
+					const parsedAmount =
+						typeof amount === "string" ? parseFloat(amount) : Number(amount);
+					return {
+						year: parseInt(year),
+						amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+					};
+				})
+				.filter((entry) => {
+					if (!filters.fromDate && !filters.toDate) return true;
+					const yearNum = entry.year;
+					const fromYear = filters.fromDate
+						? parseInt(filters.fromDate.split("-")[0])
+						: 0;
+					const toYear = filters.toDate
+						? parseInt(filters.toDate.split("-")[0])
+						: 9999;
+					return yearNum >= fromYear && yearNum <= toYear;
+				})
+				.sort((a, b) => a.year - b.year);
 
 	console.log("Final transformed data:", {
 		eventsData,
@@ -695,13 +696,20 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
 							{/* <span>{data?.eventCount ? formatNumber(data.eventCount) : "No data available"}</span> */}
-							<span>
-								{eventsData.length > 0
-									? formatNumber(
-											eventsData.reduce((sum, event) => sum + event.count, 0)
-									  )
-									: "No data available"}
-							</span>
+							{eventsData.length > 0 ? (
+								<span>
+									{formatNumber(
+										eventsData.reduce((sum, event) => sum + event.count, 0)
+									)}
+								</span>
+							) : (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-g">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							)}
 						</div>
 					</div>
 
@@ -723,12 +731,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 							</button>
 						</h3>
 						<div style={{ height: "300px" }}>
-							<AreaChart
-								data={eventsData}
-								variant="events"
-								formatter={formatNumber}
-								CustomTooltip={CustomTooltip}
-							/>
+							{eventsData.length > 0 ? (
+								<AreaChart
+									data={eventsData}
+									variant="events"
+									formatter={formatNumber}
+									CustomTooltip={CustomTooltip}
+								/>
+							) : (
+								<EmptyChartPlaceholder />
+							)}
 						</div>
 					</div>
 				</div>
@@ -755,25 +767,39 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 							</button>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-d">
-							<span>
-								{data?.dataAvailability?.damage === "zero"
-									? "Zero Impact (Confirmed)"
-									: data?.dataAvailability?.damage === "no_data"
-									? "No data available"
-									: data?.totalDamage !== undefined &&
-									  data?.totalDamage !== null &&
-									  data?.totalDamage !== ""
-									? formatCurrencyWithCode(Number(data.totalDamage), currency)
-									: "No data available"}
-							</span>
+							{data?.dataAvailability?.damage === "zero" ? (
+								<span>Zero Impact (Confirmed)</span>
+							) : data?.dataAvailability?.damage === "no_data" ? (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-d">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							) : data?.totalDamage !== undefined &&
+								data?.totalDamage !== null &&
+								data?.totalDamage !== "" ? (
+								<span>
+									{formatCurrencyWithCode(Number(data.totalDamage), currency)}
+								</span>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 						<div style={{ height: "300px" }}>
-							<AreaChart
-								data={damageData}
-								variant="damage"
-								formatter={formatMoneyValue}
-								CustomTooltip={CustomTooltip}
-							/>
+							{damageData.length > 0 ? (
+								<AreaChart
+									data={damageData}
+									variant="damage"
+									formatter={formatMoneyValue}
+									CustomTooltip={CustomTooltip}
+								/>
+							) : (
+								<EmptyChartPlaceholder />
+							)}
 						</div>
 					</div>
 
@@ -795,25 +821,41 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 							</button>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-c">
-							<span>
-								{data?.dataAvailability?.loss === "zero"
-									? "Zero Impact (Confirmed)"
-									: data?.dataAvailability?.loss === "no_data"
-									? "No data available"
-									: data?.totalLoss !== undefined &&
-									  data?.totalLoss !== null &&
-									  data?.totalLoss !== ""
-									? formatCurrencyWithCode(Number(data.totalLoss), currency)
-									: "No data available"}
-							</span>
+							{data?.dataAvailability?.loss === "zero" ? (
+								<span>Zero Impact (Confirmed)</span>
+							) : data?.dataAvailability?.loss === "no_data" ? (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-c">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							) : data?.totalLoss !== undefined &&
+								data?.totalLoss !== null &&
+								data?.totalLoss !== "" ? (
+								<span>
+									{formatCurrencyWithCode(Number(data.totalLoss), currency)}
+								</span>
+							) : (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-c">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							)}
 						</div>
 						<div style={{ height: "300px" }}>
-							<AreaChart
-								data={lossData}
-								variant="loss"
-								formatter={formatMoneyValue}
-								CustomTooltip={CustomTooltip}
-							/>
+							{lossData.length > 0 ? (
+								<AreaChart
+									data={lossData}
+									variant="loss"
+									formatter={formatMoneyValue}
+									CustomTooltip={CustomTooltip}
+								/>
+							) : (
+								<EmptyChartPlaceholder />
+							)}
 						</div>
 					</div>
 				</div>
