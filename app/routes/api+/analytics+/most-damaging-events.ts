@@ -77,30 +77,21 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
         .transform(value => value || null)
         .optional(),
       fromDate: z.string()
-        .datetime("Invalid date format")
         .transform(value => value || null)
-        .optional(),
+        .optional(), // Allow flexible date formats for compatibility with database records
       toDate: z.string()
-        .datetime("Invalid date format")
         .transform(value => value || null)
-        .optional(),
+        .optional(), // Allow flexible date formats for compatibility with database records
       disasterEventId: z.string()
-        .regex(/^\d+$/, "Disaster event ID must be numeric")
         .transform(value => value || null)
-        .optional(),
+        .optional(), // Allow UUID format for disaster event IDs
       sortBy: z.enum(['damages', 'losses', 'eventName', 'createdAt'])
         .transform(value => value || null)
         .optional(),
       sortDirection: z.enum(['asc', 'desc'])
         .transform(value => value || null)
         .optional()
-    }).refine(
-      (data) => (!data.fromDate || data.toDate) && (!data.toDate || data.fromDate),
-      {
-        message: "Both fromDate and toDate must be provided together",
-        path: ["fromDate", "toDate"]
-      }
-    );
+    });
 
     const validationResult = querySchema.safeParse(searchParams);
 
