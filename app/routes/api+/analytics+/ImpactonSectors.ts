@@ -38,13 +38,12 @@ const querySchema = z.object({
   sectorId: z.string()
     .regex(/^\d+$/, "Sector ID must be numeric")
     .transform(Number),
-  fromDate: z.string().datetime().optional(),
-  toDate: z.string().datetime().optional(),
+
   hazardTypeId: z.string().regex(/^\d+$/).optional(),
   hazardClusterId: z.string().regex(/^\d+$/).optional(),
   specificHazardId: z.string().regex(/^\d+$/).optional(),
   geographicLevelId: z.string().regex(/^\d+$/).optional(),
-  disasterEventId: z.string().regex(/^\d+$/).optional(),
+  disasterEventId: z.string().optional(), // Allow UUID format for disaster event IDs
 });
 
 /**
@@ -73,7 +72,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
      * This ensures type safety and proper format of all inputs
      */
     const validationResult = querySchema.safeParse(searchParams);
-    
+
     if (!validationResult.success) {
       return Response.json(
         {
@@ -84,20 +83,25 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
       ) as TypedResponse<ImpactResponse>;
     }
 
-    const { sectorId, fromDate, toDate, hazardTypeId, hazardClusterId, 
-           specificHazardId, geographicLevelId, disasterEventId } = validationResult.data;
+    const { sectorId, hazardTypeId, hazardClusterId,
+      specificHazardId, geographicLevelId, disasterEventId } = validationResult.data;
+
+    // Get the original query parameters directly from the URL
+    // We'll pass the original date format to maintain compatibility with the database records
+    const fromDate = url.searchParams.get('fromDate');
+    const toDate = url.searchParams.get('toDate');
 
     /**
-     * Construct typed filters object from validated parameters
+     * Construct typed filters object from parameters
      */
     const filters: ImpactFilters = {
-      startDate: fromDate ?? null,
-      endDate: toDate ?? null,
+      startDate: fromDate,
+      endDate: toDate,
       hazardType: hazardTypeId ?? null,
       hazardCluster: hazardClusterId ?? null,
       specificHazard: specificHazardId ?? null,
       geographicLevel: geographicLevelId ?? null,
-      disasterEvent: disasterEventId ?? null,
+      disasterEvent: disasterEventId ?? null
     }
     /**
      * Data Retrieval and Processing
