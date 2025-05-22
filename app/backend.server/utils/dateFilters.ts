@@ -52,24 +52,54 @@ export const createDateCondition = (
 ): SQL => {
   const op = operator === 'gte' ? '>=' : '<=';
 
-  return sql`
-    ${column} IS NOT NULL AND 
-    CASE 
-      WHEN ${column} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' 
-      THEN ${column}::date ${sql.raw(op)} ${dateStr}::date
-      WHEN ${column} ~ '^[0-9]{4}-[0-9]{2}' 
-      THEN ${column}::date ${sql.raw(op)} ${operator === 'gte'
-      ? sql`date_trunc('month', ${dateStr}::date)`
-      : sql`(date_trunc('month', ${dateStr}::date) + interval '1 month - 1 day')`
+  // Format the input date string for PostgreSQL compatibility
+  let formattedDateStr = dateStr;
+
+  // If it's a year-only format (YYYY), convert to YYYY-01-01 or YYYY-12-31
+  if (/^\d{4}$/.test(dateStr)) {
+    formattedDateStr = operator === 'gte' ? `${dateStr}-01-01` : `${dateStr}-12-31`;
+  }
+  // If it's a year-month format (YYYY-MM), convert to YYYY-MM-01 or YYYY-MM-last_day
+  else if (/^\d{4}-\d{2}$/.test(dateStr)) {
+    if (operator === 'gte') {
+      formattedDateStr = `${dateStr}-01`;
+    } else {
+      const year = parseInt(dateStr.substring(0, 4));
+      const month = parseInt(dateStr.substring(5, 7));
+      const lastDay = new Date(year, month, 0).getDate();
+      formattedDateStr = `${dateStr}-${lastDay}`;
     }
-      WHEN ${column} ~ '^[0-9]{4}' 
-      THEN ${column}::date ${sql.raw(op)} ${operator === 'gte'
-      ? sql`date_trunc('year', ${dateStr}::date)`
-      : sql`(date_trunc('year', ${dateStr}::date) + interval '1 year - 1 day')`
-    }
-      ELSE false
-    END
-  `;
+  }
+
+  // Extract input year for comparison
+  const inputYear = formattedDateStr.substring(0, 4);
+
+  // For text-based date comparisons, we need a simple approach that works correctly
+  if (operator === 'gte') {
+    // For >= operations, we need to check if the database date is >= the input date
+    return sql`
+      ${column} IS NOT NULL AND
+      (
+        /* First extract and compare years numerically */
+        CASE
+          WHEN ${column} ~ '^[0-9]{4}' THEN SUBSTRING(${column} FROM 1 FOR 4)::integer
+          ELSE 0
+        END >= ${inputYear}::integer
+      )
+    `;
+  } else {
+    // For <= operations, we need to check if the database date is <= the input date
+    return sql`
+      ${column} IS NOT NULL AND
+      (
+        /* First extract and compare years numerically */
+        CASE
+          WHEN ${column} ~ '^[0-9]{4}' THEN SUBSTRING(${column} FROM 1 FOR 4)::integer
+          ELSE 0
+        END <= ${inputYear}::integer
+      )
+    `;
+  }
 };
 
 /**
