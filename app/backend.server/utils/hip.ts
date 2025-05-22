@@ -1,4 +1,4 @@
-import { Hip, HipApi, upsertHip } from '~/backend.server/models/hip'
+import { HipApi, upsertHip } from '~/backend.server/models/hip'
 
 /**
  * Fetches and processes HIPs data page-by-page.

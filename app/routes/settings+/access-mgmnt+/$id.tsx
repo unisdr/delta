@@ -3,8 +3,6 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { auditLogsTable, userTable } from "~/drizzle/schema";
 
-import { json } from "@remix-run/node";
-
 import { useLoaderData, Link } from "@remix-run/react";
 
 import { authLoaderWithPerm } from "~/util/auth";

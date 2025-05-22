@@ -1,5 +1,3 @@
-// api/geographic-levels.ts
-import { json } from "@remix-run/node";
 import { dr } from "~/db.server"; // Database instance
 import { divisionTable } from "~/drizzle/schema";
 import { sql } from "drizzle-orm";

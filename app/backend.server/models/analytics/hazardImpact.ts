@@ -1,4 +1,4 @@
-import { and, desc, eq, exists, inArray, sql, SQL, or } from "drizzle-orm";
+import { and, desc, eq, exists, inArray, sql, SQL, } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     damagesTable,
@@ -12,8 +12,6 @@ import {
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
 import {
-    calculateDamages,
-    calculateLosses,
     createAssessmentMetadata,
     calculateFaoAgriculturalDamage,
     calculateFaoAgriculturalLoss

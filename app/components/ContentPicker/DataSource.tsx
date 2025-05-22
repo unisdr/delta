@@ -1,6 +1,6 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { formatDate, isDateLike, convertToISODate } from "~/util/date";
-import { sql, eq, ilike, or, asc, desc, count, and } from "drizzle-orm";
+import { sql, ilike, or, asc, desc, and } from "drizzle-orm";
 import { buildTree } from "~/components/TreeView";
 
 function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: any) {

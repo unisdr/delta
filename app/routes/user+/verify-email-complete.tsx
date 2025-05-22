@@ -1,4 +1,4 @@
-import { json, MetaFunction } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/node";
 
 import {
 	authLoaderGetAuth,
@@ -9,16 +9,10 @@ import {
 
 import { useLoaderData, useActionData } from "@remix-run/react";
 
-import { verifyEmail } from "~/backend.server/models/user/verify_email";
-import { sendEmailVerification } from "~/backend.server/models/user/verify_email";
-
 import { formStringData } from "~/util/httputil";
-
-import { errorToString } from "~/frontend/form";
 
 import { redirect } from "@remix-run/node";
 
-import { formatTimestamp } from "~/util/time";
 import { sendEmail } from "~/util/email";
 import {
 	configCountryName,

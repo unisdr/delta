@@ -6,9 +6,6 @@ import { MainContainer } from "~/frontend/container";
 import { resourceRepoLoader } from "~/backend.server/handlers/resourcerepo";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import PreventionWebLandingPageWidget from "~/components/PreventionWebLandingPageWidget";
-import path from "path";
-import fs from "fs/promises";
-import { marked } from "marked";
 import { useLoaderData } from "@remix-run/react";
 import { loadMarkdownContent } from "~/util/loadMarkdownContent";
 

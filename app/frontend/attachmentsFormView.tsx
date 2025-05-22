@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import { ContentRepeater } from "~/components/ContentRepeater";
 
 export function AttachmentsFormView({

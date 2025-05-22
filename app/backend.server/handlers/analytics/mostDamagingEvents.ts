@@ -1,6 +1,6 @@
 import { getMostDamagingEvents, type MostDamagingEventsParams, type SortColumn, type SortDirection } from "~/backend.server/models/analytics/mostDamagingEvents";
 import { sanitizeInput } from "~/utils/security";
-import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 
 interface MostDamagingEventsRequestParams {
   sectorId: string | null;

@@ -1,10 +1,3 @@
-import {
-	Link
-} from "@remix-run/react";
-import {divisionTable} from "~/drizzle/schema";
-import {eq, isNotNull, isNull, sql} from "drizzle-orm";
-import {dr} from '~/db.server';
-
 interface TreeViewProps {
 	jsonData: any;
 }

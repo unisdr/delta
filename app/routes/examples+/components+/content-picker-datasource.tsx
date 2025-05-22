@@ -1,6 +1,5 @@
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
 import { contentPickerConfig } from "./content-picker-config";
-import { json } from "@remix-run/node";
 
 export const loader = async ({ request }: { request: Request }) => {
     const url = new URL(request.url);
