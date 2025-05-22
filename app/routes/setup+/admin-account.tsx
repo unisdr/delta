@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { useLocation } from "@remix-run/react";
 
@@ -18,7 +18,6 @@ interface ActionData {
     };
   };
 }
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { setupAdminAccount, setupAdminAccountFieldsFromMap } from "~/backend.server/models/user/admin";
 
 export const meta: MetaFunction = () => {

@@ -21,14 +21,6 @@ export default defineConfig({
 				v3_singleFetch: true,
 			},
 		}),
-		// viteStaticCopy({
-		// 	targets: [
-		// 		{
-		// 			src: "app/hips/*.csv", // Source: All CSV files in app/hip
-		// 			dest: "../app/hips", // Destination: Will be in 'build/app/hip'
-		// 		},
-		// 	],
-		// }),
 	],
 	resolve: {
 		alias: {

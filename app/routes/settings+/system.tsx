@@ -192,11 +192,6 @@ export default function Settings() {
   const isTermsSubmitting = termsFetcher.state === 'submitting';
   const isPrivacySubmitting = privacyFetcher.state === 'submitting';
 
-  const box2colStyle = {
-    width: '50%',
-    height: '100px',
-  };
-
   return (
     <MainContainer title="System Settings" headerExtra={<NavSettings />}>
       <div className="mg-section">

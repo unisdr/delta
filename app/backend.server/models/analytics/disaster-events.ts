@@ -201,7 +201,7 @@ export async function disasterEventTotalRecovery_RecordsAssets__ById(disasterEve
 			)
 		);
 
-	const rawSQL2 = queryDamageTable.toSQL();
+	// const rawSQL2 = queryDamageTable.toSQL();
 	// console.log('Recovery:', rawSQL2 );
 
 	// return queryDamageTable;

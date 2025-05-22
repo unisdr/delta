@@ -20,7 +20,6 @@ import {notifyError} from "./utils/notifications";
 import {JsonView, allExpanded, defaultStyles} from 'react-json-view-lite';
 
 import {DeleteButton} from "./components/delete-dialog";
-import { disable } from "ol/rotationconstraint";
 
 
 export type FormResponse<T> =

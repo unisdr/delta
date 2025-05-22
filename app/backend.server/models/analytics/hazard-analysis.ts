@@ -1,17 +1,5 @@
-import { and, eq, isNull, ne, SQL, sql } from "drizzle-orm";
+import { and, SQL, sql } from "drizzle-orm";
 import { dr } from "~/db.server";
-import {
-	affectedTable,
-	deathsTable,
-	disasterEventTable,
-	disasterRecordsTable,
-	displacedTable,
-	divisionTable,
-	humanDsgTable,
-	injuredTable,
-	missingTable,
-	sectorDisasterRecordsRelationTable,
-} from "~/drizzle/schema";
 
 interface HazardFilters {
 	hazardTypeId: string | null;

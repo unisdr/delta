@@ -1,4 +1,4 @@
-import { eq, sql, SQL, and, count, desc, inArray, gte, lte, exists, or, not } from "drizzle-orm";
+import { eq, sql, SQL, and, inArray, gte, lte, exists, or, not } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     disasterRecordsTable,
@@ -14,7 +14,6 @@ import {
     hipClusterTable,
     hipTypeTable
 } from "~/drizzle/schema";
-import { getSectorsByParentId } from "./sectors";
 import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import type { DisasterImpactMetadata } from "~/types/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
@@ -78,13 +77,13 @@ interface GeographicFilters {
     baseQuery?: any;
 }
 
-interface DivisionValues {
-    totalDamage: number | null;
-    totalLoss: number | null;
-    sources: Set<string>;
-    metadata: DisasterImpactMetadata;
-    dataAvailability: 'available' | 'no_data' | 'zero';
-}
+// interface DivisionValues {
+//     totalDamage: number | null;
+//     totalLoss: number | null;
+//     sources: Set<string>;
+//     metadata: DisasterImpactMetadata;
+//     dataAvailability: 'available' | 'no_data' | 'zero';
+// }
 
 interface CleanDivisionValues {
     totalDamage: number | null;
@@ -138,7 +137,7 @@ interface GeoJSONFeatureCollection {
     features: GeoJSONFeature[];
 }
 
-type GeoJSON = GeoJSONGeometry | GeoJSONFeature | GeoJSONFeatureCollection;
+// type GeoJSON = GeoJSONGeometry | GeoJSONFeature | GeoJSONFeatureCollection;
 
 // Helper function to normalize text for matching
 function normalizeText(text: string): string {

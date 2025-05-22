@@ -1,4 +1,4 @@
-import { json, MetaFunction } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/node";
 
 import {
 	authLoaderGetAuth,
@@ -9,16 +9,8 @@ import {
 
 import { useLoaderData, useActionData } from "@remix-run/react";
 
-import { verifyEmail } from "~/backend.server/models/user/verify_email";
-import { sendEmailVerification } from "~/backend.server/models/user/verify_email";
-
-import { formStringData } from "~/util/httputil";
-
-import { errorToString } from "~/frontend/form";
-
 import { redirect } from "@remix-run/node";
 
-import { formatTimestamp } from "~/util/time";
 import { sendEmail } from "~/util/email";
 import {
 	configCountryName,
@@ -64,12 +56,12 @@ export const meta: MetaFunction = (request) => {
 };
 
 export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
-	const { request } = actionArgs;
+	// const { request } = actionArgs;
 	const { user } = authActionGetAuth(actionArgs);
-	const data = formStringData(await request.formData());
-	const code = data.code || "";
-	const resend = data.resend || "";
-	const userId = user.id;
+	// const data = formStringData(await request.formData());
+	// const code = data.code || "";
+	// const resend = data.resend || "";
+	// const userId = user.id;
 
 	//Send confirmation email
 	const countryName = configCountryName();
@@ -152,10 +144,10 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 
 export default function Data() {
 	const pageData = useLoaderData<typeof loader>();
-	const actionData = useActionData<typeof action>();
-	const [resent, setResent] = React.useState(false);
+	// const actionData = useActionData<typeof action>();
+	// const [resent, setResent] = React.useState(false);
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 
 	return (
 		<div className="dts-page-container">

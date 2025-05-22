@@ -1,32 +1,37 @@
+import { authLoaderWithPerm } from "~/util/auth";
+
+import { NavSettings } from "~/routes/settings/nav";
 import {
-	authLoaderWithPerm
-} from "~/util/auth";
+	divisionBreadcrumb,
+	DivisionBreadcrumbRow,
+	divisionsAllLanguages,
+} from "~/backend.server/models/division";
+import { Link, useLoaderData } from "@remix-run/react";
+import { divisionTable } from "~/drizzle/schema";
+import { eq, isNull, sql } from "drizzle-orm";
+import { dr } from "~/db.server";
 
-import {NavSettings} from "~/routes/settings/nav";
-import {divisionBreadcrumb, DivisionBreadcrumbRow, divisionsAllLanguages} from "~/backend.server/models/division";
-import {Link, useLoaderData} from "@remix-run/react";
-import {divisionTable} from "~/drizzle/schema";
-import {eq, isNull, sql} from "drizzle-orm";
-import {dr} from '~/db.server';
+import { Pagination } from "~/frontend/pagination/view";
+import { executeQueryForPagination2 } from "~/frontend/pagination/api.server";
 
-import {Pagination} from "~/frontend/pagination/view"
-import {executeQueryForPagination2} from "~/frontend/pagination/api.server"
-
-import {Breadcrumb} from "~/frontend/division";
-import {MainContainer} from "~/frontend/container";
+import { Breadcrumb } from "~/frontend/division";
+import { MainContainer } from "~/frontend/container";
 
 import "./style.css";
-import {DataMainLinks} from "~/frontend/data_screen";
+import { DataMainLinks } from "~/frontend/data_screen";
+import { useState } from "react";
+// import { TreeView } from "~/frontend/treeview/view";
+import { buildTree, TreeView } from "~/components/TreeView";
 
 interface ItemRes {
-	id: number
-	nationalId: string
-	hasChildren: boolean
-	name: Record<string, string>
+	id: number;
+	nationalId: string;
+	hasChildren: boolean;
+	name: Record<string, string>;
 }
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
-	const {request} = loaderArgs;
+	const { request } = loaderArgs;
 
 	const url = new URL(request.url);
 	const parentId = Number(url.searchParams.get("parent")) || null;
@@ -50,31 +55,52 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		hasChildren: sql<boolean>`EXISTS (
 		SELECT 1
 		FROM ${divisionTable} as children
-		WHERE children.${divisionTable.parentId} = ${divisionTable}.id)`.as("hasChildren"),
+		WHERE children.${divisionTable.parentId} = ${divisionTable}.id)`.as(
+			"hasChildren"
+		),
 	});
 
 	let q2 = (q: typeof q1) => {
-		return q.from(divisionTable)
-			.where(parentId ? eq(divisionTable.parentId, parentId) : isNull(divisionTable.parentId))
-	}
+		return q
+			.from(divisionTable)
+			.where(
+				parentId
+					? eq(divisionTable.parentId, parentId)
+					: isNull(divisionTable.parentId)
+			);
+	};
 
 	let breadcrumbs: DivisionBreadcrumbRow[] | null = null;
 	if (parentId) {
-		breadcrumbs = await divisionBreadcrumb(selectedLangs, parentId)
+		breadcrumbs = await divisionBreadcrumb(selectedLangs, parentId);
 	}
 
-	const res = await executeQueryForPagination2<ItemRes>(request, q1, q2, ["parent"])
+	const res = await executeQueryForPagination2<ItemRes>(request, q1, q2, [
+		"parent",
+	]);
 
-	return {langs, breadcrumbs, selectedLangs, ...res};
+
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "name";
+	const rawData = await dr.select().from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+
+	return { langs, breadcrumbs, selectedLangs, treeData, ...res };
 });
 
 type LanguageCheckboxesProps = {
-	langs: Record<string, number>
-	selectedLangs: string[]
-}
+	langs: Record<string, number>;
+	selectedLangs: string[];
+};
 
-export function LanguageCheckboxes({langs, selectedLangs}: LanguageCheckboxesProps) {
-	const sortedLangs = Object.entries(langs).sort(([a], [b]) => a.localeCompare(b));
+export function LanguageCheckboxes({
+	langs,
+	selectedLangs,
+}: LanguageCheckboxesProps) {
+	const sortedLangs = Object.entries(langs).sort(([a], [b]) =>
+		a.localeCompare(b)
+	);
 
 	return (
 		<div>
@@ -102,7 +128,7 @@ function linkOrText(linkUrl: string, text: string | number) {
 	return linkUrl ? <Link to={linkUrl}>{text}</Link> : <span>{text}</span>;
 }
 
-export function DivisionsTable({items, langs}: DivisionsTableProps) {
+export function DivisionsTable({ items, langs }: DivisionsTableProps) {
 	return (
 		<table className="dts-table">
 			<thead>
@@ -120,12 +146,8 @@ export function DivisionsTable({items, langs}: DivisionsTableProps) {
 					const linkUrl = item.hasChildren ? `?parent=${item.id}` : "";
 					return (
 						<tr key={item.id}>
-							<td>
-								{linkOrText(linkUrl, item.id)}
-							</td>
-							<td>
-								{linkOrText(linkUrl, item.nationalId)}
-							</td>
+							<td>{linkOrText(linkUrl, item.id)}</td>
+							<td>{linkOrText(linkUrl, item.nationalId)}</td>
 							{langs.map((lang) => (
 								<td key={lang}>
 									{linkOrText(linkUrl, item.name[lang] || "-")}
@@ -133,7 +155,8 @@ export function DivisionsTable({items, langs}: DivisionsTableProps) {
 							))}
 							<td>
 								<Link to={`/settings/geography/${item.id}`}>View</Link>&nbsp;
-								<Link to={`/settings/geography/edit/${item.id}`}>Edit</Link>&nbsp;
+								<Link to={`/settings/geography/edit/${item.id}`}>Edit</Link>
+								&nbsp;
 							</td>
 						</tr>
 					);
@@ -143,51 +166,127 @@ export function DivisionsTable({items, langs}: DivisionsTableProps) {
 	);
 }
 
-
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>();
-	const pagination = Pagination(ld.pagination)
+	const pagination = Pagination(ld.pagination);
+	const [viewMode, setViewMode] = useState<"tree" | "table">("tree");
+
+	// Table Component
+	const GeographicLevelsTable = () => (
+		<>
+			<br />
+			<DataMainLinks
+				noCreate={true}
+				noImport={true}
+				baseRoute="/settings/geography"
+				resourceName=""
+				csvExportLinks={true}
+				extraButtons={[{ relPath: "upload", label: "Upload CSV" }]}
+			/>
+			{ld.pagination.totalItems > 0 ? (
+				<>
+					<LanguageCheckboxes
+						langs={ld.langs}
+						selectedLangs={ld.selectedLangs}
+					/>
+					<Breadcrumb rows={ld.breadcrumbs} />
+					<DivisionsTable langs={ld.selectedLangs} items={ld.items} />
+					{pagination}
+				</>
+			) : (
+				<p>
+					No administrative divisions configured. Please upload CSV with data.
+					See <a href="#">example</a>.
+				</p>
+			)}
+		</>
+	);
 
 	return (
-		<MainContainer
-			title="Geographic levels"
-			headerExtra={<NavSettings />}
-			headerAfter={
-				<section>
-					<div className="mg-container tabs-container">
-						<ul className="tabs">
-							<li className="active"><Link to="/settings/geography/">Table View</Link></li>
-							<li><Link to="/settings/geography/tree">Tree View</Link></li>
-						</ul>
+		<MainContainer title="Geographic levels" headerExtra={<NavSettings />}>
+			<>
+				<section className="dts-page-section">
+					<h2 className="mg-u-sr-only" id="tablist01">
+						Tablist title
+					</h2>
+					<ul
+						className="dts-tablist"
+						role="tablist"
+						aria-labelledby="tablist01"
+					>
+						<li role="presentation">
+							<button
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab01"
+								aria-selected={viewMode === "tree" ? true : false}
+								aria-controls="tabpanel01"
+								tabIndex={viewMode === "tree" ? 0 : -1}
+								onClick={() => setViewMode("tree")}
+							>
+								<span>Tree View</span>
+							</button>
+						</li>
+						<li role="presentation">
+							<button
+								type="button"
+								className="dts-tablist__button"
+								role="tab"
+								id="tab02"
+								aria-selected={viewMode === "table" ? true : false}
+								aria-controls="tabpanel02"
+								tabIndex={viewMode === "table" ? 0 : -1}
+								onClick={() => setViewMode("table")}
+							>
+								<span>Table View</span>
+							</button>
+						</li>
+					</ul>
+					<div
+						className={
+							viewMode === "tree"
+								? "dts-tablist__panel"
+								: "dts-tablist__panel hidden"
+						}
+						id="tabpanel101"
+						role="tabpanel"
+						aria-labelledby="tab01"
+					>
+						<div className="dts-placeholder">
+							<form>
+								<div className="fields">
+									<div className="form-field">
+										<TreeView
+											treeData={ld.treeData as any}
+											rootCaption="Geographic levels"
+											dialogMode={false}
+											disableButtonSelect={true}
+											noSelect={true}
+											search={true}
+											expanded={true}
+											itemLink="/settings/geography/edit/[id]?view=tree"
+											expandByDefault={true}
+										/>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+					<div
+						className={
+							viewMode === "table"
+								? "dts-tablist__panel"
+								: "dts-tablist__panel hidden"
+						}
+						id="tabpanel102"
+						role="tabpanel"
+						aria-labelledby="tab02"
+					>
+						<GeographicLevelsTable/>
 					</div>
 				</section>
-			}
-		>
-			<>
-				<br />
-				<DataMainLinks
-					noCreate={true}
-					noImport={true}
-					baseRoute="/settings/geography"
-					resourceName=""
-					csvExportLinks={true}
-					extraButtons={
-						[
-							{relPath: "upload", label: "Upload CSV"}
-						]
-					}
-				/>
-				{ld.pagination.totalItems > 0 ? (
-					<>
-						<LanguageCheckboxes langs={ld.langs} selectedLangs={ld.selectedLangs} />
-						<Breadcrumb rows={ld.breadcrumbs} />
-						<DivisionsTable langs={ld.selectedLangs} items={ld.items} />
-						{pagination}
-					</>
-				) : (
-					<p>No administrative divisions configured. Please upload CSV with data. See <a href="#">example</a>.</p>
-				)}
 			</>
-		</MainContainer >
+		</MainContainer>
 	);
 }
