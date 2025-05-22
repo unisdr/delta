@@ -35,16 +35,10 @@ const querySchema = z.object({
   hazardClusterId: z.string().regex(/^\d+$/).optional(),
   specificHazardId: z.string().regex(/^\d+$/).optional(),
   geographicLevelId: z.string().regex(/^\d+$/).optional(),
-  fromDate: z.string().datetime().optional(),
-  toDate: z.string().datetime().optional(),
-  disasterEventId: z.string().regex(/^\d+$/).optional(),
-}).refine(
-  (data) => (!data.fromDate || data.toDate) && (!data.toDate || data.fromDate),
-  {
-    message: "Both fromDate and toDate must be provided together",
-    path: ["fromDate", "toDate"],
-  }
-);
+  fromDate: z.string().optional(), 
+  toDate: z.string().optional(), 
+  disasterEventId: z.string().optional(), 
+});
 
 /**
  * Loader function for the effect-details API endpoint.
