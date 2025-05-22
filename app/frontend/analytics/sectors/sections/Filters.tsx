@@ -138,12 +138,12 @@ const Filters: React.FC<FiltersProps> = ({
 
   // React Query for fetching geographic levels
   const { data: geographicLevelsData } = useQuery({
-   queryKey: ["geographicLevels", filters.geographicLevelId],
-   queryFn: async () => {
+    queryKey: ["geographicLevels", filters.geographicLevelId],
+    queryFn: async () => {
       const response = await fetch(`/api/analytics/geographic-levels`);
       return response.json();
     }
-});
+  });
 
   // Function to handle specific hazard selection
   const handleSpecificHazardSelection = async (specificHazardId: string) => {
@@ -233,6 +233,23 @@ const Filters: React.FC<FiltersProps> = ({
     setFilters((prev) => {
       const updatedFilters = { ...prev, [field]: value };
 
+      // Validate date ranges
+      if (field === "fromDate" && prev.toDate && value > prev.toDate) {
+        // If fromDate is later than toDate, clear toDate
+        updatedFilters.toDate = "";
+        // Show warning to user
+        Swal.fire({
+          icon: 'warning',
+          text: 'From date is later than To date. The To date has been cleared.',
+          confirmButtonText: 'OK',
+          buttonsStyling: false,
+          customClass: {
+            popup: 'swal2-custom-popup',
+            confirmButton: 'swal2-custom-button',
+          },
+        });
+      }
+
       // Reset dependent fields for sectors
       if (field === "sectorId") {
         const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
@@ -291,6 +308,21 @@ const Filters: React.FC<FiltersProps> = ({
         customClass: {
           popup: 'swal2-custom-popup', // Apply the custom popup styles
           confirmButton: 'swal2-custom-button', // Apply the custom button styles
+        },
+      });
+      return;
+    }
+
+    // Validate date range before applying filters
+    if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) {
+      Swal.fire({
+        icon: 'warning',
+        text: 'From date cannot be later than To date. Please adjust your date selection.',
+        confirmButtonText: 'OK',
+        buttonsStyling: false,
+        customClass: {
+          popup: 'swal2-custom-popup',
+          confirmButton: 'swal2-custom-button',
         },
       });
       return;
@@ -543,6 +575,7 @@ const Filters: React.FC<FiltersProps> = ({
           type="date"
           className="filter-date"
           value={filters.toDate}
+          min={filters.fromDate || undefined}
           onChange={(e) => handleFilterChange("toDate", e.target.value)}
         />
       </div>
