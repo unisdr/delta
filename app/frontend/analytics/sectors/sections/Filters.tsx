@@ -158,8 +158,8 @@ const Filters: React.FC<FiltersProps> = ({
       // Convert IDs to strings before updating the filters
       setFilters((prev) => ({
         ...prev,
-        hazardClusterId: hazardClusterId.toString(),
-        hazardTypeId: hazardTypeId.toString(),
+        hazardClusterId: hazardClusterId?.toString() || "",
+        hazardTypeId: hazardTypeId?.toString() || "",
       }));
     } catch (error) {
       console.error("Error fetching related hazard data:", error);
@@ -185,7 +185,7 @@ const Filters: React.FC<FiltersProps> = ({
       const cluster = hazardClusters[0];
       setFilters(prev => ({
         ...prev,
-        hazardClusterId: cluster.id.toString()
+        hazardClusterId: cluster.id?.toString() || ""
       }));
       setDisplayValues(prev => ({
         ...prev,
@@ -200,7 +200,7 @@ const Filters: React.FC<FiltersProps> = ({
       const hazard = specificHazards[0];
       setFilters(prev => ({
         ...prev,
-        specificHazardId: hazard.id.toString()
+        specificHazardId: hazard.id?.toString() || ""
       }));
       setDisplayValues(prev => ({
         ...prev,
