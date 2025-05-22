@@ -1,6 +1,5 @@
 import {
 	ActionFunctionArgs,
-	json,
 	LoaderFunctionArgs,
 	redirect,
 	MetaFunction
@@ -9,23 +8,16 @@ import {
 	useActionData,
 	useLoaderData,
 } from "@remix-run/react";
-import { Link } from "react-router-dom";
 import {
 	Form,
 	Field,
 	SubmitButton,
-	FieldErrors,
 	FieldErrorsStandard,
-	validateFormAndToggleSubmitButton,
 } from "~/frontend/form";
 import { formStringData } from "~/util/httputil";
 import {
 	createUserSession
 } from "~/util/session";
-import { 
-	configAuthSupportedAzureSSOB2C
-} from "~/util/config";
-import { MainContainer } from "~/frontend/container";
 import {acceptInvite, AcceptInviteFieldsFromMap, validateInviteCode} from "~/backend.server/models/user/invite";
 
 import { useState, useEffect } from "react";

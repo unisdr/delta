@@ -6,7 +6,7 @@ import {
 	redirect,
 } from "@remix-run/node";
 import { useLoaderData, useActionData, Link } from "@remix-run/react";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
 	Form,
 	Field,
@@ -100,12 +100,7 @@ export default function Screen() {
 	const errors = actionData?.errors || {};
 	const data = actionData?.data;
 
-	// Ensure password visibility is initialized on the client to avoid mismatch
-	const [isClient, setIsClient] = useState(false);
-
 	useEffect(() => {
-		setIsClient(true);
-
 		// Submit button enabling only when required fields are filled
 		const submitButton = document.querySelector(
 			"[id='login-button']"

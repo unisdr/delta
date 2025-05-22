@@ -1,19 +1,14 @@
-import {dr, Tx} from "~/db.server";
+import {dr} from "~/db.server";
 import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
 
 import { MainContainer } from "~/frontend/container";
 import type { MetaFunction } from "@remix-run/node";
-
-import { useLocation } from 'react-router-dom';
-
 
 import {
 	upsertRecord as disRecSectorsUpsertRecord,
 	disRecSectorsById,
 } from "~/backend.server/models/disaster_record__sectors";
 
-
-import {getSectors, SectorType} from "~/backend.server/models/sector";
 
 import { 
 	useLoaderData, 
@@ -22,15 +17,10 @@ import {
 	useSubmit, 
 	useNavigation,
 	useActionData,
-	useNavigate,
-	Link
 } from "@remix-run/react";
 
-import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
-import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
-import { string } from "prop-types";
+import { useState, useEffect, useRef, RefObject } from 'react';
 import { configCurrencies } from  "~/util/config";
-import { isEmpty } from "ol/extent";
 
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
@@ -45,10 +35,10 @@ export const meta: MetaFunction = ({ data }) => {
 	];
  };
 
-interface Category { 
-	id: number; 
-	name: string; 
-}
+// interface Category { 
+// 	id: number; 
+// 	name: string; 
+// }
 
 interface SubCategory { 
 	id: number; 
@@ -193,7 +183,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 export default function Screen() {
 	const loaderData = useLoaderData<PropsLoader>();
 	const actionData = useActionData<PropsAction>();
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
@@ -201,7 +191,7 @@ export default function Screen() {
 	const formRefHidden: RefObject<HTMLInputElement> = useRef(null);
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
 
-	const locationUrlPath = useLocation();
+	// const locationUrlPath = useLocation();
 
 	const formAction = loaderData?.formAction || 'new';
 
