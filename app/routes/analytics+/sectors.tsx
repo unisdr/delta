@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
-import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
@@ -16,7 +15,6 @@ import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
 import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
-import { FaFileDownload } from 'react-icons/fa';
 import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
 
 

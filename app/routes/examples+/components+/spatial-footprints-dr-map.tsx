@@ -5,8 +5,6 @@ import { sql, } from "drizzle-orm";
 import SpatialFootprintsMapViewer from "~/components/SpatialFootprintsMapViewer";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    const url = new URL(request.url);
-  
     const disasterEvents = await dr.execute(sql`
       SELECT 
         de.id,

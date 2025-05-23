@@ -1,14 +1,9 @@
 import type { MetaFunction } from '@remix-run/node';
 
-import {
-	json,
-} from "@remix-run/node";
-
 import { Link } from "react-router-dom";
-import { useLoaderData, isRouteErrorResponse, useRouteError } from "@remix-run/react";
-import { configSiteName, configAuthSupportedAzureSSOB2C, configCountryInstanceISO } from "~/util/config";
-import { FaExclamationTriangle, FaDatabase } from "react-icons/fa";
-import { ErrorMessage } from "~/frontend/components/ErrorMessage";
+import { useLoaderData, } from "@remix-run/react";
+import { configSiteName, configAuthSupportedAzureSSOB2C} from "~/util/config";
+import { FaExclamationTriangle } from "react-icons/fa";
 import { checkValidCurrency } from "~/util/currency";
 
 export const action = async () => {

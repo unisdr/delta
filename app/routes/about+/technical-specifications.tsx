@@ -1,6 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
 
-import { authLoader, authLoaderGetAuth } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { resourceRepoLoader } from "~/backend.server/handlers/resourcerepo";

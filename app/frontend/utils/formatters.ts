@@ -94,12 +94,12 @@ export const formatPercentage = (value: string | number, locale: string = 'en-US
 };
 
 // TODO: Add exchange rate functionality
-interface ExchangeRate {
-    from: string;
-    to: string;
-    rate: number;
-    lastUpdated: Date;
-}
+// interface ExchangeRate {
+//     from: string;
+//     to: string;
+//     rate: number;
+//     lastUpdated: Date;
+// }
 
 // This will be implemented later to support real-time currency conversion
 export const convertCurrency = async (

@@ -14,12 +14,12 @@ import { z } from "zod";
 /**
  * Interface for the API response structure
  */
-interface MostDamagingEventsResponse {
-  success: boolean;
-  data?: any; // TODO: Replace with specific type from getMostDamagingEvents
-  error?: string;
-  code?: string;
-}
+// interface MostDamagingEventsResponse {
+//   success: boolean;
+//   data?: any; // TODO: Replace with specific type from getMostDamagingEvents
+//   error?: string;
+//   code?: string;
+// }
 
 /**
  * Loader function that handles the most damaging events API request

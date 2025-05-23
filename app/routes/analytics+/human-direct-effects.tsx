@@ -1,7 +1,6 @@
-import React from "react";
 import type { MetaFunction } from "@remix-run/node";
 
-import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 

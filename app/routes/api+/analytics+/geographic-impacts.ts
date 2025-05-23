@@ -4,7 +4,7 @@
  * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
  */
 
-import { LoaderFunction, LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { handleGeographicImpactQuery } from "~/backend.server/handlers/analytics/geographicImpact";
 import { z } from "zod";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";

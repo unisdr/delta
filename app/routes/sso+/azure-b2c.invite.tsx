@@ -1,5 +1,4 @@
 import {
-    json,
     LoaderFunctionArgs,
 } from "@remix-run/node";
 import {
@@ -7,7 +6,6 @@ import {
 } from "@remix-run/react";
 import {validateInviteCode} from "~/backend.server/models/user/invite";
 import { 
-    SSOAzureB2C as interfaceSSOAzureB2C, 
     loginGetCode
 } from "~/util/ssoauzeb2c";
 

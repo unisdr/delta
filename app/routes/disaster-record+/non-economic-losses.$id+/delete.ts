@@ -10,9 +10,6 @@ import {
     redirect,
 } from "@remix-run/react";
 
-import { json } from "@remix-run/node";
-
-
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
     const {params} = actionArgs;
     const req = actionArgs.request;

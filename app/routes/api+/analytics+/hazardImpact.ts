@@ -4,7 +4,7 @@
  * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
  */
 
-import { LoaderFunction, LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
+import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getHazardImpact } from "~/backend.server/handlers/analytics/hazardImpact";
 import type { HazardImpactFilters } from "~/types/hazardImpact";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";

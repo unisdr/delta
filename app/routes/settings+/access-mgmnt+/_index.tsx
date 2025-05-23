@@ -60,7 +60,7 @@ interface UserRes {
 
 export default function Settings() {
 	const ld = useLoaderData<typeof loader>();
-	const { items, search } = ld;
+	const { items } = ld;
 
 	const [isClient, setIsClient] = useState(false);
 

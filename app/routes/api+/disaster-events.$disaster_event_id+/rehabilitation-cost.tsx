@@ -3,7 +3,7 @@
  *
  */
 
-import { dr, Tx } from "~/db.server";
+import { dr } from "~/db.server";
 
 
 import { calculateTotalRehabilitationCost } from "~/backend.server/models/analytics/disaster-events-cost-calculator";

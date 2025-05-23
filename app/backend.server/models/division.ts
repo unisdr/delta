@@ -1,5 +1,5 @@
 import {
-  SQL, sql, eq, isNull, aliasedTable, and, or, inArray, asc
+  SQL, sql, eq, isNull
 } from 'drizzle-orm';
 
 import { selectTranslated } from './common';
@@ -23,31 +23,16 @@ import {
   ImportError,
   HierarchyError,
   TransactionError,
-  TriggerError,
   AppError
 } from '~/utils/errors';
 import {
-  processBatches,
   processParallelBatches
 } from '~/utils/batchProcessing';
 import {
-  verifyTriggerExistence,
-  divisionExists,
-  validateGeometryWithPostGIS,
-  validateCoordinateSystem,
-  transformToWGS84,
-  calculateDivisionLevel,
-  optimizeSpatialIndexing,
-  restoreDefaultSettings,
   GeoDatabaseUtils
 } from '~/utils/geoDatabase';
 import {
   validateGeoJSON,
-  validateCSVStructure,
-  detectCircularReferences,
-  validateParentChildRelationships,
-  featureSchema,
-  featureCollectionSchema
 } from '~/utils/geoValidation';
 
 // Create logger

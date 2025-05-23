@@ -4,9 +4,9 @@
  * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
  */
 
-import { LoaderFunction, LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
+import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getEffectDetailsHandler, EffectDetailsError } from "~/backend.server/handlers/analytics/effectDetails";
-import { sanitizeInput, checkRateLimit } from "~/utils/security";
+import { checkRateLimit } from "~/utils/security";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { z } from "zod";
 

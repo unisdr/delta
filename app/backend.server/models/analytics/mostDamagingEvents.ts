@@ -7,7 +7,7 @@
  * 3. World Bank DaLA methodology for impact ranking
  */
 
-import { SQL, sql, eq, and, inArray, desc, ilike, exists, or } from "drizzle-orm";
+import { SQL, sql, eq, and, inArray, desc, exists, or } from "drizzle-orm";
 import { dr as db } from "~/db.server";
 import {
   disasterRecordsTable,
@@ -18,14 +18,12 @@ import {
   lossesTable,
   hipTypeTable,
   hipClusterTable,
-  divisionTable,
   hipHazardTable,
   sectorTable
 } from "~/drizzle/schema";
-import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
-import { getSectorsByParentId } from "./sectors";
 import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 /**

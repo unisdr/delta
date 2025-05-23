@@ -312,9 +312,9 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 	let totalDamages:number = 0;
 	let totalLosses:number = 0;
 	let totalRecovery:number = 0;
-	let recordsAssetDamagesQuery:any = undefined;
-	let recordsAssetDamages:any = undefined;
-	let recordsAssetlosses:any = undefined;
+	// let recordsAssetDamagesQuery:any = undefined;
+	// let recordsAssetDamages:any = undefined;
+	// let recordsAssetlosses:any = undefined;
 	let recordsAssetRecoveryIdArray:any[] = [];
 	let recordsAssetDamagesIdArray:any[] = [];
 	let recordsAssetLossesIdArray:any[] = [];
@@ -473,9 +473,9 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 	let totalDamages:number = 0;
 	let totalLosses:number = 0;
 	let totalRecovery:number = 0;
-	let recordsAssetDamagesQuery:any = undefined;
-	let recordsAssetDamages:any = undefined;
-	let recordsAssetlosses:any = undefined;
+	// let recordsAssetDamagesQuery:any = undefined;
+	// let recordsAssetDamages:any = undefined;
+	// let recordsAssetlosses:any = undefined;
 	let recordsAssetRecoveryIdArray:any[] = [];
 	let recordsAssetDamagesIdArray:any[] = [];
 	let recordsAssetLossesIdArray:any[] = [];

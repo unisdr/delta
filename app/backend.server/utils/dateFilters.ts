@@ -50,7 +50,7 @@ export const createDateCondition = (
   dateStr: string,
   operator: 'gte' | 'lte'
 ): SQL => {
-  const op = operator === 'gte' ? '>=' : '<=';
+  // const op = operator === 'gte' ? '>=' : '<=';
 
   // Format the input date string for PostgreSQL compatibility
   let formattedDateStr = dateStr;

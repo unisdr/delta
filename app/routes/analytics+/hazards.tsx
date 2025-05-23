@@ -1,4 +1,4 @@
-import { json, MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { useState } from "react";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";

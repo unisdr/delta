@@ -7,7 +7,7 @@ import {
 	authActionGetAuth,
 } from "~/util/auth";
 
-import { useLoaderData, useActionData } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 
 import { redirect } from "@remix-run/node";
 

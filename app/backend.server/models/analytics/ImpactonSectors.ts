@@ -6,12 +6,9 @@ import {
   disasterRecordsTable,
   disasterEventTable,
   hazardousEventTable,
-  hipHazardTable,
-  hipClusterTable,
   sectorDisasterRecordsRelationTable,
-  sectorTable
 } from "~/drizzle/schema";
-import { and, eq, inArray, ilike, SQL, exists, like, or } from "drizzle-orm";
+import { and, eq, inArray, SQL, exists} from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import { configCurrencies } from "~/util/config";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";

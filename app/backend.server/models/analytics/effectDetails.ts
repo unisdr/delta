@@ -6,12 +6,9 @@ import {
   disruptionTable,
   disasterRecordsTable,
   sectorDisasterRecordsRelationTable,
-  measureTable,
-  unitTable,
   assetTable,
   disasterEventTable,
   hazardousEventTable,
-  sectorTable,
 } from "~/drizzle/schema";
 import { getSectorsByParentId } from "./sectors";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
