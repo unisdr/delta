@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
