@@ -1,4 +1,4 @@
-import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
+import { authLoaderWithPerm} from "~/util/auth";
 
 import {
 	disRecSectorsById,
@@ -13,9 +13,6 @@ import {lossesDeleteBySectorId} from "~/backend.server/models/losses";
 import { 
 	redirect,
 } from "@remix-run/react";
-
-import { json, } from "@remix-run/node";
-
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params} = actionArgs;

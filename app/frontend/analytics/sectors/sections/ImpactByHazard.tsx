@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from "react";
-import { useQuery, QueryClient, QueryClientProvider, UseQueryOptions } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
-import { formatCurrencyWithCode, useDefaultCurrency, formatCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 
 // Create a client
@@ -237,7 +237,6 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
     };
 
     const renderLegendText = (value: string, entry: any) => {
-        const { payload } = entry;
         return (
             <span style={{
                 color: activeIndex === entry.index ? '#000' : '#666',
@@ -325,7 +324,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
 function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     const enabled = !!filters.sectorId;
     const targetSectorId = filters.subSectorId || filters.sectorId;
-    const defaultCurrency = useDefaultCurrency();
+    // const defaultCurrency = useDefaultCurrency();
 
     const queryParams = new URLSearchParams();
     if (targetSectorId) queryParams.set("sectorId", targetSectorId);

@@ -67,7 +67,7 @@ export function DivisionForm({edit, fields, errors, breadcrumbs, view}: Division
 			</Form>
 
 		    {!view && <Link to={"/settings/geography?parent=" + fields.parentId}>Back to List</Link>}
-			{view && <Link to={"/settings/geography/tree"}>Back to List</Link>}
+			{view && <Link to={"/settings/geography"}>Back to List</Link>}
 		</>
 	);
 }

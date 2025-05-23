@@ -1,5 +1,4 @@
-import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
-import { eq, ilike, or, asc, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { sectorTable } from "~/drizzle/schema";
 
 export const contentPickerConfigSector = {

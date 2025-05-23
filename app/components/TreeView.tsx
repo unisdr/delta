@@ -1,10 +1,9 @@
-import React, {
+import {
 	useState,
 	useRef,
 	useEffect,
 	forwardRef,
 	useImperativeHandle,
-	useCallback,
 } from "react";
 import { Link } from "@remix-run/react";
 
@@ -258,9 +257,9 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			});
 		}, [defaultSelectedIds]); // ✅ This avoids infinite re-renders
 
-		const [selectedItems, setSelectedItems] = useState<{
-			[key: number]: boolean;
-		}>({});
+		// const [selectedItems, setSelectedItems] = useState<{
+		// 	[key: number]: boolean;
+		// }>({});
 
 		const dialogRef = useRef<any>(null);
 
@@ -289,7 +288,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 				setIsCollapseDisabled(false);
 
 				const expandedState: { [key: number]: boolean } = {};
-				const filteredNodes = filterTree(treeData, searchTerm, expandedState);
+				filterTree(treeData, searchTerm, expandedState);
 
 				setExpandedNodes((prev) => {
 					if (JSON.stringify(prev) !== JSON.stringify(expandedState)) {
@@ -396,9 +395,9 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 		const itemSelect = (e: any) => {
 			e.preventDefault();
 
-			const textarea = e.target
-				.closest("li")
-				?.querySelector("textarea") as HTMLTextAreaElement;
+			// const textarea = e.target
+			// 	.closest("li")
+			// 	?.querySelector("textarea") as HTMLTextAreaElement;
 
 			const dataId = e.target.closest("li").getAttribute("data-id") || "";
 			const dataIds = e.target.closest("li").getAttribute("data-ids") || "";
