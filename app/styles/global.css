@@ -44,6 +44,33 @@ form>label {
   border-color: #004f91;
 }
 
+.dts-status--draft {
+  background-color: #FFA500;
+}
+
+
+.dts-status--completed-waiting-for-approval {
+  background-color: #1E90FF;
+}
+
+
+.dts-status--approved {
+  background-color: #28A745;
+}
+
+
+.dts-status--sent-for-review {
+  background-color: #FFC107;
+}
+
+.dts-status--published {
+  background-color: #6F42C1;
+}
+
+.dts-status--rejected {
+  background-color: #990000;
+}
+
 .input-error {
   border: 1px solid #c10920 !important;
   /* Error border with higher specificity */
