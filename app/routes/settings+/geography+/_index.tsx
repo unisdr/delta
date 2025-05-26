@@ -20,7 +20,6 @@ import { MainContainer } from "~/frontend/container";
 import "./style.css";
 import { DataMainLinks } from "~/frontend/data_screen";
 import { useState } from "react";
-// import { TreeView } from "~/frontend/treeview/view";
 import { buildTree, TreeView } from "~/components/TreeView";
 
 interface ItemRes {
@@ -79,12 +78,19 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		"parent",
 	]);
 
-
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
 	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson"]);
+	const treeData = buildTree(
+		rawData,
+		idKey,
+		parentKey,
+		nameKey,
+		["fr", "de", "en"],
+		"en",
+		["geojson"]
+	);
 
 	return { langs, breadcrumbs, selectedLangs, treeData, ...res };
 });
@@ -253,7 +259,7 @@ export default function Screen() {
 						role="tabpanel"
 						aria-labelledby="tab01"
 					>
-						<div className="dts-placeholder">
+						<div>
 							<form>
 								<div className="fields">
 									<div className="form-field">
@@ -283,7 +289,7 @@ export default function Screen() {
 						role="tabpanel"
 						aria-labelledby="tab02"
 					>
-						<GeographicLevelsTable/>
+						<GeographicLevelsTable />
 					</div>
 				</section>
 			</>
