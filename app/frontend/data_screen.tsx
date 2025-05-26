@@ -47,21 +47,21 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 								</div>
 								<div className="dts-legend__item">
 									<span
-										className="dts-status dts-status--completed-waiting-for-approval"
+										className="dts-status dts-status--wait-info"
 										aria-labelledby="legend2"
 									></span>
 									<span id="legend2">Completed / Waiting for approval</span>
 								</div>
 								<div className="dts-legend__item">
 									<span
-										className="dts-status dts-status--approved"
+										className="dts-status dts-status--wait-valid"
 										aria-labelledby="legend3"
 									></span>
 									<span id="legend3">Approved</span>
 								</div>
 								<div className="dts-legend__item">
 									<span
-										className="dts-status dts-status--sent-for-review"
+										className="dts-status dts-status--undrr"
 										aria-labelledby="legend4"
 									></span>
 									<span id="legend4">Sent for review</span>

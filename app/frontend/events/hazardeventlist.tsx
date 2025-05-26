@@ -90,21 +90,21 @@ export function ListView(args: ListViewArgs) {
 						</div>
 						<div className="dts-legend__item">
 							<span
-								className="dts-status dts-status--completed-waiting-for-approval"
+								className="dts-status dts-status--wait-info"
 								aria-labelledby="legend2"
 							></span>
 							<span id="legend2">Completed / Waiting for approval</span>
 						</div>
 						<div className="dts-legend__item">
 							<span
-								className="dts-status dts-status--approved"
+								className="dts-status dts-status--wait-valid"
 								aria-labelledby="legend2"
 							></span>
 							<span id="legend2">Approved</span>
 						</div>
 						<div className="dts-legend__item">
 							<span
-								className="dts-status dts-status--sent-for-review"
+								className="dts-status dts-status--undrr"
 								aria-labelledby="legend2"
 							></span>
 							<span id="legend2">Sent for review</span>
