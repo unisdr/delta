@@ -51,22 +51,6 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
   return result.map(r => r.id);
 };
 
-/**
- * Helper function to normalize text for matching
- * 
- * @param text - The text to normalize
- * @returns Normalized text
- */
-const normalizeText = (text: string): string => {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
 async function buildFilterConditions(params: MostDamagingEventsParams): Promise<{ conditions: SQL<unknown>[]; sectorIds?: string[] }> {
   let conditions: SQL[] = [
     sql`${disasterRecordsTable.approvalStatus} = 'published'`
@@ -134,26 +118,6 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     and
   );
 
-  // Extract hazard ID values for debug
-  // console.log('HazardType:', params.hazardTypeId);
-  // console.log('HazardCluster:', params.hazardClusterId);
-  // console.log('SpecificHazard:', params.specificHazardId);
-
-  // Check actual hazard values in query
-  const debugHazards = await db
-    .select({
-      id: disasterRecordsTable.id,
-      hip_type: hazardousEventTable.hipTypeId,
-      hip_cluster: hazardousEventTable.hipClusterId,
-      hip_hazard: hazardousEventTable.hipHazardId,
-    })
-    .from(disasterRecordsTable)
-    .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
-    .innerJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
-    .where(and(...conditions));
-
-  // console.log(' Matching record hazard fields:', debugHazards);
-
   // Apply geographic level filter
   if (params.geographicLevelId) {
     try {
@@ -207,29 +171,9 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     console.log(' [MostDamagingEvents] Running with params:');
     console.table(params);
 
-    // Generate cache key from params
-    const cacheKey = JSON.stringify(params);
-    // const cached = resultsCache.get(cacheKey);
-    // if (cached) {
-    //   return cached;
-    // }
-
     // Build filter conditions with improved geographic filtering
     const { conditions, sectorIds } = await buildFilterConditions(params);
     console.log(' [Filters Applied] SQL Conditions count:', conditions.length);
-
-    // Base query builder with required joins for hazard filtering
-    let baseQuery = db
-      .select()
-      .from(disasterRecordsTable)
-      .innerJoin(
-        disasterEventTable,
-        eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-      )
-      .innerJoin(
-        hazardousEventTable,
-        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
-      );
 
     // Optimize the count query by separating it from the main query
     // This prevents unnecessary computations when counting total records

@@ -92,7 +92,7 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
     if (!sectorsData?.sectors) return "Most Damaging Events";
 
     if (filters.sectorId) {
-      const { sector, parent } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+      const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
 
       if (filters.subSectorId && sector) {
         // Case: Subsector is selected

@@ -412,7 +412,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
         if (!sectorsData?.sectors) return "Impact by Hazard Type";
 
         if (filters.sectorId) {
-            const { sector, parent } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+            const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
 
             if (filters.subSectorId && sector) {
                 // Case: Subsector is selected

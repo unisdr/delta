@@ -99,28 +99,6 @@ interface GeographicImpactResult {
     error?: string;
 }
 
-interface LocationImpact {
-    location: string;
-    damage: number;
-    loss: number;
-    disasterIds: string[];
-}
-
-interface NormalizedDivision {
-    original: string;
-    normalized: string;
-    simple: string;
-    id: number | null;
-    level: number | null;
-    parentId: number | null;
-}
-
-interface MatchResult {
-    division: Division;
-    confidence: number;
-    impacts: LocationImpact[];
-}
-
 interface GeoJSONGeometry {
     type: string;
     coordinates: number[] | number[][] | number[][][] | number[][][][];
@@ -137,8 +115,6 @@ interface GeoJSONFeatureCollection {
     features: GeoJSONFeature[];
 }
 
-// type GeoJSON = GeoJSONGeometry | GeoJSONFeature | GeoJSONFeatureCollection;
-
 // Helper function to normalize text for matching
 function normalizeText(text: string): string {
     return text
@@ -149,275 +125,6 @@ function normalizeText(text: string): string {
         .replace(/\s+/g, ' ')            // Clean up multiple spaces
         .replace(/\b(region|province|city|municipality)\b/g, '') // Remove common geographic terms
         .trim();
-}
-
-// Helper function to calculate Levenshtein distance for fuzzy matching
-function levenshteinDistance(str1: string, str2: string): number {
-    const track = Array(str2.length + 1).fill(null).map(() =>
-        Array(str1.length + 1).fill(null));
-
-    for (let i = 0; i <= str1.length; i++) track[0][i] = i;
-    for (let j = 0; j <= str2.length; j++) track[j][0] = j;
-
-    for (let j = 1; j <= str2.length; j++) {
-        for (let i = 1; i <= str1.length; i++) {
-            const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-            track[j][i] = Math.min(
-                track[j][i - 1] + 1, // deletion
-                track[j - 1][i] + 1, // insertion
-                track[j - 1][i - 1] + indicator // substitution
-            );
-        }
-    }
-    return track[str2.length][str1.length];
-}
-
-// Helper function to calculate similarity ratio
-function calculateSimilarity(str1: string, str2: string): number {
-    const maxLength = Math.max(str1.length, str2.length);
-    if (maxLength === 0) return 1.0;
-    const distance = levenshteinDistance(str1, str2);
-    return 1 - (distance / maxLength);
-}
-
-// Helper function to prepare division for matching
-function prepareDivisionForMatching(division: Division): NormalizedDivision {
-    const cacheKey = `${division.id}-${division.name.en}`;
-
-    if (normalizedDivisionsCache.has(cacheKey)) {
-        return normalizedDivisionsCache.get(cacheKey)!;
-    }
-
-    const divNameFull = normalizeText(division.name.en);
-    const divNameSimple = divNameFull
-        .replace(/\s*\(.*?\)\s*/g, '')  // Remove anything in parentheses
-        .replace(/\s+/g, ' ')           // Clean up spaces
-        .trim();
-
-    const normalizedDiv: NormalizedDivision = {
-        original: division.name.en,
-        normalized: divNameFull,
-        simple: divNameSimple,
-        id: division.id,
-        level: division.level,
-        parentId: division.parentId ?? null
-    };
-
-    normalizedDivisionsCache.set(cacheKey, normalizedDiv);
-    return normalizedDiv;
-}
-
-// Helper function to find matches with confidence scores
-function findMatchesWithConfidence(locationPart: string, division: NormalizedDivision): number {
-    const locationNorm = normalizeText(locationPart);
-
-    // Try exact matches first
-    if (division.simple === locationNorm || division.normalized === locationNorm) {
-        return 1.0;
-    }
-
-    // Calculate similarity scores
-    const simpleSimilarity = calculateSimilarity(locationNorm, division.simple);
-    const normalizedSimilarity = calculateSimilarity(locationNorm, division.normalized);
-
-    // Get the best similarity score
-    const bestSimilarity = Math.max(simpleSimilarity, normalizedSimilarity);
-
-    // Additional checks for partial matches
-    const locationWords = locationNorm.split(' ');
-    const divisionWords = division.simple.split(' ');
-
-    // Check for word-level matches
-    const wordMatchScore = locationWords.reduce((score, word) => {
-        if (word.length <= 2) return score;
-        if (divisionWords.some(divWord => divWord.includes(word) || word.includes(divWord))) {
-            score += 0.2; // Boost score for each matching word
-        }
-        return score;
-    }, 0);
-
-    return Math.min(1.0, bestSimilarity + wordMatchScore);
-}
-
-// Main matching function
-async function findMatchingDivision(locationName: string, divisions: Division[], locationImpacts: LocationImpact[]): Promise<MatchResult[]> {
-    try {
-        if (!locationName || !divisions.length) {
-            throw new Error('Invalid input parameters');
-        }
-
-        const normalizedLocation = normalizeText(locationName);
-        // console.log("Processing location:", normalizedLocation);
-
-        // Get all potential matches with confidence scores
-        const matchesWithScores = divisions.map(division => {
-            const normalizedDiv = prepareDivisionForMatching(division);
-            const confidence = findMatchesWithConfidence(normalizedLocation, normalizedDiv);
-            return {
-                division,
-                confidence,
-                impacts: locationImpacts
-            };
-        }).filter(match => match.confidence > 0.6);
-
-        // Sort by confidence score
-        matchesWithScores.sort((a, b) => b.confidence - a.confidence);
-
-        // Log matching results for debugging
-        console.log("Matching results:", matchesWithScores.map(match => ({
-            name: match.division.name.en,
-            confidence: match.confidence,
-            impacts: match.impacts.map(impact => ({
-                location: impact.location,
-                damage: impact.damage,
-                loss: impact.loss
-            }))
-        })));
-
-        return matchesWithScores;
-
-    } catch (error) {
-        console.error('Unexpected error during geographic matching:', error);
-        return [];
-    }
-}
-
-// Helper function to check if words match
-function doWordsMatch(word1: string, word2: string): boolean {
-    if (word1.length <= 2 || word2.length <= 2) return false;
-    return word1.includes(word2) || word2.includes(word1);
-}
-
-// Helper function to find matches in word arrays
-function findMatchingWords(locationWords: string[], divisionWords: string[]): boolean {
-    return locationWords.some(word =>
-        divisionWords.some(divWord => doWordsMatch(word, divWord))
-    );
-}
-
-// Helper function to calculate the area of a ring
-function calculateArea(ring: number[][]): number {
-    let area = 0;
-    for (let i = 0; i < ring.length - 1; i++) {
-        area += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
-    }
-    return area / 2;
-}
-
-// Helper function to reverse ring coordinates if needed
-function ensureRightHandRule(ring: number[][]): number[][] {
-    // Area > 0 means counterclockwise, < 0 means clockwise
-    const area = calculateArea(ring);
-
-    // For exterior rings (first ring in polygon), we want counterclockwise (positive area)
-    // If area is negative, reverse the coordinates
-    if (area < 0) {
-        return ring.reverse();
-    }
-    return ring;
-}
-
-// Helper function to ensure polygon coordinates form a closed ring
-function ensureClosedRing(coordinates: any[]): any[] {
-    if (!Array.isArray(coordinates) || coordinates.length < 3) {
-        return coordinates;
-    }
-
-    const first = coordinates[0];
-    const last = coordinates[coordinates.length - 1];
-
-    // Check if first and last points are identical
-    if (first[0] !== last[0] || first[1] !== last[1]) {
-        // Add the first point to the end to close the ring
-        return [...coordinates, [...first]];
-    }
-
-    return coordinates;
-}
-
-// Parse PostgreSQL geometry to GeoJSON
-function parseGeometry(geojson: any): GeoJSONGeometry | null {
-    try {
-        // If it's already a GeoJSON object, validate and return it
-        if (typeof geojson === 'object' && geojson !== null) {
-            // Ensure coordinates are properly structured arrays
-            if (geojson.type === 'MultiPolygon') {
-                // MultiPolygon structure: [[[[x,y],[x,y]...]]]
-                const coordinates = geojson.coordinates.map((polygon: any) => {
-                    return polygon.map((ring: any) => {
-                        return ring.map((coord: any) => {
-                            if (Array.isArray(coord) && coord.length >= 2) {
-                                // Ensure coordinates are numbers and in the correct range
-                                const [lng, lat] = coord;
-                                if (typeof lng === 'number' && typeof lat === 'number' &&
-                                    !isNaN(lng) && !isNaN(lat) &&
-                                    Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
-                                    return [lng, lat];
-                                }
-                            }
-                            throw new Error(`Invalid coordinate: ${JSON.stringify(coord)}`);
-                        });
-                    });
-                });
-
-                return {
-                    type: 'MultiPolygon',
-                    coordinates
-                };
-            } else if (geojson.type === 'Polygon') {
-                // Polygon structure: [[[x,y],[x,y]...]]
-                const coordinates = geojson.coordinates.map((ring: any) => {
-                    return ring.map((coord: any) => {
-                        if (Array.isArray(coord) && coord.length >= 2) {
-                            // Ensure coordinates are numbers and in the correct range
-                            const [lng, lat] = coord;
-                            if (typeof lng === 'number' && typeof lat === 'number' &&
-                                !isNaN(lng) && !isNaN(lat) &&
-                                Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
-                                return [lng, lat];
-                            }
-                        }
-                        throw new Error(`Invalid coordinate: ${JSON.stringify(coord)}`);
-                    });
-                });
-
-                return {
-                    type: 'Polygon',
-                    coordinates
-                };
-            }
-        }
-
-        // If it's a string (from PostgreSQL), parse it
-        if (typeof geojson === 'string') {
-            try {
-                const parsed = JSON.parse(geojson);
-                return parseGeometry(parsed);
-            } catch (e) {
-                console.error('Error parsing geometry string:', e);
-                return null;
-            }
-        }
-
-        console.warn('Unsupported geometry type:', geojson);
-        return null;
-    } catch (error) {
-        console.error('Error parsing geometry:', error);
-        return null;
-    }
-}
-
-// Type guards for GeoJSON types
-function isFeature(json: any): json is GeoJSONFeature {
-    return json?.type === 'Feature' && json?.geometry !== undefined;
-}
-
-function isFeatureCollection(json: any): json is GeoJSONFeatureCollection {
-    return json?.type === 'FeatureCollection' && Array.isArray(json?.features);
-}
-
-function isGeometry(json: any): json is GeoJSONGeometry {
-    return json?.type && ['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon', 'GeometryCollection'].includes(json.type) && Array.isArray(json?.coordinates);
 }
 
 // Helper function to safely convert money values
@@ -441,18 +148,6 @@ function safeMoneyToNumber(value: string | number | null): number {
         console.error("Error converting money value:", error);
         return 0;
     }
-}
-
-// Helper function to safely parse sector ID
-function parseSectorId(sectorId: string | number | undefined): number | undefined {
-    if (typeof sectorId === 'undefined') {
-        return undefined;
-    }
-    if (typeof sectorId === 'number') {
-        return sectorId;
-    }
-    const parsed = parseInt(sectorId, 10);
-    return isNaN(parsed) ? undefined : parsed;
 }
 
 // Gets all subsector IDs for a given sector and its subsectors following international standards.
@@ -681,13 +376,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         );
 
         // ✅ Finalize query with all base conditions
-        const filteredDisasterQuery = queryBuilder.where(and(...baseConditions));
-
-        // ✅ Extract hazard ID values for debug
-        // console.log('HazardType:', filters.hazardTypeId);
-        // console.log('HazardCluster:', filters.hazardClusterId);
-        // console.log('SpecificHazard:', filters.specificHazardId);
-        // console.log('Hazard-related WHERE clause:', filteredDisasterQuery.toSQL().sql);
+        queryBuilder.where(and(...baseConditions));
 
         // ✅ Check actual hazard values in query
         const debugHazards = await dr
@@ -1025,7 +714,7 @@ async function getDisasterRecordsForDivision(
         const quoted = descendantIds.map((id) => `@ == "${id}"`).join(" || ");
         console.log(`✔ Division path filter applied: ${descendantIds.length} divisions`);
 
-        const pathCondition = sql.raw(
+        sql.raw(
             `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.properties.division_ids[*] ? (${quoted})')`
         );
         console.log("✔ JSONB path condition constructed for spatial filter");
@@ -1200,7 +889,6 @@ AND ST_Intersects(
         console.log("Matching disaster record IDs:", spatialRecords.map(r => r.id));
         console.log(`✔ Found ${spatialRecords.length} matching disaster records`);
 
-        const divisionIdStr = divisionId.toString();
         const regionResult = await dr.execute(sql`
             SELECT name->>'en' as name FROM "division" WHERE name->>'en' IS NOT NULL
           `);
@@ -1301,10 +989,6 @@ AND ST_Intersects(
                             ${disasterRecordsTable.locationDesc} LIKE ${`%${divisionName}%`}
                         )`
                     ));
-
-                    const textQueryStr = textQuery.toSQL();
-                    // console.log(`[TEXT MATCH] SQL Query: ${textQueryStr.sql}`);
-                    // console.log('Query parameters:', textQueryStr.params);
 
                     const textRecords = await textQuery;
                     console.log(`[TEXT MATCH] ➜ Returned ${textRecords.length} additional records`);
@@ -1735,6 +1419,3 @@ export async function getGeographicImpactGeoJSON(sectorId: string, subSectorId?:
         };
     }
 }
-
-// Memoization cache for normalized divisions
-const normalizedDivisionsCache = new Map<string, NormalizedDivision>();

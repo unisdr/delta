@@ -19,7 +19,6 @@ import {
 } from "~/util/config";
 
 import React from "react";
-import { useNavigate } from "@remix-run/react";
 
 import {processHipsPage} from "~/backend.server/utils/hip";
 import {processSectorCsv} from "~/backend.server/utils/sector";
@@ -102,7 +101,7 @@ export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
 });
 
 export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
-	const { user } = authLoaderGetAuth(loaderArgs);
+	authLoaderGetAuth(loaderArgs);
 	const url = new URL(loaderArgs.request.url);
 	let qsStep = url.searchParams.get("step") || "";
 
@@ -144,10 +143,7 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 
 export default function Data() {
 	const pageData = useLoaderData<typeof loader>();
-	// const actionData = useActionData<typeof action>();
-	// const [resent, setResent] = React.useState(false);
-	const [isSubmitting, setIsSubmitting] = React.useState(false);
-	// const navigate = useNavigate();
+	let isSubmitting=false;
 
 	return (
 		<div className="dts-page-container">

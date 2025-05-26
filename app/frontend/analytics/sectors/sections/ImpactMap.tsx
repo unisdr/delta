@@ -81,7 +81,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
     if (!sectorsResponse?.sectors) return "Impact by Geographic Level";
 
     if (filters?.sectorId) {
-      const { sector, parent } = findSectorWithParent(sectorsResponse.sectors, filters.sectorId);
+      const { sector } = findSectorWithParent(sectorsResponse.sectors, filters.sectorId);
 
       if (filters?.subSectorId && sector) {
         const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsResponse.sectors, filters.subSectorId);
