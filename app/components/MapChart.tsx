@@ -32,22 +32,6 @@ type DataSourceType = {
 const glbMapperJS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
 const glbMapperCSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 
-const glbColors = {
-  polygon: "#208f04",
-  line: "#FF851B",
-  rectangle: "#2ECC40",
-  circle: "#FF4136",
-  marker: "#85144b",
-};
-
-const glbMarkerIcon = {
-  iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-  iconSize: [20, 20],
-  iconAnchor: [5, 20],
-  popupAnchor: [0, -20],
-  shadowUrl: null,
-  className: "custom-leaflet-marker",
-};
 
 const loadLeaflet = (setLeafletLoaded: (loaded: boolean) => void) => {
   if (typeof window === "undefined") return;
@@ -355,7 +339,7 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
               No Data
             </li>
             {[...Array(6)].map((_, i) => {
-              const rangeMin = minTotal + (i * (maxTotal - minTotal) / 6);
+              // const rangeMin = minTotal + (i * (maxTotal - minTotal) / 6);
               const rangeMax = minTotal + ((i + 1) * (maxTotal - minTotal) / 6);
               return (
                 <li key={i} style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>

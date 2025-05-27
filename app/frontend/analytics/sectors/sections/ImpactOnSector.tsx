@@ -27,14 +27,14 @@ interface ApiResponse {
 	};
 }
 
-interface ImpactData {
-	eventCount: number;
-	totalDamage: string;
-	totalLoss: string;
-	eventsOverTime: { year: number; count: number }[];
-	damageOverTime: { year: number; amount: number }[];
-	lossOverTime: { year: number; amount: number }[];
-}
+// interface ImpactData {
+// 	eventCount: number;
+// 	totalDamage: string;
+// 	totalLoss: string;
+// 	eventsOverTime: { year: number; count: number }[];
+// 	damageOverTime: { year: number; amount: number }[];
+// 	lossOverTime: { year: number; amount: number }[];
+// }
 
 interface Props {
 	sectorId: string | null;
@@ -75,20 +75,15 @@ interface SpecificHazardsResponse {
 	hazards: Hazard[];
 }
 
-// Utility functions
-const calculateTotal = (data: { year: number; amount: number }[]) => {
-	return data.reduce((acc, curr) => acc + curr.amount, 0);
-};
-
 // Transform time series data
-const transformTimeSeriesData = (data: Record<string, string>) => {
-	return Object.entries(data)
-		.map(([year, value]) => ({
-			year: parseInt(year),
-			amount: parseFloat(value),
-		}))
-		.sort((a, b) => a.year - b.year);
-};
+// const transformTimeSeriesData = (data: Record<string, string>) => {
+// 	return Object.entries(data)
+// 		.map(([year, value]) => ({
+// 			year: parseInt(year),
+// 			amount: parseFloat(value),
+// 		}))
+// 		.sort((a, b) => a.year - b.year);
+// };
 
 // Custom tooltip for charts
 interface CustomTooltipProps {
@@ -147,25 +142,25 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		}
 	};
 
-	const handlePointerEnter = (
-		e: React.PointerEvent<HTMLButtonElement>,
-		content: string
-	) => {
-		console.log("Pointer Enter Event:", {
-			target: e.currentTarget,
-			content: content,
-		});
+	// const handlePointerEnter = (
+	// 	e: React.PointerEvent<HTMLButtonElement>,
+	// 	content: string
+	// ) => {
+	// 	console.log("Pointer Enter Event:", {
+	// 		target: e.currentTarget,
+	// 		content: content,
+	// 	});
 
-		if (e.currentTarget === eventsImpactingRef.current) {
-			createTooltip(eventsImpactingRef, content);
-		} else if (e.currentTarget === eventsOverTimeRef.current) {
-			createTooltip(eventsOverTimeRef, content);
-		} else if (e.currentTarget === damageTooltipRef.current) {
-			createTooltip(damageTooltipRef, content);
-		} else if (e.currentTarget === lossTooltipRef.current) {
-			createTooltip(lossTooltipRef, content);
-		}
-	};
+	// 	if (e.currentTarget === eventsImpactingRef.current) {
+	// 		createTooltip(eventsImpactingRef, content);
+	// 	} else if (e.currentTarget === eventsOverTimeRef.current) {
+	// 		createTooltip(eventsOverTimeRef, content);
+	// 	} else if (e.currentTarget === damageTooltipRef.current) {
+	// 		createTooltip(damageTooltipRef, content);
+	// 	} else if (e.currentTarget === lossTooltipRef.current) {
+	// 		createTooltip(lossTooltipRef, content);
+	// 	}
+	// };
 
 	// Debug logging for tooltip state changes
 	useEffect(() => {
@@ -657,9 +652,6 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		rawDamage: data.totalDamage,
 		rawLoss: data.totalLoss,
 	});
-
-	const totalDamage = calculateTotal(damageData);
-	const totalLoss = calculateTotal(lossData);
 
 	return (
 		<section

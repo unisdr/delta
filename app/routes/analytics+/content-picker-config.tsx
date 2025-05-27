@@ -1,7 +1,7 @@
 import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
-import { eq, ilike, or, asc, sql } from "drizzle-orm";
-import { disasterEventTable, hazardousEventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
-import { formatDate, formatDateDisplay } from "~/util/date";
+import { eq } from "drizzle-orm";
+import { disasterEventTable, hazardousEventTable, hipHazardTable } from "~/drizzle/schema";
+import { formatDateDisplay } from "~/util/date";
 
 export const contentPickerConfig = {
     id: "disasterEventId",
