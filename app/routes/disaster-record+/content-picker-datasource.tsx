@@ -1,7 +1,6 @@
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
 import { contentPickerConfig, contentPickerConfigSector, contentPickerConfigCategory } from "./content-picker-config";
-import { json } from "@remix-run/node";
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: any) => {
     const url = new URL(request.url);

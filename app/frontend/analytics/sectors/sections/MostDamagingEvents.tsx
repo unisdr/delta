@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
@@ -92,7 +92,7 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
     if (!sectorsData?.sectors) return "Most Damaging Events";
 
     if (filters.sectorId) {
-      const { sector, parent } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+      const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
 
       if (filters.subSectorId && sector) {
         // Case: Subsector is selected

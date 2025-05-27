@@ -1,6 +1,5 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { useFetcher, useLoaderData } from '@remix-run/react';
+import { json, useFetcher, useLoaderData } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
 import { authLoaderGetAuth, authLoaderWithPerm } from '~/util/auth';
 import { getSupportedTimeZone } from '~/util/timezone';
@@ -9,8 +8,6 @@ import {
   configApplicationVersion,
   configCountryInstanceISO,
   configApplicationEmail,
-  configFooterURLPrivPolicy,
-  configFooterURLTermsConds,
   config2FAIssuer,
   configApprovedRecordsArePublic,
 } from '~/util/config';
@@ -39,8 +36,6 @@ interface LoaderData {
     SMTP_SECURE?: string;
   };
   confCtryInstanceISO: string;
-  confPageFooterPrivPolicy: string;
-  confPageFooterTermsConds: string;
   conf2FAIssuer: string;
   confInstanceTypePublic: boolean;
   instanceSystemSettings: InstanceSystemSettings | null;
@@ -53,8 +48,6 @@ export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (load
   const currency: string[] = configCurrencies();
   const systemLanguage: string[] = ['English'];
   const confEmailObj = configApplicationEmail();
-  const confPageFooterPrivPolicy = configFooterURLPrivPolicy();
-  const confPageFooterTermsConds = configFooterURLTermsConds();
   const conf2FAIssuer = config2FAIssuer();
   const confInstanceTypePublic = configApprovedRecordsArePublic();
 
@@ -94,8 +87,6 @@ export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (load
     ctryInstanceName,
     confEmailObj,
     confCtryInstanceISO,
-    confPageFooterPrivPolicy,
-    confPageFooterTermsConds,
     conf2FAIssuer,
     confInstanceTypePublic,
     instanceSystemSettings,
@@ -191,11 +182,6 @@ export default function Settings() {
   // Handle form submission states
   const isTermsSubmitting = termsFetcher.state === 'submitting';
   const isPrivacySubmitting = privacyFetcher.state === 'submitting';
-
-  const box2colStyle = {
-    width: '50%',
-    height: '100px',
-  };
 
   return (
     <MainContainer title="System Settings" headerExtra={<NavSettings />}>

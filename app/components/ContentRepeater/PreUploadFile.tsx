@@ -38,7 +38,7 @@ import {
         const tempFilenamePrev = formData.get("temp_filename_prev") as string | null; // Previous file with full path
   
         const fileViewerTempUrl = formData.get("file_viewer_temp_url") as string | null;
-        const fileViewerUrl = formData.get("file_viewer_url") as string | null;
+        // const fileViewerUrl = formData.get("file_viewer_url") as string | null;
   
         // Validate required fields
         if (!savePathTemp || !tempFilename || !originalFilename || !uploadedFile) {

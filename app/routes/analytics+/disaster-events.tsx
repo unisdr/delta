@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { json } from "@remix-run/node";
 import { useLoaderData, Outlet } from "@remix-run/react";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
@@ -25,18 +23,15 @@ import {
 } from "~/backend.server/models/event";
 
 import {
-	getSectorAncestorById, 
   sectorChildrenById
 } from "~/backend.server/models/sector";
 
 
 import {
-	getAllChildren,
   getDivisionByLevel,
 } from "~/backend.server/models/division";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import MapChart, { MapChartRef } from "~/components/MapChart";
-import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
 
 import CustomPieChart from '~/components/PieChart';
@@ -96,7 +91,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let datamageGeoData:interfaceMap[] = [];
   let lossesGeoData:interfaceMap[] = [];
   let humanEffectsGeoData:interfaceMap[] = [];
-  let totalAffectedPeople:any = {};
+  // let totalAffectedPeople:any = {};
   let totalAffectedPeople2:any = {};
   const sectortData: Record<number, { id: number; sectorname: string; subSector?: interfaceSector[]; }> = {};
   
@@ -108,9 +103,9 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let x: any = {};
   
 
-  const sectorExistsInSectorParentArray = (id: number): boolean => {
-    return sectorParentArray.some(item => item.id === id);
-  };
+  // const sectorExistsInSectorParentArray = (id: number): boolean => {
+  //   return sectorParentArray.some(item => item.id === id);
+  // };
   
   if (qsDisEventId) {
     record = await disasterEventById(qsDisEventId).catch(console.error);

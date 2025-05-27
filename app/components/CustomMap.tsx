@@ -3,14 +3,12 @@ import Map from "ol/Map";
 import View from "ol/View";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import { fromLonLat } from "ol/proj";
 import GeoJSON from "ol/format/GeoJSON";
 import { Fill, Stroke, Style } from "ol/style";
 import type { StyleFunction } from "ol/style/Style";
 import { defaults as defaultControls } from "ol/control";
 import { defaults as defaultInteractions } from "ol/interaction";
 import { unByKey } from "ol/Observable";
-import { EventsKey } from "ol/events";
 import { FeatureLike } from "ol/Feature"; // Import FeatureLike to handle both Feature and RenderFeature
 import { Feature } from "ol";
 import { getCenter } from "ol/extent";

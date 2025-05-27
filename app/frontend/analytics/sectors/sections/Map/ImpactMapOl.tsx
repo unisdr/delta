@@ -1,4 +1,3 @@
-import React from "react";
 import type { GeoData, Filters } from "~/components/CustomMap";
 import CustomMap from "~/components/CustomMap";
 import ErrorBoundary from "~/frontend/components/ErrorBoundary";

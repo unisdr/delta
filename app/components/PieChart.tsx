@@ -50,14 +50,14 @@ const isLightColor = (color: string): boolean => {
 
 
 // Helper function to infer chart type from data
-const inferChartType = (rawValue: number | string | undefined): "number" | "monetary" => {
-  if (rawValue === undefined) {
-    return "number"; // Fallback to number if no rawValue
-  }
-  // If rawValue is a number or a string that can be parsed as a number, assume monetary
-  const numericValue = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;
-  return isNaN(numericValue) ? "number" : "monetary";
-};
+// const inferChartType = (rawValue: number | string | undefined): "number" | "monetary" => {
+//   if (rawValue === undefined) {
+//     return "number"; // Fallback to number if no rawValue
+//   }
+//   // If rawValue is a number or a string that can be parsed as a number, assume monetary
+//   const numericValue = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;
+//   return isNaN(numericValue) ? "number" : "monetary";
+// };
 
 
 const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, data }) => {
@@ -79,7 +79,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, data }) 
   const textColor = isLightColor(segmentColor) ? "#000000" : "#FFFFFF";
 
   // Infer chart type based on rawValue
-  const chartType = inferChartType(rawValue);
+  // const chartType = inferChartType(rawValue);
 
   // Format rawValue as a monetary amount
   const numericValue = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;

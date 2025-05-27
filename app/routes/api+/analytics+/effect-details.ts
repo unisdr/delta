@@ -4,9 +4,9 @@
  * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
  */
 
-import { LoaderFunction, LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
+import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getEffectDetailsHandler, EffectDetailsError } from "~/backend.server/handlers/analytics/effectDetails";
-import { sanitizeInput, checkRateLimit } from "~/utils/security";
+import { checkRateLimit } from "~/utils/security";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { z } from "zod";
 
@@ -35,16 +35,10 @@ const querySchema = z.object({
   hazardClusterId: z.string().regex(/^\d+$/).optional(),
   specificHazardId: z.string().regex(/^\d+$/).optional(),
   geographicLevelId: z.string().regex(/^\d+$/).optional(),
-  fromDate: z.string().datetime().optional(),
-  toDate: z.string().datetime().optional(),
-  disasterEventId: z.string().regex(/^\d+$/).optional(),
-}).refine(
-  (data) => (!data.fromDate || data.toDate) && (!data.toDate || data.fromDate),
-  {
-    message: "Both fromDate and toDate must be provided together",
-    path: ["fromDate", "toDate"],
-  }
-);
+  fromDate: z.string().optional(), 
+  toDate: z.string().optional(), 
+  disasterEventId: z.string().optional(), 
+});
 
 /**
  * Loader function for the effect-details API endpoint.

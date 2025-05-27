@@ -9,7 +9,6 @@ import {
 
 import {
 	upsertRecord as upsertRecordAsset,
-  assetByName,
 } from "~/backend.server/models/asset";
 
 import {AssetInsert as AssetType} from "~/drizzle/schema";
@@ -26,7 +25,6 @@ import {
   Form, 
   useActionData,
 } from "@remix-run/react";
-import { number } from "prop-types";
 
 
 

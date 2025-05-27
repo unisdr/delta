@@ -6,12 +6,9 @@ import {
   disasterRecordsTable,
   disasterEventTable,
   hazardousEventTable,
-  hipHazardTable,
-  hipClusterTable,
   sectorDisasterRecordsRelationTable,
-  sectorTable
 } from "~/drizzle/schema";
-import { and, eq, inArray, ilike, SQL, exists, like, or } from "drizzle-orm";
+import { and, eq, inArray, SQL, exists} from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import { configCurrencies } from "~/util/config";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
@@ -86,16 +83,6 @@ interface SectorImpactData {
     loss: 'available' | 'zero' | 'no_data';
   };
 }
-
-const getAgriSubsector = (sectorId: string): any | null => {
-  const subsectorMap: { [key: string]: any } = {
-    'agri_crops': 'crops',
-    'agri_livestock': 'livestock',
-    'agri_fisheries': 'fisheries',
-    'agri_forestry': 'forestry'
-  };
-  return subsectorMap[sectorId] || null;
-};
 
 // Function to get all disaster records for a sector
 const getDisasterRecordsForSector = async (
@@ -306,18 +293,6 @@ const getAllSubsectorIds = async (sectorId: string | number | undefined): Promis
 
   console.log("Traversal complete. Collected sector IDs:", result);
   return result;
-};
-
-// Helper function to validate sector ID
-const validateSectorId = (sectorId: string): number => {
-  if (!sectorId || sectorId.trim() === '') {
-    throw new Error("Invalid sector ID provided");
-  }
-  const numericId = parseInt(sectorId, 10);
-  if (isNaN(numericId)) {
-    throw new Error("Sector ID must be a valid number");
-  }
-  return numericId;
 };
 
 // Update aggregateDamagesData function

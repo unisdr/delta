@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import { ContentRepeater } from "~/components/ContentRepeater";
 
 export function AttachmentsFormView({
@@ -123,7 +122,7 @@ export function AttachmentsFormView({
             data={parsedData}
             onChange={(items: any) => {
                 try {
-                    const parsedItems = Array.isArray(items) ? items : (items);
+                    Array.isArray(items) ? items : (items);
                 } catch {
                     console.error("Failed to process items.");
                 }

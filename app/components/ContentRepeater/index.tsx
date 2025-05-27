@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { initTokenField, renderTokenField } from "./controls/tokenfield";
-import { renderMapper, renderMapperDialog, previewMap, previewGeoJSON } from "./controls/mapper";
+import { renderMapperDialog, previewMap, previewGeoJSON } from "./controls/mapper";
 import "./assets/content-repeater.css";
 import "./assets/mapper.css";
 

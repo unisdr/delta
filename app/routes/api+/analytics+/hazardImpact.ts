@@ -4,7 +4,7 @@
  * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
  */
 
-import { LoaderFunction, LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
+import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getHazardImpact } from "~/backend.server/handlers/analytics/hazardImpact";
 import type { HazardImpactFilters } from "~/types/hazardImpact";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
@@ -29,17 +29,11 @@ const querySchema = z.object({
   hazardClusterId: z.string().regex(/^\d+$/).optional(),
   specificHazardId: z.string().regex(/^\d+$/).optional(),
   geographicLevelId: z.string().regex(/^\d+$/).optional(),
-  fromDate: z.string().datetime().optional(),
-  toDate: z.string().datetime().optional(),
-  disasterEventId: z.string().regex(/^\d+$/).optional(),
-  _disasterEventId: z.string().regex(/^\d+$/).optional(),
-}).refine(
-  (data) => (!data.fromDate || data.toDate) && (!data.toDate || data.fromDate),
-  {
-    message: "Both fromDate and toDate must be provided together",
-    path: ["fromDate", "toDate"],
-  }
-);
+  fromDate: z.string().optional(), // Allow flexible date formats for compatibility with database records
+  toDate: z.string().optional(), // Allow flexible date formats for compatibility with database records
+  disasterEventId: z.string().optional(), // Allow UUID format for disaster event IDs
+  _disasterEventId: z.string().optional(), // Allow UUID format for disaster event IDs
+});
 
 /**
  * Loader function for the hazardImpact API endpoint.

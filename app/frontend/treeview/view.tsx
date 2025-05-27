@@ -1,10 +1,3 @@
-import {
-	Link
-} from "@remix-run/react";
-import {divisionTable} from "~/drizzle/schema";
-import {eq, isNotNull, isNull, sql} from "drizzle-orm";
-import {dr} from '~/db.server';
-
 interface TreeViewProps {
 	jsonData: any;
 }
@@ -31,14 +24,6 @@ export async function _getData() {
 
 
 export function TreeView(props: TreeViewProps) {
-    // const loaderData = _getData();
-
-	const {
-		jsonData,
-	} = props;
-
-    // console.log(loaderData);
-
 	return (
 		<div className="treeview">
             <p><input type="radio" />tree view</p>

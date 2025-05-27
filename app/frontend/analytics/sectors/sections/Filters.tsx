@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { AiOutlineSearch } from "react-icons/ai"; // Import the Search Icon from react-icons
 
@@ -46,7 +46,7 @@ const Filters: React.FC<FiltersProps> = ({
   onAdvancedSearch,
   onClearFilters,
 }) => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
   const [isMounted, setIsMounted] = useState(false); // Ensure hydration consistency
@@ -138,12 +138,12 @@ const Filters: React.FC<FiltersProps> = ({
 
   // React Query for fetching geographic levels
   const { data: geographicLevelsData } = useQuery({
-   queryKey: ["geographicLevels", filters.geographicLevelId],
-   queryFn: async () => {
+    queryKey: ["geographicLevels", filters.geographicLevelId],
+    queryFn: async () => {
       const response = await fetch(`/api/analytics/geographic-levels`);
       return response.json();
     }
-});
+  });
 
   // Function to handle specific hazard selection
   const handleSpecificHazardSelection = async (specificHazardId: string) => {
@@ -158,8 +158,8 @@ const Filters: React.FC<FiltersProps> = ({
       // Convert IDs to strings before updating the filters
       setFilters((prev) => ({
         ...prev,
-        hazardClusterId: hazardClusterId.toString(),
-        hazardTypeId: hazardTypeId.toString(),
+        hazardClusterId: hazardClusterId?.toString() || "",
+        hazardTypeId: hazardTypeId?.toString() || "",
       }));
     } catch (error) {
       console.error("Error fetching related hazard data:", error);
@@ -185,7 +185,7 @@ const Filters: React.FC<FiltersProps> = ({
       const cluster = hazardClusters[0];
       setFilters(prev => ({
         ...prev,
-        hazardClusterId: cluster.id.toString()
+        hazardClusterId: cluster.id?.toString() || ""
       }));
       setDisplayValues(prev => ({
         ...prev,
@@ -200,7 +200,7 @@ const Filters: React.FC<FiltersProps> = ({
       const hazard = specificHazards[0];
       setFilters(prev => ({
         ...prev,
-        specificHazardId: hazard.id.toString()
+        specificHazardId: hazard.id?.toString() || ""
       }));
       setDisplayValues(prev => ({
         ...prev,
@@ -232,6 +232,23 @@ const Filters: React.FC<FiltersProps> = ({
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
     setFilters((prev) => {
       const updatedFilters = { ...prev, [field]: value };
+
+      // Validate date ranges
+      if (field === "fromDate" && prev.toDate && value > prev.toDate) {
+        // If fromDate is later than toDate, clear toDate
+        updatedFilters.toDate = "";
+        // Show warning to user
+        Swal.fire({
+          icon: 'warning',
+          text: 'From date is later than To date. The To date has been cleared.',
+          confirmButtonText: 'OK',
+          buttonsStyling: false,
+          customClass: {
+            popup: 'swal2-custom-popup',
+            confirmButton: 'swal2-custom-button',
+          },
+        });
+      }
 
       // Reset dependent fields for sectors
       if (field === "sectorId") {
@@ -291,6 +308,21 @@ const Filters: React.FC<FiltersProps> = ({
         customClass: {
           popup: 'swal2-custom-popup', // Apply the custom popup styles
           confirmButton: 'swal2-custom-button', // Apply the custom button styles
+        },
+      });
+      return;
+    }
+
+    // Validate date range before applying filters
+    if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) {
+      Swal.fire({
+        icon: 'warning',
+        text: 'From date cannot be later than To date. Please adjust your date selection.',
+        confirmButtonText: 'OK',
+        buttonsStyling: false,
+        customClass: {
+          popup: 'swal2-custom-popup',
+          confirmButton: 'swal2-custom-button',
         },
       });
       return;
@@ -543,6 +575,7 @@ const Filters: React.FC<FiltersProps> = ({
           type="date"
           className="filter-date"
           value={filters.toDate}
+          min={filters.fromDate || undefined}
           onChange={(e) => handleFilterChange("toDate", e.target.value)}
         />
       </div>

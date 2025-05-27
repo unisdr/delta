@@ -1,7 +1,4 @@
 import {
-	json,
-} from "@remix-run/node";
-import {
 	useLoaderData,
 	Link,
 } from "@remix-run/react";

@@ -28,7 +28,6 @@ import type {
     DisasterImpactMetadata,
     AssessmentType,
     ConfidenceLevel,
-    Currency,
     FaoAgriSubsector,
     FaoAgriculturalDamage,
     FaoAgriculturalLoss,

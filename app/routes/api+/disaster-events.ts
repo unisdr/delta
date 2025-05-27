@@ -1,4 +1,3 @@
-import { json } from "@remix-run/node";
 import { dr } from "~/db.server"; // Correct import path
 import { disasterEventTable } from "~/drizzle/schema";
 import { sql } from "drizzle-orm";

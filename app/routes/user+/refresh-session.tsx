@@ -1,5 +1,3 @@
-import { json } from "@remix-run/node";
-
 import {
 	authLoader
 } from "~/util/auth";

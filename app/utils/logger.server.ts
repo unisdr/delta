@@ -9,16 +9,30 @@ const transport = new winston.transports.DailyRotateFile({
   maxFiles: '14d',
 });
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    transport,
-    new winston.transports.Console({ format: winston.format.simple() }),
-  ],
-});
+const createLogger = (module: string = "") => {
+  return winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format((info) => {
+        info.module = module; 
+        return info;
+      })(),
+      winston.format.json()
+    ),
+    transports: [
+      transport,
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.colorize(),
+          winston.format.printf(({ level, message, timestamp, module }) => {
+            const moduleStr = module ? `[${module}]` : '';
+            return `${level}: ${message} ${moduleStr} ${timestamp}`;
+          })
+        ),
+      }),
+    ],
+  });
+};
 
-export default logger;
+export default createLogger;

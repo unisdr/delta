@@ -4,10 +4,6 @@ import {
 	sectorTable
 } from '~/drizzle/schema';
 
-import {
-	or,
-	inArray
-} from "drizzle-orm";
 
 import {dr, Tx} from '~/db.server';
 

@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import type { MetaFunction } from "@remix-run/node";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { json } from "@remix-run/node";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
 
-import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
@@ -15,17 +14,16 @@ import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
-import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
-import { FaFileDownload } from 'react-icons/fa';
-import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
+// import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
+// import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
 
 
 // Types
-interface Sector {
-  id: number;
-  sectorname: string;
-  subsectors?: Sector[];
-}
+// interface Sector {
+//   id: number;
+//   sectorname: string;
+//   subsectors?: Sector[];
+// }
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -62,9 +60,7 @@ function SectorsAnalysisContent() {
   const { currency } = useLoaderData<typeof loader>();
 
   // State declarations
-  const [isMounted, setIsMounted] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  // const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [filters, setFilters] = useState<{
     sectorId: string | null;
     subSectorId: string | null;
@@ -76,11 +72,6 @@ function SectorsAnalysisContent() {
     toDate: string | null;
     disasterEventId: string | null;
   } | null>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
 
   // Event handlers for Filters component
   const handleApplyFilters = (newFilters: typeof filters) => {
@@ -97,7 +88,7 @@ function SectorsAnalysisContent() {
   };
 
   // Function to export Excel data
-  const handleExportToExcel = async () => {
+  /*const handleExportToExcel = async () => {
     console.log("Start export to Excel");
     if (!filters) return;
     console.log('handleExportToExcel triggered');
@@ -416,17 +407,8 @@ function SectorsAnalysisContent() {
     } finally {
       setIsExportingExcel(false);
     }
-  };
+  };*/
 
-  // Add sectors query for dynamic titles
-  const { data: sectorsData } = useQuery({
-    queryKey: ["sectors"],
-    queryFn: async () => {
-      const response = await fetch("/api/analytics/sectors");
-      if (!response.ok) throw new Error("Failed to fetch sectors");
-      return response.json() as Promise<{ sectors: Sector[] }>;
-    }
-  });
 
   return (
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
