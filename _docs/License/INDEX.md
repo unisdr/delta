@@ -27,17 +27,19 @@ This directory contains all documentation related to licensing for the UNDRR Dis
    - Used for automated license compliance checks
    - Contains detailed license information per package
 
-## Upcoming Documents
+5. [license-recommendation.md](./license-recommendation.md)
+   - Comprehensive license recommendation
+   - Analysis of MIT vs Apache 2.0 for DTS
+   - Detailed rationale for Apache 2.0
+   - Risk assessment and compatibility analysis
 
-1. License Recommendation Document (Planned)
-   - Team validation and decision-making
-   - Final license selection rationale
-   - Implementation guidelines
+## Upcoming Document
 
-2. DPG Compliance Matrix (Planned)
+6. DPG Compliance Matrix (Planned)
    - Comprehensive DPG standard compliance tracking
    - Evidence of compliance for each criterion
    - Gap analysis and action items
+
 
 ## Document Status
 
@@ -46,5 +48,5 @@ This directory contains all documentation related to licensing for the UNDRR Dis
 | LICENSE.md | Draft | May 2025 |
 | License-comparison.md | Complete | May 2025 |
 | third-party-dependencies-review.md | Complete | May 2025 |
-| License Recommendation | Planned | TBD |
+| license-recommendation.md | Complete | May 2025 |
 | DPG Compliance Matrix | Planned | TBD |
