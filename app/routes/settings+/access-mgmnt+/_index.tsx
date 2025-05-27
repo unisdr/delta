@@ -1,4 +1,4 @@
-import { useLoaderData, Link, MetaFunction } from "@remix-run/react";
+import { useLoaderData, Link, MetaFunction, useNavigate } from "@remix-run/react";
 import { authLoaderWithPerm } from "~/util/auth";
 import { Pagination } from "~/frontend/pagination/view";
 import { executeQueryForPagination } from "~/frontend/pagination/api.server";
@@ -63,6 +63,7 @@ export default function Settings() {
 	const { items } = ld;
 
 	const [isClient, setIsClient] = useState(false);
+	const navigate = useNavigate();
 
 	// Ensure client-specific rendering only occurs after the component mounts
 	useEffect(() => {
@@ -304,23 +305,20 @@ export default function Settings() {
 									</td>
 									<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
 									<td>
-										<div>
-											<button
-												className="mg-button mg-button-table"
-												onClick={() =>
-													(window.location.href = `/settings/access-mgmnt/edit/${item.id}`)
-												}
+										<button
+											aria-label={`Edit item ${item.id}`}
+											className="mg-button mg-button-table"
+											onClick={() => navigate(`/settings/access-mgmnt/edit/${item.id}`)}
+										>
+											<svg
+												aria-hidden="true"
+												focusable="false"
+												role="img"
+												style={{ marginLeft: "4px" }}
 											>
-												<svg
-													aria-hidden="true"
-													focusable="false"
-													role="img"
-													style={{ marginLeft: "4px" }}
-												>
-													<use href="/assets/icons/edit.svg#edit"></use>
-												</svg>
-											</button>
-										</div>
+												<use href="/assets/icons/edit.svg#edit"></use>
+											</svg>
+										</button>
 									</td>
 								</tr>
 							))}
