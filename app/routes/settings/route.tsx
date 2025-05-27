@@ -21,7 +21,6 @@ export const loader = authLoader(async ( request ) => {
 	if ( url.pathname === "/settings" || url.pathname === "/settings/" ) {
 		return redirect("/settings/system", 303);
 	}
-	// console.log( url.pathname );
 
 	return {  };
 });
@@ -33,10 +32,10 @@ export default function SettingsLayout() {
   const isSettingsPage = location.pathname.startsWith("/settings") && !location.pathname.startsWith("/settings/");
 
   return (
-	<div>
+	<>
 	  {/* Render NavSettings dynamically */}
 	  {isSettingsPage && <NavSettings />}
 	  <Outlet />
-	</div>
+	</>
   );
 }
