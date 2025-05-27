@@ -182,15 +182,15 @@ async function parseCSV(data: string): Promise<string[][]> {
   });
 }
 
-interface ImportItem {
-  ImportID: string;
-  GeodataFileName: string;
-}
+// interface ImportItem {
+//   ImportID: string;
+//   GeodataFileName: string;
+// }
 
-interface FailedUpdate {
-  id: string;
-  error: string;
-}
+// interface FailedUpdate {
+//   id: string;
+//   error: string;
+// }
 
 interface BatchResult {
   id: string;
@@ -208,7 +208,7 @@ interface ImportRes {
 export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
   const successfulImports = new Set<string>();
   const failedImports = new Map<string, string>();
-  const results = new Map<string, ImportRes>();
+  // const results = new Map<string, ImportRes>();
   const zip = await JSZip.loadAsync(zipBytes);
 
   try {
@@ -816,9 +816,6 @@ export async function getDivisionsBySpatialQuery(
             validationError: validationResult.error
           });
         }
-
-        // Build query conditions
-        const conditions = [];
 
         // Add spatial relationship condition
         const relationshipType = options.relationshipType || 'intersects';

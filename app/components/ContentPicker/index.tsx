@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import React, { useState, useRef, useEffect, forwardRef } from "react";
 import "./assets/content-picker.css";
-import { TreeView, buildTree } from "~/components/TreeView";
+import { TreeView } from "~/components/TreeView";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
@@ -243,10 +243,10 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         // console.log('tableData: ', tableData);
         // console.log('selectedRow: ', selectedRow);
 
-        const selectedValues = table_columns
-        .filter((col) => col?.is_selected_field)
-        .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
-        .join(", "); // Convert array to comma-separated string
+        // const selectedValues = table_columns
+        // .filter((col) => col?.is_selected_field)
+        // .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
+        // .join(", "); // Convert array to comma-separated string
         //console.log("Selected item:", selectedRow);
         //console.log("Selected Fields (is_selected_field):", selectedValues);
         //console.log("Selected item:", selectedRow['_CpID']);

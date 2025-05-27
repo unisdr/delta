@@ -9,10 +9,6 @@ export function NavSettings() {
   const menu = useMemo(() => {
     if (location.pathname.includes("/analytics")) {
       return [
-        // {
-        //   link: "analytics/human-direct-effects",
-        //   text: "Human Direct Effects",
-        // },
         { link: "analytics/sectors", text: "Sectors" },
         { link: "analytics/hazards", text: "Hazards" },
         { link: "analytics/disaster-events", text: "Disaster Events" },

@@ -1,7 +1,6 @@
 import { useOutletContext, useFetcher } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm , authActionWithPerm} from "~/util/auth";
 import {
-  getSectorAncestorById, 
   sectorChildrenById,
   sectorById
 } from "~/backend.server/models/sector";
@@ -18,7 +17,7 @@ import CustomPieChart from '~/components/PieChart';
 
 import {configCurrencies} from "~/util/config";	
 
-import { unitsEnum, unitName } from "~/frontend/unit_picker"
+import { unitName } from "~/frontend/unit_picker"
 
 interface interfacePieChart {
   name: string;
@@ -64,13 +63,13 @@ interface interfaceSectorDisruptions {
   sectorName: string;
 }
 
-interface interfaceSector {
-  id: number;
-  sectorname: string;
-  level?: number;
-  ids?: [];
-  subSector?: interfaceSector[];
-}
+// interface interfaceSector {
+//   id: number;
+//   sectorname: string;
+//   level?: number;
+//   ids?: [];
+//   subSector?: interfaceSector[];
+// }
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {

@@ -18,8 +18,6 @@ import {
 	configSiteURL,
 } from "~/util/config";
 
-import React from "react";
-
 import {processHipsPage} from "~/backend.server/utils/hip";
 import {processSectorCsv} from "~/backend.server/utils/sector";
 import {processCategoryCsv} from "~/backend.server/utils/category";

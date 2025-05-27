@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { AiOutlineSearch } from "react-icons/ai"; // Import the Search Icon from react-icons
 
@@ -46,7 +46,7 @@ const Filters: React.FC<FiltersProps> = ({
   onAdvancedSearch,
   onClearFilters,
 }) => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
   const [isMounted, setIsMounted] = useState(false); // Ensure hydration consistency
