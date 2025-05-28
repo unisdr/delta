@@ -519,6 +519,13 @@ svg {
   width: 2.4rem;
   height: 2.4rem;
 }
+svg.dts-icon--ocha {
+  width: 4.8rem;
+  height: 4.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
 button {
   display: flex;
@@ -1825,15 +1832,27 @@ header .mg-container {
 }
 
 .dts-indicator {
-  display: grid;
-  place-content: center;
-  height: 9rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 9rem;
   font-size: 3.4rem;
-  padding: 0 1.6rem;
+  padding: 1.6rem;
   background-color: #F2F2F2;
   /* medium design - 768px up */
   /* medium design - 1024px up */
   /* large design - 1164px up */
+}
+.dts-indicator--empty {
+  display: grid;
+  place-content: center;
+}
+.dts-indicator--chart > svg {
+  align-self: flex-start;
+}
+.dts-indicator > span {
+  flex-grow: 1;
+  text-align: center;
 }
 @media (width >= 768px) {
   .dts-indicator {
@@ -2476,10 +2495,14 @@ header .mg-container {
 }
 
 .dts-placeholder {
+  flex-grow: 1;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #F2F2F2;
+  font-size: 1.4rem;
+  line-height: 1.43;
+  font-weight: 400;
 }
 
 .dts-snackbar {
