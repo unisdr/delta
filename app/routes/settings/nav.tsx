@@ -46,30 +46,32 @@ export function NavSettings() {
   }
 
   return (
-    <nav className="dts-sub-navigation">
-      <div className="mg-container">
-        <div className="dts-sub-navigation__container">
-          <ul className="dts-sub-navigation__list">
-            {menu.map(({ link, text }) => {
-              const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-              const isCurrent = currentPath.startsWith(`/${link}`);
-              return (
-                <li
-                  key={link}
-                  className={`dts-sub-navigation__item${isCurrent ? ' dts-sub-navigation__item--current' : ''}`}
-                >
-                  <NavLink
-                    to={`/${link}`}
-                    className="dts-sub-navigation__link"
+    <div className="mg-container">
+      <nav className="dts-sub-navigation">
+        <div className="mg-container">
+          <div className="dts-sub-navigation__container">
+            <ul className="dts-sub-navigation__list">
+              {menu.map(({ link, text }) => {
+                const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+                const isCurrent = currentPath.startsWith(`/${link}`);
+                return (
+                  <li
+                    key={link}
+                    className={`dts-sub-navigation__item${isCurrent ? ' dts-sub-navigation__item--current' : ''}`}
                   >
-                    {text}
-                  </NavLink>
-                </li>
-              );
-            })}
-          </ul>
+                    <NavLink
+                      to={`/${link}`}
+                      className="dts-sub-navigation__link"
+                    >
+                      {text}
+                    </NavLink>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }

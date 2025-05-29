@@ -168,7 +168,7 @@ export default function Settings() {
 			</div>
 
 			{/* Filter Form */}
-			<form method="get">
+			<form method="get" className="dts-form">
 				<div className="mg-grid mg-grid__col-3">
 					{/* Organisation Filter */}
 					<div className="dts-form-component">
