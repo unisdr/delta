@@ -392,7 +392,7 @@ const Filters: React.FC<FiltersProps> = ({
     );
 
     return (
-      <div className="dts-form-component">
+      <>
         <label htmlFor={`${field}-input`}>{placeholder}</label>
         <span>{placeholder}</span>
         <div style={{ position: "relative" }}>
@@ -400,7 +400,7 @@ const Filters: React.FC<FiltersProps> = ({
             id={`${field}-input`}
             type="text"
             className="filter-search"
-            placeholder={`Search ${placeholder.toLowerCase()}...`}
+            placeholder={`Type to search by ${placeholder.toLowerCase()}...`}
             value={displayValues[field]} // Use displayValues from state
             onChange={(e) => {
               setDisplayValues((prev) => ({
@@ -458,7 +458,7 @@ const Filters: React.FC<FiltersProps> = ({
             </ul>
           )}
         </div>
-      </div>
+      </>
     );
   };
 
@@ -554,30 +554,47 @@ const Filters: React.FC<FiltersProps> = ({
 
       {/* Row 3: Geographic Level, From, and To */}
       <div className="dts-form-component mg-grid__col--span-2">
-        {renderAutocomplete(geographicLevels, "geographicLevelId", false, "Geographic Level")}
+
+        <label>
+          <div className="dts-form-component__label">
+            <span>Geographic Level</span>
+          </div>
+          {renderAutocomplete(geographicLevels, "geographicLevelId", false, "Geographic Level")}
+        </label>
+
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">
-        <label htmlFor="from-date">From</label>
-        <input
-          id="from-date"
-          type="date"
-          className="filter-date"
-          value={filters.fromDate}
-          onChange={(e) => handleFilterChange("fromDate", e.target.value)}
-        />
+
+        <label>
+          <div className="dts-form-component__label">
+            <span>From</span>
+          </div>
+          <input
+            type="date"
+            id="from-date"
+            value={filters.fromDate || ""}
+            onChange={(e) => handleFilterChange("fromDate", e.target.value)}
+          />
+        </label>
+
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">
-        <label htmlFor="to-date">To</label>
-        <input
-          id="to-date"
-          type="date"
-          className="filter-date"
-          value={filters.toDate}
-          min={filters.fromDate || undefined}
-          onChange={(e) => handleFilterChange("toDate", e.target.value)}
-        />
+
+        <label>
+          <div className="dts-form-component__label">
+            <span>To</span>
+          </div>
+          <input
+            type="date"
+            id="to-date"
+            value={filters.toDate || ""}
+            min={filters.fromDate || undefined}
+            onChange={(e) => handleFilterChange("toDate", e.target.value)}
+          />
+        </label>
+
       </div>
 
       {/* Row 4: Disaster Event and Action Buttons */}
@@ -590,7 +607,7 @@ const Filters: React.FC<FiltersProps> = ({
             aria-label="Search for disaster events"
             type="text"
             className="filter-search"
-            placeholder="Search by name, ID, GLIDE number..."
+            placeholder="Type to search by name, ID, GLIDE number..."
             value={filters.disasterEventId || ""}
             onChange={(e) => {
               handleFilterChange("disasterEventId", e.target.value);
