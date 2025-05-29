@@ -36,18 +36,24 @@ export async function sendEmail(to: string, subject: string, text: string, html:
 
 	const fromEmail = process.env.EMAIL_FROM || '"Example" <no-reply@example.com>';
 
-	const info = await transporter.sendMail({
-		from: fromEmail,
-		to,
-		subject,
-		text,
-		html,
-	});
+	try{
 
-	// Log email to console or stdout if using file transport
-	if (emailTransportType() == "file") {
-		(info as any).message.pipe(process.stdout);
+		const info = await transporter.sendMail({
+			from: fromEmail,
+			to,
+			subject,
+			text,
+			html,
+		});
+		
+		// Log email to console or stdout if using file transport
+		if (emailTransportType() == "file") {
+			(info as any).message.pipe(process.stdout);
+		}
+		
+		console.log("Email sent: %s", info.messageId);
+		return info;
+	}catch(error: any){
+		throw new Error(`Failed to send email to ${to}: ${error.message}`);
 	}
-
-	console.log("Email sent: %s", info.messageId);
 }

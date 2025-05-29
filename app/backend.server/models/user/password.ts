@@ -32,7 +32,7 @@ export async function passwordHashCompare(password: string, passwordHash: string
 }
 
 
-export async function resetPasswordSilentIfNotFound(email: string) {
+export async function resetPasswordSilentIfNotFound(email: string, resetToken: string) {
   const res = await dr
     .select()
     .from(userTable)
@@ -42,10 +42,7 @@ export async function resetPasswordSilentIfNotFound(email: string) {
     console.log("reset password, user not found", "email", email);
     return;
   }
-  const user = res[0];
-
-  const resetToken = randomBytes(32).toString("hex");
-
+  
   const expiresAt = addHours(new Date(), 1);
   await dr
     .update(userTable)
@@ -55,34 +52,6 @@ export async function resetPasswordSilentIfNotFound(email: string) {
     })
     .where(eq(userTable.email, email));
 
-  const resetURL = `${configSiteURL()}/user/reset-password?token=${resetToken}&email=${encodeURIComponent(
-    email
-  )}`;
-
-  const subject = "Reset password request";
-  const text = `
-              A request to reset your password has been made. If you did not make this request, simply ignore this email.
-              Copy and paste the following link into your browser URL to reset your password:${resetURL} 
-              This link will expire in 1 hour.
-            `;
-  const html = `
-              <p>
-                A request to reset your password has been made. If you did not make this request, simply ignore this email.
-              </p>
-              <p>
-                Click the link below to reset your password:
-                <a href="${resetURL}" 
-                   style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
-                  background-color: #007BFF; text-decoration: none; border-radius: 5px;">
-                  Reset password
-                </a>
-              </p>
-              <p>
-                This link will expire in 1 hour.
-              </p>
-              `;
-
-  await sendEmail(user.email, subject, text, html);
 }
 
 export interface ResetPasswordFields {
