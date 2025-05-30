@@ -59,7 +59,14 @@ const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
         >
           <CartesianGrid strokeDasharray="3 3" />
           <Tooltip />
-          <XAxis type="number" />
+          <XAxis 
+            type="number"
+            tick={{ fill: '#6B7280' }}
+            tickFormatter={(value) => Number.isInteger(value) ? value.toString() : ''}
+            domain={[0, 'dataMax']}
+            tickCount={5}
+            allowDecimals={false}
+          />
           <YAxis type="category" dataKey="name" />
           <Legend align="left" />
           {dataKeys.map((key, index) => (
