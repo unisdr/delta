@@ -75,6 +75,7 @@ export interface CustomMapProps {
   apiEndpoint?: string;
   levelCap?: number;
   calculateColorRanges?: (values: number[], defaultCurrency: string) => ColorRange[];
+  currency: string;
 }
 
 // Helper function to check if a color is light
@@ -105,6 +106,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   apiEndpoint = "/api/analytics/geographic-impacts",
   levelCap = 3,
   calculateColorRanges: customCalculateColorRanges,
+  currency
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -692,7 +694,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       <div className="impact-map-container">
         <div ref={mapRef} className="map" />
         <div ref={tooltipRef} className="map-tooltip" />
-        <Legend ranges={legendRanges} selectedMetric={selectedMetric} />
+        <Legend ranges={legendRanges} selectedMetric={selectedMetric} currency={currency}/>
         {loading && (
           <div className="loading-overlay">
             <div className="loading-spinner" />
