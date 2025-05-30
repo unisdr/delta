@@ -27,6 +27,7 @@ type Filters = FilterValues | null;
 
 type ImpactMapProps = {
   filters: Filters;
+  currency: string;
 };
 
 const DEFAULT_FILTERS: FilterValues = {
@@ -43,7 +44,7 @@ const DEFAULT_FILTERS: FilterValues = {
   confidenceLevel: 'low'
 };
 
-export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps) {
+export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: ImpactMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [selectedMetric, setSelectedMetric] = useState<"totalDamage" | "totalLoss">("totalDamage");
   const [selectedTab, setSelectedTab] = useState<string>('tab01');
@@ -171,7 +172,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
                 tabIndex={selectedTab === 'tab01' ? 0 : -1}
                 onClick={() => handleSelectTab('tab01')}
               >
-                <span>Total Damages</span>
+                <span>Total Damages in {currency}</span>
               </button>
             </li>
             <li role="presentation">
@@ -185,7 +186,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
                 tabIndex={selectedTab === 'tab02' ? 0 : -1}
                 onClick={() => handleSelectTab('tab02')}
               >
-                <span>Total Losses</span>
+                <span>Total Losses in {currency}</span>
               </button>
             </li>
           </ul>
@@ -214,6 +215,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
                 geoData={geoData}
                 selectedMetric={selectedMetric}
                 filters={filters || DEFAULT_FILTERS}
+                currency={currency}
               />
             )}
           </div>
@@ -242,6 +244,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS }: ImpactMapProps)
                 geoData={geoData}
                 selectedMetric={selectedMetric}
                 filters={filters || DEFAULT_FILTERS}
+                currency={currency}
               />
             )}
           </div>

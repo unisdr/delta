@@ -4,12 +4,13 @@ interface LegendProps {
     range: string;
   }>;
   selectedMetric: "totalDamage" | "totalLoss";
+  currency: string;
 }
 
-export default function Legend({ ranges, selectedMetric }: LegendProps) {
+export default function Legend({ ranges, selectedMetric, currency }: LegendProps) {
   return (
     <div className="legend">
-      <h4>{selectedMetric === 'totalDamage' ? 'Total Damages' : 'Total Losses'}</h4>
+      <h4>{selectedMetric === 'totalDamage' ? `Total Damages in ${currency}`  : `Total Losses in ${currency}`}</h4>
       <div className="legend-items">
         {ranges.map((range, index) => (
           <div key={index} className="legend-item">

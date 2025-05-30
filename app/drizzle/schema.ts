@@ -1039,42 +1039,6 @@ export const hipHazardRel = relations(hipHazardTable, ({ one }) => ({
 	}),
 }));
 
-export const resourceRepoTable = pgTable("resource_repo", {
-	id: ourRandomUUID(),
-	title: text("title").notNull(),
-	summary: text("summary").notNull(),
-	attachments: jsonb("attachments"),
-	...approvalFields,
-	...createdUpdatedTimestamps,
-});
-
-export type resourceRepo = typeof resourceRepoTable.$inferSelect;
-export type resourceRepoInsert = typeof resourceRepoTable.$inferInsert;
-
-export const resourceRepoRel = relations(resourceRepoTable, ({ many }) => ({
-	attachments: many(rrAttachmentsTable),
-}));
-
-export const rrAttachmentsTable = pgTable("rr_attachments", {
-	id: ourRandomUUID(),
-	resourceRepoId: uuid("resource_repo_id")
-		.references((): AnyPgColumn => resourceRepoTable.id)
-		.notNull(),
-	type: text({ enum: ["document", "other"] })
-		.notNull()
-		.default("document"),
-	typeOtherDesc: text("type_other_desc"),
-	filename: text("filename"),
-	url: text("url"),
-	...createdUpdatedTimestamps,
-});
-
-export const rrAttachmentsRel = relations(rrAttachmentsTable, ({ one }) => ({
-	attachment: one(resourceRepoTable, {
-		fields: [rrAttachmentsTable.resourceRepoId],
-		references: [resourceRepoTable.id],
-	}),
-}));
 
 /**
  * Pending final design confirmation from @sindicatoesp, this table's structure, especially its sector linkage,

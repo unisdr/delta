@@ -6,6 +6,7 @@ type ImpactMapProps = {
   geoData: GeoData;
   selectedMetric: "totalDamage" | "totalLoss";
   filters: Filters;
+  currency: string;
 };
 
 /**
@@ -13,7 +14,7 @@ type ImpactMapProps = {
  * This is now a thin wrapper around CustomMap that maintains backward compatibility
  * while leveraging all the improvements and fixes from the reusable component
  */
-export default function ImpactMapOl({ geoData, selectedMetric, filters }: ImpactMapProps) {
+export default function ImpactMapOl({ geoData, selectedMetric, filters, currency }: ImpactMapProps) {
   return (
     <ErrorBoundary>
       <CustomMap
@@ -22,6 +23,7 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters }: Impact
         filters={filters}
         apiEndpoint="/api/analytics/geographic-impacts"
         levelCap={3}
+        currency={currency}
       />
     </ErrorBoundary>
   );

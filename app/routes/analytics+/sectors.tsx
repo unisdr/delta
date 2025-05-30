@@ -497,7 +497,7 @@ function SectorsAnalysisContent() {
                 <ImpactByHazard filters={filters} />
 
                 {/* Impact by Geographic Level */}
-                <ImpactMap filters={filters} />
+                <ImpactMap filters={filters} currency={currency} />
 
                 {/* Effect Details Section */}
                 <EffectDetails filters={filters} currency={currency} />

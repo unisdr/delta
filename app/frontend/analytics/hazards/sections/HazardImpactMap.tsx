@@ -121,7 +121,7 @@ const HazardImpactMap2: React.FC<HazardImpactMap2Props> = ({
               aria-controls="tabpanel02"
               aria-selected={activeData === lossesGeoData ? "true" : "false"}
             >
-              <span>Total losses</span>
+              <span>Total losses in {localCurrency}</span>
             </button>
           </li>
           <li role="presentation">
