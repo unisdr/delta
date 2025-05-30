@@ -1280,6 +1280,11 @@ header .mg-container {
 .dts-form__actions--bottom {
   margin-top: 6.4rem;
 }
+.dts-form__actions--standalone {
+  display: flex;
+  flex-direction: row;
+  margin-top: 0;
+}
 
 .dts-dialog .dts-form--vertical .dts-form__actions {
   margin: 3.2rem 0 0;
@@ -2438,10 +2443,14 @@ header .mg-container {
 .dts-metadata--highlight {
   background-color: #F2F2F2;
   padding: 1.6rem;
+  align-self: end;
 }
 .dts-metadata__item {
   display: flex;
   gap: 0.8rem;
+}
+.dts-metadata__item--end {
+  justify-content: end;
 }
 .dts-metadata dd {
   margin: 0;
@@ -2633,6 +2642,7 @@ header .mg-container {
   border-collapse: collapse;
   border-spacing: 0;
   font-size: 1.4rem;
+  margin-bottom: 1.6rem;
   /* medium design - 768px up */
 }
 @media (width >= 768px) {
@@ -2681,7 +2691,7 @@ header .mg-container {
   width: 1.6rem;
 }
 .dts-tooltip__button svg * {
-  transform: scale(0.75) translate(-2px, -3px);
+  transform: scale(0.75) translate(-2px, -2px);
 }
 
 [role=tooltip] {
