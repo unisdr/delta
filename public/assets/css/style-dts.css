@@ -1400,6 +1400,10 @@ header .mg-container {
   border: 1px solid #CCCCCC;
   border-radius: 6px;
   padding: 0.4rem 0.8rem;
+}
+.dts-form-component input:not([type=date]):not([type=time]),
+.dts-form-component textarea:not([type=date]):not([type=time]),
+.dts-form-component select:not([type=date]):not([type=time]) {
   line-height: 1.7 !important;
 }
 .dts-form-component input:hover:not(:disabled):not([readonly]),
@@ -1851,7 +1855,7 @@ header .mg-container {
   min-height: 9rem;
   font-size: 3.4rem;
   padding: 1.6rem;
-  background-color: #F2F2F2;
+  background-color: #FAFAFA;
   /* medium design - 768px up */
   /* medium design - 1024px up */
   /* large design - 1164px up */
@@ -2642,6 +2646,10 @@ header .mg-container {
   height: 5.4rem;
   padding: 0.8rem;
 }
+.dts-table th.dts-table__cell-centered,
+.dts-table td.dts-table__cell-centered {
+  text-align: center;
+}
 .dts-table th {
   background-color: #F2F2F2;
   text-align: left;
@@ -2659,11 +2667,9 @@ header .mg-container {
     white-space: normal;
   }
 }
-.dts-table__cell-centered {
-  text-align: center;
-}
 .dts-table__actions {
   display: flex;
+  justify-content: center;
 }
 
 .dts-tooltip__button {
