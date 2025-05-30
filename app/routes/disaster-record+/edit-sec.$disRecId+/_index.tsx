@@ -334,14 +334,14 @@ export default function Screen() {
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
 										<input type="checkbox" name="with_losses" aria-describedby="" defaultChecked={ (loaderData.record && loaderData.record.withLosses) ? true : false } />
-										<span>Has Lossses</span>
+										<span>Has Losses</span>
 									</div>
 								</label>					
 							</div>
 							<div className="dts-form-component mg-grid__col">
 								<label>
 									<div className="dts-form-component__label">
-										<span>Lossses Cost</span>
+										<span>Losses Cost</span>
 									</div>
 									<input type="number" name="losses_cost" placeholder="enter the losses cost" defaultValue={(loaderData.record && loaderData.record.lossesCost) ? loaderData.record.lossesCost : '' } />
 								</label>
