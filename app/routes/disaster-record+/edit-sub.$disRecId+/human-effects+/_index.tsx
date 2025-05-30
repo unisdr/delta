@@ -50,7 +50,7 @@ export default function Screen() {
 	const data = fetcher.data || ld
 
 	return (
-		<MainContainer title="Human Direct Effects">
+		<MainContainer title="Human Effects">
 			<Link to={"/disaster-record/edit/" + ld.recordId}>Back to disaster record</Link>
 			<p>{data.tbl.label}</p>
 			<fetcher.Form method="get" action=".">
