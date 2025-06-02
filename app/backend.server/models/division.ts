@@ -301,7 +301,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
     });
 
     // Process root divisions first
-    const rootResults = await processParallelBatches(
+    await processParallelBatches(
       rootDivisions,
       10, // batchSize
       2,  // concurrency
@@ -368,7 +368,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
     );
 
     // Then process child divisions
-    const childResults = await processParallelBatches(
+    await processParallelBatches(
       childDivisions,
       10, // batchSize
       2,  // concurrency

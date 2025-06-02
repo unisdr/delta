@@ -128,13 +128,11 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
   
   const [isClient, setIsClient] = useState(false);
   const [isLeafletLoaded, setLeafletLoaded] = useState(false);
-  const [updatedData, setUpdatedData] = useState(dataSource);
   const [isMapRendered, setIsMapRendered] = useState(false);
   const [minTotal, setMinTotal] = useState(0);
   const [maxTotal, setMaxTotal] = useState(0);
 
   const mapRef = useRef<any>(null);
-  const layersRef = useState<any[]>([]);
 
   const makeLegendDraggable = () => {
     const legend = document.getElementById(`${componentId}_map-legend`);
@@ -206,8 +204,6 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
       ...region,
       colorPercentage: getOpacityForRange(region.total, minVal, maxVal),
     }));
-  
-    setUpdatedData(newData);
   
     setTimeout(() => {
       if (!mapRef.current) {
@@ -288,16 +284,6 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
   useEffect(() => {
     updateMapLayers(dataSource);
   }, [isClient, isLeafletLoaded, dataSource, updateMapLayers]);
-  
-  const setLegendTitle = (newTitle: string) => {
-    const legend = document.getElementById(`${componentId}_map-legend`) as HTMLElement;
-    if (legend) {
-      const strongElement = legend.querySelector("strong");
-      if (strongElement) {
-        strongElement.textContent = newTitle;
-      }
-    } 
-  };
   
   return (
     <div style={{ position: "relative" }}>

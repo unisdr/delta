@@ -198,7 +198,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDialogMapOpen, setIsDialogMapOpen] = useState(false);
+  // let isDialogMapOpen=false;
   const [editingItem, setEditingItem] = useState<any>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [formData, setFormData] = useState<any>({});
@@ -1052,7 +1052,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
  
   const closeMapDialog = () => {
     if (debug) console.log('Unload: ', (`${id}_mapper_container`));
-    setIsDialogMapOpen(false);
+    // isDialogMapOpen=false;
     dialogMapRef.current?.close();
 
     document.getElementById(`${id}_mapper_container`)?.remove();
@@ -1087,22 +1087,22 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       console.error(`Container not found for selector: ${id}_mapper .dts-form__body`);
     }
   }
-  const isConnectedToStart = (newPoint: any, startPoint: any) => {
-    const distance = mapRef.current.distance(newPoint, startPoint); // Use Leaflet's distance method
-    return distance < 10; // Close if within 10 meters
-  };
-  type Point = [number, number];
-  const doLinesIntersect = (p1: Point, p2: Point, p3: Point, p4: Point) => {
-    const det = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0]);
-    if (det === 0) return false; // Lines are parallel
+  // const isConnectedToStart = (newPoint: any, startPoint: any) => {
+  //   const distance = mapRef.current.distance(newPoint, startPoint); // Use Leaflet's distance method
+  //   return distance < 10; // Close if within 10 meters
+  // };
+  // type Point = [number, number];
+  // const doLinesIntersect = (p1: Point, p2: Point, p3: Point, p4: Point) => {
+  //   const det = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0]);
+  //   if (det === 0) return false; // Lines are parallel
   
-    const lambda =
-      ((p4[1] - p3[1]) * (p4[0] - p1[0]) + (p3[0] - p4[0]) * (p4[1] - p1[1])) / det;
-    const gamma =
-      ((p1[1] - p2[1]) * (p4[0] - p1[0]) + (p2[0] - p1[0]) * (p4[1] - p1[1])) / det;
+  //   const lambda =
+  //     ((p4[1] - p3[1]) * (p4[0] - p1[0]) + (p3[0] - p4[0]) * (p4[1] - p1[1])) / det;
+  //   const gamma =
+  //     ((p1[1] - p2[1]) * (p4[0] - p1[0]) + (p2[0] - p1[0]) * (p4[1] - p1[1])) / det;
   
-    return 0 < lambda && lambda < 1 && 0 < gamma && gamma < 1;
-  };
+  //   return 0 < lambda && lambda < 1 && 0 < gamma && gamma < 1;
+  // };
   const resetDrawing = () => {
     const L = (window as any).L || null;
 
@@ -1527,7 +1527,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                             <div className="wrapper">  
                               <a className="btn"
                                 onClick={() => {
-                                  setIsDialogMapOpen(true);
+                                  // isDialogMapOpen=true;
                                   if (dialogMapRef.current) {
                                     const dialogElement = dialogMapRef.current as HTMLDialogElement & { mapperField?: any };
                                     dialogElement.showModal();

@@ -126,7 +126,7 @@ export default function Data() {
 	}, []);
 
 	// Handler to clear OTP when resending
-	const handleResend = React.useCallback(() => {
+	React.useCallback(() => {
 		setOtp("");
 		const input = document.querySelector(
 			'input[name="code"]'

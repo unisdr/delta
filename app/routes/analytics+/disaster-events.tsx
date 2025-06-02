@@ -37,7 +37,6 @@ import { getAffected } from "~/backend.server/models/analytics/affected-people-b
 import CustomPieChart from '~/components/PieChart';
 import CustomStackedBarChart from '~/components/StackedBarChart';
 import HorizontalBarChart from '~/components/HorizontalBarChart';
-import { getCurrency } from "~/util/currency";
 
 
 // Define an interface for the structure of the JSON objects
