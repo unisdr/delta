@@ -7,7 +7,7 @@ import {
 
 export interface Hip {
     //type: string
-    nid: number
+    id: number
     title: string
     description: string
     notation: string
@@ -51,7 +51,7 @@ export async function upsertHip(item: Hip) {
     await dr
         .insert(hipHazardTable)
         .values({
-            id: String(item.nid),
+            id: String(item.id),
             code: item.notation,
             clusterId: String(cluster.id),
             nameEn: item.title,
