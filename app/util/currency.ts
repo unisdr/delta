@@ -24,3 +24,17 @@ export function checkValidCurrency(value: string): boolean {
 export function formatNumber(value: number, locale: string = 'en-US', options: Intl.NumberFormatOptions = {}): string {
     return new Intl.NumberFormat(locale, options).format(value);
 }
+
+/**
+ * format number without decimals
+ * @param value 
+ * @returns 
+ */
+export const formatNumberWithoutDecimals = (value: number) => {
+  if (value == null || isNaN(value)) return "N/A"; 
+  return new Intl.NumberFormat("en-US", {
+    style: "decimal",
+    minimumFractionDigits: 0, 
+    maximumFractionDigits: 0, 
+  }).format(value);
+};
