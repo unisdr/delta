@@ -23,7 +23,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     //"noImplicitReturns": true,
-    //"noUnusedParameters": true,
+    "noUnusedParameters": true,
     "noUnusedLocals": true,
     "paths": {
       "~/*": ["./app/*"]
