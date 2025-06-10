@@ -3,7 +3,6 @@ import type { MetaFunction } from "@remix-run/node";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
-import { resourceRepoLoader } from "~/backend.server/handlers/resourcerepo";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { loadMarkdownContent } from "~/util/loadMarkdownContent";
 import { useLoaderData } from "@remix-run/react";
@@ -11,20 +10,19 @@ import PreventionWebLandingPageWidget from "~/components/PreventionWebLandingPag
 
 export const loader = authLoaderPublicOrWithPerm(
   "ViewData",
-  async (loaderArgs) => {
-    const resourceRepoData = await resourceRepoLoader({ loaderArgs });
+  async () => {
 
     // load .md file and its append file if exist
     const { fullContent, appendContent } = await loadMarkdownContent(
       "methodologies"
     );
 
-    return Response.json({ resourceRepoData, fullContent, appendContent });
+    return Response.json({ fullContent, appendContent });
   }
 );
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
   return [
     { title: "Methodologies - DTS" },
     {

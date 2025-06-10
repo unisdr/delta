@@ -10,9 +10,6 @@ import { Errors, hasErrors } from "~/frontend/form";
 import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
 
-import { randomBytes } from "crypto";
-
-import { configSiteURL } from "~/util/config";
 import { checkPasswordComplexity, PasswordErrorType } from "./password_check";
 
 // rounds=10: ~10 hashes/sec

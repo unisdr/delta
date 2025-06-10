@@ -29,7 +29,7 @@ const DisasterEventsList: React.FC<DisasterEventsListProps> = ({
 								<th>End Date</th>
 								<th>Province Affected</th>
 								<th>Damages</th>
-								<th>Lossese</th>
+								<th>Losses</th>
 								<th>People Affected</th>
 							</tr>
 						</thead>

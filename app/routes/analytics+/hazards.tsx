@@ -488,7 +488,7 @@ export default function HazardAnalysis() {
 	);
 }
 
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
 	return [
 		{ title: "Hazards Analysis - DTS" },
 		{ name: "description", content: "Hazards analysis page under DTS." },

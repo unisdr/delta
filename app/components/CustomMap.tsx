@@ -13,7 +13,6 @@ import { FeatureLike } from "ol/Feature"; // Import FeatureLike to handle both F
 import { Feature } from "ol";
 import { getCenter } from "ol/extent";
 import { Geometry } from "ol/geom";
-import Swal from "sweetalert2";
 import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
 import ErrorBoundary from "~/frontend/components/ErrorBoundary";
 import Legend from "~/frontend/analytics/sectors/sections/Map/Legend";
@@ -112,11 +111,8 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<Map | null>(null);
   const [legendRanges, setLegendRanges] = useState<Array<{ color: string; range: string }>>([]);
-  const [currentLevel, setCurrentLevel] = useState(1);
-  const [currentParentId, setCurrentParentId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [hoveredFeatureColor, setHoveredFeatureColor] = useState<string | null>(null);
-  const [hoveredFeature, setHoveredFeature] = useState<FeatureLike | null>(null);
+  const loading = false;
+  let hoveredFeature : FeatureLike | null = null;
   const defaultCurrency = useDefaultCurrency();
 
   // Default color range calculation if not provided via props
@@ -218,66 +214,66 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   };
 
   // Fetch data for drill-down
-  const fetchGeoData = async (level: number, parentId: number | null): Promise<GeoData | null> => {
-    setLoading(true);
-    try {
-      const url = new URL(apiEndpoint, window.location.origin);
-      const params = new URLSearchParams();
+  // const fetchGeoData = async (level: number, parentId: number | null): Promise<GeoData | null> => {
+  //   setLoading(true);
+  //   try {
+  //     const url = new URL(apiEndpoint, window.location.origin);
+  //     const params = new URLSearchParams();
 
-      if (filters.sectorId) {
-        params.set("sectorId", filters.sectorId);
-      }
+  //     if (filters.sectorId) {
+  //       params.set("sectorId", filters.sectorId);
+  //     }
 
-      const optionalParams: Array<[keyof Filters, string]> = [
-        ["subSectorId", "subSectorId"],
-        ["hazardTypeId", "hazardTypeId"],
-        ["hazardClusterId", "hazardClusterId"],
-        ["specificHazardId", "specificHazardId"],
-        ["geographicLevelId", "geographicLevelId"],
-        ["fromDate", "fromDate"],
-        ["toDate", "toDate"],
-        ["disasterEventId", "disasterEventId"],
-        ["assessmentType", "assessmentType"],
-        ["confidenceLevel", "confidenceLevel"],
-      ];
+  //     const optionalParams: Array<[keyof Filters, string]> = [
+  //       ["subSectorId", "subSectorId"],
+  //       ["hazardTypeId", "hazardTypeId"],
+  //       ["hazardClusterId", "hazardClusterId"],
+  //       ["specificHazardId", "specificHazardId"],
+  //       ["geographicLevelId", "geographicLevelId"],
+  //       ["fromDate", "fromDate"],
+  //       ["toDate", "toDate"],
+  //       ["disasterEventId", "disasterEventId"],
+  //       ["assessmentType", "assessmentType"],
+  //       ["confidenceLevel", "confidenceLevel"],
+  //     ];
 
-      optionalParams.forEach(([key, paramName]) => {
-        const value = filters[key];
-        if (value) {
-          params.set(paramName, value);
-        }
-      });
+  //     optionalParams.forEach(([key, paramName]) => {
+  //       const value = filters[key];
+  //       if (value) {
+  //         params.set(paramName, value);
+  //       }
+  //     });
 
-      params.set("level", level.toString());
-      if (parentId !== null) {
-        params.set("parentId", parentId.toString());
-      }
+  //     params.set("level", level.toString());
+  //     if (parentId !== null) {
+  //       params.set("parentId", parentId.toString());
+  //     }
 
-      const response = await fetch(`${url.toString()}?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch geographic impact data: ${response.statusText}`);
-      }
+  //     const response = await fetch(`${url.toString()}?${params.toString()}`);
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch geographic impact data: ${response.statusText}`);
+  //     }
 
-      const data: GeoData = await response.json();
-      if (!data || !data.features) {
-        throw new Error("Invalid response format from geographic impacts API");
-      }
+  //     const data: GeoData = await response.json();
+  //     if (!data || !data.features) {
+  //       throw new Error("Invalid response format from geographic impacts API");
+  //     }
 
-      return data;
-    } catch (error) {
-      console.error("🧭 Unable to load map data. Please check your internet connection or filters.", error);
-      Swal.fire({
-        title: "Could not load map",
-        text: error instanceof Error
-          ? error.message
-          : "Please check your filters or try reloading the page. If the issue persists, contact support.",
-        icon: "error",
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     return data;
+  //   } catch (error) {
+  //     console.error("🧭 Unable to load map data. Please check your internet connection or filters.", error);
+  //     Swal.fire({
+  //       title: "Could not load map",
+  //       text: error instanceof Error
+  //         ? error.message
+  //         : "Please check your filters or try reloading the page. If the issue persists, contact support.",
+  //       icon: "error",
+  //     });
+  //     return null;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Handle feature click for drill-down
   const handleFeatureClick = async (feature: Feature<Geometry>) => {
@@ -469,7 +465,6 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       const style = getFeatureStyle(feature, 0);
       const fill = style instanceof Style ? style.getFill() : null;
       const backgroundColor = fill ? fill.getColor() as string : "#FFFFFF";
-      setHoveredFeatureColor(backgroundColor);
 
       const textColor = isLightColor(backgroundColor) ? "#333333" : "#FFFFFF";
       const subTextColor = isLightColor(backgroundColor) ? "#666666" : "#EEEEEE";
@@ -702,17 +697,11 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       });
     }
 
-    // Reset to initial view state
-    setCurrentLevel(0);
-    setCurrentParentId(null);
-
   }, [map, geoData, selectedMetric, getFeatureStyle]); // Added selectedMetric to dependencies
 
   // Reset view when filters change
   useEffect(() => {
     if (!map || !filters) return;
-    setCurrentLevel(1);
-    setCurrentParentId(null);
   }, [filters, map]);
 
   // Empty state

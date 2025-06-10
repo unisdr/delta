@@ -1,4 +1,4 @@
-import { useOutletContext, useFetcher } from "@remix-run/react";
+import { useOutletContext } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm , authActionWithPerm} from "~/util/auth";
 import {
   sectorChildrenById,
@@ -184,17 +184,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 });
 
 export const action = authActionWithPerm("ViewData", async (actionArgs) => {
-  const req = actionArgs.request;
-  const formData = await req.formData();
-
-  //console.log('Child Action: ', req.url, formData);
-
   return {};
 });
 
 export default function DetailSectorEffectScreen() {
   const myValue = useOutletContext();
-  const fetcher = useFetcher();
     const ld = useLoaderData<{
       sectorData: any,
       sectorPieChartData: any,

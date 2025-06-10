@@ -46,7 +46,6 @@ const Filters: React.FC<FiltersProps> = ({
   onAdvancedSearch,
   onClearFilters,
 }) => {
-  // const queryClient = useQueryClient();
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
   const [isMounted, setIsMounted] = useState(false); // Ensure hydration consistency
@@ -67,8 +66,6 @@ const Filters: React.FC<FiltersProps> = ({
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const [subSectors, setSubSectors] = useState<Sector[]>([]); // For filtered subsectors
 
   const [dropdownVisibility, setDropdownVisibility] = useState<{
     [key: string]: boolean;
@@ -252,8 +249,7 @@ const Filters: React.FC<FiltersProps> = ({
 
       // Reset dependent fields for sectors
       if (field === "sectorId") {
-        const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
-        setSubSectors(selectedSector?.subsectors || []); // Update subsectors dropdown
+        // const selectedSector = sectors.find((sector) => sector.id === parseInt(value, 10));
         updatedFilters.subSectorId = ""; // Reset sub-sector
       }
 
@@ -363,7 +359,6 @@ const Filters: React.FC<FiltersProps> = ({
       specificHazardId: "",
       geographicLevelId: "",
     });
-    setSubSectors([]); // Clear sub-sector options
     onClearFilters(); // Call parent clear handler
   };
 

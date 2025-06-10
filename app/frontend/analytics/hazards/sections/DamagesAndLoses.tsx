@@ -12,6 +12,7 @@ import {
 	DamageByYear,
 	LossByYear,
 } from "~/backend.server/models/analytics/hazard-analysis";
+import { formatNumberWithoutDecimals } from "~/util/currency";
 import { createFloatingTooltip } from "~/util/tooltip";
 
 interface DamagesAndLosesProps {
@@ -29,6 +30,8 @@ const DamagesAndLoses: React.FC<DamagesAndLosesProps> = ({
 	totalDamagesByYear,
 	totalLossesByYear,
 }) => {
+	
+
 	return (
 		<>
 			<section className="dts-page-section">
@@ -53,7 +56,7 @@ const DamagesAndLoses: React.FC<DamagesAndLosesProps> = ({
 							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
-							<span>{totalDamages}</span>
+							<span>{formatNumberWithoutDecimals(totalDamages)}</span>
 						</div>
 						{/* Damages overtime */}
 						<div>
@@ -113,7 +116,7 @@ const DamagesAndLoses: React.FC<DamagesAndLosesProps> = ({
 							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
-							<span>{totalLosses}</span>
+							<span>{formatNumberWithoutDecimals(totalLosses)}</span>
 						</div>
 						<div>
 							<ResponsiveContainer width="100%" height={400}>
