@@ -483,12 +483,10 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 	record.forEach((item) => {
 		if (item.withDamage) {
 			if (item.damageCost) {
-				// console.log(index, item);
 				totalDamages += Number(item.damageCost); //get the total override from the sector level damage cost
 			}
 			else {
 				// get damage records from damages table
-				// console.log(index, item);
 				recordsAssetDamagesIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
 			}
 
@@ -497,7 +495,6 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 			}
 			else {
 				// get the recovery records from damages table
-				// console.log(index, item);
 				recordsAssetRecoveryIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
 			}
 		}
@@ -509,7 +506,6 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 			}
 			else {
 				// get the losses records from losses table
-				// console.log(index, item);
 				recordsAssetLossesIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
 			}
 		}
@@ -521,38 +517,31 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 		try {
 			const recordsAssetRecovery = await disasterEventTotalRecovery_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
 			recordsAssetRecovery.forEach((item2) => {
-				// console.log( 'cccc', index2, item2.totalRecovery );
 				totalRecovery += Number( item2.totalRecovery );
-				// console.log(item2.totalRepairReplacement);
 			});
 		} catch (error) {
 			console.error(`Error processing item ${item}:`, error);
 		}
 	}
 
-	// console.log( 'IDx', recordsAssetDamagesIdArray );
 	// Get damages from Asset level records
 	for (const item of recordsAssetDamagesIdArray) {
 		try {
 			const recordsAssetDamages = await disasterEventTotalDamages_RecordsAssets__ById(disasterEventId, item.record_id);
 			recordsAssetDamages.forEach((item2) => {
 				totalDamages += Number( item2.totalRepairReplacement );
-				// console.log(item2.totalRepairReplacement);
 			});
 		} catch (error) {
 			console.error(`Error processing item ${item}:`, error);
 		}
 	}
 
-	// console.log( 'ID: ', recordsAssetLossesIdArray );
 	// Get losses from Asset level records
 	for (const item of recordsAssetLossesIdArray) {
 		
 		try {
 			const recordsAssetlosses = await disasterEventTotalLosses_RecordsAssets__ById(disasterEventId, item.record_id);
-			recordsAssetlosses.forEach((item2, index2) => {
-				// totalLosses += Number( item2.totalRepairReplacement );
-				// damageCurrency = String( item2.pdRecoveryCostUnitCurrency );
+			recordsAssetlosses.forEach((item2) => {
 				if (item2.publicCostTotalOverride) {
 					totalLosses += Number( item2.publicCostTotal );
 				}
@@ -565,14 +554,12 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 				else {
 					totalLosses += (Number( item2.privateUnits ) * Number( item2.privateCostUnit ));
 				}
-				// console.log('Losses:', item2);
 			});
 		} catch (error) {
 			console.error(`Error processing item ${item}:`, error);
 		}
 	}
 
-	// console.log( totalDamages, totalLosses, totalRecovery );
 	return {
 		damages: {
 			total: totalDamages, currency: damageCurrency
