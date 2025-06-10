@@ -6,6 +6,7 @@ import { useLoaderData } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
+import createLogger from "~/utils/logger.server";
 
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector";
@@ -13,6 +14,9 @@ import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
+
+// Create logger for this module
+const logger = createLogger("routes/analytics/sectors.tsx");
 
 // import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
 // import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
@@ -38,13 +42,49 @@ const queryClient = new QueryClient({
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
-  // Get currency from environment variable
-  const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
+  const { request, userSession } = loaderArgs;
 
-  return {
-    currency,
-    loaderArgs
-  };
+  // Generate request ID for tracking
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  // Create context logger with user details (if authenticated)
+  const contextLogger = logger.withContext({
+    requestId,
+    userId: userSession?.user?.id?.toString() || 'public_user',
+    userRole: userSession?.user?.role || 'public',
+    action: 'sectors_analytics_view'
+  });
+
+  contextLogger.info("Sectors analytics page requested", {
+    isPublicAccess: !userSession,
+    userAgent: request.headers.get("user-agent"),
+    referer: request.headers.get("referer"),
+    url: request.url
+  });
+
+  try {
+    // Get currency from environment variable
+    const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
+
+    contextLogger.info("Successfully loaded sectors analytics data", {
+      currency,
+      hasAuthentication: !!userSession
+    });
+
+    return {
+      currency,
+      loaderArgs,
+      requestId
+    };
+
+  } catch (error) {
+    contextLogger.error("Failed to load sectors analytics data", {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    throw error;
+  }
 });
 
 // Meta function for page SEO
@@ -76,15 +116,29 @@ function SectorsAnalysisContent() {
   // Event handlers for Filters component
   const handleApplyFilters = (newFilters: typeof filters) => {
     setFilters(newFilters);
+
+    // Log filter application for analytics
+    console.log('[SECTORS-ANALYTICS] Filters applied', {
+      appliedFilters: newFilters,
+      filterCount: Object.values(newFilters || {}).filter(v => v !== null).length,
+      timestamp: new Date().toISOString()
+    });
   };
 
   const handleAdvancedSearch = () => {
     // TODO: Implement advanced search functionality
-    console.log("Advanced search clicked");
+    console.log('[SECTORS-ANALYTICS] Advanced search clicked', {
+      timestamp: new Date().toISOString()
+    });
   };
 
   const handleClearFilters = () => {
     setFilters(null);
+
+    // Log filter clearing for analytics
+    console.log('[SECTORS-ANALYTICS] Filters cleared', {
+      timestamp: new Date().toISOString()
+    });
   };
 
   // Function to export Excel data
