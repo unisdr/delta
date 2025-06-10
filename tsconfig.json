@@ -22,7 +22,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
-    //"noImplicitReturns": true,
+    "noImplicitReturns": true,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "paths": {
