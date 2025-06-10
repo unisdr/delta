@@ -1,5 +1,9 @@
 import { and, eq, sql, inArray, exists, SQL } from "drizzle-orm";
 import { dr } from "~/db.server";
+import createLogger from "~/utils/logger.server";
+
+// Initialize logger for this module
+const logger = createLogger("backend.server/models/analytics/effectDetails");
 import {
   damagesTable,
   lossesTable,
@@ -80,6 +84,17 @@ interface FilterParams {
  * - Spatial queries use PostGIS functions with proper error handling
  */
 export async function getEffectDetails(filters: FilterParams) {
+  const startTime = Date.now();
+  logger.info("Processing effect details request", {
+    filters: {
+      sectorId: filters.sectorId,
+      hazardTypeId: filters.hazardTypeId,
+      geographicLevelId: filters.geographicLevelId,
+      fromDate: filters.fromDate,
+      toDate: filters.toDate,
+      disasterEventId: filters.disasterEventId
+    }
+  });
   let targetSectorIds: number[] = [];
   if (filters.sectorId) {
     try {
@@ -111,7 +126,11 @@ export async function getEffectDetails(filters: FilterParams) {
         targetSectorIds = [...new Set(targetSectorIds)];
       }
     } catch (error) {
-      console.error('Error processing sector IDs:', error);
+      logger.error("Error processing sector IDs", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        sectorId: filters.sectorId
+      });
       targetSectorIds = [];
     }
   }
@@ -120,6 +139,11 @@ export async function getEffectDetails(filters: FilterParams) {
   let baseConditions: SQL[] = [
     sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`
   ];
+
+  logger.debug("Initialized base query conditions", {
+    hasSectorFilter: targetSectorIds.length > 0,
+    sectorCount: targetSectorIds.length
+  });
 
   // Add sector filter to disaster records if we have target sectors
   if (targetSectorIds.length > 0) {
@@ -151,13 +175,19 @@ export async function getEffectDetails(filters: FilterParams) {
     try {
       const divisionInfo = await getDivisionInfo(filters.geographicLevelId);
       if (divisionInfo) {
-        // Apply geographic filters from utility
+        logger.debug("Applying geographic filters", { divisionId: filters.geographicLevelId });
         baseConditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, baseConditions);
       } else {
-        console.warn(`Division with ID ${filters.geographicLevelId} not found. No geographic filtering will be applied.`);
+        logger.warn("Division not found, skipping geographic filtering", {
+          divisionId: filters.geographicLevelId
+        });
       }
     } catch (error) {
-      console.error(`Error in geographic filtering for division ${filters.geographicLevelId}:`, error);
+      logger.error("Error in geographic filtering", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        divisionId: filters.geographicLevelId
+      });
     }
   }
 
@@ -167,7 +197,10 @@ export async function getEffectDetails(filters: FilterParams) {
     if (parsedFromDate) {
       baseConditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
     } else {
-      console.error('Invalid fromDate format:', filters.fromDate);
+      logger.warn("Invalid fromDate format", {
+        fromDate: filters.fromDate,
+        error: "Could not parse date"
+      });
     }
   }
   if (filters.toDate) {
@@ -175,7 +208,10 @@ export async function getEffectDetails(filters: FilterParams) {
     if (parsedToDate) {
       baseConditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
     } else {
-      console.error('Invalid toDate format:', filters.toDate);
+      logger.warn("Invalid toDate format", {
+        toDate: filters.toDate,
+        error: "Could not parse date"
+      });
     }
   }
 
@@ -305,6 +341,22 @@ export async function getEffectDetails(filters: FilterParams) {
       targetSectorIds.length > 0 ? inArray(disruptionTable.sectorId, targetSectorIds) : undefined
     ))
     .groupBy(disruptionTable.id);
+
+  // Log successful query completion with result counts and performance metrics
+  const executionTime = Date.now() - startTime;
+  logger.info("Successfully retrieved effect details", {
+    damagesCount: damagesData.length,
+    lossesCount: lossesData.length,
+    disruptionsCount: disruptionsData.length,
+    executionTimeMs: executionTime,
+    executionTime: `${executionTime}ms`,
+    filters: {
+      sectorId: filters.sectorId,
+      hazardTypeId: filters.hazardTypeId,
+      dateRange: `${filters.fromDate} to ${filters.toDate}`,
+      geographicLevelId: filters.geographicLevelId
+    }
+  });
 
   return {
     damages: damagesData,

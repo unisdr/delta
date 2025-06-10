@@ -8,11 +8,15 @@ import {
   hazardousEventTable,
   sectorDisasterRecordsRelationTable,
 } from "~/drizzle/schema";
-import { and, eq, inArray, SQL, exists} from "drizzle-orm";
+import { and, eq, inArray, SQL, exists } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
 import { configCurrencies } from "~/util/config";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 import { parseFlexibleDate, createDateCondition, extractYearFromDate } from "~/backend.server/utils/dateFilters";
+import createLogger from "~/utils/logger.server";
+
+// Create logger for this backend module
+const logger = createLogger("backend.server/models/analytics/ImpactOnSectors");
 
 type AssessmentType = 'rapid' | 'detailed';
 type ConfidenceLevel = 'low' | 'medium' | 'high';
@@ -31,6 +35,13 @@ export const createAssessmentMetadata = (
   confidenceLevel: ConfidenceLevel = 'medium'
 ): DisasterImpactMetadata => {
   const currencies = configCurrencies();
+
+  logger.debug("Creating assessment metadata", {
+    assessmentType,
+    confidenceLevel,
+    availableCurrencies: currencies
+  });
+
   return {
     assessmentType,
     confidenceLevel,
@@ -50,7 +61,13 @@ export const createAssessmentMetadata = (
  */
 export const validateCurrency = (currency: string): boolean => {
   const iso4217Pattern = /^[A-Z]{3}$/;
-  return iso4217Pattern.test(currency);
+  const isValid = iso4217Pattern.test(currency);
+
+  if (!isValid) {
+    logger.warn("Invalid currency code provided", { currency });
+  }
+
+  return isValid;
 };
 
 interface Filters {
@@ -90,13 +107,21 @@ const getDisasterRecordsForSector = async (
   filters?: Filters
 ): Promise<string[]> => {
   try {
-    console.log("Sector ID:", sectorId);
+    logger.info("Getting disaster records for sector", {
+      sectorId,
+      hasFilters: !!filters,
+      filterCount: filters ? Object.keys(filters).length : 0
+    });
 
     // Get all relevant sector IDs (including subsectors if parent sector)
     const sectorIds = await getAllSubsectorIds(sectorId);
     const numericSectorIds = sectorIds;
-    console.log("Found Sector IDs:", numericSectorIds);
 
+    logger.debug("Found sector hierarchy", {
+      rootSectorId: sectorId,
+      totalSectorIds: numericSectorIds.length,
+      sectorIds: numericSectorIds
+    });
 
     // Initialize conditions array
     let conditions: SQL[] = [
@@ -122,11 +147,17 @@ const getDisasterRecordsForSector = async (
       try {
         const divisionInfo = await getDivisionInfo(filters.geographicLevel);
         if (divisionInfo) {
-          // console.log("Geographic Level:", divisionInfo);
+          logger.debug("Applying geographic filter", {
+            geographicLevel: filters.geographicLevel,
+            divisionInfo
+          });
           conditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, conditions);
         }
       } catch (error) {
-        console.error('Error applying geographic filter:', error);
+        logger.error('Error applying geographic filter', {
+          geographicLevel: filters.geographicLevel,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
     }
 
@@ -137,49 +168,69 @@ const getDisasterRecordsForSector = async (
           const startDate = parseFlexibleDate(filters.startDate);
           if (startDate) {
             conditions.push(createDateCondition(disasterRecordsTable.startDate, startDate, 'gte'));
+            logger.debug("Applied start date filter", { startDate: filters.startDate });
           } else {
-            console.error('Invalid start date format:', filters.startDate);
+            logger.error('Invalid start date format', { startDate: filters.startDate });
           }
         } catch (error) {
-          console.error('Invalid start date:', error);
+          logger.error('Invalid start date', {
+            startDate: filters.startDate,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
+
       if (filters.endDate) {
         try {
           const endDate = parseFlexibleDate(filters.endDate);
           if (endDate) {
             conditions.push(createDateCondition(disasterRecordsTable.endDate, endDate, 'lte'));
+            logger.debug("Applied end date filter", { endDate: filters.endDate });
           } else {
-            console.error('Invalid end date format:', filters.endDate);
+            logger.error('Invalid end date format', { endDate: filters.endDate });
           }
         } catch (error) {
-          console.error('Invalid end date:', error);
+          logger.error('Invalid end date', {
+            endDate: filters.endDate,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
 
       // Handle hazard type hierarchy
       if (filters.hazardType) {
         try {
-          console.log("Hazard Type filter applied:", filters.hazardType);
+          logger.debug("Applying hazard type filter", { hazardType: filters.hazardType });
           conditions.push(sql`${hazardousEventTable.hipTypeId} = ${filters.hazardType}`);
         } catch (error) {
-          console.error('Invalid hazard type ID:', error);
+          logger.error('Invalid hazard type ID', {
+            hazardType: filters.hazardType,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
+
       if (filters.hazardCluster) {
         try {
-          console.log("Hazard Cluster filter applied:", filters.hazardCluster);
+          logger.debug("Applying hazard cluster filter", { hazardCluster: filters.hazardCluster });
           conditions.push(sql`${hazardousEventTable.hipClusterId} = ${filters.hazardCluster}`);
         } catch (error) {
-          console.error('Invalid hazard cluster ID:', error);
+          logger.error('Invalid hazard cluster ID', {
+            hazardCluster: filters.hazardCluster,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
+
       if (filters.specificHazard) {
         try {
-          console.log("Specific Hazard filter applied:", filters.specificHazard);
+          logger.debug("Applying specific hazard filter", { specificHazard: filters.specificHazard });
           conditions.push(sql`${hazardousEventTable.hipHazardId} = ${filters.specificHazard}`);
         } catch (error) {
-          console.error('Invalid specific hazard ID:', error);
+          logger.error('Invalid specific hazard ID', {
+            specificHazard: filters.specificHazard,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
 
@@ -188,12 +239,13 @@ const getDisasterRecordsForSector = async (
         try {
           const eventId = filters._disasterEventId || filters.disasterEvent;
           if (eventId) {
-            console.log("Disaster Event filter applied:", eventId);
+            logger.debug("Applying disaster event filter", { eventId });
             // Check if it's a UUID (for direct ID matching)
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             if (uuidRegex.test(eventId)) {
               // Direct ID match for UUID format
               conditions.push(eq(disasterEventTable.id, eventId));
+              logger.debug("Using UUID direct match for disaster event", { eventId });
             } else {
               // Text search across multiple fields for non-UUID format
               const searchConditions: SQL[] = [];
@@ -214,11 +266,18 @@ const getDisasterRecordsForSector = async (
                 THEN LOWER(${disasterEventTable.otherId1}) LIKE ${`%${eventId.toLowerCase()}%`}
                 ELSE FALSE END
               `);
-
+              logger.debug("Using text search for disaster event", {
+                eventId,
+                searchFieldsCount: searchConditions.length
+              });
             }
           }
         } catch (error) {
-          console.error('Error filtering by disaster event:', error);
+          logger.error('Error filtering by disaster event', {
+            disasterEvent: filters.disasterEvent,
+            _disasterEventId: filters._disasterEventId,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
         }
       }
     }
@@ -243,15 +302,29 @@ const getDisasterRecordsForSector = async (
 
       // Execute the query and map results
       const results = await query;
-      console.log("Query success. Total records fetched:", results.length);
+
+      logger.info("Successfully retrieved disaster records", {
+        sectorId,
+        totalRecords: results.length,
+        conditionsApplied: conditions.length
+      });
+
       return results.map(r => r.id.toString());
     } catch (error) {
-      console.error('Error executing getDisasterRecordsForSector query:', error);
+      logger.error('Error executing getDisasterRecordsForSector query', {
+        sectorId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       // Return empty array instead of throwing to prevent cascading failures
       return [];
     }
   } catch (error) {
-    console.error('Error in getDisasterRecordsForSector:', error);
+    logger.error('Error in getDisasterRecordsForSector', {
+      sectorId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     throw error;
   }
 };
@@ -269,7 +342,7 @@ const getAllSubsectorIds = async (sectorId: string | number | undefined): Promis
   const rootId = Number(sectorId);
   if (isNaN(rootId)) return [];
 
-  console.log("Starting traversal from sectorId:", rootId);
+  logger.debug("Starting sector hierarchy traversal", { rootId });
 
   const result: number[] = [];
   const seen = new Set<number>();
@@ -281,17 +354,26 @@ const getAllSubsectorIds = async (sectorId: string | number | undefined): Promis
     seen.add(currentId);
     result.push(currentId);
 
-    console.debug("Visiting sectorId:", currentId);
+    logger.debug("Processing sector in hierarchy", { currentId });
 
     const children = await getSectorsByParentId(currentId);
-    console.debug("Found children for", currentId, ":", children.map(c => c.id));
+    logger.debug("Found subsectors", {
+      parentId: currentId,
+      childrenCount: children.length,
+      childrenIds: children.map(c => c.id)
+    });
 
     for (const child of children) {
       if (!seen.has(child.id)) queue.push(child.id);
     }
   }
 
-  console.log("Traversal complete. Collected sector IDs:", result);
+  logger.info("Completed sector hierarchy traversal", {
+    rootId,
+    totalSectors: result.length,
+    sectorIds: result
+  });
+
   return result;
 };
 
@@ -300,6 +382,11 @@ const aggregateDamagesData = async (
   recordIds: string[],
   sectorId: string | undefined
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriDamage?: any }> => {
+  logger.debug("Starting damage data aggregation", {
+    recordCount: recordIds.length,
+    sectorId
+  });
+
   const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : [];
   const numericSectorIds = sectorIds;
 
@@ -315,11 +402,15 @@ const aggregateDamagesData = async (
     .where(
       and(
         inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
-        numericSectorIds.length > 0 
+        numericSectorIds.length > 0
           ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
           : undefined
       )
     );
+
+  logger.debug("Found sector override records", {
+    overrideCount: sectorOverrides.length
+  });
 
   // Get detailed damages for records without sector overrides
   const detailedDamages = await dr
@@ -337,11 +428,15 @@ const aggregateDamagesData = async (
     .where(
       and(
         inArray(damagesTable.recordId, recordIds),
-        numericSectorIds.length > 0 
+        numericSectorIds.length > 0
           ? inArray(damagesTable.sectorId, numericSectorIds)
           : undefined
       )
     );
+
+  logger.debug("Found detailed damage records", {
+    detailedDamageCount: detailedDamages.length
+  });
 
   let total = 0;
   const byYear = new Map<number, number>();
@@ -349,7 +444,7 @@ const aggregateDamagesData = async (
   // Process each record
   for (const recordId of recordIds) {
     let recordDamageAmount = 0;
-    
+
     // Check sector override first
     const sectorOverride = sectorOverrides.find(
       so => so.recordId === recordId && numericSectorIds.includes(so.sectorId)
@@ -358,6 +453,10 @@ const aggregateDamagesData = async (
     if (sectorOverride?.withDamage && sectorOverride?.damageCost !== null) {
       // Use sector override value
       recordDamageAmount = Number(sectorOverride.damageCost) || 0;
+      logger.debug("Using sector override for damage", {
+        recordId,
+        overrideAmount: recordDamageAmount
+      });
     } else {
       // If no sector override, check detailed damages
       const damage = detailedDamages.find(
@@ -370,10 +469,16 @@ const aggregateDamagesData = async (
           recordDamageAmount = Number(damage.totalRepairReplacement) || 0;
         } else {
           // Only include PD repair and TD replacement costs
-          recordDamageAmount = 
+          recordDamageAmount =
             (Number(damage.pdDamageAmount) || 0) * (Number(damage.pdRepairCostUnit) || 0) +
             (Number(damage.tdDamageAmount) || 0) * (Number(damage.tdReplacementCostUnit) || 0);
         }
+
+        logger.debug("Calculated damage from detailed records", {
+          recordId,
+          calculatedAmount: recordDamageAmount,
+          usedOverride: damage.totalRepairReplacementOverride
+        });
       }
     }
 
@@ -396,6 +501,12 @@ const aggregateDamagesData = async (
     }
   }
 
+  logger.info("Completed damage data aggregation", {
+    totalDamage: total,
+    yearsWithData: byYear.size,
+    recordsProcessed: recordIds.length
+  });
+
   return { total, byYear };
 };
 
@@ -404,6 +515,11 @@ const aggregateLossesData = async (
   recordIds: string[],
   sectorId: string | undefined
 ): Promise<{ total: number; byYear: Map<number, number>; faoAgriLoss?: any }> => {
+  logger.debug("Starting loss data aggregation", {
+    recordCount: recordIds.length,
+    sectorId
+  });
+
   const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : [];
   const numericSectorIds = sectorIds;
 
@@ -419,11 +535,15 @@ const aggregateLossesData = async (
     .where(
       and(
         inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
-        numericSectorIds.length > 0 
+        numericSectorIds.length > 0
           ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
           : undefined
       )
     );
+
+  logger.debug("Found sector override records for losses", {
+    overrideCount: sectorOverrides.length
+  });
 
   // Get detailed losses for records without sector overrides
   const detailedLosses = await dr
@@ -443,11 +563,15 @@ const aggregateLossesData = async (
     .where(
       and(
         inArray(lossesTable.recordId, recordIds),
-        numericSectorIds.length > 0 
+        numericSectorIds.length > 0
           ? inArray(lossesTable.sectorId, numericSectorIds)
           : undefined
       )
     );
+
+  logger.debug("Found detailed loss records", {
+    detailedLossCount: detailedLosses.length
+  });
 
   let total = 0;
   const byYear = new Map<number, number>();
@@ -464,6 +588,10 @@ const aggregateLossesData = async (
     if (sectorOverride?.withLosses && sectorOverride?.lossesCost !== null) {
       // Use sector override value
       recordLossAmount = Number(sectorOverride.lossesCost) || 0;
+      logger.debug("Using sector override for loss", {
+        recordId,
+        overrideAmount: recordLossAmount
+      });
     } else {
       // If no sector override, check detailed losses
       const loss = detailedLosses.find(
@@ -483,6 +611,13 @@ const aggregateLossesData = async (
         } else {
           recordLossAmount += (Number(loss.privateUnits) || 0) * (Number(loss.privateCostUnit) || 0);
         }
+
+        logger.debug("Calculated loss from detailed records", {
+          recordId,
+          calculatedAmount: recordLossAmount,
+          usedPublicOverride: loss.publicCostTotalOverride,
+          usedPrivateOverride: loss.privateCostTotalOverride
+        });
       }
     }
 
@@ -505,14 +640,20 @@ const aggregateLossesData = async (
     }
   }
 
+  logger.info("Completed loss data aggregation", {
+    totalLoss: total,
+    yearsWithData: byYear.size,
+    recordsProcessed: recordIds.length
+  });
+
   return { total, byYear };
 };
 
 // Function to get event counts by year
 const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, number>> => {
   if (recordIds.length === 0) return new Map();
-  console.log("Getting event counts by year for records:", recordIds);
-  console.log("Calculating events by year for", recordIds.length, "records.");
+
+  logger.debug("Getting event counts by year", { recordCount: recordIds.length });
 
   // Get events that span years by considering both start and end dates
   const eventYearSpans = await dr
@@ -537,8 +678,12 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
       yearCounts.set(year, (yearCounts.get(year) || 0) + 1);
     }
   }
-  console.log("Event count by year:", [...yearCounts.entries()]);
 
+  logger.debug("Event count calculation completed", {
+    uniqueEvents: eventYearSpans.length,
+    yearsWithEvents: yearCounts.size,
+    yearCounts: [...yearCounts.entries()]
+  });
 
   return yearCounts;
 };
@@ -554,14 +699,32 @@ export async function fetchSectorImpactData(
   filters?: Filters
 ): Promise<SectorImpactData> {
   try {
-    console.log("[Sector Impact] Fetching impact data for sector:", sectorId);
-    console.log("Filters provided:", filters);
+    logger.info("Starting sector impact data fetch", {
+      sectorId,
+      hasFilters: !!filters,
+      filterDetails: filters ? {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        hazardType: filters.hazardType,
+        geographicLevel: filters.geographicLevel,
+        disasterEvent: filters.disasterEvent || filters._disasterEventId
+      } : null
+    });
 
     const recordIds = await getDisasterRecordsForSector(sectorId, filters);
-    console.log("Record IDs retrieved:", recordIds.length);
+
+    logger.info("Retrieved disaster records for sector", {
+      sectorId,
+      recordCount: recordIds.length
+    });
 
     // If no records found, return null values
     if (recordIds.length === 0) {
+      logger.info("No records found for sector", {
+        sectorId,
+        filters
+      });
+
       return {
         eventCount: 0,
         totalDamage: null,
@@ -585,9 +748,15 @@ export async function fetchSectorImpactData(
       aggregateLossesData(recordIds, sectorId),
       getEventCountsByYear(recordIds)
     ]);
-    console.log("Final damage & loss summary:", {
+
+    logger.info("Completed sector impact analysis", {
+      sectorId,
+      eventCount: recordIds.length,
       totalDamage: damagesResult.total,
-      totalLoss: lossesResult.total
+      totalLoss: lossesResult.total,
+      yearsWithDamageData: damagesResult.byYear.size,
+      yearsWithLossData: lossesResult.byYear.size,
+      yearsWithEvents: eventCounts.size
     });
 
     // Create assessment metadata
@@ -627,7 +796,12 @@ export async function fetchSectorImpactData(
       }
     };
   } catch (error) {
-    console.error("Error in fetchSectorImpactData for sector:", sectorId, error);
+    logger.error("Error in fetchSectorImpactData", {
+      sectorId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      filters
+    });
     throw error;
   }
 }

@@ -4,6 +4,10 @@
 import { SQL, sql, eq } from "drizzle-orm";
 import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
+import createLogger from "~/utils/logger.server";
+
+// Create logger for this geographic filtering module
+const logger = createLogger("backend.server/utils/geographicFilters");
 
 export interface GeographicFilter {
   id: number;
@@ -14,7 +18,7 @@ export interface GeographicFilter {
 const divisionCache = new Map<string, GeographicFilter>();
 
 export function normalizeText(text: string): string {
-  return text
+  const normalized = text
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
@@ -22,39 +26,83 @@ export function normalizeText(text: string): string {
     .replace(/\s+/g, ' ')
     .replace(/\b(region|province|city|municipality)\b/g, '')
     .trim();
+
+  logger.debug("Text normalization completed", {
+    originalText: text,
+    normalizedText: normalized,
+    transformationsApplied: ["lowercase", "unicode_normalize", "special_chars_removed", "admin_terms_removed"]
+  });
+
+  return normalized;
 }
 
 export async function getDivisionInfo(geographicLevelId: string): Promise<GeographicFilter | null> {
-  console.log('getDivisionInfo', 'Fetching division info for ID:', geographicLevelId);
+  logger.info("Fetching division information", {
+    geographicLevelId,
+    cacheHit: divisionCache.has(geographicLevelId)
+  });
+
   const cached = divisionCache.get(geographicLevelId);
-  if (cached) return cached;
-
-  const division = await dr
-    .select({
-      id: divisionTable.id,
-      name: divisionTable.name,
-      geom: divisionTable.geom
-    })
-    .from(divisionTable)
-    .where(eq(divisionTable.id, parseInt(geographicLevelId)))
-    .limit(1);
-
-  if (!division || division.length === 0) {
-    console.log("getDivisionInfo", "No division found for ID", geographicLevelId);
-    return null;
+  if (cached) {
+    logger.debug("Division info retrieved from cache", {
+      geographicLevelId,
+      divisionId: cached.id
+    });
+    return cached;
   }
 
-  const result: GeographicFilter = {
-    id: division[0].id,
-    names: division[0].name as Record<string, string>,
-    geometry: division[0].geom
-  };
+  try {
+    const division = await dr
+      .select({
+        id: divisionTable.id,
+        name: divisionTable.name,
+        geom: divisionTable.geom
+      })
+      .from(divisionTable)
+      .where(eq(divisionTable.id, parseInt(geographicLevelId)))
+      .limit(1);
 
-  divisionCache.set(geographicLevelId, result);
-  return result;
+    if (!division || division.length === 0) {
+      logger.warn("Division not found in database", {
+        geographicLevelId,
+        issue: "no matching division record"
+      });
+      return null;
+    }
+
+    const result: GeographicFilter = {
+      id: division[0].id,
+      names: division[0].name as Record<string, string>,
+      geometry: division[0].geom
+    };
+
+    divisionCache.set(geographicLevelId, result);
+
+    logger.info("Division info successfully retrieved and cached", {
+      geographicLevelId,
+      divisionId: result.id,
+      hasGeometry: !!result.geometry,
+      availableNames: Object.keys(result.names),
+      cacheSize: divisionCache.size
+    });
+
+    return result;
+  } catch (error) {
+    logger.error("Error fetching division information", {
+      geographicLevelId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return null;
+  }
 }
 
 export function debugMatchedGeoFormat(spatialFootprint: any, divisionId: number): string[] {
+  logger.debug("Starting geographic format matching debug", {
+    divisionId,
+    spatialFootprintLength: Array.isArray(spatialFootprint) ? spatialFootprint.length : 0
+  });
+
   const matches: string[] = [];
 
   for (const elem of spatialFootprint) {
@@ -99,7 +147,16 @@ export function debugMatchedGeoFormat(spatialFootprint: any, divisionId: number)
     }
   }
 
-  return [...new Set(matches)];
+  const uniqueMatches = [...new Set(matches)];
+
+  logger.debug("Geographic format matching completed", {
+    divisionId,
+    totalMatches: uniqueMatches.length,
+    matchedFormats: uniqueMatches,
+    elementsProcessed: spatialFootprint.length
+  });
+
+  return uniqueMatches;
 }
 
 export async function applyGeographicFilters(
@@ -108,15 +165,33 @@ export async function applyGeographicFilters(
   baseConditions: SQL[],
   rawSpatialData: any[] | null = null
 ): Promise<SQL[]> {
-  if (!divisionInfo?.id) return baseConditions;
+  if (!divisionInfo?.id) {
+    logger.warn("No valid division info provided for geographic filtering", {
+      hasDivisionInfo: !!divisionInfo,
+      divisionId: divisionInfo?.id
+    });
+    return baseConditions;
+  }
 
   const divisionId = divisionInfo.id;
   const quotedInt = divisionId.toString(); // Always string
   const quotedJson = `"${quotedInt}"`;     // Quote for JSONPath string match
 
+  logger.info("Starting geographic filter application", {
+    divisionId,
+    divisionNames: divisionInfo.names,
+    hasRawSpatialData: !!rawSpatialData,
+    currentConditionsCount: baseConditions.length
+  });
+
   if (process.env.NODE_ENV === 'development' && rawSpatialData) {
     const matchedFormats = debugMatchedGeoFormat(rawSpatialData, divisionId);
-    console.log("[GeoMatch] Division", divisionId, "Matched Formats:", matchedFormats);
+
+    logger.debug("Development mode: analyzing spatial data formats", {
+      divisionId,
+      matchedFormats,
+      spatialDataElements: rawSpatialData.length
+    });
 
     const preferred = matchedFormats.find((f) => [
       "geojson.properties.division_ids",
@@ -128,156 +203,192 @@ export async function applyGeographicFilters(
     ].includes(f));
 
     if (preferred) {
-      console.log("[GeoMatch] Short-circuiting on preferred match:", preferred);
+      logger.info("Found preferred geographic format match - short-circuiting", {
+        divisionId,
+        preferredFormat: preferred,
+        skipFullSpatialFilter: true
+      });
       // optionally skip adding full spatial filter logic here
       return baseConditions;
     }
   }
 
-  const jsonbCondition = sql`${disasterRecordsTable.spatialFootprint} IS NOT NULL AND (
-    ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.properties.division_ids[*] ? (@ == ${quotedJson})')`)} OR
-    ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_ids[*] ? (@ == ${quotedJson})')`)} OR
-${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_id ? (@ == ${quotedJson})')`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
-      WHERE footprint->>'geographic_level' IN (
-        SELECT name->>'en' FROM division WHERE id = ${divisionId}
-      )
-    )`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
-      WHERE footprint->'map_coords'->>'mode' = 'markers'
-      AND EXISTS (
-        SELECT 1 FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
-        WHERE ST_Contains(
+  try {
+    const jsonbCondition = sql`${disasterRecordsTable.spatialFootprint} IS NOT NULL AND (
+      ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.properties.division_ids[*] ? (@ == ${quotedJson})')`)} OR
+      ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_ids[*] ? (@ == ${quotedJson})')`)} OR
+      ${sql.raw(`jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.dts_info.division_id ? (@ == ${quotedJson})')`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+        WHERE footprint->>'geographic_level' IN (
+          SELECT name->>'en' FROM division WHERE id = ${divisionId}
+        )
+      )`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+        WHERE footprint->'map_coords'->>'mode' = 'markers'
+        AND EXISTS (
+          SELECT 1 FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+          WHERE ST_Contains(
+            (SELECT geom FROM division WHERE id = ${divisionId}),
+            ST_SetSRID(ST_MakePoint(
+              (coord->>1)::float,
+              (coord->>0)::float
+            ), 4326)
+          )
+        )
+      )`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+        WHERE footprint->'map_coords'->>'mode' = 'circle'
+        AND ST_Intersects(
           (SELECT geom FROM division WHERE id = ${divisionId}),
-          ST_SetSRID(ST_MakePoint(
-            (coord->>1)::float,
-            (coord->>0)::float
+          ST_Buffer(
+            ST_SetSRID(ST_MakePoint(
+              (footprint->'map_coords'->'center'->>1)::float,
+              (footprint->'map_coords'->'center'->>0)::float
+            ), 4326),
+            (footprint->'map_coords'->>'radius')::float / 111320.0
+          )
+        )
+      )`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+        WHERE footprint->'map_coords'->>'mode' = 'rectangle'
+        AND ST_Intersects(
+          (SELECT geom FROM division WHERE id = ${divisionId}),
+          ST_MakeEnvelope(
+            (footprint->'map_coords'->'coordinates'->0->1)::float,
+            (footprint->'map_coords'->'coordinates'->0->0)::float,
+            (footprint->'map_coords'->'coordinates'->1->1)::float,
+            (footprint->'map_coords'->'coordinates'->1->0)::float,
+            4326
+          )
+        )
+      )`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+        WHERE footprint->'map_coords'->>'mode' = 'polygon'
+        AND ST_Intersects(
+          (SELECT geom FROM division WHERE id = ${divisionId}),
+          ST_SetSRID(ST_MakePolygon(
+            ST_MakeLine(
+              ARRAY(
+                SELECT ST_MakePoint(
+                  (coord->>1)::float,
+                  (coord->>0)::float
+                )
+                FROM (
+                      SELECT CASE 
+                          WHEN array_position(ARRAY(
+                              SELECT jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
+                          ), coord) = (
+                              SELECT COUNT(*) 
+                              FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
+                          )
+                          AND (
+                              SELECT element->0 
+                              FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                              LIMIT 1
+                          ) != coord->0
+                          OR (
+                              SELECT element->1 
+                              FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                              LIMIT 1
+                          ) != coord->1
+                          THEN (
+                              SELECT jsonb_build_array(
+                                  element->0,
+                                  element->1
+                              )::jsonb
+                              FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
+                              LIMIT 1
+                          )
+                          ELSE coord
+                      END AS coord
+                      FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
+                  ) AS coords
+              )
+            )
           ), 4326)
         )
-      )
-    )`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
-      WHERE footprint->'map_coords'->>'mode' = 'circle'
-      AND ST_Intersects(
-        (SELECT geom FROM division WHERE id = ${divisionId}),
-        ST_Buffer(
+      )`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
+                     jsonb_array_elements(footprint->'geojson'->'features') AS feature
+        WHERE feature->'geometry'->>'type' = 'Point'
+        AND ST_Contains(
+          (SELECT geom FROM division WHERE id = ${divisionId}),
           ST_SetSRID(ST_MakePoint(
-            (footprint->'map_coords'->'center'->>1)::float,
-            (footprint->'map_coords'->'center'->>0)::float
-          ), 4326),
-          (footprint->'map_coords'->>'radius')::float / 111320.0
+            (feature->'geometry'->'coordinates'->>0)::float,
+            (feature->'geometry'->'coordinates'->>1)::float
+          ), 4326)
         )
-      )
-    )`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
-      WHERE footprint->'map_coords'->>'mode' = 'rectangle'
-      AND ST_Intersects(
-        (SELECT geom FROM division WHERE id = ${divisionId}),
-        ST_MakeEnvelope(
-          (footprint->'map_coords'->'coordinates'->0->1)::float,
-          (footprint->'map_coords'->'coordinates'->0->0)::float,
-          (footprint->'map_coords'->'coordinates'->1->1)::float,
-          (footprint->'map_coords'->'coordinates'->1->0)::float,
-          4326
+      )`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
+                     jsonb_array_elements(footprint->'geojson'->'features') AS feature
+        WHERE feature->'geometry'->>'type' = 'LineString'
+        AND ST_Intersects(
+          (SELECT geom FROM division WHERE id = ${divisionId}),
+          ST_SetSRID(ST_MakeLine(ARRAY(
+            SELECT ST_MakePoint(
+              (coord->>0)::float,  -- longitude
+              (coord->>1)::float   -- latitude
+            )
+            FROM jsonb_array_elements(feature->'geometry'->'coordinates') AS coord
+          )), 4326)
         )
-      )
-    )`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
-      WHERE footprint->'map_coords'->>'mode' = 'polygon'
-      AND ST_Intersects(
-        (SELECT geom FROM division WHERE id = ${divisionId}),
-        ST_SetSRID(ST_MakePolygon(
-          ST_MakeLine(
+      )`)} OR
+      ${sql.raw(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
+        WHERE footprint->'map_coords'->>'mode' = 'lines'
+        AND ST_Intersects(
+          (SELECT geom FROM division WHERE id = ${divisionId}),
+          ST_SetSRID(ST_MakeLine(
             ARRAY(
               SELECT ST_MakePoint(
                 (coord->>1)::float,
                 (coord->>0)::float
               )
-              FROM (
-                    SELECT CASE 
-                        WHEN array_position(ARRAY(
-                            SELECT jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
-                        ), coord) = (
-                            SELECT COUNT(*) 
-                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb)
-                        )
-                        AND (
-                            SELECT element->0 
-                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
-                            LIMIT 1
-                        ) != coord->0
-                        OR (
-                            SELECT element->1 
-                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
-                            LIMIT 1
-                        ) != coord->1
-                        THEN (
-                            SELECT jsonb_build_array(
-                                element->0,
-                                element->1
-                            )::jsonb
-                            FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) element 
-                            LIMIT 1
-                        )
-                        ELSE coord
-                    END AS coord
-                    FROM jsonb_array_elements((footprint->'map_coords'->'coordinates')::jsonb) AS coord
-                ) AS coords
+              FROM jsonb_array_elements(footprint->'map_coords'->'coordinates') AS coord
             )
-          )
-        ), 4326)
-      )
-    )`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
-                   jsonb_array_elements(footprint->'geojson'->'features') AS feature
-      WHERE feature->'geometry'->>'type' = 'Point'
-      AND ST_Contains(
-        (SELECT geom FROM division WHERE id = ${divisionId}),
-        ST_SetSRID(ST_MakePoint(
-          (feature->'geometry'->'coordinates'->>0)::float,
-          (feature->'geometry'->'coordinates'->>1)::float
-        ), 4326)
-      )
-    )`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint,
-                   jsonb_array_elements(footprint->'geojson'->'features') AS feature
-      WHERE feature->'geometry'->>'type' = 'LineString'
-      AND ST_Intersects(
-        (SELECT geom FROM division WHERE id = ${divisionId}),
-        ST_SetSRID(ST_MakeLine(ARRAY(
-          SELECT ST_MakePoint(
-            (coord->>0)::float,  -- longitude
-            (coord->>1)::float   -- latitude
-          )
-          FROM jsonb_array_elements(feature->'geometry'->'coordinates') AS coord
-        )), 4326)
-      )
-    )`)} OR
-    ${sql.raw(`EXISTS (
-      SELECT 1 FROM jsonb_array_elements("disaster_records"."spatial_footprint") AS footprint
-      WHERE footprint->'map_coords'->>'mode' = 'lines'
-      AND ST_Intersects(
-        (SELECT geom FROM division WHERE id = ${divisionId}),
-        ST_SetSRID(ST_MakeLine(
-          ARRAY(
-            SELECT ST_MakePoint(
-              (coord->>1)::float,
-              (coord->>0)::float
-            )
-            FROM jsonb_array_elements(footprint->'map_coords'->'coordinates') AS coord
-          )
-        ), 4326)
-      )
-    )`)}
-  )`;
+          ), 4326)
+        )
+      )`)}
+    )`;
 
-  baseConditions.push(jsonbCondition);
-  return baseConditions;
+    baseConditions.push(jsonbCondition);
+
+    logger.info("Geographic filter successfully applied", {
+      divisionId,
+      totalConditions: baseConditions.length,
+      filterComplexity: "comprehensive_spatial_matching",
+      supportedFormats: [
+        "geojson_division_ids",
+        "dts_info_division_ids",
+        "geographic_level_names",
+        "map_coords_markers",
+        "map_coords_circle",
+        "map_coords_rectangle",
+        "map_coords_polygon",
+        "geojson_point_features",
+        "geojson_linestring_features",
+        "map_coords_lines"
+      ]
+    });
+
+    return baseConditions;
+  } catch (error) {
+    logger.error("Error applying geographic filters", {
+      divisionId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      quotedJson,
+      quotedInt
+    });
+
+    // Return original conditions to prevent query failure
+    return baseConditions;
+  }
 }
