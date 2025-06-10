@@ -185,7 +185,7 @@ export function EffectDetails({ filters, currency }: Props) {
         });
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error("No data found for the selected criteria");
+            throw new Error("No effect details found for the selected criteria");
           }
           throw new Error(`Failed to fetch effect details: ${response.statusText}`);
         }
@@ -267,7 +267,7 @@ export function EffectDetails({ filters, currency }: Props) {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-[300px]" role="status">
-                      <p className="text-gray-500">No damage data available for the selected criteria.</p>
+                      <p className="text-gray-500">No damage records details available for the selected criteria.</p>
                     </div>
                   )}
                 </div>
@@ -295,7 +295,7 @@ export function EffectDetails({ filters, currency }: Props) {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-[300px]" role="status">
-                      <p className="text-gray-500">No loss data available for the selected criteria.</p>
+                      <p className="text-gray-500">No loss records details available for the selected criteria.</p>
                     </div>
                   )}
                 </div>
@@ -325,7 +325,7 @@ export function EffectDetails({ filters, currency }: Props) {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-[300px]" role="status">
-                      <p className="text-gray-500">No disruption data available for the selected criteria.</p>
+                      <p className="text-gray-500">No disruption records details available for the selected criteria.</p>
                     </div>
                   )}
                 </div>

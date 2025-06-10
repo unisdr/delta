@@ -1,5 +1,9 @@
 import { eq, sql, SQL, and, inArray, gte, lte, exists, or, not } from "drizzle-orm";
 import { dr } from "~/db.server";
+import createLogger from "~/utils/logger.server";
+
+// Initialize logger for this module
+const logger = createLogger("backend.server/models/analytics/geographicImpact");
 import {
     disasterRecordsTable,
     damagesTable,
@@ -145,7 +149,7 @@ function safeMoneyToNumber(value: string | number | null): number {
         // Handle numeric values
         return typeof value === 'number' ? value : 0;
     } catch (error) {
-        console.error("Error converting money value:", error);
+        logger.error("Error converting money value", { error: error instanceof Error ? error.message : String(error), value: value?.toString() });
         return 0;
     }
 }
@@ -217,7 +221,7 @@ function isValidGeoJSON(value: any): boolean {
         }
         return false;
     } catch (error) {
-        console.error("Error validating GeoJSON:", error);
+        logger.error("Error validating GeoJSON", { error: error instanceof Error ? error.message : String(error), value: value?.toString() });
         return false;
     }
 }
@@ -245,12 +249,12 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             // If subsector is selected, only use that ID
             const parsedSubSectorId = parseInt(filters.subSectorId, 10);
             sectorIds = await getAllSubsectorIds(parsedSubSectorId);
-            console.log('Expanded sector IDs from subSector:', sectorIds);
-            console.log('Using specific subsector ID:', parsedSubSectorId);
+            logger.debug("Expanded sector IDs from subSector", { sectorIds });
+            logger.debug("Using specific subsector ID", { parsedSubSectorId });
         } else if (filters.sectorId) {
             // If only parent sector is selected, get all its subsectors
             sectorIds = await getAllSubsectorIds(filters.sectorId);
-            console.log(`[SECTOR EXPANSION] Sector ID: ${filters.sectorId ?? "(none)"} ➜ Subsector IDs:`, sectorIds);
+            logger.debug("Sector expansion completed", { sectorId: filters.sectorId || "(none)", sectorIds });
         }
 
         if (filters.sectorId && sectorIds.length === 0) {
@@ -275,7 +279,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
 
         // Add sector filtering using sectorDisasterRecordsRelationTable
         if (sectorIds.length > 0) {
-            console.log('Adding sector filter for IDs:', sectorIds);
+            logger.debug("Adding sector filter for IDs", { sectorIds });
             const sectorCondition = exists(
                 dr.select()
                     .from(sectorDisasterRecordsRelationTable)
@@ -285,7 +289,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                     ))
             );
             baseConditions.push(sectorCondition);
-            console.log(`✔ Sector filter applied for ${sectorIds.length} IDs`);
+            logger.debug("Sector filter applied", { sectorCount: sectorIds.length });
         }
 
         // Add date range filters if provided
@@ -294,7 +298,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             if (parsedFromDate) {
                 baseConditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
             } else {
-                console.error('Invalid from date format:', filters.fromDate);
+                logger.error("Invalid from date format", { fromDate: filters.fromDate });
             }
         }
         if (filters.toDate) {
@@ -302,7 +306,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             if (parsedToDate) {
                 baseConditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
             } else {
-                console.error('Invalid to date format:', filters.toDate);
+                logger.error("Invalid to date format", { toDate: filters.toDate });
             }
         }
 

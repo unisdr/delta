@@ -327,27 +327,87 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
     */
   };
 
-  // Calculate color ranges
+  // Calculate color ranges - Updated to show only present values
   const colorRanges = useMemo(() => {
     if (!geoData?.features) return [];
 
-    const values = geoData.features
-      .map((f) => f.properties?.values?.[selectedMetric])
-      .filter((v): v is number => typeof v === "number" && v > 0);
+    // Extract all values and categorize them
+    const allValues: number[] = [];
+    const categorizedData = {
+      hasPositiveValues: false,
+      hasZeroValues: false,
+      hasNoData: false
+    };
 
+    geoData.features.forEach((f) => {
+      const values = f.properties?.values?.[selectedMetric];
+      const dataAvailability = f.properties?.values?.dataAvailability;
+      
+      if (dataAvailability === "no_data") {
+        categorizedData.hasNoData = true;
+      } else if (values === 0) {
+        categorizedData.hasZeroValues = true;
+      } else if (typeof values === "number" && values > 0) {
+        allValues.push(values);
+        categorizedData.hasPositiveValues = true;
+      }
+    });
+
+    // Calculate ranges for positive values
     const ranges = (customCalculateColorRanges || defaultCalculateColorRanges)(
-      values,
-      defaultCurrency
+      allValues,
+      currency
     );
 
+    // Filter ranges to only include those that have actual data points
+    const filteredRanges: ColorRange[] = [];
+
+    if (categorizedData.hasPositiveValues && allValues.length > 0) {
+      // Only include color ranges that have actual values falling within them
+      ranges.forEach((range) => {
+        // Skip the special cases (zero and no data) for now
+        if (range.min === 0 && range.max === 0) return;
+        if (range.min === -1 && range.max === -1) return;
+        
+        // Check if any actual values fall within this range
+        const hasValuesInRange = allValues.some(value => 
+          value >= range.min && value <= range.max
+        );
+        
+        if (hasValuesInRange) {
+          filteredRanges.push(range);
+        }
+      });
+    }
+
+    // Add special categories only if they exist in the data
+    if (categorizedData.hasZeroValues) {
+      filteredRanges.push({
+        min: 0,
+        max: 0,
+        color: "rgba(255, 255, 255, 0.9)",
+        label: "Zero Impact (Confirmed)"
+      });
+    }
+
+    if (categorizedData.hasNoData) {
+      filteredRanges.push({
+        min: -1,
+        max: -1,
+        color: "rgba(200, 200, 200, 0.9)",
+        label: "No Data Available"
+      });
+    }
+
+    // Update legend with only the ranges that are actually present
     setLegendRanges(
-      ranges.map((r) => ({
+      filteredRanges.map((r) => ({
         color: r.color,
         range: r.label,
       }))
     );
 
-    return ranges;
+    return filteredRanges;
   }, [geoData?.features, selectedMetric, defaultCurrency, customCalculateColorRanges]);
 
   // Feature style function - Updated to match OpenLayers StyleFunction type
