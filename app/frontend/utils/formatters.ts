@@ -102,7 +102,7 @@ export const formatPercentage = (value: string | number, locale: string = 'en-US
 // }
 
 // This will be implemented later to support real-time currency conversion
-export const convertCurrency = async (
+/*export const convertCurrency = async (
     value: number,
     fromCurrency: string,
     toCurrency: string
@@ -113,4 +113,4 @@ export const convertCurrency = async (
     // 3. Store in cache
     // 4. Convert and return
     throw new Error('Currency conversion not yet implemented');
-};
+};*/

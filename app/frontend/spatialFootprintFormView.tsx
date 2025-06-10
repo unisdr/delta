@@ -84,6 +84,7 @@ export function SpatialFootprintFormView({
                                 </>
                             );
                         }
+                        return null;
                     },
                     width: "40%",
                 },
