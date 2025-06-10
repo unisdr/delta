@@ -168,7 +168,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
         setActiveIndex(-1);
     }, [setActiveIndex]);
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, value, index }: any) => {
+    const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent, name, value, index }: any) => {
         const RADIAN = Math.PI / 180;
         // Increase radius to push labels further out consistently
         const radius = outerRadius * 1.4; // Increased from 1.1 to 1.4 for more spacing
@@ -295,7 +295,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
                             animationDuration={1000}
                             animationEasing="ease-out"
                         >
-                            {dataWithIndex.map((entry, index) => (
+                            {dataWithIndex.map((index) => (
                                 <Cell
                                     key={index}
                                     fill={COLORS[index % COLORS.length]}

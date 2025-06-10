@@ -28,7 +28,7 @@ import { contentPickerConfigSector } from "../content-picker-config";
 //#Sector: End
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
 	return [
 	  { title: " Sectors - Disaster Records - DTS" },
 	  { name: "description", content: " Sectors page" },

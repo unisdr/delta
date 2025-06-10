@@ -6,14 +6,12 @@ export function AttachmentsFormView({
   file_viewer_temp_url,
   file_viewer_url,
   api_upload_url,
-  onChange
 }: {
   initialData: any;
   save_path_temp: string;
   file_viewer_temp_url: string;
   file_viewer_url: string;
   api_upload_url: string;
-  onChange?: (items: any) => void;
 }) {
   const parsedData = (() => {
     try {

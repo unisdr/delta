@@ -216,7 +216,7 @@ export const renderMapperDialog = (
               <div id={`${id}_mapper_buttons`} style={{display: "flex", gap: "10px"}}>
                   <button type="button" id={`${id}_mapper_clearCoords`} 
                   className="mg-button mg-button--small mg-button-system" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
-                  onClick={(e) => {
+                  onClick={() => {
                     resetDrawing();
                   
                     // Reinitialize the drawing mode if rectangle or circle is active
@@ -229,7 +229,7 @@ export const renderMapperDialog = (
                   >Clear</button>
                   <button type="button" id={`${id}_mapper_undoAction`} 
                   className="mg-button mg-button--small mg-button-system" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
-                  onClick={(e) => {
+                  onClick={() => {
                     const L = (window as any).L || null;
 
                     const mapperModeSelect = document.getElementById(`${id}_mapper_modeSelect`);
@@ -297,7 +297,7 @@ export const renderMapperDialog = (
                   >Undo</button>
                   <button type="button" id={`${id}_mapper_getCoords`} 
                   className="mg-button mg-button--small mg-button-primary" style={{fontSize: "1.2rem", padding: "0.4rem 1.1rem"}}
-                  onClick={(e) => {
+                  onClick={() => {
                     const field = dialogMapRef.current?.mapperField;
                   
                     if (!field) {

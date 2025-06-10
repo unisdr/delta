@@ -366,9 +366,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             },
             dr,
             baseConditions,
-            sql,
             eq,
-            inArray,
             hipTypeTable,
             hipClusterTable,
             hipHazardTable,
@@ -376,7 +374,6 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             disasterEventTable,
             disasterRecordsTable,
             queryBuilder,
-            and
         );
 
         // ✅ Finalize query with all base conditions

@@ -68,7 +68,7 @@ export const loader = async () => {
     const nameKey = "name"; 
     
     // Data from Database
-    const treeData = buildTree(rawData[0], idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId"]);
+    const treeData = buildTree(rawData[0], idKey, parentKey, nameKey, "en", ["geojson", "importId"]);
     // Data from Array
     //const treeData = buildTree(rawData[1], idKey, parentKey, nameKey, ["fr", "de", "en"], "");
 

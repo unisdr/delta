@@ -12,7 +12,7 @@ export const contentPickerConfig = {
     table_column_primary_key: "id",
     table_columns: [
         { column_type: "db", column_field: "display", column_title: "Event", is_primary_id: true, is_selected_field: true,
-            render: (item: any, displayName: string) => {
+            render: (displayName: string) => {
                 return `${displayName}`;
             }
         },

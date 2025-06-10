@@ -210,7 +210,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			treeData = [],
 			caption = "",
 			rootCaption = "Root",
-			targetObject = null,
 			base_path = "",
 			onApply = null,
 			onClose = null,
@@ -221,7 +220,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			disableButtonSelect = false,
 			dialogMode = true,
 			search = true,
-			expanded = false,
 			onItemClick = undefined,
 			defaultSelectedIds = [],
 			itemLink = "",
@@ -492,7 +490,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			});
 		};
 
-		const renderItemName = (node: any, parentIds: any) => {
+		const renderItemName = (node: any) => {
 			return onRenderItemName ? onRenderItemName(node) : {};
 		};
 
@@ -543,7 +541,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 										/>
 									)}
 									<div
-										{...renderItemName(enrichedNode, parentIds)}
+										{...renderItemName(enrichedNode)}
 										onClick={treeViewClick}
 									>
 										{renderItem(enrichedNode)}
@@ -584,7 +582,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 									)}
 
 									<div
-										{...renderItemName(enrichedNode, parentIds)}
+										{...renderItemName(enrichedNode)}
 										onClick={treeViewClick}
 									>
 										{renderItem(enrichedNode)}
@@ -953,10 +951,10 @@ export const buildTree = (
 	idKey: string,
 	parentKey: string,
 	nameKey: string,
-	nameObj: string[] = ["en"], // Default priority order
+	// nameObj: string[] = ["en"], // Default priority order
 	priorityKey?: string | null, // Explicitly optional
 	additionalFields?: string[], // Array of field keys for hidden data
-	pickerConfig?: any | null
+	// pickerConfig?: any | null
 ) => {
 	const map = new Map();
 

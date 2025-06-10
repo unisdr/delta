@@ -1383,7 +1383,7 @@ export function FormView(props: FormViewProps) {
 
 		if (formElement) {
 
-			const handleSubmit = (e: SubmitEvent) => {
+			const handleSubmit = () => {
 				if (formElementSubmit) {
 					formElementSubmit.setAttribute("disabled", "true");
 
@@ -1400,13 +1400,9 @@ export function FormView(props: FormViewProps) {
 
 			return () => {
 				formElement.removeEventListener("submit", handleSubmit); // Cleanup on unmount'
-				repeatablefields.detach(opts);
 			};
 		}
 
-		return () => {
-			repeatablefields.detach(opts);
-		}
 	}, [intClickedCtr, isSubmitting]);
 
 	return (

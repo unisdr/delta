@@ -872,7 +872,7 @@ export async function getDivisionsByBoundingBox(
   } = {}
 ): Promise<any[]> {
   try {
-    return await dr.transaction(async (tx: Tx) => {
+    return await dr.transaction(async () => {
       try {
         // Validate bounding box coordinates
         const [minLon, minLat, maxLon, maxLat] = bbox;

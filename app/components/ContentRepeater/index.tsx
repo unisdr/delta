@@ -485,7 +485,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
 
       divisions.forEach(function(division: { geojson: any; name?: { en?: string } }) {
         var layer = L.geoJSON(division.geojson, {
-            style: function(feature: any) {
+            style: function() {
                 return {
                     color: 'gray',       // border color
                     weight: 1,           // border thickness
@@ -493,10 +493,10 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
                     fillOpacity: 0       // make the inside transparent
                 };
             },
-            onEachFeature: function(feature: any, layer: any) {
-                // Assuming you want to show the English name in the popup
-                // layer.bindPopup(division.name?.en || '');
-            }
+            // onEachFeature: function(feature: any, layer: any) {
+            //     // Assuming you want to show the English name in the popup
+            //     // layer.bindPopup(division.name?.en || '');
+            // }
         });
         layer.addTo(mapRef.current);
       });
@@ -787,7 +787,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
     });
   
     // Double-click to edit popup
-    newMarker.on("dblclick", (markerEvent: any) => {
+    newMarker.on("dblclick", () => {
       const savedText = state.current.popups[markerIndex] || "";
   
       const popupDiv = document.createElement("div");

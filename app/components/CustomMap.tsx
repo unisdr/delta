@@ -102,8 +102,8 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   geoData,
   selectedMetric,
   filters,
-  apiEndpoint = "/api/analytics/geographic-impacts",
-  levelCap = 3,
+  // apiEndpoint = "/api/analytics/geographic-impacts",
+  // levelCap = 3,
   calculateColorRanges: customCalculateColorRanges,
   currency
 }) => {
@@ -276,7 +276,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   // };
 
   // Handle feature click for drill-down
-  const handleFeatureClick = async (feature: Feature<Geometry>) => {
+  /*const handleFeatureClick = async (feature: Feature<Geometry>) => {
     // Drilldown functionality temporarily disabled
     return;
 
@@ -324,8 +324,8 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
     } finally {
       setLoading(false);
     }
-    */
-  };
+    
+  };*/
 
   // Calculate color ranges - Updated to show only present values
   const colorRanges = useMemo(() => {
@@ -412,7 +412,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
 
   // Feature style function - Updated to match OpenLayers StyleFunction type
   const getFeatureStyle = useCallback(
-    (feature: FeatureLike, resolution: number) => {
+    (feature: FeatureLike) => {
       // Safely access properties using get() method, which works for both Feature and RenderFeature
       const values = feature.get("values");
       const value = values?.[selectedMetric];
@@ -576,7 +576,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       newMap.forEachFeatureAtPixel(event.pixel, (feature) => {
         // Ensure the feature is a Feature<Geometry> for drill-down
         if (feature instanceof Feature) {
-          handleFeatureClick(feature as Feature<Geometry>);
+          // handleFeatureClick(feature as Feature<Geometry>);
         }
       });
     });

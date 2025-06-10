@@ -183,7 +183,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   };
 });
 
-export const action = authActionWithPerm("ViewData", async (actionArgs) => {
+export const action = authActionWithPerm("ViewData", async () => {
   return {};
 });
 

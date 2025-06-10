@@ -106,7 +106,8 @@ export function attach(opts: repeatableFieldsOpts) {
 	}
 }
 
-export function detach(opts: repeatableFieldsOpts) {
-}
+// export function detach(opts: repeatableFieldsOpts) {
+	
+// }
 
 

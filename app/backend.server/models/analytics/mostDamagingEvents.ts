@@ -134,9 +134,7 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     },
     db,
     conditions,
-    sql,
     eq,
-    inArray,
     hipTypeTable,
     hipClusterTable,
     hipHazardTable,
@@ -144,7 +142,6 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     disasterEventTable,
     disasterRecordsTable,
     queryBuilder,
-    and
   );
 
   // Apply geographic level filter
