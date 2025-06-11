@@ -11,9 +11,7 @@ export async function applyHazardFilters(
     filters: any,
     dr: any,
     baseConditions: any[],
-    sql: any,
     eq: any,
-    inArray: any,
     hipTypeTable: any,
     hipClusterTable: any,
     hipHazardTable: any,
@@ -21,7 +19,6 @@ export async function applyHazardFilters(
     disasterEventTable: any,
     disasterRecordsTable: any,
     query: any,
-    and: any
 ): Promise<any> {
     const hazardTypeId = filters.hazardTypeId != null ? String(filters.hazardTypeId).trim() : null;
     const hazardClusterId = filters.hazardClusterId != null ? String(filters.hazardClusterId).trim() : null;

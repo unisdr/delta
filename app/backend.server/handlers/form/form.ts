@@ -144,18 +144,18 @@ interface FormSaveArgs<T> {
 
 let validApprovalStatusesForDataCollector = ["draft", "completed-waiting-for-approval", "approved", "sent-for-review"]
 
-function adjustApprovalStatsBasedOnUserRole(role: RoleId, isCreate: boolean, data: any) {
+function adjustApprovalStatsBasedOnUserRole(role: RoleId, isCreate: boolean, data: any): void | null {
 	let allow = false
-	if (role == "data-validator" || role == "admin") {
+	if (role === "data-validator" || role == "admin") {
 		allow = true
 	}
 	if (allow) {
 		return null
 	}
-	if (role == "data-viewer") {
+	if (role === "data-viewer") {
 		throw new Error("got to form save with data-viewer role, this should not happen")
 	}
-	if (role != "data-collector") {
+	if (role !== "data-collector") {
 		throw new Error("unknown role: 	" + role)
 	}
 	if (isCreate) {
@@ -170,6 +170,7 @@ function adjustApprovalStatsBasedOnUserRole(role: RoleId, isCreate: boolean, dat
 			//data.approvalStatus = "draft"
 			//return
 		}
+		return null;
 	}
 
 	if (data && "approvalStatus" in data) {
@@ -183,6 +184,7 @@ function adjustApprovalStatsBasedOnUserRole(role: RoleId, isCreate: boolean, dat
 		//	delete data.approvalStatus
 		//return
 	}
+	return null;
 }
 
 export async function formSave<T>(

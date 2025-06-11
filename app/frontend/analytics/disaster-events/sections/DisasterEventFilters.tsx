@@ -20,7 +20,6 @@ interface FiltersProps {
 
 export function Filters({
   onApplyFilters,
-  onAdvancedSearch,
   onClearFilters,
 }: FiltersProps) {
   const [isMounted, setIsMounted] = useState(false);

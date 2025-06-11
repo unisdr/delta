@@ -170,7 +170,7 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
         // Extract nameKey dynamically
         const nameKey = pickerConfig.table_columns.find((col: any) => col.tree_field === "nameKey")?.column_field || "name";
         
-        return buildTree(rows, idKey, parentKey, nameKey, [], null, [], pickerConfig);
+        return buildTree(rows, idKey, parentKey, nameKey,  null, []);
     }
 }
 

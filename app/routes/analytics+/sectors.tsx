@@ -88,7 +88,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 });
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
   return [
     { title: "Sectors Analysis - DTS" },
     { name: "description", content: "Sector analysis page under DTS." },

@@ -366,9 +366,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             },
             dr,
             baseConditions,
-            sql,
             eq,
-            inArray,
             hipTypeTable,
             hipClusterTable,
             hipHazardTable,
@@ -376,7 +374,6 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             disasterEventTable,
             disasterRecordsTable,
             queryBuilder,
-            and
         );
 
         // ✅ Finalize query with all base conditions
@@ -471,7 +468,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
                         baseQuery: queryBuilder.where(and(...baseConditions)),
                     },
                     sectorIds,
-                    division.geom as GeoJSON.Geometry
+                    // division.geom as GeoJSON.Geometry
                 );
 
                 if (!disasterRecords || disasterRecords.length === 0) {
@@ -581,7 +578,7 @@ async function getDisasterRecordsForDivision(
     divisionId: string,
     filters?: GeographicFilters,
     sectorIds: number[] = [],
-    divisionGeom?: GeoJSON.Geometry
+    // divisionGeom?: GeoJSON.Geometry
 ): Promise<string[]> {
     try {
         console.log(`[Start] Fetching disaster records for Division ID: ${divisionId}`);

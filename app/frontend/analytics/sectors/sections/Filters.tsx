@@ -88,7 +88,6 @@ interface FiltersProps {
 
 const Filters: React.FC<FiltersProps> = ({
   onApplyFilters,
-  onAdvancedSearch,
   onClearFilters,
 }) => {
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);

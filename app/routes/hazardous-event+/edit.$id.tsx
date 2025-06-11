@@ -56,7 +56,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const parentKey = "parentId";
 	const nameKey = "name";
 	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId", "nationalId", "level", "name"]); console.log(treeData);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]); console.log(treeData);
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 

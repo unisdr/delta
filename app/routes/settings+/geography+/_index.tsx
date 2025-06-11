@@ -87,7 +87,6 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		idKey,
 		parentKey,
 		nameKey,
-		["fr", "de", "en"],
 		"en",
 		["geojson"]
 	);

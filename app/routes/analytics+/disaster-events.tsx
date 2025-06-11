@@ -284,7 +284,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 });
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
   return [
     { title: "Disaster Events Analysis - DTS" },
     { name: "description", content: "Disaster events analysis page under DTS." },
@@ -450,7 +450,7 @@ function DisasterEventsAnalysisContent() {
                                     value={ ld.record ? ld.record.id : '' } 
                                     displayName={ ld.cpDisplayName } 
                                     onSelect={
-                                        (item) => {
+                                        () => {
                                           if (btnCancelRef.current) {
                                             btnCancelRef.current.disabled = false;
                                           }

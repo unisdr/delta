@@ -388,12 +388,12 @@ editableInput.addEventListener('blur', () => {
       tokens.forEach((token, index) => {
         token.setAttribute('draggable', "true");
 
-        token.addEventListener('dragstart', (e) => {
+        token.addEventListener('dragstart', () => {
           draggedIndex = index;
           token.style.opacity = '0.5'; // Visual cue for dragging
         });
 
-        token.addEventListener('dragend', (e) => {
+        token.addEventListener('dragend', () => {
           token.style.opacity = '1'; // Reset visual cue
         });
 

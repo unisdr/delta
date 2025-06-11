@@ -131,7 +131,7 @@ function _configAuthSupported(): string[] {
 	value = value.replace(/\s+/g, '');
 	valueArray = value.split(",");
 
-	valueArray.forEach(function(item, index) { 
+	valueArray.forEach(function(item) { 
 		if ((authAllowedArray.indexOf(item) !== -1) == false) {
 			console.log('Authentication configuration (.env): ' + item + ' is invalid.'); 
 		}
@@ -188,7 +188,7 @@ export function configCurrencies(): string[] {
 	value = value.replace(/\s+/g, '');
 	valueArray = value.split(",");
 
-	valueArray.forEach(function(item, index) { 
+	valueArray.forEach(function(item) { 
 		if (checkValidCurrency(item)) {
 			returnArray.push(item.toUpperCase());
 		}

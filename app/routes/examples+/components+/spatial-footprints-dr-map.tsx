@@ -1,10 +1,9 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { dr } from "~/db.server";
 import { sql, } from "drizzle-orm";
 import SpatialFootprintsMapViewer from "~/components/SpatialFootprintsMapViewer";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async () => {
     const disasterEvents = await dr.execute(sql`
       SELECT 
         de.id,
