@@ -330,7 +330,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
                             animationDuration={1000}
                             animationEasing="ease-out"
                         >
-                            {dataWithIndex.map((index) => (
+                            {dataWithIndex.map((_item, index) => (
                                 <Cell
                                     key={index}
                                     fill={COLORS[index % COLORS.length]}
