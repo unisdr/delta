@@ -9,6 +9,7 @@ import {
 } from "~/frontend/utils/formatters";
 import AreaChart from "~/components/AreaChart";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
+import createClientLogger from "~/utils/clientLogger";
 
 // Types
 interface ApiResponse {
@@ -123,6 +124,12 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
 };
 
 const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
+	// Initialize logger with component name and default context
+	const logger = createClientLogger('ImpactOnSector', {
+		sectorId,
+		filters: JSON.stringify(filters)
+	});
+
 	const eventsImpactingRef = useRef<HTMLButtonElement>(null);
 	const eventsOverTimeRef = useRef<HTMLButtonElement>(null);
 	const damageTooltipRef = useRef<HTMLButtonElement>(null);
@@ -164,21 +171,21 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Debug logging for tooltip state changes
 	useEffect(() => {
-		console.log("Tooltip Props Changed:");
+		logger.debug("Tooltip Props Changed");
 	}, []);
 
 	// Handle the creation of the floating tooltip
 	useEffect(() => {
 		return () => {
-			console.log("Cleaning up tooltip");
+			logger.debug("Cleaning up tooltip");
 		};
 	}, []);
 
-	console.log("Component Render - Props:", { sectorId, filters });
+	logger.info("Component Render", { sectorId, filters });
 
 	// Determine which ID to use for the API call
 	const targetSectorId = filters.subSectorId || sectorId;
-	console.log("Target Sector ID:", targetSectorId);
+	logger.debug("Target Sector ID", { targetSectorId });
 
 	// Track previous values for debugging
 	const prevTargetSectorIdRef = useRef(targetSectorId);
@@ -186,14 +193,14 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	useEffect(() => {
 		if (prevTargetSectorIdRef.current !== targetSectorId) {
-			console.log("Target Sector ID Changed:", {
+			logger.info("Target Sector ID Changed", {
 				from: prevTargetSectorIdRef.current,
 				to: targetSectorId,
 			});
 			prevTargetSectorIdRef.current = targetSectorId;
 		}
 		if (prevGeographicLevelRef.current !== filters.geographicLevelId) {
-			console.log("Geographic Level Changed:", {
+			logger.info("Geographic Level Changed", {
 				from: prevGeographicLevelRef.current,
 				to: filters.geographicLevelId,
 			});
@@ -258,7 +265,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	} = useQuery<ApiResponse>({
 		queryKey: ["sectorImpact", targetSectorId, filters],
 		queryFn: async () => {
-			console.log("Fetching data for:", { targetSectorId, filters });
+			logger.info("Fetching data for sector impact", { targetSectorId, filters });
 
 			if (!targetSectorId) throw new Error("Sector ID is required");
 
@@ -275,24 +282,31 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 					key !== "subSectorId"
 				) {
 					params.append(key, value.toString());
-					console.log(`Adding filter: ${key}=${value}`);
+					logger.debug(`Adding filter parameter`, { key, value });
 				}
 			});
 
-			console.log(
-				"API Request URL:",
-				`/api/analytics/ImpactonSectors?${params}`
-			);
+			logger.info("Making API request", {
+				url: `/api/analytics/ImpactonSectors?${params}`,
+				targetSectorId
+			});
 
 			const response = await fetch(`/api/analytics/ImpactonSectors?${params}`);
 			if (!response.ok) {
-				console.error("API Error:", response.status, response.statusText);
+				logger.error("API Error", {
+					status: response.status,
+					statusText: response.statusText
+				});
 				const errorText = await response.text();
-				console.error("API Error Details:", errorText);
+				logger.error("API Error Details", { errorText });
 				throw new Error("Failed to fetch sector impact data");
 			}
 			const data = await response.json();
-			console.log("API Response:", data);
+			logger.info("API Response received", {
+				success: data.success,
+				hasData: !!data.data,
+				eventCount: data.data?.eventCount
+			});
 			return data;
 		},
 		enabled: !!targetSectorId,
@@ -304,15 +318,22 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	useEffect(() => {
 		if (isSuccess && apiResponse) {
-			console.log("Query Success - New Data:", apiResponse);
+			logger.info("Query Success - New Data", {
+				success: apiResponse.success,
+				hasData: !!apiResponse.data,
+				eventCount: apiResponse.data?.eventCount
+			});
 		}
 	}, [isSuccess, apiResponse]);
 
 	useEffect(() => {
 		if (isError && error) {
-			console.error("Query Error:", error);
+			logger.error("Query Error", {
+				error: error instanceof Error ? error.message : String(error),
+				targetSectorId
+			});
 		}
-	}, [isError, error]);
+	}, [isError, error, targetSectorId]);
 
 	// const { data: sectorsData } = useQuery<{ sectors: Sector[] }>("sectors", async () => {
 	//     const response = await fetch("/api/analytics/sectors");
@@ -408,16 +429,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		);
 	};
 
-	console.log("Debug - Component State:", {
+	logger.debug("Component State", {
 		sectorId,
 		hasError: !!error,
 		isLoading,
 		hasData: !!apiResponse,
-		apiResponseData: apiResponse?.data,
+		apiResponseData: apiResponse?.data ? true : false,
 	});
 
 	if (isLoading) {
-		console.log("Debug - Loading state");
+		logger.debug("Component in loading state");
 		return (
 			<section className="dts-page-section">
 				<div className="mg-container">
@@ -465,7 +486,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Error state
 	if (error) {
-		console.log("Debug - Error state:", error);
+		logger.error("Component in error state", {
+			error: error instanceof Error ? error.message : String(error)
+		});
 
 		// Extract the actual error message from the error object
 		let errorMessage = "An error occurred while fetching the data.";
@@ -480,10 +503,12 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 				.then((json: any) => {
 					if (json.error) {
 						errorMessage = json.error;
-						console.log("Extracted API error:", errorMessage);
+						logger.error("Extracted API error", { errorMessage });
 					}
 				})
-				.catch(() => { });
+				.catch((err: unknown) => {
+					logger.error("Failed to extract API error", { error: err });
+				});
 		}
 
 		return (
@@ -524,7 +549,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Empty state - no sector selected
 	if (!targetSectorId) {
-		console.log("Debug - No sector selected state");
+		logger.debug("No sector selected");
 		return (
 			<div className="dts-data-box dts-data-box--error">
 				<h3 className="dts-body-label">
@@ -540,7 +565,7 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	}
 
 	if (!apiResponse?.data) {
-		console.log("Debug - No data state");
+		logger.debug("No data available");
 		return (
 			<div className="dts-data-box dts-data-box--error">
 				<div className="dts-error-content">
@@ -557,12 +582,12 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	const data = apiResponse?.data || {};
 
 	// Add debug logging for the data that will be used for display
-	console.log("Data for display:", {
+	logger.info("Data for display", {
 		apiResponseExists: !!apiResponse,
 		dataExists: !!data,
 		eventCount: data.eventCount,
-		totalDamage: data.totalDamage,
-		totalLoss: data.totalLoss,
+		totalDamage: data.totalDamage ? true : false,
+		totalLoss: data.totalLoss ? true : false,
 		dataAvailability: data.dataAvailability,
 	});
 
@@ -645,12 +670,19 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 				})
 				.sort((a, b) => a.year - b.year);
 
-	console.log("Final transformed data:", {
+	logger.info("Final transformed data", {
+		eventsDataCount: eventsData.length,
+		damageDataCount: damageData.length,
+		lossDataCount: lossData.length,
+		rawDamage: data.totalDamage ? true : false,
+		rawLoss: data.totalLoss ? true : false,
+	});
+
+	// Log detailed data at debug level
+	logger.debug("Detailed transformed data", {
 		eventsData,
 		damageData,
-		lossData,
-		rawDamage: data.totalDamage,
-		rawLoss: data.totalLoss,
+		lossData
 	});
 
 	return (

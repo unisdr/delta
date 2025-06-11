@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
 import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
+import createClientLogger from "~/utils/clientLogger";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -15,6 +16,35 @@ const queryClient = new QueryClient({
             refetchOnWindowFocus: false
         }
     }
+});
+
+// Initialize component loggers with appropriate context
+const logger = createClientLogger('ImpactByHazard', {
+    feature: 'analytics',
+    section: 'sectors',
+    chartType: 'pie-charts'
+});
+
+// Create specialized loggers for different categories
+const apiLogger = logger.withTags({
+    category: 'api-call',
+    operation: 'data-fetch',
+    businessCritical: true
+});
+
+const dataLogger = logger.withTags({
+    category: 'data-processing',
+    operation: 'chart-preparation'
+});
+
+const chartLogger = logger.withTags({
+    category: 'ui-rendering',
+    component: 'pie-chart'
+});
+
+const errorLogger = logger.withTags({
+    category: 'error-handling',
+    priority: 'high'
 });
 
 // Colors for the pie chart slices
@@ -266,8 +296,13 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
         index
     }));
 
-    // Add debug logging for the chart data
-    console.log('Chart data for', title, ':', dataWithIndex);
+    // Add structured logging for chart data preparation
+    chartLogger.debug('Chart data prepared for rendering', {
+        chartTitle: title,
+        dataPointCount: dataWithIndex.length,
+        hasValidData: dataWithIndex.length > 0,
+        totalValue: dataWithIndex.reduce((sum, item) => sum + (parseFloat(item.value) || 0), 0)
+    });
 
     return (
         <div className="dts-data-box">
@@ -349,33 +384,84 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     const { data, isLoading, error } = useQuery({
         queryKey: ["hazardImpact", targetSectorId, filters],
         queryFn: async () => {
-            console.log('Fetching hazard impact data for:', { targetSectorId, filters });
+            const fetchStartTime = performance.now();
+            apiLogger.info('Fetching hazard impact data', {
+                targetSectorId,
+                hasFilters: Object.values(filters).some(value => value !== null),
+                filterCount: queryParams.toString().split('&').length,
+                queryParamsCount: queryParams.toString().split('&').length
+            });
+
             const response = await fetch(`/api/analytics/hazardImpact?${queryParams}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch hazard impact data");
             }
+
             const result = await response.json();
-            console.log('API Response:', result);
+            const fetchEndTime = performance.now();
+
+            apiLogger.info('Hazard impact data received', {
+                success: result.success,
+                hasEventsData: !!(result.data?.eventsCount?.length),
+                hasDamagesData: !!(result.data?.damages?.length),
+                hasLossesData: !!(result.data?.losses?.length),
+                responseSize: JSON.stringify(result).length,
+                fetchTimeMs: fetchEndTime - fetchStartTime,
+                isSlowRequest: (fetchEndTime - fetchStartTime) > 2000
+            });
             return result as HazardImpactResponse;
         },
         enabled
     });
 
+    // Add component lifecycle logging
+    useEffect(() => {
+        logger.info('ImpactByHazard component mounted', {
+            hasTargetSector: !!targetSectorId,
+            isEnabled: enabled,
+            filterCount: Object.values(filters).filter(Boolean).length
+        });
+
+        return () => {
+            logger.debug('ImpactByHazard component unmounting');
+        };
+    }, []);
+
     if (!enabled) {
+        logger.warn('Component disabled - no sector selected', {
+            reason: 'no_sector_selected'
+        });
         return <div className="text-gray-500">Please select a sector to view hazard impact data.</div>;
     }
 
     if (isLoading) {
+        logger.debug('Component in loading state', {
+            targetSectorId,
+            hasFilters: Object.values(filters).some(value => value !== null)
+        });
         return <LoadingSpinner />;
     }
 
     if (error || !data?.success) {
-        console.error('Error loading hazard impact data:', error);
+        errorLogger.error('Failed to load hazard impact data', {
+            errorMessage: error instanceof Error ? error.message : String(error),
+            errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+            targetSectorId,
+            hasFilters: Object.values(filters).some(value => value !== null),
+            apiEndpoint: `/api/analytics/hazardImpact?${queryParams}`
+        });
         return <ErrorMessage message="Failed to load hazard impact data" />;
     }
 
     if (!data?.data?.eventsCount || !data?.data?.damages || !data?.data?.losses) {
-        console.error('Invalid data structure:', data);
+        errorLogger.error('Invalid data structure received from API', {
+            hasData: !!data,
+            hasSuccess: data?.success,
+            hasDataProperty: !!(data?.data),
+            expectedProperties: ['eventsCount', 'damages', 'losses'],
+            receivedProperties: data?.data ? Object.keys(data.data) : [],
+            dataStructure: typeof data
+        });
         return <ErrorMessage message="Invalid data structure received from server" />;
     }
 
@@ -462,7 +548,12 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 index
             }));
 
-        console.log('Filtered chart data:', filteredData);
+        dataLogger.info('Chart data filtering completed', {
+            originalCount: rawData?.length || 0,
+            filteredCount: filteredData.length,
+            dataAvailability: filteredData.length > 0 ? 'available' : 'no_data',
+            hasZeroValues: allZero
+        });
 
         return {
             data: filteredData.length > 0 ? filteredData : [],
@@ -470,18 +561,36 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
         };
     };
 
-    // Process the data
+    // Process the data with performance tracking
+    const processingStartTime = performance.now();
     const eventsResult = formatChartData(data?.data?.eventsCount ?? []);
     const damagesResult = formatChartData(data?.data?.damages ?? []);
     const lossesResult = formatChartData(data?.data?.losses ?? []);
+    const processingEndTime = performance.now();
 
-    // Add debug logging for data processing
-    console.log('Processed events data:', eventsResult);
-    console.log('Processed damages data:', damagesResult);
-    console.log('Processed losses data:', lossesResult);
+    // Add structured logging for data processing
+    dataLogger.info('Data processing completed', {
+        eventsAvailability: eventsResult.dataAvailability,
+        damagesAvailability: damagesResult.dataAvailability,
+        lossesAvailability: lossesResult.dataAvailability,
+        totalChartsWithData: [eventsResult, damagesResult, lossesResult]
+            .filter(result => result.dataAvailability === 'available').length,
+        processingTimeMs: processingEndTime - processingStartTime,
+        dataSize: data ? JSON.stringify(data).length : 0,
+        isSlowProcessing: (processingEndTime - processingStartTime) > 500
+    });
 
     if (!data?.success || !data?.data) {
-        console.error("Invalid data structure:", data);
+        errorLogger.error('Invalid data structure after processing', {
+            hasData: !!data,
+            hasSuccess: !!data?.success,
+            hasDataProperty: !!(data?.data),
+            processingResults: {
+                events: eventsResult.dataAvailability,
+                damages: damagesResult.dataAvailability,
+                losses: lossesResult.dataAvailability
+            }
+        });
         return <ErrorMessage message="Invalid data structure received from server" />;
     }
 
