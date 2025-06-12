@@ -1,0 +1,54 @@
+name: "🐛 Bug Report"
+description: "Report a reproducible bug or unexpected behavior."
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the following fields.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node version, OS, browser, etc.
+      placeholder: e.g. Node 22, Chrome 125, macOS
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How do we reproduce the bug?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or Errors
+      description: Paste any relevant logs or error messages.
+      render: shell
