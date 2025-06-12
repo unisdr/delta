@@ -270,7 +270,7 @@ export default function CustomPieChart({ data, title, chartHeight = 350, boolRen
             animationDuration={1000}
             animationEasing="ease-out"
           >
-            {dataWithIndex.map((index) => (
+            {dataWithIndex.map((_item, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={COLORS[index % COLORS.length]}
