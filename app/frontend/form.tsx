@@ -1474,7 +1474,6 @@ interface FormViewProps {
 }
 
 export function FormView(props: FormViewProps) {
-	console.log("Form view from our code.")
 	if (!props.fieldsDef) {
 		throw new Error("props.fieldsDef not passed to FormView");
 	}

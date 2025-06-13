@@ -1,3 +1,4 @@
+import { Form } from "@remix-run/react";
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
@@ -29,14 +30,6 @@ interface FiltersProps {
   hazardClusters: HazardCluster[];
   specificHazards: SpecificHazard[];
   geographicLevels: GeographicLevel[];
-  onApplyFilters: (filters: {
-    hazardTypeId: string | null;
-    hazardClusterId: string | null;
-    specificHazardId: string | null;
-    geographicLevelId: string | null;
-    fromDate: string | null;
-    toDate: string | null;
-  }) => void;
   onClearFilters: () => void;
   selectedHazardClusterId: string | null;
   selectedSpecificHazardId: string | null;
@@ -48,7 +41,6 @@ const HazardFilters: React.FC<FiltersProps> = ({
   hazardClusters,
   specificHazards,
   geographicLevels,
-  onApplyFilters,
   onClearFilters,
   selectedHazardClusterId,
   selectedSpecificHazardId,
@@ -70,13 +62,14 @@ const HazardFilters: React.FC<FiltersProps> = ({
     setSpecificHazardId(null);
   }, [hazardClusterId]);
 
-  const handleApply = () => {
+  const handleApply = (e: React.FormEvent) => {
     if (!hazardTypeId) {
       Swal.fire({
         icon: "warning",
         text: "Please select a hazard type first.",
         confirmButtonText: "OK",
       });
+      e.preventDefault();
       return;
     }
     // Validate that "To" date is not before "From" date if both are set
@@ -89,11 +82,10 @@ const HazardFilters: React.FC<FiltersProps> = ({
           text: "The 'To' date cannot be earlier than the 'From' date.",
           confirmButtonText: "OK",
         });
+        e.preventDefault();
         return;
       }
     }
-
-    onApplyFilters({ hazardTypeId, hazardClusterId, specificHazardId, geographicLevelId, fromDate, toDate });
   };
 
   const handleClear = () => {
@@ -115,15 +107,18 @@ const HazardFilters: React.FC<FiltersProps> = ({
     : [];
 
   return (
+    <Form method="post" onSubmit={handleApply}>
+
     <div className="mg-grid mg-grid__col-6">
       {/* First Row: Hazard Type, Hazard Cluster, Specific Hazard */}
       <div className="dts-form-component mg-grid__col--span-2">
         <label htmlFor="hazard-type">Hazard Type *</label>
         <select
           id="hazard-type"
+          name="hazardTypeId"
           value={hazardTypeId || ""}
           onChange={(e) => setHazardTypeId(e.target.value || null)}
-        >
+          >
           <option value="">Select a hazard type</option>
           {hazardTypes.map((type) => (
             <option key={type.id} value={type.id}>
@@ -136,10 +131,11 @@ const HazardFilters: React.FC<FiltersProps> = ({
         <label htmlFor="hazard-cluster">Hazard Cluster</label>
         <select
           id="hazard-cluster"
+          name="hazardClusterId"
           value={hazardClusterId || ""}
           onChange={(e) => setHazardClusterId(e.target.value || null)}
           disabled={!hazardTypeId}
-        >
+          >
           <option value="">Select a hazard cluster</option>
           {filteredClusters.map((cluster) => (
             <option key={cluster.id} value={cluster.id}>
@@ -152,6 +148,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
         <label htmlFor="specific-hazard">Specific Hazard</label>
         <select
           id="specific-hazard"
+          name="specificHazardId"
           value={specificHazardId || ""}
           onChange={(e) => setSpecificHazardId(e.target.value || null)}
           disabled={!hazardClusterId}
@@ -171,7 +168,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
           id="geographic-level"
           value={geographicLevelId || ""}
           onChange={(e) => setGeographicLevelId(e.target.value || null)}
-        >
+          >
           <option value="">Select a geographic level</option>
           {geographicLevels.map((level) => (
             <option key={level.id} value={level.id.toString()}>
@@ -185,18 +182,20 @@ const HazardFilters: React.FC<FiltersProps> = ({
         <input
           type="date"
           id="from-date"
+          name="fromDate"
           value={fromDate || ""}
           onChange={(e) => setFromDate(e.target.value || null)}
-        />
+          />
       </div>
       <div className="dts-form-component mg-grid__col--span-2">
         <label htmlFor="to-date">To</label>
         <input
           type="date"
           id="to-date"
+          name="toDate"
           value={toDate || ""}
           onChange={(e) => setToDate(e.target.value || null)}
-        />
+          />
       </div>
       {/* Buttons */}
       <div
@@ -215,15 +214,15 @@ const HazardFilters: React.FC<FiltersProps> = ({
         >
           Clear
         </button>
-        <button
+        <button 
           className="mg-button mg-button--small mg-button-primary"
-          type="button"
-          onClick={handleApply}
+          type="submit"
         >
           Apply Filters
         </button>
       </div>
     </div>
+  </Form>
   );
 };
 
