@@ -50,43 +50,6 @@ interface interfaceMap {
 	geojson: any;
 }
 
-interface ActionData {
-  currency: string;
-  disasterCount: number;
-  yearlyDisasterCounts: { year: number; count: number }[];
-  totalDeaths: number;
-  totalInjured: number;
-  totalMissing: number;
-  totalDisplaced: number;
-  totalAffectedDirect: number;
-  totalAffectedIndirect: number;
-  totalMen: number;
-  totalWomen: number;
-  totalNonBinary: number;
-  totalChildren: number;
-  totalAdults: number;
-  totalSeniors: number;
-  totalDisability: number;
-  totalInternationalPoorPeople: number;
-  totalNationalPoorPeople: number;
-  totalDamages: number;
-  totalLosses: number;
-  totalDamagesByYear: { year: number; total: number }[];
-  totalLossesByYear: { year: number; total: number }[];
-  damagesGeoData: interfaceMap[];
-  lossesGeoData: interfaceMap[];
-  deathsGeoData: interfaceMap[];
-  affectedPeopleGeoData: interfaceMap[];
-  disasterEventGeoData: interfaceMap[];
-  disasterSummary: any[]; // Replace with a more specific type if possible
-  hazardTypeId: string | null;
-  hazardClusterId: string | null;
-  specificHazardId: string | null;
-  geographicLevelId: string | null;
-  fromDate: string | null;
-  toDate: string | null;
-}
-
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
 
