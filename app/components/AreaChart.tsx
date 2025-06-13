@@ -61,16 +61,30 @@ const AreaChart: React.FC<AreaChartProps> = ({
   formatter,
   CustomTooltip,
   title,
-  yAxisWidth = 60,
+  yAxisWidth,
 }) => {
+  // Determine appropriate width based on variant
+  const getYAxisWidth = () => {
+    if (yAxisWidth !== undefined) return yAxisWidth;
+    // For damage/loss variants (currency), use wider width
+    return variant === 'events' ? 40 : 50;
+  };
   const config = variantConfig[variant];
   return (
     <div className="dts-data-box">
       {title && <h3 className="dts-body-label">{title}</h3>}
-      <div style={{ height: "300px" }}>
+      <div style={{ height: "300px", width: "100%" }}>
         {data && data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <RechartsAreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <RechartsAreaChart
+              data={data}
+              margin={{
+                top: 10,
+                // right: 6, 
+                left: 20,
+                bottom: 10
+              }}
+            >
               <defs>
                 <linearGradient id={config.gradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={config.stroke} stopOpacity={0.8} />
@@ -83,7 +97,15 @@ const AreaChart: React.FC<AreaChartProps> = ({
                 tickFormatter={formatter}
                 allowDecimals={false}
                 domain={[0, "auto"]}
-                width={yAxisWidth || 60}
+                width={getYAxisWidth()}
+                tick={{
+                  fontSize: 11, // Slightly smaller font
+                  textAnchor: 'end' // Ensure text is right-aligned
+                }}
+                tickMargin={8} // Increased margin between tick and axis
+                axisLine={true}
+                tickLine={true}
+                tickCount={6} // Reduce number of ticks for better spacing
               />
               <RechartsTooltip
                 content={({ active, payload, label }) => (
