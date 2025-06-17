@@ -39,6 +39,8 @@ migrations/
 # Logs
 logs/
 
+# Uploads
+public/uploads/
 
 # IDE
 .vscode/
