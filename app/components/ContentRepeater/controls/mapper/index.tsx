@@ -783,6 +783,7 @@ export const renderMapperDialog = (
 										handleFieldChange(field, JSON.parse(updatedValue));
 
 										closeMapDialog();
+										return true;
 									}}
 								>
 									Save Coordinates
