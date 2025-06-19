@@ -34,7 +34,7 @@ import { MainContainer } from "~/frontend/container";
 import { NavSettings } from "~/routes/settings/nav";
 import HazardFilters from "~/frontend/analytics/hazards/sections/HazardFilters";
 import ImpactByHazard from "~/frontend/analytics/hazards/sections/ImpactByHazard";
-import { getDivisionByLevel } from "~/backend.server/models/division";
+import { getDivisionByLevel, getDivisionIdAndNameByLevel } from "~/backend.server/models/division";
 import { fetchHazardClusters } from "~/backend.server/models/analytics/hazard-clusters";
 import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
@@ -58,14 +58,14 @@ export const loader = authLoaderPublicOrWithPerm(
 		const hazardTypes = await fetchHazardTypes();
 		const hazardClusters = await fetchHazardClusters(null);
 		const specificHazards = await fetchAllSpecificHazards();
-		const geographicLevel1 = await getDivisionByLevel(1);
+		const level1DivisionNames = await getDivisionIdAndNameByLevel(1);
 
 		return {
 			currency,
 			hazardTypes,
 			hazardClusters,
 			specificHazards,
-			geographicLevel1,
+			level1DivisionNames
 		};
 	}
 );
@@ -236,9 +236,12 @@ export default function HazardAnalysis() {
 		hazardTypes,
 		hazardClusters,
 		specificHazards,
-		geographicLevel1: geographicLevels,
+		level1DivisionNames
+		// geographicLevel1: geographicLevels,
+
 	} = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
+	console.log("actionData= ", actionData)
 
 	const [appliedFilters, setAppliedFilters] = useState<{
 		hazardTypeId: string | null;
@@ -294,8 +297,8 @@ export default function HazardAnalysis() {
 			: null;
 
 	const geographicName =
-		appliedFilters.geographicLevelId && geographicLevels.length > 0
-			? geographicLevels.find(
+		appliedFilters.geographicLevelId && level1DivisionNames.length > 0
+			? level1DivisionNames.find(
 					(g) => g.id.toString() === appliedFilters.geographicLevelId
 			  )?.name["en"] || "Unknown Level"
 			: null;
@@ -315,7 +318,7 @@ export default function HazardAnalysis() {
 						hazardTypes={hazardTypes}
 						hazardClusters={hazardClusters}
 						specificHazards={specificHazards}
-						geographicLevels={geographicLevels}
+						geographicLevels={level1DivisionNames}
 						onClearFilters={handleClearFilters}
 						selectedHazardClusterId={appliedFilters.hazardClusterId}
 						selectedSpecificHazardId={appliedFilters.specificHazardId}

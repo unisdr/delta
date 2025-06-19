@@ -775,6 +775,36 @@ export async function getAllChildren(divisionId: number) {
   }
 }
 
+export type DivisionIdAndNameResult = {
+  id: number;
+  name: Record<string,string>;
+  level: number | null;
+}[];
+
+
+export async function getDivisionIdAndNameByLevel(level: number): Promise<DivisionIdAndNameResult> {
+  try {
+    const divisions = await dr
+      .select({
+        id: divisionTable.id,
+        name: divisionTable.name,
+        level: divisionTable.level
+      })
+      .from(divisionTable)
+      .where(eq(divisionTable.level, level));
+
+    // Map results to ensure correct typing
+    return divisions.map((division) => ({
+      id: division.id,
+      name: division.name,
+      level: division.level 
+    }));
+  } catch (error) {
+    console.error("Error fetching divisions by level:", error);
+    throw new Error("Failed to fetch divisions");
+  }
+}
+
 export async function getDivisionByLevel(level: number) {
   try {
     return await dr.transaction(async (tx: Tx) => {
