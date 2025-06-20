@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
@@ -7,6 +7,7 @@ import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import createLogger from "~/utils/logger.server";
+import { ErrorMessage } from "~/frontend/components/ErrorMessage";
 
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector";
@@ -14,6 +15,47 @@ import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
+
+// JavaScript Disabled Message Component
+function JavaScriptDisabledMessage() {
+  return (
+    <div className="dts-page-section">
+      <div className="mg-container">
+        <div className="dts-data-box" style={{ textAlign: "center", padding: "4rem 2rem" }}>
+          <h2 className="dts-heading-2" style={{ color: "#c10920", marginBottom: "2rem" }}>
+            JavaScript Required
+          </h2>
+          <ErrorMessage message="JavaScript is currently disabled in your browser. This interactive dashboard requires JavaScript to function properly." />
+          <div style={{ marginTop: "2rem" }}>
+            <h3 className="dts-heading-4" style={{ marginBottom: "1.6rem" }}>
+              To enable JavaScript:
+            </h3>
+            <div className="dts-body-text" style={{ textAlign: "left", maxWidth: "600px", margin: "0 auto" }}>
+              <strong>Chrome, Firefox, Safari, Edge:</strong>
+              <ol style={{ marginLeft: "2rem", marginTop: "0.8rem" }}>
+                <li>Click on the settings/menu icon in your browser</li>
+                <li>Go to "Settings" or "Preferences"</li>
+                <li>Find "Privacy & Security" or "Advanced"</li>
+                <li>Look for "JavaScript" or "Site Settings"</li>
+                <li>Enable JavaScript for all sites or this site specifically</li>
+                <li>Refresh this page</li>
+              </ol>
+            </div>
+          </div>
+          <div style={{ marginTop: "2rem" }}>
+            <button
+              className="mg-button mg-button-primary"
+              onClick={() => window.location.reload()}
+              style={{ margin: "0 auto" }}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Create logger for this module
 const logger = createLogger("routes/analytics/sectors.tsx");
@@ -100,6 +142,18 @@ export const meta: MetaFunction = () => {
 // React component for Sectors Analysis page
 function SectorsAnalysisContent() {
   const { currency } = useLoaderData<typeof loader>();
+
+  // Effect to show content when JavaScript is enabled
+  useEffect(() => {
+    try {
+      const jsContent = document.getElementById('js-content');
+      if (jsContent) {
+        jsContent.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error showing main content:', error);
+    }
+  }, []);
 
   // State declarations
   // const [isExportingExcel, setIsExportingExcel] = useState(false);
@@ -470,58 +524,9 @@ function SectorsAnalysisContent() {
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       <div style={{ maxWidth: "100%", overflow: "hidden" }}>
 
-        {/* Static HTML message for when JavaScript is disabled */}
+        {/* Show message when JavaScript is disabled */}
         <noscript>
-          <div className="dts-page-section">
-            <div className="mg-container">
-              <div className="dts-data-box dts-js-disabled-message" role="alert">
-                <h2 className="dts-heading-2 dts-js-disabled-title">
-                  JavaScript Required
-                </h2>
-
-                <div className="dts-alert dts-alert--error">
-                  <div className="dts-alert__icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <span className="dts-body-text">
-                    JavaScript is currently disabled in your browser. This interactive dashboard requires JavaScript to function properly.
-                  </span>
-                </div>
-
-                <div className="dts-js-disabled-instructions">
-                  <h3 className="dts-heading-4">
-                    To enable JavaScript:
-                  </h3>
-
-                  <div className="dts-body-text">
-                    <p><strong>Quick Instructions:</strong></p>
-                    <ol className="dts-js-disabled-steps">
-                      <li>Open your browser settings</li>
-                      <li>Find "Privacy & Security" or "Site Settings"</li>
-                      <li>Enable JavaScript</li>
-                      <li>Refresh this page</li>
-                    </ol>
-
-                    <p><strong>Need detailed help?</strong></p>
-                    <ul className="dts-js-disabled-links">
-                      <li><a href="https://support.google.com/adsense/answer/12654?hl=en" target="_blank" rel="noopener">Enable JavaScript in Chrome</a></li>
-                      <li><a href="https://support.mozilla.org/en-US/kb/javascript-settings-for-interactive-web-pages" target="_blank" rel="noopener">Enable JavaScript in Firefox</a></li>
-                      <li><a href="https://support.apple.com/guide/safari/enable-javascript-ibrw1074/mac" target="_blank" rel="noopener">Enable JavaScript in Safari</a></li>
-                      <li><a href="https://support.microsoft.com/en-us/microsoft-edge/javascript-is-disabled-in-your-browser-c24e84cf-7a18-7e65-c1b1-0dff3e58e01a" target="_blank" rel="noopener">Enable JavaScript in Edge</a></li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="dts-js-disabled-actions">
-                  <a href="" className="mg-button mg-button-primary">
-                    Try Again
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
+          <JavaScriptDisabledMessage />
         </noscript>
 
 
@@ -667,12 +672,6 @@ function SectorsAnalysisContent() {
             * Data shown is based on published records
           </div>
         </div>
-        {/* Script to show the main content when JavaScript is enabled */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            document.getElementById('js-content').style.display = 'block';
-          `
-        }} />
       </div>
     </MainContainer>
   );
