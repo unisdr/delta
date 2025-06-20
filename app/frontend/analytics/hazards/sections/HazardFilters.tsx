@@ -166,6 +166,7 @@ const HazardFilters: React.FC<FiltersProps> = ({
         <label htmlFor="geographic-level">Geographic Level</label>
         <select
           id="geographic-level"
+          name="geographicLevelId"
           value={geographicLevelId || ""}
           onChange={(e) => setGeographicLevelId(e.target.value || null)}
           >
