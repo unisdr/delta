@@ -92,7 +92,6 @@ const Filters: React.FC<FiltersProps> = ({
 }) => {
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
-  const [isMounted, setIsMounted] = useState(false); // Ensure hydration consistency
   const [filters, setFilters] = useState({
     sectorId: "",
     subSectorId: "",
@@ -112,8 +111,6 @@ const Filters: React.FC<FiltersProps> = ({
       componentState: 'mounted',
       initialFilters: Object.keys(filters).filter(key => filters[key as keyof typeof filters] !== '').length
     });
-
-    setIsMounted(true);
 
     return () => {
       logger.debug('Filters component unmounting', {
@@ -981,17 +978,6 @@ const Filters: React.FC<FiltersProps> = ({
     );
   };
 
-
-
-
-  // Render skeleton/loading state during server-side rendering
-  if (!isMounted) {
-    return (
-      <div className="mg-grid mg-grid__col-6">
-        <p>Loading filters...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="mg-grid mg-grid__col-6">
