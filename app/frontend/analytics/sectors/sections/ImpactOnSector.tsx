@@ -704,14 +704,14 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 				<div className="mg-grid mg-grid--gap-default">
 					<div className="dts-data-box">
 						<h3 className="dts-body-label">
-							<span id="elementId01">Events impacting sectors</span>
+							<span id="elementId01">Disaster events impacting sectors</span>
 							<button
 								ref={eventsImpactingRef}
 								className="dts-tooltip__button"
 								onPointerEnter={() =>
 									createTooltip(
 										eventsImpactingRef,
-										"Total number of events that have impacted this sector"
+										"Total number of disaster events that have impacted this sector"
 									)
 								}
 							>
