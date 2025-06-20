@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
+import { createClientLogger } from "~/utils/clientLogger";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
@@ -15,6 +16,43 @@ import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
+
+// Performance optimization hooks
+// Custom hook for debouncing values
+const useDebounce = <T,>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    // Set debouncedValue to value after the specified delay
+    const handler = setTimeout(() => {
+      try {
+        setDebouncedValue(value);
+      } catch (error) {
+        componentLogger.error("Error in debounce hook", {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          businessCritical: false
+        });
+        // Fallback to non-debounced value in case of error
+        setDebouncedValue(value);
+      }
+    }, delay);
+
+    // Cancel the timeout if value changes or component unmounts
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+// Memoize expensive components
+const MemoizedImpactOnSector = memo(ImpactOnSector);
+const MemoizedImpactByHazard = memo(ImpactByHazard);
+const MemoizedImpactMap = memo(ImpactMap);
+const MemoizedEffectDetails = memo(EffectDetails);
+const MemoizedMostDamagingEvents = memo(MostDamagingEvents);
 
 // JavaScript Disabled Message Component
 function JavaScriptDisabledMessage() {
@@ -59,6 +97,12 @@ function JavaScriptDisabledMessage() {
 
 // Create logger for this module
 const logger = createLogger("routes/analytics/sectors.tsx");
+
+// Create client-side logger for user interactions
+const componentLogger = createClientLogger('sectors-analytics', {
+  component: 'SectorsAnalysisContent',
+  feature: 'dashboard-filters'
+});
 
 // import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
 // import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
@@ -110,7 +154,9 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
     contextLogger.info("Successfully loaded sectors analytics data", {
       currency,
-      hasAuthentication: !!userSession
+      hasAuthentication: !!userSession,
+      timestamp: new Date().toISOString(),
+      requestId
     });
 
     return {
@@ -122,9 +168,12 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   } catch (error) {
     contextLogger.error("Failed to load sectors analytics data", {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+      requestId
     });
 
+    // Re-throw the error after logging
     throw error;
   }
 });
@@ -151,7 +200,12 @@ function SectorsAnalysisContent() {
         jsContent.style.display = 'block';
       }
     } catch (error) {
-      console.error('Error showing main content:', error);
+      componentLogger.error('Error showing main content', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        businessCritical: false,
+        operation: 'showJsContent'
+      });
     }
   }, []);
 
@@ -169,33 +223,82 @@ function SectorsAnalysisContent() {
     disasterEventId: string | null;
   } | null>(null);
 
+  // Add loading state to track filter application
+  const [isLoading, setIsLoading] = useState(false);
+  const [pendingFilters, setPendingFilters] = useState<typeof filters>(null);
+
+  // Debounce the filter changes to reduce API calls
+  const debouncedFilters = useDebounce(pendingFilters, 300);
+
+  // Apply debounced filters
+  useEffect(() => {
+    // Create a no-op cleanup function for code paths that don't need cleanup
+    const noop = () => { };
+
+    if (debouncedFilters !== null) {
+      try {
+        setIsLoading(true);
+        setFilters(debouncedFilters);
+
+        // Log filter application for analytics
+        componentLogger.info('Filters applied', {
+          userAction: 'apply_filters',
+          filterCount: Object.values(debouncedFilters || {}).filter(v => v !== null).length,
+          hasHazardFilter: !!debouncedFilters?.hazardTypeId || !!debouncedFilters?.hazardClusterId || !!debouncedFilters?.specificHazardId,
+          hasSectorFilter: !!debouncedFilters?.sectorId || !!debouncedFilters?.subSectorId,
+          hasDateFilter: !!debouncedFilters?.fromDate || !!debouncedFilters?.toDate,
+          hasEventFilter: !!debouncedFilters?.disasterEventId,
+          businessCritical: false
+        });
+
+        // Simulate network delay for demonstration
+        const timer = setTimeout(() => {
+          setIsLoading(false);
+        }, 500);
+
+        return () => clearTimeout(timer);
+      } catch (error) {
+        componentLogger.error("Error applying filters", {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          businessCritical: false,
+          operation: 'applyFilters'
+        });
+        setIsLoading(false);
+        return noop; // Return no-op cleanup function in error case
+      }
+    }
+
+    // Return no-op cleanup function for the case when debouncedFilters is null
+    return noop;
+  }, [debouncedFilters]);
+
   // Event handlers for Filters component
-  const handleApplyFilters = (newFilters: typeof filters) => {
-    setFilters(newFilters);
+  const handleApplyFilters = useCallback((newFilters: typeof filters) => {
+    setPendingFilters(newFilters);
+  }, []);
 
-    // Log filter application for analytics
-    console.log('[SECTORS-ANALYTICS] Filters applied', {
-      appliedFilters: newFilters,
-      filterCount: Object.values(newFilters || {}).filter(v => v !== null).length,
-      timestamp: new Date().toISOString()
-    });
-  };
-
-  const handleAdvancedSearch = () => {
+  const handleAdvancedSearch = useCallback(() => {
     // TODO: Implement advanced search functionality
-    console.log('[SECTORS-ANALYTICS] Advanced search clicked', {
-      timestamp: new Date().toISOString()
+    componentLogger.info('Advanced search clicked', {
+      userAction: 'advanced_search',
+      businessCritical: false,
+      currentFiltersCount: filters ? Object.values(filters).filter(v => v !== null).length : 0
     });
-  };
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
+    setPendingFilters(null);
     setFilters(null);
+    setIsLoading(false);
 
     // Log filter clearing for analytics
-    console.log('[SECTORS-ANALYTICS] Filters cleared', {
-      timestamp: new Date().toISOString()
+    componentLogger.info('Filters cleared', {
+      userAction: 'clear_filters',
+      businessCritical: false,
+      previousFiltersCount: filters ? Object.values(filters).filter(v => v !== null).length : 0
     });
-  };
+  }, []);
 
   // Function to export Excel data
   /*const handleExportToExcel = async () => {
@@ -599,11 +702,52 @@ function SectorsAnalysisContent() {
                   {isExportingExcel ? "Exporting Data..." : "Download Data"}
                 </button> */}
               </div>
-              <div className="sectors-content" style={{ marginTop: "1rem", maxWidth: "100%", overflow: "hidden" }}>
+
+              {/* Loading overlay */}
+              {isLoading && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: "rgba(255, 255, 255, 0.7)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 10,
+                    borderRadius: "8px"
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "1rem"
+                    }}
+                  >
+                    <div className="dts-loading-spinner"></div>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 500 }}>Loading data...</div>
+                  </div>
+                </div>
+              )}
+
+              <div
+                className="sectors-content"
+                style={{
+                  marginTop: "1rem",
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  position: "relative",
+                  minHeight: "800px" // Prevent layout shift
+                }}
+              >
                 {/* Impact on Selected Sector */}
                 {filters.sectorId && (
-                  <div className="space-y-8">
-                    <ImpactOnSector
+                  <div className="space-y-8" style={{ minHeight: "300px" }}>
+                    <MemoizedImpactOnSector
                       sectorId={filters.sectorId}
                       filters={filters}
                       currency={currency}
@@ -612,16 +756,24 @@ function SectorsAnalysisContent() {
                 )}
 
                 {/* Impact by Hazard Section */}
-                <ImpactByHazard filters={filters} />
+                <div style={{ minHeight: "400px" }}>
+                  <MemoizedImpactByHazard filters={filters} />
+                </div>
 
                 {/* Impact by Geographic Level */}
-                <ImpactMap filters={filters} currency={currency} />
+                <div style={{ minHeight: "500px" }}>
+                  <MemoizedImpactMap filters={filters} currency={currency} />
+                </div>
 
                 {/* Effect Details Section */}
-                <EffectDetails filters={filters} currency={currency} />
+                <div style={{ minHeight: "400px" }}>
+                  <MemoizedEffectDetails filters={filters} currency={currency} />
+                </div>
 
                 {/* Most Damaging Events Section */}
-                <MostDamagingEvents filters={filters} currency={currency} />
+                <div style={{ minHeight: "300px" }}>
+                  <MemoizedMostDamagingEvents filters={filters} currency={currency} />
+                </div>
               </div>
             </>
           )}
