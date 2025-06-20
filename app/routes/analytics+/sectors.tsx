@@ -95,6 +95,8 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+
+
 // React component for Sectors Analysis page
 function SectorsAnalysisContent() {
   const { currency } = useLoaderData<typeof loader>();
@@ -467,7 +469,64 @@ function SectorsAnalysisContent() {
   return (
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       <div style={{ maxWidth: "100%", overflow: "hidden" }}>
-        <div className="sectors-page">
+
+        {/* Static HTML message for when JavaScript is disabled */}
+        <noscript>
+          <div className="dts-page-section">
+            <div className="mg-container">
+              <div className="dts-data-box dts-js-disabled-message" role="alert">
+                <h2 className="dts-heading-2 dts-js-disabled-title">
+                  JavaScript Required
+                </h2>
+
+                <div className="dts-alert dts-alert--error">
+                  <div className="dts-alert__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="dts-body-text">
+                    JavaScript is currently disabled in your browser. This interactive dashboard requires JavaScript to function properly.
+                  </span>
+                </div>
+
+                <div className="dts-js-disabled-instructions">
+                  <h3 className="dts-heading-4">
+                    To enable JavaScript:
+                  </h3>
+
+                  <div className="dts-body-text">
+                    <p><strong>Quick Instructions:</strong></p>
+                    <ol className="dts-js-disabled-steps">
+                      <li>Open your browser settings</li>
+                      <li>Find "Privacy & Security" or "Site Settings"</li>
+                      <li>Enable JavaScript</li>
+                      <li>Refresh this page</li>
+                    </ol>
+
+                    <p><strong>Need detailed help?</strong></p>
+                    <ul className="dts-js-disabled-links">
+                      <li><a href="https://support.google.com/adsense/answer/12654?hl=en" target="_blank" rel="noopener">Enable JavaScript in Chrome</a></li>
+                      <li><a href="https://support.mozilla.org/en-US/kb/javascript-settings-for-interactive-web-pages" target="_blank" rel="noopener">Enable JavaScript in Firefox</a></li>
+                      <li><a href="https://support.apple.com/guide/safari/enable-javascript-ibrw1074/mac" target="_blank" rel="noopener">Enable JavaScript in Safari</a></li>
+                      <li><a href="https://support.microsoft.com/en-us/microsoft-edge/javascript-is-disabled-in-your-browser-c24e84cf-7a18-7e65-c1b1-0dff3e58e01a" target="_blank" rel="noopener">Enable JavaScript in Edge</a></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="dts-js-disabled-actions">
+                  <a href="" className="mg-button mg-button-primary">
+                    Try Again
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </noscript>
+
+
+        {/* Main content - only shown when JavaScript is enabled */}
+        <div className="sectors-page" style={{ display: "none" }} id="js-content">
           {/* Filters Section */}
           <Filters
             onApplyFilters={handleApplyFilters}
@@ -608,6 +667,12 @@ function SectorsAnalysisContent() {
             * Data shown is based on published records
           </div>
         </div>
+        {/* Script to show the main content when JavaScript is enabled */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            document.getElementById('js-content').style.display = 'block';
+          `
+        }} />
       </div>
     </MainContainer>
   );
