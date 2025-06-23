@@ -21,10 +21,10 @@
   "private": true,
   "dependencies": {
     "@floating-ui/dom": "^1.6.13",
-    "@remix-run/express": "^2.14.0",
-    "@remix-run/node": "^2.14.0",
-    "@remix-run/react": "^2.14.0",
-    "@remix-run/serve": "^2.14.0",
+    "@remix-run/express": "^2.16.3",
+    "@remix-run/node": "^2.16.3",
+    "@remix-run/react": "^2.16.3",
+    "@remix-run/serve": "^2.16.3",
     "@remix-run/server-runtime": "^2.0.0",
     "@tanstack/react-query": "^5.64.2",
     "@turf/boolean-clockwise": "^7.2.0",
@@ -76,7 +76,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.14.0",
+    "@remix-run/dev": "^2.16.3",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^6.4.16",
     "@types/pg": "^8.11.11",
