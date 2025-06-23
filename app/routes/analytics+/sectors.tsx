@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useRef } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
@@ -9,6 +9,7 @@ import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import createLogger from "~/utils/logger.server";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
+import ErrorBoundary from "~/frontend/components/ErrorBoundary";
 
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector";
@@ -18,31 +19,87 @@ import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
 // Performance optimization hooks
-// Custom hook for debouncing values
-const useDebounce = <T,>(value: T, delay: number): T => {
+// Enhanced debounce hook with adaptive timing and user interaction awareness
+const useDebounce = <T,>(value: T, baseDelay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  const lastInteractionTime = useRef<number>(Date.now());
+  const interactionCount = useRef<number>(0);
+  const isTyping = useRef<boolean>(false);
+  const lastValue = useRef<T>(value);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
+  // Track user interaction patterns
   useEffect(() => {
-    // Set debouncedValue to value after the specified delay
-    const handler = setTimeout(() => {
+    const now = Date.now();
+    const timeSinceLastInteraction = now - lastInteractionTime.current;
+
+    // Detect typing patterns (rapid successive changes)
+    if (timeSinceLastInteraction < 1000) { // If changes within 1 second
+      interactionCount.current++;
+      isTyping.current = true;
+    } else {
+      interactionCount.current = 0;
+      isTyping.current = false;
+    }
+
+    lastInteractionTime.current = now;
+
+    // Calculate adaptive delay based on interaction pattern
+    let adaptiveDelay = baseDelay;
+
+    if (isTyping.current) {
+      // If user is actively typing, use a longer delay
+      adaptiveDelay = Math.min(baseDelay * 1.5, 1000); // Cap at 1s
+    } else if (interactionCount.current > 3) {
+      // If user is rapidly changing values, use a shorter delay
+      adaptiveDelay = Math.max(baseDelay * 0.5, 100); // At least 100ms
+    }
+
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Set new timeout with adaptive delay
+    timeoutRef.current = setTimeout(() => {
       try {
-        setDebouncedValue(value);
+        // Only update if value has actually changed
+        if (lastValue.current !== value) {
+          lastValue.current = value;
+          setDebouncedValue(value);
+
+          // Log debounce application for performance monitoring
+          componentLogger.debug('Debounced value updated', {
+            originalValue: value,
+            debouncedValue: value,
+            delayUsed: adaptiveDelay,
+            interactionCount: interactionCount.current,
+            wasTyping: isTyping.current,
+            businessCritical: false
+          });
+        }
       } catch (error) {
         componentLogger.error("Error in debounce hook", {
           error: error instanceof Error ? error.message : 'Unknown error',
           stack: error instanceof Error ? error.stack : undefined,
-          businessCritical: false
+          businessCritical: false,
+          operation: 'debounceUpdate'
         });
         // Fallback to non-debounced value in case of error
         setDebouncedValue(value);
       }
-    }, delay);
 
-    // Cancel the timeout if value changes or component unmounts
+      // Reset typing state after delay
+      isTyping.current = false;
+    }, adaptiveDelay);
+
+    // Cleanup function to clear timeout on unmount or value change
     return () => {
-      clearTimeout(handler);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, [value, delay]);
+  }, [value, baseDelay]);
 
   return debouncedValue;
 };
@@ -115,16 +172,123 @@ const componentLogger = createClientLogger('sectors-analytics', {
 //   subsectors?: Sector[];
 // }
 
-// Create QueryClient instance
+// Define custom error type for API errors
+interface ApiError extends Error {
+  status?: number;
+  response?: {
+    status?: number;
+    data?: any;
+  };
+}
+
+// Type-safe error handler
+const handleError = (error: unknown, context: string) => {
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  const stack = error instanceof Error ? error.stack : undefined;
+
+  componentLogger.error(`Error in ${context}`, {
+    error: errorMessage,
+    stack,
+    businessCritical: true
+  });
+};
+
+// Create QueryClient instance with enhanced configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
+      // Cache configuration
+      staleTime: 5 * 60 * 1000,     // 5 minutes before data becomes stale
+      gcTime: 10 * 60 * 1000,       // 10 minutes before garbage collection
+      refetchOnWindowFocus: false,  // Prevent refetch on window focus
+      refetchOnMount: false,        // Prevent refetch on component mount
+      refetchOnReconnect: 'always', // Always refetch on reconnect
+      retry: (failureCount, error: unknown) => {
+        try {
+          // Type guard to check if error is an instance of Error
+          if (!(error instanceof Error)) {
+            return failureCount < 1; // Only retry once for non-Error types
+          }
+
+          const apiError = error as ApiError;
+          const errorMessage = error.message || 'Unknown error';
+
+          // Check for rate limit errors
+          const isRateLimit = errorMessage.includes('rate limited') ||
+            apiError.status === 429 ||
+            apiError.response?.status === 429;
+
+          if (isRateLimit) {
+            // Log rate limit hit
+            componentLogger.warn('Rate limit hit, applying retry logic', {
+              attempt: failureCount + 1,
+              error: errorMessage,
+              stack: error.stack,
+              businessCritical: true
+            });
+            return failureCount < 3; // Max 3 retries for rate limits
+          }
+
+          // For other errors, only retry once
+          return failureCount < 1;
+        } catch (err) {
+          handleError(err, 'retry logic');
+          return false; // Don't retry if error handling fails
+        }
+      },
+      retryDelay: (attemptIndex) => {
+        // Exponential backoff with jitter
+        const baseDelay = Math.min(1000 * 2 ** attemptIndex, 30000); // Cap at 30s
+        const jitter = Math.random() * 1000; // Add up to 1s of jitter
+        return baseDelay + jitter;
+      },
+      // Optimistic updates configuration
+      networkMode: 'online',
+      // Query options
+      structuralSharing: true // Prevent unnecessary re-renders
+    }
+  }
 });
+
+// Set up global query cache event handlers
+const queryCache = queryClient.getQueryCache();
+
+// Subscribe to query cache events with type-safe handling
+queryCache.subscribe((event) => {
+  try {
+    // Handle error events
+    if ('error' in event && event.error) {
+      handleError(event.error, 'query cache');
+    }
+
+    // Handle query updates
+    if ('query' in event) {
+      componentLogger.debug('Query cache updated', {
+        queryKey: event.query.queryKey,
+        timestamp: new Date().toISOString(),
+        eventType: event.type
+      });
+    }
+  } catch (error) {
+    handleError(error, 'query cache subscription');
+  }
+});
+
+// Set up global error handler for uncaught query errors
+queryClient.getQueryCache().config = {
+  ...queryClient.getQueryCache().config,
+  onError: (error: unknown) => {
+    handleError(error, 'global query cache');
+  }
+};
+
+// Set up global mutation error handler
+queryClient.getMutationCache().config = {
+  ...queryClient.getMutationCache().config,
+  onError: (error: unknown) => {
+    handleError(error, 'global mutation cache');
+  }
+};
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
@@ -228,7 +392,7 @@ function SectorsAnalysisContent() {
   const [pendingFilters, setPendingFilters] = useState<typeof filters>(null);
 
   // Debounce the filter changes to reduce API calls
-  const debouncedFilters = useDebounce(pendingFilters, 300);
+  const debouncedFilters = useDebounce(pendingFilters, 1000);
 
   // Apply debounced filters
   useEffect(() => {
@@ -636,11 +800,13 @@ function SectorsAnalysisContent() {
         {/* Main content - only shown when JavaScript is enabled */}
         <div className="sectors-page" style={{ display: "none" }} id="js-content">
           {/* Filters Section */}
-          <Filters
-            onApplyFilters={handleApplyFilters}
-            onAdvancedSearch={handleAdvancedSearch}
-            onClearFilters={handleClearFilters}
-          />
+          <ErrorBoundary>
+            <Filters
+              onApplyFilters={handleApplyFilters}
+              onAdvancedSearch={handleAdvancedSearch}
+              onClearFilters={handleClearFilters}
+            />
+          </ErrorBoundary>
 
           {/* Conditional rendering: Display this message until filters are applied */}
           {!filters && (
@@ -706,6 +872,9 @@ function SectorsAnalysisContent() {
               {/* Loading overlay */}
               {isLoading && (
                 <div
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
                   style={{
                     position: "absolute",
                     top: 0,
@@ -728,8 +897,11 @@ function SectorsAnalysisContent() {
                       gap: "1rem"
                     }}
                   >
-                    <div className="dts-loading-spinner"></div>
-                    <div style={{ fontSize: "1.4rem", fontWeight: 500 }}>Loading data...</div>
+                    <div className="dts-loading-spinner" aria-label="Loading data" aria-hidden="true"></div>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 500 }}>
+                      <span className="mg-u-sr-only">Loading data, please wait.</span>
+                      Loading data...
+                    </div>
                   </div>
                 </div>
               )}
@@ -747,32 +919,42 @@ function SectorsAnalysisContent() {
                 {/* Impact on Selected Sector */}
                 {filters.sectorId && (
                   <div className="space-y-8" style={{ minHeight: "300px" }}>
-                    <MemoizedImpactOnSector
-                      sectorId={filters.sectorId}
-                      filters={filters}
-                      currency={currency}
-                    />
+                    <ErrorBoundary>
+                      <MemoizedImpactOnSector
+                        sectorId={filters.sectorId}
+                        filters={filters}
+                        currency={currency}
+                      />
+                    </ErrorBoundary>
                   </div>
                 )}
 
                 {/* Impact by Hazard Section */}
                 <div style={{ minHeight: "400px" }}>
-                  <MemoizedImpactByHazard filters={filters} />
+                  <ErrorBoundary>
+                    <MemoizedImpactByHazard filters={filters} />
+                  </ErrorBoundary>
                 </div>
 
                 {/* Impact by Geographic Level */}
                 <div style={{ minHeight: "500px" }}>
-                  <MemoizedImpactMap filters={filters} currency={currency} />
+                  <ErrorBoundary>
+                    <MemoizedImpactMap filters={filters} currency={currency} />
+                  </ErrorBoundary>
                 </div>
 
                 {/* Effect Details Section */}
                 <div style={{ minHeight: "400px" }}>
-                  <MemoizedEffectDetails filters={filters} currency={currency} />
+                  <ErrorBoundary>
+                    <MemoizedEffectDetails filters={filters} currency={currency} />
+                  </ErrorBoundary>
                 </div>
 
                 {/* Most Damaging Events Section */}
                 <div style={{ minHeight: "300px" }}>
-                  <MemoizedMostDamagingEvents filters={filters} currency={currency} />
+                  <ErrorBoundary>
+                    <MemoizedMostDamagingEvents filters={filters} currency={currency} />
+                  </ErrorBoundary>
                 </div>
               </div>
             </>
