@@ -228,11 +228,27 @@ function enrichLogPayload(payload: EnhancedLogPayload, request: Request): Enhanc
  */
 export const action: ActionFunction = async ({ request }) => {
   try {
+    // Handle OPTIONS method for CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Max-Age': '86400', // 24 hours
+        },
+      });
+    }
+
     // Only accept POST requests
     if (request.method !== "POST") {
       return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
         status: 405,
-        headers: { "Content-Type": "application/json" }
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
       });
     }
 
@@ -385,9 +401,13 @@ export const action: ActionFunction = async ({ request }) => {
       requestHeaders: Object.fromEntries(request.headers.entries())
     });
 
-    return new Response(JSON.stringify({ success: false, error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
+    // Return success response with CORS headers
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      }
     });
   }
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
@@ -54,10 +54,16 @@ interface ApiResponse {
   };
 }
 
-export default function MostDamagingEvents({ filters, currency }: MostDamagingEventsProps) {
+const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency }: MostDamagingEventsProps) {
   const [page, setPage] = useState(1);
-  const [sortColumn, setSortColumn] = useState<SortColumn>("damages");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [sortState, setSortState] = useState<{ column: SortColumn; direction: "asc" | "desc" }>({
+    column: "damages",
+    direction: "desc"
+  });
+
+  // For backward compatibility with existing code
+  const sortColumn = sortState.column;
+  const sortDirection = sortState.direction;
 
   // Fetch sectors data for dynamic title
   const { data: sectorsData } = useQuery({
@@ -87,29 +93,34 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
     return { sector: undefined, parent: undefined };
   };
 
-  // Construct title based on sector/subsector selection
-  const sectionTitle = () => {
-    if (!sectorsData?.sectors) return "Most Damaging Events";
+  // Memoized title calculation based on sector/subsector selection
+  const sectionTitle = useMemo(() => {
+    try {
+      if (!sectorsData?.sectors) return "Most Damaging Events";
 
-    if (filters.sectorId) {
-      const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+      if (filters.sectorId) {
+        const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
 
-      if (filters.subSectorId && sector) {
-        // Case: Subsector is selected
-        const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsData.sectors, filters.subSectorId);
-        if (subsector && mainSector) {
-          return `The Most Damaging Events for ${subsector.sectorname} (${mainSector.sectorname} Sector)`;
+        if (filters.subSectorId && sector) {
+          // Case: Subsector is selected
+          const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsData.sectors, filters.subSectorId);
+          if (subsector && mainSector) {
+            return `The Most Damaging Events for ${subsector.sectorname} (${mainSector.sectorname} Sector)`;
+          }
+        }
+
+        // Case: Only sector is selected
+        if (sector) {
+          return `The Most Damaging Events for the ${sector.sectorname} Sector`;
         }
       }
 
-      // Case: Only sector is selected
-      if (sector) {
-        return `The Most Damaging Events for the ${sector.sectorname} Sector`;
-      }
+      return "The Most Damaging Events";
+    } catch (error) {
+      console.error("Error generating section title:", error);
+      return "The Most Damaging Events";
     }
-
-    return "The Most Damaging Events";
-  };
+  }, [sectorsData?.sectors, filters.sectorId, filters.subSectorId]);
 
   // Debounce filters to prevent too many API calls
   const debouncedFilters = useDebounce(filters, 300);
@@ -158,18 +169,45 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
     enabled: !!(debouncedFilters.sectorId || debouncedFilters.subSectorId || debouncedFilters.hazardTypeId || debouncedFilters.hazardClusterId || debouncedFilters.specificHazardId || debouncedFilters.geographicLevelId || debouncedFilters.fromDate || debouncedFilters.toDate),
   });
 
-  const handleSort = (column: SortColumn) => {
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortColumn(column);
-      setSortDirection("desc");
+  // Memoized currency formatting function to prevent recreation on each render
+  const formatCurrencyValue = useCallback((amount: number) => {
+    try {
+      const scale = amount >= 1_000_000_000 ? 'billions' :
+        amount >= 1_000_000 ? 'millions' :
+          amount >= 1_000 ? 'thousands' :
+            undefined;
+
+      return formatCurrencyWithCode(amount, currency, {}, scale);
+    } catch (error) {
+      console.error("Error formatting currency:", error);
+      return `${amount} ${currency}`; // Fallback formatting
     }
-  };
+  }, [currency]);
+
+  // Memoized sort handler to prevent recreation on each render
+  const handleSort = useCallback((column: SortColumn) => {
+    try {
+      setSortState(prevState => {
+        if (prevState.column === column) {
+          return {
+            ...prevState,
+            direction: prevState.direction === "asc" ? "desc" : "asc"
+          };
+        } else {
+          return {
+            column,
+            direction: "desc"
+          };
+        }
+      });
+    } catch (error) {
+      console.error("Error handling sort:", error);
+    }
+  }, []);
 
   return (
     <div className="dts-page-section">
-      <h2 className="dts-section-title">{sectionTitle()}</h2>
+      <h2 className="dts-section-title">{sectionTitle}</h2>
       <p className="dts-body-text mb-6">
         Displays key disasters by damage, losses, and dates.
       </p>
@@ -241,20 +279,10 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
                       {event.eventName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatCurrencyWithCode(event.totalDamages, currency, {}, 
-                        event.totalDamages >= 1_000_000_000 ? 'billions' : 
-                        event.totalDamages >= 1_000_000 ? 'millions' : 
-                        event.totalDamages >= 1_000 ? 'thousands' : 
-                        undefined
-                      )}
+                      {formatCurrencyValue(event.totalDamages)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatCurrencyWithCode(event.totalLosses, currency, {}, 
-                        event.totalLosses >= 1_000_000_000 ? 'billions' : 
-                        event.totalLosses >= 1_000_000 ? 'millions' : 
-                        event.totalLosses >= 1_000 ? 'thousands' : 
-                        undefined
-                      )}
+                      {formatCurrencyValue(event.totalLosses)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(event.createdAt).toLocaleDateString()}
@@ -292,4 +320,6 @@ export default function MostDamagingEvents({ filters, currency }: MostDamagingEv
       )}
     </div>
   );
-}
+});
+
+export default MostDamagingEvents;

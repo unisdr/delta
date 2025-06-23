@@ -29,11 +29,13 @@ interface SamplingConfig {
   enabled: boolean;
   rates: {
     error: number;    // Always 1.0 (100%)
-    warn: number;     // Default 0.8 (80%)
-    info: number;     // Default 0.3 (30%)
-    debug: number;    // Default 0.1 (10%)
+    warn: number;     // Default 0.5 (50% in production)
+    info: number;     // Default 0.1 (10% in production)
+    debug: number;    // Default 0.05 (5% in production)
   };
   adaptiveThreshold: number; // Increase sampling under this rate
+  maxLogsPerMinute: number;  // Maximum logs per minute before aggressive sampling
+  useBeacon: boolean;        // Whether to use navigator.sendBeacon for final retry
 }
 
 interface SessionInfo {
@@ -145,22 +147,32 @@ class ClientLogger {
   private sessionInfo: SessionInfo;
   private logCount: number = 0;
   private lastResetTime: number = Date.now();
+  private isClient: boolean;
 
   constructor(componentName: string = '', defaultContext: LogContext = {}) {
     this.componentName = componentName;
     this.defaultContext = defaultContext;
-    this.endpoint = '/api/client-log';
+    this.isClient = typeof window !== 'undefined';
 
-    // Initialize sampling configuration with industry standard rates
+    // Use full URL in browser, relative URL in SSR
+    const baseUrl = this.isClient ? window.location.origin : '';
+    this.endpoint = `${baseUrl}/api/client-log`;
+
+    // Initialize sampling configuration with production-safe defaults
     this.samplingConfig = {
       enabled: true,
       rates: {
         error: 1.0,   // Always log errors (100%)
-        warn: 0.8,    // Log 80% of warnings
-        info: 0.3,    // Log 30% of info messages
-        debug: 0.1    // Log 10% of debug messages
+        warn: 0.5,    // Log 50% of warnings in production
+        info: 0.1,    // Log 10% of info messages in production
+        debug: 0.05   // Log 5% of debug messages in production
       },
-      adaptiveThreshold: 50 // Increase sampling if less than 50 logs per minute
+      // More conservative adaptive threshold for production
+      adaptiveThreshold: process.env.NODE_ENV === 'production' ? 20 : 50,
+      // Maximum logs per minute before aggressive sampling
+      maxLogsPerMinute: process.env.NODE_ENV === 'production' ? 100 : 200,
+      // Whether to use navigator.sendBeacon for final retry (better for page unload)
+      useBeacon: true
     };
 
     // Initialize session information
@@ -252,24 +264,44 @@ class ClientLogger {
       return true;
     }
 
-    // Adaptive sampling: increase rate if we're under threshold
     const now = Date.now();
     const timeSinceReset = now - this.lastResetTime;
+    const oneMinute = 60000;
 
     // Reset counter every minute
-    if (timeSinceReset > 60000) {
+    if (timeSinceReset > oneMinute) {
       this.logCount = 0;
       this.lastResetTime = now;
     }
 
+    // Enforce maximum logs per minute with exponential backoff
+    const maxLogs = this.samplingConfig.maxLogsPerMinute || 100;
+    const elapsedMinutes = timeSinceReset / oneMinute;
+    const currentRate = this.logCount / (elapsedMinutes || 1);
+
+    // If we're exceeding our rate limit, start dropping logs aggressively
+    if (currentRate > maxLogs) {
+      const excessRatio = currentRate / maxLogs;
+      // More aggressive backoff as we exceed our limit
+      if (Math.random() < (1 - (1 / excessRatio))) {
+        return false;
+      }
+    }
+
     let samplingRate = this.samplingConfig.rates[level];
 
-    // Increase sampling if we're under the adaptive threshold
+    // Adaptive sampling: increase rate if we're under threshold
     if (this.logCount < this.samplingConfig.adaptiveThreshold && timeSinceReset > 30000) {
       samplingRate = Math.min(1.0, samplingRate * 1.5);
     }
 
-    return Math.random() < samplingRate;
+    // Only increment counter if we're going to log this message
+    const shouldLog = Math.random() < samplingRate;
+    if (shouldLog) {
+      this.logCount++;
+    }
+
+    return shouldLog;
   }
 
   /**
@@ -362,25 +394,111 @@ class ClientLogger {
   /**
    * Send log payload to server
    */
-  private async sendLogToServer(payload: EnhancedLogPayload): Promise<void> {
+  private async sendWithRetry(endpoint: string, payload: any, retries = 2, isFinalAttempt = false): Promise<void> {
+    // On final retry, use sendBeacon if available and enabled
+    if (isFinalAttempt && this.samplingConfig.useBeacon && navigator.sendBeacon) {
+      try {
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const success = navigator.sendBeacon(endpoint, blob);
+        if (success) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[Logger] Log sent successfully via sendBeacon');
+          }
+          return;
+        }
+      } catch (beaconError) {
+        // Fall through to fetch if beacon fails
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Logger] sendBeacon failed, falling back to fetch:', beaconError);
+        }
+      }
+    }
+
     try {
-      const response = await fetch(this.endpoint, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-        // Don't block navigation with this request
-        keepalive: true
+        signal: controller.signal,
+        // Only use keepalive on final attempt to prevent connection pool exhaustion
+        keepalive: isFinalAttempt,
+        credentials: 'same-origin',
+        // Add cache control headers
+        cache: 'no-cache',
+        redirect: 'follow',
+        referrerPolicy: 'strict-origin-when-cross-origin'
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'No response body');
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-    } catch (error) {
-      // Silent failure in production, console error in development
+
       if (process.env.NODE_ENV === 'development') {
-        console.error('Error sending log to server:', error);
+        console.log('[Logger] Log sent successfully');
+      }
+      return;
+    } catch (error) {
+      if (retries > 0) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Logger] Retrying... (${retries} attempts left)`, error);
+        }
+        // Exponential backoff
+        const delay = Math.min(1000, 300 * Math.pow(2, 3 - retries));
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.sendWithRetry(endpoint, payload, retries - 1, retries === 1);
+      }
+      throw error; // Re-throw if all retries failed
+    }
+  }
+
+  private async sendLogToServer(payload: EnhancedLogPayload): Promise<void> {
+    // Skip logging during server-side rendering
+    if (!this.isClient) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Logger] Skipping log in SSR environment');
+      }
+      return;
+    }
+
+    // Skip logging if we're not in a browser environment
+    if (typeof window === 'undefined' || !window.navigator) {
+      return;
+    }
+
+    // Skip logging if we're offline
+    if (!navigator.onLine) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Logger] Skipping log - offline');
+      }
+      return;
+    }
+
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Logger] Sending log to:', this.endpoint);
+      }
+
+      await this.sendWithRetry(this.endpoint, payload);
+    } catch (error) {
+      // Only log errors in development to avoid console spam
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Logger] Failed to send log after retries:', {
+          error: error instanceof Error ? error.message : String(error),
+          endpoint: this.endpoint,
+          payload: {
+            ...payload,
+            context: payload.context ? '[Object]' : undefined,
+            sessionInfo: payload.sessionInfo ? '[SessionInfo]' : undefined
+          }
+        });
       }
     }
   }
