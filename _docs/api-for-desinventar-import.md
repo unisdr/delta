@@ -82,10 +82,7 @@ curl -H "X-Auth:$DTS_KEY" http://localhost:3000/api/disaster-record/add -d '[{
 
 ## Human direct effects
 ```
-curl -H "X-Auth:$DTS_KEY" "http://localhost:3000/api/human-effects/category-presence-save?recordId=e9faaa06-0e53-4ba1-b555-d444dbc02dbf" -d '{
-	"table": "Deaths",
-	"data": { "deaths": true }
-}'
+Check doc on http://localhost:3000/api/human-effects
 
 curl -H "X-Auth:$DTS_KEY" "http://localhost:3000/api/human-effects/save?recordId=e9faaa06-0e53-4ba1-b555-d444dbc02dbf" -d '{
 	"table":"Deaths",
