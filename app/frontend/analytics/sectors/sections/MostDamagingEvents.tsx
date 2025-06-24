@@ -125,9 +125,9 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
   // Debounce filters to prevent too many API calls
   const debouncedFilters = useDebounce(filters, 300);
 
-  // Fetch data using React Query
+  // Fetch data using React Query (without sort parameters)
   const { data, isLoading, isError } = useQuery<ApiResponse>({
-    queryKey: ["mostDamagingEvents", debouncedFilters, page, sortColumn, sortDirection],
+    queryKey: ["mostDamagingEvents", debouncedFilters, page],
     queryFn: async () => {
       try {
         const searchParams = new URLSearchParams();
@@ -146,11 +146,9 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
           }
         });
 
-        // Add pagination and sorting params
+        // Add pagination params (sorting is now client-side)
         searchParams.append("page", page.toString());
         searchParams.append("pageSize", "20");
-        searchParams.append("sortBy", sortColumn);
-        searchParams.append("sortDirection", sortDirection);
 
         const response = await fetch(`/api/analytics/most-damaging-events?${searchParams}`);
         if (!response.ok) {
@@ -168,6 +166,50 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
     retry: 1,
     enabled: !!(debouncedFilters.sectorId || debouncedFilters.subSectorId || debouncedFilters.hazardTypeId || debouncedFilters.hazardClusterId || debouncedFilters.specificHazardId || debouncedFilters.geographicLevelId || debouncedFilters.fromDate || debouncedFilters.toDate),
   });
+
+  // Client-side sorting of events
+  const sortedEvents = useMemo(() => {
+    if (!data?.data?.events) return [];
+
+    return [...data.data.events].sort((a, b) => {
+      let valueA, valueB;
+
+      // Handle different sort columns
+      switch (sortColumn) {
+        case 'eventName':
+          valueA = a.eventName.toLowerCase();
+          valueB = b.eventName.toLowerCase();
+          return sortDirection === 'asc'
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+
+        case 'createdAt':
+          valueA = new Date(a.createdAt).getTime();
+          valueB = new Date(b.createdAt).getTime();
+          break;
+
+        case 'damages':
+          valueA = a.totalDamages;
+          valueB = b.totalDamages;
+          break;
+
+        case 'losses':
+          valueA = a.totalLosses;
+          valueB = b.totalLosses;
+          break;
+
+        default:
+          // Default to sorting by damages if sortColumn is invalid
+          valueA = a.totalDamages;
+          valueB = b.totalDamages;
+      }
+
+      // Handle numeric comparisons
+      if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data?.data?.events, sortColumn, sortDirection]);
 
   // Memoized currency formatting function to prevent recreation on each render
   const formatCurrencyValue = useCallback((amount: number) => {
@@ -220,7 +262,7 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
         <div className="text-center p-4 text-red-600">
           <p>Error loading data. Please try again.</p>
         </div>
-      ) : !data?.success || !data?.data?.events?.length ? (
+      ) : !data?.success || !sortedEvents?.length ? (
         <div className="text-center p-4">
           <p>No events found for the selected filters.</p>
         </div>
@@ -273,7 +315,7 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data.data.events.map((event: DisasterEvent) => (
+                {sortedEvents.map((event: DisasterEvent) => (
                   <tr key={event.eventId}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {event.eventName}
