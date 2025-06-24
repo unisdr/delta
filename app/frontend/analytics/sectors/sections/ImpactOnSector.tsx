@@ -9,7 +9,7 @@ import {
 } from "~/frontend/utils/formatters";
 import AreaChart from "~/components/AreaChart";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
-import createClientLogger from "~/utils/clientLogger";
+
 
 // Types
 interface ApiResponse {
@@ -124,12 +124,6 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
 };
 
 const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
-	// Initialize logger with component name and default context
-	const logger = createClientLogger('ImpactOnSector', {
-		sectorId,
-		filters: JSON.stringify(filters)
-	});
-
 	const eventsImpactingRef = useRef<HTMLButtonElement>(null);
 	const eventsOverTimeRef = useRef<HTMLButtonElement>(null);
 	const damageTooltipRef = useRef<HTMLButtonElement>(null);
@@ -171,21 +165,29 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Debug logging for tooltip state changes
 	useEffect(() => {
-		logger.debug("Tooltip Props Changed");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Cleaning up tooltip");
+		}
 	}, []);
 
 	// Handle the creation of the floating tooltip
 	useEffect(() => {
 		return () => {
-			logger.debug("Cleaning up tooltip");
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Cleaning up tooltip");
+			}
 		};
 	}, []);
 
-	logger.info("Component Render", { sectorId, filters });
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Component Render", { sectorId, filters });
+	}
 
 	// Determine which ID to use for the API call
 	const targetSectorId = filters.subSectorId || sectorId;
-	logger.debug("Target Sector ID", { targetSectorId });
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Target Sector ID", { targetSectorId });
+	}
 
 	// Track previous values for debugging
 	const prevTargetSectorIdRef = useRef(targetSectorId);
@@ -193,17 +195,21 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	useEffect(() => {
 		if (prevTargetSectorIdRef.current !== targetSectorId) {
-			logger.info("Target Sector ID Changed", {
-				from: prevTargetSectorIdRef.current,
-				to: targetSectorId,
-			});
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Target Sector ID Changed", {
+					from: prevTargetSectorIdRef.current,
+					to: targetSectorId,
+				});
+			}
 			prevTargetSectorIdRef.current = targetSectorId;
 		}
 		if (prevGeographicLevelRef.current !== filters.geographicLevelId) {
-			logger.info("Geographic Level Changed", {
-				from: prevGeographicLevelRef.current,
-				to: filters.geographicLevelId,
-			});
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Geographic Level Changed", {
+					from: prevGeographicLevelRef.current,
+					to: filters.geographicLevelId,
+				});
+			}
 			prevGeographicLevelRef.current = filters.geographicLevelId;
 		}
 	}, [targetSectorId, filters.geographicLevelId]);
@@ -265,7 +271,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	} = useQuery<ApiResponse>({
 		queryKey: ["sectorImpact", targetSectorId, filters],
 		queryFn: async () => {
-			logger.info("Fetching data for sector impact", { targetSectorId, filters });
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Fetching data for:", { targetSectorId, filters });
+			}
 
 			if (!targetSectorId) throw new Error("Sector ID is required");
 
@@ -282,31 +290,33 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 					key !== "subSectorId"
 				) {
 					params.append(key, value.toString());
-					logger.debug(`Adding filter parameter`, { key, value });
+					if (process.env.NODE_ENV === 'development') {
+						console.log(`Adding filter parameter`, { key, value });
+					}
 				}
 			});
 
-			logger.info("Making API request", {
-				url: `/api/analytics/ImpactonSectors?${params}`,
-				targetSectorId
-			});
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Making API request", {
+					url: `/api/analytics/ImpactonSectors?${params}`,
+					targetSectorId
+				});
+			}
 
 			const response = await fetch(`/api/analytics/ImpactonSectors?${params}`);
 			if (!response.ok) {
-				logger.error("API Error", {
+				console.error("API Error", {
 					status: response.status,
 					statusText: response.statusText
 				});
 				const errorText = await response.text();
-				logger.error("API Error Details", { errorText });
+				console.error("API Error Details", { errorText });
 				throw new Error("Failed to fetch sector impact data");
 			}
 			const data = await response.json();
-			logger.info("API Response received", {
-				success: data.success,
-				hasData: !!data.data,
-				eventCount: data.data?.eventCount
-			});
+			if (process.env.NODE_ENV === 'development') {
+				console.log("API Response:", data);
+			}
 			return data;
 		},
 		enabled: !!targetSectorId,
@@ -318,17 +328,15 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	useEffect(() => {
 		if (isSuccess && apiResponse) {
-			logger.info("Query Success - New Data", {
-				success: apiResponse.success,
-				hasData: !!apiResponse.data,
-				eventCount: apiResponse.data?.eventCount
-			});
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Query Success - New Data:", apiResponse);
+			}
 		}
 	}, [isSuccess, apiResponse]);
 
 	useEffect(() => {
 		if (isError && error) {
-			logger.error("Query Error", {
+			console.error("Query Error", {
 				error: error instanceof Error ? error.message : String(error),
 				targetSectorId
 			});
@@ -429,16 +437,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		);
 	};
 
-	logger.debug("Component State", {
-		sectorId,
-		hasError: !!error,
-		isLoading,
-		hasData: !!apiResponse,
-		apiResponseData: apiResponse?.data ? true : false,
-	});
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Debug - Component State:", {
+			apiResponseData: apiResponse?.data,
+		});
+	}
 
 	if (isLoading) {
-		logger.debug("Component in loading state");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - Loading state");
+		}
 		return (
 			<section className="dts-page-section">
 				<div className="mg-container">
@@ -486,9 +494,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Error state
 	if (error) {
-		logger.error("Component in error state", {
-			error: error instanceof Error ? error.message : String(error)
-		});
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - Error state:", error);
+		}
 
 		// Extract the actual error message from the error object
 		let errorMessage = "An error occurred while fetching the data.";
@@ -503,12 +511,12 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 				.then((json: any) => {
 					if (json.error) {
 						errorMessage = json.error;
-						logger.error("Extracted API error", { errorMessage });
+						if (process.env.NODE_ENV === 'development') {
+							console.log("Extracted API error:", errorMessage);
+						}
 					}
 				})
-				.catch((err: unknown) => {
-					logger.error("Failed to extract API error", { error: err });
-				});
+				.catch(() => { });
 		}
 
 		return (
@@ -549,7 +557,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Empty state - no sector selected
 	if (!targetSectorId) {
-		logger.debug("No sector selected");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - No sector selected state");
+		}
 		return (
 			<div className="dts-data-box dts-data-box--error">
 				<h3 className="dts-body-label">
@@ -565,7 +575,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	}
 
 	if (!apiResponse?.data) {
-		logger.debug("No data available");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - No data state");
+		}
 		return (
 			<div className="dts-data-box dts-data-box--error">
 				<div className="dts-error-content">
@@ -582,14 +594,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	const data = apiResponse?.data || {};
 
 	// Add debug logging for the data that will be used for display
-	logger.info("Data for display", {
-		apiResponseExists: !!apiResponse,
-		dataExists: !!data,
-		eventCount: data.eventCount,
-		totalDamage: data.totalDamage ? true : false,
-		totalLoss: data.totalLoss ? true : false,
-		dataAvailability: data.dataAvailability,
-	});
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Data for display:", {
+			apiResponseExists: !!apiResponse,
+			dataExists: !!data,
+			eventCount: data.eventCount,
+			totalDamage: data.totalDamage ? true : false,
+			totalLoss: data.totalLoss ? true : false,
+			dataAvailability: data.dataAvailability,
+		});
+	}
 
 	// Transform time series data with proper typing and logging
 	const eventsData = Object.entries(data.eventsOverTime || {})
@@ -670,20 +684,15 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 				})
 				.sort((a, b) => a.year - b.year);
 
-	logger.info("Final transformed data", {
-		eventsDataCount: eventsData.length,
-		damageDataCount: damageData.length,
-		lossDataCount: lossData.length,
-		rawDamage: data.totalDamage ? true : false,
-		rawLoss: data.totalLoss ? true : false,
-	});
 
-	// Log detailed data at debug level
-	logger.debug("Detailed transformed data", {
-		eventsData,
-		damageData,
-		lossData
-	});
+
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Final transformed data:", {
+			eventsData,
+			damageData,
+			lossData
+		});
+	}
 
 	return (
 		<section

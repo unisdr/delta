@@ -2,12 +2,10 @@ import { useState, useEffect, useCallback, memo, useRef } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
-import { createClientLogger } from "~/utils/clientLogger";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import createLogger from "~/utils/logger.server";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
 import ErrorBoundary from "~/frontend/components/ErrorBoundary";
 
@@ -69,22 +67,18 @@ const useDebounce = <T,>(value: T, baseDelay: number): T => {
           setDebouncedValue(value);
 
           // Log debounce application for performance monitoring
-          componentLogger.debug('Debounced value updated', {
-            originalValue: value,
-            debouncedValue: value,
-            delayUsed: adaptiveDelay,
-            interactionCount: interactionCount.current,
-            wasTyping: isTyping.current,
-            businessCritical: false
-          });
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Debounced value updated', {
+              originalValue: value,
+              debouncedValue: value,
+              delayUsed: adaptiveDelay,
+              interactionCount: interactionCount.current,
+              wasTyping: isTyping.current
+            });
+          }
         }
       } catch (error) {
-        componentLogger.error("Error in debounce hook", {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          businessCritical: false,
-          operation: 'debounceUpdate'
-        });
+        console.error("Error in debounce hook:", error);
         // Fallback to non-debounced value in case of error
         setDebouncedValue(value);
       }
@@ -152,15 +146,6 @@ function JavaScriptDisabledMessage() {
   );
 }
 
-// Create logger for this module
-const logger = createLogger("routes/analytics/sectors.tsx");
-
-// Create client-side logger for user interactions
-const componentLogger = createClientLogger('sectors-analytics', {
-  component: 'SectorsAnalysisContent',
-  feature: 'dashboard-filters'
-});
-
 // import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
 // import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
 
@@ -184,13 +169,7 @@ interface ApiError extends Error {
 // Type-safe error handler
 const handleError = (error: unknown, context: string) => {
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-  const stack = error instanceof Error ? error.stack : undefined;
-
-  componentLogger.error(`Error in ${context}`, {
-    error: errorMessage,
-    stack,
-    businessCritical: true
-  });
+  console.error(`Error in ${context}:`, errorMessage);
 };
 
 // Create QueryClient instance with enhanced configuration
@@ -220,12 +199,9 @@ const queryClient = new QueryClient({
 
           if (isRateLimit) {
             // Log rate limit hit
-            componentLogger.warn('Rate limit hit, applying retry logic', {
-              attempt: failureCount + 1,
-              error: errorMessage,
-              stack: error.stack,
-              businessCritical: true
-            });
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Rate limit hit, applying retry logic (attempt ${failureCount + 1}/3)`);
+            }
             return failureCount < 3; // Max 3 retries for rate limits
           }
 
@@ -253,20 +229,16 @@ const queryClient = new QueryClient({
 // Set up global query cache event handlers
 const queryCache = queryClient.getQueryCache();
 
-// Subscribe to query cache events with type-safe handling
+// Subscribe to query cache events
 queryCache.subscribe((event) => {
   try {
-    // Handle error events
     if ('error' in event && event.error) {
       handleError(event.error, 'query cache');
     }
-
-    // Handle query updates
-    if ('query' in event) {
-      componentLogger.debug('Query cache updated', {
+    if (process.env.NODE_ENV === 'development' && 'query' in event) {
+      console.log('Query cache updated', {
         queryKey: event.query.queryKey,
-        timestamp: new Date().toISOString(),
-        eventType: event.type
+        state: event.query.state.status
       });
     }
   } catch (error) {
@@ -293,35 +265,29 @@ queryClient.getMutationCache().config = {
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
   const { request, userSession } = loaderArgs;
-
-  // Generate request ID for tracking
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Create context logger with user details (if authenticated)
-  const contextLogger = logger.withContext({
-    requestId,
-    userId: userSession?.user?.id?.toString() || 'public_user',
-    userRole: userSession?.user?.role || 'public',
-    action: 'sectors_analytics_view'
-  });
-
-  contextLogger.info("Sectors analytics page requested", {
-    isPublicAccess: !userSession,
-    userAgent: request.headers.get("user-agent"),
-    referer: request.headers.get("referer"),
-    url: request.url
-  });
+  // Log basic request info in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[${new Date().toISOString()}] Sectors analytics page requested`, {
+      requestId,
+      userId: userSession?.user?.id?.toString() || 'public_user',
+      isPublicAccess: !userSession,
+      url: request.url
+    });
+  }
 
   try {
     // Get currency from environment variable
     const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
 
-    contextLogger.info("Successfully loaded sectors analytics data", {
-      currency,
-      hasAuthentication: !!userSession,
-      timestamp: new Date().toISOString(),
-      requestId
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[${new Date().toISOString()}] Successfully loaded sectors analytics data`, {
+        requestId,
+        currency,
+        hasAuthentication: !!userSession
+      });
+    }
 
     return {
       currency,
@@ -330,11 +296,10 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     };
 
   } catch (error) {
-    contextLogger.error("Failed to load sectors analytics data", {
+    console.error(`[${new Date().toISOString()}] Failed to load sectors analytics data`, {
+      requestId,
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString(),
-      requestId
+      stack: error instanceof Error ? error.stack : undefined
     });
 
     // Re-throw the error after logging
@@ -364,12 +329,7 @@ function SectorsAnalysisContent() {
         jsContent.style.display = 'block';
       }
     } catch (error) {
-      componentLogger.error('Error showing main content', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        businessCritical: false,
-        operation: 'showJsContent'
-      });
+      console.error('Error showing main content:', error);
     }
   }, []);
 
@@ -405,15 +365,11 @@ function SectorsAnalysisContent() {
         setFilters(debouncedFilters);
 
         // Log filter application for analytics
-        componentLogger.info('Filters applied', {
-          userAction: 'apply_filters',
-          filterCount: Object.values(debouncedFilters || {}).filter(v => v !== null).length,
-          hasHazardFilter: !!debouncedFilters?.hazardTypeId || !!debouncedFilters?.hazardClusterId || !!debouncedFilters?.specificHazardId,
-          hasSectorFilter: !!debouncedFilters?.sectorId || !!debouncedFilters?.subSectorId,
-          hasDateFilter: !!debouncedFilters?.fromDate || !!debouncedFilters?.toDate,
-          hasEventFilter: !!debouncedFilters?.disasterEventId,
-          businessCritical: false
-        });
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Filters applied', {
+            filterCount: Object.values(debouncedFilters || {}).filter(v => v !== null).length
+          });
+        }
 
         // Simulate network delay for demonstration
         const timer = setTimeout(() => {
@@ -422,12 +378,7 @@ function SectorsAnalysisContent() {
 
         return () => clearTimeout(timer);
       } catch (error) {
-        componentLogger.error("Error applying filters", {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          businessCritical: false,
-          operation: 'applyFilters'
-        });
+        console.error("Error applying filters:", error);
         setIsLoading(false);
         return noop; // Return no-op cleanup function in error case
       }
@@ -444,11 +395,9 @@ function SectorsAnalysisContent() {
 
   const handleAdvancedSearch = useCallback(() => {
     // TODO: Implement advanced search functionality
-    componentLogger.info('Advanced search clicked', {
-      userAction: 'advanced_search',
-      businessCritical: false,
-      currentFiltersCount: filters ? Object.values(filters).filter(v => v !== null).length : 0
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Advanced search clicked');
+    }
   }, []);
 
   const handleClearFilters = useCallback(() => {
@@ -457,11 +406,9 @@ function SectorsAnalysisContent() {
     setIsLoading(false);
 
     // Log filter clearing for analytics
-    componentLogger.info('Filters cleared', {
-      userAction: 'clear_filters',
-      businessCritical: false,
-      previousFiltersCount: filters ? Object.values(filters).filter(v => v !== null).length : 0
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Filters cleared');
+    }
   }, []);
 
   // Function to export Excel data
