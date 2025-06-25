@@ -63,7 +63,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
      * Rate Limiting
      * Enforces rate limiting to prevent abuse (100 requests per 15 minutes)
      */
-    if (!checkRateLimit(request)) {
+    if (!checkRateLimit(request, 100, 15 * 60 * 1000)) {
       return Response.json(
         {
           success: false,

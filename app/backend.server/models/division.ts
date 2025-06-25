@@ -15,7 +15,7 @@ import { parse } from 'csv-parse';
 import JSZip from "jszip";
 
 // Import utility functions
-import { createLogger } from '~/utils/logger';
+import createLogger from '~/utils/logger.server';
 import {
   ValidationError,
   DatabaseError,

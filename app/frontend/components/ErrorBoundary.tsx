@@ -1,5 +1,4 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { createClientLogger } from '~/utils/clientLogger';
 
 interface Props {
   children: ReactNode;
@@ -14,7 +13,6 @@ interface State {
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
-  private logger = createClientLogger('error-boundary');
 
   public state: State = {
     hasError: false
@@ -60,7 +58,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     const { category: errorCategory, severity: errorSeverity } = this.categorizeError(error);
 
 
-    this.logger.error('Component error boundary triggered', {
+    console.error('Component error boundary triggered', {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,

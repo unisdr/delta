@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { Tx} from '~/db.server';
 import { divisionTable } from '~/drizzle/schema';
-import { createLogger } from '~/utils/logger';
+import createLogger from '~/utils/logger.server';
 import { TriggerError } from './errors';
 
 const logger = createLogger('geoDatabase');

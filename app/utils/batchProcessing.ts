@@ -1,7 +1,7 @@
 /**
  * Batch processing utilities for efficient handling of bulk operations
  */
-import { createLogger } from './logger';
+import createLogger from './logger.server';
 
 const logger = createLogger('batchProcessing');
 
