@@ -1339,4 +1339,12 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	footerUrlPrivacyPolicy: url("footer_url_privacy_policy"),
 	footerUrlTermsConditions: url("footer_url_terms_conditions"),
 	adminSetupComplete: boolean("admin_setup_complete").notNull().default(false),
+	websiteLogo:url("website_logo").notNull().default("https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg"),
+	websiteName: varchar("website_name", {length: 250}).notNull().default("Disaster Tracking System (DTS)"),
+	websiteUrl: url("website_url").notNull().default("http://localhost:3000"),
+	approvedRecordsArePublic: boolean().notNull().default(false),
+	totpIssuer: varchar("totp_issuer", {length: 250} ),
+	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
+	dtsInstanceCtryIso3:  varchar("dts_instance_ctry_iso3").notNull().default("USA"),
+	currencyCodes: varchar("currency_codes").notNull().default("USD")
 });
