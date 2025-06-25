@@ -67,7 +67,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 	return (
 		<>
 			<section className="dts-page-section">
-				<h2 className="dts-heading-2">Human direct effects</h2>
+				<h2 className="dts-heading-2">Human effects</h2>
 
 				<div className="mg-grid mg-grid__col-3">
 					<div className="dts-data-box">
