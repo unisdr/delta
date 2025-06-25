@@ -11,7 +11,6 @@ import {
 	validateFromJsonFull,
 } from "~/frontend/form_validate";
 
-import {configSiteURL} from "~/util/config";
 import {
 	CreateResult,
 	ObjectWithImportId,
@@ -25,6 +24,7 @@ import {
 	updateMissingIDError,
 	errorForForm,
 } from "./form_utils";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 export interface JsonCreateArgs<T> {
 	data: any;
@@ -311,12 +311,20 @@ function jsonPayloadExample<T>(
 	return data;
 }
 
-export function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): string {
+export async function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): Promise<string> {
 	let parts: string[] = [];
 	let line = function (s: string) {
 		parts.push(s);
 		parts.push("\n");
 	};
+
+	const settings =  await getInstanceSystemSettings();
+	var siteUrl = "http://localhost:3000";
+	if(settings){
+		siteUrl=settings.websiteUrl;
+	}
+	
+
 	let docForEndpoint = function (
 		name: string,
 		urlPart: string,
@@ -329,7 +337,7 @@ export function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): string {
 		line(path);
 		line(desc);
 		line("# Example ");
-		let url = configSiteURL() + path;
+		let url = siteUrl + path;
 
 		line(`export DTS_KEY=YOUR_KEY`);
 

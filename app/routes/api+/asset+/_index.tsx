@@ -10,13 +10,15 @@ import {
 } from "~/backend.server/handlers/form/form_api";
 
 export let loader = authLoaderApiDocs(async () => {
-  let docs = jsonApiDocs({
+  // Add await since jsonApiDocs is now async
+  let docs = await jsonApiDocs({
     baseUrl: "asset",
     fieldsDef: await fieldsDefApi()
-  })
+  });
 
   return new Response(docs, {
     status: 200,
     headers: {"Content-Type": "text/plain"}
-  })
-})
+  });
+});
+

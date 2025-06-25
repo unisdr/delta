@@ -8,6 +8,15 @@ export interface InstanceSystemSettings {
 	footerUrlPrivacyPolicy: string | null;
 	footerUrlTermsConditions: string | null;
 	adminSetupComplete: boolean;
+	websiteLogo:string;
+	websiteName: string;
+	websiteUrl: string;
+	approvedRecordsArePublic: boolean;
+	totpIssuer: string | null;
+	dtsInstanceType: string;
+	dtsInstanceCtryIso3:  string;
+	currencyCodes: string;
+	countryName: string;
 }
 
 // Get the system settings (expects a single record)

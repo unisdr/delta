@@ -2,9 +2,10 @@ import type { MetaFunction } from '@remix-run/node';
 
 import { Link } from "react-router-dom";
 import { useLoaderData, } from "@remix-run/react";
-import { configSiteName, configAuthSupportedAzureSSOB2C} from "~/util/config";
+import { configAuthSupportedAzureSSOB2C} from "~/util/config";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { checkValidCurrency } from "~/util/currency";
+import { getInstanceSystemSettings } from '~/backend.server/models/instanceSystemSettingDAO';
 
 export const action = async () => {
 	return (null);
@@ -240,8 +241,14 @@ export const loader = async () => {
 		console.warn(`Found ${configErrors.length} configuration errors that need to be fixed before proceeding with setup.`);
 	}
 	
+	const settings = await getInstanceSystemSettings();
+	var siteName="Disaster Losses Tracking System"
+
+	if(settings){
+		siteName=settings.websiteName;
+	}
 	return ({
-		configSiteName: configSiteName(),
+		configSiteName: siteName,
 		confAuthSupportedAzureSSOB2C: configAuthSupportedAzureSSOB2C(),
 		configErrors
 	});

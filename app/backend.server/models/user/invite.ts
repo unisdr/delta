@@ -11,9 +11,9 @@ import {errorIsNotUnique} from "~/util/db";
 
 import {randomBytes} from "crypto";
 
-import {configSiteName, configSiteURL} from "~/util/config";
 import {validateName, validatePassword} from "./user_utils";
 import {passwordHash} from "./password";
+import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
 
 type AdminInviteUserResult =
 	| {ok: true}
@@ -110,10 +110,19 @@ export async function sendInvite(user: User) {
 		})
 		.where(eq(userTable.id, user.id));
 
+	var siteUrl="http://localhost:3000";
+	var siteName='';
+	const settings= await getInstanceSystemSettings();
+	
+	if(settings){
+		siteUrl=settings.websiteUrl;
+		siteName=settings.websiteName;
+	}	
+
 	const inviteURL =
-		configSiteURL() + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
-	const subject = `Invitation to join DTS ${configSiteName()}`;
-	const html = `<p>You have been invited to join the DTS ${configSiteName()} system as 
+		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
+	const subject = `Invitation to join DTS ${siteName}`;
+	const html = `<p>You have been invited to join the DTS ${siteName} system as 
                    a ${user.role} user.
                 </p>
                 <p>Click on the link below to create your account.</p>
@@ -126,7 +135,7 @@ export async function sendInvite(user: User) {
                 </p>
                 <p><a href="${inviteURL}">${inviteURL}</a></p>`;
 
-	const text = `You have been invited to join the DTS ${configSiteName()} system as 
+	const text = `You have been invited to join the DTS ${siteName} system as 
                 a ${user.role} user. 
                 Copy and paste the following link into your browser url to create your account:
                 ${inviteURL}`;
@@ -236,11 +245,18 @@ export async function acceptInvite(
 
 	user = res[0];
 
-	const accessAccountURL = configSiteURL() + '/user/settings/';
-	const subject = `Welcome to DTS ${configSiteName()}`;
+	var siteUrl="http://localhost:3000";
+	var siteName='';
+	const settings= await getInstanceSystemSettings();
+	if(settings){
+		siteUrl=settings.websiteUrl;
+		siteName=settings.websiteName;
+	}	
+	const accessAccountURL = siteUrl + '/user/settings/';
+	const subject = `Welcome to DTS ${siteName}`;
 	const html = `<p>Dear ${user.firstName} ${user.lastName},</p>
 
-			<p>Welcome to the DTS ${configSiteName()} system. Your user account has been successfully created.</p>
+			<p>Welcome to the DTS ${siteName} system. Your user account has been successfully created.</p>
 
 			<p>Click the link below to access your account.</p>
 
@@ -250,7 +266,7 @@ export async function acceptInvite(
 
 	const text = `Dear ${user.firstName} ${user.lastName},
 
-			Welcome to the DTS ${configSiteName()} system. Your user account has been successfully created.
+			Welcome to the DTS ${siteName} system. Your user account has been successfully created.
 
 			Click the link below to access your account.
 

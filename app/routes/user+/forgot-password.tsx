@@ -15,10 +15,10 @@ import { redirectWithMessage } from "~/util/session";
 import "react-toastify/dist/ReactToastify.css";
 
 import { useEffect } from "react";
-import { configSiteURL } from "~/util/config";
 import { randomBytes } from "crypto";
 import { sendEmail } from "~/util/email";
 import { toast } from "react-toastify/unstyled";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 interface FormFields {
 	email: string;
@@ -41,12 +41,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return { data, errors };
 	}
 
+	
 	// do not show an error message if the email is not found in the database
 	const resetToken = randomBytes(32).toString("hex");
 	await resetPasswordSilentIfNotFound(data.email, resetToken);
 
+	const settings = await getInstanceSystemSettings();
+	var siteUrl= "http://localhost";
+	if(settings){
+		siteUrl = settings.websiteUrl;
+	}
 	//Send email
-	const resetURL = `${configSiteURL()}/user/reset-password?token=${resetToken}&email=${encodeURIComponent(
+	const resetURL = `${siteUrl}/user/reset-password?token=${resetToken}&email=${encodeURIComponent(
 		data.email
 	)}`;
 

@@ -16,7 +16,7 @@ import {
 import {LoginResult, LoginTotpResult, login as modelLogin, loginTotp as modelLoginTotp} from "~/backend.server/models/user/auth"
 import {apiAuth} from "~/backend.server/models/api_key"
 import {PermissionId, roleHasPermission, RoleId} from "~/frontend/user/roles";
-import {configApprovedRecordsArePublic} from "./config";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 export async function login(email: string, password: string): Promise<LoginResult> {
 	return await modelLogin(email, password)
@@ -105,7 +105,6 @@ export function authLoaderWithPerm<T extends LoaderFunction>(permission: Permiss
 		if (!roleHasPermission(userSession.user.role, permission)) {
 			throw new Response("Forbidden", {status: 403});
 		}
-
 		return fn({
 			...(args as any),
 			userSession,
@@ -113,24 +112,46 @@ export function authLoaderWithPerm<T extends LoaderFunction>(permission: Permiss
 	}) as T;
 }
 
-export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
-	if (!configApprovedRecordsArePublic()) {
-		return authLoaderWithPerm(permission, fn)
-	}
+interface CustomLoaderArgs extends LoaderFunctionArgs {
+  userSession?: UserSession;
+}
 
-	return (async (args: LoaderFunctionArgs) => {
-		const userSession = await optionalUser(args.request);
-		if (!userSession) {
-			return fn(args) as T
-		}
-		if (!roleHasPermission(userSession.user.role, permission)) {
-			throw new Response("Forbidden", {status: 403});
-		}
-		return fn({
-			...(args as any),
-			userSession,
-		});
-	}) as T;
+export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
+  permission: PermissionId,
+  fn: T
+): T {
+  const wrappedLoader = async (args: LoaderFunctionArgs) => {
+    const settings = await getInstanceSystemSettings();
+    
+    if (!settings) {
+      throw new Response("System settings not found", { status: 500 });
+    }
+
+    if (!settings.approvedRecordsArePublic) {
+      const authLoader = authLoaderWithPerm(permission, fn);
+      return await authLoader(args);
+    }
+
+    const userSession = await optionalUser(args.request);
+    
+    if (!userSession) {
+      return await fn(args);
+    }
+    
+    if (!roleHasPermission(userSession.user.role, permission)) {
+      throw new Response("Forbidden", { status: 403 });
+    }
+    
+    // Create extended args with proper typing
+    const extendedArgs: CustomLoaderArgs = {
+      ...args,
+      userSession,  // Now properly typed
+    };
+    
+    return await fn(extendedArgs);
+  };
+
+  return wrappedLoader as T;
 }
 
 export function authLoaderAllowUnverifiedEmail<T extends LoaderFunction>(fn: T): T {

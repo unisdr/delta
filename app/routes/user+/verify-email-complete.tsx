@@ -12,16 +12,13 @@ import { useLoaderData } from "@remix-run/react";
 import { redirect } from "@remix-run/node";
 
 import { sendEmail } from "~/util/email";
-import {
-	configCountryName,
-	configSiteName,
-	configSiteURL,
-} from "~/util/config";
+
 
 import {processHipsPage} from "~/backend.server/utils/hip";
 import {processSectorCsv} from "~/backend.server/utils/sector";
 import {processCategoryCsv} from "~/backend.server/utils/category";
 import {processAssetCsv} from "~/backend.server/utils/asset";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 export const meta: MetaFunction = (request) => {
 	// Extract the query string
@@ -53,17 +50,21 @@ export const meta: MetaFunction = (request) => {
 };
 
 export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
-	// const { request } = actionArgs;
 	const { user } = authActionGetAuth(actionArgs);
-	// const data = formStringData(await request.formData());
-	// const code = data.code || "";
-	// const resend = data.resend || "";
-	// const userId = user.id;
 
+	const settings= await getInstanceSystemSettings();
+	if(!settings){
+		throw new Response ("System settings cannot be found.",{status:500})
+	}
+	
+	var countryName='';
+	if(settings){
+		countryName=settings.countryName;
+	}
+	
 	//Send confirmation email
-	const countryName = configCountryName();
-	const siteURL = configSiteURL();
-	const subject = `Welcome to DTS ${configSiteName()}`;
+	const subject = `Welcome to DTS ${settings.websiteName}`;
+	const siteURL = settings.websiteUrl;
 	const html = `
     <p>
       Dear ${user.firstName} ${user.lastName},
@@ -133,8 +134,13 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		}
 	}
 	
+	var siteName="Disaster Losses Tracking System";
+	const settings = await getInstanceSystemSettings();
+	if(settings){
+		siteName=settings.websiteName
+	}
 	return {
-		configSiteName: configSiteName(),
+		configSiteName: siteName,
 		qsStep: qsStep,
 	};
 });

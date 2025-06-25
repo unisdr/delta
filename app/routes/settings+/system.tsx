@@ -9,7 +9,6 @@ import {
   configCountryInstanceISO,
   configApplicationEmail,
   config2FAIssuer,
-  configApprovedRecordsArePublic,
 } from '~/util/config';
 import { NavSettings } from '~/routes/settings/nav';
 import { MainContainer } from '~/frontend/container';
@@ -44,16 +43,20 @@ interface LoaderData {
 
 export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (loaderArgs) => {
   const { user } = authLoaderGetAuth(loaderArgs);
+  const settings = await getInstanceSystemSettings();
+  if(!settings){
+    throw new Response ("System settings was not found.",{status:500});
+  }
+
   const timeZones: string[] = getSupportedTimeZone();
   const currency: string[] = configCurrencies();
   const systemLanguage: string[] = ['English'];
   const confEmailObj = configApplicationEmail();
   const conf2FAIssuer = config2FAIssuer();
-  const confInstanceTypePublic = configApprovedRecordsArePublic();
+  const confInstanceTypePublic = settings.approvedRecordsArePublic;
 
   let ctryInstanceName: string = '';
 
-  const instanceSystemSettings = await getInstanceSystemSettings();
   const dtsSystemInfo = await getSystemInfo();
 
   const confAppVersion = await configApplicationVersion()
@@ -89,7 +92,7 @@ export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (load
     confCtryInstanceISO,
     conf2FAIssuer,
     confInstanceTypePublic,
-    instanceSystemSettings,
+    instanceSystemSettings: settings,
     dtsSystemInfo,
   });
 });

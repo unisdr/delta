@@ -28,6 +28,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) 
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
+	console.log("ld=", ld)
+
 	return (
 		<MainContainer title="Hazardous events">
 			<>

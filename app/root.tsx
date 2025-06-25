@@ -25,11 +25,7 @@ import {
 
 import {useEffect, useState} from "react";
 
-import {
-	configApprovedRecordsArePublic,
-	configSiteLogo,
-	configSiteName,
-} from "~/util/config";
+
 
 import allStylesHref from "./styles/all.css?url";
 
@@ -52,21 +48,24 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({request}: LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request)
-	const instanceSystemSetting = await getInstanceSystemSettings();
+	const settings = await getInstanceSystemSettings();
+	if(!settings){
+		throw new Response ("System settings was not found", {status:500});
+	}
 
 	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 
 	const message = getFlashMessage(session);
 
 	return Response.json({
-		hasPublicSite: configApprovedRecordsArePublic(),
+		hasPublicSite: settings.approvedRecordsArePublic,
 		loggedIn: !!user,
 		userRole: user?.user.role || '',
 		flashMessage: message,
-		confSiteName: configSiteName(),
-		confSiteLogo: configSiteLogo(),
-		confFooterURLPrivPolicy: instanceSystemSetting?.footerUrlPrivacyPolicy || '',
-		confFooterURLTermsConds: instanceSystemSetting?.footerUrlTermsConditions || '',
+		confSiteName: settings.websiteName,
+		confSiteLogo: settings.websiteLogo,
+		confFooterURLPrivPolicy: settings?.footerUrlPrivacyPolicy || '',
+		confFooterURLTermsConds: settings?.footerUrlTermsConditions || '',
 		env: {
 			CURRENCY_CODES: process.env.CURRENCY_CODES || '',
 			DTS_INSTANCE_CTRY_ISO3: process.env.DTS_INSTANCE_CTRY_ISO3 || ''

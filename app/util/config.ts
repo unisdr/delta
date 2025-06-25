@@ -5,7 +5,7 @@
  * https://remix.run/docs/en/main/guides/envvars
  */
 import {SSOAzureB2C as interfaceSSOAzureB2C} from "~/util/ssoauzeb2c";
-import { stringToBoolean } from "~/util/string";
+// import { stringToBoolean } from "~/util/string";
 import { checkValidCurrency } from '~/util/currency';
 import fs from 'fs/promises';
 import path from 'path';
@@ -13,37 +13,37 @@ import path from 'path';
 /**
  * Get the Website URL.
  */
-export function configSiteURL(): string {
-	const value = process.env.WEBSITE_URL || 'http://localhost:3000';
-	return value;
-};
+// export function configSiteURL(): string {
+// 	const value = process.env.WEBSITE_URL || 'http://localhost:3000';
+// 	return value;
+// };
 
 /**
  * Get the Website Name.
  */
-export function configSiteName(): string {
-	const value = process.env.WEBSITE_NAME || 'Disaster Losses Tracking System';
-	return value + ' - DTS';
-};
+// export function configSiteName(): string {
+// 	const value = process.env.WEBSITE_NAME || 'Disaster Losses Tracking System';
+// 	return value + ' - DTS';
+// };
 
 /**
  * Get the Country Name.
  */
-export function configCountryName(): string {
-	const value = process.env.COUNTRY_NAME || '';
-	return value;
-};
+// export function configCountryName(): string {
+// 	const value = process.env.COUNTRY_NAME || '';
+// 	return value;
+// };
 
 /**
  * Get the Website Logo Image URL.
  */
-export function configSiteLogo(): string {
-	// const value = process.env.WEBSITE_LOGO || '';
+// export function configSiteLogo(): string {
+// 	// const value = process.env.WEBSITE_LOGO || '';
 
-	//Temporary not to break the layout
-	const value = process.env.WEBSITE_LOGO || 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/images/dldt-logo-mark.svg';
-	return value;
-};
+// 	//Temporary not to break the layout
+// 	const value = process.env.WEBSITE_LOGO || 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/images/dldt-logo-mark.svg';
+// 	return value;
+// };
 
 export function configSsoAzureB2C(): interfaceSSOAzureB2C {
 	const data: interfaceSSOAzureB2C = {
@@ -112,10 +112,10 @@ function _configSsoAzureB2CTenant(): string {
 	return value;
 };
 
-export function configApprovedRecordsArePublic(): boolean {
-	const value = stringToBoolean( process.env.APPROVED_RECORDS_ARE_PUBLIC || "1" );
-	return value;
-};
+// export function configApprovedRecordsArePublic(): boolean {
+// 	const value = stringToBoolean( process.env.APPROVED_RECORDS_ARE_PUBLIC || "1" );
+// 	return value;
+// };
 
 /**
  * Get configuration for supported autentication.

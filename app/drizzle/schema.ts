@@ -1346,5 +1346,6 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	totpIssuer: varchar("totp_issuer", {length: 250} ),
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
 	dtsInstanceCtryIso3:  varchar("dts_instance_ctry_iso3").notNull().default("USA"),
-	currencyCodes: varchar("currency_codes").notNull().default("USD")
+	currencyCodes: varchar("currency_codes").notNull().default("USD"),
+	countryName: varchar("country_name").notNull().default("United State of America")
 });

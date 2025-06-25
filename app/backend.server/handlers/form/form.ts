@@ -32,12 +32,12 @@ import {
 } from "~/util/auth";
 
 import {getItem2} from "~/backend.server/handlers/view";
-import {configApprovedRecordsArePublic} from "~/util/config";
 
 import {PermissionId, RoleId} from "~/frontend/user/roles";
 import {logAudit} from "../../models/auditLogs";
 import {auditLogsTable, userTable} from "~/drizzle/schema";
 import {and, desc, eq} from "drizzle-orm";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 export type ErrorResult<T> = {ok: false; errors: Errors<T>};
 
@@ -446,16 +446,24 @@ interface CreateViewLoaderPublicApprovedWithAuditLogArgs<
 export function createViewLoaderPublicApproved<
 	T extends {approvalStatus: string}
 >(args: CreateViewLoaderPublicApprovedArgs<T>) {
-	if (!configApprovedRecordsArePublic()) {
-		return authLoaderWithPerm("ViewData", async (loaderArgs) => {
-			const {params} = loaderArgs;
-			const item = await getItem2(params, args.getById);
-			if (!item) {
-				throw new Response("Not Found", {status: 404});
-			}
-			return {item, isPublic: false};
-		});
+	return async (loaderArgs: LoaderFunctionArgs) => {
+    // Fetch approvedRecordsArePublic from the database
+    const settings = await getInstanceSystemSettings();
+	if(!settings){
+		throw new Response("System settings was not found.", {status:500});
 	}
+
+    if (!settings.approvedRecordsArePublic) {
+      // If records are not public, enforce ViewData permission
+      return authLoaderWithPerm("ViewData", async (loaderArgs) => {
+        const { params } = loaderArgs;
+        const item = await getItem2(params, args.getById);
+        if (!item) {
+          throw new Response("Not Found", { status: 404 });
+        }
+        return { item, isPublic: false };
+      })(loaderArgs);
+    }
 
 	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 		const {params} = loaderArgs;
@@ -472,23 +480,31 @@ export function createViewLoaderPublicApproved<
 			}
 		}
 		return {item, isPublic};
-	});
+	})(loaderArgs);
+};
 }
 
 export function createViewLoaderPublicApprovedWithAuditLog<
 	T extends {approvalStatus: string}
 >(args: CreateViewLoaderPublicApprovedWithAuditLogArgs<T>) {
-	if (!configApprovedRecordsArePublic()) {
-		return authLoaderWithPerm("ViewData", async (loaderArgs) => {
-			const {params} = loaderArgs;
-			const item = await getItem2(params, args.getById);
-			if (!item) {
-				throw new Response("Not Found", {status: 404});
-			}
-			let user = authLoaderGetUserForFrontend(loaderArgs)
-			return {item, isPublic: false, auditLogs: [], user};
-		});
+	return async (loaderArgs: LoaderFunctionArgs) => {
+    const settings = await getInstanceSystemSettings();
+	if(!settings){
+		throw new Response("System settings was not found.",{status:500});
 	}
+
+    if (!settings.approvedRecordsArePublic) {
+      // If records are not public, enforce ViewData permission
+      return authLoaderWithPerm("ViewData", async (loaderArgs) => {
+        const { params } = loaderArgs;
+        const item = await getItem2(params, args.getById);
+        if (!item) {
+          throw new Response("Not Found", { status: 404 });
+        }
+        let user = authLoaderGetUserForFrontend(loaderArgs);
+        return { item, isPublic: false, auditLogs: [], user };
+      })(loaderArgs);
+    }
 
 	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 		const {params} = loaderArgs;
@@ -525,7 +541,8 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 		let user = authLoaderGetUserForFrontend(loaderArgs)
 
 		return {item, isPublic, auditLogs, user};
-	});
+	})(loaderArgs);
+};
 }
 
 interface DeleteActionArgs {

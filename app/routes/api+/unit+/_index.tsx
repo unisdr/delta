@@ -10,7 +10,7 @@ import {
 } from "~/backend.server/handlers/form/form_api";
 
 export let loader = authLoaderApiDocs(async () => {
-  let docs = jsonApiDocs({
+  let docs = await jsonApiDocs({
     baseUrl: "unit",
     fieldsDef: await fieldsDefApi()
   })

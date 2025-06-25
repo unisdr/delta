@@ -7,14 +7,17 @@ import {
 import {
 	Header,
 } from "~/frontend/header/header"
-
-
-import {configSiteName} from "~/util/config";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 
 export const loader = authLoader(async () => {
+	const settings= await getInstanceSystemSettings();
+	var siteName='Disaster Losses Tracking System'
+	if(settings){
+		siteName=settings.websiteName;
+	}
 	return {
-		configSiteName: configSiteName(),
+		configSiteName: siteName,
 	};
 });
 
@@ -22,16 +25,6 @@ export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
 	const {configSiteName} = loaderData
 
-
-	/*
-	// only render in the browser, not server
-	// since it uses window breakpoints to know the sizing
-	const [isClient, setIsClient] = useState(false);
-	useEffect(() => {
-		setIsClient(true);
-	}, []);
-	if (!isClient) return null;
-*/
 
 	return (
 		<>
