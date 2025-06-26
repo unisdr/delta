@@ -90,7 +90,17 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
         .optional(),
       sortDirection: z.enum(['asc', 'desc'])
         .transform(value => value || null)
-        .optional()
+        .optional(),
+      page: z.string()
+        .regex(/^\d+$/, "Page must be a positive number")
+        .default('1')
+        .transform(Number)
+        .refine(n => n > 0, "Page must be greater than 0"),
+      pageSize: z.string()
+        .regex(/^\d+$/, "Page size must be a positive number")
+        .default('20')
+        .transform(Number)
+        .refine(n => [10, 20, 30, 40, 50].includes(n), "Page size must be 10, 20, 30, 40, or 50")
     });
 
     const validationResult = querySchema.safeParse(searchParams);
@@ -126,7 +136,9 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
       toDate: params.toDate || null,
       disasterEventId: params.disasterEventId || null,
       sortBy: params.sortBy || null,
-      sortDirection: params.sortDirection || null
+      sortDirection: params.sortDirection || null,
+      page: params.page,
+      pageSize: params.pageSize
     });
 
     return Response.json({
