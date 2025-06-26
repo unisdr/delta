@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
@@ -16,94 +16,6 @@ import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
-// Performance optimization hooks
-// Enhanced debounce hook with adaptive timing and user interaction awareness
-const useDebounce = <T,>(value: T, baseDelay: number): T => {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  const lastInteractionTime = useRef<number>(Date.now());
-  const interactionCount = useRef<number>(0);
-  const isTyping = useRef<boolean>(false);
-  const lastValue = useRef<T>(value);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-
-  // Track user interaction patterns
-  useEffect(() => {
-    const now = Date.now();
-    const timeSinceLastInteraction = now - lastInteractionTime.current;
-
-    // Detect typing patterns (rapid successive changes)
-    if (timeSinceLastInteraction < 1000) { // If changes within 1 second
-      interactionCount.current++;
-      isTyping.current = true;
-    } else {
-      interactionCount.current = 0;
-      isTyping.current = false;
-    }
-
-    lastInteractionTime.current = now;
-
-    // Calculate adaptive delay based on interaction pattern
-    let adaptiveDelay = baseDelay;
-
-    if (isTyping.current) {
-      // If user is actively typing, use a longer delay
-      adaptiveDelay = Math.min(baseDelay * 1.5, 1000); // Cap at 1s
-    } else if (interactionCount.current > 3) {
-      // If user is rapidly changing values, use a shorter delay
-      adaptiveDelay = Math.max(baseDelay * 0.5, 100); // At least 100ms
-    }
-
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Set new timeout with adaptive delay
-    timeoutRef.current = setTimeout(() => {
-      try {
-        // Only update if value has actually changed
-        if (lastValue.current !== value) {
-          lastValue.current = value;
-          setDebouncedValue(value);
-
-          // Log debounce application for performance monitoring
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Debounced value updated', {
-              originalValue: value,
-              debouncedValue: value,
-              delayUsed: adaptiveDelay,
-              interactionCount: interactionCount.current,
-              wasTyping: isTyping.current
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error in debounce hook:", error);
-        // Fallback to non-debounced value in case of error
-        setDebouncedValue(value);
-      }
-
-      // Reset typing state after delay
-      isTyping.current = false;
-    }, adaptiveDelay);
-
-    // Cleanup function to clear timeout on unmount or value change
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [value, baseDelay]);
-
-  return debouncedValue;
-};
-
-// Memoize expensive components
-const MemoizedImpactOnSector = memo(ImpactOnSector);
-const MemoizedImpactByHazard = memo(ImpactByHazard);
-const MemoizedImpactMap = memo(ImpactMap);
-const MemoizedEffectDetails = memo(EffectDetails);
-const MemoizedMostDamagingEvents = memo(MostDamagingEvents);
 
 // JavaScript Disabled Message Component
 function JavaScriptDisabledMessage() {
@@ -126,19 +38,8 @@ function JavaScriptDisabledMessage() {
                 <li>Go to "Settings" or "Preferences"</li>
                 <li>Find "Privacy & Security" or "Advanced"</li>
                 <li>Look for "JavaScript" or "Site Settings"</li>
-                <li>Enable JavaScript for all sites or this site specifically</li>
-                <li>Refresh this page</li>
               </ol>
             </div>
-          </div>
-          <div style={{ marginTop: "2rem" }}>
-            <button
-              className="mg-button mg-button-primary"
-              onClick={() => window.location.reload()}
-              style={{ margin: "0 auto" }}
-            >
-              Try Again
-            </button>
           </div>
         </div>
       </div>
@@ -150,161 +51,28 @@ function JavaScriptDisabledMessage() {
 // import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
 
 
-// Types
-// interface Sector {
-//   id: number;
-//   sectorname: string;
-//   subsectors?: Sector[];
-// }
 
-// Define custom error type for API errors
-interface ApiError extends Error {
-  status?: number;
-  response?: {
-    status?: number;
-    data?: any;
-  };
-}
-
-// Type-safe error handler
-const handleError = (error: unknown, context: string) => {
-  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-  console.error(`Error in ${context}:`, errorMessage);
-};
-
-// Create QueryClient instance with enhanced configuration
+// Create QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Cache configuration
-      staleTime: 5 * 60 * 1000,     // 5 minutes before data becomes stale
-      gcTime: 10 * 60 * 1000,       // 10 minutes before garbage collection
-      refetchOnWindowFocus: false,  // Prevent refetch on window focus
-      refetchOnMount: false,        // Prevent refetch on component mount
-      refetchOnReconnect: 'always', // Always refetch on reconnect
-      retry: (failureCount, error: unknown) => {
-        try {
-          // Type guard to check if error is an instance of Error
-          if (!(error instanceof Error)) {
-            return failureCount < 1; // Only retry once for non-Error types
-          }
-
-          const apiError = error as ApiError;
-          const errorMessage = error.message || 'Unknown error';
-
-          // Check for rate limit errors
-          const isRateLimit = errorMessage.includes('rate limited') ||
-            apiError.status === 429 ||
-            apiError.response?.status === 429;
-
-          if (isRateLimit) {
-            // Log rate limit hit
-            if (process.env.NODE_ENV === 'development') {
-              console.log(`Rate limit hit, applying retry logic (attempt ${failureCount + 1}/3)`);
-            }
-            return failureCount < 3; // Max 3 retries for rate limits
-          }
-
-          // For other errors, only retry once
-          return failureCount < 1;
-        } catch (err) {
-          handleError(err, 'retry logic');
-          return false; // Don't retry if error handling fails
-        }
-      },
-      retryDelay: (attemptIndex) => {
-        // Exponential backoff with jitter
-        const baseDelay = Math.min(1000 * 2 ** attemptIndex, 30000); // Cap at 30s
-        const jitter = Math.random() * 1000; // Add up to 1s of jitter
-        return baseDelay + jitter;
-      },
-      // Optimistic updates configuration
-      networkMode: 'online',
-      // Query options
-      structuralSharing: true // Prevent unnecessary re-renders
-    }
-  }
+      refetchOnWindowFocus: false,
+      retry: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
 });
 
-// Set up global query cache event handlers
-const queryCache = queryClient.getQueryCache();
-
-// Subscribe to query cache events
-queryCache.subscribe((event) => {
-  try {
-    if ('error' in event && event.error) {
-      handleError(event.error, 'query cache');
-    }
-    if (process.env.NODE_ENV === 'development' && 'query' in event) {
-      console.log('Query cache updated', {
-        queryKey: event.query.queryKey,
-        state: event.query.state.status
-      });
-    }
-  } catch (error) {
-    handleError(error, 'query cache subscription');
-  }
-});
-
-// Set up global error handler for uncaught query errors
-queryClient.getQueryCache().config = {
-  ...queryClient.getQueryCache().config,
-  onError: (error: unknown) => {
-    handleError(error, 'global query cache');
-  }
-};
-
-// Set up global mutation error handler
-queryClient.getMutationCache().config = {
-  ...queryClient.getMutationCache().config,
-  onError: (error: unknown) => {
-    handleError(error, 'global mutation cache');
-  }
-};
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
-  const { request, userSession } = loaderArgs;
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Get currency from environment variable
+  const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
 
-  // Log basic request info in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[${new Date().toISOString()}] Sectors analytics page requested`, {
-      requestId,
-      userId: userSession?.user?.id?.toString() || 'public_user',
-      isPublicAccess: !userSession,
-      url: request.url
-    });
-  }
-
-  try {
-    // Get currency from environment variable
-    const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[${new Date().toISOString()}] Successfully loaded sectors analytics data`, {
-        requestId,
-        currency,
-        hasAuthentication: !!userSession
-      });
-    }
-
-    return {
-      currency,
-      loaderArgs,
-      requestId
-    };
-
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] Failed to load sectors analytics data`, {
-      requestId,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-
-    // Re-throw the error after logging
-    throw error;
-  }
+  return {
+    currency,
+    loaderArgs
+  };
 });
 
 // Meta function for page SEO
@@ -323,13 +91,9 @@ function SectorsAnalysisContent() {
 
   // Effect to show content when JavaScript is enabled
   useEffect(() => {
-    try {
-      const jsContent = document.getElementById('js-content');
-      if (jsContent) {
-        jsContent.style.display = 'block';
-      }
-    } catch (error) {
-      console.error('Error showing main content:', error);
+    const jsContent = document.getElementById('js-content');
+    if (jsContent) {
+      jsContent.style.display = 'block';
     }
   }, []);
 
@@ -347,69 +111,22 @@ function SectorsAnalysisContent() {
     disasterEventId: string | null;
   } | null>(null);
 
-  // Add loading state to track filter application
-  const [isLoading, setIsLoading] = useState(false);
-  const [pendingFilters, setPendingFilters] = useState<typeof filters>(null);
-
-  // Debounce the filter changes to reduce API calls
-  const debouncedFilters = useDebounce(pendingFilters, 1000);
-
-  // Apply debounced filters
-  useEffect(() => {
-    // Create a no-op cleanup function for code paths that don't need cleanup
-    const noop = () => { };
-
-    if (debouncedFilters !== null) {
-      try {
-        setIsLoading(true);
-        setFilters(debouncedFilters);
-
-        // Log filter application for analytics
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Filters applied', {
-            filterCount: Object.values(debouncedFilters || {}).filter(v => v !== null).length
-          });
-        }
-
-        // Simulate network delay for demonstration
-        const timer = setTimeout(() => {
-          setIsLoading(false);
-        }, 500);
-
-        return () => clearTimeout(timer);
-      } catch (error) {
-        console.error("Error applying filters:", error);
-        setIsLoading(false);
-        return noop; // Return no-op cleanup function in error case
-      }
-    }
-
-    // Return no-op cleanup function for the case when debouncedFilters is null
-    return noop;
-  }, [debouncedFilters]);
 
   // Event handlers for Filters component
-  const handleApplyFilters = useCallback((newFilters: typeof filters) => {
-    setPendingFilters(newFilters);
-  }, []);
+  const handleApplyFilters = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+  };
 
-  const handleAdvancedSearch = useCallback(() => {
+  const handleAdvancedSearch = () => {
     // TODO: Implement advanced search functionality
     if (process.env.NODE_ENV === 'development') {
       console.log('Advanced search clicked');
     }
-  }, []);
+  };
 
-  const handleClearFilters = useCallback(() => {
-    setPendingFilters(null);
+  const handleClearFilters = () => {
     setFilters(null);
-    setIsLoading(false);
-
-    // Log filter clearing for analytics
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Filters cleared');
-    }
-  }, []);
+  };
 
   // Function to export Excel data
   /*const handleExportToExcel = async () => {
@@ -816,43 +533,6 @@ function SectorsAnalysisContent() {
                 </button> */}
               </div>
 
-              {/* Loading overlay */}
-              {isLoading && (
-                <div
-                  role="status"
-                  aria-live="polite"
-                  aria-busy="true"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: "rgba(255, 255, 255, 0.7)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    zIndex: 10,
-                    borderRadius: "8px"
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "1rem"
-                    }}
-                  >
-                    <div className="dts-loading-spinner" aria-label="Loading data" aria-hidden="true"></div>
-                    <div style={{ fontSize: "1.4rem", fontWeight: 500 }}>
-                      <span className="mg-u-sr-only">Loading data, please wait.</span>
-                      Loading data...
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div
                 className="sectors-content"
                 style={{
@@ -865,90 +545,38 @@ function SectorsAnalysisContent() {
               >
                 {/* Impact on Selected Sector */}
                 {filters.sectorId && (
-                  <div className="space-y-8" style={{ minHeight: "300px" }}>
-                    <ErrorBoundary>
-                      <MemoizedImpactOnSector
-                        sectorId={filters.sectorId}
-                        filters={filters}
-                        currency={currency}
-                      />
-                    </ErrorBoundary>
-                  </div>
+                  <ErrorBoundary>
+                    <ImpactOnSector
+                      sectorId={filters.sectorId}
+                      filters={filters}
+                      currency={currency}
+                    />
+                  </ErrorBoundary>
                 )}
 
                 {/* Impact by Hazard Section */}
-                <div style={{ minHeight: "400px" }}>
-                  <ErrorBoundary>
-                    <MemoizedImpactByHazard filters={filters} />
-                  </ErrorBoundary>
-                </div>
+                <ErrorBoundary>
+                  <ImpactByHazard filters={filters} />
+                </ErrorBoundary>
 
                 {/* Impact by Geographic Level */}
-                <div style={{ minHeight: "500px" }}>
-                  <ErrorBoundary>
-                    <MemoizedImpactMap filters={filters} currency={currency} />
-                  </ErrorBoundary>
-                </div>
+                <ErrorBoundary>
+                  <ImpactMap filters={filters} currency={currency} />
+                </ErrorBoundary>
 
                 {/* Effect Details Section */}
-                <div style={{ minHeight: "400px" }}>
-                  <ErrorBoundary>
-                    <MemoizedEffectDetails filters={filters} currency={currency} />
-                  </ErrorBoundary>
-                </div>
+                <ErrorBoundary>
+                  <EffectDetails filters={filters} currency={currency} />
+                </ErrorBoundary>
 
                 {/* Most Damaging Events Section */}
-                <div style={{ minHeight: "300px" }}>
-                  <ErrorBoundary>
-                    <MemoizedMostDamagingEvents filters={filters} currency={currency} />
-                  </ErrorBoundary>
-                </div>
+                <ErrorBoundary>
+                  <MostDamagingEvents filters={filters} currency={currency} />
+                </ErrorBoundary>
               </div>
             </>
           )}
 
-          {/* Work In Progress Message - Updated list
-          <div
-            className="construction-message"
-            style={{
-              marginTop: "2rem",
-              padding: "1.6rem",
-              backgroundColor: "#f9f9f9",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-            }}
-          >
-            <h3
-              style={{
-                fontSize: "1.8rem",
-                marginBottom: "1rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              🚧 Work In Progress
-            </h3>
-            <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-              The remaining sections of this dashboard, including:
-            </p>
-            <ul
-              style={{
-                marginTop: "1rem",
-                marginBottom: "1rem",
-                paddingLeft: "1.5rem",
-                fontSize: "1.4rem",
-                lineHeight: "1.6",
-                color: "#555",
-              }}
-            >
-              <li>The most damaging events for sectors</li>
-            </ul>
-            <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-              are still under construction. Please stay tuned for future updates!
-            </p>
-          </div> */}
-
-          <p></p>
           <div className="dts-caption mt-4">
             * Data shown is based on published records
           </div>
