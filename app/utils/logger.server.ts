@@ -19,42 +19,6 @@ const maskApiKey = (apiKey: string): string => {
   return apiKey.substring(0, 4) + '***' + apiKey.substring(apiKey.length - 4);
 };
 
-// Validate API key on startup
-const validateApiKey = (apiKey: string | undefined): string | null => {
-  if (!apiKey) {
-    console.warn('REMOTE_LOG_API_KEY not provided - remote logging disabled');
-    return null;
-  }
-
-  if (apiKey.length < 10) {
-    console.error('REMOTE_LOG_API_KEY too short - should be at least 10 characters');
-    return null;
-  }
-
-  // Check for common patterns (Bearer token, JWT, etc.)
-  if (!apiKey.match(/^[A-Za-z0-9_\-\.]+$/)) {
-    console.error('REMOTE_LOG_API_KEY contains invalid characters');
-    return null;
-  }
-
-  return apiKey;
-};
-
-// Validate endpoint security
-const validateEndpoint = (endpoint: string | undefined): string | null => {
-  if (!endpoint) {
-    console.warn('REMOTE_LOG_ENDPOINT not provided - remote logging disabled');
-    return null;
-  }
-
-  if (!endpoint.startsWith('https://')) {
-    console.error('REMOTE_LOG_ENDPOINT must use HTTPS for security');
-    return null;
-  }
-
-  return endpoint;
-};
-
 // Configuration from environment variables
 const LOG_DIR = process.env.LOG_DIR || 'logs';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
@@ -63,16 +27,14 @@ const APP_VERSION = process.env.APP_VERSION || '1.0.0';
 
 // Remote monitoring configuration
 const ENABLE_REMOTE_LOGGING = process.env.ENABLE_REMOTE_LOGGING === 'true';
-const REMOTE_LOG_ENDPOINT = validateEndpoint(process.env.REMOTE_LOG_ENDPOINT);
-const REMOTE_LOG_API_KEY = validateApiKey(process.env.REMOTE_LOG_API_KEY);
+const REMOTE_LOG_ENDPOINT = process.env.REMOTE_LOG_ENDPOINT;
+const REMOTE_LOG_API_KEY = process.env.REMOTE_LOG_API_KEY;
 const INSTANCE_ID = process.env.INSTANCE_ID || `dts-${NODE_ENV}-${Date.now()}`;
 const DEPLOYMENT_REGION = process.env.DEPLOYMENT_REGION || 'unknown';
 
 // Health check and metrics
 const ENABLE_LOG_METRICS = process.env.ENABLE_LOG_METRICS === 'true';
 const LOG_RETENTION_DAYS = parseInt(process.env.LOG_RETENTION_DAYS || '30');
-
-
 
 // Ensure log directory exists
 if (!fs.existsSync(LOG_DIR)) {
@@ -107,12 +69,7 @@ class RemoteLogTransport extends Transport {
   constructor(options: { endpoint: string; apiKey: string }) {
     super();
 
-    // Validate endpoint
-    if (!options.endpoint?.startsWith('https://')) {
-      throw new Error('Remote log endpoint must use HTTPS');
-    }
-
-    // Validate API key
+    // Validate before assignment
     if (!options.apiKey || options.apiKey.length < 10) {
       throw new Error('Invalid API key for remote logging');
     }
@@ -172,7 +129,7 @@ class RemoteLogTransport extends Transport {
       });
 
       if (!response.ok) {
-        // ✅ SECURE: Don't log the actual API key
+        // Don't log the actual API key
         console.error(`Failed to send logs to remote endpoint: ${response.statusText} (${response.status})`);
         console.error(`Endpoint: ${this.endpoint}, Key: ${maskApiKey(this.apiKey)}`);
 
@@ -181,7 +138,7 @@ class RemoteLogTransport extends Transport {
         }
       }
     } catch (error) {
-      // ✅ SECURE: Error logging without exposing credentials
+      // Error logging without exposing credentials
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Remote logging transport error:', errorMessage);
       console.error(`Failed endpoint: ${this.endpoint}`);
