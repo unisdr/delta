@@ -5,13 +5,20 @@ import {eq} from "drizzle-orm"
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form"
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
-import {configCurrencies} from "~/util/config"
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
+import { getInstanceSystemSettings } from "./instanceSystemSettingDAO"
 
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 
-export const fieldsDef: FormInputDef<DisruptionFields>[] =
-	[
+// export const fieldsDef: FormInputDef<DisruptionFields>[] =
+export async function getFieldsDef(): Promise<FormInputDef<DisruptionFields>[]> {
+	const settings = await getInstanceSystemSettings();
+	let currencies:string[]=[];
+	if(settings){
+		currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+	}
+	return [
 		{key: "recordId", label: "", type: "uuid"},
 		{key: "sectorId", label: "", type: "other"},
 		{key: "durationDays", label: "Duration (days)", type: "number", uiRow: {}},
@@ -25,24 +32,28 @@ export const fieldsDef: FormInputDef<DisruptionFields>[] =
 			key: "responseCurrency",
 			label: "Currency",
 			type: "enum-flex",
-			enumData: configCurrencies().map(c => {return {key: c, label: c}})
+			enumData: currencies.map(c => {return {key: c, label: c}})
 		},
 		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
 	]
+}
 
+// export const fieldsDefApi: FormInputDef<DisruptionFields>[] =
+// 	[
+// 		...await getFieldsDef(),
+// 		{key: "apiImportId", label: "", type: "other"}
+// 	]
 
-export const fieldsDefApi: FormInputDef<DisruptionFields>[] =
-	[
-		...fieldsDef,
-		{key: "apiImportId", label: "", type: "other"}
-	]
+export async function getFieldsDefApi(): Promise<FormInputDef<DisruptionFields>[]> {
+  const baseFields = await getFieldsDef();
+  return [...baseFields, {key: "apiImportId", label: "", type: "other"}];
+}
 
-
-export const fieldsDefView: FormInputDef<DisruptionFields>[] =
-	[
-		...fieldsDef,
-	]
+export async function getFieldsDefView(): Promise<FormInputDef<DisruptionFields>[]> {
+  const baseFields = await getFieldsDef();
+  return [...baseFields];
+}
 
 
 export function validate(fields: Partial<DisruptionFields>): Errors<DisruptionFields> {

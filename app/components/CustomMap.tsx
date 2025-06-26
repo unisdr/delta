@@ -13,7 +13,7 @@ import { FeatureLike } from "ol/Feature"; // Import FeatureLike to handle both F
 import { Feature } from "ol";
 import { getCenter } from "ol/extent";
 import { Geometry } from "ol/geom";
-import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode} from "~/frontend/utils/formatters";
 import ErrorBoundary from "~/frontend/components/ErrorBoundary";
 import Legend from "~/frontend/analytics/sectors/sections/Map/Legend";
 import "~/frontend/analytics/sectors/sections/Map/ImpactMap.css"; // Assuming this CSS file is available and compatible
@@ -113,7 +113,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   const [legendRanges, setLegendRanges] = useState<Array<{ color: string; range: string }>>([]);
   const loading = false;
   let hoveredFeature : FeatureLike | null = null;
-  const defaultCurrency = useDefaultCurrency();
+  
 
   // Default color range calculation if not provided via props
   const defaultCalculateColorRanges = (values: number[], currency: string): ColorRange[] => {
@@ -408,7 +408,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
     );
 
     return filteredRanges;
-  }, [geoData?.features, selectedMetric, defaultCurrency, customCalculateColorRanges]);
+  }, [geoData?.features, selectedMetric, currency, customCalculateColorRanges]);
 
   // Feature style function - Updated to match OpenLayers StyleFunction type
   const getFeatureStyle = useCallback(
@@ -477,7 +477,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       } else if (value > 0) {
         displayValue = formatCurrencyWithCode(
           value,
-          defaultCurrency,
+          currency,
           {},
           value >= 1_000_000_000 ? "billions" : value >= 1_000_000 ? "millions" : "thousands"
         );
@@ -503,7 +503,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       tooltip.style.pointerEvents = "none";
       tooltip.style.zIndex = "1000";
     },
-    [map, selectedMetric, defaultCurrency, getFeatureStyle]
+    [map, selectedMetric, currency, getFeatureStyle]
   );
 
   // Initialize map - Updated style typing

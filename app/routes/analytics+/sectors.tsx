@@ -17,6 +17,7 @@ import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 // Performance optimization hooks
 // Enhanced debounce hook with adaptive timing and user interaction awareness
@@ -313,9 +314,13 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   });
 
   try {
-    // Get currency from environment variable
-    const currency = process.env.CURRENCY_CODES?.split(',')[0] || 'PHP';
 
+    // Get currency from environment variable
+    const settings  = await getInstanceSystemSettings();
+    let currency = "PHP";
+    if(settings){
+      currency = settings.currencyCodes?.split(",")[0]
+    }
     contextLogger.info("Successfully loaded sectors analytics data", {
       currency,
       hasAuthentication: !!userSession,
@@ -932,7 +937,8 @@ function SectorsAnalysisContent() {
                 {/* Impact by Hazard Section */}
                 <div style={{ minHeight: "400px" }}>
                   <ErrorBoundary>
-                    <MemoizedImpactByHazard filters={filters} />
+                    <MemoizedImpactByHazard filters={filters}
+                    currency={currency} />
                   </ErrorBoundary>
                 </div>
 

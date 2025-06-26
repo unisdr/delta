@@ -5,15 +5,16 @@ import { userTable, User } from "~/drizzle/schema";
 
 import * as OTPAuth from "otpauth";
 import {loginTotp} from "./auth";
+import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
 
 
-function totpSettings(userEmail: string, secret: string) {
+function totpSettings(userEmail: string, secret: string, totpIssuer: string) {
   if (!secret) {
     throw "provide secret";
   }
 
   return new OTPAuth.TOTP({
-    issuer: process.env.TOTP_ISSUER || "example-app",
+    issuer: totpIssuer,
     label: userEmail,
     algorithm: "SHA1",
     digits: 6,
@@ -49,7 +50,12 @@ export async function generateTotpIfNotSet(
 
   const secret = new OTPAuth.Secret({ size: totpSecretSize }).base32;
 
-  const totp = totpSettings(user.email, secret);
+  const settings = await getInstanceSystemSettings();
+  let totpIssuer = "";
+  if(settings){
+    totpIssuer = settings.totpIssuer;
+  }
+  const totp = totpSettings(user.email, secret, totpIssuer);
 
   if (!secret) {
     throw "Application Error";
@@ -80,7 +86,12 @@ export async function isValidTotp(user: User, token: string): Promise<boolean> {
   if (!token) {
     return false;
   }
-  const totp = totpSettings(user.email, user.totpSecret);
+  const settings = await getInstanceSystemSettings();
+  let totpIssuer = "";
+  if(settings){
+    totpIssuer = settings.totpIssuer;
+  }
+  const totp = totpSettings(user.email, user.totpSecret, totpIssuer);
   let delta = totp.validate({ token, window: 1 });
   if (delta === null) {
     return false;

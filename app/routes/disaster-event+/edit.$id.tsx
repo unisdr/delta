@@ -26,6 +26,7 @@ import {buildTree} from "~/components/TreeView";
 import {dr} from "~/db.server"; // Drizzle ORM instance
 import {divisionTable} from "~/drizzle/schema";
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 // export const loader = createLoader({
 // 	getById: disasterEventById,
@@ -56,7 +57,12 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	let user = authLoaderGetUserForFrontend(loaderArgs)
 	let hip = await dataForHazardPicker()
 
-	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+	let ctryIso3:string = "";
+	const settings = await getInstanceSystemSettings()
+	if(settings){
+		ctryIso3=settings.dtsInstanceCtryIso3;
+	}
+
 
     const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson

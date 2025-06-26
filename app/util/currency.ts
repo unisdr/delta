@@ -40,7 +40,7 @@ export const formatNumberWithoutDecimals = (value: number) => {
 };
 
 
-export function configCurrenciesAsListFromCommaSeparated(currencies: string): string[] {
+export function getCurrenciesAsListFromCommaSeparated(currencies: string): string[] {
   let value = currencies || "";
 	let valueArray = [];
 	let returnArray:string[] = [];

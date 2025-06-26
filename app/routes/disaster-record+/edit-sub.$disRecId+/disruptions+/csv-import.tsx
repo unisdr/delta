@@ -6,7 +6,7 @@ import {
 	disruptionCreate,
 	disruptionUpdate,
 	disruptionIdByImportId,
-	fieldsDefApi
+	getFieldsDefApi
 } from "~/backend.server/models/disruption"
 
 import {
@@ -22,7 +22,7 @@ export const loader = authLoaderWithPerm("EditData", async () => {
 })
 
 export const action = createAction({
-	fieldsDef: fieldsDefApi,
+	fieldsDef: await getFieldsDefApi(),
 	create: disruptionCreate,
 	update: disruptionUpdate,
 	idByImportId: disruptionIdByImportId,

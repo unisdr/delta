@@ -3,7 +3,7 @@ import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-quer
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
-import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 import createClientLogger from "~/utils/clientLogger";
 
@@ -76,6 +76,8 @@ interface ImpactByHazardProps {
         toDate: string | null;
         subSectorId: string | null;
     };
+    currency: string;
+    
 }
 
 interface HazardImpactResponse {
@@ -108,8 +110,8 @@ interface Sector {
     subsectors?: Sector[];
 }
 
-const CustomTooltip = ({ active, payload, title }: any) => {
-    const defaultCurrency = useDefaultCurrency();
+const CustomTooltip = ({ active, payload, title, currency }: any) => {
+    const defaultCurrency = currency;
 
     if (active && payload && payload.length) {
         const data = payload[0].payload;
@@ -184,7 +186,7 @@ const CustomTooltip = ({ active, payload, title }: any) => {
     return null;
 };
 
-const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
+const CustomPieChart = ({ data, title, currency }: { data: any[], title: string, currency: string }) => {
     const [activeIndex, setActiveIndex] = useState(-1);
 
     const onPieEnter = useCallback(
@@ -340,7 +342,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
                                 />
                             ))}
                         </Pie>
-                        <Tooltip content={<CustomTooltip title={title} />} />
+                        <Tooltip content={<CustomTooltip title={title} currency={currency}/>} />
                         <Legend
                             verticalAlign="bottom"
                             align="center"
@@ -356,7 +358,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
     );
 };
 
-function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
+function ImpactByHazardComponent({ filters, currency }: ImpactByHazardProps) {
     const enabled = !!filters.sectorId;
     const targetSectorId = filters.subSectorId || filters.sectorId;
     // const defaultCurrency = useDefaultCurrency();
@@ -604,7 +606,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                     {/* Number of Disaster Events */}
                     <div className="dts-data-box">
                         {eventsResult.dataAvailability === 'available' ? (
-                            <CustomPieChart data={eventsResult.data} title="Number of Disaster Events" />
+                            <CustomPieChart data={eventsResult.data} title="Number of Disaster Events" currency={currency} />
                         ) : eventsResult.dataAvailability === 'zero' ? (
                             <>
                                 <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
@@ -621,7 +623,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                     {/* Damages by Hazard Type */}
                     <div className="dts-data-box">
                         {damagesResult.dataAvailability === 'available' ? (
-                            <CustomPieChart data={damagesResult.data} title="Damages by Hazard Type" />
+                            <CustomPieChart data={damagesResult.data} title="Damages by Hazard Type" currency={currency}/>
                         ) : damagesResult.dataAvailability === 'zero' ? (
                             <>
                                 <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
@@ -638,7 +640,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                     {/* Losses by Hazard Type */}
                     <div className="dts-data-box">
                         {lossesResult.dataAvailability === 'available' ? (
-                            <CustomPieChart data={lossesResult.data} title="Losses by Hazard Type" />
+                            <CustomPieChart data={lossesResult.data} title="Losses by Hazard Type" currency={currency} />
                         ) : lossesResult.dataAvailability === 'zero' ? (
                             <>
                                 <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>

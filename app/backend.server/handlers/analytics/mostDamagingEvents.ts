@@ -21,7 +21,7 @@ const VALID_SORT_COLUMNS: readonly SortColumn[] = ['damages', 'losses', 'eventNa
 export async function handleMostDamagingEventsRequest(params: MostDamagingEventsRequestParams) {
   try {
     // Create assessment metadata for logging
-    const metadata = createAssessmentMetadata('rapid', 'medium');
+    const metadata = await createAssessmentMetadata('rapid', 'medium');
     console.log('Starting most damaging events request:', {
       metadata,
       requestParams: { ...params, sectorId: params.sectorId ? '[REDACTED]' : null }

@@ -263,7 +263,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
           geographicLevelId: params.geographicLevelId
         }
       });
-      const metadata = createAssessmentMetadata(
+      const metadata = await createAssessmentMetadata(
         params.assessmentType || 'rapid',
         params.confidenceLevel || 'medium'
       );
@@ -481,7 +481,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     });
 
 
-    const metadata = createAssessmentMetadata(
+    const metadata = await createAssessmentMetadata(
       params.assessmentType || 'rapid',
       params.confidenceLevel || 'medium'
     );
@@ -532,7 +532,7 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     });
 
     // Return a graceful error response instead of throwing
-    const metadata = createAssessmentMetadata(
+    const metadata = await createAssessmentMetadata(
       params.assessmentType || 'rapid',
       params.confidenceLevel || 'medium'
     );

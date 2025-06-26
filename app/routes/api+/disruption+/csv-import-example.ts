@@ -1,10 +1,10 @@
 import { createExampleLoader } from "~/backend.server/handlers/form/csv_import"
 
 import {
-	fieldsDefApi
+	getFieldsDefApi
 } from "~/backend.server/models/disruption"
 
 export const loader = createExampleLoader({
-	fieldsDef: fieldsDefApi
+	fieldsDef: await getFieldsDefApi()
 })
 

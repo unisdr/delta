@@ -267,7 +267,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         }
 
         // Create assessment metadata with all required fields
-        const metadata = createAssessmentMetadata(
+        const metadata = await createAssessmentMetadata(
             filters.assessmentType || 'rapid',
             filters.confidenceLevel || 'low'
         );
@@ -1042,7 +1042,7 @@ export async function fetchGeographicImpactData(
                 totalDamage: 0,
                 totalLoss: 0,
                 byYear: new Map(),
-                metadata: createAssessmentMetadata('rapid', 'low')
+                metadata: await createAssessmentMetadata('rapid', 'low')
             };
         }
 
@@ -1055,7 +1055,7 @@ export async function fetchGeographicImpactData(
                 totalDamage: 0,
                 totalLoss: 0,
                 byYear: new Map(),
-                metadata: createAssessmentMetadata('rapid', 'low')
+                metadata: await createAssessmentMetadata('rapid', 'low')
             };
         }
 
@@ -1080,7 +1080,7 @@ export async function fetchGeographicImpactData(
         }
 
         // Create assessment metadata following international standards
-        const metadata = createAssessmentMetadata(
+        const metadata = await createAssessmentMetadata(
             filters?.assessmentType || 'rapid',
             filters?.confidenceLevel || 'low'
         );
@@ -1097,7 +1097,7 @@ export async function fetchGeographicImpactData(
             totalDamage: 0,
             totalLoss: 0,
             byYear: new Map(),
-            metadata: createAssessmentMetadata('rapid', 'low')
+            metadata: await createAssessmentMetadata('rapid', 'low')
         };
     }
 }

@@ -4,7 +4,7 @@ import {
 } from "~/util/auth"
 
 import {
-	fieldsDefApi
+	getFieldsDefApi
 } from "~/backend.server/models/disruption"
 
 
@@ -26,7 +26,7 @@ export const action = authActionApi(async (args) => {
 	const data = await args.request.json()
 	const saveRes = await jsonUpsert({
 		data,
-		fieldsDef: fieldsDefApi,
+		fieldsDef: await getFieldsDefApi(),
 		create: disruptionCreate,
 		update: disruptionUpdate,
 		idByImportId: disruptionIdByImportId,

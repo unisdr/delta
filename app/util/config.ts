@@ -5,45 +5,8 @@
  * https://remix.run/docs/en/main/guides/envvars
  */
 import {SSOAzureB2C as interfaceSSOAzureB2C} from "~/util/ssoauzeb2c";
-// import { stringToBoolean } from "~/util/string";
-import { checkValidCurrency } from '~/util/currency';
 import fs from 'fs/promises';
 import path from 'path';
-
-/**
- * Get the Website URL.
- */
-// export function configSiteURL(): string {
-// 	const value = process.env.WEBSITE_URL || 'http://localhost:3000';
-// 	return value;
-// };
-
-/**
- * Get the Website Name.
- */
-// export function configSiteName(): string {
-// 	const value = process.env.WEBSITE_NAME || 'Disaster Losses Tracking System';
-// 	return value + ' - DTS';
-// };
-
-/**
- * Get the Country Name.
- */
-// export function configCountryName(): string {
-// 	const value = process.env.COUNTRY_NAME || '';
-// 	return value;
-// };
-
-/**
- * Get the Website Logo Image URL.
- */
-// export function configSiteLogo(): string {
-// 	// const value = process.env.WEBSITE_LOGO || '';
-
-// 	//Temporary not to break the layout
-// 	const value = process.env.WEBSITE_LOGO || 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/images/dldt-logo-mark.svg';
-// 	return value;
-// };
 
 export function configSsoAzureB2C(): interfaceSSOAzureB2C {
 	const data: interfaceSSOAzureB2C = {
@@ -112,10 +75,6 @@ function _configSsoAzureB2CTenant(): string {
 	return value;
 };
 
-// export function configApprovedRecordsArePublic(): boolean {
-// 	const value = stringToBoolean( process.env.APPROVED_RECORDS_ARE_PUBLIC || "1" );
-// 	return value;
-// };
 
 /**
  * Get configuration for supported autentication.
@@ -176,28 +135,6 @@ export function configAuthSupportedAzureSSOB2C(): boolean {
 
 
 /**
- * Get systems currency configuration.
- * @returns string[] | default value empty string[]
- */
-export function configCurrencies(): string[] {
-	let value = process.env.CURRENCY_CODES || "";
-	let valueArray = [];
-	let returnArray:string[] = [];
-	
-	// remove spaces
-	value = value.replace(/\s+/g, '');
-	valueArray = value.split(",");
-
-	valueArray.forEach(function(item) { 
-		if (checkValidCurrency(item)) {
-			returnArray.push(item.toUpperCase());
-		}
-	});
-
-	return returnArray;
-};
-
-/**
  * Retrieves the application's version from the package.json file.
  * 
  * This function reads the package.json file located in the current working directory,
@@ -221,8 +158,6 @@ export async function configApplicationVersion(): Promise<string> {
 	let fileString:string = '';
 	let packageJson:any = {};
 
-	// console.log( currentDirectory(), packageJsonPath );
-
 	// Read the file
 	try {
 		fileString = await fs.readFile(packageJsonPath, 'utf8');
@@ -238,15 +173,6 @@ export async function configApplicationVersion(): Promise<string> {
 
 	return returnValue;
 };
-
-
-
-export function configCountryInstanceISO(): string {
-	let returnValue:string = process.env.DTS_INSTANCE_CTRY_ISO3 || "";
-
-	return returnValue;
-};
-
 
 /**
  * Application email settings from environment variables.
@@ -272,9 +198,3 @@ export function configApplicationEmail() {
     };
 }
 
-
-export function config2FAIssuer(): string {
-	let returnValue:string = process.env.TOTP_ISSUER || "";
-
-	return returnValue;
-};

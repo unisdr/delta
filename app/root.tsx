@@ -18,9 +18,9 @@ import {LoaderFunctionArgs} from "react-router-dom";
 import {ToastContainer} from "react-toastify/unstyled"; // Import ToastContainer for notifications
 
 import {
-	getUserFromSession,
 	sessionCookie,
 	getFlashMessage,
+	getUserFromSession,
 } from "~/util/session";
 
 import {useEffect, useState} from "react";
@@ -38,6 +38,7 @@ import {
 
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {notifyError, notifyInfo} from "./frontend/utils/notifications";
+import { getCurrenciesAsListFromCommaSeparated } from "./util/currency";
 import { getInstanceSystemSettings } from "./backend.server/models/instanceSystemSettingDAO";
 
 
@@ -48,14 +49,13 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({request}: LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request)
-	const settings = await getInstanceSystemSettings();
-	if(!settings){
-		throw new Response ("System settings was not found", {status:500});
-	}
-
 	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-
 	const message = getFlashMessage(session);
+
+	let settings = await getInstanceSystemSettings();
+	if(!settings){
+		throw new Response("System settings was not found", {status:500});
+	}
 
 	return Response.json({
 		hasPublicSite: settings.approvedRecordsArePublic,
@@ -64,49 +64,19 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 		flashMessage: message,
 		confSiteName: settings.websiteName,
 		confSiteLogo: settings.websiteLogo,
-		confFooterURLPrivPolicy: settings?.footerUrlPrivacyPolicy || '',
-		confFooterURLTermsConds: settings?.footerUrlTermsConditions || '',
+		confFooterURLPrivPolicy: settings.footerUrlPrivacyPolicy || '',
+		confFooterURLTermsConds: settings.footerUrlTermsConditions || '',
+		systemSettings: settings,
 		env: {
-			CURRENCY_CODES: process.env.CURRENCY_CODES || '',
-			DTS_INSTANCE_CTRY_ISO3: process.env.DTS_INSTANCE_CTRY_ISO3 || ''
-		}
+			CURRENCY_CODES: getCurrenciesAsListFromCommaSeparated(settings.currencyCodes) || 'USD',
+			DTS_INSTANCE_CTRY_ISO3: settings.dtsInstanceCtryIso3 || ''
+		},
 	}, {
 		headers: {
 			"Set-Cookie": await sessionCookie().commitSession(session),
 		}
 	});
 };
-
-/*
-interface NavProps {
-	loggedIn: boolean
-}
-
-function Nav(props: NavProps) {
-	const menu = [
-		{link: "data", text: "Data"},
-		{link: "settings", text: "Settings"},
-		{link: "user/settings", text: "Settings (todo 2)"},
-	]
-	return (
-		<nav>
-			{menu.map((item, index) => (
-				<NavLink
-					key={index}
-					to={`/${item.link}`}
-					className={({ isActive, isPending }) =>
-						isActive ? "active" : isPending ? "pending" : ""
-					}
-				>
-				{item.text}
-				</NavLink>
-			))}
-			{props.loggedIn ? (
-				<Link to="/user/logout">Logout</Link>
-			) : null }
-		</nav>
-	);
-}*/
 
 interface InactivityWarningProps {
 	loggedIn: boolean

@@ -10,10 +10,11 @@ import {
 } from "~/drizzle/schema";
 import { and, eq, inArray, SQL, exists } from "drizzle-orm";
 import { getSectorsByParentId } from "./sectors";
-import { configCurrencies } from "~/util/config";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 import { parseFlexibleDate, createDateCondition, extractYearFromDate } from "~/backend.server/utils/dateFilters";
 import createLogger from "~/utils/logger.server";
+import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 // Create logger for this backend module
 const logger = createLogger("backend.server/models/analytics/ImpactOnSectors");
@@ -30,11 +31,17 @@ interface DisasterImpactMetadata {
   notes: string;
 }
 
-export const createAssessmentMetadata = (
+export const createAssessmentMetadata = async(
   assessmentType: AssessmentType = 'rapid',
   confidenceLevel: ConfidenceLevel = 'medium'
-): DisasterImpactMetadata => {
-  const currencies = configCurrencies();
+): Promise<DisasterImpactMetadata> => {
+  
+  const settings = await getInstanceSystemSettings()
+
+  let currencies: string[]=[];
+  if(settings){
+    currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+  }
 
   logger.debug("Creating assessment metadata", {
     assessmentType,
@@ -732,7 +739,7 @@ export async function fetchSectorImpactData(
         eventsOverTime: {},
         damageOverTime: {},
         lossOverTime: {},
-        metadata: createAssessmentMetadata(
+        metadata: await createAssessmentMetadata(
           filters?.assessmentType || 'detailed',
           filters?.confidenceLevel || 'medium'
         ),
@@ -760,7 +767,7 @@ export async function fetchSectorImpactData(
     });
 
     // Create assessment metadata
-    const metadata = createAssessmentMetadata(
+    const metadata = await createAssessmentMetadata(
       filters?.assessmentType || 'detailed',
       filters?.confidenceLevel || 'medium'
     );

@@ -40,6 +40,8 @@ import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
 import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 // Define an interface for the structure of the JSON objects
 interface interfaceMap {
@@ -52,9 +54,14 @@ interface interfaceMap {
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
-
 	async () => {
-		const currency = process.env.CURRENCY_CODES?.split(",")[0] || "PHP";
+		const settings = await getInstanceSystemSettings();
+		let currencies:string[]= [];
+		if(settings){
+			currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+		}
+		
+		const currency = currencies[0] || "PHP";
 		const hazardTypes = await fetchHazardTypes();
 		const hazardClusters = await fetchHazardClusters(null);
 		const specificHazards = await fetchAllSpecificHazards();
@@ -92,7 +99,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     toDate,
   };
 
-  const currency = process.env.CURRENCY_CODES?.split(",")[0] || "PHP";
+  const settings  = await getInstanceSystemSettings();
+  let currency = "PHP";
+  if(settings){
+	currency = settings.currencyCodes?.split(",")[0]
+  }
   const geographicLevel1 = await getDivisionByLevel(1);
 
   const disasterCount = await getDisasterEventCount(filters);
@@ -241,7 +252,6 @@ export default function HazardAnalysis() {
 
 	} = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
-	console.log("actionData= ", actionData)
 
 	const [appliedFilters, setAppliedFilters] = useState<{
 		hazardTypeId: string | null;

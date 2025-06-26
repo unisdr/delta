@@ -1,5 +1,5 @@
 import {
-	fieldsDefApi
+	getFieldsDefApi
 } from "~/backend.server/models/disruption"
 
 import {
@@ -13,7 +13,7 @@ import {
 export const loader = authLoaderApiDocs(async () => {
 	let docs = await jsonApiDocs({
 		baseUrl: "disruption",
-		fieldsDef: fieldsDefApi
+		fieldsDef: await getFieldsDefApi()
 	})
 
 	return new Response(docs, {

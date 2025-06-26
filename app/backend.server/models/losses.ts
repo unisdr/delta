@@ -5,14 +5,22 @@ import {eq} from "drizzle-orm"
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form"
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
-import {configCurrencies} from "~/util/config"
 import {unitsEnum} from "~/frontend/unit_picker"
 import {typeEnumAgriculture, typeEnumNotAgriculture} from "~/frontend/losses_enums"
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
+import { getInstanceSystemSettings } from "./instanceSystemSettingDAO"
 
 export interface LossesFields extends Omit<LossesInsert, "id"> {}
 
-export function fieldsForPubOrPriv(pub: boolean): FormInputDef<LossesFields>[] {
+export async function fieldsForPubOrPriv(pub: boolean): Promise<FormInputDef<LossesFields>[]> {
 	let pre = pub ? "public" : "private"
+
+		const settings = await getInstanceSystemSettings();
+		let currencies:string[]=[];
+		if(settings){
+			currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+		}
+
 	return [
 		{key: pre + "Unit" as keyof LossesFields, label: "Value Unit", type: "enum", enumData: unitsEnum, uiRow: {colOverride: 5}},
 		{key: pre + "Units" as keyof LossesFields, label: "Value", type: "number"},
@@ -21,7 +29,7 @@ export function fieldsForPubOrPriv(pub: boolean): FormInputDef<LossesFields>[] {
 			key: pre + "CostUnitCurrency" as keyof LossesFields,
 			label: "Cost Currency",
 			type: "enum-flex",
-			enumData: configCurrencies().map(c => ({key: c, label: c}))
+			enumData: currencies.map(c => ({key: c, label: c}))
 		},
 		{key: pre + "CostTotal" as keyof LossesFields, label: "Total Cost", type: "money", uiRow: {}},
 		{key: pre + "CostTotalOverride" as keyof LossesFields, label: "Override", type: "bool"},
@@ -69,9 +77,9 @@ export const fieldsDef: FormInputDef<LossesFields>[] = [
 	{key: "description", label: "Description", type: "textarea", uiRowNew: true},
 
 	// Public 
-	...fieldsForPubOrPriv(true),
+	...await fieldsForPubOrPriv(true),
 	// Private 
-	...fieldsForPubOrPriv(false),
+	...await fieldsForPubOrPriv(false),
 
 	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},

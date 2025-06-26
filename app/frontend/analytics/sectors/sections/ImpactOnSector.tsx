@@ -5,7 +5,6 @@ import { IoInformationCircleOutline } from "react-icons/io5";
 import {
 	formatCurrencyWithCode,
 	formatNumber,
-	useDefaultCurrency,
 } from "~/frontend/utils/formatters";
 import AreaChart from "~/components/AreaChart";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
@@ -27,15 +26,6 @@ interface ApiResponse {
 		};
 	};
 }
-
-// interface ImpactData {
-// 	eventCount: number;
-// 	totalDamage: string;
-// 	totalLoss: string;
-// 	eventsOverTime: { year: number; count: number }[];
-// 	damageOverTime: { year: number; amount: number }[];
-// 	lossOverTime: { year: number; amount: number }[];
-// }
 
 interface Props {
 	sectorId: string | null;
@@ -76,16 +66,6 @@ interface SpecificHazardsResponse {
 	hazards: Hazard[];
 }
 
-// Transform time series data
-// const transformTimeSeriesData = (data: Record<string, string>) => {
-// 	return Object.entries(data)
-// 		.map(([year, value]) => ({
-// 			year: parseInt(year),
-// 			amount: parseFloat(value),
-// 		}))
-// 		.sort((a, b) => a.year - b.year);
-// };
-
 // Custom tooltip for charts
 interface CustomTooltipProps {
 	active?: boolean;
@@ -123,7 +103,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
 	return null;
 };
 
-const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
+const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
 	// Initialize logger with component name and default context
 	const logger = createClientLogger('ImpactOnSector', {
 		sectorId,
@@ -148,27 +128,6 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 			});
 		}
 	};
-
-	// const handlePointerEnter = (
-	// 	e: React.PointerEvent<HTMLButtonElement>,
-	// 	content: string
-	// ) => {
-	// 	console.log("Pointer Enter Event:", {
-	// 		target: e.currentTarget,
-	// 		content: content,
-	// 	});
-
-	// 	if (e.currentTarget === eventsImpactingRef.current) {
-	// 		createTooltip(eventsImpactingRef, content);
-	// 	} else if (e.currentTarget === eventsOverTimeRef.current) {
-	// 		createTooltip(eventsOverTimeRef, content);
-	// 	} else if (e.currentTarget === damageTooltipRef.current) {
-	// 		createTooltip(damageTooltipRef, content);
-	// 	} else if (e.currentTarget === lossTooltipRef.current) {
-	// 		createTooltip(lossTooltipRef, content);
-	// 	}
-	// };
-
 	// Debug logging for tooltip state changes
 	useEffect(() => {
 		logger.debug("Tooltip Props Changed");
@@ -207,54 +166,6 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 			prevGeographicLevelRef.current = filters.geographicLevelId;
 		}
 	}, [targetSectorId, filters.geographicLevelId]);
-
-	// const { data: apiResponse, error, isLoading } = useQuery<ApiResponse>(
-	//     ["sectorImpact", targetSectorId, filters],
-	//     async () => {
-	//         console.log('Fetching data for:', { targetSectorId, filters });
-
-	//         if (!targetSectorId) throw new Error("Sector ID is required");
-
-	//         const params = new URLSearchParams();
-
-	//         // Add sector ID first
-	//         params.append("sectorId", targetSectorId);
-
-	//         // Add other filters, but exclude sectorId and subSectorId since we handle those separately
-	//         Object.entries(filters).forEach(([key, value]) => {
-	//             if (value !== null && value !== undefined && value !== "" && key !== "sectorId" && key !== "subSectorId") {
-	//                 params.append(key, value.toString());
-	//                 console.log(`Adding filter: ${key}=${value}`);
-	//             }
-	//         });
-
-	//         console.log('API Request URL:', `/api/analytics/ImpactonSectors?${params}`);
-
-	//         const response = await fetch(`/api/analytics/ImpactonSectors?${params}`);
-	//         if (!response.ok) {
-	//             console.error('API Error:', response.status, response.statusText);
-	//             const errorText = await response.text();
-	//             console.error('API Error Details:', errorText);
-	//             throw new Error("Failed to fetch sector impact data");
-	//         }
-	//         const data = await response.json();
-	//         console.log('API Response:', data);
-	//         return data;
-	//     },
-	//     {
-	//         enabled: !!targetSectorId,
-	//         staleTime: 0,
-	//         cacheTime: 0,
-	//         refetchOnWindowFocus: false,
-	//         retry: 1,
-	//         onSuccess: (data) => {
-	//             console.log('Query Success - New Data:', data);
-	//         },
-	//         onError: (error) => {
-	//             console.error('Query Error:', error);
-	//         }
-	//     }
-	// );
 
 	const {
 		data: apiResponse,
@@ -335,12 +246,6 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		}
 	}, [isError, error, targetSectorId]);
 
-	// const { data: sectorsData } = useQuery<{ sectors: Sector[] }>("sectors", async () => {
-	//     const response = await fetch("/api/analytics/sectors");
-	//     if (!response.ok) throw new Error("Failed to fetch sectors");
-	//     return response.json();
-	// });
-
 	const { data: sectorsData } = useQuery<{ sectors: Sector[] }>({
 		queryKey: ["sectors"],
 		queryFn: async () => {
@@ -410,8 +315,6 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		}
 		return "All Hazards";
 	};
-
-	const currency = useDefaultCurrency();
 
 	// Format money values with appropriate scale
 	const formatMoneyValue = (value: number) => {

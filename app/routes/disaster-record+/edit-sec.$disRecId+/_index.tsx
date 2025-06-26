@@ -20,11 +20,12 @@ import {
 } from "@remix-run/react";
 
 import { useState, useEffect, useRef, RefObject } from 'react';
-import { configCurrencies } from  "~/util/config";
 
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfigSector } from "../content-picker-config";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 //#Sector: End
 
 // Meta function for page SEO
@@ -90,7 +91,13 @@ interface PropsAction {
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params} = actionArgs;
 	const req = actionArgs.request;
-	const arrayCurrency = configCurrencies();
+
+	const settings= await getInstanceSystemSettings();
+	var currencyCodes= '';
+	if(settings){
+		currencyCodes=settings.currencyCodes;
+	}
+	const arrayCurrency = getCurrenciesAsListFromCommaSeparated(currencyCodes);
 	let sectorDisplayName:string = '';
 
 	// Parse the request URL

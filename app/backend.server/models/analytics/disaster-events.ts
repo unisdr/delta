@@ -20,7 +20,8 @@ import {
 	inArray
 } from "drizzle-orm";
 
-import { configCurrencies } from "~/util/config";
+import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 /**
  * Fetch disaster events from the database based on the query parameter.
@@ -304,32 +305,32 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 				)
 			),
 		);
-	// const rawSQL2 = queryRecordSectorTable.toSQL();
-	// console.log(rawSQL2 );
 
 	// Execute the query
 	const record = await queryRecordSectorTable.execute();
 	let totalDamages:number = 0;
 	let totalLosses:number = 0;
 	let totalRecovery:number = 0;
-	// let recordsAssetDamagesQuery:any = undefined;
-	// let recordsAssetDamages:any = undefined;
-	// let recordsAssetlosses:any = undefined;
 	let recordsAssetRecoveryIdArray:any[] = [];
 	let recordsAssetDamagesIdArray:any[] = [];
 	let recordsAssetLossesIdArray:any[] = [];
-	// console.log( recordsAssetDamagesIdArray );
-	let damageCurrency:string = configCurrencies()[0];
+
+	const settings=await getInstanceSystemSettings();
+	var currenyCodes ='';
+	if(settings){
+		currenyCodes = settings.currencyCodes;
+	}
+	const currenyCodesAsList = getCurrenciesAsListFromCommaSeparated(currenyCodes);
+
+	let damageCurrency:string = currenyCodesAsList[0];
 
 	record.forEach((item) => {
 		if (item.withDamage) {
 			if (item.damageCost) {
-				// console.log(index, item);
 				totalDamages += Number(item.damageCost); //get the total override from the sector level damage cost
 			}
 			else {
 				// get damage records from damages table
-				// console.log(index, item);
 				recordsAssetDamagesIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
 			}
 
@@ -338,7 +339,6 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 			}
 			else {
 				// get the recovery records from damages table
-				// console.log(index, item);
 				recordsAssetRecoveryIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
 			}
 		}
@@ -471,14 +471,18 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 	let totalDamages:number = 0;
 	let totalLosses:number = 0;
 	let totalRecovery:number = 0;
-	// let recordsAssetDamagesQuery:any = undefined;
-	// let recordsAssetDamages:any = undefined;
-	// let recordsAssetlosses:any = undefined;
 	let recordsAssetRecoveryIdArray:any[] = [];
 	let recordsAssetDamagesIdArray:any[] = [];
 	let recordsAssetLossesIdArray:any[] = [];
-	// console.log( recordsAssetDamagesIdArray );
-	let damageCurrency:string = configCurrencies()[0];
+
+	const settings=await getInstanceSystemSettings();
+	var currenyCodes ='';
+	if(settings){
+		currenyCodes = settings.currencyCodes;
+	}
+	const currenyCodesAsList = getCurrenciesAsListFromCommaSeparated(currenyCodes);
+
+	let damageCurrency:string = currenyCodesAsList[0];
 
 	record.forEach((item) => {
 		if (item.withDamage) {

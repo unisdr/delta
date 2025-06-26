@@ -37,6 +37,7 @@ import { getAffected } from "~/backend.server/models/analytics/affected-people-b
 import CustomPieChart from '~/components/PieChart';
 import CustomStackedBarChart from '~/components/StackedBarChart';
 import HorizontalBarChart from '~/components/HorizontalBarChart';
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 
 // Define an interface for the structure of the JSON objects
@@ -102,7 +103,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let sectorParentArray: interfaceSector[] = [];
   let x: any = {};
   
-  const currency = process.env.CURRENCY_CODES?.split(",")[0] || "PHP";
+  const settings= await getInstanceSystemSettings();
+  let currency = "PHP";
+  if(settings){
+    currency =settings.currencyCodes?.split(",")[0];
+  }
   // const sectorExistsInSectorParentArray = (id: number): boolean => {
   //   return sectorParentArray.some(item => item.id === id);
   // };
@@ -388,9 +393,6 @@ function DisasterEventsAnalysisContent() {
   
     const buttonText = e.currentTarget.textContent?.trim() || "Legend";
   
-    // console.log('data:', data);
-    // console.log('buttonText:', buttonText);
-    // console.log();
     e.currentTarget.ariaSelected = 'true';
   
     setActiveData(data);
@@ -805,7 +807,7 @@ function DisasterEventsAnalysisContent() {
                             <span>Damage</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorDamagePieChartData } boolRenderLabel={false} />
+                              <CustomPieChart data={ ld.sectorDamagePieChartData } boolRenderLabel={false} currency={ld.currency}/>
                           </div>
                         </div>
                       )
@@ -818,7 +820,7 @@ function DisasterEventsAnalysisContent() {
                             <span>Losses</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorLossesPieChartData } boolRenderLabel={false} />
+                              <CustomPieChart data={ ld.sectorLossesPieChartData } boolRenderLabel={false} currency={ld.currency}/>
                           </div>
                         </div>
                       )
@@ -831,7 +833,7 @@ function DisasterEventsAnalysisContent() {
                             <span>Recovery need</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } boolRenderLabel={false} />
+                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } boolRenderLabel={false} currency={ld.currency}/>
                           </div>
                         </div>
                       )

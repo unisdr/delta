@@ -1,6 +1,6 @@
 import {
 	hazardousEventUpdate,
-	hazardousEventById
+	hazardousEventById,
 } from "~/backend.server/models/event";
 
 import {
@@ -8,13 +8,9 @@ import {
 	HazardousEventForm,
 } from "~/frontend/events/hazardeventform";
 
-import {
-	formScreen,
-} from "~/frontend/form";
+import { formScreen } from "~/frontend/form";
 
-import {
-	formSave,
-} from "~/backend.server/handlers/form/form";
+import { formSave } from "~/backend.server/handlers/form/form";
 
 import {
 	authActionGetAuth,
@@ -23,32 +19,29 @@ import {
 	authLoaderWithPerm,
 } from "~/util/auth";
 
-import {
-	useLoaderData,
-} from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 
-import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
+import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
-import {
-	getItem2
-} from "~/backend.server/handlers/view"
+import { getItem2 } from "~/backend.server/handlers/view";
 
-import {buildTree} from "~/components/TreeView";
-import {dr} from "~/db.server"; // Drizzle ORM instance
-import {divisionTable} from "~/drizzle/schema";
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server"; // Drizzle ORM instance
+import { divisionTable } from "~/drizzle/schema";
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	const {params} = loaderArgs;
-	const item = await getItem2(params, hazardousEventById)
+	const { params } = loaderArgs;
+	const item = await getItem2(params, hazardousEventById);
 	let hip = await dataForHazardPicker();
 
-	let user = authLoaderGetUserForFrontend(loaderArgs)
+	let user = authLoaderGetUserForFrontend(loaderArgs);
 
 	if (item!.event.ps.length > 0) {
 		let parent = item!.event.ps[0].p.he;
 		// get parent of parent as well, to match what we use in new form
 		let parent2 = await hazardousEventById(parent.id);
-		return {hip, item, parent: parent2, treeData: [], user};
+		return { hip, item, parent: parent2, treeData: [], user };
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
@@ -56,21 +49,38 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const parentKey = "parentId";
 	const nameKey = "name";
 	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]); console.log(treeData);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
+		"geojson",
+		"importId",
+		"nationalId",
+		"level",
+		"name",
+	]);
+	console.log(treeData);
 
-	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
+	let ctryIso3: string = "";
+	const settings = await getInstanceSystemSettings();
+	if (settings) {
+		ctryIso3 = settings.dtsInstanceCtryIso3;
+	}
 
-    const divisionGeoJSON = await dr.execute(`
+	const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson, import_id
 		FROM division
 		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
     `);
 
-	return {hip: hip, item: item, treeData: treeData, ctryIso3: ctryIso3, divisionGeoJSON: divisionGeoJSON?.rows || [], user};
-})
+	return {
+		hip: hip,
+		item: item,
+		treeData: treeData,
+		ctryIso3: ctryIso3,
+		divisionGeoJSON: divisionGeoJSON?.rows || [],
+		user,
+	};
+});
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
-
 	const user = authActionGetAuth(actionArgs);
 	return formSave({
 		actionArgs,
@@ -79,23 +89,23 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			if (id) {
 				return hazardousEventUpdate(tx, id, data, user.user.id);
 			} else {
-				throw "not an create screen"
+				throw "not an create screen";
 			}
 		},
-		redirectTo: (id: string) => `/hazardous-event/${id}`
-	})
+		redirectTo: (id: string) => `/hazardous-event/${id}`,
+	});
 });
 
 export default function Screen() {
-	let ld = useLoaderData<typeof loader>()
+	let ld = useLoaderData<typeof loader>();
 	if (!ld.item) {
-		throw "invalid"
+		throw "invalid";
 	}
 	let fieldsInitial = {
 		...ld.item,
 		...ld.item.event,
-		parent: ""
-	}
+		parent: "",
+	};
 	return formScreen({
 		extraData: {
 			hip: ld.hip,
@@ -103,11 +113,11 @@ export default function Screen() {
 			treeData: ld.treeData,
 			ctryIso3: ld.ctryIso3,
 			user: ld.user,
-			divisionGeoJSON: ld.divisionGeoJSON
+			divisionGeoJSON: ld.divisionGeoJSON,
 		},
 		fieldsInitial,
 		form: HazardousEventForm,
 		edit: true,
-		id: ld.item.id
+		id: ld.item.id,
 	});
 }

@@ -4,11 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { authLoaderGetAuth, authLoaderWithPerm } from '~/util/auth';
 import { getSupportedTimeZone } from '~/util/timezone';
 import {
-  configCurrencies,
   configApplicationVersion,
-  configCountryInstanceISO,
   configApplicationEmail,
-  config2FAIssuer,
 } from '~/util/config';
 import { NavSettings } from '~/routes/settings/nav';
 import { MainContainer } from '~/frontend/container';
@@ -19,6 +16,7 @@ import {
   updateFooterUrlTermsConditions,
 } from '~/backend.server/models/instanceSystemSettingDAO';
 import { getSystemInfo, SystemInfo } from '~/backend.server/models/dtsSystemInfoDAO';
+import { getCurrenciesAsListFromCommaSeparated } from '~/util/currency';
 
 // Define the loader data type
 interface LoaderData {
@@ -44,16 +42,23 @@ interface LoaderData {
 export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (loaderArgs) => {
   const { user } = authLoaderGetAuth(loaderArgs);
   const settings = await getInstanceSystemSettings();
-  if(!settings){
-    throw new Response ("System settings was not found.",{status:500});
+  let approvedRecordsArePublic = false;
+  let currencies:string[] = [];
+  let confCtryInstanceISO = "USA";
+  let totpIssuer= "example-app";
+  if(settings){
+    approvedRecordsArePublic= settings.approvedRecordsArePublic;
+    currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+    confCtryInstanceISO =settings.dtsInstanceCtryIso3;
+    totpIssuer = settings.totpIssuer;
   }
 
   const timeZones: string[] = getSupportedTimeZone();
-  const currency: string[] = configCurrencies();
+  const currency: string[] = currencies;
   const systemLanguage: string[] = ['English'];
   const confEmailObj = configApplicationEmail();
-  const conf2FAIssuer = config2FAIssuer();
-  const confInstanceTypePublic = settings.approvedRecordsArePublic;
+  const conf2FAIssuer = totpIssuer;
+  const confInstanceTypePublic = approvedRecordsArePublic;
 
   let ctryInstanceName: string = '';
 
@@ -65,8 +70,6 @@ export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (load
       console.error('Error:', error);
       return undefined;
     });
-
-  const confCtryInstanceISO = configCountryInstanceISO();
 
   if (confCtryInstanceISO !== '') {
     const url =

@@ -5,15 +5,21 @@ import {eq} from "drizzle-orm"
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form"
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
-import {configCurrencies} from "~/util/config"
 import {unitsEnum} from "~/frontend/unit_picker"
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
+import { getInstanceSystemSettings } from "./instanceSystemSettingDAO"
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
 
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}
 
 
-export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
+export async function fieldsForPd(pre: "pd" | "td"): Promise<FormInputDef<DamagesFields>[]> {
 	let repairOrReplacement = pre == "pd" ? "Repair" : "Replacement"
+	const settings = await getInstanceSystemSettings();
+	let currencies:string[]=[];
+	if(settings){
+		currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+	}
 
 	return [
 		{key: pre + "DamageAmount" as keyof DamagesFields, label: "Amount of units", type: "number", uiRow: {}},
@@ -22,7 +28,7 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 			key: pre + repairOrReplacement + "CostUnitCurrency" as keyof DamagesFields,
 			label: "Currency",
 			type: "enum-flex",
-			enumData: configCurrencies().map(c => ({key: c, label: c}))
+			enumData: currencies.map(c => ({key: c, label: c}))
 		},
 		{key: pre + repairOrReplacement + "CostTotal" as keyof DamagesFields, label: `Total ${repairOrReplacement.toLowerCase()} cost`, type: "money"},
 		{key: pre + repairOrReplacement + "CostTotalOverride" as keyof DamagesFields, label: "Override", type: "bool"},
@@ -31,7 +37,7 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 			key: pre + "RecoveryCostUnitCurrency" as keyof DamagesFields,
 			label: "Currency",
 			type: "enum-flex",
-			enumData: configCurrencies().map(c => ({key: c, label: c}))
+			enumData: currencies.map(c => ({key: c, label: c}))
 		},
 		{key: pre + "RecoveryCostTotal" as keyof DamagesFields, label: "Total recovery cost", type: "money"},
 		{key: pre + "RecoveryCostTotalOverride" as keyof DamagesFields, label: "Override", type: "bool"},
@@ -45,9 +51,13 @@ export function fieldsForPd(pre: "pd" | "td"): FormInputDef<DamagesFields>[] {
 
 export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 	let cur = ""
-	let curs = configCurrencies()
-	if (curs.length > 0) {
-		cur = curs[0]
+	const settings = await getInstanceSystemSettings();
+	let currencies:string[]=[];
+	if(settings){
+		currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+	}
+	if (currencies.length > 0) {
+		cur = currencies[0]
 	}
 
 	return [
@@ -64,9 +74,9 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 		{key: "totalRepairReplacementOverride", label: "Override", type: "bool"},
 
 		// Partially destroyed
-		...fieldsForPd("pd"),
+		...await fieldsForPd("pd"),
 		// Totally damaged
-		...fieldsForPd("td"),
+		...await fieldsForPd("td"),
 
 		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},

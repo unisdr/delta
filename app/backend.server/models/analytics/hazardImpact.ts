@@ -126,7 +126,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     });
 
     // Create assessment metadata
-    const metadata = createAssessmentMetadata(
+    const metadata = await createAssessmentMetadata(
         assessmentType,
         confidenceLevel
     );

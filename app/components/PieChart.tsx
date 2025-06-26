@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { PieChart, Pie, Tooltip, Legend, Cell, ResponsiveContainer } from "recharts";
-import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
 
 // Note: The colors below are sourced from the UNDRR Visual Identity Guide (colors-typography) as a temporary palette, pending the designer's input for a more aligned and less confusing color set.
 const COLORS = [
@@ -32,6 +32,7 @@ interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{ payload: PieChartData }>;
   data: PieChartData[]; // Full dataset for percentage calculation
+  currency: string;
 }
 
 // Helper function to determine if a color is light (for text contrast)
@@ -60,8 +61,8 @@ const isLightColor = (color: string): boolean => {
 // };
 
 
-const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, data }) => {
-  const defaultCurrency = useDefaultCurrency();
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, data, currency }) => {
+  const defaultCurrency = currency;
 
   if (!active || !payload || !payload.length) {
     return null;
@@ -131,7 +132,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, data }) 
 };
 
 // Main PieChart component
-export default function CustomPieChart({ data, title, chartHeight = 350, boolRenderLabel = true }: { data: any[]; title?: string; chartHeight?:number; boolRenderLabel?: boolean }) {
+export default function CustomPieChart({ data, title, chartHeight = 350, boolRenderLabel = true, currency }: { data: any[]; title?: string; chartHeight?:number; boolRenderLabel?: boolean; currency: string }) {
   const [mounted, setMounted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
@@ -280,7 +281,7 @@ export default function CustomPieChart({ data, title, chartHeight = 350, boolRen
               />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip data={dataWithIndex} />} />
+          <Tooltip content={<CustomTooltip data={dataWithIndex} currency={currency}/>} />
           <Legend
             align="left"
             verticalAlign="bottom"

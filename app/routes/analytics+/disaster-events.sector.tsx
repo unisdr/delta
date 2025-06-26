@@ -15,9 +15,9 @@ import {
 
 import CustomPieChart from '~/components/PieChart';
 
-import {configCurrencies} from "~/util/config";	
-
 import { unitName } from "~/frontend/unit_picker"
+import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 interface interfacePieChart {
   name: string;
@@ -91,7 +91,12 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let sectorData:any = {};
   let sectorId:number = 0;
 
-  let confCurrencies:any = configCurrencies();
+  const settings = await getInstanceSystemSettings();
+  let currencies:string[]=[];
+  if(settings){
+    currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+  }
+  let confCurrencies:any = currencies;
 
   let sectorDamagePieChartData:interfacePieChart[] = [];
   let sectorLossesPieChartData:interfacePieChart[] = [];
@@ -228,7 +233,7 @@ export default function DetailSectorEffectScreen() {
                             <span>Damage in {ld.sectorData.sectorname} in {ld.confCurrencies}</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '${pieChartHeightContainer}px'}}>
-                              <CustomPieChart data={ ld.sectorDamagePieChartData } chartHeight={pieChartHeight} boolRenderLabel={false} />
+                              <CustomPieChart data={ ld.sectorDamagePieChartData } chartHeight={pieChartHeight} boolRenderLabel={false} currency={ld.confCurrencies}/>
                           </div>
                         </div>
                       )
@@ -241,7 +246,7 @@ export default function DetailSectorEffectScreen() {
                             <span>Losses in {ld.sectorData.sectorname} in {ld.confCurrencies}</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '${pieChartHeightContainer}px'}}>
-                              <CustomPieChart data={ ld.sectorLossesPieChartData } chartHeight={pieChartHeight} boolRenderLabel={false} />
+                              <CustomPieChart data={ ld.sectorLossesPieChartData } chartHeight={pieChartHeight} boolRenderLabel={false} currency={ld.confCurrencies}/>
                           </div>
                         </div>
                       )
@@ -254,7 +259,7 @@ export default function DetailSectorEffectScreen() {
                             <span>Recovery in {ld.sectorData.sectorname} in {ld.confCurrencies}</span>
                           </h3>
                           <div className="dts-placeholder" style={{height: '${pieChartHeightContainer}px'}}>
-                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } chartHeight={pieChartHeight} boolRenderLabel={false} />
+                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } chartHeight={pieChartHeight} boolRenderLabel={false} currency={ld.confCurrencies} />
                           </div>
                         </div>
                       )

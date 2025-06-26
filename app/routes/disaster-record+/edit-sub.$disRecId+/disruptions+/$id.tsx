@@ -11,7 +11,7 @@ import {authLoaderWithPerm} from "~/util/auth";
 import {getItem2} from "~/backend.server/handlers/view";
 
 import {
-	fieldsDefView
+	getFieldsDefView
 } from "~/backend.server/models/disruption"
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
@@ -20,7 +20,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	if (!item) {
 		throw new Response("Not Found", {status: 404});
 	}
-	return {item, fieldDef: fieldsDefView };
+	return {item, fieldDef: await getFieldsDefView() };
 });
 
 export default function Screen() {

@@ -23,7 +23,6 @@
 
 import { SQL, sql } from "drizzle-orm";
 import { dr as db } from "~/db.server";
-import { configCurrencies } from "~/util/config";
 import type {
     DisasterImpactMetadata,
     AssessmentType,
@@ -34,6 +33,8 @@ import type {
     FaoAssessmentMetadata,
     FaoAgriculturalImpact
 } from "~/types/disasterCalculations";
+import { getInstanceSystemSettings } from "../models/instanceSystemSettingDAO";
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 /**
  * Calculates total damages following UNDRR and World Bank DaLA methodology:
@@ -81,11 +82,15 @@ export const calculateLosses = (table: any): SQL => {
  * @param confidenceLevel - Confidence level in the data
  * @returns Standardized metadata object
  */
-export const createAssessmentMetadata = (
+export const createAssessmentMetadata = async(
     assessmentType: AssessmentType = 'rapid',
     confidenceLevel: ConfidenceLevel = 'medium'
-): DisasterImpactMetadata => {
-    const currencies = configCurrencies();
+): Promise<DisasterImpactMetadata> => {
+    const settings = await getInstanceSystemSettings();
+    let currencies :string[]=[];
+    if(settings){
+        currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes)
+    }
     return {
         assessmentType,
         confidenceLevel,
@@ -318,14 +323,15 @@ export const calculateFaoAgriculturalImpact = async (
  * @param seasonalContext - Optional seasonal context
  * @returns FAO assessment metadata object
  */
-export const createFaoAssessmentMetadata = (
+export const createFaoAssessmentMetadata =  async(
     subsector: FaoAgriSubsector,
     baselinePeriod: string,
     assessmentPeriod: string,
     seasonalContext?: string
-): FaoAssessmentMetadata => {
+): Promise<FaoAssessmentMetadata> => {
+    const baseMetadata = await createAssessmentMetadata();
     return {
-        ...createAssessmentMetadata(),
+        ...baseMetadata,
         subsector,
         baselinePeriod,
         assessmentPeriod,

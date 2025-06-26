@@ -12,7 +12,7 @@ export interface InstanceSystemSettings {
 	websiteName: string;
 	websiteUrl: string;
 	approvedRecordsArePublic: boolean;
-	totpIssuer: string | null;
+	totpIssuer: string ;
 	dtsInstanceType: string;
 	dtsInstanceCtryIso3:  string;
 	currencyCodes: string;
