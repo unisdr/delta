@@ -6,7 +6,6 @@
 
 import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getEffectDetailsHandler, EffectDetailsError } from "~/backend.server/handlers/analytics/effectDetails";
-import { checkRateLimit } from "~/utils/security";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { z } from "zod";
 
@@ -35,9 +34,9 @@ const querySchema = z.object({
   hazardClusterId: z.string().regex(/^\d+$/).optional(),
   specificHazardId: z.string().regex(/^\d+$/).optional(),
   geographicLevelId: z.string().regex(/^\d+$/).optional(),
-  fromDate: z.string().optional(), 
-  toDate: z.string().optional(), 
-  disasterEventId: z.string().optional(), 
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+  disasterEventId: z.string().optional(),
 });
 
 /**
@@ -59,27 +58,7 @@ const querySchema = z.object({
  */
 export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
   try {
-    /**
-     * Rate Limiting
-     * Enforces rate limiting to prevent abuse (100 requests per 15 minutes)
-     */
-    if (!checkRateLimit(request, 100, 15 * 60 * 1000)) {
-      return Response.json(
-        {
-          success: false,
-          error: 'Too many requests from this IP, please try again later',
-          code: 'RATE_LIMIT_EXCEEDED'
-        },
-        {
-          status: 429,
-          headers: {
-            'Cache-Control': 'no-store',
-            'X-Content-Type-Options': 'nosniff',
-            'Retry-After': '900' // 15 minutes in seconds
-          }
-        }
-      ) as TypedResponse<EffectDetailsResponse>;
-    }
+
 
     /**
      * Parameter Extraction & Validation

@@ -6,7 +6,6 @@
  */
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { checkRateLimit } from "~/utils/security";
 import { handleMostDamagingEventsRequest } from "~/backend.server/handlers/analytics/mostDamagingEvents";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { z } from "zod";
@@ -27,21 +26,7 @@ import { z } from "zod";
  * @returns {Promise<Response>} JSON response with most damaging events data or error message
  */
 export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
-  // Rate limiting check
-  if (!checkRateLimit(request, 100, 15 * 60 * 1000)) {
-    return Response.json({
-      success: false,
-      error: "Rate limit exceeded. Please try again later.",
-      code: 'RATE_LIMIT_EXCEEDED'
-    }, {
-      status: 429,
-      headers: {
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff',
-        'Retry-After': '900'
-      }
-    });
-  }
+
 
   /**
    * Parameter extraction & validation
