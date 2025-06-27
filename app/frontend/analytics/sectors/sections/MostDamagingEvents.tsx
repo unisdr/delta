@@ -312,25 +312,125 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
             <table className="dts-table">
               <thead>
                 <tr>
-                  <th>Event Name</th>
-                  <th>Total Damages</th>
-                  <th>Total Losses</th>
-                  <th>Created</th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Event Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total Damages
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total Losses
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Created
+                  </th>
                 </tr>
               </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={4} className="text-center p-4">
+                    Loading data...
+                  </td>
+                </tr>
+              </tbody>
             </table>
-          </div>
-          <div className="py-8">
-            <p>Loading data...</p>
           </div>
         </div>
       ) : isError ? (
-        <div className="text-center p-4 text-red-600">
-          <p>Error loading data. Please try again.</p>
+        <div className="mg-container">
+          <div className="dts-table-wrapper">
+            <table className="dts-table">
+              <thead>
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Event Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total Damages
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total Losses
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Created
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={4} className="text-center p-4 text-red-600">
+                    Error loading data. Please try again.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : !data?.success || !sortedEvents?.length ? (
-        <div className="text-center p-4">
-          <p>No events found for the selected filters.</p>
+        <div className="mg-container">
+          <div className="dts-table-wrapper">
+            <table className="dts-table">
+              <thead>
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Event Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total Damages
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total Losses
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Created
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={4} className="text-center p-4">
+                    No events found for the selected filters.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="mg-container">
