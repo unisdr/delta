@@ -232,11 +232,6 @@ export const devExample1Table = pgTable("dev_example1", {
 export type DevExample1 = typeof devExample1Table.$inferSelect;
 export type DevExample1Insert = typeof devExample1Table.$inferInsert;
 
-export const country1Table = pgTable("country1", {
-	id: ourSerial("id").primaryKey(),
-	name: zeroStrMap("name"),
-});
-
 export const divisionTable = pgTable(
 	"division",
 	{
