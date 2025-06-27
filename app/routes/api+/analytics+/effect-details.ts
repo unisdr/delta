@@ -4,10 +4,11 @@
  * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
  */
 
-import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
+import type { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getEffectDetailsHandler, EffectDetailsError } from "~/backend.server/handlers/analytics/effectDetails";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { z } from "zod";
+import { json } from "@remix-run/node";
 
 /**
  * Interface for the API response structure
@@ -15,6 +16,12 @@ import { z } from "zod";
 interface EffectDetailsResponse {
   success: boolean;
   data?: any; // TODO: Replace with specific type from getEffectDetails
+  pagination?: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
   error?: string;
   code?: string;
 }
@@ -37,120 +44,129 @@ const querySchema = z.object({
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
   disasterEventId: z.string().optional(),
+  // Pagination parameters
+  page: z.string().regex(/^\d+$/).transform(Number).default('1'),
+  pageSize: z.string().regex(/^(10|20|30|40|50)$/).transform(Number).default('10'),
+  // Table selection for pagination (damages, losses, disruptions)
+  table: z.enum(['damages', 'losses', 'disruptions']).optional(),
 });
 
 /**
  * Loader function for the effect-details API endpoint.
  * @route GET /api/analytics/effect-details
- * @param {Object} request - The incoming request object
- * @authentication Requires ViewData permission if APPROVED_RECORDS_ARE_PUBLIC is false
- * @queryParams
- *   - sectorId {string}. Numeric ID of the sector to analyze
- *   - subSectorId {string}. Numeric ID of the sub-sector
- *   - hazardTypeId {string} Optional. Filter by hazard type
- *   - hazardClusterId {string} Optional. Filter by hazard cluster
- *   - specificHazardId {string} Optional. Filter by specific hazard
- *   - geographicLevelId {string} Optional. Filter by geographic level
- *   - fromDate {string} Optional. Start date for the analysis period
- *   - toDate {string} Optional. End date for the analysis period
- *   - disasterEventId {string} Optional. Filter by specific disaster event
+ * @param {Object} request - The incoming HTTP request
+ * @param {Object} request.url - The request URL containing query parameters
+ * @queryParam {string} sectorId - Required. The ID of the sector to filter by
+ * @queryParam {string} [subSectorId] - Optional. The ID of the subsector to filter by
+ * @queryParam {string} [hazardTypeId] - Optional. Filter by hazard type
+ * @queryParam {string} [hazardClusterId] - Optional. Filter by hazard cluster
+ * @queryParam {string} [specificHazardId] - Optional. Filter by specific hazard
+ * @queryParam {string} [geographicLevelId] - Optional. Filter by geographic level
+ * @queryParam {string} [fromDate] - Optional. Start date for filtering (YYYY-MM-DD)
+ * @queryParam {string} [toDate] - Optional. End date for filtering (YYYY-MM-DD)
+ * @queryParam {string} [disasterEventId] - Optional. Filter by specific disaster event
+ * @queryParam {number} [page=1] - Page number for pagination (1-based)
+ * @queryParam {number} [pageSize=10] - Number of items per page (10, 20, 30, 40, or 50)
+ * @queryParam {string} [table] - Optional. Table to paginate (damages, losses, or disruptions)
  * @returns {Promise<Response>} JSON response with effect details data or error message
  */
 export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
+  // Process the request
+  const url = new URL(request.url);
+  const queryParams = Object.fromEntries(url.searchParams);
+
+  // Validate query parameters against the schema
+  const result = querySchema.safeParse(queryParams);
+
+  if (!result.success) {
+    return json(
+      {
+        success: false,
+        error: 'Invalid query parameters',
+        details: result.error.format()
+      },
+      { status: 400 }
+    ) as TypedResponse<EffectDetailsResponse>;
+  }
+
+  // Extract and format parameters with proper null/undefined handling
+  const {
+    page = 1,
+    pageSize = 10,
+    table,
+    sectorId,
+    subSectorId,
+    hazardTypeId,
+    hazardClusterId,
+    specificHazardId,
+    geographicLevelId,
+    fromDate,
+    toDate,
+    disasterEventId
+  } = result.data;
+
   try {
-
-
-    /**
-     * Parameter Extraction & Validation
-     * Extracts query parameters and validates them using Zod schema
-     */
-    const url = new URL(request.url);
-    const searchParams = Object.fromEntries(url.searchParams);
-    const validationResult = querySchema.safeParse(searchParams);
-
-    if (!validationResult.success) {
-      return Response.json(
-        {
-          success: false,
-          error: validationResult.error.issues.map(i => i.message).join(", "),
-          code: 'INVALID_PARAMS'
-        },
-        {
-          status: 400,
-          headers: {
-            'Cache-Control': 'no-store',
-            'X-Content-Type-Options': 'nosniff'
-          }
-        }
-      ) as TypedResponse<EffectDetailsResponse>;
-    }
-
-    /**
-     * Data Retrieval
-     * Calls the domain layer handler to fetch and process effect details data
-     */
-    const validatedData = validationResult.data;
+    // Call the handler with properly typed parameters
     const data = await getEffectDetailsHandler({
-      sectorId: validatedData.sectorId?.toString() || null,
-      subSectorId: validatedData.subSectorId?.toString() || null,
-      hazardTypeId: validatedData.hazardTypeId || null,
-      hazardClusterId: validatedData.hazardClusterId || null,
-      specificHazardId: validatedData.specificHazardId || null,
-      geographicLevelId: validatedData.geographicLevelId || null,
-      fromDate: validatedData.fromDate || null,
-      toDate: validatedData.toDate || null,
-      disasterEventId: validatedData.disasterEventId || null,
+      // Required parameters
+      sectorId: sectorId ?? null,
+      // Optional parameters with null fallback
+      subSectorId: subSectorId ?? null,
+      hazardTypeId: hazardTypeId ?? null,
+      hazardClusterId: hazardClusterId ?? null,
+      specificHazardId: specificHazardId ?? null,
+      geographicLevelId: geographicLevelId ?? null,
+      fromDate: fromDate ?? null,
+      toDate: toDate ?? null,
+      disasterEventId: disasterEventId ?? null,
+      // Pagination parameters
+      page,
+      pageSize,
+      table
     });
 
-    /**
-     * Response Construction
-     * Returns the data with proper security headers
-     */
-    return Response.json(data, {
-      headers: {
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block'
+    // Return the data with success status
+    // Create response object with proper typing
+    const responseData: EffectDetailsResponse = {
+      success: true,
+      data: data,
+      // Pagination will be added by the handler if needed
+    };
+
+    return json(
+      responseData,
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+          'X-Content-Type-Options': 'nosniff'
+        }
       }
-    }) as TypedResponse<EffectDetailsResponse>;
-
+    ) as TypedResponse<EffectDetailsResponse>;
   } catch (error) {
-    /**
-     * Error Handling
-     * Handles all types of errors with appropriate status codes and messages
-     */
-    console.error('API Error:', error);
-
+    // Handle expected errors
     if (error instanceof EffectDetailsError) {
-      return Response.json(
+      return json(
         {
           success: false,
           error: error.message,
           code: error.code
         },
-        {
-          status: error.code === 'INVALID_PARAMS' ? 400 : 500,
-          headers: {
-            'Cache-Control': 'no-store',
-            'X-Content-Type-Options': 'nosniff'
-          }
-        }
+        { status: 400 }
       ) as TypedResponse<EffectDetailsResponse>;
     }
 
-    return Response.json(
+    // Log unexpected errors for debugging
+    console.error('Unexpected error in effect-details endpoint:', error);
+
+    return json(
       {
         success: false,
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR'
+        error: 'An unexpected error occurred',
+        code: 'INTERNAL_SERVER_ERROR'
       },
-      {
-        status: 500,
-        headers: {
-          'Cache-Control': 'no-store',
-          'X-Content-Type-Options': 'nosniff'
-        }
-      }
+      { status: 500 }
     ) as TypedResponse<EffectDetailsResponse>;
   }
 });

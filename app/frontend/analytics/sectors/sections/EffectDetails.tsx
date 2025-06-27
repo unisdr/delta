@@ -1,10 +1,40 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ClientOnly } from "remix-utils/client-only";
+import { useCallback, useMemo } from "react";
 import { formatCurrencyWithCode, formatNumber } from "~/frontend/utils/formatters";
 import "~/frontend/styles/analytics/sectors/effect-details.css";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
 import { typeEnumAgriculture, typeEnumNotAgriculture } from "~/frontend/losses_enums";
+import { Pagination } from "~/frontend/pagination/view";
+import { useSearchParams } from "@remix-run/react";
+
+// Client-side URL parameter parsing
+const parseUrlParams = (searchParams: URLSearchParams) => {
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10)) || 1;
+  const pageSize = Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10)) || 10;
+
+  const extraParams: Record<string, string[]> = {};
+  const allowedParams = [
+    'sectorId', 'subSectorId', 'hazardTypeId', 'hazardClusterId',
+    'specificHazardId', 'geographicLevelId', 'fromDate', 'toDate', 'disasterEventId'
+  ];
+
+  searchParams.forEach((value, key) => {
+    if (allowedParams.includes(key)) {
+      if (!extraParams[key]) {
+        extraParams[key] = [];
+      }
+      extraParams[key].push(value);
+    }
+  });
+
+  return {
+    page,
+    pageSize,
+    extraParams
+  };
+};
 
 interface Props {
   filters: {
@@ -27,12 +57,24 @@ interface Sector {
   subsectors?: Sector[];
 }
 
+interface PaginationData {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 interface EffectDetailsResponse {
   success: boolean;
   data: {
     damages: DamageRecord[];
     losses: LossRecord[];
     disruptions: DisruptionRecord[];
+  };
+  pagination?: {
+    damages?: PaginationData;
+    losses?: PaginationData;
+    disruptions?: PaginationData;
   };
 }
 
@@ -93,8 +135,6 @@ interface TableProps {
   data: TableData[];
   currency: string;
 }
-
-
 
 interface SortableTableProps extends TableProps {
   formatValue: (value: string | number | null, key: string) => string;
@@ -183,9 +223,16 @@ const SortableTable: React.FC<SortableTableProps> = ({ title, columns, data, for
   );
 };
 
-
-
 export function EffectDetails({ filters, currency }: Props) {
+  // URL search params for pagination
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
+
+  // Parse URL parameters for pagination
+  const { page, pageSize, extraParams: urlExtraParams } = useMemo(
+    () => parseUrlParams(urlSearchParams),
+    [urlSearchParams]
+  );
+
   // Debounce filters to prevent too many API calls
   const debouncedFilters = useDebounce(filters, 500);
 
@@ -246,41 +293,85 @@ export function EffectDetails({ filters, currency }: Props) {
     return "Effect Details";
   };
 
+  // Build query parameters with pagination
+  const buildQueryParams = useCallback((filters: any, table: 'damages' | 'losses' | 'disruptions') => {
+    const searchParams = new URLSearchParams();
+
+    // Only use sectorId if no subsectorId is selected
+    if (filters.subSectorId) {
+      searchParams.append('sectorId', filters.subSectorId);
+    } else if (filters.sectorId) {
+      searchParams.append('sectorId', filters.sectorId);
+    }
+
+    // Add other filters with proper type checking
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '' && key !== 'sectorId' && key !== 'subSectorId') {
+        // Ensure we're only appending string values
+        const stringValue = String(value);
+        searchParams.append(key, stringValue);
+      }
+    });
+
+    // Add pagination parameters from URL
+    searchParams.append('page', page.toString());
+    searchParams.append('pageSize', pageSize.toString());
+    searchParams.append('table', table);
+
+    return searchParams;
+  }, [page, pageSize]);
+
   // Fetch effect details data
   const { data: effectDetailsResponse, isLoading, error } = useQuery<EffectDetailsResponse>({
-    queryKey: ["effectDetails", debouncedFilters],
+    queryKey: ["effectDetails", debouncedFilters, page, pageSize],
     queryFn: async () => {
       try {
-        const searchParams = new URLSearchParams();
+        // Fetch data for each table with its own pagination
+        const [damagesResponse, lossesResponse, disruptionsResponse] = await Promise.all([
+          fetch(`/api/analytics/effect-details?${buildQueryParams(debouncedFilters, 'damages')}`, {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }),
+          fetch(`/api/analytics/effect-details?${buildQueryParams(debouncedFilters, 'losses')}`, {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }),
+          fetch(`/api/analytics/effect-details?${buildQueryParams(debouncedFilters, 'disruptions')}`, {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          })
+        ]);
 
-        // Only use sectorId if no subsectorId is selected
-        if (debouncedFilters.subSectorId) {
-          searchParams.append('sectorId', debouncedFilters.subSectorId);
-        } else if (debouncedFilters.sectorId) {
-          searchParams.append('sectorId', debouncedFilters.sectorId);
-        }
+        // Process responses
+        const [damagesData, lossesData, disruptionsData] = await Promise.all([
+          damagesResponse.json(),
+          lossesResponse.json(),
+          disruptionsResponse.json()
+        ]);
 
-        // Add other filters
-        Object.entries(debouncedFilters).forEach(([key, value]) => {
-          if (value && key !== 'sectorId' && key !== 'subSectorId') {
-            searchParams.append(key, value);
+        // Combine responses
+        return {
+          success: true,
+          data: {
+            damages: damagesData.data?.data?.damages || damagesData.data?.damages || [],
+            losses: lossesData.data?.data?.losses || lossesData.data?.losses || [],
+            disruptions: disruptionsData.data?.data?.disruptions || disruptionsData.data?.disruptions || []
+          },
+          pagination: {
+            damages: damagesData.data?.data?.pagination || damagesData.pagination,
+            losses: lossesData.data?.data?.pagination || lossesData.pagination,
+            disruptions: disruptionsData.data?.data?.pagination || disruptionsData.pagination
           }
-        });
-
-        const response = await fetch(`/api/analytics/effect-details?${searchParams}`, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("No effect details found for the selected criteria");
-          }
-          throw new Error(`Failed to fetch effect details: ${response.statusText}`);
-        }
-        return response.json();
+        };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
         throw new Error(`Error fetching effect details: ${errorMessage}`);
@@ -357,41 +448,6 @@ export function EffectDetails({ filters, currency }: Props) {
     loadingMessage: string;
     isLoading: boolean;
   }) => {
-    const formatValue = (value: string | number | null, key: string): string => {
-      if (value === null || value === undefined) return '-';
-
-      // Convert string numbers to actual numbers for currency fields
-      if (typeof value === 'string' && !isNaN(Number(value)) &&
-        ['totalDamage', 'repairReplacement', 'recovery', 'publicCost', 'privateCost',
-          'totalDamageAmount', 'totalRepairReplacement', 'totalRecovery', 'publicCostTotal', 'privateCostTotal', 'responseCost'].includes(key)) {
-        value = Number(value);
-      }
-
-      // Format all currency fields consistently
-      if (
-        ['totalDamage', 'repairReplacement', 'recovery', 'publicCost', 'privateCost',
-          'totalDamageAmount', 'totalRepairReplacement', 'totalRecovery', 'publicCostTotal', 'privateCostTotal', 'responseCost'].includes(key) &&
-        typeof value === 'number'
-      ) {
-        return formatCurrencyWithCode(
-          value,
-          currency,
-          {},
-          value >= 1_000_000_000 ? 'billions' :
-            value >= 1_000_000 ? 'millions' :
-              value >= 1_000 ? 'thousands' :
-                undefined
-        );
-      }
-
-      // Format other numeric values with proper grouping
-      if (typeof value === 'number') {
-        return formatNumber(value);
-      }
-
-      return String(value);
-    };
-
     if (isLoading) {
       return (
         <div className="dts-data-box">
@@ -501,7 +557,6 @@ export function EffectDetails({ filters, currency }: Props) {
 
             {isLoading ? (
               <div>
-                {/* Damages Table Loading */}
                 {renderTable({
                   title: 'Damages',
                   columns: [
@@ -512,11 +567,10 @@ export function EffectDetails({ filters, currency }: Props) {
                   ],
                   data: [],
                   emptyMessage: '',
-                  loadingMessage: 'Loading damage records...',
-                  isLoading: isLoading
+                  loadingMessage: 'Loading damages data...',
+                  isLoading: true
                 })}
 
-                {/* Losses Table Loading */}
                 {renderTable({
                   title: 'Losses',
                   columns: [
@@ -527,15 +581,14 @@ export function EffectDetails({ filters, currency }: Props) {
                   ],
                   data: [],
                   emptyMessage: '',
-                  loadingMessage: 'Loading loss records...',
-                  isLoading: isLoading
+                  loadingMessage: 'Loading losses data...',
+                  isLoading: true
                 })}
 
-                {/* Disruptions Table Loading */}
                 {renderTable({
                   title: 'Disruptions',
                   columns: [
-                    { key: 'comment', label: 'Description' },
+                    { key: 'comment', label: 'Comment' },
                     { key: 'durationDays', label: 'Duration (Days)' },
                     { key: 'usersAffected', label: 'Users Affected' },
                     { key: 'peopleAffected', label: 'People Affected' },
@@ -543,13 +596,12 @@ export function EffectDetails({ filters, currency }: Props) {
                   ],
                   data: [],
                   emptyMessage: '',
-                  loadingMessage: 'Loading disruption records...',
-                  isLoading: isLoading
+                  loadingMessage: 'Loading disruptions data...',
+                  isLoading: true
                 })}
               </div>
             ) : effectDetailsResponse ? (
               <div>
-                {/* Damages Table */}
                 {renderTable({
                   title: 'Damages',
                   columns: [
@@ -565,9 +617,29 @@ export function EffectDetails({ filters, currency }: Props) {
                     totalRecovery: formatValue(damage.totalRecovery, 'totalRecovery'),
                   })),
                   emptyMessage: 'No damage records details available for the selected criteria.',
-                  loadingMessage: '',
-                  isLoading: isLoading
+                  loadingMessage: 'Loading damages data...',
+                  isLoading: false
                 })}
+
+                {effectDetailsResponse.pagination?.damages && effectDetailsResponse.data.damages && effectDetailsResponse.data.damages.length > 0 && (
+                  <div className="mt-4 w-full">
+                    <div className="inline-block">
+                      <Pagination
+                        itemsOnThisPage={effectDetailsResponse.data.damages.length}
+                        totalItems={effectDetailsResponse.pagination.damages.total}
+                        page={effectDetailsResponse.pagination.damages.page}
+                        pageSize={effectDetailsResponse.pagination.damages.pageSize}
+                        extraParams={urlExtraParams}
+                        onPageSizeChange={(newSize) => {
+                          const params = new URLSearchParams(urlSearchParams);
+                          params.set('pageSize', newSize.toString());
+                          params.set('page', '1'); // Reset to first page when changing page size
+                          setUrlSearchParams(params, { replace: true });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Losses Table */}
                 {renderTable({
@@ -585,15 +657,35 @@ export function EffectDetails({ filters, currency }: Props) {
                     privateCostTotal: loss.privateCostTotal ? formatValue(loss.privateCostTotal, 'privateCostTotal') : '-',
                   })),
                   emptyMessage: 'No loss records details available for the selected criteria.',
-                  loadingMessage: '',
-                  isLoading: isLoading
+                  loadingMessage: 'Loading losses data...',
+                  isLoading: false,
                 })}
+
+                {effectDetailsResponse.pagination?.losses && effectDetailsResponse.data.losses && effectDetailsResponse.data.losses.length > 0 && (
+                  <div className="mt-4 w-full">
+                    <div className="inline-block">
+                      <Pagination
+                        itemsOnThisPage={effectDetailsResponse.data.losses.length}
+                        totalItems={effectDetailsResponse.pagination.losses.total}
+                        page={effectDetailsResponse.pagination.losses.page}
+                        pageSize={effectDetailsResponse.pagination.losses.pageSize}
+                        extraParams={urlExtraParams}
+                        onPageSizeChange={(newSize) => {
+                          const params = new URLSearchParams(urlSearchParams);
+                          params.set('pageSize', newSize.toString());
+                          params.set('page', '1'); // Reset to first page when changing page size
+                          setUrlSearchParams(params, { replace: true });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Disruptions Table */}
                 {renderTable({
                   title: 'Disruptions',
                   columns: [
-                    { key: 'comment', label: 'Description' },
+                    { key: 'comment', label: 'Comment' },
                     { key: 'durationDays', label: 'Duration (Days)' },
                     { key: 'usersAffected', label: 'Users Affected' },
                     { key: 'peopleAffected', label: 'People Affected' },
@@ -607,9 +699,29 @@ export function EffectDetails({ filters, currency }: Props) {
                     responseCost: disruption.responseCost ? formatValue(disruption.responseCost, 'responseCost') : '-',
                   })),
                   emptyMessage: 'No disruption records details available for the selected criteria.',
-                  loadingMessage: '',
-                  isLoading: isLoading
+                  loadingMessage: 'Loading disruptions data...',
+                  isLoading: false,
                 })}
+
+                {effectDetailsResponse.pagination?.disruptions && effectDetailsResponse.data.disruptions && effectDetailsResponse.data.disruptions.length > 0 && (
+                  <div className="mt-4 w-full">
+                    <div className="inline-block">
+                      <Pagination
+                        itemsOnThisPage={effectDetailsResponse.data.disruptions.length}
+                        totalItems={effectDetailsResponse.pagination.disruptions.total}
+                        page={effectDetailsResponse.pagination.disruptions.page}
+                        pageSize={effectDetailsResponse.pagination.disruptions.pageSize}
+                        extraParams={urlExtraParams}
+                        onPageSizeChange={(newSize) => {
+                          const params = new URLSearchParams(urlSearchParams);
+                          params.set('pageSize', newSize.toString());
+                          params.set('page', '1'); // Reset to first page when changing page size
+                          setUrlSearchParams(params, { replace: true });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>

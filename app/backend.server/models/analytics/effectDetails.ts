@@ -19,15 +19,33 @@ import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/
 import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 /**
+ * Normalizes ID values to strings, handling both string and number inputs
+ */
+function normalizeId(id: string | number | null | undefined): string | null {
+  if (id === null || id === undefined) return null;
+  return typeof id === 'number' ? id.toString() : id;
+}
+
+/**
+ * Converts a string or number ID to a number
+ */
+function toNumberId(id: string | number | null | undefined): number | null {
+  const idStr = normalizeId(id);
+  if (!idStr) return null;
+  const num = parseInt(idStr, 10);
+  return isNaN(num) ? null : num;
+}
+
+/**
  * Gets all subsector IDs for a given sector following international standards.
  * This implementation uses the proper hierarchical structure defined in the sector table.
  * 
- * @param sectorId - The ID of the sector to get subsectors for
+ * @param sectorId - The ID of the sector to get subsectors for (string or number)
  * @returns Array of sector IDs including the input sector and all its subsectors
  */
-const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
-  const numericSectorId = parseInt(sectorId, 10);
-  if (isNaN(numericSectorId)) {
+const getAllSubsectorIds = async (sectorId: string | number | null): Promise<number[]> => {
+  const numericSectorId = toNumberId(sectorId);
+  if (numericSectorId === null) {
     return []; // Return empty array if invalid ID
   }
 
@@ -44,14 +62,14 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
 
     // For each subsector, recursively get its subsectors
     for (const subsector of subsectors) {
-      const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
+      const childSubsectorIds = await getAllSubsectorIds(subsector.id);
       // Filter out the subsector ID itself as it's already included
       const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
       result.push(...uniqueChildIds);
     }
   }
 
-  // Remove duplicates and return
+  // Remove duplicates
   return [...new Set(result)];
 };
 
@@ -60,8 +78,8 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
  * @interface FilterParams
  */
 interface FilterParams {
-  sectorId: string | null;
-  subSectorId: string | null;
+  sectorId: string | number | null;
+  subSectorId: string | number | null;
   hazardTypeId: string | null;
   hazardClusterId: string | null;
   specificHazardId: string | null;
@@ -98,8 +116,8 @@ export async function getEffectDetails(filters: FilterParams) {
   let targetSectorIds: number[] = [];
   if (filters.sectorId) {
     try {
-      const numericSectorId = parseInt(filters.sectorId, 10);
-      if (isNaN(numericSectorId)) {
+      const numericSectorId = toNumberId(filters.sectorId);
+      if (numericSectorId === null) {
         targetSectorIds = []; // Return empty array if invalid ID
       } else {
         // Get immediate subsectors
@@ -115,7 +133,7 @@ export async function getEffectDetails(filters: FilterParams) {
 
           // For each subsector, recursively get its subsectors
           for (const subsector of subsectors) {
-            const childSubsectorIds = await getAllSubsectorIds(subsector.id.toString());
+            const childSubsectorIds = await getAllSubsectorIds(subsector.id);
             // Filter out the subsector ID itself as it's already included
             const uniqueChildIds = childSubsectorIds.filter(id => id !== subsector.id);
             targetSectorIds.push(...uniqueChildIds);
