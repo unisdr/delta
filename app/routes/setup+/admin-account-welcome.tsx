@@ -2,9 +2,10 @@ import type { MetaFunction } from '@remix-run/node';
 
 import { Link } from "react-router-dom";
 import { useLoaderData, } from "@remix-run/react";
-import { configSiteName, configAuthSupportedAzureSSOB2C} from "~/util/config";
+import { configSiteName, configAuthSupportedAzureSSOB2C } from "~/util/config";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { checkValidCurrency } from "~/util/currency";
+import { checkValidCountryISO3 } from "~/util/country";
 
 export const action = async () => {
 	return (null);
@@ -13,7 +14,7 @@ export const action = async () => {
 // Function to validate required environment variables
 function validateRequiredEnvVars() {
 	const errors: { variable: string; message: string }[] = [];
-	
+
 	// Check WEBSITE_LOGO
 	if (!process.env.WEBSITE_LOGO) {
 		errors.push({
@@ -21,7 +22,7 @@ function validateRequiredEnvVars() {
 			message: 'Website logo URL is missing'
 		});
 	}
-	
+
 	// Check WEBSITE_NAME
 	if (!process.env.WEBSITE_NAME) {
 		errors.push({
@@ -29,7 +30,7 @@ function validateRequiredEnvVars() {
 			message: 'Website name is missing'
 		});
 	}
-	
+
 	// Check WEBSITE_URL
 	if (!process.env.WEBSITE_URL) {
 		errors.push({
@@ -42,7 +43,7 @@ function validateRequiredEnvVars() {
 			message: 'Website URL must start with http:// or https://'
 		});
 	}
-	
+
 	// Check DATABASE_URL
 	if (!process.env.DATABASE_URL) {
 		errors.push({
@@ -55,7 +56,7 @@ function validateRequiredEnvVars() {
 			message: 'Database connection string is invalid (must be PostgreSQL)'
 		});
 	}
-	
+
 	// Check if the database URL contains invalid characters or paths
 	if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('?host=/var/run/postgresql/')) {
 		errors.push({
@@ -63,7 +64,7 @@ function validateRequiredEnvVars() {
 			message: 'Database connection string contains invalid Unix socket path. Please use a standard PostgreSQL connection string format.'
 		});
 	}
-	
+
 	// Check SESSION_SECRET
 	if (!process.env.SESSION_SECRET) {
 		errors.push({
@@ -76,7 +77,7 @@ function validateRequiredEnvVars() {
 			message: 'Session secret is using default value in production'
 		});
 	}
-	
+
 	// Check EMAIL_TRANSPORT and related settings
 	if (!process.env.EMAIL_TRANSPORT) {
 		errors.push({
@@ -110,7 +111,7 @@ function validateRequiredEnvVars() {
 			});
 		}
 	}
-	
+
 	// Check EMAIL_FROM
 	if (!process.env.EMAIL_FROM) {
 		errors.push({
@@ -123,7 +124,7 @@ function validateRequiredEnvVars() {
 			message: 'Email sender address appears to be invalid'
 		});
 	}
-	
+
 	// Check DTS_INSTANCE_TYPE
 	if (!process.env.DTS_INSTANCE_TYPE) {
 		errors.push({
@@ -136,24 +137,26 @@ function validateRequiredEnvVars() {
 			message: 'DTS instance type must be either "country" or "undrr"'
 		});
 	}
-	
+
 	// Check DTS_INSTANCE_CTRY_ISO3
 	if (!process.env.DTS_INSTANCE_CTRY_ISO3) {
 		errors.push({
 			variable: 'DTS_INSTANCE_CTRY_ISO3',
 			message: 'Country ISO3 code is missing'
 		});
-	} else {
-		// Check if ISO3 is valid (3 uppercase letters)
-		const iso3Regex = /^[A-Z]{3}$/;
-		if (!iso3Regex.test(process.env.DTS_INSTANCE_CTRY_ISO3)) {
-			errors.push({
-				variable: 'DTS_INSTANCE_CTRY_ISO3',
-				message: 'Country ISO3 code must be 3 uppercase letters (e.g., USA, GBR, JPN)'
-			});
-		}
+	} else if (process.env.DTS_INSTANCE_CTRY_ISO3.length !== 3) {
+		errors.push({
+			variable: 'DTS_INSTANCE_CTRY_ISO3',
+			message: 'Country code must be exactly 3 characters long'
+		});
+	} else if (!checkValidCountryISO3(process.env.DTS_INSTANCE_CTRY_ISO3)) {
+		errors.push({
+			variable: 'DTS_INSTANCE_CTRY_ISO3',
+			message: `"${process.env.DTS_INSTANCE_CTRY_ISO3}" is not a valid ISO 3166-1 alpha-3 country code. ` +
+				'Please use a valid 3-letter country code (e.g., COD, ETH, UGA, RWA)'
+		});
 	}
-	
+
 	// Check CURRENCY_CODES
 	if (!process.env.CURRENCY_CODES) {
 		errors.push({
@@ -172,7 +175,7 @@ function validateRequiredEnvVars() {
 			}
 		}
 	}
-	
+
 	// Check AUTHENTICATION_SUPPORTED
 	if (!process.env.AUTHENTICATION_SUPPORTED) {
 		errors.push({
@@ -180,7 +183,7 @@ function validateRequiredEnvVars() {
 			message: 'Authentication methods configuration is missing'
 		});
 	}
-	
+
 	// Check SSO configuration if enabled
 	if (configAuthSupportedAzureSSOB2C()) {
 		if (!process.env.SSO_AZURE_B2C_TENANT) {
@@ -202,23 +205,23 @@ function validateRequiredEnvVars() {
 			});
 		}
 	}
-	
+
 	return errors;
 }
 
 export const loader = async () => {
 	console.log("NODE_ENV", process.env.NODE_ENV);
-	
+
 	// Validate required environment variables
 	const configErrors = validateRequiredEnvVars();
-	
+
 	// Test database connection before proceeding
 	if (process.env.DATABASE_URL) {
 		try {
 			// We're not actually testing the connection here to avoid dependencies,
 			// but in a real implementation, you would add a simple connection test
 			// For example: await db.$queryRaw`SELECT 1`;
-			
+
 			// If there are known connection issues based on the URL format, add them to errors
 			if (process.env.DATABASE_URL.includes('/var/run/postgresql/')) {
 				configErrors.push({
@@ -234,12 +237,12 @@ export const loader = async () => {
 			});
 		}
 	}
-	
+
 	// Add a message about the number of configuration errors
 	if (configErrors.length > 0) {
 		console.warn(`Found ${configErrors.length} configuration errors that need to be fixed before proceeding with setup.`);
 	}
-	
+
 	return ({
 		configSiteName: configSiteName(),
 		confAuthSupportedAzureSSOB2C: configAuthSupportedAzureSSOB2C(),
@@ -256,32 +259,32 @@ export const meta: MetaFunction = () => {
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {configSiteName, configErrors} = loaderData;
+	const { configSiteName, configErrors } = loaderData;
 
 	return (
 		<>
 			<div className="mg-container">
 				<form className="dts-form dts-form--vertical">
 					<div className="dts-form__header">
-					<span>&nbsp;</span>
+						<span>&nbsp;</span>
 					</div>
 					<div className="dts-form__intro">
-						<h2 className="dts-heading-1">Welcome to the { configSiteName }.</h2>
+						<h2 className="dts-heading-1">Welcome to the {configSiteName}.</h2>
 						<p>Track disaster impacts, including damages, losses, and human effects, to support better recovery and resilience.</p>
 					</div>
-					
+
 					{configErrors && configErrors.length > 0 ? (
 						<div className="dts-form__body">
-							<div style={{ 
-								background: '#fff0f0', 
+							<div style={{
+								background: '#fff0f0',
 								border: '1px solid #ffcccc',
 								borderRadius: '4px',
 								padding: '16px',
-								marginBottom: '20px' 
+								marginBottom: '20px'
 							}}>
-								<div style={{ 
-									display: 'flex', 
-									alignItems: 'center', 
+								<div style={{
+									display: 'flex',
+									alignItems: 'center',
 									marginBottom: '10px',
 									color: '#cc0000',
 									fontWeight: 'bold'
@@ -292,8 +295,8 @@ export default function Screen() {
 								<p style={{ marginBottom: '10px' }}>
 									The following required configuration variables are missing or have invalid values in your <code>.env</code> file:
 								</p>
-								<ul style={{ 
-									listStyleType: 'disc', 
+								<ul style={{
+									listStyleType: 'disc',
 									paddingLeft: '20px',
 									margin: '0'
 								}}>
@@ -309,11 +312,11 @@ export default function Screen() {
 							</div>
 						</div>
 					) : null}
-					
+
 					<div className="dts-form__actions">
 						{configErrors && configErrors.length > 0 ? (
-							<button 
-								className="mg-button mg-button-primary" 
+							<button
+								className="mg-button mg-button-primary"
 								disabled
 								style={{ opacity: 0.6, cursor: 'not-allowed' }}
 							>
@@ -323,7 +326,7 @@ export default function Screen() {
 							<Link to="/setup/admin-account" className="mg-button mg-button-primary">Set up account</Link>
 						)}
 						{
-							loaderData.confAuthSupportedAzureSSOB2C && !(configErrors && configErrors.length > 0) ? 
+							loaderData.confAuthSupportedAzureSSOB2C && !(configErrors && configErrors.length > 0) ?
 								<Link className='mg-button mg-button-outline' to="/setup/admin-account-sso"
 									style={{
 										width: "100%", // Full width on small screens
