@@ -29,6 +29,13 @@
       "when": 1751167295654,
       "tag": "20250629032135_populating_countries_table_data",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1751269515383,
+      "tag": "20250630074515_update_countries_table_to_add_iso3",
+      "breakpoints": true
     }
   ]
 }

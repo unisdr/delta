@@ -179,6 +179,7 @@ export const userTable = pgTable("user", {
 	hydrometCheUser: zeroBool("hydromet_che_user"),
 	authType: text("auth_type").notNull().default("form"),
 	...createdUpdatedTimestamps,
+	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
 });
 
 export type User = typeof userTable.$inferSelect;
@@ -1348,7 +1349,8 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 
 export const countries = pgTable("countries",{
 	id: ourRandomUUID(),
-	name: varchar('name',{length: 100}).notNull().unique()
+	name: varchar('name',{length: 100}).notNull().unique(),
+	iso3: varchar('iso3', {length: 3}).unique()
 })
 
 export type Country = typeof countries.$inferSelect;
