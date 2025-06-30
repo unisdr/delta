@@ -5,7 +5,7 @@ import { useLoaderData, } from "@remix-run/react";
 import { configAuthSupportedAzureSSOB2C} from "~/util/config";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { checkValidCurrency } from "~/util/currency";
-import { getInstanceSystemSettings } from '~/backend.server/models/instanceSystemSettingDAO';
+import { getInstanceSystemSettings } from '~/db/queries/instanceSystemSetting';
 
 export const action = async () => {
 	return (null);

@@ -28,7 +28,7 @@ import { getItem2 } from "~/backend.server/handlers/view";
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params } = loaderArgs;

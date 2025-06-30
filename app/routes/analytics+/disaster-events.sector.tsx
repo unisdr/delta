@@ -16,7 +16,7 @@ import {
 import CustomPieChart from '~/components/PieChart';
 
 import { unitName } from "~/frontend/unit_picker"
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 interface interfacePieChart {

@@ -7,7 +7,7 @@ import {
 import {
 	Header,
 } from "~/frontend/header/header"
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 
 export const loader = authLoader(async () => {

@@ -24,7 +24,7 @@ import { useState, useEffect, useRef, RefObject } from 'react';
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfigSector } from "../content-picker-config";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 //#Sector: End
 

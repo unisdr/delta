@@ -24,7 +24,7 @@ import {
 	updateMissingIDError,
 	errorForForm,
 } from "./form_utils";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export interface JsonCreateArgs<T> {
 	data: any;

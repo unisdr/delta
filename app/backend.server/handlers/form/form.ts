@@ -37,7 +37,7 @@ import {PermissionId, RoleId} from "~/frontend/user/roles";
 import {logAudit} from "../../models/auditLogs";
 import {auditLogsTable, userTable} from "~/drizzle/schema";
 import {and, desc, eq} from "drizzle-orm";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export type ErrorResult<T> = {ok: false; errors: Errors<T>};
 

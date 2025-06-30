@@ -7,7 +7,7 @@ import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {unitsEnum} from "~/frontend/unit_picker"
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
-import { getInstanceSystemSettings } from "./instanceSystemSettingDAO"
+import { getInstanceSystemSettings } from "../../db/queries/instanceSystemSetting"
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
 
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}

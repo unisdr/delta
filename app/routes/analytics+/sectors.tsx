@@ -17,7 +17,7 @@ import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 // Performance optimization hooks
 // Enhanced debounce hook with adaptive timing and user interaction awareness

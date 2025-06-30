@@ -9,6 +9,7 @@ import {
 import {
 	cookieSessionDestroy,
 	getUserFromSession,
+	sessionCookie,
 	sessionMarkTotpAuthed,
 	UserSession
 } from "~/util/session";
@@ -16,7 +17,8 @@ import {
 import {LoginResult, LoginTotpResult, login as modelLogin, loginTotp as modelLoginTotp} from "~/backend.server/models/user/auth"
 import {apiAuth} from "~/backend.server/models/api_key"
 import {PermissionId, roleHasPermission, RoleId} from "~/frontend/user/roles";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getUserById } from "~/db/queries/user";
 
 export async function login(email: string, password: string): Promise<LoginResult> {
 	return await modelLogin(email, password)
@@ -289,5 +291,21 @@ export function authActionGetAuth(args: any): UserSession {
 		throw new Error("Missing user session")
 	}
 	return args.userSession
+}
+
+export async function requireSuperAdmin(request: Request) {
+  const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+  const userId = session.get('userId') as string | undefined;
+
+  if (!userId) {
+    throw redirect('/login');
+  }
+
+  const user = await getUserById(Number(userId));
+  if (!user || user.role !== 'super_admin') {
+    throw redirect('/403');
+  }
+
+  return user;
 }
 

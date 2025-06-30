@@ -25,7 +25,7 @@ import { buildTree } from "~/components/TreeView";
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 async function getResponseData(
 	item: DamagesViewModel | null,

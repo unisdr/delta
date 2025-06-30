@@ -13,7 +13,7 @@ import { getSectorsByParentId } from "./sectors";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 import { parseFlexibleDate, createDateCondition, extractYearFromDate } from "~/backend.server/utils/dateFilters";
 import createLogger from "~/utils/logger.server";
-import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 // Create logger for this backend module

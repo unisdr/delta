@@ -7,7 +7,7 @@ import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
-import { getInstanceSystemSettings } from "./instanceSystemSettingDAO"
+import { getInstanceSystemSettings } from "../../db/queries/instanceSystemSetting"
 
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 

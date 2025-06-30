@@ -18,7 +18,7 @@ import { useEffect } from "react";
 import { randomBytes } from "crypto";
 import { sendEmail } from "~/util/email";
 import { toast } from "react-toastify/unstyled";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 interface FormFields {
 	email: string;

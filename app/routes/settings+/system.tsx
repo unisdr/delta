@@ -14,8 +14,8 @@ import {
   InstanceSystemSettings,
   updateFooterUrlPrivacyPolicy,
   updateFooterUrlTermsConditions,
-} from '~/backend.server/models/instanceSystemSettingDAO';
-import { getSystemInfo, SystemInfo } from '~/backend.server/models/dtsSystemInfoDAO';
+} from '~/db/queries/instanceSystemSetting';
+import { getSystemInfo, SystemInfo } from '~/db/queries/dtsSystemInfo';
 import { getCurrenciesAsListFromCommaSeparated } from '~/util/currency';
 
 // Define the loader data type

@@ -34,7 +34,7 @@ import { contentPickerConfig } from "./content-picker-config";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { DeleteButton } from "~/frontend/components/delete-dialog";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params } = loaderArgs;

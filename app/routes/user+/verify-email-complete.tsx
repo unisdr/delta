@@ -18,7 +18,7 @@ import {processHipsPage} from "~/backend.server/utils/hip";
 import {processSectorCsv} from "~/backend.server/utils/sector";
 import {processCategoryCsv} from "~/backend.server/utils/category";
 import {processAssetCsv} from "~/backend.server/utils/asset";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export const meta: MetaFunction = (request) => {
 	// Extract the query string

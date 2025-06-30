@@ -25,7 +25,7 @@ import { hazardousEventById } from "~/backend.server/models/event";
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	let { request } = loaderArgs;

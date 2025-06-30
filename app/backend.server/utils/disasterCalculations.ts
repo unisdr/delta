@@ -33,7 +33,7 @@ import type {
     FaoAssessmentMetadata,
     FaoAgriculturalImpact
 } from "~/types/disasterCalculations";
-import { getInstanceSystemSettings } from "../models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "../../db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 /**

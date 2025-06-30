@@ -39,7 +39,7 @@ import {
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {notifyError, notifyInfo} from "./frontend/utils/notifications";
 import { getCurrenciesAsListFromCommaSeparated } from "./util/currency";
-import { getInstanceSystemSettings } from "./backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "./db/queries/instanceSystemSetting";
 
 
 export const links: LinksFunction = () => [

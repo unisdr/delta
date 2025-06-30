@@ -8,7 +8,7 @@ import {deleteByIdForStringId} from "./common"
 import {unitsEnum} from "~/frontend/unit_picker"
 import {typeEnumAgriculture, typeEnumNotAgriculture} from "~/frontend/losses_enums"
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
-import { getInstanceSystemSettings } from "./instanceSystemSettingDAO"
+import { getInstanceSystemSettings } from "../../db/queries/instanceSystemSetting"
 
 export interface LossesFields extends Omit<LossesInsert, "id"> {}
 

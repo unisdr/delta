@@ -5,7 +5,7 @@ import { userTable, User } from "~/drizzle/schema";
 
 import * as OTPAuth from "otpauth";
 import {loginTotp} from "./auth";
-import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
 
 
 function totpSettings(userEmail: string, secret: string, totpIssuer: string) {

@@ -20,7 +20,7 @@ import {
 	inArray
 } from "drizzle-orm";
 
-import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 /**

@@ -26,7 +26,7 @@ import {buildTree} from "~/components/TreeView";
 import {dr} from "~/db.server"; // Drizzle ORM instance
 import {divisionTable} from "~/drizzle/schema";
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 // export const loader = createLoader({
 // 	getById: disasterEventById,

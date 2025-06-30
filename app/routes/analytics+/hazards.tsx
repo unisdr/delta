@@ -40,7 +40,7 @@ import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
 import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
-import { getInstanceSystemSettings } from "~/backend.server/models/instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 // Define an interface for the structure of the JSON objects

@@ -13,7 +13,7 @@ import {randomBytes} from "crypto";
 
 import {validateName, validatePassword} from "./user_utils";
 import {passwordHash} from "./password";
-import { getInstanceSystemSettings } from "../instanceSystemSettingDAO";
+import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
 
 type AdminInviteUserResult =
 	| {ok: true}

@@ -1344,3 +1344,36 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
 	countryName: varchar("country_name").notNull().default("United State of America")
 });
+
+
+export const countries = pgTable("countries",{
+	id: ourRandomUUID(),
+	name: varchar('name',{length: 100}).notNull().unique()
+})
+
+export type Country = typeof countries.$inferSelect;
+export type NewCountry = typeof countries.$inferSelect;
+
+
+export const countryRelations =  relations(countries, ({one}) =>({
+	countryAccount: one(countryAccounts)
+}))
+
+export const countryAccounts = pgTable("country_accounts",{
+	id: ourRandomUUID(),
+	countryId: uuid("country_id").unique().notNull().references(()=>countries.id),
+	status: integer("status").notNull().default(1),
+	createdAt: timestamp("created_at",{mode: 'date', withTimezone: false}).notNull().defaultNow(),
+	updatedAt: timestamp("updated_at",{mode: 'date', withTimezone: false}),
+})
+
+export type CountryAccount = typeof countryAccounts.$inferSelect;
+export type NewCountryAccount = typeof countryAccounts.$inferInsert;
+
+export const countryAccountsRelations = relations(countryAccounts, ({ one }) =>({
+	country: one(countries,{
+		fields: [countryAccounts.countryId],
+		references: [countries.id]
+	})
+}))
+
