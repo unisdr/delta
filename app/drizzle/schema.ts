@@ -232,6 +232,113 @@ export const devExample1Table = pgTable("dev_example1", {
 export type DevExample1 = typeof devExample1Table.$inferSelect;
 export type DevExample1Insert = typeof devExample1Table.$inferInsert;
 
+export const countries = pgTable("countries", {
+	id: ourRandomUUID().primaryKey(),
+	name: zeroStrMap("name").notNull(),
+	iso3_code: varchar("iso3_code", { length: 3 }).notNull().unique(),
+	iso2_code: varchar("iso2_code", { length: 2 }).notNull().unique(),
+	numeric_code: varchar("numeric_code", { length: 3 }).unique(),
+	is_eligible_for_dts: boolean("is_eligible_for_dts").notNull().default(true),
+	created_at: timestamp("created_at").notNull().defaultNow(),
+	updated_at: timestamp("updated_at").notNull().defaultNow(),
+	deleted_at: timestamp("deleted_at"),
+});
+
+export type Country = typeof countries.$inferSelect;
+export type CountryInsert = typeof countries.$inferInsert;
+
+export const country_accounts = pgTable("country_accounts", {
+	id: ourRandomUUID().primaryKey(),
+	country_id: ourRandomUUID().notNull().references(() => countries.id).unique(),
+	status: integer("status").notNull().default(1), // -2=archived, -1=pending_deletion, 0=inactive, 1=active
+	created_at: timestamp("created_at").notNull().defaultNow(),
+	updated_at: timestamp("updated_at").notNull().defaultNow(),
+	deleted_at: timestamp("deleted_at"), // Soft delete support
+});
+
+export type CountryAccount = typeof country_accounts.$inferSelect;
+export type CountryAccountInsert = typeof country_accounts.$inferInsert;
+
+export const country_account_relations = relations(country_accounts, ({ one, many }) => ({
+	country: one(countries, {
+		fields: [country_accounts.country_id],
+		references: [countries.id],
+	}),
+	instance_settings: one(instanceSystemSettings, {
+		fields: [country_accounts.id],
+		references: [instanceSystemSettings.country_account_id],
+	}),
+	divisions: many(divisionTable),
+}));
+
+export const country_relations = relations(countries, ({ many }) => ({
+	country_accounts: many(country_accounts),
+}));
+
+
+
+// Account status enumeration for better type safety
+export enum AccountStatus {
+	ARCHIVED = -2,        // Data archived, no access, can be purged after retention period
+	PENDING_DELETION = -1, // Grace period before archival, read-only access for data export
+	INACTIVE = 0,         // Temporarily disabled, full data preservation, can be reactivated
+	ACTIVE = 1           // Normal operation
+}
+
+// Account lifecycle management utilities
+export const accountLifecycle = {
+	// Deactivate country account (reversible)
+	deactivate: (country_account_id: string) => ({
+		id: country_account_id,
+		status: AccountStatus.INACTIVE,
+		updated_at: new Date(),
+	}),
+
+	// Reactivate country account
+	reactivate: (country_account_id: string) => ({
+		id: country_account_id,
+		status: AccountStatus.ACTIVE,
+		updated_at: new Date(),
+	}),
+
+	// Mark for deletion (30-day grace period)
+	markForDeletion: (country_account_id: string) => ({
+		id: country_account_id,
+		status: AccountStatus.PENDING_DELETION,
+		updated_at: new Date(),
+	}),
+
+	// Archive account (read-only, data preserved)
+	archive: (country_account_id: string) => ({
+		id: country_account_id,
+		status: AccountStatus.ARCHIVED,
+		updated_at: new Date(),
+	}),
+
+	// Check if account allows data access
+	canAccessData: (status: number) => status === AccountStatus.ACTIVE,
+
+	// Check if account allows read-only export access
+	canExportData: (status: number) => status >= AccountStatus.PENDING_DELETION,
+
+	// Get user-friendly status message
+	getStatusMessage: (status: number) => {
+		switch (status) {
+			case AccountStatus.ACTIVE:
+				return "Active - Full access to DTS services";
+			case AccountStatus.INACTIVE:
+				return "Inactive - Account temporarily disabled. Contact UNDRR to reactivate.";
+			case AccountStatus.PENDING_DELETION:
+				return "Pending Deletion - Read-only access for data export. Account will be archived soon.";
+			case AccountStatus.ARCHIVED:
+				return "Archived - Account archived. Contact UNDRR for data recovery.";
+			default:
+				return "Unknown status";
+		}
+	},
+};
+
+
 export const divisionTable = pgTable(
 	"division",
 	{
@@ -257,6 +364,9 @@ export const divisionTable = pgTable(
 
 		// Spatial index will be updated via trigger
 		spatial_index: text("spatial_index"),
+
+		// New field for multi-tenant support
+		country_account_id: ourRandomUUID().references(() => country_accounts.id),
 	},
 	(table) => {
 		return [
@@ -269,6 +379,9 @@ export const divisionTable = pgTable(
 
 			// Ensure all geometries are valid
 			check("valid_geom_check", sql`ST_IsValid(geom)`),
+
+			// Index for multi-tenant support
+			index("division_country_account_idx").on(table.country_account_id),
 		];
 	}
 );
@@ -278,6 +391,24 @@ export const divisionParent_Rel = relations(divisionTable, ({ one }) => ({
 		fields: [divisionTable.parentId],
 		references: [divisionTable.id],
 	}),
+}));
+
+// Additional relations for multi-tenancy
+export const division_relations = relations(divisionTable, ({ one, many }) => ({
+	// Multi-tenancy relation
+	country_account: one(country_accounts, {
+		fields: [divisionTable.country_account_id], // Note: using existing table naming
+		references: [country_accounts.id],
+	}),
+
+	// Parent relation (alternative to divisionParent_Rel)
+	parent: one(divisionTable, {
+		fields: [divisionTable.parentId],
+		references: [divisionTable.id],
+	}),
+
+	// Children relation
+	children: many(divisionTable),
 }));
 
 export type Division = typeof divisionTable.$inferSelect;
@@ -1334,13 +1465,23 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	footerUrlPrivacyPolicy: url("footer_url_privacy_policy"),
 	footerUrlTermsConditions: url("footer_url_terms_conditions"),
 	adminSetupComplete: boolean("admin_setup_complete").notNull().default(false),
-	websiteLogo:url("website_logo").notNull().default("https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg"),
-	websiteName: varchar("website_name", {length: 250}).notNull().default("Disaster Tracking System (DTS)"),
+	websiteLogo: url("website_logo").notNull().default("https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg"),
+	websiteName: varchar("website_name", { length: 250 }).notNull().default("Disaster Tracking System (DTS)"),
 	websiteUrl: url("website_url").notNull().default("http://localhost:3000"),
 	approvedRecordsArePublic: boolean().notNull().default(false),
-	totpIssuer: varchar("totp_issuer", {length: 250} ).notNull().default("example-app"),
+	totpIssuer: varchar("totp_issuer", { length: 250 }).notNull().default("example-app"),
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
-	dtsInstanceCtryIso3:  varchar("dts_instance_ctry_iso3").notNull().default("USA"),
+	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default("USA"),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
-	countryName: varchar("country_name").notNull().default("United State of America")
+	countryName: varchar("country_name").notNull().default("United State of America"),
+
+	// New field for multi-tenant support
+	country_account_id: ourRandomUUID().references(() => country_accounts.id),
 });
+
+export const instance_settings_relations = relations(instanceSystemSettings, ({ one }) => ({
+	country_account: one(country_accounts, {
+		fields: [instanceSystemSettings.country_account_id],
+		references: [country_accounts.id],
+	}),
+}));
