@@ -34,6 +34,7 @@ migrations/
 *.sqlite3
 *.sql.gz
 *.dump
+app/drizzle/migrations/meta/_journal.json
 
 
 # Logs
@@ -56,3 +57,14 @@ Thumbs.db
 .parcel-cache
 tmp/
 temp/
+
+
+
+# Database usage analysis reports (local development use only)
+database-usage/
+
+# Country instance onboarding documentation (local development use only)
+_docs/country-instance-onboarding/
+
+# Shared instance project documentation (local development use only)
+_docs/Project_Documentation/
