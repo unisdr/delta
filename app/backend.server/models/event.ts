@@ -8,7 +8,8 @@ import {
 	Errors,
 	hasErrors,
 } from "~/frontend/form";
-import { eventTable, EventInsert, hazardousEventTable, HazardousEventInsert, eventRelationshipTable, DisasterEventInsert, disasterEventTable, hazardousEventTableConstraits, disasterEventTableConstraits } from "~/drizzle/schema";
+import { eventTable, EventInsert, hazardousEventTable, HazardousEventInsert, eventRelationshipTable, DisasterEventInsert, disasterEventTable, hazardousEventTableConstraits, disasterEventTableConstrains } from "~/drizzle/schema";
+import { TenantContext } from "~/util/tenant";
 import { checkConstraintError } from "./common";
 
 import { dr, Tx } from "~/db.server";
@@ -38,8 +39,9 @@ interface TemporalValidationResult {
 	};
 }
 
-export interface HazardousEventFields extends Omit<EventInsert, 'id'>, Omit<HazardousEventInsert, 'id'>, ObjectWithImportId {
-	parent: string
+export interface HazardousEventFields extends Omit<EventInsert, 'id'>, Omit<HazardousEventInsert, 'id' | 'countryAccountsId'>, ObjectWithImportId {
+	parent: string;
+	// countryAccountsId will be auto-assigned from tenant context, not user input
 }
 
 export function validate(fields: Partial<HazardousEventFields>): Errors<HazardousEventFields> {
@@ -60,7 +62,12 @@ export function validate(fields: Partial<HazardousEventFields>): Errors<Hazardou
 	return errors
 }
 
-export async function hazardousEventCreate(tx: Tx, fields: HazardousEventFields, userId?: number): Promise<CreateResult<HazardousEventFields>> {
+export async function hazardousEventCreate(
+	tx: Tx, 
+	fields: HazardousEventFields, 
+	tenantContext: TenantContext,
+	userId?: number
+): Promise<CreateResult<HazardousEventFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return { ok: false, errors: errors }
@@ -75,8 +82,37 @@ export async function hazardousEventCreate(tx: Tx, fields: HazardousEventFields,
 		.returning({ id: eventTable.id });
 	eventId = res[0].id
 
-	let values: HazardousEventFields = {
+	// Ensure parent belongs to same tenant if specified
+	if (fields.parent) {
+		const parentEvent = await tx
+			.select({ countryAccountsId: hazardousEventTable.countryAccountsId })
+			.from(hazardousEventTable)
+			.where(eq(hazardousEventTable.id, fields.parent));
+			
+		if (parentEvent.length === 0) {
+			return {
+				ok: false,
+				errors: {
+					fields: { parent: ["Parent event not found"] },
+					form: []
+				}
+			};
+		}
+		
+		if (parentEvent[0].countryAccountsId !== tenantContext.countryAccountId) {
+			return {
+				ok: false,
+				errors: {
+					fields: { parent: ["Cannot reference events from other countries"] },
+					form: []
+				}
+			};
+		}
+	}
+
+	let values = {
 		...fields,
+		countryAccountsId: tenantContext.countryAccountId, // Auto-assign tenant
 	}
 	try {
 
@@ -159,7 +195,13 @@ export const RelationCycleError = {
 	message: "Event relation cycle not allowed. This event or one of it's children, is set as the parent."
 };
 
-export async function hazardousEventUpdate(tx: Tx, id: string, fields: Partial<HazardousEventFields>, userId?: number): Promise<UpdateResult<HazardousEventFields>> {
+export async function hazardousEventUpdate(
+	tx: Tx, 
+	id: string, 
+	fields: Partial<HazardousEventFields>, 
+	tenantContext: TenantContext,
+	userId?: number
+): Promise<UpdateResult<HazardousEventFields>> {
 	// Get validation errors and ensure form is always an array
 	const validationErrors = validate(fields);
 	const errors: Errors<HazardousEventFields> = {
@@ -171,7 +213,10 @@ export async function hazardousEventUpdate(tx: Tx, id: string, fields: Partial<H
 	const [oldRecord] = await tx
 		.select()
 		.from(hazardousEventTable)
-		.where(eq(hazardousEventTable.id, id));
+		.where(and(
+			eq(hazardousEventTable.id, id),
+			eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
+		));
 
 	if (!oldRecord) {
 		if (!errors.form) errors.form = [];
@@ -579,15 +624,23 @@ const hazardParentJoin = {
 	}
 } as const
 
-export async function hazardousEventById(id: any) {
+export async function hazardousEventById(id: string, tenantContext: TenantContext) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
 	const res = await dr.query.hazardousEventTable.findFirst({
-		where: eq(hazardousEventTable.id, id),
+		where: and(
+			eq(hazardousEventTable.id, id),
+			eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
+		),
 		with: {
 			...hazardBasicInfoJoin,
-			...hazardParentJoin
+			...hazardParentJoin,
+			countryAccount: {
+				with: {
+					country: true
+				}
+			}
 		}
 	});
 	return res
@@ -597,27 +650,55 @@ export type HazardousEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof
 	undefined
 >;
 
-export async function hazardousEventBasicInfoById(id: any) {
-	if (typeof id !== "string") {
-		throw new Error("Invalid ID: must be a string");
-	}
-	const res = await dr.query.hazardousEventTable.findFirst({
-		where: eq(hazardousEventTable.id, id),
-		with: {
-			...hazardBasicInfoJoin,
-		}
-	});
-	return res
+// Includes tenant filtering
+export async function hazardousEventBasicInfoById(id: string, tenantContext?: TenantContext) {
+    if (typeof id !== "string") {
+        throw new Error("Invalid ID: must be a string");
+    }
+    
+    const whereClause = tenantContext 
+        ? and(
+            eq(hazardousEventTable.id, id),
+            eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
+        )
+        : eq(hazardousEventTable.id, id); // For public/system access
+    
+    const res = await dr.query.hazardousEventTable.findFirst({
+        where: whereClause,
+        with: {
+            ...hazardBasicInfoJoin,
+        }
+    });
+    return res;
 }
 
 
-export async function hazardousEventDelete(id: string): Promise<DeleteResult> {
+export async function hazardousEventDelete(id: string, tenantContext: TenantContext): Promise<DeleteResult> {
 	try {
+		// Check if record exists and belongs to tenant
+		const existingRecord = await dr
+			.select({ id: hazardousEventTable.id })
+			.from(hazardousEventTable)
+			.where(and(
+				eq(hazardousEventTable.id, id),
+				eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
+			));
+
+		if (existingRecord.length === 0) {
+			return {
+				ok: false,
+				error: "Record not found or access denied"
+			};
+		}
+
 		// First check if there are any disaster events linked to this hazard event
 		const linkedDisasterEvents = await dr
 			.select()
 			.from(disasterEventTable)
-			.where(eq(disasterEventTable.hazardousEventId, String(id)));
+			.where(and(
+				eq(disasterEventTable.hazardousEventId, id),
+				eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
+			));
 
 		if (linkedDisasterEvents.length > 0) {
 			return {
@@ -629,7 +710,10 @@ export async function hazardousEventDelete(id: string): Promise<DeleteResult> {
 		await dr.transaction(async (tx) => {
 			await tx
 				.delete(hazardousEventTable)
-				.where(eq(hazardousEventTable.id, String(id)));
+				.where(and(
+					eq(hazardousEventTable.id, id),
+					eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
+				));
 
 			await tx
 				.delete(eventRelationshipTable)
@@ -695,7 +779,7 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 				id: eventId,
 			})
 	} catch (error: any) {
-		let res = checkConstraintError(error, disasterEventTableConstraits)
+		let res = checkConstraintError(error, disasterEventTableConstrains)
 		if (res) {
 			return res
 		}
@@ -749,7 +833,7 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 
 		await processAndSaveAttachments(disasterEventTable, tx, id, Array.isArray(fields?.attachments) ? fields.attachments : [], "disaster-event");
 	} catch (error: any) {
-		let res = checkConstraintError(error, disasterEventTableConstraits)
+		let res = checkConstraintError(error, disasterEventTableConstrains)
 		if (res) {
 			return res
 		}
