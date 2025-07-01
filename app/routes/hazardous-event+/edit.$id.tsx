@@ -30,20 +30,35 @@ import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
 import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
+
+import { getTenantContext } from "~/util/tenant";
+
+
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params } = loaderArgs;
-	const item = await getItem2(params, hazardousEventById);
-	let hip = await dataForHazardPicker();
+	const userSession = (loaderArgs as any).userSession; // 🔧 CHANGE: Use same pattern as existing codebase
+	const user = authLoaderGetUserForFrontend(loaderArgs);
+	
+	// Extract tenant context for secure data access
+	const tenantContext = await getTenantContext(userSession);
+	
+	const getHazardousEvent = async (id: string) => {
+		// Pass tenant context instead of userSession for data isolation
+		return hazardousEventById(id, tenantContext);
+	};
 
-	let user = authLoaderGetUserForFrontend(loaderArgs);
+	const item = await getItem2(params, getHazardousEvent);
+	let hip = await dataForHazardPicker();
 
 	if (item!.event.ps.length > 0) {
 		let parent = item!.event.ps[0].p.he;
 		// get parent of parent as well, to match what we use in new form
-		let parent2 = await hazardousEventById(parent.id);
+		// Use tenant context for parent lookup too
+		let parent2 = await hazardousEventById(parent.id, tenantContext);
 		return { hip, item, parent: parent2, treeData: [], user };
 	}
 
+	
 	// Define Keys Mapping (Make it Adaptable)
 	const idKey = "id";
 	const parentKey = "parentId";
@@ -64,12 +79,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
 	}
 
+	
 	const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson, import_id
 		FROM division
 		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
     `);
 
+	
 	return {
 		hip: hip,
 		item: item,
@@ -81,13 +98,19 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
-	const user = authActionGetAuth(actionArgs);
+	const userSession = authActionGetAuth(actionArgs);
+	
+	// Extract tenant context for secure updates
+	const tenantContext = await getTenantContext(userSession);
+	
+	// Keep existing formSave structure and logic
 	return formSave({
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
 			if (id) {
-				return hazardousEventUpdate(tx, id, data, user.user.id);
+				// Pass tenant context instead of userSession for data isolation
+				return hazardousEventUpdate(tx, id, data, tenantContext);
 			} else {
 				throw "not an create screen";
 			}
@@ -95,6 +118,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		redirectTo: (id: string) => `/hazardous-event/${id}`,
 	});
 });
+
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>();
