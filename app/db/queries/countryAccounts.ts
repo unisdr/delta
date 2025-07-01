@@ -18,6 +18,7 @@ export async function getCountryAccounts() {
 		},
 	});
 }
+export type CountryAccountWithCountry = Awaited<ReturnType<typeof getCountryAccounts>>[number];
 
 export async function getCountryAccountById(id: string) {
 	const result = await dr.query.countryAccounts.findFirst({
