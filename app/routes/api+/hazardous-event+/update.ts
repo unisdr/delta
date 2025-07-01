@@ -1,6 +1,7 @@
 import {
 	authLoaderApi,
-	authActionApi
+	authActionApi,
+	authActionGetAuth
 } from "~/util/auth";
 
 import {
@@ -10,7 +11,10 @@ import {
 import {
 	jsonUpdate,
 } from "~/backend.server/handlers/form/form_api";
-import {hazardousEventUpdate} from "~/backend.server/models/event";
+import {hazardousEventUpdate, HazardousEventFields} from "~/backend.server/models/event";
+import { getTenantContext } from "~/util/tenant";
+import { Tx } from "~/db.server";
+import { SaveResult } from "~/backend.server/handlers/form/form";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -18,11 +22,34 @@ export const loader = authLoaderApi(async () => {
 
 export const action = authActionApi(async (args) => {
 	const data = await args.request.json();
+	
+	// Extract user session from API request
+	const userSession = authActionGetAuth(args);
+	
+	// Create a wrapper function that extracts tenant context and passes it to hazardousEventUpdate
+	const updateWithTenant = async (tx: Tx, id: string, fields: Partial<HazardousEventFields>): Promise<SaveResult<HazardousEventFields>> => {
+		try {
+			// Extract tenant context from user session
+			const tenantContext = await getTenantContext(userSession);
+			
+			// Call the original function with tenant context
+			return hazardousEventUpdate(tx, id, fields, tenantContext, userSession.user.id);
+		} catch (error) {
+			console.error("Failed to extract tenant context:", error);
+			return {
+				ok: false,
+				errors: {
+					form: ["Failed to initialize tenant context. User may not be associated with a tenant."],
+					fields: {}
+				}
+			};
+		}
+	};
 
 	const saveRes = await jsonUpdate({
 		data,
 		fieldsDef: fieldsDefApi,
-		update: hazardousEventUpdate
+		update: updateWithTenant
 	});
 
 	return Response.json(saveRes)
