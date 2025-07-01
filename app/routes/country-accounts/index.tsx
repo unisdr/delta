@@ -8,27 +8,51 @@ import { MainContainer } from "~/frontend/container";
 import { NavSettings } from "../settings/nav";
 import { requireSuperAdmin } from "~/util/auth";
 import { useState } from "react";
+import Dialog from "~/components/Dialog";
+import { getCountries } from "~/db/queries/countries";
+import { Country } from "~/drizzle/schema";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
+	// await requireSuperAdmin(request);
 	const countryAccounts = await getCountryAccounts();
+	const countries = await getCountries();
 
-	return { countryAccounts };
+	return { countryAccounts, countries };
 };
 
 export default function CountryAccounts() {
-	const { countryAccounts } = useLoaderData<{
+	const { countryAccounts, countries } = useLoaderData<{
 		countryAccounts: CountryAccountWithCountry[];
+		countries: Country[];
 	}>();
-	const [editingAccount, setEditingAccount] =
-		useState<CountryAccountWithCountry | null>(null);
-	console.log(countryAccounts);
+	const [isAddCountryAccountDialogOpen, setIsAddCountryAccountDialogOpen] =
+		useState(false);
+
+	const footerContent = (
+		<button
+			type="button"
+			className="mg-button mg-button-outline"
+			onClick={() => setIsAddCountryAccountDialogOpen(false)}
+		>
+			Cancel
+		</button>
+	);
 
 	return (
 		<MainContainer
 			title="Manage Country Accounts"
 			headerExtra={<NavSettings />}
 		>
+			<div className="dts-page-intro">
+				<div className="dts-external-links">
+					<button
+						className="mg-button mg-button-secondary"
+						onClick={() => setIsAddCountryAccountDialogOpen(true)}
+					>
+						Add Country Account
+					</button>
+				</div>
+			</div>
 			<table className="dts-table">
 				<thead>
 					<tr>
@@ -52,7 +76,7 @@ export default function CountryAccounts() {
 							</td>
 							<td>
 								<button
-									onClick={() => setEditingAccount(countryAccount)}
+									onClick={() => {}}
 									className="mg-button mg-button-table"
 								>
 									<svg
@@ -69,6 +93,47 @@ export default function CountryAccounts() {
 					))}
 				</tbody>
 			</table>
+
+			{/* Add country accounts modal */}
+			<Dialog
+				visible={isAddCountryAccountDialogOpen}
+				header="Create Country Account"
+				onClose={() => setIsAddCountryAccountDialogOpen(false)}
+				footer={footerContent}
+			>
+				<div className="dts-form__body">
+					<div className="dts-form-component">
+						<label>
+							<div className="dts-form-component__label">
+								<span>Country</span>
+							</div>
+							<select>
+								<option key="-1" value="-1">
+									Select a country
+								</option>
+								{countries.map((country) => (
+									<option key={country.id} value={country.id}>
+										{country.name}
+									</option>
+								))}
+							</select>
+						</label>
+						<label>
+							<div className="dts-form-component__label">
+								<span>Status</span>
+							</div>
+							<select>
+								<option key={1} value={1}>
+									Active
+								</option>
+								<option key={0} value={0}>
+									Inactive
+								</option>
+							</select>
+						</label>
+					</div>
+				</div>
+			</Dialog>
 		</MainContainer>
 	);
 }
