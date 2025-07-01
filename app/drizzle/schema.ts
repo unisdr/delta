@@ -347,6 +347,10 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
+	// Tenant isolation
+	countryAccountsId: uuid("country_accounts_id")
+		.notNull()
+		.references(() => countryAccounts.id),
 	status: text("status").notNull().default("pending"),
 	// otherId1: zeroText("otherId1"),
 	//duration: zeroText("duration"),
@@ -384,6 +388,11 @@ export const hazardousEventRel = relations(hazardousEventTable, ({ one }) => ({
 		fields: [hazardousEventTable.id],
 		references: [eventTable.id],
 	}),
+	// Tenant relation
+	countryAccount: one(countryAccounts, {
+		fields: [hazardousEventTable.countryAccountsId],
+		references: [countryAccounts.id],
+	}),
 	hipHazard: one(hipHazardTable, {
 		fields: [hazardousEventTable.hipHazardId],
 		references: [hipHazardTable.id],
@@ -403,6 +412,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	...approvalFields,
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
+	countryAccountsId: uuid("country_accounts_id").notNull().references(() => countryAccounts.id, { onDelete: "cascade" }),
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
@@ -592,14 +602,20 @@ export const disasterEventTable = pgTable("disaster_event", {
 export type DisasterEvent = typeof disasterEventTable.$inferSelect;
 export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
 
-export const disasterEventTableConstraits = {
+export const disasterEventTableConstrains = {
 	hazardousEventId: "disaster_event_hazardous_event_id_hazardous_event_id_fk",
+	countryAccountsId: "disaster_event_country_accounts_id_country_accounts_id_fk",
 };
 
 export const disasterEventRel = relations(disasterEventTable, ({ one }) => ({
 	event: one(eventTable, {
 		fields: [disasterEventTable.id],
 		references: [eventTable.id],
+	}),
+	// Tenant relation
+	countryAccount: one(countryAccounts, {
+		fields: [disasterEventTable.countryAccountsId],
+		references: [countryAccounts.id],
 	}),
 	hazardousEvent: one(hazardousEventTable, {
 		fields: [disasterEventTable.hazardousEventId],
