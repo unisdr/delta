@@ -6,6 +6,8 @@ import {
 	authLoaderIsPublic
 } from "~/util/auth";
 
+import { TenantContext, getTenantContext } from "~/util/tenant";
+
 import {dr} from "~/db.server";
 
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
@@ -20,11 +22,13 @@ import {
 import {approvalStatusIds} from '~/frontend/approval';
 
 interface hazardousEventLoaderArgs {
-	loaderArgs: LoaderFunctionArgs
+	loaderArgs: LoaderFunctionArgs;
+	// Add tenant context - will be provided by auth middleware
+	tenantContext?: TenantContext;
 }
 
 export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
-	const {loaderArgs} = args;
+	const {loaderArgs, tenantContext} = args;
 	const {request} = loaderArgs;
 
 	const url = new URL(request.url);
@@ -53,7 +57,12 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	filters.search = filters.search.trim()
 	let searchIlike = "%" + filters.search + "%"
 
+	// Build base condition with tenant filtering
 	let condition = and(
+		// TENANT FILTERING - Only show events from user's country account
+		tenantContext ? eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) : undefined,
+		
+		// Existing filters
 		filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
 		filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
 		filters.hipTypeId ? eq(hazardousEventTable.hipTypeId, filters.hipTypeId) : undefined,
@@ -105,7 +114,18 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 		filters,
 		hip,
 		data: res,
+		tenantContext, // Include for debugging
 	}
+}
 
+// Helper function for route handlers to get tenant context
+export async function createTenantAwareLoader(userSession: any) {
+	const tenantContext = userSession ? await getTenantContext(userSession) : undefined;
+	
+	return {
+		tenantContext,
+		hazardousEventsLoader: (loaderArgs: LoaderFunctionArgs) => 
+			hazardousEventsLoader({ loaderArgs, tenantContext })
+	};
 }
 

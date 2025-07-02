@@ -57,7 +57,26 @@ Thumbs.db
 tmp/
 temp/
 
-
+# Test suite files and directories (local testing only)
+app/tests/
+coverage/
+.nyc_output/
+jest-report/
+test-results/
+test-report.xml
+junit.xml
+.jest-cache/
+__snapshots__/
+*.snap
+*.test.js
+*.test.js.map
+*.spec.js
+*.spec.js.map
+jest.config.js
+jest.setup.js
+app/frontend/components/UserForm.tsx
+app/types/index.ts
+app/types/user.ts
 
 # Database usage analysis reports (local development use only)
 database-usage/
