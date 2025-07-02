@@ -63,8 +63,8 @@ export function validate(fields: Partial<HazardousEventFields>): Errors<Hazardou
 }
 
 export async function hazardousEventCreate(
-	tx: Tx, 
-	fields: HazardousEventFields, 
+	tx: Tx,
+	fields: HazardousEventFields,
 	tenantContext: TenantContext,
 	userId?: number
 ): Promise<CreateResult<HazardousEventFields>> {
@@ -88,7 +88,7 @@ export async function hazardousEventCreate(
 			.select({ countryAccountsId: hazardousEventTable.countryAccountsId })
 			.from(hazardousEventTable)
 			.where(eq(hazardousEventTable.id, fields.parent));
-			
+
 		if (parentEvent.length === 0) {
 			return {
 				ok: false,
@@ -98,7 +98,7 @@ export async function hazardousEventCreate(
 				}
 			};
 		}
-		
+
 		if (parentEvent[0].countryAccountsId !== tenantContext.countryAccountId) {
 			return {
 				ok: false,
@@ -196,9 +196,9 @@ export const RelationCycleError = {
 };
 
 export async function hazardousEventUpdate(
-	tx: Tx, 
-	id: string, 
-	fields: Partial<HazardousEventFields>, 
+	tx: Tx,
+	id: string,
+	fields: Partial<HazardousEventFields>,
 	tenantContext: TenantContext,
 	userId?: number
 ): Promise<UpdateResult<HazardousEventFields>> {
@@ -652,24 +652,24 @@ export type HazardousEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof
 
 // Includes tenant filtering
 export async function hazardousEventBasicInfoById(id: string, tenantContext?: TenantContext) {
-    if (typeof id !== "string") {
-        throw new Error("Invalid ID: must be a string");
-    }
-    
-    const whereClause = tenantContext 
-        ? and(
-            eq(hazardousEventTable.id, id),
-            eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
-        )
-        : eq(hazardousEventTable.id, id); // For public/system access
-    
-    const res = await dr.query.hazardousEventTable.findFirst({
-        where: whereClause,
-        with: {
-            ...hazardBasicInfoJoin,
-        }
-    });
-    return res;
+	if (typeof id !== "string") {
+		throw new Error("Invalid ID: must be a string");
+	}
+
+	const whereClause = tenantContext
+		? and(
+			eq(hazardousEventTable.id, id),
+			eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) // TENANT FILTER
+		)
+		: eq(hazardousEventTable.id, id); // For public/system access
+
+	const res = await dr.query.hazardousEventTable.findFirst({
+		where: whereClause,
+		with: {
+			...hazardBasicInfoJoin,
+		}
+	});
+	return res;
 }
 
 
@@ -737,11 +737,16 @@ export async function hazardousEventDelete(id: string, tenantContext: TenantCont
 	return { ok: true }
 }
 
-export interface DisasterEventFields extends Omit<EventInsert, 'id'>, Omit<DisasterEventInsert, 'id'> {
+export interface DisasterEventFields extends Omit<EventInsert, 'id'>, Omit<DisasterEventInsert, 'id' | 'countryAccountsId'> {
 	//hazardousEvent: string
+	// countryAccountsId will be auto-assigned from tenant context, not user input
 }
 
-export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): Promise<CreateResult<DisasterEventFields>> {
+export async function disasterEventCreate(
+	tx: Tx,
+	fields: DisasterEventFields,
+	tenantContext: TenantContext
+): Promise<CreateResult<DisasterEventFields>> {
 	let errors: Errors<DisasterEventFields> = {};
 	errors.fields = {};
 	errors.form = [];
@@ -758,6 +763,33 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 	}
  */
 
+	// Ensure hazardous event belongs to the same tenant if specified
+	if (fields.hazardousEventId) {
+		const hazardousEvent = await tx
+			.select({ countryAccountsId: hazardousEventTable.countryAccountsId })
+			.from(hazardousEventTable)
+			.where(eq(hazardousEventTable.id, fields.hazardousEventId));
+
+		if (hazardousEvent.length === 0) {
+			return {
+				ok: false,
+				errors: {
+					fields: { hazardousEventId: ["Hazardous event not found"] },
+					form: []
+				}
+			};
+		}
+
+		if (hazardousEvent[0].countryAccountsId !== tenantContext.countryAccountId) {
+			return {
+				ok: false,
+				errors: {
+					fields: { hazardousEventId: ["Cannot reference hazardous events from other tenants"] },
+					form: []
+				}
+			};
+		}
+	}
 
 	let eventId = "";
 
@@ -777,6 +809,7 @@ export async function disasterEventCreate(tx: Tx, fields: DisasterEventFields): 
 			.values({
 				...values,
 				id: eventId,
+				countryAccountsId: tenantContext.countryAccountId
 			})
 	} catch (error: any) {
 		let res = checkConstraintError(error, disasterEventTableConstrains)
@@ -803,7 +836,12 @@ if (fields.parent) {
 	return { ok: true, id: eventId }
 }
 
-export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<DisasterEventFields>): Promise<UpdateResult<DisasterEventFields>> {
+export async function disasterEventUpdate(
+	tx: Tx,
+	id: string,
+	fields: Partial<DisasterEventFields>,
+	tenantContext: TenantContext
+): Promise<UpdateResult<DisasterEventFields>> {
 	let errors: Errors<DisasterEventFields> = {};
 	errors.fields = {};
 	errors.form = [];
@@ -823,13 +861,35 @@ export async function disasterEventUpdate(tx: Tx, id: string, fields: Partial<Di
 		.where(eq(eventTable.id, id))
 */
 
+	// Verify the event belongs to the tenant before updating
+	const event = await tx
+		.select({ id: disasterEventTable.id })
+		.from(disasterEventTable)
+		.where(and(
+			eq(disasterEventTable.id, id),
+			eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
+		));
+
+	if (event.length === 0) {
+		return {
+			ok: false,
+			errors: {
+				fields: {},
+				form: ["You don't have permission to update this disaster event"]
+			}
+		};
+	}
+
 	try {
 		await tx
 			.update(disasterEventTable)
 			.set({
 				...fields
 			})
-			.where(eq(disasterEventTable.id, id))
+			.where(and(
+				eq(disasterEventTable.id, id),
+				eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
+			))
 
 		await processAndSaveAttachments(disasterEventTable, tx, id, Array.isArray(fields?.attachments) ? fields.attachments : [], "disaster-event");
 	} catch (error: any) {
@@ -847,11 +907,12 @@ export type DisasterEventViewModel = Exclude<Awaited<ReturnType<typeof disasterE
 	undefined
 >;
 
-export async function disasterEventIdByImportId(tx: Tx, importId: string) {
+export async function disasterEventIdByImportId(tx: Tx, importId: string, tenantContext: TenantContext) {
 	const res = await tx.select({
 		id: disasterEventTable.id
-	}).from(disasterEventTable).where(eq(
-		disasterEventTable.apiImportId, importId
+	}).from(disasterEventTable).where(and(
+		eq(disasterEventTable.apiImportId, importId),
+		eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
 	))
 	if (res.length == 0) {
 		return null
@@ -859,30 +920,27 @@ export async function disasterEventIdByImportId(tx: Tx, importId: string) {
 	return res[0].id
 }
 
-export async function disasterEventById(id: any) {
-	return disasterEventByIdTx(dr, id);
+export async function disasterEventById(id: any, tenantContext: TenantContext) {
+	return disasterEventByIdTx(dr, id, tenantContext);
 }
 
-export async function disasterEventByIdTx(tx: Tx, id: any) {
+export async function disasterEventByIdTx(tx: Tx, id: any, tenantContext: TenantContext) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
+	// Simplified query to avoid PostgreSQL error with too many arguments
 	const res = await tx.query.disasterEventTable.findFirst({
-		where: eq(disasterEventTable.id, id),
+		where: and(
+			eq(disasterEventTable.id, id),
+			eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
+		),
 		with: {
-			hazardousEvent: {
-				with: hazardBasicInfoJoin
-			},
+			hazardousEvent: true,
 			disasterEvent: true,
 			hipHazard: true,
 			hipCluster: true,
 			hipType: true,
-			event: {
-				with: {
-					ps: true,
-					cs: true
-				}
-			},
+			event: true,
 		}
 	});
 
@@ -897,22 +955,46 @@ export type DisasterEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof 
 	undefined
 >;
 
-export async function disasterEventBasicInfoById(id: any) {
+export async function disasterEventBasicInfoById(id: any, tenantContext?: TenantContext) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
 	const res = await dr.query.disasterEventTable.findFirst({
-		where: eq(disasterEventTable.id, id),
+		where: tenantContext
+			? and(
+				eq(disasterEventTable.id, id),
+				eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
+			)
+			: eq(disasterEventTable.id, id),
 	});
 	return res
 }
 
 
-export async function disasterEventDelete(id: string): Promise<DeleteResult> {
+export async function disasterEventDelete(id: string, tenantContext: TenantContext): Promise<DeleteResult> {
+	// Verify the event belongs to the tenant before deleting
+	const event = await dr
+		.select({ id: disasterEventTable.id })
+		.from(disasterEventTable)
+		.where(and(
+			eq(disasterEventTable.id, id),
+			eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
+		));
+
+	if (event.length === 0) {
+		return {
+			ok: false,
+			error: "You don't have permission to delete this disaster event"
+		};
+	}
+
 	await dr.transaction(async (tx) => {
 		await tx
 			.delete(disasterEventTable)
-			.where(eq(disasterEventTable.id, id));
+			.where(and(
+				eq(disasterEventTable.id, id),
+				eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
+			));
 
 		/*
 	await tx

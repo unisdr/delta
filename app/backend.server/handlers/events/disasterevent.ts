@@ -3,30 +3,33 @@ import {
 } from '~/drizzle/schema';
 
 import {
-	authLoaderIsPublic
+	authLoaderIsPublic,
+	authLoaderGetAuth
 } from "~/util/auth";
 
-import {dr} from "~/db.server";
+import { getTenantContext } from "~/util/tenant";
 
-import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
+import { dr } from "~/db.server";
 
-import {hazardBasicInfoJoin} from "~/backend.server/models/event"
+import { executeQueryForPagination3, OffsetLimit } from "~/frontend/pagination/api.server";
+
+import { hazardBasicInfoJoin } from "~/backend.server/models/event"
 
 
-import {sql, and, eq, desc, ilike, or} from 'drizzle-orm';
+import { sql, and, eq, desc, ilike, or } from 'drizzle-orm';
 
 import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
-import {approvalStatusIds} from '~/frontend/approval';
+import { approvalStatusIds } from '~/frontend/approval';
 
 interface disasterEventLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
 }
 
 export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
-	const {loaderArgs} = args;
-	const {request} = loaderArgs;
+	const { loaderArgs } = args;
+	const { request } = loaderArgs;
 
 	const url = new URL(request.url);
 	const extraParams = ["search"]
@@ -41,6 +44,20 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 
 	const isPublic = authLoaderIsPublic(loaderArgs)
 
+	// Extract tenant context for authenticated users
+	let tenantContext = undefined;
+	if (!isPublic) {
+		const auth = await authLoaderGetAuth(loaderArgs);
+		if (auth.user) {
+			const userSession = {
+				user: auth.user,
+				sessionId: auth.session?.id || '',
+				session: auth.session || null
+			};
+			tenantContext = await getTenantContext(userSession);
+		}
+	}
+
 	if (!isPublic) {
 		filters.approvalStatus = undefined
 	}
@@ -50,6 +67,8 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 	let searchIlike = "%" + filters.search + "%"
 
 	let condition = and(
+		// Apply tenant filtering for authenticated users
+		tenantContext ? eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId) : undefined,
 		filters.approvalStatus ? eq(disasterEventTable.approvalStatus, filters.approvalStatus) : undefined,
 		filters.search !== "" ? or(
 
