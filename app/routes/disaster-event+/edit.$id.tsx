@@ -1,27 +1,31 @@
-import {getTableName} from "drizzle-orm";
+// Import necessary modules
 import {
 	disasterEventById,
-	disasterEventByIdTx,
 	disasterEventCreate,
 	DisasterEventFields,
 	disasterEventUpdate,
 } from "~/backend.server/models/event";
+import { getTenantContext } from "~/util/tenant";
 
 import {
 	fieldsDef,
 	DisasterEventForm,
 } from "~/frontend/events/disastereventform";
 
-import {createLoader, createAction} from "~/backend.server/handlers/form/form";
+import {formSave} from "~/backend.server/handlers/form/form";
 
 import {formScreen} from "~/frontend/form";
 
 import {route} from "~/frontend/events/disastereventform";
 
 import {useLoaderData} from "@remix-run/react";
-import {disasterEventTable} from "~/drizzle/schema";
 
-import {authLoaderGetUserForFrontend, authLoaderWithPerm} from "~/util/auth";
+import {
+	authActionGetAuth,
+	authActionWithPerm,
+	authLoaderGetUserForFrontend, 
+	authLoaderWithPerm
+} from "~/util/auth";
 import {buildTree} from "~/components/TreeView";
 import {dr} from "~/db.server"; // Drizzle ORM instance
 import {divisionTable} from "~/drizzle/schema";
@@ -32,20 +36,44 @@ import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 // 	getById: disasterEventById,
 // });
 
-export const action = createAction({
-	fieldsDef,
-	create: disasterEventCreate,
-	update: disasterEventUpdate,
-	redirectTo: (id) => route + "/" + id,
-	getById: disasterEventByIdTx,
-	tableName: getTableName(disasterEventTable),
-	action: (isCreate) =>
-		isCreate ? "Create disaster event" : "Update disaster event",
+export const action = authActionWithPerm("EditData", async (actionArgs) => {
+	const userSession = authActionGetAuth(actionArgs);
+	
+	// Extract tenant context for secure updates
+	const tenantContext = await getTenantContext(userSession);
+	
+	// Keep existing formSave structure and logic
+	return formSave({
+		actionArgs,
+		fieldsDef,
+		save: async (tx, id, data) => {
+			if (id) {
+				// Pass tenant context instead of userSession for data isolation
+				return disasterEventUpdate(tx, id, data, tenantContext);
+			} else {
+				// Pass tenant context for create as well
+				return disasterEventCreate(tx, data, tenantContext);
+			}
+		},
+		redirectTo: (id: string) => route + "/" + id,
+	});
 });
 
+import { getItem2 } from "~/backend.server/handlers/view";
+
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	// ✅ Fetch existing disaster event data
-	const baseData = await createLoader({getById: disasterEventById})(loaderArgs);
+	const { params } = loaderArgs;
+	const userSession = (loaderArgs as any).userSession;
+	
+	// Extract tenant context for secure data access
+	const tenantContext = await getTenantContext(userSession);
+	
+	const getDisasterEvent = async (id: string) => {
+		// Pass tenant context for data isolation
+		return disasterEventById(id, tenantContext);
+	};
+
+	const item = await getItem2(params, getDisasterEvent);
 
 	// ✅ Fetch division data & build tree
 	const idKey = "id";
@@ -54,7 +82,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const rawData = await dr.select().from(divisionTable);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
 
-	let user = authLoaderGetUserForFrontend(loaderArgs)
+	// User already extracted above
 	let hip = await dataForHazardPicker()
 
 	let ctryIso3:string = "";
@@ -71,12 +99,12 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
     `);
 
 	return {
-		...baseData,
+		item,
 		hip,
 		treeData,
 		ctryIso3,
 		divisionGeoJSON: divisionGeoJSON?.rows,
-		user
+		user: authLoaderGetUserForFrontend(loaderArgs)
 	};
 });
 
@@ -87,10 +115,32 @@ export default function Screen() {
 			...ld.item,
 		}
 		: {};
+	
+	// Fix the hazardousEvent to include missing HIP properties with complete structure
+	const fixedHazardousEvent = ld.item?.hazardousEvent ? {
+		...ld.item.hazardousEvent,
+		hipHazard: { 
+			id: "", 
+			code: "", 
+			clusterId: "", 
+			nameEn: "", 
+			descriptionEn: "" 
+		},
+		hipCluster: { 
+			id: "", 
+			nameEn: "",
+			typeId: ""
+		},
+		hipType: { 
+			id: "", 
+			nameEn: ""
+		},
+	} : null;
+
 	return formScreen({
 		extraData: {
 			hip: ld.hip,
-			hazardousEvent: ld.item?.hazardousEvent,
+			hazardousEvent: fixedHazardousEvent,
 			disasterEvent: ld.item?.disasterEvent,
 			treeData: ld.treeData,
 			ctryIso3: ld.ctryIso3,

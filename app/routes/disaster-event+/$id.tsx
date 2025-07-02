@@ -1,4 +1,4 @@
-import { disasterEventById } from "~/backend.server/models/event";
+import { disasterEventById, disasterEventBasicInfoById } from "~/backend.server/models/event";
 
 import { DisasterEventView } from "~/frontend/events/disastereventform";
 
@@ -12,6 +12,7 @@ import { getTableName } from "drizzle-orm";
 import { disasterEventTable } from "~/drizzle/schema";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { optionalUser } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 
 import { dr } from "~/db.server";
 import { sql } from "drizzle-orm";
@@ -35,14 +36,35 @@ export const loader = async ({
 
 	// Check if user is logged in
 	const session = await optionalUser(request);
-	const loaderFunction = session ? 
+
+	// Extract tenant context for authenticated users
+	let tenantContext = undefined;
+	if (session) {
+		tenantContext = await getTenantContext(session);
+	}
+
+	// Create wrapper functions with the expected signature
+	const getByIdWithTenant = async (id: string) => {
+		// Ensure tenant context is defined before passing it
+		if (!tenantContext) {
+			throw new Response("Unauthorized: Missing tenant context", { status: 401 });
+		}
+		return await disasterEventById(id, tenantContext);
+	};
+
+	const getByIdPublic = async (id: string) => {
+		// For public access, use disasterEventBasicInfoById which supports optional tenant context
+		return await disasterEventBasicInfoById(id);
+	};
+
+	const loaderFunction = session ?
 		createViewLoaderPublicApprovedWithAuditLog({
-			getById: disasterEventById,
+			getById: getByIdWithTenant,
 			recordId: id,
 			tableName: getTableName(disasterEventTable),
 		}) :
 		createViewLoaderPublicApproved({
-			getById: disasterEventById,
+			getById: getByIdPublic,
 		});
 
 	const result = await loaderFunction({ request, params, context });
@@ -111,6 +133,8 @@ export const loader = async ({
 	  ) disruption ON true
   
 	  WHERE de.id = ${id}
+	  -- Apply tenant filtering for authenticated users
+	  ${tenantContext ? sql`AND de.country_accounts_id = ${tenantContext.countryAccountId}` : sql``}
   
 	  GROUP BY 
 		de.id, 
@@ -119,7 +143,7 @@ export const loader = async ({
 		de.name_national;
 	`);
 
-		console.log('disasterEvents.rows', disasterEvents.rows);
+	console.log('disasterEvents.rows', disasterEvents.rows);
 
 	return {
 		...result,
