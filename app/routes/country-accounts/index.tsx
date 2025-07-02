@@ -29,13 +29,22 @@ export default function CountryAccounts() {
 		useState(false);
 
 	const footerContent = (
-		<button
-			type="button"
-			className="mg-button mg-button-outline"
-			onClick={() => setIsAddCountryAccountDialogOpen(false)}
-		>
-			Cancel
-		</button>
+		<>
+			<button
+				type="button"
+				className="mg-button mg-button-primary"
+				onClick={() => console.log("Saving...")}
+			>
+				Save
+			</button>
+			<button
+				type="button"
+				className="mg-button mg-button-outline"
+				onClick={() => setIsAddCountryAccountDialogOpen(false)}
+			>
+				Cancel
+			</button>
+		</>
 	);
 
 	return (
@@ -130,6 +139,26 @@ export default function CountryAccounts() {
 									Inactive
 								</option>
 							</select>
+						</label>
+						<label>
+							<div className="dts-form-component__label">
+								<span>Admin's email</span>
+							</div>
+							<input
+								type="text"
+								aria-label="main admin's email"
+								placeholder="Enter email"
+							></input>
+						</label>
+						<label>
+							<div className="dts-form-component__label">
+								<span>Password</span>
+							</div>
+							<input
+								type="password"
+								aria-label="main admin's password"
+								placeholder="Enter password"
+							></input>
 						</label>
 					</div>
 				</div>
