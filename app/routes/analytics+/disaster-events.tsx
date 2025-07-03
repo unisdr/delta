@@ -4,22 +4,23 @@ import { Link } from "@remix-run/react";
 import { useLoaderData, Outlet } from "@remix-run/react";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { public_tenant_context } from "~/util/tenant";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfig } from "./content-picker-config";
 
-import { 
+import {
   disasterEventSectorsById,
-  disasterEvent_DisasterRecordsCount__ById, 
+  disasterEvent_DisasterRecordsCount__ById,
   disasterEventSectorTotal__ById,
   disasterEventSectorTotal__ByDivisionId,
 } from "~/backend.server/models/analytics/disaster-events";
 
 import {
-	disasterEventById,
-	DisasterEventViewModel,
+  disasterEventById,
+  DisasterEventViewModel,
 } from "~/backend.server/models/event";
 
 import {
@@ -74,47 +75,50 @@ interface interfaceSector {
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
 
   const req = loaderArgs.request;
-  
+
   // Parse the request URL
   const parsedUrl = new URL(req.url);
 
   // Extract query string parameters
   const queryParams = parsedUrl.searchParams;
-  const qsDisEventId = queryParams.get('disasterEventId') || ''; 
-  let record:any = undefined;
-  let recordsRelatedSectors:any = undefined;
-  let countRelatedDisasterRecords:any = undefined;
-  let totalSectorEffects:any = undefined;
-  let cpDisplayName:string = '';
-  let sectorDamagePieChartData:interfacePieChart[] = [];
-  let sectorLossesPieChartData:interfacePieChart[] = [];
-  let sectorRecoveryPieChartData:interfacePieChart[] = [];
-  let datamageGeoData:interfaceMap[] = [];
-  let lossesGeoData:interfaceMap[] = [];
-  let humanEffectsGeoData:interfaceMap[] = [];
+  const qsDisEventId = queryParams.get('disasterEventId') || '';
+  let record: any = undefined;
+  let recordsRelatedSectors: any = undefined;
+  let countRelatedDisasterRecords: any = undefined;
+  let totalSectorEffects: any = undefined;
+  let cpDisplayName: string = '';
+  let sectorDamagePieChartData: interfacePieChart[] = [];
+  let sectorLossesPieChartData: interfacePieChart[] = [];
+  let sectorRecoveryPieChartData: interfacePieChart[] = [];
+  let datamageGeoData: interfaceMap[] = [];
+  let lossesGeoData: interfaceMap[] = [];
+  let humanEffectsGeoData: interfaceMap[] = [];
   // let totalAffectedPeople:any = {};
-  let totalAffectedPeople2:any = {};
+  let totalAffectedPeople2: any = {};
   const sectortData: Record<number, { id: number; sectorname: string; subSector?: interfaceSector[]; }> = {};
-  
+
   const sectorPieChartData: Record<number, { damages: interfacePieChart; losses: interfacePieChart; recovery: interfacePieChart }> = {};
   let sectorBarChartData: Record<number, interfaceBarChart> = {};
 
-    // Initialize arrays to store filtered values
+  // Initialize arrays to store filtered values
   let sectorParentArray: interfaceSector[] = [];
   let x: any = {};
-  
-  const settings= await getInstanceSystemSettings();
+
+  const settings = await getInstanceSystemSettings();
   let currency = "PHP";
-  if(settings){
-    currency =settings.currencyCodes?.split(",")[0];
+  if (settings) {
+    currency = settings.currencyCodes?.split(",")[0];
   }
   // const sectorExistsInSectorParentArray = (id: number): boolean => {
   //   return sectorParentArray.some(item => item.id === id);
   // };
-  
+
+  // Use the shared public tenant context for analytics
+
   if (qsDisEventId) {
-    record = await disasterEventById(qsDisEventId).catch(console.error);
-    if  ( record ) {
+    // Pass public tenant context for analytics access
+    record = await disasterEventById(qsDisEventId, public_tenant_context).catch(console.error);
+    if (record) {
       try {
         cpDisplayName = await contentPickerConfig.selectedDisplay(dr, qsDisEventId);
 
@@ -150,7 +154,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
               sectortData[x.id] = {
                 id: x.id,
                 sectorname: x.sectorname,
-                subSector:  await sectorChildrenById(x.id) as interfaceSector[],
+                subSector: await sectorChildrenById(x.id) as interfaceSector[],
               }
             }
 
@@ -164,7 +168,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
             }
             else {
               sectorPieChartData[x.id].damages.value += x.effects.damages.total;
-              sectorPieChartData[x.id].losses.value += x.effects.losses.total; 
+              sectorPieChartData[x.id].losses.value += x.effects.losses.total;
               sectorPieChartData[x.id].recovery.value += x.effects.recovery.total;
             }
 
@@ -225,7 +229,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         const divisionLevel1 = await getDivisionByLevel(1);
         for (const item of divisionLevel1) {
           const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, [item.id]);
-          const humanEffectsPerDivision = await getAffected(dr, qsDisEventId, {divisionId: item.id});
+          const humanEffectsPerDivision = await getAffected(dr, qsDisEventId, { divisionId: item.id });
 
           // Populate the geoData for the map for the human effects
           humanEffectsGeoData.push({
@@ -264,7 +268,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
       }
     }
     else {
-      return Response.json({ }, { status: 404 });
+      return Response.json({}, { status: 404 });
     }
   }
 
@@ -307,7 +311,7 @@ function DisasterEventsAnalysisContent() {
 
   const ld = useLoaderData<{
     qsDisEventId: string,
-    record: DisasterEventViewModel | null, 
+    record: DisasterEventViewModel | null,
     recordsRelatedSectors: any,
     countRelatedDisasterRecords: number | null,
     total: any | null,
@@ -323,8 +327,8 @@ function DisasterEventsAnalysisContent() {
     sectorParentArray: interfaceSector[],
     currency: string;
   }>();
-  let disaggregationsAge2:{
-    children:number|undefined, adult: number|undefined, senior: number|undefined
+  let disaggregationsAge2: {
+    children: number | undefined, adult: number | undefined, senior: number | undefined
   } | undefined = undefined;
 
   let [activeData, setActiveData] = useState(ld.datamageGeoData); //  Default MapChart geoData
@@ -339,7 +343,7 @@ function DisasterEventsAnalysisContent() {
   //   setFilters(newFilters);
   // };
 
-    // Define the handleClearFilters function
+  // Define the handleClearFilters function
   const handleClearFilters = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault(); // Prevent the default form submission
     window.location.href = '/analytics/disaster-events';
@@ -350,10 +354,10 @@ function DisasterEventsAnalysisContent() {
     setSelectedSector(sectorId);
 
     // Filter sub-sectors based on selected sector ID
-    const filteredSubSectors = ld.sectorParentArray.filter( item => item.id === Number(sectorId));
+    const filteredSubSectors = ld.sectorParentArray.filter(item => item.id === Number(sectorId));
     const element = document.getElementById("sector-apply-filter");
 
-    if(filteredSubSectors.length === 0) { 
+    if (filteredSubSectors.length === 0) {
       setSubSectors([]);
       setSelectedSubSector('');
 
@@ -390,11 +394,11 @@ function DisasterEventsAnalysisContent() {
     document.getElementById('tab01')?.setAttribute('aria-selected', 'false');
     document.getElementById('tab02')?.setAttribute('aria-selected', 'false');
     document.getElementById('tab03')?.setAttribute('aria-selected', 'false')
-  
+
     const buttonText = e.currentTarget.textContent?.trim() || "Legend";
-  
+
     e.currentTarget.ariaSelected = 'true';
-  
+
     setActiveData(data);
     mapChartRef.current?.setDataSource(data);
     mapChartRef.current?.setLegendTitle(buttonText);
@@ -403,21 +407,21 @@ function DisasterEventsAnalysisContent() {
 
 
   useEffect(() => {
-      if (ld.record) {
-        if (btnCancelRef.current) {
-          btnCancelRef.current.disabled = false;
-        }
+    if (ld.record) {
+      if (btnCancelRef.current) {
+        btnCancelRef.current.disabled = false;
       }
-      else {
-        if (btnSubmitRef.current) {
-          btnSubmitRef.current.disabled = false;
-        }
-        if (btnCancelRef.current) {
-          btnCancelRef.current.disabled = true;
-        }
+    }
+    else {
+      if (btnSubmitRef.current) {
+        btnSubmitRef.current.disabled = false;
       }
-      mapChartRef.current?.setLegendTitle(`Total damages in ${ld.currency}`);
-    }, []);
+      if (btnCancelRef.current) {
+        btnCancelRef.current.disabled = true;
+      }
+    }
+    mapChartRef.current?.setLegendTitle(`Total damages in ${ld.currency}`);
+  }, []);
 
   // console.log(ld.datamageGeoData);
 
@@ -427,7 +431,7 @@ function DisasterEventsAnalysisContent() {
     const ageData = ld.totalAffectedPeople2.disaggregations.age;
     disaggregationsAge2 = {
       children: ageData["0-14"],
-      adult: ageData["15-64"], 
+      adult: ageData["15-64"],
       senior: ageData["65+"]
     }
   }
@@ -437,43 +441,43 @@ function DisasterEventsAnalysisContent() {
       <div style={{ maxWidth: "100%", overflow: "hidden" }}>
         <div className="disaster-events-page">
 
-        <section>
-          <div className="mg-container">
+          <section>
+            <div className="mg-container">
               <form className="dts-form" method="get">
-                  <div className="dts-form__body">
-                      <div className="mg-grid mg-grid__col-1">
-                          <div className="dts-form-component">
-                              <label>
-                                  <div className="dts-form-component__label">
-                                      <span>Disaster event</span>
-                                  </div>
-                                  <ContentPicker 
-                                    {...contentPickerConfig} 
-                                    value={ ld.record ? ld.record.id : '' } 
-                                    displayName={ ld.cpDisplayName } 
-                                    onSelect={
-                                        () => {
-                                          if (btnCancelRef.current) {
-                                            btnCancelRef.current.disabled = false;
-                                          }
-                                          if (btnSubmitRef.current) {
-                                            btnSubmitRef.current.disabled = false;
-                                          }
-                                        }
-                                    }
-                                    disabledOnEdit={ld.record ? true : false}
-                                  />
-                              </label>
-                          </div>
-                      </div>
-                      <div className="dts-form__actions">
-                          <button ref={btnSubmitRef} type="submit" className="mg-button mg-button--small mg-button-primary" disabled>Apply filters</button>
-                          <button ref={btnCancelRef} onClick={handleClearFilters} type="button" className="mg-button mg-button--small mg-button-outline">Clear</button>
-                      </div>
+                <div className="dts-form__body">
+                  <div className="mg-grid mg-grid__col-1">
+                    <div className="dts-form-component">
+                      <label>
+                        <div className="dts-form-component__label">
+                          <span>Disaster event</span>
+                        </div>
+                        <ContentPicker
+                          {...contentPickerConfig}
+                          value={ld.record ? ld.record.id : ''}
+                          displayName={ld.cpDisplayName}
+                          onSelect={
+                            () => {
+                              if (btnCancelRef.current) {
+                                btnCancelRef.current.disabled = false;
+                              }
+                              if (btnSubmitRef.current) {
+                                btnSubmitRef.current.disabled = false;
+                              }
+                            }
+                          }
+                          disabledOnEdit={ld.record ? true : false}
+                        />
+                      </label>
+                    </div>
                   </div>
+                  <div className="dts-form__actions">
+                    <button ref={btnSubmitRef} type="submit" className="mg-button mg-button--small mg-button-primary" disabled>Apply filters</button>
+                    <button ref={btnCancelRef} onClick={handleClearFilters} type="button" className="mg-button mg-button--small mg-button-outline">Clear</button>
+                  </div>
+                </div>
               </form>
-          </div>
-        </section>
+            </div>
+          </section>
 
           {/* Conditional rendering: Display this message until filters are applied */}
           {!ld.record && (
@@ -505,354 +509,354 @@ function DisasterEventsAnalysisContent() {
         </div>
 
         {ld.record && (<>
-        
-        <section className="dts-page-section">
-        <div className="mg-container">
-          <h2 className="dts-heading-2">{ ld.cpDisplayName }</h2>
-          <p><strong>Affiliated record(s)</strong>: 
-            { ld.countRelatedDisasterRecords }
-            { ' ' }
-            { ld.countRelatedDisasterRecords && ld.countRelatedDisasterRecords > 0 && (
-                <a href={`/disaster-record?search=${ld.qsDisEventId}`}>View records</a>
-            )}           
-          </p>
 
-          {
-            Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.length > 0 && <>
-                <p>
-                {
-                  Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.map((sector, index) => (<>
-                      <span key={index}>
-                        {sector.sectorname}
-                        {ld.recordsRelatedSectors.length == (index + 1) ? ' ' : ', '}
-                      </span>
-                  </>))
-                }
-                </p>
-            </>
-          }
-
-          {
-            
-            (ld.record && (ld.record.startDate || ld.record.endDate)) && <>
-              <p>
-              <strong>Date</strong>: { ld.record.startDate } to {ld.record.endDate}
+          <section className="dts-page-section">
+            <div className="mg-container">
+              <h2 className="dts-heading-2">{ld.cpDisplayName}</h2>
+              <p><strong>Affiliated record(s)</strong>:
+                {ld.countRelatedDisasterRecords}
+                {' '}
+                {ld.countRelatedDisasterRecords && ld.countRelatedDisasterRecords > 0 && (
+                  <a href={`/disaster-record?search=${ld.qsDisEventId}`}>View records</a>
+                )}
               </p>
-              </>
-          }
 
-          {
-            (ld.record && ld.record.dataSource) && <>
-              <p>
-                Data Source: { ld.record.dataSource }
-              </p>
-            </>   
-          }
+              {
+                Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.length > 0 && <>
+                  <p>
+                    {
+                      Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.map((sector, index) => (<>
+                        <span key={index}>
+                          {sector.sectorname}
+                          {ld.recordsRelatedSectors.length == (index + 1) ? ' ' : ', '}
+                        </span>
+                      </>))
+                    }
+                  </p>
+                </>
+              }
 
-          <div className="mg-grid mg-grid__col-3">
-            { Number(ld.total.damages.total) > 0 && (
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span id="elementId03">Damage in { ld.total.damages.currency }</span>
-                </h3>
-                <div className="dts-indicator dts-indicator--target-box-b">
-                  <span>{ ld.total.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
-                </div>
-              </div>
-            )}
+              {
 
-            { Number(ld.total.losses.total) > 0 && (
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span id="elementId04">Losses in { ld.total.losses.currency }</span>
-                </h3>
-                <div className="dts-indicator dts-indicator--target-box-c">
-                  <span>{ ld.total.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
-                </div>
-              </div>
-            )}
+                (ld.record && (ld.record.startDate || ld.record.endDate)) && <>
+                  <p>
+                    <strong>Date</strong>: {ld.record.startDate} to {ld.record.endDate}
+                  </p>
+                </>
+              }
 
-            { Number(ld.total.recovery.total) > 0 && (
-                <>
+              {
+                (ld.record && ld.record.dataSource) && <>
+                  <p>
+                    Data Source: {ld.record.dataSource}
+                  </p>
+                </>
+              }
+
+              <div className="mg-grid mg-grid__col-3">
+                {Number(ld.total.damages.total) > 0 && (
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
-                      <span id="elementId05">Recovery in { ld.total.recovery.currency }</span>
+                      <span id="elementId03">Damage in {ld.total.damages.currency}</span>
                     </h3>
-                    <div className="dts-indicator dts-indicator--target-box-d">
-                      <span>{ ld.total.recovery.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+                    <div className="dts-indicator dts-indicator--target-box-b">
+                      <span>{ld.total.damages.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
                     </div>
                   </div>
-                </>
-            )}
+                )}
 
-
-          </div>
-        </div>
-      </section>
-
-      { Number(ld.totalAffectedPeople2.noDisaggregations.total) > 0 && (<>
-        <section className="dts-page-section">
-          <div className="mg-container">
-            <h2 className="dts-heading-2">Human effects</h2>
-
-            <div className="mg-grid mg-grid__col-3">
-              <div className="dts-data-box">
-                  <h3 className="dts-body-label">
-                    <span>Total people affected</span>
-                  </h3>
-                  <div className="dts-indicator dts-indicator--target-box-f">
-                    <span>{ (ld.totalAffectedPeople2.noDisaggregations.total - ld.totalAffectedPeople2.noDisaggregations.tables.deaths).toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
+                {Number(ld.total.losses.total) > 0 && (
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span id="elementId04">Losses in {ld.total.losses.currency}</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-c">
+                      <span>{ld.total.losses.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                    </div>
                   </div>
-                </div>
-            </div>
-          </div>
-        </section>
+                )}
 
-        <section className="dts-page-section">
-          <div className="mg-container">
-            <div className="mg-grid mg-grid__col-3">
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span>Death</span>
-                </h3>
-                <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.deaths.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
-                </div>
-              </div>
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span>Injured</span>
-                </h3>
-                <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.injured.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
-                </div>
-              </div>
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span>Missing</span>
-                </h3>
-                <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.missing.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="dts-page-section">
-          <div className="mg-container">
-            <div className="mg-grid mg-grid__col-3">
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span>People directly affected (old DesInventar)</span>
-                </h3>
-                <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.directlyAffected.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
-                </div>
-              </div>
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">
-                  <span>Displaced</span>
-                </h3>
-                <div className="dts-indicator dts-indicator--target-box-g">
-                  <span>{ ld.totalAffectedPeople2.noDisaggregations.tables.displaced.toLocaleString(navigator.language, { minimumFractionDigits: 0 }) }</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="dts-page-section">
-          <div className="mg-container">
-            <div className="mg-grid mg-grid__col-3">
-              { (
-                  (ld.totalAffectedPeople2.disaggregations.sex)
-                  && (
-                    ld.totalAffectedPeople2.disaggregations.sex.m
-                    ||
-                    ld.totalAffectedPeople2.disaggregations.sex.f
-                    ||
-                    ld.totalAffectedPeople2.disaggregations.sex.o
-                  )
-
-                ) && ( 
-                <div className="dts-data-box">
-                    <h3 className="dts-body-label">
-                      <span>Men and women affected</span>
-                    </h3>
-                    <div style={{height: '300px'}}>
-                        <HorizontalBarChart data={
-                              [
-                                { 
-                                  name: '',
-                                  'Men': ld.totalAffectedPeople2.disaggregations.sex.m,
-                                  'Women': ld.totalAffectedPeople2.disaggregations.sex.f,
-                                  'Other non-Binary': ld.totalAffectedPeople2.disaggregations.sex.o,
-                                }
-                              ]
-                            }
-                            colorScheme="violet"
-                            imgSrc="/assets/icons/Male&Female.svg"
-                          />
+                {Number(ld.total.recovery.total) > 0 && (
+                  <>
+                    <div className="dts-data-box">
+                      <h3 className="dts-body-label">
+                        <span id="elementId05">Recovery in {ld.total.recovery.currency}</span>
+                      </h3>
+                      <div className="dts-indicator dts-indicator--target-box-d">
+                        <span>{ld.total.recovery.total.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                      </div>
                     </div>
-                </div>
-              )}
-
-              { (
-                  (ld.totalAffectedPeople2.disaggregations.disability && ld.totalAffectedPeople2.disaggregations.disability.disability)
-                  || 
-                  (ld.totalAffectedPeople2.disaggregations.globalPovertyLine && ld.totalAffectedPeople2.disaggregations.globalPovertyLine.below)
-                  || 
-                  (ld.totalAffectedPeople2.disaggregations.nationalPovertyLine && ld.totalAffectedPeople2.disaggregations.nationalPovertyLine.below)
-                ) && ( 
-                <div className="dts-data-box">
-                    <h3 className="dts-body-label">
-                      <span>Persons with disabilities and living in poverty affected</span>
-                    </h3>
-                    <div style={{height: '350px'}}>
-                        <HorizontalBarChart data={
-                              [{
-                                name: '',
-                                'Persons with disabilities': ld.totalAffectedPeople2.disaggregations.disability.disability,
-                                'Persons living in poverty (national)': ld.totalAffectedPeople2.disaggregations.nationalPovertyLine.below,
-                                'Persons living in poverty (international)': ld.totalAffectedPeople2.disaggregations.globalPovertyLine.below,
-                              }]
-                            }
-                            colorScheme="cerulean"
-                            imgSrc="/assets/icons/People-with-physical-impairments.svg"
-                          />
-                    </div>
-                </div>
-              )}
+                  </>
+                )}
 
 
-              { (ld.totalAffectedPeople2.disaggregations.age) 
-                && (disaggregationsAge2 && disaggregationsAge2.children ) 
-                && ( 
-                <div className="dts-data-box">
-                    <h3 className="dts-body-label">
-                      <span>Children, adults, and seniors affected</span>
-                    </h3>
-                    <div style={{height: '300px'}}>
-                        <HorizontalBarChart data={
-                              [{
-                                name: '',
-                                'Children': Number(disaggregationsAge2?.children),
-                                'Adults': Number(disaggregationsAge2?.adult),
-                                'Seniors': Number(disaggregationsAge2?.senior),
-                              }]
-                            }
-                            colorScheme="violet"
-                            imgSrc="/assets/icons/Male&Female.svg"
-                          />
-                    </div>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-
-
-      </>)}
-
-
-
-
-        { (Number(ld.total.damages.total) > 0 || Number(ld.total.losses.total) > 0 || Number(ld.total.recovery.total) > 0) && (
-          <>
+          {Number(ld.totalAffectedPeople2.noDisaggregations.total) > 0 && (<>
             <section className="dts-page-section">
               <div className="mg-container">
-                <h2 className="dts-heading-2">Affected areas/zones</h2>
+                <h2 className="dts-heading-2">Human effects</h2>
 
-                
-
-
-                <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
-                  <li role="presentation">
-                    <button onClick={(e) => handleSwitchMapData(e, ld.datamageGeoData, '#208f04')} type="button" className="dts-tablist__button" role="tab" id="tab01" aria-selected="true" aria-controls="tabpanel01">
-                      <span>Total Damage in {ld.currency}</span>
-                    </button>
-                  </li>
-                  <li role="presentation">
-                    <button onClick={(e) => handleSwitchMapData(e, ld.humanEffectsGeoData, '#ff1010')}  type="button" className="dts-tablist__button" role="tab" id="tab02" aria-controls="tabpanel02" aria-selected="false">
-                      <span>Total Affected</span>
-                    </button>
-                  </li>
-                  <li role="presentation">
-                    <button onClick={(e) => handleSwitchMapData(e, ld.lossesGeoData, '#58508d')} type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false">
-                      <span>Total Losses in {ld.currency}</span>
-                    </button>
-                  </li>
-                </ul>
-                <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
-                  <div>
-                      <MapChart ref={mapChartRef} id="map_viewer" dataSource={activeData} legendTitle="Total Damage" legendMaxColor="#208f04" />
+                <div className="mg-grid mg-grid__col-3">
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Total people affected</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-f">
+                      <span>{(ld.totalAffectedPeople2.noDisaggregations.total - ld.totalAffectedPeople2.noDisaggregations.tables.deaths).toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </section>
-          </>
-        )}
 
-          <section className="dts-page-section">
+            <section className="dts-page-section">
               <div className="mg-container">
-                <h2 className="dts-heading-2">{ ld.cpDisplayName } impacts on sectors</h2>
-
-                  <div className="mg-grid mg-grid__col-3">
-                    {
-                      Object.keys(ld.sectorDamagePieChartData).length > 0 && (
-                        <div className="dts-data-box">
-                          <h3 className="dts-body-label">
-                            <span>Damage</span>
-                          </h3>
-                          <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorDamagePieChartData } boolRenderLabel={false} currency={ld.currency}/>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    {
-                      Object.keys(ld.sectorLossesPieChartData).length > 0 && (
-                        <div className="dts-data-box">
-                          <h3 className="dts-body-label">
-                            <span>Losses</span>
-                          </h3>
-                          <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorLossesPieChartData } boolRenderLabel={false} currency={ld.currency}/>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    {
-                      Object.keys(ld.sectorRecoveryPieChartData).length > 0 && (
-                        <div className="dts-data-box">
-                          <h3 className="dts-body-label">
-                            <span>Recovery need</span>
-                          </h3>
-                          <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomPieChart data={ ld.sectorRecoveryPieChartData } boolRenderLabel={false} currency={ld.currency}/>
-                          </div>
-                        </div>
-                      )
-                    }                   
+                <div className="mg-grid mg-grid__col-3">
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Death</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-g">
+                      <span>{ld.totalAffectedPeople2.noDisaggregations.tables.deaths.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                    </div>
                   </div>
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Injured</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-g">
+                      <span>{ld.totalAffectedPeople2.noDisaggregations.tables.injured.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Missing</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-g">
+                      <span>{ld.totalAffectedPeople2.noDisaggregations.tables.missing.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-                  {
-                    Object.keys(ld.sectorBarChartData).length > 0 && (
-                      <div className="mg-grid mg-grid__col-1">
-                        <div className="dts-data-box">
-                          <div className="dts-placeholder" style={{height: '400px'}}>
-                              <CustomStackedBarChart data={ ld.sectorBarChartData } />
-                          </div>
+            <section className="dts-page-section">
+              <div className="mg-container">
+                <div className="mg-grid mg-grid__col-3">
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>People directly affected (old DesInventar)</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-g">
+                      <span>{ld.totalAffectedPeople2.noDisaggregations.tables.directlyAffected.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                  <div className="dts-data-box">
+                    <h3 className="dts-body-label">
+                      <span>Displaced</span>
+                    </h3>
+                    <div className="dts-indicator dts-indicator--target-box-g">
+                      <span>{ld.totalAffectedPeople2.noDisaggregations.tables.displaced.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="dts-page-section">
+              <div className="mg-container">
+                <div className="mg-grid mg-grid__col-3">
+                  {(
+                    (ld.totalAffectedPeople2.disaggregations.sex)
+                    && (
+                      ld.totalAffectedPeople2.disaggregations.sex.m
+                      ||
+                      ld.totalAffectedPeople2.disaggregations.sex.f
+                      ||
+                      ld.totalAffectedPeople2.disaggregations.sex.o
+                    )
+
+                  ) && (
+                      <div className="dts-data-box">
+                        <h3 className="dts-body-label">
+                          <span>Men and women affected</span>
+                        </h3>
+                        <div style={{ height: '300px' }}>
+                          <HorizontalBarChart data={
+                            [
+                              {
+                                name: '',
+                                'Men': ld.totalAffectedPeople2.disaggregations.sex.m,
+                                'Women': ld.totalAffectedPeople2.disaggregations.sex.f,
+                                'Other non-Binary': ld.totalAffectedPeople2.disaggregations.sex.o,
+                              }
+                            ]
+                          }
+                            colorScheme="violet"
+                            imgSrc="/assets/icons/Male&Female.svg"
+                          />
                         </div>
                       </div>
-                    )
-                  }
-                  
+                    )}
+
+                  {(
+                    (ld.totalAffectedPeople2.disaggregations.disability && ld.totalAffectedPeople2.disaggregations.disability.disability)
+                    ||
+                    (ld.totalAffectedPeople2.disaggregations.globalPovertyLine && ld.totalAffectedPeople2.disaggregations.globalPovertyLine.below)
+                    ||
+                    (ld.totalAffectedPeople2.disaggregations.nationalPovertyLine && ld.totalAffectedPeople2.disaggregations.nationalPovertyLine.below)
+                  ) && (
+                      <div className="dts-data-box">
+                        <h3 className="dts-body-label">
+                          <span>Persons with disabilities and living in poverty affected</span>
+                        </h3>
+                        <div style={{ height: '350px' }}>
+                          <HorizontalBarChart data={
+                            [{
+                              name: '',
+                              'Persons with disabilities': ld.totalAffectedPeople2.disaggregations.disability.disability,
+                              'Persons living in poverty (national)': ld.totalAffectedPeople2.disaggregations.nationalPovertyLine.below,
+                              'Persons living in poverty (international)': ld.totalAffectedPeople2.disaggregations.globalPovertyLine.below,
+                            }]
+                          }
+                            colorScheme="cerulean"
+                            imgSrc="/assets/icons/People-with-physical-impairments.svg"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+
+                  {(ld.totalAffectedPeople2.disaggregations.age)
+                    && (disaggregationsAge2 && disaggregationsAge2.children)
+                    && (
+                      <div className="dts-data-box">
+                        <h3 className="dts-body-label">
+                          <span>Children, adults, and seniors affected</span>
+                        </h3>
+                        <div style={{ height: '300px' }}>
+                          <HorizontalBarChart data={
+                            [{
+                              name: '',
+                              'Children': Number(disaggregationsAge2?.children),
+                              'Adults': Number(disaggregationsAge2?.adult),
+                              'Seniors': Number(disaggregationsAge2?.senior),
+                            }]
+                          }
+                            colorScheme="violet"
+                            imgSrc="/assets/icons/Male&Female.svg"
+                          />
+                        </div>
+                      </div>
+                    )}
+                </div>
               </div>
+            </section>
+
+
+
+          </>)}
+
+
+
+
+          {(Number(ld.total.damages.total) > 0 || Number(ld.total.losses.total) > 0 || Number(ld.total.recovery.total) > 0) && (
+            <>
+              <section className="dts-page-section">
+                <div className="mg-container">
+                  <h2 className="dts-heading-2">Affected areas/zones</h2>
+
+
+
+
+                  <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
+                    <li role="presentation">
+                      <button onClick={(e) => handleSwitchMapData(e, ld.datamageGeoData, '#208f04')} type="button" className="dts-tablist__button" role="tab" id="tab01" aria-selected="true" aria-controls="tabpanel01">
+                        <span>Total Damage in {ld.currency}</span>
+                      </button>
+                    </li>
+                    <li role="presentation">
+                      <button onClick={(e) => handleSwitchMapData(e, ld.humanEffectsGeoData, '#ff1010')} type="button" className="dts-tablist__button" role="tab" id="tab02" aria-controls="tabpanel02" aria-selected="false">
+                        <span>Total Affected</span>
+                      </button>
+                    </li>
+                    <li role="presentation">
+                      <button onClick={(e) => handleSwitchMapData(e, ld.lossesGeoData, '#58508d')} type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false">
+                        <span>Total Losses in {ld.currency}</span>
+                      </button>
+                    </li>
+                  </ul>
+                  <div className="dts-tablist__panel" id="tabpanel01" role="tabpanel" aria-labelledby="tab01">
+                    <div>
+                      <MapChart ref={mapChartRef} id="map_viewer" dataSource={activeData} legendTitle="Total Damage" legendMaxColor="#208f04" />
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          <section className="dts-page-section">
+            <div className="mg-container">
+              <h2 className="dts-heading-2">{ld.cpDisplayName} impacts on sectors</h2>
+
+              <div className="mg-grid mg-grid__col-3">
+                {
+                  Object.keys(ld.sectorDamagePieChartData).length > 0 && (
+                    <div className="dts-data-box">
+                      <h3 className="dts-body-label">
+                        <span>Damage</span>
+                      </h3>
+                      <div className="dts-placeholder" style={{ height: '400px' }}>
+                        <CustomPieChart data={ld.sectorDamagePieChartData} boolRenderLabel={false} currency={ld.currency} />
+                      </div>
+                    </div>
+                  )
+                }
+
+                {
+                  Object.keys(ld.sectorLossesPieChartData).length > 0 && (
+                    <div className="dts-data-box">
+                      <h3 className="dts-body-label">
+                        <span>Losses</span>
+                      </h3>
+                      <div className="dts-placeholder" style={{ height: '400px' }}>
+                        <CustomPieChart data={ld.sectorLossesPieChartData} boolRenderLabel={false} currency={ld.currency} />
+                      </div>
+                    </div>
+                  )
+                }
+
+                {
+                  Object.keys(ld.sectorRecoveryPieChartData).length > 0 && (
+                    <div className="dts-data-box">
+                      <h3 className="dts-body-label">
+                        <span>Recovery need</span>
+                      </h3>
+                      <div className="dts-placeholder" style={{ height: '400px' }}>
+                        <CustomPieChart data={ld.sectorRecoveryPieChartData} boolRenderLabel={false} currency={ld.currency} />
+                      </div>
+                    </div>
+                  )
+                }
+              </div>
+
+              {
+                Object.keys(ld.sectorBarChartData).length > 0 && (
+                  <div className="mg-grid mg-grid__col-1">
+                    <div className="dts-data-box">
+                      <div className="dts-placeholder" style={{ height: '400px' }}>
+                        <CustomStackedBarChart data={ld.sectorBarChartData} />
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
+            </div>
           </section>
 
           {
@@ -868,7 +872,7 @@ function DisasterEventsAnalysisContent() {
                           <div className="dts-form-component">
                             <label>
                               <div className="dts-form-component__label">
-                              <span>Sector *</span>
+                                <span>Sector *</span>
                               </div>
                               <select id="sector-select" className="filter-select" name="sector" required onChange={handleSectorChange}>
                                 <option value="">Select Sector</option>
@@ -883,15 +887,15 @@ function DisasterEventsAnalysisContent() {
                           <div className="dts-form-component">
                             <label>
                               <div className="dts-form-component__label">
-                              <span>Sub Sector</span>
+                                <span>Sub Sector</span>
                               </div>
-                              <select id="sub-sector-select" className="filter-select"  name="sub-sector" onChange={handleSubSectorChange}>
-                                  <option  value="">Select Sector First</option>
-                                  {subSectors.map((sub: { id: number; sectorname: string }) => (
-                                    <option key={sub.id} value={sub.id}>
-                                      {sub.sectorname}
-                                    </option>
-                                  ))}
+                              <select id="sub-sector-select" className="filter-select" name="sub-sector" onChange={handleSubSectorChange}>
+                                <option value="">Select Sector First</option>
+                                {subSectors.map((sub: { id: number; sectorname: string }) => (
+                                  <option key={sub.id} value={sub.id}>
+                                    {sub.sectorname}
+                                  </option>
+                                ))}
                               </select>
                             </label>
                           </div>
@@ -909,15 +913,15 @@ function DisasterEventsAnalysisContent() {
               </>
             )
           }
-          
-
-          <Outlet context={{name:'joel'}} />
 
 
-          
-      
+          <Outlet context={{ name: 'joel' }} />
 
-      </>)}
+
+
+
+
+        </>)}
 
         <p>&nbsp;</p>
         <p>&nbsp;</p>
@@ -926,7 +930,7 @@ function DisasterEventsAnalysisContent() {
         </div>
 
       </div>
-      
+
     </MainContainer>
   );
 }
