@@ -23,9 +23,10 @@ import {
 } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
-import { redirectWithMessage } from "~/util/session";
+import { redirectWithMessage, getUserFromSession } from "~/util/session";
 
 import { MainContainer } from "~/frontend/container";
+import { getTenantContext } from "~/util/tenant";
 
 import "react-toastify/dist/ReactToastify.css"; // Toast styles
 import { adminInviteUser, AdminInviteUserFields, adminInviteUserFieldsFromMap } from "~/backend.server/models/user/invite";
@@ -37,7 +38,18 @@ export const meta: MetaFunction = () => {
 	];
 };
 
-export const loader = authLoaderWithPerm("InviteUsers", async () => {
+export const loader = authLoaderWithPerm("InviteUsers", async ({ request }) => {
+	// Get user session and tenant context to verify authorization
+	const userSession = await getUserFromSession(request);
+	if (!userSession) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	const tenantContext = await getTenantContext(userSession);
+	if (!tenantContext) {
+		throw new Response("Unauthorized - No tenant context", { status: 401 });
+	}
+
 	return {
 		data: adminInviteUserFieldsFromMap({})
 	}
@@ -53,6 +65,18 @@ type ErrorsType = {
 
 export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const { request } = actionArgs;
+
+	// Get user session and tenant context
+	const userSession = await getUserFromSession(request);
+	if (!userSession) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	const tenantContext = await getTenantContext(userSession);
+	if (!tenantContext) {
+		throw new Response("Unauthorized - No tenant context", { status: 401 });
+	}
+
 	const formData = formStringData(await request.formData());
 	const data = adminInviteUserFieldsFromMap(formData);
 
@@ -78,7 +102,8 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	}
 
 	try {
-		const res = await adminInviteUser(data);
+		// Pass tenant context to ensure user is created within the correct tenant
+		const res = await adminInviteUser(data, tenantContext);
 
 		if (!res.ok) {
 			return json<ActionResponse>({
@@ -101,6 +126,7 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 			data: data,
 			errors: {
 				fields: {},
+				form: ["An unexpected error occurred. Please try again."],
 			},
 		});
 	}

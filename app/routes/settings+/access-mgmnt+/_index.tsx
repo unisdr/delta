@@ -7,6 +7,9 @@ import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { getTenantContext } from "~/util/tenant";
+import { and, eq, ne } from "drizzle-orm";
+import { getUserFromSession } from "~/util/session";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -20,6 +23,17 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	const url = new URL(request.url);
 	const search = url.searchParams.get("search") || "";
 
+	// Get user session and tenant context
+	const userSession = await getUserFromSession(request);
+	if (!userSession) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	const tenantContext = await getTenantContext(userSession);
+	if (!tenantContext) {
+		throw new Response("Unauthorized - No tenant context", { status: 401 });
+	}
+
 	const select = {
 		id: userTable.id,
 		email: userTable.email,
@@ -32,11 +46,17 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		modifiedAt: userTable.updatedAt,
 	};
 
+	// Add tenant filtering to only show users from the current tenant
+	const where = and(
+		eq(userTable.countryAccountsId, tenantContext.countryAccountId),
+		ne(userTable.role, 'super_admin') // Don't show super admins in the list
+	);
+
 	const res = await executeQueryForPagination<UserRes>(
 		request,
 		userTable,
 		select,
-		null
+		where
 	);
 
 	return {
@@ -271,11 +291,10 @@ export default function Settings() {
 								<tr key={index}>
 									<td>
 										<span
-											className={`dts-access-management__status-dot ${
-												item.emailVerified
+											className={`dts-access-management__status-dot ${item.emailVerified
 													? "dts-access-management__status-dot--activated"
 													: "dts-access-management__status-dot--pending"
-											}`}
+												}`}
 										>
 											{/* Tooltip message */}
 											<span className="dts-access-management__tooltip-text">

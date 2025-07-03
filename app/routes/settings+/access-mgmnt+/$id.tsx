@@ -1,14 +1,16 @@
 import { dr } from "~/db.server";
 import { and, desc, eq } from "drizzle-orm";
+import { format } from "date-fns";
 
 import { auditLogsTable, userTable } from "~/drizzle/schema";
 
 import { useLoaderData, Link } from "@remix-run/react";
 
 import { authLoaderWithPerm } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
+import { getUserFromSession } from "~/util/session";
 
 import { NavSettings } from "~/routes/settings/nav";
-
 import { MainContainer } from "~/frontend/container";
 
 export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
@@ -17,17 +19,33 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		throw new Response("Missing item ID", { status: 400 });
 	}
 
-	const res = await dr
-		.select()
-		.from(userTable)
-		.where(eq(userTable.id, Number(id)));
-
-	if (!res || res.length === 0) {
-		throw new Response("Item not found", { status: 404 });
+	// Get user session and tenant context
+	const userSession = await getUserFromSession(loaderArgs.request);
+	if (!userSession) {
+		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const item = res[0];
+	const tenantContext = await getTenantContext(userSession);
+	if (!tenantContext) {
+		throw new Response("Unauthorized - No tenant context", { status: 401 });
+	}
 
+	// Get user with tenant check
+	const [user] = await dr
+		.select()
+		.from(userTable)
+		.where(
+			and(
+				eq(userTable.id, Number(id)),
+				eq(userTable.countryAccountsId, tenantContext.countryAccountId)
+			)
+		);
+
+	if (!user) {
+		throw new Response("User not found or access denied", { status: 404 });
+	}
+
+	// Get audit logs with tenant check
 	const auditLogs = await dr
 		.select({
 			action: auditLogsTable.action,
@@ -40,28 +58,30 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		.where(
 			and(
 				eq(auditLogsTable.tableName, "user"),
-				eq(auditLogsTable.recordId, String(id))
+				eq(auditLogsTable.recordId, String(id)),
+				eq(userTable.countryAccountsId, tenantContext.countryAccountId)
 			)
 		)
 		.orderBy(desc(auditLogsTable.timestamp));
 
 	return Response.json({
 		item: {
-			id: item.id,
-			email: item.email,
-			firstName: item.firstName,
-			lastName: item.lastName,
-			role: item.role,
-			organization: item.organization,
-			emailVerified: item.emailVerified,
-			authType: item.authType,
+			id: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			role: user.role,
+			organization: user.organization,
+			emailVerified: user.emailVerified,
+			authType: user.authType,
+			modifiedAt: user.updatedAt,
 		},
 		auditLogs: auditLogs.map((log) => ({
 			action: log.action,
 			by: log.by,
 			organization: log.organization,
-			date: log.timestamp.toDateString(),
-			time: log.timestamp.toTimeString(),
+			date: format(new Date(log.timestamp), "yyyy-MM-dd"),
+			time: format(new Date(log.timestamp), "HH:mm:ss"),
 		})),
 	});
 });
@@ -105,7 +125,7 @@ export default function Data() {
 							</tr>
 						</thead>
 						<tbody>
-							{auditLogs.map((item:AuditLogsRef , index: number) => (
+							{auditLogs.map((item: AuditLogsRef, index: number) => (
 								<tr key={index}>
 									<td>{item.action}</td>
 									<td>{item.by}</td>
