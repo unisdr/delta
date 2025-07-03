@@ -1,6 +1,6 @@
 import { countryAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { dr } from "~/db.server";
+import { dr, Tx } from "~/db.server";
 
 const ACTIVE_STATUS = 1;
 const INACTIVE_STATUS = 0;
@@ -40,8 +40,22 @@ export async function getCountryAccountById(id: string) {
 	return result;
 }
 
-export async function createCountryAccount(countryId: string, status: number) {
+export async function countryAccountExists(
+	countryId: string
+): Promise<boolean> {
 	const result = await dr
+		.select()
+		.from(countryAccounts)
+		.where(eq(countryAccounts.countryId, countryId))
+		.limit(1)
+		.execute();
+
+	return result.length > 0;
+}
+
+export async function createCountryAccount(countryId: string, status: number, tx?: Tx) {
+	const db = tx || dr;
+	const result = await db
 		.insert(countryAccounts)
 		.values({ countryId, status })
 		.returning()

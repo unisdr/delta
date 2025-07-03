@@ -96,7 +96,6 @@ export default function Screen() {
 								placeholder="*New password"
 								name="newPassword"
 								errors={errors}
-								style={{ width: "100%" }}
 							/>
 							<FieldErrors errors={errors} field="newPassword"></FieldErrors>
 						</Field>
@@ -105,7 +104,6 @@ export default function Screen() {
 								placeholder="*Confirm password"
 								name="confirmPassword"
 								errors={errors}
-								style={{ width: "100%" }}
 							/>
 							<FieldErrors
 								errors={errors}

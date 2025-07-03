@@ -1,23 +1,9 @@
 import { eq } from "drizzle-orm";
-import { instanceSystemSettings } from "~/drizzle/schema";
-import { dr } from "~/db.server";
-
-// Define the shape of the settings data
-export interface InstanceSystemSettings {
-	id: string;
-	footerUrlPrivacyPolicy: string | null;
-	footerUrlTermsConditions: string | null;
-	adminSetupComplete: boolean;
-	websiteLogo:string;
-	websiteName: string;
-	websiteUrl: string;
-	approvedRecordsArePublic: boolean;
-	totpIssuer: string ;
-	dtsInstanceType: string;
-	dtsInstanceCtryIso3:  string;
-	currencyCodes: string;
-	countryName: string;
-}
+import {
+	InstanceSystemSettings,
+	instanceSystemSettings,
+} from "~/drizzle/schema";
+import { dr, Tx } from "~/db.server";
 
 // Get the system settings (expects a single record)
 export async function getInstanceSystemSettings(): Promise<InstanceSystemSettings | null> {
@@ -67,4 +53,23 @@ export async function updateFooterUrlTermsConditions(
 		.returning();
 
 	return updated;
+}
+
+export async function createInstanceSystemSetting(
+	countryName: string,
+	countryIso3: string,
+	countryAccountId: string,
+	tx?: Tx
+): Promise<InstanceSystemSettings> {
+	const db = tx || dr;
+	const result = await db
+		.insert(instanceSystemSettings)
+		.values({
+			countryName: countryName,
+			dtsInstanceCtryIso3: countryIso3,
+			countryAccountsId: countryAccountId,
+		})
+		.returning()
+		.execute();
+	return result[0];
 }

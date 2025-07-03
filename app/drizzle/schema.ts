@@ -179,7 +179,8 @@ export const userTable = pgTable("user", {
 	hydrometCheUser: zeroBool("hydromet_che_user"),
 	authType: text("auth_type").notNull().default("form"),
 	...createdUpdatedTimestamps,
-	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id),
+	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
+	isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
 });
 
 export type User = typeof userTable.$inferSelect;
@@ -348,7 +349,6 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
 	countryAccountsId: uuid("country_accounts_id")
-		.notNull()
 		.references(() => countryAccounts.id),
 	status: text("status").notNull().default("pending"),
 	// otherId1: zeroText("otherId1"),
@@ -410,7 +410,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	...approvalFields,
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
-	countryAccountsId: uuid("country_accounts_id").notNull().references(() => countryAccounts.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
@@ -1362,18 +1362,21 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
 	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default("USA"),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
-	countryName: varchar("country_name").notNull().default("United State of America")
+	countryName: varchar("country_name").notNull().default("United State of America"),
+	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
 });
 
+export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
+export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferInsert;
 
-export const countries = pgTable("countries", {
+export const countries = pgTable("countries",{
 	id: ourRandomUUID(),
 	name: varchar('name', { length: 100 }).notNull().unique(),
 	iso3: varchar('iso3', { length: 3 }).unique()
 })
 
 export type Country = typeof countries.$inferSelect;
-export type NewCountry = typeof countries.$inferSelect;
+export type NewCountry = typeof countries.$inferInsert;
 
 
 export const countryRelations = relations(countries, ({ one }) => ({
