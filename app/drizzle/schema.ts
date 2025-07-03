@@ -348,7 +348,6 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
-	// Tenant isolation
 	countryAccountsId: uuid("country_accounts_id")
 		.references(() => countryAccounts.id),
 	status: text("status").notNull().default("pending"),
@@ -388,7 +387,6 @@ export const hazardousEventRel = relations(hazardousEventTable, ({ one }) => ({
 		fields: [hazardousEventTable.id],
 		references: [eventTable.id],
 	}),
-	// Tenant relation
 	countryAccount: one(countryAccounts, {
 		fields: [hazardousEventTable.countryAccountsId],
 		references: [countryAccounts.id],
@@ -612,7 +610,6 @@ export const disasterEventRel = relations(disasterEventTable, ({ one }) => ({
 		fields: [disasterEventTable.id],
 		references: [eventTable.id],
 	}),
-	// Tenant relation
 	countryAccount: one(countryAccounts, {
 		fields: [disasterEventTable.countryAccountsId],
 		references: [countryAccounts.id],
@@ -1063,6 +1060,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
 	id: ourRandomUUID(),
+	countryAccountsId: uuid("country_accounts_id").notNull().references(() => countryAccounts.id, { onDelete: "cascade" }),
 	disasterEventId: uuid("disaster_event_id").references(
 		(): AnyPgColumn => disasterEventTable.id
 	),
@@ -1095,6 +1093,11 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 export const disasterRecordsRel = relations(
 	disasterRecordsTable,
 	({ one, many }) => ({
+		countryAccount: one(countryAccounts, {
+			fields: [disasterRecordsTable.countryAccountsId],
+			references: [countryAccounts.id],
+		}),
+
 		//Relationship: Links each disaster record to a disaster event
 		disasterEvent: one(disasterEventTable, {
 			fields: [disasterRecordsTable.disasterEventId],
@@ -1351,13 +1354,13 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	footerUrlPrivacyPolicy: url("footer_url_privacy_policy"),
 	footerUrlTermsConditions: url("footer_url_terms_conditions"),
 	adminSetupComplete: boolean("admin_setup_complete").notNull().default(false),
-	websiteLogo:url("website_logo").notNull().default("https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg"),
-	websiteName: varchar("website_name", {length: 250}).notNull().default("Disaster Tracking System (DTS)"),
+	websiteLogo: url("website_logo").notNull().default("https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg"),
+	websiteName: varchar("website_name", { length: 250 }).notNull().default("Disaster Tracking System (DTS)"),
 	websiteUrl: url("website_url").notNull().default("http://localhost:3000"),
 	approvedRecordsArePublic: boolean().notNull().default(false),
-	totpIssuer: varchar("totp_issuer", {length: 250} ).notNull().default("example-app"),
+	totpIssuer: varchar("totp_issuer", { length: 250 }).notNull().default("example-app"),
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
-	dtsInstanceCtryIso3:  varchar("dts_instance_ctry_iso3").notNull().default("USA"),
+	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default("USA"),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
 	countryName: varchar("country_name").notNull().default("United State of America"),
 	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
@@ -1366,34 +1369,36 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
 export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
 
+export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
+export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
 
 export const countries = pgTable("countries",{
 	id: ourRandomUUID(),
-	name: varchar('name',{length: 100}).notNull().unique(),
-	iso3: varchar('iso3', {length: 3}).unique()
+	name: varchar('name', { length: 100 }).notNull().unique(),
+	iso3: varchar('iso3', { length: 3 }).unique()
 })
 
 export type Country = typeof countries.$inferSelect;
 export type NewCountry = typeof countries.$inferSelect;
 
 
-export const countryRelations =  relations(countries, ({one}) =>({
+export const countryRelations = relations(countries, ({ one }) => ({
 	countryAccount: one(countryAccounts)
 }))
 
-export const countryAccounts = pgTable("country_accounts",{
+export const countryAccounts = pgTable("country_accounts", {
 	id: ourRandomUUID(),
-	countryId: uuid("country_id").unique().notNull().references(()=>countries.id),
+	countryId: uuid("country_id").unique().notNull().references(() => countries.id),
 	status: integer("status").notNull().default(1),
-	createdAt: timestamp("created_at",{mode: 'date', withTimezone: false}).notNull().defaultNow(),
-	updatedAt: timestamp("updated_at",{mode: 'date', withTimezone: false}),
+	createdAt: timestamp("created_at", { mode: 'date', withTimezone: false }).notNull().defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: 'date', withTimezone: false }),
 })
 
 export type CountryAccount = typeof countryAccounts.$inferSelect;
 export type NewCountryAccount = typeof countryAccounts.$inferInsert;
 
-export const countryAccountsRelations = relations(countryAccounts, ({ one }) =>({
-	country: one(countries,{
+export const countryAccountsRelations = relations(countryAccounts, ({ one }) => ({
+	country: one(countries, {
 		fields: [countryAccounts.countryId],
 		references: [countries.id]
 	})

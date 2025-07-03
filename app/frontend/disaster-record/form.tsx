@@ -2,9 +2,9 @@ import {
 	Link
 } from "@remix-run/react";
 
-import {DisasterRecordsFields, DisasterRecordsViewModel} from "~/backend.server/models/disaster_record"
+import { DisasterRecordsFields, DisasterRecordsViewModel } from "~/backend.server/models/disaster_record"
 
-import {formatDate} from "~/util/date";
+import { formatDate } from "~/util/date";
 
 import {
 	UserFormProps,
@@ -17,62 +17,62 @@ import {
 	WrapInputBasic
 } from "~/frontend/form";
 
-import {useEffect, useState} from 'react';
-import {approvalStatusField} from "~/frontend/approval";
+import { useEffect, useState } from 'react';
+import { approvalStatusField } from "~/frontend/approval";
 
-import {ContentPicker} from "~/components/ContentPicker";
-import {contentPickerConfig} from "~/routes/disaster-record+/content-picker-config.js";
+import { ContentPicker } from "~/components/ContentPicker";
+import { contentPickerConfig } from "~/routes/disaster-record+/content-picker-config.js";
 import AuditLogHistory from "~/components/AuditLogHistory";
-import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
-import {HipHazardInfo} from "~/frontend/hip/hip";
+import { HazardPicker, Hip } from "~/frontend/hip/hazardpicker";
 
 import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
 import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
 import { AttachmentsFormView } from "~/frontend/attachmentsFormView";
 import { AttachmentsView } from "~/frontend/attachmentsView";
 
-import {UserForFrontend} from "~/util/auth";
+import { UserForFrontend } from "~/util/auth";
 
 export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
-	{key: "locationDesc", label: "Location Description", type: "text"},
-	{key: "startDate", label: "Start Date", type: "date_optional_precision", uiRow: {}},
-	{key: "endDate", label: "End Date", type: "date_optional_precision"},
-	{key: "localWarnInst", label: "Local warning and local instructions ( recommended actions)", type: "text", uiRowNew: true},
-	{key: "primaryDataSource", label: "Primary data source", type: "text", required: true, uiRow: {}},
-	{key: "otherDataSource", label: "Other data sources", type: "text"},
-	{key: "fieldAssessDate", label: "Field assessment conducted", type: "date", uiRow: {}},
-	{key: "assessmentModes", label: "Assessments methodologies", type: "textarea"},
-	{key: "originatorRecorderInst", label: "Recording institution", type: "text", required: true, uiRow: {}},
-	{key: "validatedBy", label: "Validated by", type: "text", required: true},
-	{key: "checkedBy", label: "Checked by", type: "text", uiRow: {}},
-	{key: "dataCollector", label: "Data collector", type: "text"},
-	{key: "legacyData", label: "Legacy Data", type: "json", uiRow: {colOverride: 1}},
-	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
-	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
+	{ key: "locationDesc", label: "Location Description", type: "text" },
+	{ key: "startDate", label: "Start Date", type: "date_optional_precision", uiRow: {} },
+	{ key: "endDate", label: "End Date", type: "date_optional_precision" },
+	{ key: "localWarnInst", label: "Local warning and local instructions ( recommended actions)", type: "text", uiRowNew: true },
+	{ key: "primaryDataSource", label: "Primary data source", type: "text", required: true, uiRow: {} },
+	{ key: "otherDataSource", label: "Other data sources", type: "text" },
+	{ key: "fieldAssessDate", label: "Field assessment conducted", type: "date", uiRow: {} },
+	{ key: "assessmentModes", label: "Assessments methodologies", type: "textarea" },
+	{ key: "originatorRecorderInst", label: "Recording institution", type: "text", required: true, uiRow: {} },
+	{ key: "validatedBy", label: "Validated by", type: "text", required: true },
+	{ key: "checkedBy", label: "Checked by", type: "text", uiRow: {} },
+	{ key: "dataCollector", label: "Data collector", type: "text" },
+	{ key: "legacyData", label: "Legacy Data", type: "json", uiRow: { colOverride: 1 } },
+	{ key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true },
+	{ key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true },
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
-	{key: "disasterEventId", label: "", type: "uuid"},
-	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
-	{key: "hipClusterId", label: "", type: "other"},
-	{key: "hipTypeId", label: "", type: "other"},
+	{ key: "disasterEventId", label: "", type: "uuid" },
+	{ key: "hipHazardId", label: "Hazard", type: "other", uiRow: { colOverride: 1 } },
+	{ key: "hipClusterId", label: "", type: "other" },
+	{ key: "hipTypeId", label: "", type: "other" },
 	...fieldsDefCommon
 ];
 
 export const fieldsDefApi: FormInputDef<DisasterRecordsFields>[] = [
 	...fieldsDef,
-	{key: "apiImportId", label: "", type: "other"},
+	{ key: "apiImportId", label: "", type: "other" },
 ];
 
-export const fieldsDefView: FormInputDef<DisasterRecordsViewModel>[] = [
-	{key: "disasterEventId", label: "", type: "uuid"},
-	{key: "hipHazard", label: "", type: "other"},
-	...fieldsDefCommon,
-	{key: "createdAt", label: "", type: "other"},
-	{key: "updatedAt", label: "", type: "other"},
+// Use keyof to ensure type safety
+export const fieldsDefView: FormInputDef<Partial<DisasterRecordsViewModel>>[] = [
+	{ key: "disasterEventId" as keyof DisasterRecordsViewModel, label: "", type: "uuid" },
+	{ key: "hipHazard" as keyof DisasterRecordsViewModel, label: "", type: "other" },
+	...fieldsDefCommon as unknown as FormInputDef<Partial<DisasterRecordsViewModel>>[],
+	{ key: "createdAt" as keyof DisasterRecordsViewModel, label: "", type: "other" },
+	{ key: "updatedAt" as keyof DisasterRecordsViewModel, label: "", type: "other" },
 ];
 
 interface DisasterRecordsFormProps extends UserFormProps<DisasterRecordsFields> {
@@ -112,7 +112,7 @@ export function disasterRecordsLink(args: {
 }
 
 export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
-	const {fields, treeData, cpDisplayName, ctryIso3, divisionGeoJSON} = props;
+	const { fields, treeData, cpDisplayName, ctryIso3, divisionGeoJSON } = props;
 
 	useEffect(() => {
 	}, []);
@@ -204,7 +204,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 		<ViewComponent
 			isPublic={props.isPublic}
 			path={route}
-			id={item.id}
+			id={item?.id || ''}
 			plural="Disaster Records"
 			singular="Disaster Record"
 		// extraActions={
@@ -222,13 +222,13 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 				user={props.user}
 				override={{
 					hipHazard: (
-						<HipHazardInfo key="hazard" model={item} />
+						<div key="hazard">Hazard: {item?.hipHazardId || 'N/A'}</div>
 					),
 					createdAt: (
-						<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
+						<p key="createdAt">Created at: {item?.createdAt ? formatDate(item.createdAt) : 'N/A'}</p>
 					),
 					updatedAt: (
-						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
+						<p key="updatedAt">Updated at: {item?.updatedAt ? formatDate(item.updatedAt) : 'N/A'}</p>
 					),
 					disasterEventId: (
 						<p key="disasterEventId">Disaster Event: {(item as any).cpDisplayName || ""}</p>
@@ -242,7 +242,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 					),
 					attachments: (
 						<AttachmentsView
-							id={item.id}
+							id={item?.id || ''}
 							initialData={(item?.attachments as any[]) || []}
 							file_viewer_url="/disaster-record/file-viewer"
 						/>

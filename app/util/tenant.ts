@@ -4,6 +4,29 @@ import { eq } from "drizzle-orm";
 import { dr } from "~/db.server";
 import { countryAccounts } from "~/drizzle/schema";
 
+/**
+ * Public tenant context used for unauthenticated access to public data
+ * This is a special tenant context that represents public/anonymous access
+ */
+export const public_tenant_context: TenantContext = {
+    countryAccountId: "",
+    countryId: "",
+    countryName: "Public",
+    iso3: ""
+};
+
+/**
+ * Type guard to check if a tenant context is the public tenant context
+ */
+export function isPublicTenantContext(context: TenantContext): boolean {
+    return (
+        context.countryAccountId === "" &&
+        context.countryId === "" &&
+        context.countryName === "Public" &&
+        context.iso3 === ""
+    );
+}
+
 export interface TenantContext {
     countryAccountId: string;
     countryId: string;

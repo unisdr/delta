@@ -3,27 +3,30 @@ import {
 } from '~/drizzle/schema';
 
 import {
-	authLoaderIsPublic
+	authLoaderIsPublic,
+	authLoaderGetAuth
 } from "~/util/auth";
 
-import {dr} from "~/db.server";
+import { getTenantContext, type TenantContext } from "~/util/tenant";
 
-import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
+import { dr } from "~/db.server";
 
-import {and, eq, desc, or, ilike, sql} from 'drizzle-orm';
+import { executeQueryForPagination3, OffsetLimit } from "~/frontend/pagination/api.server";
+
+import { and, eq, desc, or, ilike, sql } from 'drizzle-orm';
 
 import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
-import {approvalStatusIds} from '~/frontend/approval';
+import { approvalStatusIds } from '~/frontend/approval';
 
 interface disasterRecordLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
 }
 
 export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
-	const {loaderArgs} = args;
-	const {request} = loaderArgs;
+	const { loaderArgs } = args;
+	const { request } = loaderArgs;
 
 	const url = new URL(request.url);
 	const extraParams = ["search"]
@@ -37,7 +40,13 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 
 	const isPublic = authLoaderIsPublic(loaderArgs)
 
+	// Extract tenant context for authenticated users
+	let tenantContext: TenantContext | null = null;
 	if (!isPublic) {
+		const userSession = authLoaderGetAuth(loaderArgs);
+		if (userSession) {
+			tenantContext = await getTenantContext(userSession);
+		}
 		filters.approvalStatus = undefined
 	}
 
@@ -46,6 +55,8 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	let searchIlike = "%" + filters.search + "%"
 
 	let condition = and(
+		// Tenant isolation - filter by tenant context if available
+		tenantContext ? eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId) : undefined,
 		filters.approvalStatus ? eq(disasterRecordsTable.approvalStatus, filters.approvalStatus) : undefined,
 		filters.search !== "" ? or(
 			sql`${disasterRecordsTable.id}::text ILIKE ${searchIlike}`,
