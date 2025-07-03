@@ -20,6 +20,7 @@ import { dr } from "~/db.server";
 import { contentPickerConfig } from "./content-picker-config";
 import { sql, eq } from "drizzle-orm";
 import { optionalUser } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 
 interface LoaderData {
 	item: any;
@@ -39,15 +40,33 @@ export const loader = async ({
 
 	// Check if user is logged in
 	const session = await optionalUser(request);
+
+	// Extract tenant context for authenticated users
+	let tenantContext = null;
+	if (session) {
+		tenantContext = await getTenantContext(session);
+	}
+
+	// Create a wrapper function that includes tenant context
+	const getByIdWithTenant = async (idStr: string) => {
+		if (tenantContext) {
+			return disasterRecordsById(idStr, tenantContext);
+		} else {
+			// For public access, modify the model function to accept a string ID only
+			// This requires updating the disaster_record model to handle public access
+			throw new Response("Public access to disaster records is not implemented", { status: 403 });
+		}
+	};
+
 	const loaderFunction = session
 		? createViewLoaderPublicApprovedWithAuditLog({
-				getById: disasterRecordsById,
-				recordId: id,
-				tableName: getTableName(disasterRecordsTable),
-		  })
+			getById: getByIdWithTenant,
+			recordId: id,
+			tableName: getTableName(disasterRecordsTable),
+		})
 		: createViewLoaderPublicApproved({
-				getById: disasterRecordsById,
-		  });
+			getById: getByIdWithTenant,
+		});
 
 	const result = await loaderFunction({ request, params, context });
 
@@ -104,8 +123,8 @@ export const loader = async ({
 		.groupBy(disasterRecordsTable.id, disasterRecordsTable.spatialFootprint);
 
 	const extendedItem = { ...result.item, cpDisplayName, disasterRecord };
-	
-	return {...result, item: extendedItem};
+
+	return { ...result, item: extendedItem };
 };
 
 export default function Screen() {

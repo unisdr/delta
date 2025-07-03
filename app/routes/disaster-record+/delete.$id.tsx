@@ -9,15 +9,39 @@ import { disasterRecordsTable } from "~/drizzle/schema";
 import { route } from "~/frontend/disaster-record/form";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
+import { authActionGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 
-export const action = createDeleteAction({
-  baseRoute: route,
-  delete: disasterRecordsDeleteById,
-  tableName: getTableName(disasterRecordsTable),
-  getById: disasterRecordsById,
-  postProcess: async (id, data) => {
-    console.log(`Post-processing record: ${id}`);
-    //console.log(`data: `, data);
-    ContentRepeaterUploadFile.delete(data.attachments);
+export const action = async (args: any) => {
+  // Extract tenant context from user session
+  const userSession = authActionGetAuth(args);
+  if (!userSession) {
+    return new Response("Authentication required", { status: 401 });
   }
-});
+
+  const tenantContext = await getTenantContext(userSession);
+
+  // Create wrapper functions that include tenant context
+  const deleteWithTenant = async (id: string) => {
+    return disasterRecordsDeleteById(id, tenantContext);
+  };
+
+  const getByIdWithTenant = async (id: string) => {
+    return disasterRecordsById(id, tenantContext);
+  };
+
+  // Use the createDeleteAction function with our tenant-aware wrappers
+  const actionHandler = createDeleteAction({
+    baseRoute: route,
+    delete: deleteWithTenant,
+    tableName: getTableName(disasterRecordsTable),
+    getById: getByIdWithTenant,
+    postProcess: async (id, data) => {
+      console.log(`Post-processing record: ${id}`);
+      //console.log(`data: `, data);
+      ContentRepeaterUploadFile.delete(data.attachments);
+    }
+  });
+
+  return actionHandler(args);
+}
