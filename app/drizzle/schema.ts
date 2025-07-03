@@ -1367,10 +1367,7 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 });
 
 export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
-export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
-
-export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
-export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
+export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferInsert;
 
 export const countries = pgTable("countries",{
 	id: ourRandomUUID(),
@@ -1379,7 +1376,7 @@ export const countries = pgTable("countries",{
 })
 
 export type Country = typeof countries.$inferSelect;
-export type NewCountry = typeof countries.$inferSelect;
+export type NewCountry = typeof countries.$inferInsert;
 
 
 export const countryRelations = relations(countries, ({ one }) => ({
