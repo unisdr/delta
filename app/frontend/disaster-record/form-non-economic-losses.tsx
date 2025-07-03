@@ -2,9 +2,9 @@ import {
 	Link
 } from "@remix-run/react";
 
-import {DisasterRecordsFields, DisasterRecordsViewModel} from "~/backend.server/models/disaster_record"
+import { DisasterRecordsFields, DisasterRecordsViewModel } from "~/backend.server/models/disaster_record"
 
-import {formatDate} from "~/util/date";
+import { formatDate } from "~/util/date";
 
 import {
 	UserFormProps,
@@ -14,25 +14,26 @@ import {
 	ViewComponent
 } from "~/frontend/form";
 
-import {useEffect} from 'react';
-import {approvalStatusField} from "~/frontend/approval";
+import { useEffect } from 'react';
+import { approvalStatusField } from "~/frontend/approval";
 
 
 export const route = "/disaster-record"
 
 export const fieldsDefCommon = [
 	approvalStatusField,
-	{key: "disasterEventId", label: "Disaster Event", type: "text", required: true},
+	{ key: "disasterEventId", label: "Disaster Event", type: "text", required: true },
 ] as const;
 
 export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
 	...fieldsDefCommon
 ];
 
-export const fieldsDefView: FormInputDef<DisasterRecordsViewModel>[] = [
-	...fieldsDefCommon,
-	{key: "createdAt", label: "", type: "other"},
-	{key: "updatedAt", label: "", type: "other"},
+// Use Partial and type assertions to ensure type safety
+export const fieldsDefView: FormInputDef<Partial<DisasterRecordsViewModel>>[] = [
+	...fieldsDefCommon as unknown as FormInputDef<Partial<DisasterRecordsViewModel>>[],
+	{ key: "createdAt" as keyof DisasterRecordsViewModel, label: "", type: "other" },
+	{ key: "updatedAt" as keyof DisasterRecordsViewModel, label: "", type: "other" },
 ];
 
 interface DisasterRecordsFormProps extends UserFormProps<DisasterRecordsFields> {
@@ -97,7 +98,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 		<ViewComponent
 			isPublic={props.isPublic}
 			path={route}
-			id={item.id}
+			id={item?.id || ''}
 			plural="Disaster Records"
 			singular="Disaster Record"
 		>
@@ -106,10 +107,10 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 				fields={item}
 				override={{
 					createdAt: (
-						<p key="createdAt">Created at: {formatDate(item.createdAt)}</p>
+						<p key="createdAt">Created at: {item?.createdAt ? formatDate(item.createdAt) : 'N/A'}</p>
 					),
 					updatedAt: (
-						<p key="updatedAt">Updated at: {formatDate(item.updatedAt)}</p>
+						<p key="updatedAt">Updated at: {item?.updatedAt ? formatDate(item.updatedAt) : 'N/A'}</p>
 					),
 				}}
 			/>
