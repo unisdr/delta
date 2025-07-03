@@ -161,7 +161,6 @@ export default function Screen() {
 											name="password"
 											placeholder="*Password"
 											defaultValue={data?.password}
-											style={{ width: "100%" }}
 											errors={errors}
 											required={true}
 										/>

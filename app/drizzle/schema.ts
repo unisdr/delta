@@ -180,6 +180,7 @@ export const userTable = pgTable("user", {
 	authType: text("auth_type").notNull().default("form"),
 	...createdUpdatedTimestamps,
 	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
+	isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
 });
 
 export type User = typeof userTable.$inferSelect;
@@ -349,7 +350,6 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 		.primaryKey(),
 	// Tenant isolation
 	countryAccountsId: uuid("country_accounts_id")
-		.notNull()
 		.references(() => countryAccounts.id),
 	status: text("status").notNull().default("pending"),
 	// otherId1: zeroText("otherId1"),
@@ -412,7 +412,7 @@ export const disasterEventTable = pgTable("disaster_event", {
 	...approvalFields,
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
-	countryAccountsId: uuid("country_accounts_id").notNull().references(() => countryAccounts.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
@@ -1359,8 +1359,12 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
 	dtsInstanceCtryIso3:  varchar("dts_instance_ctry_iso3").notNull().default("USA"),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
-	countryName: varchar("country_name").notNull().default("United State of America")
+	countryName: varchar("country_name").notNull().default("United State of America"),
+	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
 });
+
+export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
+export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
 
 
 export const countries = pgTable("countries",{

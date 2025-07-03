@@ -11,6 +11,7 @@ export async function getCountryById(id: string): Promise<Country | null> {
 		.select()
 		.from(countries)
 		.where(eq(countries.id, id))
+		.limit(1)
 		.execute();
 	return result[0] || null;
 }
