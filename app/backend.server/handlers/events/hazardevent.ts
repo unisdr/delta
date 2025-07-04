@@ -6,20 +6,20 @@ import {
 	authLoaderIsPublic
 } from "~/util/auth";
 
-import { TenantContext, getTenantContext } from "~/util/tenant";
+import { TenantContext, requireTenantContext } from "~/util/tenant";
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
-import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server";
+import { executeQueryForPagination3, OffsetLimit } from "~/frontend/pagination/api.server";
 
-import {sql, and, eq, desc, ilike, or} from 'drizzle-orm';
+import { sql, and, eq, desc, ilike, or } from 'drizzle-orm';
 
-import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
+import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
 import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
-import {approvalStatusIds} from '~/frontend/approval';
+import { approvalStatusIds } from '~/frontend/approval';
 
 interface hazardousEventLoaderArgs {
 	loaderArgs: LoaderFunctionArgs;
@@ -28,8 +28,8 @@ interface hazardousEventLoaderArgs {
 }
 
 export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
-	const {loaderArgs, tenantContext} = args;
-	const {request} = loaderArgs;
+	const { loaderArgs, tenantContext } = args;
+	const { request } = loaderArgs;
 
 	const url = new URL(request.url);
 	const extraParams = ["hipHazardId", "hipClusterId", "hipTypeId", "search"]
@@ -61,7 +61,7 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	let condition = and(
 		// TENANT FILTERING - Only show events from user's country account
 		tenantContext ? eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) : undefined,
-		
+
 		// Existing filters
 		filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
 		filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
@@ -120,11 +120,11 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 
 // Helper function for route handlers to get tenant context
 export async function createTenantAwareLoader(userSession: any) {
-	const tenantContext = userSession ? await getTenantContext(userSession) : undefined;
-	
+	const tenantContext = userSession ? await requireTenantContext(userSession) : undefined;
+
 	return {
 		tenantContext,
-		hazardousEventsLoader: (loaderArgs: LoaderFunctionArgs) => 
+		hazardousEventsLoader: (loaderArgs: LoaderFunctionArgs) =>
 			hazardousEventsLoader({ loaderArgs, tenantContext })
 	};
 }
