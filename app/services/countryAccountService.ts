@@ -1,13 +1,10 @@
-import {
-	generatePassword,
-	passwordHash,
-} from "~/backend.server/models/user/password";
+import { sendInvite } from "~/backend.server/models/user/invite";
 import { dr } from "~/db.server";
 import { getCountryById } from "~/db/queries/countries";
 import { countryAccountWithTypeExists, createCountryAccount } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
 import {
-	createPrimaryAdminUserForCountryAccounts,
+	createUser,
 	getUserByEmail,
 } from "~/db/queries/user";
 import { countryAccountTypes } from "~/drizzle/schema";
@@ -78,13 +75,13 @@ export async function createCountryAccountService(
 	}
 
 	// generate password
-	const password = generatePassword(12);
+	 const isPrimaryAdmin = true;
 	return dr.transaction(async (tx) => {
 		const countryAccount = await createCountryAccount(countryId, status, countryAccountType, tx);
-		const adminUser = await createPrimaryAdminUserForCountryAccounts(
+		const adminUser = await createUser(
 			email,
 			"admin",
-			passwordHash(password),
+			isPrimaryAdmin,
 			countryAccount.id,
 			tx
 		);
@@ -94,13 +91,13 @@ export async function createCountryAccountService(
 			errors.push(`Country with ID ${countryId} not found.`);
 			throw new CountryAccountValidationError(errors);
 		}
-		createInstanceSystemSetting(
+		const instanceSystemSetting = createInstanceSystemSetting(
 			country.name,
 			country.iso3 || "",
-			countryAccount.id
+			countryAccount.id,
+			tx
 		);
-		return { countryAccount, adminUser };
+		await sendInvite(adminUser, tx);
+		return { countryAccount, adminUser, instanceSystemSetting };
 	});
-
-	//TODO send an email
 }

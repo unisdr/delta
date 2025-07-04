@@ -25,7 +25,7 @@ import { RadioButton } from "~/components/RadioButton";
 import { Fieldset } from "~/components/FieldSet";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	// await requireSuperAdmin(request);
+	await requireSuperAdmin(request);
 	const countryAccounts = await getCountryAccounts();
 	const countries = await getCountries();
 

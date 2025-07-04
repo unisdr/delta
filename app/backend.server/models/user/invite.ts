@@ -1,4 +1,4 @@
-import { dr } from "~/db.server";
+import { dr, Tx } from "~/db.server";
 import { eq } from "drizzle-orm";
 
 import { userTable, User } from "~/drizzle/schema";
@@ -101,11 +101,12 @@ export async function adminInviteUser(
 	return { ok: true };
 }
 
-export async function sendInvite(user: User) {
+export async function sendInvite(user: User,tx?: Tx) {
 	const inviteCode = randomBytes(32).toString("hex");
 	const expirationTime = addHours(new Date(), 7 * 24);
 
-	await dr
+	const db = tx || dr;
+	await db
 		.update(userTable)
 		.set({
 			inviteSentAt: new Date(),
