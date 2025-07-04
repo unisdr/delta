@@ -1,14 +1,18 @@
-import { countryAccounts } from "../../drizzle/schema";
+import { countryAccounts, userTable } from "../../drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { dr, Tx } from "~/db.server";
 
 const ACTIVE_STATUS = 1;
 const INACTIVE_STATUS = 0;
 
-export async function getCountryAccounts() {
+export async function getCountryAccountsWithCountryAndPrimaryAdminUser() {
 	return dr.query.countryAccounts.findMany({
 		with: {
 			country: true,
+			users: {
+				where: eq(userTable.isPrimaryAdmin, true),
+				limit: 1
+			}
 		},
 		columns: {
 			id: true,
@@ -20,8 +24,8 @@ export async function getCountryAccounts() {
 		orderBy: (countryAccounts, { desc }) => [desc(countryAccounts.createdAt)],
 	});
 }
-export type CountryAccountWithCountry = Awaited<
-	ReturnType<typeof getCountryAccounts>
+export type CountryAccountWithCountryAndPrimaryAdminUser = Awaited<
+	ReturnType<typeof getCountryAccountsWithCountryAndPrimaryAdminUser>
 >[number];
 
 export async function getCountryAccountById(id: string) {
