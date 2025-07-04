@@ -7,7 +7,7 @@ import {
 	authLoaderGetAuth
 } from "~/util/auth";
 
-import { getTenantContext } from "~/util/tenant";
+import { requireTenantContext } from "~/util/tenant";
 
 import { dr } from "~/db.server";
 
@@ -45,6 +45,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 	const isPublic = authLoaderIsPublic(loaderArgs)
 
 	// Extract tenant context for authenticated users
+	// Extract tenant context for authenticated users
 	let tenantContext = undefined;
 	if (!isPublic) {
 		const auth = await authLoaderGetAuth(loaderArgs);
@@ -54,7 +55,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 				sessionId: auth.session?.id || '',
 				session: auth.session || null
 			};
-			tenantContext = await getTenantContext(userSession);
+			tenantContext = await requireTenantContext(userSession);
 		}
 	}
 

@@ -7,7 +7,7 @@ import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { getTenantContext } from "~/util/tenant";
+import { requireTenantContext } from "~/util/tenant";
 import { and, eq, ne } from "drizzle-orm";
 import { getUserFromSession } from "~/util/session";
 
@@ -29,7 +29,7 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const tenantContext = await getTenantContext(userSession);
+	const tenantContext = await requireTenantContext(userSession);
 	if (!tenantContext) {
 		throw new Response("Unauthorized - No tenant context", { status: 401 });
 	}
@@ -292,8 +292,8 @@ export default function Settings() {
 									<td>
 										<span
 											className={`dts-access-management__status-dot ${item.emailVerified
-													? "dts-access-management__status-dot--activated"
-													: "dts-access-management__status-dot--pending"
+												? "dts-access-management__status-dot--activated"
+												: "dts-access-management__status-dot--pending"
 												}`}
 										>
 											{/* Tooltip message */}
