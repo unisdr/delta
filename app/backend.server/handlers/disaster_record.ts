@@ -7,7 +7,7 @@ import {
 	authLoaderGetAuth
 } from "~/util/auth";
 
-import { getTenantContext, type TenantContext } from "~/util/tenant";
+import { requireTenantContext, type TenantContext } from "~/util/tenant";
 
 import { dr } from "~/db.server";
 
@@ -45,7 +45,8 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	if (!isPublic) {
 		const userSession = authLoaderGetAuth(loaderArgs);
 		if (userSession) {
-			tenantContext = await getTenantContext(userSession);
+			// Use requireTenantContext which handles errors properly
+			tenantContext = await requireTenantContext(userSession);
 		}
 		filters.approvalStatus = undefined
 	}
