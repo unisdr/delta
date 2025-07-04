@@ -1,23 +1,24 @@
-import {dr} from "~/db.server";
-import {eq} from "drizzle-orm";
+import { dr } from "~/db.server";
+import { eq } from "drizzle-orm";
 
-import {userTable, User} from "~/drizzle/schema";
+import { userTable, User } from "~/drizzle/schema";
 
-import {Errors, hasErrors} from "~/frontend/form";
+import { Errors, hasErrors } from "~/frontend/form";
 
-import {sendEmail} from "~/util/email";
-import {addHours} from "~/util/time";
-import {errorIsNotUnique} from "~/util/db";
+import { sendEmail } from "~/util/email";
+import { addHours } from "~/util/time";
+import { errorIsNotUnique } from "~/util/db";
 
-import {randomBytes} from "crypto";
+import { randomBytes } from "crypto";
 
-import {validateName, validatePassword} from "./user_utils";
-import {passwordHash} from "./password";
+import { validateName, validatePassword } from "./user_utils";
+import { passwordHash } from "./password";
 import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
+import { TenantContext } from "~/util/tenant";
 
 type AdminInviteUserResult =
-	| {ok: true}
-	| {ok: false; errors: Errors<AdminInviteUserFields>};
+	| { ok: true }
+	| { ok: false; errors: Errors<AdminInviteUserFields> };
 
 export interface AdminInviteUserFields {
 	firstName: string;
@@ -49,7 +50,8 @@ export function adminInviteUserFieldsFromMap(data: {
 }
 
 export async function adminInviteUser(
-	fields: AdminInviteUserFields
+	fields: AdminInviteUserFields,
+	tenantContext: TenantContext
 ): Promise<AdminInviteUserResult> {
 	let errors: Errors<AdminInviteUserFields> = {};
 	errors.form = [];
@@ -69,7 +71,7 @@ export async function adminInviteUser(
 	}
 
 	if (hasErrors(errors)) {
-		return {ok: false, errors};
+		return { ok: false, errors };
 	}
 
 	try {
@@ -82,6 +84,8 @@ export async function adminInviteUser(
 				role: fields.role,
 				organization: fields.organization,
 				hydrometCheUser: fields.hydrometCheUser,
+				// Add tenant context to ensure user is created within the correct tenant
+				countryAccountsId: tenantContext.countryAccountId
 			})
 			.returning();
 		const user = res[0];
@@ -89,12 +93,12 @@ export async function adminInviteUser(
 	} catch (e: any) {
 		if (errorIsNotUnique(e, "user", "email")) {
 			errors.fields.email = ["A user with this email already exists"];
-			return {ok: false, errors};
+			return { ok: false, errors };
 		}
 		throw e;
 	}
 
-	return {ok: true};
+	return { ok: true };
 }
 
 export async function sendInvite(user: User) {
@@ -110,14 +114,14 @@ export async function sendInvite(user: User) {
 		})
 		.where(eq(userTable.id, user.id));
 
-	var siteUrl="http://localhost:3000";
-	var siteName='';
-	const settings= await getInstanceSystemSettings();
-	
-	if(settings){
-		siteUrl=settings.websiteUrl;
-		siteName=settings.websiteName;
-	}	
+	var siteUrl = "http://localhost:3000";
+	var siteName = '';
+	const settings = await getInstanceSystemSettings();
+
+	if (settings) {
+		siteUrl = settings.websiteUrl;
+		siteName = settings.websiteName;
+	}
 
 	const inviteURL =
 		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
@@ -143,14 +147,14 @@ export async function sendInvite(user: User) {
 }
 
 type ValidateInviteCodeResult =
-	| {ok: true; userId: number; email: string}
-	| {ok: false; error: string};
+	| { ok: true; userId: number; email: string }
+	| { ok: false; error: string };
 
 export async function validateInviteCode(
 	code: string
 ): Promise<ValidateInviteCodeResult> {
 	if (!code) {
-		return {ok: false, error: "Invite code is required"};
+		return { ok: false, error: "Invite code is required" };
 	}
 
 	const res = await dr
@@ -159,14 +163,14 @@ export async function validateInviteCode(
 		.where(eq(userTable.inviteCode, code));
 
 	if (!res.length) {
-		return {ok: false, error: "Invalid invite code"};
+		return { ok: false, error: "Invalid invite code" };
 	}
 
 	const user = res[0];
 	const now = new Date();
 
 	if (user.inviteExpiresAt < now) {
-		return {ok: false, error: "Invite code has expired"};
+		return { ok: false, error: "Invite code has expired" };
 	}
 
 	return {
@@ -177,8 +181,8 @@ export async function validateInviteCode(
 }
 
 type AcceptInviteResult =
-	| {ok: true; userId: number}
-	| {ok: false; errors: Errors<AcceptInviteFields>};
+	| { ok: true; userId: number }
+	| { ok: false; errors: Errors<AcceptInviteFields> };
 
 interface AcceptInviteFields {
 	firstName: string;
@@ -212,7 +216,7 @@ export async function acceptInvite(
 	const codeRes = await validateInviteCode(inviteCode);
 	if (!codeRes.ok) {
 		errors.form = [codeRes.error];
-		return {ok: false, errors};
+		return { ok: false, errors };
 	}
 
 	const userId = codeRes.userId;
@@ -221,7 +225,7 @@ export async function acceptInvite(
 	validatePassword(fields, errors);
 
 	if (hasErrors(errors)) {
-		return {ok: false, errors};
+		return { ok: false, errors };
 	}
 
 	let user: User;
@@ -240,18 +244,18 @@ export async function acceptInvite(
 
 	if (res.length === 0) {
 		errors.form = ["Application Error. User not found"];
-		return {ok: false, errors};
+		return { ok: false, errors };
 	}
 
 	user = res[0];
 
-	var siteUrl="http://localhost:3000";
-	var siteName='';
-	const settings= await getInstanceSystemSettings();
-	if(settings){
-		siteUrl=settings.websiteUrl;
-		siteName=settings.websiteName;
-	}	
+	var siteUrl = "http://localhost:3000";
+	var siteName = '';
+	const settings = await getInstanceSystemSettings();
+	if (settings) {
+		siteUrl = settings.websiteUrl;
+		siteName = settings.websiteName;
+	}
 	const accessAccountURL = siteUrl + '/user/settings/';
 	const subject = `Welcome to DTS ${siteName}`;
 	const html = `<p>Dear ${user.firstName} ${user.lastName},</p>
@@ -274,5 +278,5 @@ export async function acceptInvite(
 
 	await sendEmail(user.email, subject, text, html);
 
-	return {ok: true, userId: user.id};
+	return { ok: true, userId: user.id };
 }

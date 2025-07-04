@@ -1,5 +1,5 @@
 import { dr } from "~/db.server";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { userTable } from "~/drizzle/schema";
 import { json, MetaFunction } from "@remix-run/node";
 import {
@@ -18,7 +18,8 @@ import { ValidRoles } from "~/frontend/user/roles";
 import { authLoaderWithPerm, authActionWithPerm } from "~/util/auth";
 import { formStringData } from "~/util/httputil";
 import { MainContainer } from "~/frontend/container";
-import { redirectWithMessage, sessionCookie } from "~/util/session";
+import { getTenantContext } from "~/util/tenant";
+import { redirectWithMessage, sessionCookie, getUserFromSession } from "~/util/session";
 import {
 	adminUpdateUser,
 	AdminUpdateUserFields,
@@ -37,11 +38,24 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
-	const { id } = loaderArgs.params;
+	const { request, params } = loaderArgs;
+	const { id } = params;
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
 
+	// Get user session and tenant context
+	const userSession = await getUserFromSession(request);
+	if (!userSession) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	const tenantContext = await getTenantContext(userSession);
+	if (!tenantContext) {
+		throw new Response("Unauthorized - No tenant context", { status: 401 });
+	}
+
+	// Query user with tenant isolation
 	const res = await dr
 		.select({
 			id: userTable.id,
@@ -53,12 +67,18 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 			emailVerified: userTable.emailVerified,
 			dateAdded: userTable.createdAt,
 			addedBy: sql<string>`'System Admin'`.as("addedBy"),
+			countryAccountsId: userTable.countryAccountsId,
 		})
 		.from(userTable)
-		.where(eq(userTable.id, Number(id)));
+		.where(
+			and(
+				eq(userTable.id, Number(id)),
+				eq(userTable.countryAccountsId, tenantContext.countryAccountId)
+			)
+		);
 
 	if (!res || res.length === 0) {
-		throw new Response("Item not found", { status: 404 });
+		throw new Response("User not found or you don't have permission to edit this user", { status: 404 });
 	}
 
 	const item = res[0];
@@ -86,6 +106,33 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 
 	if (!id) {
 		throw new Response("Missing ID", { status: 400 });
+	}
+
+	// Get user session and tenant context
+	const userSession = await getUserFromSession(request);
+	if (!userSession) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	const tenantContext = await getTenantContext(userSession);
+	if (!tenantContext) {
+		throw new Response("Unauthorized - No tenant context", { status: 401 });
+	}
+
+	// Verify the user belongs to the current tenant
+	const userToEdit = await dr
+		.select({ countryAccountsId: userTable.countryAccountsId })
+		.from(userTable)
+		.where(eq(userTable.id, id))
+		.limit(1);
+
+	if (!userToEdit || userToEdit.length === 0) {
+		throw new Response("User not found", { status: 404 });
+	}
+
+	// Ensure user belongs to the same tenant
+	if (userToEdit[0].countryAccountsId !== tenantContext.countryAccountId) {
+		throw new Response("Unauthorized - Cannot edit users from other tenants", { status: 403 });
 	}
 
 	const formData = formStringData(await request.formData());
