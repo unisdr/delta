@@ -3,6 +3,61 @@ import { redirect } from "@remix-run/node";
 import { eq } from "drizzle-orm";
 import { dr } from "~/db.server";
 import { countryAccounts } from "~/drizzle/schema";
+import createLogger from "~/utils/logger.server";
+
+// Initialize logger for this module
+const logger = createLogger("util/tenant");
+
+/**
+ * Base class for tenant-related errors
+ */
+export class TenantError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "TenantError";
+    }
+}
+
+/**
+ * Error thrown when a user is not associated with any tenant
+ */
+export class NoTenantAssociationError extends TenantError {
+    userId: string;
+
+    constructor(userId: string) {
+        super(`User ${userId} is not associated with any tenant`);
+        this.name = "NoTenantAssociationError";
+        this.userId = userId;
+    }
+}
+
+/**
+ * Error thrown when a tenant cannot be found
+ */
+export class TenantNotFoundError extends TenantError {
+    tenantId: string;
+
+    constructor(tenantId: string) {
+        super(`Tenant ${tenantId} not found`);
+        this.name = "TenantNotFoundError";
+        this.tenantId = tenantId;
+    }
+}
+
+/**
+ * Error thrown when a user doesn't have access to a specific tenant
+ */
+export class TenantAccessDeniedError extends TenantError {
+    userId: string;
+    tenantId: string;
+
+    constructor(userId: string, tenantId: string) {
+        super(`User ${userId} does not have access to tenant ${tenantId}`);
+        this.name = "TenantAccessDeniedError";
+        this.userId = userId;
+        this.tenantId = tenantId;
+    }
+}
 
 /**
  * Public tenant context used for unauthenticated access to public data
@@ -42,7 +97,9 @@ export async function getTenantContext(userSession: UserSession): Promise<Tenant
     const { user } = userSession;
 
     if (!user.countryAccountsId) {
-        throw new Error("User is not associated with any tenant");
+        const userId = user.id ? String(user.id) : 'unknown';
+        logger.warn(`User ${userId} is not associated with any tenant`);
+        throw new NoTenantAssociationError(userId);
     }
 
     // Get country account with related country info
@@ -54,12 +111,18 @@ export async function getTenantContext(userSession: UserSession): Promise<Tenant
     });
 
     if (!result) {
-        throw new Error("Country account not found");
+        logger.warn(`Country account ${user.countryAccountsId} not found`);
+        throw new TenantNotFoundError(user.countryAccountsId as string);
     }
 
     const country = result.country;
     if (!country?.id || !country.name || !country.iso3) {
-        throw new Error("Associated country account is missing required fields");
+        logger.error(`Country account ${result.id} has missing required fields`, {
+            countryId: country?.id,
+            countryName: country?.name,
+            iso3: country?.iso3
+        });
+        throw new TenantError("Associated country account is missing required fields");
     }
 
     return {
@@ -74,12 +137,28 @@ export async function getTenantContext(userSession: UserSession): Promise<Tenant
  * Middleware to ensure user has valid tenant context
  * Redirects to error page if tenant context is invalid
  */
-export async function requireTenantContext(userSession: UserSession, redirectTo = "/error/unauthorized") {
+export async function requireTenantContext(userSession: UserSession) {
     try {
         return await getTenantContext(userSession);
     } catch (error) {
-        console.error("Tenant context error:", error);
-        throw redirect(redirectTo);
+        // Log the error with structured metadata
+        logger.error("Tenant context error", {
+            userId: userSession.user?.id,
+            errorType: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+        });
+
+        // Customize redirect based on error type
+        if (error instanceof NoTenantAssociationError) {
+            throw redirect(`/error/unauthorized?reason=no-tenant`);
+        } else if (error instanceof TenantNotFoundError) {
+            throw redirect(`/error/unauthorized?reason=tenant-not-found`);
+        } else if (error instanceof TenantAccessDeniedError) {
+            throw redirect(`/error/unauthorized?reason=access-denied`);
+        } else {
+            throw redirect(`/error/unauthorized`);
+        }
     }
 }
 
@@ -127,10 +206,14 @@ export function validateTenantAccess(
     targetCountryAccountId: string
 ) {
     if (!userSession.user.countryAccountsId) {
-        throw new Error("User is not associated with any tenant");
+        const userId = userSession.user.id ? String(userSession.user.id) : 'unknown';
+        logger.warn(`User ${userId} is not associated with any tenant`);
+        throw new NoTenantAssociationError(userId);
     }
 
     if (userSession.user.countryAccountsId !== targetCountryAccountId) {
-        throw new Error("Access to requested tenant denied");
+        const userId = userSession.user.id ? String(userSession.user.id) : 'unknown';
+        logger.warn(`User ${userId} does not have access to tenant ${targetCountryAccountId}`);
+        throw new TenantAccessDeniedError(userId, targetCountryAccountId);
     }
 }
