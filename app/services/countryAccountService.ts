@@ -1,18 +1,13 @@
-import {
-	generatePassword,
-	passwordHash,
-} from "~/backend.server/models/user/password";
+import { sendInvite } from "~/backend.server/models/user/invite";
 import { dr } from "~/db.server";
 import { getCountryById } from "~/db/queries/countries";
-import {
-	countryAccountExists,
-	createCountryAccount,
-} from "~/db/queries/countryAccounts";
+import { countryAccountWithTypeExists, createCountryAccount } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
 import {
-	createPrimaryAdminUserForCountryAccounts,
+	createUser,
 	getUserByEmail,
 } from "~/db/queries/user";
+import { countryAccountTypes } from "~/drizzle/schema";
 
 // Create a custom error class for validation errors
 export class CountryAccountValidationError extends Error {
@@ -25,7 +20,8 @@ export class CountryAccountValidationError extends Error {
 export async function createCountryAccountService(
 	countryId: string,
 	email: string,
-	status: number = 1
+	status: number = 1,
+	countryAccountType: string = countryAccountTypes.OFFICIAL
 ) {
 	// send email
 
@@ -33,6 +29,7 @@ export async function createCountryAccountService(
 	if (!countryId) errors.push("Country is required");
 	if (!status) errors.push("Status is required");
 	if (!email) errors.push("Admin email is required");
+	if (!countryAccountType) errors.push("Choose instance type");
 
 	if (countryId && countryId === "-1") {
 		errors.push("Please select a country");
@@ -44,6 +41,13 @@ export async function createCountryAccountService(
 
 	if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.toString())) {
 		errors.push("Please enter a valid email address");
+	}
+
+	if (
+		countryAccountType !== countryAccountTypes.OFFICIAL &&
+		countryAccountType !== countryAccountTypes.TRAINING
+	) {
+		errors.push("Invalide instance type");
 	}
 
 	const existingUser = await getUserByEmail(email);
@@ -61,22 +65,23 @@ export async function createCountryAccountService(
 	if (
 		countryId &&
 		countryId !== "-1" &&
-		(await countryAccountExists(countryId))
+		countryAccountType === countryAccountTypes.OFFICIAL &&
+		(await countryAccountWithTypeExists(countryId, countryAccountTypes.OFFICIAL))
 	) {
-		errors.push("Selected country already exist");
+		errors.push("An official account already exists for this country.");
 	}
 	if (errors.length > 0) {
 		throw new CountryAccountValidationError(errors);
 	}
 
 	// generate password
-	const password = generatePassword(12);
+	 const isPrimaryAdmin = true;
 	return dr.transaction(async (tx) => {
-		const countryAccount = await createCountryAccount(countryId, status, tx);
-		const adminUser = await createPrimaryAdminUserForCountryAccounts(
+		const countryAccount = await createCountryAccount(countryId, status, countryAccountType, tx);
+		const adminUser = await createUser(
 			email,
 			"admin",
-			passwordHash(password),
+			isPrimaryAdmin,
 			countryAccount.id,
 			tx
 		);
@@ -86,13 +91,13 @@ export async function createCountryAccountService(
 			errors.push(`Country with ID ${countryId} not found.`);
 			throw new CountryAccountValidationError(errors);
 		}
-		createInstanceSystemSetting(
+		const instanceSystemSetting = createInstanceSystemSetting(
 			country.name,
-			country.iso3 || '',
-			countryAccount.id
+			country.iso3 || "",
+			countryAccount.id,
+			tx
 		);
-		return { countryAccount, adminUser };
+		await sendInvite(adminUser, tx);
+		return { countryAccount, adminUser, instanceSystemSetting };
 	});
-
-	//TODO send an email
 }

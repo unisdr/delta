@@ -11,12 +11,12 @@ import { NavSettings } from '~/routes/settings/nav';
 import { MainContainer } from '~/frontend/container';
 import {
   getInstanceSystemSettings,
-  InstanceSystemSettings,
   updateFooterUrlPrivacyPolicy,
   updateFooterUrlTermsConditions,
 } from '~/db/queries/instanceSystemSetting';
 import { getSystemInfo, SystemInfo } from '~/db/queries/dtsSystemInfo';
 import { getCurrenciesAsListFromCommaSeparated } from '~/util/currency';
+import { InstanceSystemSettings } from '~/drizzle/schema';
 
 // Define the loader data type
 interface LoaderData {

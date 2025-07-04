@@ -23,10 +23,10 @@ export async function getUserByEmail<T extends User = User>(
 	return (result[0] as T) ?? null;
 }
 
-export async function createPrimaryAdminUserForCountryAccounts(
+export async function createUser(
 	email: string,
 	role: string,
-    password: string,
+	isPrimaryAdmin: boolean,
     countryAccountId: string,
 	tx?: Tx
 ) {
@@ -36,9 +36,8 @@ export async function createPrimaryAdminUserForCountryAccounts(
 		.values({
 			email: email,
 			role: role,
-            password: password,
+            isPrimaryAdmin: isPrimaryAdmin,
             countryAccountsId: countryAccountId,
-            isPrimaryAdmin: true,
 		})
 		.returning()
 		.execute();
