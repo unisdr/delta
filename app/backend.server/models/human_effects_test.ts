@@ -1,6 +1,9 @@
-import {beforeEach, describe, it} from 'node:test'
+// Load environment variables for tests
+import 'dotenv/config'
+
+import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import {dr} from '~/db.server'
+import { dr } from '~/db.server'
 import {
 	create,
 	update,
@@ -10,16 +13,17 @@ import {
 	categoryPresenceGet,
 	categoryPresenceSet
 } from './human_effects'
-import {injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable} from '~/drizzle/schema'
+import { injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable } from '~/drizzle/schema'
 
-import {Def} from "~/frontend/editabletable/defs"
+import { Def } from "~/frontend/editabletable/defs"
 
 import {
 	sql
 } from "drizzle-orm"
-import {createTestDisasterRecord1, testDisasterRecord1Id} from './disaster_record_test'
+import { createTestDisasterRecord1 } from './disaster_record_test'
 
-let rid1 = testDisasterRecord1Id
+// Use a fixed UUID for testing
+let rid1 = "00000000-0000-0000-0000-000000000001"
 
 let defs1: Def[] = [
 	{
@@ -30,8 +34,8 @@ let defs1: Def[] = [
 		format: "enum",
 		role: "dimension",
 		data: [
-			{key: "m", label: "Male"},
-			{key: "f", label: "Female"}]
+			{ key: "m", label: "Male" },
+			{ key: "f", label: "Female" }]
 	},
 	{
 		uiName: "Injured",
@@ -68,8 +72,8 @@ let defsCustom: Def[] = [
 		format: "enum",
 		role: "dimension",
 		data: [
-			{key: "g1", label: "G1"},
-			{key: "g2", label: "G2"}]
+			{ key: "g1", label: "G1" },
+			{ key: "g2", label: "G2" }]
 	},
 	{
 		uiName: "Injured",
@@ -147,8 +151,8 @@ describe("human_effects - number data", async () => {
 				format: "enum",
 				role: "dimension",
 				data: [
-					{key: "above", label: "Above"},
-					{key: "below", label: "Below"}]
+					{ key: "above", label: "Above" },
+					{ key: "below", label: "Below" }]
 			},
 			{
 				uiName: "Injured",
@@ -340,8 +344,8 @@ describe("human_effects - number data", async () => {
 			format: "enum",
 			role: "dimension",
 			data: [
-				{key: "g1", label: "G1"},
-				{key: "g2", label: "G2"}]
+				{ key: "g1", label: "G1" },
+				{ key: "g2", label: "G2" }]
 		},
 		{
 			uiName: "custom2",
@@ -351,8 +355,8 @@ describe("human_effects - number data", async () => {
 			format: "enum",
 			role: "dimension",
 			data: [
-				{key: "g1", label: "G1"},
-				{key: "g2", label: "G2"}]
+				{ key: "g1", label: "G1" },
+				{ key: "g2", label: "G2" }]
 		},
 		{
 			uiName: "Injured",
@@ -440,7 +444,7 @@ describe("human_effects - category presence data", async () => {
 			"injured": true
 		})
 		let res = await categoryPresenceGet(rid1, "Injured", defs)
-		assert.deepEqual(res, {"injured": true})
+		assert.deepEqual(res, { "injured": true })
 	})
 
 	it("update - false", async () => {
@@ -451,7 +455,7 @@ describe("human_effects - category presence data", async () => {
 			"injured": false,
 		})
 		let res = await categoryPresenceGet(rid1, "Injured", defs)
-		assert.deepEqual(res, {"injured": false})
+		assert.deepEqual(res, { "injured": false })
 	})
 
 	it("update - unset", async () => {
@@ -480,7 +484,7 @@ describe("human_effects - category presence data", async () => {
 			"direct": true
 		})
 		let res = await categoryPresenceGet(rid1, "Affected", defs)
-		assert.deepEqual(res, {"direct": true})
+		assert.deepEqual(res, { "direct": true })
 	})
 
 	it("update - table prefix", async () => {
