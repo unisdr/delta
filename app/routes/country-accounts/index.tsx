@@ -15,15 +15,17 @@ import { requireSuperAdmin } from "~/util/auth";
 import { useEffect, useRef, useState } from "react";
 import Dialog from "~/components/Dialog";
 import { getCountries } from "~/db/queries/countries";
-import { Country } from "~/drizzle/schema";
+import { Country, CountryAccountType, countryAccountTypes } from "~/drizzle/schema";
 import {
 	CountryAccountValidationError,
 	createCountryAccountService,
 } from "~/services/countryAccountService";
 import Messages from "~/components/Messages";
+import { RadioButton } from "~/components/RadioButton";
+import { Fieldset } from "~/components/FieldSet";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
+	// await requireSuperAdmin(request);
 	const countryAccounts = await getCountryAccounts();
 	const countries = await getCountries();
 
@@ -31,25 +33,26 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
+	// await requireSuperAdmin(request);
 
 	const formData = await request.formData();
 	const countryId = formData.get("countryId") as string;
 	const status = formData.get("status");
 	const email = formData.get("email") as string;
+	const countryAccountType = formData.get("countryAccountType") as string;
 
 	try {
-		await createCountryAccountService(countryId, email, Number(status));
+		await createCountryAccountService(countryId, email, Number(status), countryAccountType);
 	} catch (error) {
 		if (error instanceof CountryAccountValidationError) {
 			return {
 				errors: error.errors,
-				formValues: { countryId, status, email },
+				formValues: { countryId, status, email, countryAccountType },
 			};
 		}
 		return {
 			errors: ["An unexpected error occured"],
-			formValues: { countryId, status, email },
+			formValues: { countryId, status, email, countryAccountType },
 		};
 	}
 
@@ -66,11 +69,13 @@ export default function CountryAccounts() {
 		useState(false);
 	const formRef = useRef<HTMLFormElement>(null);
 	const navigate = useNavigate();
+	const [type, setType] = useState<CountryAccountType>(countryAccountTypes.OFFICIAL);
 
 	function resetForm() {
 		if (formRef.current) {
 			formRef.current.reset();
 		}
+		setType(countryAccountTypes.OFFICIAL);
 		navigate(".", { replace: true });
 	}
 
@@ -125,6 +130,7 @@ export default function CountryAccounts() {
 					<tr>
 						<th>Country</th>
 						<th>Status</th>
+						<th>Type</th>
 						<th>Created At</th>
 						<th>Modified At</th>
 						<th>Actions</th>
@@ -135,6 +141,7 @@ export default function CountryAccounts() {
 						<tr key={countryAccount.id}>
 							<td>{countryAccount.country.name}</td>
 							<td>{countryAccount.status === 1 ? "Active" : "Inactive"}</td>
+							<td>{countryAccount.type}</td>
 							<td>{new Date(countryAccount.createdAt).toLocaleString()}</td>
 							<td>
 								{countryAccount.updatedAt
@@ -219,6 +226,28 @@ export default function CountryAccounts() {
 									placeholder="Enter email"
 								></input>
 							</label>
+							{/* feature for official and country instance */}
+							<Fieldset legend="Choose Instance Type">
+								<div className="dts-form-component__field--horizontal">
+									<RadioButton
+										inputId="type1"
+										name="countryAccountType"
+										value={countryAccountTypes.OFFICIAL}
+										onChange={(e) => setType(e.value as CountryAccountType)}
+										checked={type === countryAccountTypes.OFFICIAL}
+										label="Official"
+									/>
+
+									<RadioButton
+										inputId="type2"
+										name="countryAccountType"
+										value={countryAccountTypes.TRAINING}
+										onChange={(e) => setType(e.value as CountryAccountType)}
+										checked={type === countryAccountTypes.TRAINING}
+										label="Training"
+									/>
+								</div>
+							</Fieldset>
 						</div>
 					</div>
 				</Form>

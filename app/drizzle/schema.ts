@@ -179,7 +179,7 @@ export const userTable = pgTable("user", {
 	hydrometCheUser: zeroBool("hydromet_che_user"),
 	authType: text("auth_type").notNull().default("form"),
 	...createdUpdatedTimestamps,
-	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
+	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id, { onDelete: "cascade" }),
 	isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
 });
 
@@ -1060,7 +1060,7 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
 	id: ourRandomUUID(),
-	countryAccountsId: uuid("country_accounts_id").notNull().references(() => countryAccounts.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
 	disasterEventId: uuid("disaster_event_id").references(
 		(): AnyPgColumn => disasterEventTable.id
 	),
@@ -1363,7 +1363,7 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default("USA"),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
 	countryName: varchar("country_name").notNull().default("United State of America"),
-	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id),
+	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id, { onDelete: "cascade" }),
 });
 
 export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
@@ -1383,10 +1383,17 @@ export const countryRelations = relations(countries, ({ one }) => ({
 	countryAccount: one(countryAccounts)
 }))
 
+export type CountryAccountType = "Official" | "Training";
+export const countryAccountTypes = {
+  OFFICIAL: "Official" as CountryAccountType,
+  TRAINING: "Training" as CountryAccountType,
+} as const;
+
 export const countryAccounts = pgTable("country_accounts", {
 	id: ourRandomUUID(),
-	countryId: uuid("country_id").unique().notNull().references(() => countries.id),
+	countryId: uuid("country_id").notNull().references(() => countries.id),
 	status: integer("status").notNull().default(1),
+	type: varchar("type",{length:20}).notNull().default(countryAccountTypes.OFFICIAL),
 	createdAt: timestamp("created_at", { mode: 'date', withTimezone: false }).notNull().defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: 'date', withTimezone: false }),
 })
