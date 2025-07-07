@@ -49,7 +49,7 @@ export default function Support() {
             <>
               <PreventionWebLandingPageWidget
                 pageId="92283"
-                activeDomain="www.preventionweb.net"
+                activeDomain="syndication.preventionweb.net"
               />
               {appendContent && (
                 <div
