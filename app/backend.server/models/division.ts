@@ -1,5 +1,5 @@
 import {
-  SQL, sql, eq, isNull
+  SQL, sql, eq, isNull, and
 } from 'drizzle-orm';
 
 import { selectTranslated } from './common';
@@ -16,6 +16,7 @@ import JSZip from "jszip";
 
 // Import utility functions
 import { createLogger } from '~/utils/logger';
+import { TenantContext } from '~/util/tenant';
 import {
   ValidationError,
   DatabaseError,
@@ -45,17 +46,24 @@ export class UserError extends Error {
   }
 }
 
-export async function divisionsAllLanguages(parentId: number | null): Promise<Record<string, number>> {
+export async function divisionsAllLanguages(parentId: number | null, _langs: string[], tenantContext: TenantContext): Promise<Record<string, number>> {
+  // Note: Parameter is prefixed with underscore to indicate it's intentionally unused but kept for API consistency
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
+        // No need to select translations as we're only counting
         const q = tx
           .select({
             key: sql<string>`jsonb_object_keys(${divisionTable.name})`,
             count: sql<number>`COUNT(*)`,
           })
           .from(divisionTable)
-          .where(parentId ? eq(divisionTable.parentId, parentId) : isNull(divisionTable.parentId))
+          .where(
+            and(
+              parentId ? eq(divisionTable.parentId, parentId) : isNull(divisionTable.parentId),
+              eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+            )
+          )
           .groupBy(sql`jsonb_object_keys(${divisionTable.name})`);
 
         const rows = await q;
@@ -88,6 +96,7 @@ export type DivisionBreadcrumbRow = {
 export async function divisionBreadcrumb(
   langs: string[],
   divisionId: number,
+  tenantContext: TenantContext,
 ): Promise<DivisionBreadcrumbRow[]> {
   try {
     return await dr.transaction(async (tx: Tx) => {
@@ -112,7 +121,12 @@ export async function divisionBreadcrumb(
           const res: DivisionBreadcrumbRow[] = await tx
             .select(select)
             .from(divisionTable)
-            .where(eq(divisionTable.id, currentId))
+            .where(
+              and(
+                eq(divisionTable.id, currentId),
+                eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+              )
+            )
             .limit(1);
 
           const division = res[0];
@@ -135,7 +149,7 @@ export async function divisionBreadcrumb(
   }
 }
 
-export function divisionSelect(langs: string[]) {
+export function divisionSelect(langs: string[], tenantContext: TenantContext) {
   let tr = selectTranslated(divisionTable.name, "name", langs)
   let select: {
     id: typeof divisionTable.id,
@@ -148,7 +162,9 @@ export function divisionSelect(langs: string[]) {
   };
   return dr.transaction(async (tx: Tx) => {
     try {
-      return await tx.select(select).from(divisionTable);
+      return await tx.select(select)
+        .from(divisionTable)
+        .where(eq(divisionTable.countryAccountsId, tenantContext.countryAccountId));
     } catch (error) {
       logger.error('Failed to select divisions', { error });
       throw new DatabaseError('Failed to select divisions', { error });
@@ -205,7 +221,7 @@ interface ImportRes {
   error?: string;
 }
 
-export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
+export async function importZip(zipBytes: Uint8Array, tenantContext: TenantContext): Promise<ImportRes> {
   const successfulImports = new Set<string>();
   const failedImports = new Map<string, string>();
   // const results = new Map<string, ImportRes>();
@@ -321,7 +337,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
 
             // Process within transaction
             const result = await dr.transaction(async (tx) => {
-              const result = await importDivision(tx, divisions, divisionId, idMap, geoJsonContent);
+              const result = await importDivision(tx, divisions, divisionId, idMap, tenantContext, geoJsonContent);
               if (!result) return null;
 
               successfulImports.add(divisionId);
@@ -388,7 +404,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
 
             // Process within transaction
             const result = await dr.transaction(async (tx) => {
-              const result = await importDivision(tx, divisions, divisionId, idMap, geoJsonContent);
+              const result = await importDivision(tx, divisions, divisionId, idMap, tenantContext, geoJsonContent);
               if (!result) return null;
 
               successfulImports.add(divisionId);
@@ -558,6 +574,7 @@ async function importDivision(
   },
   importId: string,
   idMap: Map<string, number>,
+  tenantContext: TenantContext,
   geoJsonContent?: string
 ): Promise<BatchResult | null> {
   try {
@@ -576,12 +593,11 @@ async function importDivision(
 
     // For root divisions (no parent), set level to 1
     let parentDbId: number | null = null;
-    let level = 1;
 
     if (division.parent) {
       // Import parent first if exists and not already imported
       if (!idMap.has(division.parent)) {
-        const parentResult = await importDivision(tx, divisions, division.parent, idMap);
+        const parentResult = await importDivision(tx, divisions, division.parent, idMap, tenantContext, undefined);
         if (!parentResult?.success) {
           throw new HierarchyError(`Failed to import parent division ${division.parent}`, {
             parentId: division.parent,
@@ -598,43 +614,53 @@ async function importDivision(
           childId: importId
         });
       }
-
-      // Get parent's level
-      const parentLevel = await tx.select({ level: divisionTable.level })
-        .from(divisionTable)
-        .where(eq(divisionTable.id, parentDbId))
-        .limit(1)
-        .then(res => res[0]?.level);
-
-      if (typeof parentLevel !== 'number') {
-        throw new HierarchyError(`Parent division ${division.parent} level not found`, {
-          parentId: division.parent,
-          childId: importId
-        });
-      }
-
-      level = parentLevel + 1;
     }
+
+    // Prepare division data for validation and insertion/update
+    const divisionData: DivisionInsert = {
+      nationalId: division.nationalId !== "" ? division.nationalId : null,
+      importId,
+      parentId: parentDbId,
+      name: division.name
+    };
 
     // Check if division exists
     const existingDivision = await tx
       .select({ id: divisionTable.id })
       .from(divisionTable)
-      .where(sql`${divisionTable.importId} = ${importId}::text`)
+      .where(and(
+        sql`${divisionTable.importId} = ${importId}::text`,
+        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+      ))
       .limit(1)
       .then(res => res[0]);
 
     let dbId: number;
+
+    // Use shared validation logic
+    const validation = await validateDivisionData(
+      tx,
+      divisionData,
+      tenantContext,
+      existingDivision?.id
+    );
+
+    // For import, we'll convert validation errors to ImportError exceptions
+    if (!validation.valid) {
+      throw new ImportError(`Validation failed for division ${importId}: ${validation.errors.join(', ')}`, {
+        importId,
+        validationErrors: validation.errors
+      });
+    }
+
     if (existingDivision) {
       // Update existing division
       await tx
         .update(divisionTable)
         .set({
-          nationalId: division.nationalId != "" ? division.nationalId : null,
-          parentId: parentDbId,
-          name: division.name,
-          level,
-          importId // Ensure importId is set
+          ...divisionData,
+          level: validation.level,
+          countryAccountsId: tenantContext.countryAccountId
         })
         .where(eq(divisionTable.id, existingDivision.id));
 
@@ -644,11 +670,9 @@ async function importDivision(
       const [result] = await tx
         .insert(divisionTable)
         .values({
-          nationalId: division.nationalId != "" ? division.nationalId : null,
-          importId,
-          parentId: parentDbId,
-          name: division.name,
-          level
+          ...divisionData,
+          level: validation.level,
+          countryAccountsId: tenantContext.countryAccountId
         })
         .returning({ id: divisionTable.id });
 
@@ -670,7 +694,7 @@ async function importDivision(
     return {
       id: importId,
       success: true,
-      data: { dbId, level }
+      data: { dbId, level: validation.level }
     };
   } catch (error) {
     if (error instanceof AppError) throw error;
@@ -695,14 +719,256 @@ export function fromForm(formData: Record<string, string>): DivisionInsert {
   };
 }
 
-export async function update(id: number, data: DivisionInsert): Promise<{ ok: boolean; errors?: string[] }> {
+/**
+ * Validates division data before creation or update
+ * Checks for duplicate divisions, validates parent-child relationships,
+ * and ensures proper level calculation based on parent
+ */
+async function validateDivisionData(
+  tx: Tx,
+  data: DivisionInsert,
+  tenantContext: TenantContext,
+  existingId?: number
+): Promise<{ valid: boolean; errors: string[]; level?: number }> {
+  const errors: string[] = [];
+  let level = 1; // Default level for root divisions
+
+  // Validate parent exists and belongs to the same tenant if specified
+  if (data.parentId !== null && data.parentId !== undefined) {
+    const parent = await tx.query.divisionTable.findFirst({
+      where: and(
+        eq(divisionTable.id, data.parentId),
+        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+      )
+    });
+
+    if (!parent) {
+      errors.push(`Parent division with ID ${data.parentId} not found or does not belong to the same tenant`);
+    } else {
+      // Calculate level based on parent's level
+      level = (parent.level || 0) + 1;
+
+      // Check for circular reference (only needed for updates)
+      if (existingId) {
+        const wouldCreateCircularReference = await checkCircularReference(
+          tx,
+          existingId,
+          data.parentId,
+          tenantContext.countryAccountId
+        );
+
+        if (wouldCreateCircularReference) {
+          errors.push('Cannot set parent: would create a circular reference in the division hierarchy');
+        }
+      }
+    }
+  }
+
+  // Check for duplicate division names within the same tenant and level
+  if (data.name && Object.keys(data.name).length > 0) {
+    // Get a representative name for checking (using first available language)
+    const firstLang = Object.keys(data.name)[0];
+    const nameValue = data.name[firstLang];
+
+    if (nameValue) {
+      const query = and(
+        sql`${divisionTable.name}->>${firstLang} = ${nameValue}`,
+        eq(divisionTable.level, level),
+        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+      );
+
+      // If updating an existing division, exclude it from the duplicate check
+      const whereClause = existingId
+        ? and(query, sql`${divisionTable.id} != ${existingId}`)
+        : query;
+
+      const existingWithSameName = await tx.query.divisionTable.findFirst({
+        where: whereClause
+      });
+
+      if (existingWithSameName) {
+        errors.push(`A division with the name "${nameValue}" already exists at level ${level}`);
+      }
+    }
+  } else {
+    errors.push('Division name is required');
+  }
+
+  // Check for duplicate nationalId if provided
+  if (data.nationalId) {
+    const query = and(
+      eq(divisionTable.nationalId, data.nationalId),
+      eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+    );
+
+    // If updating an existing division, exclude it from the duplicate check
+    const whereClause = existingId
+      ? and(query, sql`${divisionTable.id} != ${existingId}`)
+      : query;
+
+    const existingWithSameNationalId = await tx.query.divisionTable.findFirst({
+      where: whereClause
+    });
+
+    if (existingWithSameNationalId) {
+      errors.push(`A division with the national ID "${data.nationalId}" already exists`);
+    }
+  }
+
+  // Check for duplicate importId if provided
+  if (data.importId) {
+    const query = and(
+      eq(divisionTable.importId, data.importId),
+      eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+    );
+
+    // If updating an existing division, exclude it from the duplicate check
+    const whereClause = existingId
+      ? and(query, sql`${divisionTable.id} != ${existingId}`)
+      : query;
+
+    const existingWithSameImportId = await tx.query.divisionTable.findFirst({
+      where: whereClause
+    });
+
+    if (existingWithSameImportId) {
+      errors.push(`A division with the import ID "${data.importId}" already exists`);
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    level
+  };
+}
+
+/**
+ * Checks if setting parentId for a division would create a circular reference
+ * @param tx Database transaction
+ * @param divisionId ID of the division being updated
+ * @param parentId New parent ID to set
+ * @param countryAccountId Tenant context ID
+ * @returns true if a circular reference would be created, false otherwise
+ */
+async function checkCircularReference(
+  tx: Tx,
+  divisionId: number,
+  parentId: number,
+  countryAccountId: string
+): Promise<boolean> {
+  // Simple case: division can't be its own parent
+  if (divisionId === parentId) {
+    return true;
+  }
+
+  // Check if any ancestor of the new parent is the division itself
+  let currentId = parentId;
+  const visited = new Set<number>();
+
+  while (currentId) {
+    // Prevent infinite loops
+    if (visited.has(currentId)) {
+      return true;
+    }
+    visited.add(currentId);
+
+    // Get the parent of the current division
+    const current = await tx.query.divisionTable.findFirst({
+      where: and(
+        eq(divisionTable.id, currentId),
+        eq(divisionTable.countryAccountsId, countryAccountId)
+      ),
+      columns: {
+        parentId: true
+      }
+    });
+
+    // If we reached a root division or can't find the division, stop
+    if (!current || current.parentId === null) {
+      break;
+    }
+
+    // If the parent is the division we're updating, we have a circular reference
+    if (current.parentId === divisionId) {
+      return true;
+    }
+
+    // Move up the hierarchy
+    currentId = current.parentId;
+  }
+
+  return false;
+}
+
+export async function createDivision(data: DivisionInsert, tenantContext: TenantContext): Promise<{ ok: boolean; errors?: string[] }> {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
+        // Validate division data
+        const validation = await validateDivisionData(tx, data, tenantContext);
+
+        if (!validation.valid) {
+          return { ok: false, errors: validation.errors };
+        }
+
+        // Insert with validated level
+        await tx
+          .insert(divisionTable)
+          .values({
+            ...data,
+            level: validation.level,
+            countryAccountsId: tenantContext.countryAccountId
+          });
+
+        return { ok: true };
+      } catch (error) {
+        logger.error('Failed to create division', { error, data });
+        return { ok: false, errors: ["Failed to create the division"] };
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to create division', { error, data });
+    return { ok: false, errors: ["Failed to create the division"] };
+  }
+}
+
+export async function update(id: number, data: DivisionInsert, tenantContext: TenantContext): Promise<{ ok: boolean; errors?: string[] }> {
+  try {
+    return await dr.transaction(async (tx: Tx) => {
+      try {
+        // Verify division exists and belongs to the tenant
+        const existingDivision = await tx.query.divisionTable.findFirst({
+          where: and(
+            eq(divisionTable.id, id),
+            eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+          )
+        });
+
+        if (!existingDivision) {
+          return { ok: false, errors: ["Division not found or access denied"] };
+        }
+
+        // Validate division data
+        const validation = await validateDivisionData(tx, data, tenantContext, id);
+
+        if (!validation.valid) {
+          return { ok: false, errors: validation.errors };
+        }
+
+        // Update with validated level
         await tx
           .update(divisionTable)
-          .set(data)
-          .where(eq(divisionTable.id, id));
+          .set({
+            ...data,
+            level: validation.level
+          })
+          .where(
+            and(
+              eq(divisionTable.id, id),
+              eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+            )
+          );
 
         return { ok: true };
       } catch (error) {
@@ -716,12 +982,15 @@ export async function update(id: number, data: DivisionInsert): Promise<{ ok: bo
   }
 }
 
-export async function divisionById(id: number) {
+export async function divisionById(id: number, tenantContext: TenantContext) {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
         const res = await tx.query.divisionTable.findFirst({
-          where: eq(divisionTable.id, id),
+          where: and(
+            eq(divisionTable.id, id),
+            eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+          ),
           with: {
             divisionParent: true
           }
@@ -740,7 +1009,7 @@ export async function divisionById(id: number) {
   }
 }
 
-export async function getAllChildren(divisionId: number) {
+export async function getAllChildren(divisionId: number, tenantContext: TenantContext) {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
@@ -749,12 +1018,14 @@ export async function getAllChildren(divisionId: number) {
             SELECT id, parent_id
             FROM division
             WHERE id = ${divisionId}
+            AND country_accounts_id = ${tenantContext.countryAccountId}
 
             UNION ALL
 
             SELECT t.id, t.parent_id
             FROM division t
             INNER JOIN DivisionChildren c ON t.parent_id = c.id
+            WHERE t.country_accounts_id = ${tenantContext.countryAccountId}
           )
 
           SELECT id
@@ -777,12 +1048,12 @@ export async function getAllChildren(divisionId: number) {
 
 export type DivisionIdAndNameResult = {
   id: number;
-  name: Record<string,string>;
+  name: Record<string, string>;
   level: number | null;
 }[];
 
 
-export async function getDivisionIdAndNameByLevel(level: number): Promise<DivisionIdAndNameResult> {
+export async function getDivisionIdAndNameByLevel(level: number, tenantContext: TenantContext): Promise<DivisionIdAndNameResult> {
   try {
     const divisions = await dr
       .select({
@@ -791,13 +1062,16 @@ export async function getDivisionIdAndNameByLevel(level: number): Promise<Divisi
         level: divisionTable.level
       })
       .from(divisionTable)
-      .where(eq(divisionTable.level, level));
+      .where(and(
+        eq(divisionTable.level, level),
+        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+      ));
 
     // Map results to ensure correct typing
     return divisions.map((division) => ({
       id: division.id,
       name: division.name,
-      level: division.level 
+      level: division.level
     }));
   } catch (error) {
     console.error("Error fetching divisions by level:", error);
@@ -805,12 +1079,15 @@ export async function getDivisionIdAndNameByLevel(level: number): Promise<Divisi
   }
 }
 
-export async function getDivisionByLevel(level: number) {
+export async function getDivisionByLevel(level: number, tenantContext: TenantContext) {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
         const res = await tx.query.divisionTable.findMany({
-          where: eq(divisionTable.level, level),
+          where: and(
+            eq(divisionTable.level, level),
+            eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+          ),
           with: {
             divisionParent: true
           }
@@ -833,7 +1110,8 @@ export async function getDivisionsBySpatialQuery(
   geojson: any,
   options: {
     relationshipType?: 'intersects' | 'contains' | 'within';
-  } = {}
+  } = {},
+  tenantContext: TenantContext
 ): Promise<any[]> {
   try {
     return await dr.transaction(async (tx: Tx) => {
@@ -870,7 +1148,8 @@ export async function getDivisionsBySpatialQuery(
           WHERE ${spatialFunction}(
             d.geom,
             ST_GeomFromGeoJSON(${JSON.stringify(geojson)})
-          );
+          )
+          AND d.country_accounts_id = ${tenantContext.countryAccountId};
         `;
 
         const results = await tx.execute(query);
@@ -899,7 +1178,8 @@ export async function getDivisionsByBoundingBox(
   bbox: [number, number, number, number],
   options: {
     relationshipType?: 'intersects' | 'contains' | 'within';
-  } = {}
+  } = {},
+  tenantContext: TenantContext
 ): Promise<any[]> {
   try {
     return await dr.transaction(async () => {
@@ -934,7 +1214,7 @@ export async function getDivisionsByBoundingBox(
         };
 
         // Use spatial query function
-        return await getDivisionsBySpatialQuery(bboxPolygon, options);
+        return await getDivisionsBySpatialQuery(bboxPolygon, options, tenantContext);
       } catch (error) {
         logger.error('Failed to get divisions by bounding box', { error, bbox, options });
         if (error instanceof ValidationError) {
