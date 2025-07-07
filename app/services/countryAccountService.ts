@@ -1,13 +1,19 @@
 import { sendInvite } from "~/backend.server/models/user/invite";
 import { dr } from "~/db.server";
 import { getCountryById } from "~/db/queries/countries";
-import { countryAccountWithTypeExists, createCountryAccount } from "~/db/queries/countryAccounts";
-import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
 import {
-	createUser,
-	getUserByEmail,
-} from "~/db/queries/user";
-import { countryAccountStatuses, countryAccountTypes } from "~/drizzle/schema";
+	countryAccountWithTypeExists,
+	createCountryAccount,
+	getCountryAccountById,
+	updateCountryAccountStatus,
+} from "~/db/queries/countryAccounts";
+import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
+import { createUser, getUserByEmail } from "~/db/queries/user";
+import {
+	CountryAccountStatus,
+	countryAccountStatuses,
+	countryAccountTypes,
+} from "~/drizzle/schema";
 
 // Create a custom error class for validation errors
 export class CountryAccountValidationError extends Error {
@@ -64,7 +70,10 @@ export async function createCountryAccountService(
 		countryId &&
 		countryId !== "-1" &&
 		countryAccountType === countryAccountTypes.OFFICIAL &&
-		(await countryAccountWithTypeExists(countryId, countryAccountTypes.OFFICIAL))
+		(await countryAccountWithTypeExists(
+			countryId,
+			countryAccountTypes.OFFICIAL
+		))
 	) {
 		errors.push("An official account already exists for this country.");
 	}
@@ -73,9 +82,14 @@ export async function createCountryAccountService(
 	}
 
 	// generate password
-	 const isPrimaryAdmin = true;
+	const isPrimaryAdmin = true;
 	return dr.transaction(async (tx) => {
-		const countryAccount = await createCountryAccount(countryId, status, countryAccountType, tx);
+		const countryAccount = await createCountryAccount(
+			countryId,
+			status,
+			countryAccountType,
+			tx
+		);
 		const adminUser = await createUser(
 			email,
 			"admin",
@@ -98,4 +112,20 @@ export async function createCountryAccountService(
 		await sendInvite(adminUser, tx);
 		return { countryAccount, adminUser, instanceSystemSetting };
 	});
+}
+
+export async function updateCountryAccountStatusService(
+	id: string,
+	status: number
+) {
+	const countryAccount = await getCountryAccountById(id);
+	if(!countryAccount){
+		throw new CountryAccountValidationError([`Country accounts id:${id} does not exist`])
+	}
+	if(!Object.values(countryAccountStatuses).includes(status as CountryAccountStatus)){
+		throw new CountryAccountValidationError([`Status: ${status} is not a valid value`])
+	}
+
+	const updatedCountryAccount = await updateCountryAccountStatus(id, status);
+	return {updatedCountryAccount};
 }

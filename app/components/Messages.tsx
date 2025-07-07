@@ -9,7 +9,7 @@ function Messages({ header, messages, children }: MessagesProps) {
 		<div className="dts-alert dts-alert--error">
 			<div className="dts-alert__icon">
 				<svg aria-hidden="true" focusable="false" role="img">
-					<use href="assets/icons/error.svg#error"></use>
+					<use href="/assets/icons/error.svg#error"></use>
 				</svg>
 			</div>
 			<div className="dts-alert__content">

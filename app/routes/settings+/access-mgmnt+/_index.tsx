@@ -154,7 +154,7 @@ export default function Settings() {
 	return (
 		<MainContainer title="Access management" headerExtra={<NavSettings />}>
 			<div className="dts-page-intro">
-				<div className="dts-external-links">
+				<div className="dts-additional-actions">
 					<a
 						href="/about/technical-specifications"
 						className="dts-link"

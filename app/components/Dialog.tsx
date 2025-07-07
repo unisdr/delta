@@ -5,7 +5,7 @@ interface DialogProps {
 	onClose?: () => void;
 	header?: string;
 	children?: React.ReactNode;
-    footer?: React.ReactNode;
+	footer?: React.ReactNode;
 }
 
 function Dialog({ visible, onClose, header, children, footer }: DialogProps) {
@@ -20,7 +20,20 @@ function Dialog({ visible, onClose, header, children, footer }: DialogProps) {
 		} else {
 			dialog.close();
 		}
-	}, [visible]);
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape" && visible) {
+				if (onClose) {
+					onClose();
+				}
+			}
+		};
+		document.addEventListener("keydown", handleKeyDown);
+
+		return () => {
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [visible, onClose]);
 
 	const handleClose = () => {
 		if (onClose) {
@@ -31,6 +44,7 @@ function Dialog({ visible, onClose, header, children, footer }: DialogProps) {
 	return (
 		<dialog ref={dialogRef} className="dts-dialog">
 			<div className="dts-dialog__header">
+				<h2 className="dts-heading-2">{header}</h2>
 				<button
 					type="button"
 					autoFocus
@@ -43,13 +57,9 @@ function Dialog({ visible, onClose, header, children, footer }: DialogProps) {
 				</button>
 			</div>
 
-			<div className="dts-form__intro">
-				<h2 className="dts-heading-2">{header}</h2>
-			</div>
-
 			<div className="dts-form__body">{children}</div>
 
-            <div className="dts-form__actions">{footer}</div>
+			<div className="dts-form__actions">{footer}</div>
 		</dialog>
 	);
 }

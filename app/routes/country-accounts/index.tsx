@@ -25,13 +25,16 @@ import {
 import {
 	CountryAccountValidationError,
 	createCountryAccountService,
+	updateCountryAccountStatusService,
 } from "~/services/countryAccountService";
 import Messages from "~/components/Messages";
 import { RadioButton } from "~/components/RadioButton";
 import { Fieldset } from "~/components/FieldSet";
+import Tag from "~/components/Tag";
+import { Toast, ToastRef } from "~/components/Toast";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	// await requireSuperAdmin(request);
+	await requireSuperAdmin(request);
 	const countryAccounts =
 		await getCountryAccountsWithCountryAndPrimaryAdminUser();
 	const countries = await getCountries();
@@ -40,7 +43,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-	// await requireSuperAdmin(request);
+	await requireSuperAdmin(request);
 
 	const formData = await request.formData();
 	const countryId = formData.get("countryId") as string;
@@ -51,18 +54,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 	try {
 		if (id) {
-			console.log("Updated country account");
 			// Update existing account
-			// await updateCountryAccountService(
-			// 	id,
-			// 	countryId,
-			// 	email,
-			// 	Number(status),
-			// 	countryAccountType
-			// );
+			await updateCountryAccountStatusService(id, Number(status));
 		} else {
 			// Create new account
-			console.log("Add country account");
 			await createCountryAccountService(
 				countryId,
 				email,
@@ -71,14 +66,14 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 		}
 	} catch (error) {
+		let errors = {};
 		if (error instanceof CountryAccountValidationError) {
-			return {
-				errors: error.errors,
-				formValues: { id, countryId, status, email, countryAccountType },
-			};
+			errors = { errors: error.errors };
+		} else {
+			errors = { errors: ["An unexpected error occured"] };
 		}
 		return {
-			errors: ["An unexpected error occurred"],
+			...errors,
 			formValues: { id, countryId, status, email, countryAccountType },
 		};
 	}
@@ -101,6 +96,7 @@ export default function CountryAccounts() {
 			countryAccountType: string;
 		};
 	}>();
+
 	const [editingCountryAccount, setEditingCountryAccount] =
 		useState<CountryAccountWithCountryAndPrimaryAdminUser | null>(null);
 	const [selectedCountryId, setSelectedCountryId] = useState("-1");
@@ -113,8 +109,10 @@ export default function CountryAccounts() {
 	);
 	const [isAddCountryAccountDialogOpen, setIsAddCountryAccountDialogOpen] =
 		useState(false);
+
 	const formRef = useRef<HTMLFormElement>(null);
 	const navigate = useNavigate();
+	const toast = useRef<ToastRef>(null);
 
 	function addCountryAccount() {
 		resetForm();
@@ -149,12 +147,21 @@ export default function CountryAccounts() {
 	}
 
 	useEffect(() => {
-		console.log("useEffect");
 		if (actionData?.success) {
 			setIsAddCountryAccountDialogOpen(false);
 			resetForm();
+
+			if (toast.current) {
+				toast.current.show({
+					severity: "info",
+					summary: "Success",
+					detail: editingCountryAccount
+						? "Country account updated successfully"
+						: "Country accounted created successfully",
+				});
+			}
 		}
-	}, [actionData, navigate]);
+	}, [actionData, navigate, editingCountryAccount]);
 
 	const footerContent = (
 		<>
@@ -180,8 +187,11 @@ export default function CountryAccounts() {
 			title="Manage Country Accounts"
 			headerExtra={<NavSettings />}
 		>
+			<div className="card flex justify-content-center">
+				<Toast ref={toast} />
+			</div>
 			<div className="dts-page-intro">
-				<div className="dts-external-links">
+				<div className="dts-additional-actions">
 					<button
 						className="mg-button mg-button-secondary"
 						onClick={() => addCountryAccount()}
@@ -196,7 +206,7 @@ export default function CountryAccounts() {
 						<th>Country</th>
 						<th>Status</th>
 						<th>Type</th>
-						<th>Primary Admin</th>
+						<th>Primary Admin's Email</th>
 						<th>Created At</th>
 						<th>Modified At</th>
 						<th>Actions</th>
@@ -211,7 +221,9 @@ export default function CountryAccounts() {
 									? "Active"
 									: "Inactive"}
 							</td>
-							<td>{countryAccount.type}</td>
+							<td>
+								<Tag value={countryAccount.type}></Tag>
+							</td>
 							<td>{countryAccount.users[0].email}</td>
 							<td>{new Date(countryAccount.createdAt).toLocaleString()}</td>
 							<td>
@@ -277,6 +289,7 @@ export default function CountryAccounts() {
 									name="countryId"
 									value={selectedCountryId}
 									onChange={(e) => setSelectedCountryId(e.target.value)}
+									disabled={editingCountryAccount?.id ? true : false}
 								>
 									<option key="-1" value="-1">
 										Select a country
@@ -324,10 +337,14 @@ export default function CountryAccounts() {
 									placeholder="Enter email"
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
+									disabled={editingCountryAccount?.id ? true : false}
 								></input>
 							</label>
 							{/* feature for official and country instance */}
-							<Fieldset legend="Choose Instance Type">
+							<Fieldset
+								legend="Choose Instance Type"
+								disabled={editingCountryAccount?.id ? true : false}
+							>
 								<div className="dts-form-component__field--horizontal">
 									<RadioButton
 										inputId="type1"

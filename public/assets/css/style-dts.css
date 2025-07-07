@@ -900,7 +900,7 @@ header .mg-container {
 }
 .dts-dialog__header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-bottom: 1.6rem;
 }
 .dts-dialog__content {
