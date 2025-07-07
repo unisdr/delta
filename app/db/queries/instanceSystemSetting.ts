@@ -11,6 +11,18 @@ export async function getInstanceSystemSettings(): Promise<InstanceSystemSetting
 	return result[0] || null;
 }
 
+// Get the system settings by country account id (expects a single record)
+export async function getInstanceSystemSettingsByCountryAccount(
+	countryAccountId: string
+): Promise<InstanceSystemSettings | null> {
+	const result = await dr
+		.select()
+		.from(instanceSystemSettings)
+		.where(eq(instanceSystemSettings.countryAccountsId, countryAccountId))
+		.limit(1);
+	return result[0] || null;
+}
+
 // Check if admin setup is complete
 export async function isAdminSetupComplete(): Promise<boolean> {
 	const settings = await getInstanceSystemSettings();
@@ -19,9 +31,10 @@ export async function isAdminSetupComplete(): Promise<boolean> {
 
 // Update only the footerUrlPrivacyPolicy
 export async function updateFooterUrlPrivacyPolicy(
+	countryAccountId: string,
 	footerUrlPrivacyPolicy: string | null
 ): Promise<InstanceSystemSettings> {
-	const existing = await getInstanceSystemSettings();
+	const existing = await getInstanceSystemSettingsByCountryAccount(countryAccountId);
 
 	if (!existing) {
 		throw new Error("No system settings record found to update");
@@ -36,11 +49,12 @@ export async function updateFooterUrlPrivacyPolicy(
 	return updated;
 }
 
-// Update only the footerUrlPrivacyPolicy
+// Update only the footerUrlTermsConditions
 export async function updateFooterUrlTermsConditions(
+	countryAccountId: string,
 	footerUrlTermsConditions: string | null
 ): Promise<InstanceSystemSettings> {
-	const existing = await getInstanceSystemSettings();
+	const existing = await getInstanceSystemSettingsByCountryAccount(countryAccountId);
 
 	if (!existing) {
 		throw new Error("No system settings record found to update");
