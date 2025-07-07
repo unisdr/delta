@@ -43,7 +43,7 @@ import { getInstanceSystemSettings } from "./db/queries/instanceSystemSetting";
 
 
 export const links: LinksFunction = () => [
-	{rel: "stylesheet", href: '/assets/css/style-dts.css?asof=20250513'},
+	{rel: "stylesheet", href: '/assets/css/style-dts.css?asof=20250530'},
 	{rel: "stylesheet", href: allStylesHref},
 ];
 

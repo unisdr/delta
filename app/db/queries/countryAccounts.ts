@@ -2,17 +2,14 @@ import { countryAccounts, userTable } from "../../drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { dr, Tx } from "~/db.server";
 
-const ACTIVE_STATUS = 1;
-const INACTIVE_STATUS = 0;
-
 export async function getCountryAccountsWithCountryAndPrimaryAdminUser() {
 	return dr.query.countryAccounts.findMany({
 		with: {
 			country: true,
 			users: {
 				where: eq(userTable.isPrimaryAdmin, true),
-				limit: 1
-			}
+				limit: 1,
+			},
 		},
 		columns: {
 			id: true,
@@ -79,36 +76,18 @@ export async function createCountryAccount(
 	return result[0];
 }
 
-export async function updateCountryAccount(
+export async function updateCountryAccountStatus(
 	id: string,
-	countryId: string,
-	status: number
+	status: number,
+	tx?: Tx
 ) {
-	const result = await dr
+	const db = tx || dr;
+	const result = await db
 		.update(countryAccounts)
-		.set({ countryId, status, updatedAt: new Date() })
+		.set({ status, updatedAt: new Date() })
 		.where(eq(countryAccounts.id, id))
 		.returning()
 		.execute();
 	return result[0] || null;
 }
 
-export async function activateCountryAccount(id: string) {
-	const result = await dr
-		.update(countryAccounts)
-		.set({ status: ACTIVE_STATUS })
-		.where(eq(countryAccounts.id, id))
-		.returning()
-		.execute();
-	return result[0] || null;
-}
-
-export async function deactivateCountryAccount(id: string) {
-	const result = await dr
-		.update(countryAccounts)
-		.set({ status: INACTIVE_STATUS })
-		.where(eq(countryAccounts.id, id))
-		.returning()
-		.execute();
-	return result[0] || null;
-}
