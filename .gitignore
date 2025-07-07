@@ -27,6 +27,7 @@ public/build/
 
 # Database
 app/drizzle/meta/
+app/drizzle/migrations/
 *.db
 *.sqlite
 *.sqlite3
