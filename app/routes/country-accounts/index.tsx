@@ -31,7 +31,7 @@ import Messages from "~/components/Messages";
 import { RadioButton } from "~/components/RadioButton";
 import { Fieldset } from "~/components/FieldSet";
 import Tag from "~/components/Tag";
-import {Toast,  ToastRef } from "~/components/Toast";
+import { Toast, ToastRef } from "~/components/Toast";
 
 export const loader: LoaderFunction = async ({ request }) => {
 	await requireSuperAdmin(request);
@@ -96,9 +96,9 @@ export default function CountryAccounts() {
 			countryAccountType: string;
 		};
 	}>();
-	
+
 	const [editingCountryAccount, setEditingCountryAccount] =
-	useState<CountryAccountWithCountryAndPrimaryAdminUser | null>(null);
+		useState<CountryAccountWithCountryAndPrimaryAdminUser | null>(null);
 	const [selectedCountryId, setSelectedCountryId] = useState("-1");
 	const [type, setType] = useState<CountryAccountType>(
 		countryAccountTypes.OFFICIAL
@@ -108,12 +108,12 @@ export default function CountryAccounts() {
 		countryAccountStatuses.ACTIVE
 	);
 	const [isAddCountryAccountDialogOpen, setIsAddCountryAccountDialogOpen] =
-	useState(false);
-	
+		useState(false);
+
 	const formRef = useRef<HTMLFormElement>(null);
 	const navigate = useNavigate();
 	const toast = useRef<ToastRef>(null);
-	
+
 	function addCountryAccount() {
 		resetForm();
 		setIsAddCountryAccountDialogOpen(true);
@@ -181,7 +181,6 @@ export default function CountryAccounts() {
 			</button>
 		</>
 	);
-
 
 	return (
 		<MainContainer

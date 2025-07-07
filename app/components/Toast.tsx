@@ -4,6 +4,7 @@ export interface ToastMessage {
   severity?: "info" | "warning" | "error";
   summary?: string;
   detail?: string;
+  life?: number;
 }
 
 export interface ToastRef {
@@ -20,17 +21,18 @@ export const Toast = forwardRef<ToastRef, {}>((props, ref) => {
         severity: msg.severity ?? "info",
         summary: msg.summary ?? "",
         detail: msg.detail ?? "",
+        life: msg.life ?? 3000,
       });
       setIsVisible(true);
     },
   }));
 
   useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => setIsVisible(false), 3000);
+    if (isVisible && message?.life) {
+      const timer = setTimeout(() => setIsVisible(false), message.life);
       return () => clearTimeout(timer);
     }
-  }, [isVisible]);
+  }, [isVisible, message?.life]);
 
   if (!message) return null;
 
