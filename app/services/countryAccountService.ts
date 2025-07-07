@@ -7,7 +7,7 @@ import {
 	createUser,
 	getUserByEmail,
 } from "~/db/queries/user";
-import { countryAccountTypes } from "~/drizzle/schema";
+import { countryAccountStatuses, countryAccountTypes } from "~/drizzle/schema";
 
 // Create a custom error class for validation errors
 export class CountryAccountValidationError extends Error {
@@ -20,11 +20,9 @@ export class CountryAccountValidationError extends Error {
 export async function createCountryAccountService(
 	countryId: string,
 	email: string,
-	status: number = 1,
+	status: number = countryAccountStatuses.ACTIVE,
 	countryAccountType: string = countryAccountTypes.OFFICIAL
 ) {
-	// send email
-
 	const errors: string[] = [];
 	if (!countryId) errors.push("Country is required");
 	if (!status) errors.push("Status is required");

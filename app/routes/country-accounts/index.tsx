@@ -6,8 +6,8 @@ import {
 	useNavigate,
 } from "@remix-run/react";
 import {
-	CountryAccountWithCountry,
-	getCountryAccounts,
+	CountryAccountWithCountryAndPrimaryAdminUser,
+	getCountryAccountsWithCountryAndPrimaryAdminUser,
 } from "~/db/queries/countryAccounts";
 import { MainContainer } from "~/frontend/container";
 import { NavSettings } from "../settings/nav";
@@ -15,7 +15,13 @@ import { requireSuperAdmin } from "~/util/auth";
 import { useEffect, useRef, useState } from "react";
 import Dialog from "~/components/Dialog";
 import { getCountries } from "~/db/queries/countries";
-import { Country, CountryAccountType, countryAccountTypes } from "~/drizzle/schema";
+import {
+	Country,
+	CountryAccountStatus,
+	countryAccountStatuses,
+	CountryAccountType,
+	countryAccountTypes,
+} from "~/drizzle/schema";
 import {
 	CountryAccountValidationError,
 	createCountryAccountService,
@@ -25,8 +31,9 @@ import { RadioButton } from "~/components/RadioButton";
 import { Fieldset } from "~/components/FieldSet";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
-	const countryAccounts = await getCountryAccounts();
+	// await requireSuperAdmin(request);
+	const countryAccounts =
+		await getCountryAccountsWithCountryAndPrimaryAdminUser();
 	const countries = await getCountries();
 
 	return { countryAccounts, countries };
@@ -40,51 +47,109 @@ export const action: ActionFunction = async ({ request }) => {
 	const status = formData.get("status");
 	const email = formData.get("email") as string;
 	const countryAccountType = formData.get("countryAccountType") as string;
+	const id = formData.get("id") as string;
 
 	try {
-		await createCountryAccountService(countryId, email, Number(status), countryAccountType);
+		if (id) {
+			console.log("Updated country account");
+			// Update existing account
+			// await updateCountryAccountService(
+			// 	id,
+			// 	countryId,
+			// 	email,
+			// 	Number(status),
+			// 	countryAccountType
+			// );
+		} else {
+			// Create new account
+			console.log("Add country account");
+			await createCountryAccountService(
+				countryId,
+				email,
+				Number(status),
+				countryAccountType
+			);
+		}
 	} catch (error) {
 		if (error instanceof CountryAccountValidationError) {
 			return {
 				errors: error.errors,
-				formValues: { countryId, status, email, countryAccountType },
+				formValues: { id, countryId, status, email, countryAccountType },
 			};
 		}
 		return {
-			errors: ["An unexpected error occured"],
-			formValues: { countryId, status, email, countryAccountType },
+			errors: ["An unexpected error occurred"],
+			formValues: { id, countryId, status, email, countryAccountType },
 		};
 	}
-
 	return { success: true };
 };
 
 export default function CountryAccounts() {
 	const { countryAccounts, countries } = useLoaderData<{
-		countryAccounts: CountryAccountWithCountry[];
+		countryAccounts: CountryAccountWithCountryAndPrimaryAdminUser[];
 		countries: Country[];
 	}>();
-	const actionData = useActionData<{ errors?: string[]; success?: boolean }>();
+	const actionData = useActionData<{
+		errors?: string[];
+		success?: boolean;
+		formValues?: {
+			id?: string;
+			countryId: string;
+			status: string;
+			email: string;
+			countryAccountType: string;
+		};
+	}>();
+	const [editingCountryAccount, setEditingCountryAccount] =
+		useState<CountryAccountWithCountryAndPrimaryAdminUser | null>(null);
+	const [selectedCountryId, setSelectedCountryId] = useState("-1");
+	const [type, setType] = useState<CountryAccountType>(
+		countryAccountTypes.OFFICIAL
+	);
+	const [email, setEmail] = useState("");
+	const [status, setStatus] = useState<CountryAccountStatus>(
+		countryAccountStatuses.ACTIVE
+	);
 	const [isAddCountryAccountDialogOpen, setIsAddCountryAccountDialogOpen] =
 		useState(false);
 	const formRef = useRef<HTMLFormElement>(null);
 	const navigate = useNavigate();
-	const [type, setType] = useState<CountryAccountType>(countryAccountTypes.OFFICIAL);
-
-	function resetForm() {
-		if (formRef.current) {
-			formRef.current.reset();
-		}
-		setType(countryAccountTypes.OFFICIAL);
-		navigate(".", { replace: true });
-	}
 
 	function addCountryAccount() {
 		resetForm();
 		setIsAddCountryAccountDialogOpen(true);
 	}
 
+	function editCountryAccount(
+		countryAccount: CountryAccountWithCountryAndPrimaryAdminUser
+	) {
+		if (formRef.current) {
+			formRef.current.reset();
+		}
+		navigate(".", { replace: true });
+		setEditingCountryAccount(countryAccount);
+		setSelectedCountryId(countryAccount.country.id);
+		setStatus(countryAccount.status as CountryAccountStatus);
+		setType(countryAccount.type as CountryAccountType);
+		setEmail(countryAccount.users[0].email);
+		setIsAddCountryAccountDialogOpen(true);
+	}
+
+	function resetForm() {
+		if (formRef.current) {
+			formRef.current.reset();
+		}
+		setEditingCountryAccount(null);
+		setSelectedCountryId("-1");
+		setStatus(countryAccountStatuses.ACTIVE);
+		setType(countryAccountTypes.OFFICIAL);
+		setEmail("");
+		navigate(".", { replace: true });
+	}
+
 	useEffect(() => {
+		console.log("useEffect");
 		if (actionData?.success) {
 			setIsAddCountryAccountDialogOpen(false);
 			resetForm();
@@ -131,6 +196,7 @@ export default function CountryAccounts() {
 						<th>Country</th>
 						<th>Status</th>
 						<th>Type</th>
+						<th>Primary Admin</th>
 						<th>Created At</th>
 						<th>Modified At</th>
 						<th>Actions</th>
@@ -140,8 +206,13 @@ export default function CountryAccounts() {
 					{countryAccounts.map((countryAccount) => (
 						<tr key={countryAccount.id}>
 							<td>{countryAccount.country.name}</td>
-							<td>{countryAccount.status === 1 ? "Active" : "Inactive"}</td>
+							<td>
+								{countryAccount.status === countryAccountStatuses.ACTIVE
+									? "Active"
+									: "Inactive"}
+							</td>
 							<td>{countryAccount.type}</td>
+							<td>{countryAccount.users[0].email}</td>
 							<td>{new Date(countryAccount.createdAt).toLocaleString()}</td>
 							<td>
 								{countryAccount.updatedAt
@@ -150,7 +221,9 @@ export default function CountryAccounts() {
 							</td>
 							<td>
 								<button
-									onClick={() => {}}
+									onClick={() => {
+										editCountryAccount(countryAccount);
+									}}
 									className="mg-button mg-button-table"
 								>
 									<svg
@@ -168,10 +241,14 @@ export default function CountryAccounts() {
 				</tbody>
 			</table>
 
-			{/* Add country accounts modal */}
+			{/* Add/Edit country accounts modal */}
 			<Dialog
 				visible={isAddCountryAccountDialogOpen}
-				header="Create Country Account"
+				header={
+					editingCountryAccount
+						? "Edit Country Account"
+						: "Create Country Account"
+				}
 				onClose={() => setIsAddCountryAccountDialogOpen(false)}
 				footer={footerContent}
 			>
@@ -187,11 +264,20 @@ export default function CountryAccounts() {
 					)}
 					<div className="dts-form__body">
 						<div className="dts-form-component">
+							<input
+								type="hidden"
+								name="id"
+								value={editingCountryAccount?.id || ""}
+							/>
 							<label>
 								<div className="dts-form-component__label">
 									<span>Country</span>
 								</div>
-								<select name="countryId">
+								<select
+									name="countryId"
+									value={selectedCountryId}
+									onChange={(e) => setSelectedCountryId(e.target.value)}
+								>
 									<option key="-1" value="-1">
 										Select a country
 									</option>
@@ -206,11 +292,23 @@ export default function CountryAccounts() {
 								<div className="dts-form-component__label">
 									<span>Status</span>
 								</div>
-								<select name="status">
-									<option key={1} value={1}>
+								<select
+									name="status"
+									value={status}
+									onChange={(e) =>
+										setStatus(Number(e.target.value) as CountryAccountStatus)
+									}
+								>
+									<option
+										key={countryAccountStatuses.ACTIVE}
+										value={countryAccountStatuses.ACTIVE}
+									>
 										Active
 									</option>
-									<option key={0} value={0}>
+									<option
+										key={countryAccountStatuses.INACTIVE}
+										value={countryAccountStatuses.INACTIVE}
+									>
 										Inactive
 									</option>
 								</select>
@@ -224,6 +322,8 @@ export default function CountryAccounts() {
 									name="email"
 									aria-label="main admin's email"
 									placeholder="Enter email"
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
 								></input>
 							</label>
 							{/* feature for official and country instance */}
@@ -234,7 +334,11 @@ export default function CountryAccounts() {
 										name="countryAccountType"
 										value={countryAccountTypes.OFFICIAL}
 										onChange={(e) => setType(e.value as CountryAccountType)}
-										checked={type === countryAccountTypes.OFFICIAL}
+										checked={
+											type === countryAccountTypes.OFFICIAL ||
+											editingCountryAccount?.type ===
+												countryAccountTypes.OFFICIAL
+										}
 										label="Official"
 									/>
 
@@ -243,7 +347,11 @@ export default function CountryAccounts() {
 										name="countryAccountType"
 										value={countryAccountTypes.TRAINING}
 										onChange={(e) => setType(e.value as CountryAccountType)}
-										checked={type === countryAccountTypes.TRAINING}
+										checked={
+											type === countryAccountTypes.TRAINING ||
+											editingCountryAccount?.type ===
+												countryAccountTypes.TRAINING
+										}
 										label="Training"
 									/>
 								</div>

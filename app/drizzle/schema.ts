@@ -186,6 +186,13 @@ export const userTable = pgTable("user", {
 export type User = typeof userTable.$inferSelect;
 export type UserInsert = typeof userTable.$inferInsert;
 
+export const userRelations = relations(userTable, ({ one }) => ({
+	countryAccount: one(countryAccounts, {
+		fields: [userTable.countryAccountsId],
+		references: [countryAccounts.id],
+	}),
+}));
+
 export const apiKeyTable = pgTable("api_key", {
 	...createdUpdatedTimestamps,
 	id: ourSerial("id").primaryKey(),
@@ -1389,10 +1396,16 @@ export const countryAccountTypes = {
   TRAINING: "Training" as CountryAccountType,
 } as const;
 
+export type CountryAccountStatus = 0 | 1;
+export const countryAccountStatuses = {
+  ACTIVE: 1 as CountryAccountStatus,
+  INACTIVE: 0 as CountryAccountStatus,
+} as const;
+
 export const countryAccounts = pgTable("country_accounts", {
 	id: ourRandomUUID(),
 	countryId: uuid("country_id").notNull().references(() => countries.id),
-	status: integer("status").notNull().default(1),
+	status: integer("status").notNull().default(countryAccountStatuses.ACTIVE),
 	type: varchar("type",{length:20}).notNull().default(countryAccountTypes.OFFICIAL),
 	createdAt: timestamp("created_at", { mode: 'date', withTimezone: false }).notNull().defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: 'date', withTimezone: false }),
@@ -1401,10 +1414,11 @@ export const countryAccounts = pgTable("country_accounts", {
 export type CountryAccount = typeof countryAccounts.$inferSelect;
 export type NewCountryAccount = typeof countryAccounts.$inferInsert;
 
-export const countryAccountsRelations = relations(countryAccounts, ({ one }) => ({
+export const countryAccountsRelations = relations(countryAccounts, ({ one, many }) => ({
 	country: one(countries, {
 		fields: [countryAccounts.countryId],
 		references: [countries.id]
-	})
+	}),
+	users: many(userTable),
 }))
 
