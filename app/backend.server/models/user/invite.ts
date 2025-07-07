@@ -13,7 +13,7 @@ import { randomBytes } from "crypto";
 
 import { validateName, validatePassword } from "./user_utils";
 import { passwordHash } from "./password";
-import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
+import { getInstanceSystemSettings, getInstanceSystemSettingsByCountryAccount } from "../../../db/queries/instanceSystemSetting";
 import { TenantContext } from "~/util/tenant";
 
 type AdminInviteUserResult =
@@ -117,7 +117,10 @@ export async function sendInvite(user: User,tx?: Tx) {
 
 	var siteUrl = "http://localhost:3000";
 	var siteName = '';
-	const settings = await getInstanceSystemSettings();
+	let settings = null;
+	if(user.countryAccountsId){
+		settings = await getInstanceSystemSettingsByCountryAccount(user.countryAccountsId);
+	}
 
 	if (settings) {
 		siteUrl = settings.websiteUrl;
