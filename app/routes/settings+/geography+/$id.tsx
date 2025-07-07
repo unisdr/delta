@@ -2,49 +2,63 @@
 import {
 	authLoaderWithPerm
 } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import {divisionTable} from "~/drizzle/schema";
+import { divisionTable } from "~/drizzle/schema";
 
 import {
 	useLoaderData,
 } from "@remix-run/react";
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
 import {
 	eq,
+	and
 } from "drizzle-orm";
 
-import {Breadcrumb} from "~/frontend/division";
+import { Breadcrumb } from "~/frontend/division";
 
-import {divisionBreadcrumb, DivisionBreadcrumbRow} from "~/backend.server/models/division";
+import { divisionBreadcrumb, DivisionBreadcrumbRow } from "~/backend.server/models/division";
 
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 
-import type {SerializeFrom} from "@remix-run/server-runtime";
+import type { SerializeFrom } from "@remix-run/server-runtime";
 
 import DTSMap from "~/frontend/dtsmap/dtsmap";
 
-import {NavSettings} from "~/routes/settings/nav";
-import {MainContainer} from "~/frontend/container";
+import { NavSettings } from "~/routes/settings/nav";
+import { MainContainer } from "~/frontend/container";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	const {id} = loaderArgs.params;
+	const { id } = loaderArgs.params;
 	if (!id) {
-		throw new Response("Missing item ID", {status: 400});
+		throw new Response("Missing item ID", { status: 400 });
 	}
-	const res = await dr.select().from(divisionTable).where(eq(divisionTable.id, Number(id)));
+
+	const userSession = (loaderArgs as any).userSession;
+	if (!userSession) {
+		throw new Error("User session is required");
+	}
+	const tenantContext = await getTenantContext(userSession);
+
+	const res = await dr.select().from(divisionTable).where(
+		and(
+			eq(divisionTable.id, Number(id)),
+			eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+		)
+	);
 
 	if (!res || res.length === 0) {
-		throw new Response("Item not found", {status: 404});
+		throw new Response("Item not found", { status: 404 });
 	}
 
 	const item = res[0];
 	let breadcrumbs: DivisionBreadcrumbRow[] | null = null;
 	if (item.parentId) {
-		breadcrumbs = await divisionBreadcrumb(["en"], item.parentId)
+		breadcrumbs = await divisionBreadcrumb(["en"], item.parentId, tenantContext)
 	}
 
 	return {
@@ -58,8 +72,8 @@ interface CommonProps {
 	loaderData: SerializeFrom<typeof loader>
 }
 
-function Common({loaderData}: CommonProps) {
-	const {division, breadcrumbs} = loaderData
+function Common({ loaderData }: CommonProps) {
+	const { division, breadcrumbs } = loaderData
 	return (
 		<>
 			<h1>Division Details</h1>
@@ -93,14 +107,14 @@ export default function Screen() {
 			title="Geographic levels"
 			headerExtra={<NavSettings />}
 		>
-					<Common loaderData={loaderData} />
-					{isClient && (
-						loaderData.division.geojson ? (
-						<DTSMap geoData={loaderData.division.geojson} />
-						) : (
-							<p>No geodata for this division</p>
-						)
-					)}
+			<Common loaderData={loaderData} />
+			{isClient && (
+				loaderData.division.geojson ? (
+					<DTSMap geoData={loaderData.division.geojson} />
+				) : (
+					<p>No geodata for this division</p>
+				)
+			)}
 		</MainContainer>
 	);
 }
