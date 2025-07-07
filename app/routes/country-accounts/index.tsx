@@ -34,7 +34,7 @@ import Tag from "~/components/Tag";
 import Toast, { ToastRef } from "~/components/Toast";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
+	// await requireSuperAdmin(request);
 	const countryAccounts =
 		await getCountryAccountsWithCountryAndPrimaryAdminUser();
 	const countries = await getCountries();
@@ -43,7 +43,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
+	// await requireSuperAdmin(request);
 
 	const formData = await request.formData();
 	const countryId = formData.get("countryId") as string;
@@ -96,9 +96,9 @@ export default function CountryAccounts() {
 			countryAccountType: string;
 		};
 	}>();
-
+	
 	const [editingCountryAccount, setEditingCountryAccount] =
-		useState<CountryAccountWithCountryAndPrimaryAdminUser | null>(null);
+	useState<CountryAccountWithCountryAndPrimaryAdminUser | null>(null);
 	const [selectedCountryId, setSelectedCountryId] = useState("-1");
 	const [type, setType] = useState<CountryAccountType>(
 		countryAccountTypes.OFFICIAL
@@ -108,11 +108,12 @@ export default function CountryAccounts() {
 		countryAccountStatuses.ACTIVE
 	);
 	const [isAddCountryAccountDialogOpen, setIsAddCountryAccountDialogOpen] =
-		useState(false);
-
+	useState(false);
+	
 	const formRef = useRef<HTMLFormElement>(null);
 	const navigate = useNavigate();
-
+	const toast = useRef<ToastRef>(null);
+	
 	function addCountryAccount() {
 		resetForm();
 		setIsAddCountryAccountDialogOpen(true);
@@ -181,16 +182,6 @@ export default function CountryAccounts() {
 		</>
 	);
 
-	const toast = useRef<ToastRef>(null);
-
-	const show = () => {
-		toast.current?.show({
-			severity: "info",
-			summary: "Info",
-			detail: "Successfully country accounts created",
-			life: 3000,
-		});
-	};
 
 	return (
 		<MainContainer

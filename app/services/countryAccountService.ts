@@ -1,5 +1,5 @@
 import { sendInvite } from "~/backend.server/models/user/invite";
-import { dr, Tx } from "~/db.server";
+import { dr } from "~/db.server";
 import { getCountryById } from "~/db/queries/countries";
 import {
 	countryAccountWithTypeExists,
@@ -10,11 +10,9 @@ import {
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
 import { createUser, getUserByEmail } from "~/db/queries/user";
 import {
-	countryAccounts,
 	CountryAccountStatus,
 	countryAccountStatuses,
 	countryAccountTypes,
-	dtsSystemInfo,
 } from "~/drizzle/schema";
 
 // Create a custom error class for validation errors
