@@ -401,19 +401,19 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         console.log(' Matching record hazard fields:', debugHazards);
 
         // Get divisions with complete fields and apply geographic level filter
-        const baseDivisionsQuery = dr
-            .select({
-                id: divisionTable.id,
-                parentId: divisionTable.parentId,
-                name: divisionTable.name,
-                nationalId: divisionTable.nationalId,
-                level: divisionTable.level,
-                geojson: divisionTable.geojson,
-                geom: divisionTable.geom,
-                bbox: divisionTable.bbox,
-                spatial_index: divisionTable.spatial_index,
-                importId: divisionTable.importId
-            })
+        const baseDivisionsQuery = dr.select({
+            id: divisionTable.id,
+            parentId: divisionTable.parentId,
+            name: divisionTable.name,
+            nationalId: divisionTable.nationalId,
+            level: divisionTable.level,
+            geojson: divisionTable.geojson,
+            geom: divisionTable.geom,
+            bbox: divisionTable.bbox,
+            spatial_index: divisionTable.spatial_index,
+            importId: divisionTable.importId,
+            countryAccountsId: divisionTable.countryAccountsId
+        })
             .from(divisionTable)
             .where(
                 and(
