@@ -1,0 +1,3877 @@
+{
+  "id": "809524c6-ca38-49a0-8021-491bfb1bfe99",
+  "prevId": "53f0c8e7-7681-4c2e-a86b-209844b3439a",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.affected": {
+      "name": "affected",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dsg_id": {
+          "name": "dsg_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "direct": {
+          "name": "direct",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "indirect": {
+          "name": "indirect",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "affected_dsg_id_human_dsg_id_fk": {
+          "name": "affected_dsg_id_human_dsg_id_fk",
+          "tableFrom": "affected",
+          "tableTo": "human_dsg",
+          "columnsFrom": [
+            "dsg_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.api_key": {
+      "name": "api_key",
+      "schema": "",
+      "columns": {
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "secret": {
+          "name": "secret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "api_key_user_id_user_id_fk": {
+          "name": "api_key_user_id_user_id_fk",
+          "tableFrom": "api_key",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "api_key_secret_unique": {
+          "name": "api_key_secret_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "secret"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.asset": {
+      "name": "asset",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sector_ids": {
+          "name": "sector_ids",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_built_in": {
+          "name": "is_built_in",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "national_id": {
+          "name": "national_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "asset_api_import_id_unique": {
+          "name": "asset_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_logs": {
+      "name": "audit_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "table_name": {
+          "name": "table_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "old_values": {
+          "name": "old_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "new_values": {
+          "name": "new_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "audit_logs_user_id_user_id_fk": {
+          "name": "audit_logs_user_id_user_id_fk",
+          "tableFrom": "audit_logs",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.categories": {
+      "name": "categories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "name": "level",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "categories_parent_id_categories_id_fk": {
+          "name": "categories_parent_id_categories_id_fk",
+          "tableFrom": "categories",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.commonPasswords": {
+      "name": "commonPasswords",
+      "schema": "",
+      "columns": {
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.country1": {
+      "name": "country1",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.damages": {
+      "name": "damages",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sector_id": {
+          "name": "sector_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "asset_id": {
+          "name": "asset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_damage_amount": {
+          "name": "total_damage_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_damage_amount_override": {
+          "name": "total_damage_amount_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "total_repair_replacement": {
+          "name": "total_repair_replacement",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_repair_replacement_override": {
+          "name": "total_repair_replacement_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "total_recovery": {
+          "name": "total_recovery",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_recovery_override": {
+          "name": "total_recovery_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "pd_damage_amount": {
+          "name": "pd_damage_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_repair_cost_unit": {
+          "name": "pd_repair_cost_unit",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_repair_cost_unit_currency": {
+          "name": "pd_repair_cost_unit_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_repair_cost_total": {
+          "name": "pd_repair_cost_total",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_repair_cost_total_override": {
+          "name": "pd_repair_cost_total_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "pd_recovery_cost_unit": {
+          "name": "pd_recovery_cost_unit",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_recovery_cost_unit_currency": {
+          "name": "pd_recovery_cost_unit_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_recovery_cost_total": {
+          "name": "pd_recovery_cost_total",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_recovery_cost_total_override": {
+          "name": "pd_recovery_cost_total_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "pd_disruption_duration_days": {
+          "name": "pd_disruption_duration_days",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_disruption_duration_hours": {
+          "name": "pd_disruption_duration_hours",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_disruption_users_affected": {
+          "name": "pd_disruption_users_affected",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_disruption_people_affected": {
+          "name": "pd_disruption_people_affected",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pd_disruption_description": {
+          "name": "pd_disruption_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_damage_amount": {
+          "name": "td_damage_amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_replacement_cost_unit": {
+          "name": "td_replacement_cost_unit",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_replacement_cost_unit_currency": {
+          "name": "td_replacement_cost_unit_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_replacement_cost_total": {
+          "name": "td_replacement_cost_total",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_replacement_cost_total_override": {
+          "name": "td_replacement_cost_total_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "td_recovery_cost_unit": {
+          "name": "td_recovery_cost_unit",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_recovery_cost_unit_currency": {
+          "name": "td_recovery_cost_unit_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_recovery_cost_total": {
+          "name": "td_recovery_cost_total",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_recovery_cost_total_override": {
+          "name": "td_recovery_cost_total_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "td_disruption_duration_days": {
+          "name": "td_disruption_duration_days",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_disruption_duration_hours": {
+          "name": "td_disruption_duration_hours",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_disruption_users_affected": {
+          "name": "td_disruption_users_affected",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_disruption_people_affected": {
+          "name": "td_disruption_people_affected",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_disruption_description": {
+          "name": "td_disruption_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spatial_footprint": {
+          "name": "spatial_footprint",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "damages_record_id_disaster_records_id_fk": {
+          "name": "damages_record_id_disaster_records_id_fk",
+          "tableFrom": "damages",
+          "tableTo": "disaster_records",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "damages_sector_id_sector_id_fk": {
+          "name": "damages_sector_id_sector_id_fk",
+          "tableFrom": "damages",
+          "tableTo": "sector",
+          "columnsFrom": [
+            "sector_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "damages_asset_id_asset_id_fk": {
+          "name": "damages_asset_id_asset_id_fk",
+          "tableFrom": "damages",
+          "tableTo": "asset",
+          "columnsFrom": [
+            "asset_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "damages_api_import_id_unique": {
+          "name": "damages_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.deaths": {
+      "name": "deaths",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dsg_id": {
+          "name": "dsg_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deaths": {
+          "name": "deaths",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "deaths_dsg_id_human_dsg_id_fk": {
+          "name": "deaths_dsg_id_human_dsg_id_fk",
+          "tableFrom": "deaths",
+          "tableTo": "human_dsg",
+          "columnsFrom": [
+            "dsg_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.dev_example1": {
+      "name": "dev_example1",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "field1": {
+          "name": "field1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field2": {
+          "name": "field2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field3": {
+          "name": "field3",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field4": {
+          "name": "field4",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field6": {
+          "name": "field6",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'one'"
+        },
+        "field7": {
+          "name": "field7",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field8": {
+          "name": "field8",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "repeatable_num1": {
+          "name": "repeatable_num1",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeatable_text1": {
+          "name": "repeatable_text1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeatable_num2": {
+          "name": "repeatable_num2",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeatable_text2": {
+          "name": "repeatable_text2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeatable_num3": {
+          "name": "repeatable_num3",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeatable_text3": {
+          "name": "repeatable_text3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "dev_example1_api_import_id_unique": {
+          "name": "dev_example1_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.disaster_event": {
+      "name": "disaster_event",
+      "schema": "",
+      "columns": {
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "approvalStatus": {
+          "name": "approvalStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_hazard_id": {
+          "name": "hip_hazard_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_cluster_id": {
+          "name": "hip_cluster_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_type_id": {
+          "name": "hip_type_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "hazardous_event_id": {
+          "name": "hazardous_event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disaster_event_id": {
+          "name": "disaster_event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "national_disaster_id": {
+          "name": "national_disaster_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "other_id1": {
+          "name": "other_id1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "other_id2": {
+          "name": "other_id2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "other_id3": {
+          "name": "other_id3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "name_national": {
+          "name": "name_national",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "glide": {
+          "name": "glide",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "name_global_or_regional": {
+          "name": "name_global_or_regional",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "start_date_local": {
+          "name": "start_date_local",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_date_local": {
+          "name": "end_date_local",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_days": {
+          "name": "duration_days",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disaster_declaration": {
+          "name": "disaster_declaration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
+        "disaster_declaration_type_and_effect1": {
+          "name": "disaster_declaration_type_and_effect1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "disaster_declaration_date1": {
+          "name": "disaster_declaration_date1",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disaster_declaration_type_and_effect2": {
+          "name": "disaster_declaration_type_and_effect2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "disaster_declaration_date2": {
+          "name": "disaster_declaration_date2",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disaster_declaration_type_and_effect3": {
+          "name": "disaster_declaration_type_and_effect3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "disaster_declaration_date3": {
+          "name": "disaster_declaration_date3",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disaster_declaration_type_and_effect4": {
+          "name": "disaster_declaration_type_and_effect4",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "disaster_declaration_date4": {
+          "name": "disaster_declaration_date4",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disaster_declaration_type_and_effect5": {
+          "name": "disaster_declaration_type_and_effect5",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "disaster_declaration_date5": {
+          "name": "disaster_declaration_date5",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "had_official_warning_or_weather_advisory": {
+          "name": "had_official_warning_or_weather_advisory",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "official_warning_affected_areas": {
+          "name": "official_warning_affected_areas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "early_action_description1": {
+          "name": "early_action_description1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "early_action_date1": {
+          "name": "early_action_date1",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "early_action_description2": {
+          "name": "early_action_description2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "early_action_date2": {
+          "name": "early_action_date2",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "early_action_description3": {
+          "name": "early_action_description3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "early_action_date3": {
+          "name": "early_action_date3",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "early_action_description4": {
+          "name": "early_action_description4",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "early_action_date4": {
+          "name": "early_action_date4",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "early_action_description5": {
+          "name": "early_action_description5",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "early_action_date5": {
+          "name": "early_action_date5",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assesment_description1": {
+          "name": "rapid_or_preliminary_assesment_description1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assessment_date1": {
+          "name": "rapid_or_preliminary_assessment_date1",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assesment_description2": {
+          "name": "rapid_or_preliminary_assesment_description2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assessment_date2": {
+          "name": "rapid_or_preliminary_assessment_date2",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assesment_description3": {
+          "name": "rapid_or_preliminary_assesment_description3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assessment_date3": {
+          "name": "rapid_or_preliminary_assessment_date3",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assesment_description4": {
+          "name": "rapid_or_preliminary_assesment_description4",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assessment_date4": {
+          "name": "rapid_or_preliminary_assessment_date4",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assesment_description5": {
+          "name": "rapid_or_preliminary_assesment_description5",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rapid_or_preliminary_assessment_date5": {
+          "name": "rapid_or_preliminary_assessment_date5",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_oprations": {
+          "name": "response_oprations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "post_disaster_assessment_description1": {
+          "name": "post_disaster_assessment_description1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_date1": {
+          "name": "post_disaster_assessment_date1",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_description2": {
+          "name": "post_disaster_assessment_description2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_date2": {
+          "name": "post_disaster_assessment_date2",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_description3": {
+          "name": "post_disaster_assessment_description3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_date3": {
+          "name": "post_disaster_assessment_date3",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_description4": {
+          "name": "post_disaster_assessment_description4",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_date4": {
+          "name": "post_disaster_assessment_date4",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_description5": {
+          "name": "post_disaster_assessment_description5",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_disaster_assessment_date5": {
+          "name": "post_disaster_assessment_date5",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_description1": {
+          "name": "other_assessment_description1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_date1": {
+          "name": "other_assessment_date1",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_description2": {
+          "name": "other_assessment_description2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_date2": {
+          "name": "other_assessment_date2",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_description3": {
+          "name": "other_assessment_description3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_date3": {
+          "name": "other_assessment_date3",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_description4": {
+          "name": "other_assessment_description4",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_date4": {
+          "name": "other_assessment_date4",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_description5": {
+          "name": "other_assessment_description5",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_assessment_date5": {
+          "name": "other_assessment_date5",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_source": {
+          "name": "data_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "recording_institution": {
+          "name": "recording_institution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "effects_total_usd": {
+          "name": "effects_total_usd",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "non_economic_losses": {
+          "name": "non_economic_losses",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "damages_subtotal_local_currency": {
+          "name": "damages_subtotal_local_currency",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "losses_subtotal_usd": {
+          "name": "losses_subtotal_usd",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_operations_description": {
+          "name": "response_operations_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "response_operations_costs_local_currency": {
+          "name": "response_operations_costs_local_currency",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_cost_total_local_currency": {
+          "name": "response_cost_total_local_currency",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_cost_total_usd": {
+          "name": "response_cost_total_usd",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "humanitarian_needs_description": {
+          "name": "humanitarian_needs_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "humanitarian_needs_local_currency": {
+          "name": "humanitarian_needs_local_currency",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "humanitarian_needs_usd": {
+          "name": "humanitarian_needs_usd",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rehabilitation_costs_local_currency_calc": {
+          "name": "rehabilitation_costs_local_currency_calc",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rehabilitation_costs_local_currency_override": {
+          "name": "rehabilitation_costs_local_currency_override",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repair_costs_local_currency_calc": {
+          "name": "repair_costs_local_currency_calc",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repair_costs_local_currency_override": {
+          "name": "repair_costs_local_currency_override",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replacement_costs_local_currency_calc": {
+          "name": "replacement_costs_local_currency_calc",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replacement_costs_local_currency_override": {
+          "name": "replacement_costs_local_currency_override",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recovery_needs_local_currency_calc": {
+          "name": "recovery_needs_local_currency_calc",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recovery_needs_local_currency_override": {
+          "name": "recovery_needs_local_currency_override",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spatial_footprint": {
+          "name": "spatial_footprint",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "disaster_event_hip_hazard_id_hip_hazard_id_fk": {
+          "name": "disaster_event_hip_hazard_id_hip_hazard_id_fk",
+          "tableFrom": "disaster_event",
+          "tableTo": "hip_hazard",
+          "columnsFrom": [
+            "hip_hazard_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_event_hip_cluster_id_hip_cluster_id_fk": {
+          "name": "disaster_event_hip_cluster_id_hip_cluster_id_fk",
+          "tableFrom": "disaster_event",
+          "tableTo": "hip_cluster",
+          "columnsFrom": [
+            "hip_cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_event_hip_type_id_hip_class_id_fk": {
+          "name": "disaster_event_hip_type_id_hip_class_id_fk",
+          "tableFrom": "disaster_event",
+          "tableTo": "hip_class",
+          "columnsFrom": [
+            "hip_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_event_id_event_id_fk": {
+          "name": "disaster_event_id_event_id_fk",
+          "tableFrom": "disaster_event",
+          "tableTo": "event",
+          "columnsFrom": [
+            "id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_event_hazardous_event_id_hazardous_event_id_fk": {
+          "name": "disaster_event_hazardous_event_id_hazardous_event_id_fk",
+          "tableFrom": "disaster_event",
+          "tableTo": "hazardous_event",
+          "columnsFrom": [
+            "hazardous_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_event_disaster_event_id_disaster_event_id_fk": {
+          "name": "disaster_event_disaster_event_id_disaster_event_id_fk",
+          "tableFrom": "disaster_event",
+          "tableTo": "disaster_event",
+          "columnsFrom": [
+            "disaster_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "disaster_event_api_import_id_unique": {
+          "name": "disaster_event_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.disaster_records": {
+      "name": "disaster_records",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_hazard_id": {
+          "name": "hip_hazard_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_cluster_id": {
+          "name": "hip_cluster_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_type_id": {
+          "name": "hip_type_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "disaster_event_id": {
+          "name": "disaster_event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location_desc": {
+          "name": "location_desc",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "local_warn_inst": {
+          "name": "local_warn_inst",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "primary_data_source": {
+          "name": "primary_data_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_data_source": {
+          "name": "other_data_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field_assess_date": {
+          "name": "field_assess_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assessment_modes": {
+          "name": "assessment_modes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originator_recorder_inst": {
+          "name": "originator_recorder_inst",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "validated_by": {
+          "name": "validated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "checked_by": {
+          "name": "checked_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_collector": {
+          "name": "data_collector",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spatial_footprint": {
+          "name": "spatial_footprint",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approvalStatus": {
+          "name": "approvalStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "disaster_records_hip_hazard_id_hip_hazard_id_fk": {
+          "name": "disaster_records_hip_hazard_id_hip_hazard_id_fk",
+          "tableFrom": "disaster_records",
+          "tableTo": "hip_hazard",
+          "columnsFrom": [
+            "hip_hazard_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_records_hip_cluster_id_hip_cluster_id_fk": {
+          "name": "disaster_records_hip_cluster_id_hip_cluster_id_fk",
+          "tableFrom": "disaster_records",
+          "tableTo": "hip_cluster",
+          "columnsFrom": [
+            "hip_cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_records_hip_type_id_hip_class_id_fk": {
+          "name": "disaster_records_hip_type_id_hip_class_id_fk",
+          "tableFrom": "disaster_records",
+          "tableTo": "hip_class",
+          "columnsFrom": [
+            "hip_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disaster_records_disaster_event_id_disaster_event_id_fk": {
+          "name": "disaster_records_disaster_event_id_disaster_event_id_fk",
+          "tableFrom": "disaster_records",
+          "tableTo": "disaster_event",
+          "columnsFrom": [
+            "disaster_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "disaster_records_api_import_id_unique": {
+          "name": "disaster_records_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.displaced": {
+      "name": "displaced",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dsg_id": {
+          "name": "dsg_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assisted": {
+          "name": "assisted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timing": {
+          "name": "timing",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "as_of": {
+          "name": "as_of",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "displaced": {
+          "name": "displaced",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "displaced_dsg_id_human_dsg_id_fk": {
+          "name": "displaced_dsg_id_human_dsg_id_fk",
+          "tableFrom": "displaced",
+          "tableTo": "human_dsg",
+          "columnsFrom": [
+            "dsg_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.disruption": {
+      "name": "disruption",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sector_id": {
+          "name": "sector_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_days": {
+          "name": "duration_days",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_hours": {
+          "name": "duration_hours",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "users_affected": {
+          "name": "users_affected",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "people_affected": {
+          "name": "people_affected",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_operation": {
+          "name": "response_operation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_cost": {
+          "name": "response_cost",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "response_currency": {
+          "name": "response_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spatial_footprint": {
+          "name": "spatial_footprint",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "disruption_record_id_disaster_records_id_fk": {
+          "name": "disruption_record_id_disaster_records_id_fk",
+          "tableFrom": "disruption",
+          "tableTo": "disaster_records",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "disruption_sector_id_sector_id_fk": {
+          "name": "disruption_sector_id_sector_id_fk",
+          "tableFrom": "disruption",
+          "tableTo": "sector",
+          "columnsFrom": [
+            "sector_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "disruption_api_import_id_unique": {
+          "name": "disruption_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.division": {
+      "name": "division",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "import_id": {
+          "name": "import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "national_id": {
+          "name": "national_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "geojson": {
+          "name": "geojson",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "name": "level",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "geom": {
+          "name": "geom",
+          "type": "geometry(GEOMETRY, 4326)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bbox": {
+          "name": "bbox",
+          "type": "geometry(GEOMETRY, 4326)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spatial_index": {
+          "name": "spatial_index",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "parent_idx": {
+          "name": "parent_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "division_level_idx": {
+          "name": "division_level_idx",
+          "columns": [
+            {
+              "expression": "level",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "division_parent_id_division_id_fk": {
+          "name": "division_parent_id_division_id_fk",
+          "tableFrom": "division",
+          "tableTo": "division",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "division_import_id_unique": {
+          "name": "division_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "import_id"
+          ]
+        },
+        "division_national_id_unique": {
+          "name": "division_national_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "national_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "valid_geom_check": {
+          "name": "valid_geom_check",
+          "value": "ST_IsValid(geom)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.event_relationship": {
+      "name": "event_relationship",
+      "schema": "",
+      "columns": {
+        "parent_id": {
+          "name": "parent_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "child_id": {
+          "name": "child_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "event_relationship_parent_id_event_id_fk": {
+          "name": "event_relationship_parent_id_event_id_fk",
+          "tableFrom": "event_relationship",
+          "tableTo": "event",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "event_relationship_child_id_event_id_fk": {
+          "name": "event_relationship_child_id_event_id_fk",
+          "tableFrom": "event_relationship",
+          "tableTo": "event",
+          "columnsFrom": [
+            "child_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.event": {
+      "name": "event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hazardous_event": {
+      "name": "hazardous_event",
+      "schema": "",
+      "columns": {
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "approvalStatus": {
+          "name": "approvalStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_hazard_id": {
+          "name": "hip_hazard_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_cluster_id": {
+          "name": "hip_cluster_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hip_type_id": {
+          "name": "hip_type_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "national_specification": {
+          "name": "national_specification",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "chains_explanation": {
+          "name": "chains_explanation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "magniture": {
+          "name": "magniture",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "spatial_footprint": {
+          "name": "spatial_footprint",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "record_originator": {
+          "name": "record_originator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "hazardous_event_status": {
+          "name": "hazardous_event_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_source": {
+          "name": "data_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hazardous_event_hip_hazard_id_hip_hazard_id_fk": {
+          "name": "hazardous_event_hip_hazard_id_hip_hazard_id_fk",
+          "tableFrom": "hazardous_event",
+          "tableTo": "hip_hazard",
+          "columnsFrom": [
+            "hip_hazard_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "hazardous_event_hip_cluster_id_hip_cluster_id_fk": {
+          "name": "hazardous_event_hip_cluster_id_hip_cluster_id_fk",
+          "tableFrom": "hazardous_event",
+          "tableTo": "hip_cluster",
+          "columnsFrom": [
+            "hip_cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "hazardous_event_hip_type_id_hip_class_id_fk": {
+          "name": "hazardous_event_hip_type_id_hip_class_id_fk",
+          "tableFrom": "hazardous_event",
+          "tableTo": "hip_class",
+          "columnsFrom": [
+            "hip_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "hazardous_event_id_event_id_fk": {
+          "name": "hazardous_event_id_event_id_fk",
+          "tableFrom": "hazardous_event",
+          "tableTo": "event",
+          "columnsFrom": [
+            "id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hazardous_event_api_import_id_unique": {
+          "name": "hazardous_event_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hip_cluster": {
+      "name": "hip_cluster",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "type_id": {
+          "name": "type_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_en": {
+          "name": "name_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hip_cluster_type_id_hip_class_id_fk": {
+          "name": "hip_cluster_type_id_hip_class_id_fk",
+          "tableFrom": "hip_cluster",
+          "tableTo": "hip_class",
+          "columnsFrom": [
+            "type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "name_en_not_empty": {
+          "name": "name_en_not_empty",
+          "value": "\"hip_cluster\".\"name_en\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.hip_hazard": {
+      "name": "hip_hazard",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_en": {
+          "name": "name_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "description_en": {
+          "name": "description_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hip_hazard_cluster_id_hip_cluster_id_fk": {
+          "name": "hip_hazard_cluster_id_hip_cluster_id_fk",
+          "tableFrom": "hip_hazard",
+          "tableTo": "hip_cluster",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "name_en_not_empty": {
+          "name": "name_en_not_empty",
+          "value": "\"hip_hazard\".\"name_en\" <> ''"
+        },
+        "description_en_not_empty": {
+          "name": "description_en_not_empty",
+          "value": "\"hip_hazard\".\"description_en\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.hip_class": {
+      "name": "hip_class",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name_en": {
+          "name": "name_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "name_en_not_empty": {
+          "name": "name_en_not_empty",
+          "value": "\"hip_class\".\"name_en\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.human_category_presence": {
+      "name": "human_category_presence",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deaths": {
+          "name": "deaths",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "injured": {
+          "name": "injured",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "missing": {
+          "name": "missing",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "affected_direct": {
+          "name": "affected_direct",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "affected_indirect": {
+          "name": "affected_indirect",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "displaced": {
+          "name": "displaced",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "human_category_presence_record_id_disaster_records_id_fk": {
+          "name": "human_category_presence_record_id_disaster_records_id_fk",
+          "tableFrom": "human_category_presence",
+          "tableTo": "disaster_records",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.human_dsg_config": {
+      "name": "human_dsg_config",
+      "schema": "",
+      "columns": {
+        "hidden": {
+          "name": "hidden",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "custom": {
+          "name": "custom",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.human_dsg": {
+      "name": "human_dsg",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sex": {
+          "name": "sex",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age": {
+          "name": "age",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disability": {
+          "name": "disability",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "global_poverty_line": {
+          "name": "global_poverty_line",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "national_poverty_line": {
+          "name": "national_poverty_line",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "custom": {
+          "name": "custom",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "human_dsg_record_id_disaster_records_id_fk": {
+          "name": "human_dsg_record_id_disaster_records_id_fk",
+          "tableFrom": "human_dsg",
+          "tableTo": "disaster_records",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.injured": {
+      "name": "injured",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dsg_id": {
+          "name": "dsg_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "injured": {
+          "name": "injured",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "injured_dsg_id_human_dsg_id_fk": {
+          "name": "injured_dsg_id_human_dsg_id_fk",
+          "tableFrom": "injured",
+          "tableTo": "human_dsg",
+          "columnsFrom": [
+            "dsg_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.losses": {
+      "name": "losses",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sector_id": {
+          "name": "sector_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sector_is_agriculture": {
+          "name": "sector_is_agriculture",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type_not_agriculture": {
+          "name": "type_not_agriculture",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type_agriculture": {
+          "name": "type_agriculture",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "related_to_not_agriculture": {
+          "name": "related_to_not_agriculture",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "related_to_agriculture": {
+          "name": "related_to_agriculture",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public_value_unit": {
+          "name": "public_value_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public_units": {
+          "name": "public_units",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public_cost_unit": {
+          "name": "public_cost_unit",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public_cost_unit_currency": {
+          "name": "public_cost_unit_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public_cost_total": {
+          "name": "public_cost_total",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public_cost_total_override": {
+          "name": "public_cost_total_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "private_value_unit": {
+          "name": "private_value_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "private_units": {
+          "name": "private_units",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "private_cost_unit": {
+          "name": "private_cost_unit",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "private_cost_unit_currency": {
+          "name": "private_cost_unit_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "private_cost_total": {
+          "name": "private_cost_total",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "private_cost_total_override": {
+          "name": "private_cost_total_override",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "spatial_footprint": {
+          "name": "spatial_footprint",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "losses_record_id_disaster_records_id_fk": {
+          "name": "losses_record_id_disaster_records_id_fk",
+          "tableFrom": "losses",
+          "tableTo": "disaster_records",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "losses_sector_id_sector_id_fk": {
+          "name": "losses_sector_id_sector_id_fk",
+          "tableFrom": "losses",
+          "tableTo": "sector",
+          "columnsFrom": [
+            "sector_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "losses_api_import_id_unique": {
+          "name": "losses_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.measure": {
+      "name": "measure",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'area'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "measure_api_import_id_unique": {
+          "name": "measure_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.missing": {
+      "name": "missing",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "dsg_id": {
+          "name": "dsg_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "as_of": {
+          "name": "as_of",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "missing": {
+          "name": "missing",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "missing_dsg_id_human_dsg_id_fk": {
+          "name": "missing_dsg_id_human_dsg_id_fk",
+          "tableFrom": "missing",
+          "tableTo": "human_dsg",
+          "columnsFrom": [
+            "dsg_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.noneco_losses": {
+      "name": "noneco_losses",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "disaster_record_id": {
+          "name": "disaster_record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "noneco_losses_disaster_record_id_disaster_records_id_fk": {
+          "name": "noneco_losses_disaster_record_id_disaster_records_id_fk",
+          "tableFrom": "noneco_losses",
+          "tableTo": "disaster_records",
+          "columnsFrom": [
+            "disaster_record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "noneco_losses_category_id_categories_id_fk": {
+          "name": "noneco_losses_category_id_categories_id_fk",
+          "tableFrom": "noneco_losses",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "noneco_losses_api_import_id_unique": {
+          "name": "noneco_losses_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        },
+        "nonecolosses_sectorIdx": {
+          "name": "nonecolosses_sectorIdx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "disaster_record_id",
+            "category_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.resource_repo": {
+      "name": "resource_repo",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approvalStatus": {
+          "name": "approvalStatus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rr_attachments": {
+      "name": "rr_attachments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "resource_repo_id": {
+          "name": "resource_repo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'document'"
+        },
+        "type_other_desc": {
+          "name": "type_other_desc",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "filename": {
+          "name": "filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "rr_attachments_resource_repo_id_resource_repo_id_fk": {
+          "name": "rr_attachments_resource_repo_id_resource_repo_id_fk",
+          "tableFrom": "rr_attachments",
+          "tableTo": "resource_repo",
+          "columnsFrom": [
+            "resource_repo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sector_disaster_records_relation": {
+      "name": "sector_disaster_records_relation",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sector_id": {
+          "name": "sector_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "disaster_record_id": {
+          "name": "disaster_record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "with_damage": {
+          "name": "with_damage",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "damage_cost": {
+          "name": "damage_cost",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "damage_cost_currency": {
+          "name": "damage_cost_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "damage_recovery_cost": {
+          "name": "damage_recovery_cost",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "damage_recovery_cost_currency": {
+          "name": "damage_recovery_cost_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "with_disruption": {
+          "name": "with_disruption",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "with_losses": {
+          "name": "with_losses",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "losses_cost": {
+          "name": "losses_cost",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "losses_cost_currency": {
+          "name": "losses_cost_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "sector_disaster_records_relation_sector_id_idx": {
+          "name": "sector_disaster_records_relation_sector_id_idx",
+          "columns": [
+            {
+              "expression": "sector_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sector_disaster_records_relation_disaster_record_id_idx": {
+          "name": "sector_disaster_records_relation_disaster_record_id_idx",
+          "columns": [
+            {
+              "expression": "disaster_record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sector_disaster_records_relation_sector_id_sector_id_fk": {
+          "name": "sector_disaster_records_relation_sector_id_sector_id_fk",
+          "tableFrom": "sector_disaster_records_relation",
+          "tableTo": "sector",
+          "columnsFrom": [
+            "sector_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "sector_disaster_records_relation_disaster_record_id_disaster_records_id_fk": {
+          "name": "sector_disaster_records_relation_disaster_record_id_disaster_records_id_fk",
+          "tableFrom": "sector_disaster_records_relation",
+          "tableTo": "disaster_records",
+          "columnsFrom": [
+            "disaster_record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sector_disaster_records_relation_api_import_id_unique": {
+          "name": "sector_disaster_records_relation_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        },
+        "disRecSectorsUniqueIdx": {
+          "name": "disRecSectorsUniqueIdx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "disaster_record_id",
+            "sector_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sector": {
+      "name": "sector",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sectorname": {
+          "name": "sectorname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "name": "level",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sector_parent_id_sector_id_fk": {
+          "name": "sector_parent_id_sector_id_fk",
+          "tableFrom": "sector",
+          "tableTo": "sector",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_active_at": {
+          "name": "last_active_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'2000-01-01T00:00:00.000Z'"
+        },
+        "totp_authed": {
+          "name": "totp_authed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "session_user_id_user_id_fk": {
+          "name": "session_user_id_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.unit": {
+      "name": "unit",
+      "schema": "",
+      "columns": {
+        "api_import_id": {
+          "name": "api_import_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'area'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "unit_api_import_id_unique": {
+          "name": "unit_api_import_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "api_import_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "email_verification_code": {
+          "name": "email_verification_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "email_verification_sent_at": {
+          "name": "email_verification_sent_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email_verification_expires_at": {
+          "name": "email_verification_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'2000-01-01T00:00:00.000Z'"
+        },
+        "invite_code": {
+          "name": "invite_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "invite_sent_at": {
+          "name": "invite_sent_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "invite_expires_at": {
+          "name": "invite_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'2000-01-01T00:00:00.000Z'"
+        },
+        "reset_password_token": {
+          "name": "reset_password_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "reset_password_expires_at": {
+          "name": "reset_password_expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'2000-01-01T00:00:00.000Z'"
+        },
+        "totp_enabled": {
+          "name": "totp_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "totp_secret": {
+          "name": "totp_secret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "totp_secret_url": {
+          "name": "totp_secret_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "organization": {
+          "name": "organization",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "hydromet_che_user": {
+          "name": "hydromet_che_user",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "auth_type": {
+          "name": "auth_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'form'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
