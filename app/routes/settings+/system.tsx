@@ -1,5 +1,5 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/node';
-import { json, useFetcher, useLoaderData } from '@remix-run/react';
+import { useFetcher, useLoaderData } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
 import { authLoaderGetAuth, authLoaderWithPerm } from '~/util/auth';
 import { getSupportedTimeZone } from '~/util/timezone';
@@ -10,13 +10,15 @@ import {
 import { NavSettings } from '~/routes/settings/nav';
 import { MainContainer } from '~/frontend/container';
 import {
-  getInstanceSystemSettings,
   updateFooterUrlPrivacyPolicy,
   updateFooterUrlTermsConditions,
 } from '~/db/queries/instanceSystemSetting';
 import { getSystemInfo, SystemInfo } from '~/db/queries/dtsSystemInfo';
 import { getCurrenciesAsListFromCommaSeparated } from '~/util/currency';
 import { InstanceSystemSettings } from '~/drizzle/schema';
+
+import { getTenantContext } from '~/util/tenant';
+import { getInstanceSystemSettingsByCountryAccount } from '~/db/queries/instanceSystemSetting';
 
 // Define the loader data type
 interface LoaderData {
@@ -41,15 +43,20 @@ interface LoaderData {
 
 export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (loaderArgs) => {
   const { user } = authLoaderGetAuth(loaderArgs);
-  const settings = await getInstanceSystemSettings();
+
+  // Get tenant context
+  const userSession = { user, session: { id: '', userId: user.id, lastActiveAt: new Date(), totpAuthed: false }, sessionId: '' };
+  const tenantContext = await getTenantContext(userSession);
+
+  const settings = await getInstanceSystemSettingsByCountryAccount(tenantContext.countryAccountId);
   let approvedRecordsArePublic = false;
-  let currencies:string[] = [];
+  let currencies: string[] = [];
   let confCtryInstanceISO = "USA";
-  let totpIssuer= "example-app";
-  if(settings){
-    approvedRecordsArePublic= settings.approvedRecordsArePublic;
+  let totpIssuer = "example-app";
+  if (settings) {
+    approvedRecordsArePublic = settings.approvedRecordsArePublic;
     currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
-    confCtryInstanceISO =settings.dtsInstanceCtryIso3;
+    confCtryInstanceISO = settings.dtsInstanceCtryIso3;
     totpIssuer = settings.totpIssuer;
   }
 
@@ -84,7 +91,7 @@ export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (load
     }
   }
 
-  return json<LoaderData>({
+  return Response.json({
     message: `Hello ${user.email}`,
     currencyArray: currency,
     timeZonesArray: timeZones,
@@ -101,6 +108,13 @@ export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (load
 });
 
 export const action: ActionFunction = authLoaderWithPerm('EditData', async ({ request }) => {
+
+  const { user } = authLoaderGetAuth(request);
+
+  // Get tenant context
+  const userSession = { user, session: { id: '', userId: user.id, lastActiveAt: new Date(), totpAuthed: false }, sessionId: '' };
+  const tenantContext = await getTenantContext(userSession);
+
   const formData = await request.formData();
   const termsConditionsUrl = formData.get('termsConditionsUrl') as string | null;
   const privacyPolicyUrl = formData.get('privacyPolicyUrl') as string | null;
@@ -108,17 +122,17 @@ export const action: ActionFunction = authLoaderWithPerm('EditData', async ({ re
   try {
     if (termsConditionsUrl !== null) {
       const value = termsConditionsUrl === '' ? null : termsConditionsUrl;
-      const updated = await updateFooterUrlTermsConditions(value);
-      return json({ success: true, updated, field: 'termsConditions' });
+      const updated = await updateFooterUrlTermsConditions(tenantContext.countryAccountId, value);
+      return Response.json({ success: true, updated, field: 'termsConditions' });
     }
     if (privacyPolicyUrl !== null) {
       const value = privacyPolicyUrl === '' ? null : privacyPolicyUrl;
-      const updated = await updateFooterUrlPrivacyPolicy(value);
-      return json({ success: true, updated, field: 'privacyPolicy' });
+      const updated = await updateFooterUrlPrivacyPolicy(tenantContext.countryAccountId, value);
+      return Response.json({ success: true, updated, field: 'privacyPolicy' });
     }
-    return json({ error: 'No valid field provided' }, { status: 400 });
+    return Response.json({ error: 'No valid field provided' }, { status: 400 });
   } catch (error: any) {
-    return json({ error: error.message }, { status: 400 });
+    return Response.json({ error: error.message }, { status: 400 });
   }
 });
 
