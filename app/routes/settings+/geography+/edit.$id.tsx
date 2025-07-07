@@ -3,14 +3,16 @@ import {
 	authLoaderWithPerm
 } from "~/util/auth";
 
+import { getTenantContext } from "~/util/tenant";
+
 import {
 	fromForm,
 	update
 } from "~/backend.server/models/division";
 
-import {divisionTable, DivisionInsert} from "~/drizzle/schema";
+import { divisionTable, DivisionInsert } from "~/drizzle/schema";
 
-import {divisionBreadcrumb, DivisionBreadcrumbRow, divisionById} from "~/backend.server/models/division";
+import { divisionBreadcrumb, DivisionBreadcrumbRow, divisionById } from "~/backend.server/models/division";
 
 
 import {
@@ -18,69 +20,92 @@ import {
 	useActionData,
 } from "@remix-run/react";
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
 import {
 	eq,
+	and
 } from "drizzle-orm";
-import {DivisionForm} from "~/frontend/division";
-import {formStringData} from "~/util/httputil";
-import {NavSettings} from "~/routes/settings/nav";
+import { DivisionForm } from "~/frontend/division";
+import { formStringData } from "~/util/httputil";
+import { NavSettings } from "~/routes/settings/nav";
 
-import {MainContainer} from "~/frontend/container";
+import { MainContainer } from "~/frontend/container";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	const {id} = loaderArgs.params;
+	const { id } = loaderArgs.params;
 	if (!id) {
-		throw new Response("Missing item ID", {status: 400});
+		throw new Response("Missing item ID", { status: 400 });
 	}
 
-    // Get query parameter "view"
-    const url = new URL(loaderArgs.request.url);
-    const viewParam = url.searchParams.get("view");
+	// Get query parameter "view"
+	const url = new URL(loaderArgs.request.url);
+	const viewParam = url.searchParams.get("view");
 
-	const res = await dr.select().from(divisionTable).where(eq(divisionTable.id, Number(id)));
+	const userSession = (loaderArgs as any).userSession;
+	if (!userSession) {
+		throw new Error("User session is required");
+	}
+
+	const tenantContext = await getTenantContext(userSession);
+
+	const res = await dr.select().from(divisionTable).where(
+		and(
+			eq(divisionTable.id, Number(id)),
+			eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+		)
+	);
 
 	if (!res || res.length === 0) {
-		throw new Response("Item not found", {status: 404});
+		throw new Response("Item not found", { status: 404 });
 	}
 
 	const item = res[0];
 
 	let breadcrumbs: DivisionBreadcrumbRow[] | null = null;
 	if (item.parentId) {
-		breadcrumbs = await divisionBreadcrumb(["en"], item.parentId)
+		breadcrumbs = await divisionBreadcrumb(["en"], item.parentId, tenantContext)
 	}
 
 	return {
 		data: item,
 		breadcrumbs: breadcrumbs,
-		view: viewParam, 
+		view: viewParam,
 	};
 
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
-	const {request, params} = actionArgs;
+	const { request, params } = actionArgs;
 
 	const id = Number(params.id);
 	if (!id) {
-		throw new Response("Missing ID", {status: 400});
+		throw new Response("Missing ID", { status: 400 });
 	}
 
+	const userSession = (actionArgs as any).userSession;
+	if (!userSession) {
+		throw new Error("User session is required");
+	}
+
+	const tenantContext = await getTenantContext(userSession);
+
 	const formData = formStringData(await request.formData());
-	let recordDivision:any = {};
+	let recordDivision: any = {};
 	let data = fromForm(formData);
 
+	// Ensure the division belongs to the user's tenant
+	data.countryAccountsId = tenantContext.countryAccountId;
+
 	if (data.parentId) {
-		recordDivision  = await divisionById(Number(data.parentId));
+		recordDivision = await divisionById(Number(data.parentId), tenantContext);
 		data.level = recordDivision && recordDivision.level ? recordDivision.level + 1 : 1;
 	}
 	else {
 		data.level = 1;
 	}
 
-	const res = await update(id, data);
+	const res = await update(id, data, tenantContext);
 
 	if (!res.ok) {
 		return {

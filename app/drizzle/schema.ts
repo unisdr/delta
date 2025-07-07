@@ -11,6 +11,7 @@ import {
 	uuid,
 	jsonb,
 	index,
+	uniqueIndex,
 	AnyPgColumn,
 	numeric,
 	integer,
@@ -179,7 +180,7 @@ export const userTable = pgTable("user", {
 	hydrometCheUser: zeroBool("hydromet_che_user"),
 	authType: text("auth_type").notNull().default("form"),
 	...createdUpdatedTimestamps,
-	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
 	isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
 });
 
@@ -245,11 +246,13 @@ export const divisionTable = pgTable(
 	"division",
 	{
 		id: ourSerial("id").primaryKey(),
-		importId: text("import_id").unique(),
-		nationalId: text("national_id").unique(),
+		importId: text("import_id"),
+		nationalId: text("national_id"),
 		parentId: ourBigint("parent_id").references(
 			(): AnyPgColumn => divisionTable.id
 		),
+		// Add country account reference for tenant isolation
+		countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id),
 		name: zeroStrMap("name"),
 		geojson: jsonb("geojson"),
 		level: ourBigint("level"), // value is parent level + 1 otherwise 1
@@ -271,6 +274,10 @@ export const divisionTable = pgTable(
 		return [
 			index("parent_idx").on(table.parentId),
 			index("division_level_idx").on(table.level),
+
+			// Tenant-scoped unique constraints
+			uniqueIndex("tenant_import_id_idx").on(table.countryAccountsId, table.importId),
+			uniqueIndex("tenant_national_id_idx").on(table.countryAccountsId, table.nationalId),
 
 			// Create GIST indexes via raw SQL since drizzle doesn't support USING clause directly
 			sql`CREATE INDEX IF NOT EXISTS "division_geom_idx" ON "division" USING GIST ("geom")`,
@@ -1370,13 +1377,13 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default("USA"),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
 	countryName: varchar("country_name").notNull().default("United State of America"),
-	countryAccountsId: uuid("country_accounts_id").references(()=>countryAccounts.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
 });
 
 export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
 export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferInsert;
 
-export const countries = pgTable("countries",{
+export const countries = pgTable("countries", {
 	id: ourRandomUUID(),
 	name: varchar('name', { length: 100 }).notNull().unique(),
 	iso3: varchar('iso3', { length: 3 }).unique()
@@ -1392,21 +1399,21 @@ export const countryRelations = relations(countries, ({ one }) => ({
 
 export type CountryAccountType = "Official" | "Training";
 export const countryAccountTypes = {
-  OFFICIAL: "Official" as CountryAccountType,
-  TRAINING: "Training" as CountryAccountType,
+	OFFICIAL: "Official" as CountryAccountType,
+	TRAINING: "Training" as CountryAccountType,
 } as const;
 
 export type CountryAccountStatus = 0 | 1;
 export const countryAccountStatuses = {
-  ACTIVE: 1 as CountryAccountStatus,
-  INACTIVE: 0 as CountryAccountStatus,
+	ACTIVE: 1 as CountryAccountStatus,
+	INACTIVE: 0 as CountryAccountStatus,
 } as const;
 
 export const countryAccounts = pgTable("country_accounts", {
 	id: ourRandomUUID(),
 	countryId: uuid("country_id").notNull().references(() => countries.id),
 	status: integer("status").notNull().default(countryAccountStatuses.ACTIVE),
-	type: varchar("type",{length:20}).notNull().default(countryAccountTypes.OFFICIAL),
+	type: varchar("type", { length: 20 }).notNull().default(countryAccountTypes.OFFICIAL),
 	createdAt: timestamp("created_at", { mode: 'date', withTimezone: false }).notNull().defaultNow(),
 	updatedAt: timestamp("updated_at", { mode: 'date', withTimezone: false }),
 })
