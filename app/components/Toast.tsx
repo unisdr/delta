@@ -1,125 +1,54 @@
-import React, { forwardRef, useRef, useState, useEffect } from 'react';
-
-// types.ts
-export type ToastSeverity = | 'info' | 'warn' | 'error';
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
 export interface ToastMessage {
-  severity?: ToastSeverity;
+  severity?: "info" | "warning" | "error";
   summary?: string;
   detail?: string;
-  life?: number;
-  id?: number;
 }
 
 export interface ToastRef {
-  show: (message: ToastMessage) => void;
-  clear: () => void;
+  show: (message: Partial<ToastMessage>) => void;
 }
 
+export const Toast = forwardRef<ToastRef, {}>((props, ref) => {
+  const [message, setMessage] = useState<ToastMessage | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-const Toast = forwardRef<ToastRef>((props, ref) => {
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const toastContainerRef = useRef<HTMLDivElement>(null);
-
-  const removeToast = (id?: number) => {
-    if (!id) return;
-    setToasts((prev) => prev.filter(t => t.id !== id));
-  };
-
-  // Expose the show method via ref
-  React.useImperativeHandle(ref, () => ({
-    show: (toast: ToastMessage) => {
-      const id = Date.now();
-      setToasts((prev) => [...prev, { ...toast, id }]);
-      
-      // Auto remove after some time (default 3000ms)
-      const life = toast.life || 3000;
-      setTimeout(() => {
-        removeToast(id);
-      }, life);
+  useImperativeHandle(ref, () => ({
+    show: (msg: Partial<ToastMessage>) => {
+      setMessage({
+        severity: msg.severity ?? "info",
+        summary: msg.summary ?? "",
+        detail: msg.detail ?? "",
+      });
+      setIsVisible(true);
     },
-    clear: () => setToasts([])
   }));
 
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => setIsVisible(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
+
+  if (!message) return null;
+
   return (
-    <div className="toast-container" ref={toastContainerRef}>
-      {toasts.map((toast) => (
-        <ToastMessage 
-          key={toast.id} 
-          severity={toast.severity || 'info'}
-          summary={toast.summary}
-          detail={toast.detail}
-          onRemove={() => removeToast(toast.id)}
-        />
-      ))}
+    <div
+      id="OTPsnackbar"
+      className={`dts-snackbar ${isVisible ? "show" : ""}`}
+    >
+      <div className={`dts-alert dts-alert--${message.severity}`}>
+        <div className="dts-alert__icon">
+          <svg aria-hidden="true" focusable="false" role="img">
+            <use href={`assets/icons/${message.severity}.svg#${message.severity}`} />
+          </svg>
+        </div>
+        <span>{message.detail}</span>
+      </div>
     </div>
   );
 });
 
-interface ToastMessageProps {
-  severity: ToastSeverity;
-  summary?: string;
-  detail?: string;
-  onRemove: () => void;
-}
-
-const ToastMessage: React.FC<ToastMessageProps> = ({ 
-  severity, 
-  summary, 
-  detail,
-  onRemove
-}) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
-  const toastRef = useRef<HTMLDivElement>(null);
-  const alertRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Trigger the show animation
-    setIsVisible(true);
-
-    // Set up removal timeout like designer's script
-    const timer1 = setTimeout(() => {
-      setIsRemoving(true);
-    }, 2500); // Start removal slightly before the 15s mark
-
-    const timer2 = setTimeout(() => {
-      onRemove();
-    }, 3000);
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, [onRemove]);
-
-  const getSeverityClass = (): string => {
-    return `dts-alert--${severity}`;
-  };
-
-  const getIconPath = (): string => {
-    return `assets/icons/${severity}.svg#${severity}`;
-  };
-
-  return (
-    <div 
-      ref={toastRef}
-      className={`dts-snackbar ${isVisible ? 'show' : ''} ${isRemoving ? 'removing' : ''}`}
-    >
-      <div 
-        ref={alertRef}
-        className={`dts-alert ${getSeverityClass()}`}
-      >
-        <div className="dts-alert__icon">
-          <svg aria-hidden="true" focusable="false" role="img">
-            <use href={getIconPath()}></use>
-          </svg>
-        </div>
-        <span>{detail || summary}</span>
-      </div>
-    </div>
-  );
-};
-
-Toast.displayName = 'Toast';
-export default Toast;
+Toast.displayName = "Toast";

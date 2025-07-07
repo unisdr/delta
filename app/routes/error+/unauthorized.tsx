@@ -1,5 +1,6 @@
 import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import Messages from "~/components/Messages";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
 import { MainContainer } from "~/frontend/container";
 
@@ -7,46 +8,55 @@ import { MainContainer } from "~/frontend/container";
  * Meta function for the page
  */
 export const meta: MetaFunction = () => {
-    return [
-        { title: "Access Denied - DTS" },
-        { name: "description", content: "Unauthorized access error page." },
-    ];
+	return [
+		{ title: "Access Denied - DTS" },
+		{ name: "description", content: "Unauthorized access error page." },
+	];
 };
 
 /**
  * Loader function to handle error parameters
  */
 export async function loader({ request }: LoaderFunctionArgs) {
-    const url = new URL(request.url);
-    const reason = url.searchParams.get("reason") || "unauthorized";
+	const url = new URL(request.url);
+	const reason = url.searchParams.get("reason") || "unauthorized";
 
-    return { reason };
+	return { reason };
 }
 
 /**
  * Error page for unauthorized tenant access
  */
 export default function UnauthorizedError() {
-    const { reason } = useLoaderData<typeof loader>();
+	const { reason } = useLoaderData<typeof loader>();
 
-    // Generate user-friendly error message based on reason
-    let errorMessage = "You don't have permission to access this resource.";
+	// Generate user-friendly error message based on reason
+	const errors: string[] = [];
+	let errorMessage = "You don't have permission to access this resource.";
 
-    switch (reason) {
-        case "no-tenant":
-            errorMessage = "Your account is not associated with any country. Please contact your administrator or technical support for assistance.";
-            break;
-        case "tenant-not-found":
-            errorMessage = "The country associated with your account could not be found. Please contact your administrator or technical support.";
-            break;
-        case "access-denied":
-            errorMessage = "You don't have permission to access this resource. Please contact your administrator or technical support.";
-            break;
-    }
+	switch (reason) {
+		case "no-tenant":
+			errorMessage =
+				"Your account is not associated with any country. Please contact your administrator or technical support for assistance.";
+			break;
+		case "tenant-not-found":
+			errorMessage =
+				"The country associated with your account could not be found. Please contact your administrator or technical support.";
+			break;
+		case "access-denied":
+			errorMessage =
+				"You don't have permission to access this resource. Please contact your administrator or technical support.";
+			break;
+	}
+	errors.push(errorMessage);
 
-    return (
-        <MainContainer title="Access Denied">
-            <div className="mg-grid">
+	return (
+		<MainContainer title="Access Denied">
+			<Messages
+				header="Error"
+				messages={errors}
+			/>
+			{/* <div className="mg-grid">
                 <div className="mg-grid__col mg-grid__col--12 mg-grid__col--md-8 mg-grid__col--md-offset-2">
                     <ErrorMessage
                         message={errorMessage}
@@ -62,7 +72,7 @@ export default function UnauthorizedError() {
                         </a>
                     </div>
                 </div>
-            </div>
-        </MainContainer>
-    );
+            </div> */}
+		</MainContainer>
+	);
 }
