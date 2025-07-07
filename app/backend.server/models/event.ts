@@ -8,7 +8,20 @@ import {
 	Errors,
 	hasErrors,
 } from "~/frontend/form";
-import { eventTable, EventInsert, hazardousEventTable, HazardousEventInsert, eventRelationshipTable, DisasterEventInsert, disasterEventTable, hazardousEventTableConstraits, disasterEventTableConstrains } from "~/drizzle/schema";
+import {
+	eventTable,
+	EventInsert,
+	hazardousEventTable,
+	HazardousEventInsert,
+	eventRelationshipTable,
+	DisasterEventInsert,
+	disasterEventTable,
+	hazardousEventTableConstraits,
+	disasterEventTableConstrains,
+	hipHazardTable,
+	hipClusterTable,
+	hipTypeTable
+} from "~/drizzle/schema";
 import { TenantContext } from "~/util/tenant";
 import { checkConstraintError } from "./common";
 
@@ -928,27 +941,55 @@ export async function disasterEventByIdTx(tx: Tx, id: any, tenantContext: Tenant
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
-	// Simplified query to avoid PostgreSQL error with too many arguments
-	const res = await tx.query.disasterEventTable.findFirst({
+
+	// First, get just the basic disaster event with tenant isolation
+	const disasterEvent = await tx.query.disasterEventTable.findFirst({
 		where: and(
 			eq(disasterEventTable.id, id),
 			eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
-		),
-		with: {
-			hazardousEvent: true,
-			disasterEvent: true,
-			hipHazard: true,
-			hipCluster: true,
-			hipType: true,
-			event: true,
-		}
+		)
 	});
 
-	if (!res) {
+	if (!disasterEvent) {
 		throw new Error("Id is invalid");
 	}
 
-	return res
+	// Then load related data in separate queries to avoid argument limit
+	const [hazardousEvent, hipHazard, hipCluster, hipType, event] = await Promise.all([
+		disasterEvent.hazardousEventId
+			? tx.query.hazardousEventTable.findFirst({
+				where: eq(hazardousEventTable.id, disasterEvent.hazardousEventId)
+			})
+			: Promise.resolve(null),
+		disasterEvent.hipHazardId
+			? tx.query.hipHazardTable.findFirst({
+				where: eq(hipHazardTable.id, disasterEvent.hipHazardId)
+			})
+			: Promise.resolve(null),
+		disasterEvent.hipClusterId
+			? tx.query.hipClusterTable.findFirst({
+				where: eq(hipClusterTable.id, disasterEvent.hipClusterId)
+			})
+			: Promise.resolve(null),
+		disasterEvent.hipTypeId
+			? tx.query.hipTypeTable.findFirst({
+				where: eq(hipTypeTable.id, disasterEvent.hipTypeId)
+			})
+			: Promise.resolve(null),
+		tx.query.eventTable.findFirst({
+			where: eq(eventTable.id, id)
+		})
+	]);
+
+	return {
+		...disasterEvent,
+		hazardousEvent: hazardousEvent || undefined,
+		hipHazard: hipHazard || undefined,
+		hipCluster: hipCluster || undefined,
+		hipType: hipType || undefined,
+		event: event || undefined,
+		disasterEvent: disasterEvent // Self-reference for backward compatibility
+	};
 }
 
 export type DisasterEventBasicInfoViewModel = Exclude<Awaited<ReturnType<typeof disasterEventBasicInfoById>>,
