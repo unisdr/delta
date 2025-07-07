@@ -2,48 +2,46 @@ import { getTableName } from "drizzle-orm";
 import {
 	createDeleteAction,
 } from "~/backend.server/handlers/form/form";
+import { requireUser } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 
 import {
 	disasterEventById,
 	disasterEventDelete
 } from "~/backend.server/models/event";
 import { disasterEventTable } from "~/drizzle/schema";
-import { getTenantContext } from "~/util/tenant";
-
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
 import {
 	route,
 } from "~/frontend/events/disastereventform";
 
-export const action = createDeleteAction({
-	baseRoute: route,
-	delete: async (id: string) => {
-		// Get user session and tenant context
-		const userSession = (action as any).userSession;
-		if (!userSession) {
-			throw new Response("Unauthorized", { status: 401 });
-		}
-		const tenantContext = await getTenantContext(userSession);
-		return disasterEventDelete(id, tenantContext);
-	},
-	tableName: getTableName(disasterEventTable),
-	getById: async (id: string) => {
-		// Get user session and tenant context
-		const userSession = (action as any).userSession;
-		if (!userSession) {
-			throw new Response("Unauthorized", { status: 401 });
-		}
-		const tenantContext = await getTenantContext(userSession);
-		return disasterEventById(id, tenantContext);
-	},
-	postProcess: async (_id, data) => {
-		//console.log(`Post-processing record: ${id}`);
-		//console.log(`Data before deletion:`, data);
+export const action = async (args: any) => {
+	// Get user session
+	const userSession = await requireUser(args.request);
+	if (!userSession) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
 
-		ContentRepeaterUploadFile.delete(data.attachments);
-	},
-});
+	// Get tenant context
+	const tenantContext = await getTenantContext(userSession);
+
+	return createDeleteAction({
+		baseRoute: route,
+		delete: async (id: string) => {
+			return disasterEventDelete(id, tenantContext);
+		},
+		tableName: getTableName(disasterEventTable),
+		getById: async (id: string) => {
+			return disasterEventById(id, tenantContext);
+		},
+		postProcess: async (_id: string, data: any) => {
+			if (data.attachments) {
+				ContentRepeaterUploadFile.delete(data.attachments);
+			}
+		}
+	})(args);
+};
 
 
 

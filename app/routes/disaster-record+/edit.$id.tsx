@@ -1,5 +1,6 @@
-import { authLoaderGetUserForFrontend, authLoaderWithPerm, authActionGetAuth } from "~/util/auth";
-import type { UserSession } from "~/util/session";
+import { authLoaderGetUserForFrontend, authLoaderWithPerm, authActionGetAuth, authActionWithPerm } from "~/util/auth";
+import type { ActionFunctionArgs } from "@remix-run/node";
+// UserSession type is handled through casting
 import { getTenantContext } from "~/util/tenant";
 import {
 	disasterRecordsCreate,
@@ -40,7 +41,7 @@ import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	// Extract user session and tenant context
-	const userSession = loaderArgs.context.user as UserSession;
+	const userSession = (loaderArgs as any).userSession;
 	const tenantContext = await getTenantContext(userSession);
 	const { params } = loaderArgs;
 	if (!params.id) {
@@ -134,12 +135,9 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	};
 });
 
-export const action = async (args: any) => {
+export const action = authActionWithPerm("EditData", async (args: ActionFunctionArgs) => {
 	// Extract tenant context from user session
 	const userSession = authActionGetAuth(args);
-	if (!userSession) {
-		return new Response("Authentication required", { status: 401 });
-	}
 
 	const tenantContext = await getTenantContext(userSession);
 
@@ -197,7 +195,7 @@ export const action = async (args: any) => {
 	});
 
 	return actionHandler(args);
-};
+});
 
 export default function Screen() {
 	const ld = useLoaderData<typeof loader>();

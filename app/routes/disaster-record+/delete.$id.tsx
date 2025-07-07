@@ -9,14 +9,14 @@ import { disasterRecordsTable } from "~/drizzle/schema";
 import { route } from "~/frontend/disaster-record/form";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { authActionGetAuth } from "~/util/auth";
+import { requireUser } from "~/util/auth";
 import { getTenantContext } from "~/util/tenant";
 
 export const action = async (args: any) => {
-  // Extract tenant context from user session
-  const userSession = authActionGetAuth(args);
+  // Get user session
+  const userSession = await requireUser(args.request);
   if (!userSession) {
-    return new Response("Authentication required", { status: 401 });
+    throw new Response("Unauthorized", { status: 401 });
   }
 
   const tenantContext = await getTenantContext(userSession);
