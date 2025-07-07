@@ -1,6 +1,5 @@
 import { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import Messages from "~/components/Messages";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
 import { MainContainer } from "~/frontend/container";
 
@@ -52,11 +51,7 @@ export default function UnauthorizedError() {
 
 	return (
 		<MainContainer title="Access Denied">
-			<Messages
-				header="Error"
-				messages={errors}
-			/>
-			{/* <div className="mg-grid">
+			<div className="mg-grid">
                 <div className="mg-grid__col mg-grid__col--12 mg-grid__col--md-8 mg-grid__col--md-offset-2">
                     <ErrorMessage
                         message={errorMessage}
@@ -72,7 +67,7 @@ export default function UnauthorizedError() {
                         </a>
                     </div>
                 </div>
-            </div> */}
+            </div>
 		</MainContainer>
 	);
 }
