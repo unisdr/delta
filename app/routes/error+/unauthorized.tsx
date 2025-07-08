@@ -46,28 +46,32 @@ export default function UnauthorizedError() {
 			errorMessage =
 				"You don't have permission to access this resource. Please contact your administrator or technical support.";
 			break;
+		case "content-not-published":
+			errorMessage =
+				"This content is not available for public viewing. Please log in to access this resource or contact the administrator for more information.";
+			break;
 	}
 	errors.push(errorMessage);
 
 	return (
 		<MainContainer title="Access Denied">
 			<div className="mg-grid">
-                <div className="mg-grid__col mg-grid__col--12 mg-grid__col--md-8 mg-grid__col--md-offset-2">
-                    <ErrorMessage
-                        message={errorMessage}
-                        type="error"
-                    />
+				<div className="mg-grid__col mg-grid__col--12 mg-grid__col--md-8 mg-grid__col--md-offset-2">
+					<ErrorMessage
+						message={errorMessage}
+						type="error"
+					/>
 
-                    <div className="mg-u-text-align--center mg-u-margin-top--lg">
-                        <a href="/user/login" className="mg-button mg-button--primary">
-                            Return to Login
-                        </a>
-                        <a href="/" className="mg-button mg-button--secondary mg-u-margin-left--md">
-                            Go to Home
-                        </a>
-                    </div>
-                </div>
-            </div>
+					<div className="mg-u-text-align--center mg-u-margin-top--lg">
+						<a href="/user/login" className="mg-button mg-button--primary">
+							Return to Login
+						</a>
+						<a href="/" className="mg-button mg-button--secondary mg-u-margin-left--md">
+							Go to Home
+						</a>
+					</div>
+				</div>
+			</div>
 		</MainContainer>
 	);
 }
