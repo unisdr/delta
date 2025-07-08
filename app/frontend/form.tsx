@@ -70,6 +70,7 @@ export function errorsToStrings(
 export interface Errors<T> {
 	form?: (string | FormError)[];
 	fields?: Partial<Record<keyof T, (string | FormError)[]>>;
+	general?: string[];
 }
 
 export function initErrorField<T>(errors: Errors<T>, field: keyof T): string[] {

@@ -39,7 +39,7 @@ export async function getCountryAccountById(id: string) {
 		},
 	});
 
-	return result;
+	return result ?? null;
 }
 
 export async function countryAccountWithTypeExists(

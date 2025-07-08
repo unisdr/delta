@@ -142,7 +142,7 @@ export const sessionTable = pgTable("session", {
 	id: ourRandomUUID(),
 	userId: ourBigint("user_id")
 		.notNull()
-		.references(() => userTable.id),
+		.references(() => userTable.id, { onDelete: "cascade" }),
 	lastActiveAt: zeroTimestamp("last_active_at"),
 	totpAuthed: zeroBool("totp_authed"),
 });
@@ -201,7 +201,7 @@ export const apiKeyTable = pgTable("api_key", {
 	name: zeroText("name"),
 	managedByUserId: ourBigint("user_id")
 		.notNull()
-		.references(() => userTable.id),
+		.references(() => userTable.id, { onDelete: "cascade" }),
 });
 
 export type ApiKey = typeof apiKeyTable.$inferSelect;

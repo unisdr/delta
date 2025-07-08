@@ -20,6 +20,9 @@ import { getUserFromSession, createUserSession } from "~/util/session";
 import { login } from "~/backend.server/models/user/auth";
 import { configAuthSupportedAzureSSOB2C } from "~/util/config";
 import PasswordInput from "~/components/PasswordInput";
+import { getCountryAccountById } from "~/db/queries/countryAccounts";
+import { countryAccountStatuses } from "~/drizzle/schema";
+import Messages from "~/components/Messages";
 
 interface LoginFields {
 	email: string;
@@ -51,6 +54,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		userSession.user.emailVerified === false
 	) {
 		return redirect("/user/verify-email");
+	}
+
+	// Check if user's country accounts is inactive, then show error message and redirect to login
+	const countryAccountId = res.countryAccountId;
+	if (countryAccountId) {
+		const countryAccount = await getCountryAccountById(countryAccountId);
+		if (
+			countryAccount &&
+			countryAccount.status === countryAccountStatuses.INACTIVE
+		) {
+			return Response.json(
+				{
+					data,
+					errors: { general: ["Country account is inactive"] },
+				},
+				{ status: 400 }
+			);
+		}
 	}
 
 	const headers = await createUserSession(res.userId);
@@ -125,6 +146,9 @@ export default function Screen() {
 							<input type="hidden" value={loaderData.redirectTo} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
+								{errors.general && (
+									<Messages messages={errors.general} />
+								)}
 								<h2 className="dts-heading-1">Sign in</h2>
 								<p>Enter your credentials to access your account.</p>
 								<p style={{ marginBottom: "2px" }}>*Required information</p>
@@ -144,13 +168,13 @@ export default function Screen() {
 											defaultValue={data?.email}
 											required
 											className={
-												errors?.fields?.email && errors.fields.email.length > 0 // Check if email errors exist
+												errors?.fields?.email && errors.fields.email.length > 0 
 													? "input-error"
 													: "input-normal"
 											}
 											style={{
-												paddingRight: "2.5rem", // Static style
-												width: "100%", // Static style
+												paddingRight: "2.5rem", 
+												width: "100%", 
 											}}
 										></input>
 									</Field>
@@ -178,7 +202,7 @@ export default function Screen() {
 							<div
 								className="dts-dialog__form-actions"
 								style={{
-									display: "flex", // Switch to horizontal layout
+									display: "flex", 
 									flexDirection: "column", // Stack vertically for small screens
 									alignItems: "center", // Center-align the buttons
 									gap: "0.8rem", // Maintain consistent spacing
@@ -190,8 +214,8 @@ export default function Screen() {
 									label="Sign in"
 									id="login-button"
 									style={{
-										width: "100%", // Full width on small screens
-										padding: "10px 20px", // Ensure consistent padding
+										width: "100%", 
+										padding: "10px 20px", 
 										marginBottom: "10px",
 									}}
 								></SubmitButton>
@@ -202,8 +226,8 @@ export default function Screen() {
 										className="mg-button mg-button-outline"
 										to="/sso/azure-b2c/login"
 										style={{
-											width: "100%", // Full width on small screens
-											padding: "10px 20px", // Ensure consistent padding
+											width: "100%", 
+											padding: "10px 20px", 
 											marginTop: "5px",
 										}}
 									>

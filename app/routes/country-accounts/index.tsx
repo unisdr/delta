@@ -59,6 +59,7 @@ export const action: ActionFunction = async ({ request }) => {
 			return { success: true, operation: "update" };
 		} else {
 			// Create new account
+			console.log("status = ", status)
 			await createCountryAccountService(
 				countryId,
 				email,
