@@ -141,6 +141,26 @@ export async function disasterRecordsIdByImportId(tx: Tx, importId: string, tena
 	return res[0].id
 }
 
+export async function disasterRecordsBasicInfoById(idStr: string) {
+	// For public access, only fetch published records without tenant context
+	let id = idStr;
+
+	// Query just the disaster record with approval status check
+	let record = await dr.select()
+		.from(disasterRecordsTable)
+		.where(and(
+			eq(disasterRecordsTable.id, id),
+			eq(disasterRecordsTable.approvalStatus, "published") // Only published records are accessible
+		))
+		.limit(1);
+
+	if (record.length === 0) {
+		return null; // Return null if not found or not published
+	}
+
+	return record[0];
+}
+
 export async function disasterRecordsById(idStr: string, tenantContext: TenantContext) {
 	return disasterRecordsByIdTx(dr, idStr, tenantContext);
 }
