@@ -226,7 +226,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // console.log( totalAffectedPeople );
         // console.log( totalAffectedPeople, totalAffectedPeople2 );
 
-        const divisionLevel1 = await getDivisionByLevel(1);
+        const divisionLevel1 = await getDivisionByLevel(1, public_tenant_context);
         for (const item of divisionLevel1) {
           const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, [item.id]);
           const humanEffectsPerDivision = await getAffected(dr, qsDisEventId, { divisionId: item.id });
