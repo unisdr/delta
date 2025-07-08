@@ -13,7 +13,7 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import { optionalUser } from "~/util/auth";
 import { getTenantContext } from "~/util/tenant";
 
-interface LoaderData{
+interface LoaderData {
 	item: any;
 	isPublic: boolean;
 	auditLogs?: any[];
@@ -33,12 +33,23 @@ export const loader = async ({
 
 	// Get user session
 	const session = await optionalUser(request);
-	
+
 	// Create a tenant-aware getById function
 	const getByIdWithTenant = async (id: string) => {
 		if (!session) {
 			// For public access, use hazardousEventBasicInfoById which accepts optional tenant context
-			return hazardousEventBasicInfoById(id);
+			const event = await hazardousEventBasicInfoById(id);
+
+			// If event is not found or not published, redirect to unauthorized page
+			if (!event || event.approvalStatus !== "published") {
+				// Create a URL object based on the current request URL
+				const url = new URL(request.url);
+				// Build the redirect URL using the same origin
+				const redirectUrl = `${url.origin}/error/unauthorized?reason=content-not-published`;
+				throw Response.redirect(redirectUrl, 302);
+			}
+
+			return event;
 		}
 
 		try {
@@ -53,7 +64,7 @@ export const loader = async ({
 	};
 
 	// Use the appropriate loader based on authentication
-	const loaderFunction = session ? 
+	const loaderFunction = session ?
 		createViewLoaderPublicApprovedWithAuditLog({
 			getById: getByIdWithTenant,
 			recordId: id,
@@ -64,7 +75,7 @@ export const loader = async ({
 		});
 
 	try {
-		const result = await loaderFunction({request, params, context});
+		const result = await loaderFunction({ request, params, context });
 		return {
 			...result,
 			user: session?.user,
