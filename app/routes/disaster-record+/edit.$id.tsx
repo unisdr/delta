@@ -25,7 +25,7 @@ import { getAffectedByDisasterRecord } from "~/backend.server/models/analytics/a
 import { FormScreen } from "~/frontend/form";
 
 import { createAction } from "~/backend.server/handlers/form/form";
-import { getTableName, eq } from "drizzle-orm";
+import { getTableName, eq, sql } from "drizzle-orm";
 import { disasterRecordsTable } from "~/drizzle/schema";
 
 import { buildTree } from "~/components/TreeView";
@@ -52,7 +52,11 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		const idKey = "id";
 		const parentKey = "parentId";
 		const nameKey = "name";
-		const rawData = await dr.select().from(divisionTable);
+		// Filter divisions by tenant context for security
+		const rawData = await dr
+			.select()
+			.from(divisionTable)
+			.where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
 		return buildTree(rawData, idKey, parentKey, nameKey, "en", [
 			"geojson",
 			"importId",
@@ -66,10 +70,12 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let user = authLoaderGetUserForFrontend(loaderArgs);
 
-	const divisionGeoJSON = await dr.execute(`
+	const divisionGeoJSON = await dr.execute(sql`
 		SELECT id, name, geojson
 		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+		WHERE (parent_id = 0 OR parent_id IS NULL) 
+		AND geojson IS NOT NULL
+		AND country_accounts_id = ${tenantContext.countryAccountId};
     `);
 
 	if (params.id === "new") {
