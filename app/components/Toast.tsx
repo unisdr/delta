@@ -11,7 +11,7 @@ export interface ToastRef {
   show: (message: Partial<ToastMessage>) => void;
 }
 
-export const Toast = forwardRef<ToastRef, {}>((props, ref) => {
+export const Toast = forwardRef<ToastRef, {}>((_props, ref) => {
   const [message, setMessage] = useState<ToastMessage | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -32,6 +32,7 @@ export const Toast = forwardRef<ToastRef, {}>((props, ref) => {
       const timer = setTimeout(() => setIsVisible(false), message.life);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible, message?.life]);
 
   if (!message) return null;
