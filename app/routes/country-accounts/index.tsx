@@ -56,6 +56,7 @@ export const action: ActionFunction = async ({ request }) => {
 		if (id) {
 			// Update existing account
 			await updateCountryAccountStatusService(id, Number(status));
+			return { success: true, operation: "update" };
 		} else {
 			// Create new account
 			await createCountryAccountService(
@@ -64,6 +65,7 @@ export const action: ActionFunction = async ({ request }) => {
 				Number(status),
 				countryAccountType
 			);
+			return { success: true, operation: "create" };
 		}
 	} catch (error) {
 		let errors = {};
@@ -95,6 +97,7 @@ export default function CountryAccounts() {
 			email: string;
 			countryAccountType: string;
 		};
+		operation?: string;
 	}>();
 
 	const [editingCountryAccount, setEditingCountryAccount] =
@@ -147,6 +150,7 @@ export default function CountryAccounts() {
 	}
 
 	useEffect(() => {
+		console.log("actiondata= ", actionData)
 		if (actionData?.success) {
 			setIsAddCountryAccountDialogOpen(false);
 			resetForm();
@@ -155,9 +159,9 @@ export default function CountryAccounts() {
 				toast.current.show({
 					severity: "info",
 					summary: "Success",
-					detail: editingCountryAccount
-						? "Country accounted created successfully"
-						: "Country account updated successfully",
+					detail: actionData.operation === "update"
+						? "Country account updated successfully"
+						: "Country account created successfully",
 				});
 			}
 		}

@@ -47,7 +47,10 @@ export const Toast = forwardRef<ToastRef, {}>((props, ref) => {
             <use href={`assets/icons/${message.severity}.svg#${message.severity}`} />
           </svg>
         </div>
-        <span>{message.detail}</span>
+        <div >
+          <div style={{ fontWeight: "bold" }}>{message.summary}</div>
+          <div>{message.detail}</div>
+        </div>
       </div>
     </div>
   );
