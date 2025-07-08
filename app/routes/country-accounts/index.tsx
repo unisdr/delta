@@ -34,7 +34,7 @@ import Tag from "~/components/Tag";
 import { Toast, ToastRef } from "~/components/Toast";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	// await requireSuperAdmin(request);
+	await requireSuperAdmin(request);
 	const countryAccounts =
 		await getCountryAccountsWithCountryAndPrimaryAdminUser();
 	const countries = await getCountries();
@@ -43,7 +43,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-	// await requireSuperAdmin(request);
+	await requireSuperAdmin(request);
 
 	const formData = await request.formData();
 	const countryId = formData.get("countryId") as string;
@@ -56,14 +56,17 @@ export const action: ActionFunction = async ({ request }) => {
 		if (id) {
 			// Update existing account
 			await updateCountryAccountStatusService(id, Number(status));
+			return { success: true, operation: "update" };
 		} else {
 			// Create new account
+			console.log("status = ", status)
 			await createCountryAccountService(
 				countryId,
 				email,
 				Number(status),
 				countryAccountType
 			);
+			return { success: true, operation: "create" };
 		}
 	} catch (error) {
 		let errors = {};
@@ -95,6 +98,7 @@ export default function CountryAccounts() {
 			email: string;
 			countryAccountType: string;
 		};
+		operation?: string;
 	}>();
 
 	const [editingCountryAccount, setEditingCountryAccount] =
@@ -147,6 +151,7 @@ export default function CountryAccounts() {
 	}
 
 	useEffect(() => {
+		console.log("actiondata= ", actionData)
 		if (actionData?.success) {
 			setIsAddCountryAccountDialogOpen(false);
 			resetForm();
@@ -155,9 +160,9 @@ export default function CountryAccounts() {
 				toast.current.show({
 					severity: "info",
 					summary: "Success",
-					detail: editingCountryAccount
-						? "Country accounted created successfully"
-						: "Country account updated successfully",
+					detail: actionData.operation === "update"
+						? "Country account updated successfully"
+						: "Country account created successfully",
 				});
 			}
 		}

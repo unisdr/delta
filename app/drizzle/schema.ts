@@ -142,7 +142,7 @@ export const sessionTable = pgTable("session", {
 	id: ourRandomUUID(),
 	userId: ourBigint("user_id")
 		.notNull()
-		.references(() => userTable.id),
+		.references(() => userTable.id, { onDelete: "cascade" }),
 	lastActiveAt: zeroTimestamp("last_active_at"),
 	totpAuthed: zeroBool("totp_authed"),
 });
@@ -201,7 +201,7 @@ export const apiKeyTable = pgTable("api_key", {
 	name: zeroText("name"),
 	managedByUserId: ourBigint("user_id")
 		.notNull()
-		.references(() => userTable.id),
+		.references(() => userTable.id, { onDelete: "cascade" }),
 });
 
 export type ApiKey = typeof apiKeyTable.$inferSelect;
@@ -1368,13 +1368,13 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	footerUrlPrivacyPolicy: url("footer_url_privacy_policy"),
 	footerUrlTermsConditions: url("footer_url_terms_conditions"),
 	adminSetupComplete: boolean("admin_setup_complete").notNull().default(false),
-	websiteLogo: url("website_logo").notNull().default("https://rawgit.com/PreventionWeb/templates/dts/dts/dist/assets/images/dldt-logo-mark.svg"),
-	websiteName: varchar("website_name", { length: 250 }).notNull().default("Disaster Tracking System (DTS)"),
+	websiteLogo: varchar("website_logo").notNull().default("/assets/country-instance-logo.png"),
+	websiteName: varchar("website_name", { length: 250 }).notNull().default("Disaster Tracking System"),
 	websiteUrl: url("website_url").notNull().default("http://localhost:3000"),
 	approvedRecordsArePublic: boolean().notNull().default(false),
 	totpIssuer: varchar("totp_issuer", { length: 250 }).notNull().default("example-app"),
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
-	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default("USA"),
+	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default(""),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
 	countryName: varchar("country_name").notNull().default("United State of America"),
 	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),

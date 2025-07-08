@@ -31,7 +31,7 @@ export async function createCountryAccountService(
 ) {
 	const errors: string[] = [];
 	if (!countryId) errors.push("Country is required");
-	if (!status) errors.push("Status is required");
+	if (status=== null || status=== undefined) errors.push("Status is required");
 	if (!email) errors.push("Admin email is required");
 	if (!countryAccountType) errors.push("Choose instance type");
 
