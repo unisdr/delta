@@ -67,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			return Response.json(
 				{
 					data,
-					errors: { general: ["Country account is inactive"] },
+					errors: { general: ["Your country account is inactive"] },
 				},
 				{ status: 400 }
 			);
