@@ -3,38 +3,50 @@ import {
 	LoaderFunctionArgs,
 	ActionFunction,
 	ActionFunctionArgs,
-	redirect
+	redirect,
 } from "@remix-run/node";
 
 import {
 	cookieSessionDestroy,
+	getCountrySettingsFromSession,
 	getUserFromSession,
 	sessionCookie,
 	sessionMarkTotpAuthed,
-	UserSession
+	UserSession,
 } from "~/util/session";
 
-import {LoginResult, LoginTotpResult, login as modelLogin, loginTotp as modelLoginTotp} from "~/backend.server/models/user/auth"
-import {apiAuth} from "~/backend.server/models/api_key"
-import {PermissionId, roleHasPermission, RoleId} from "~/frontend/user/roles";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import {
+	LoginResult,
+	LoginTotpResult,
+	login as modelLogin,
+	loginTotp as modelLoginTotp,
+} from "~/backend.server/models/user/auth";
+import { apiAuth } from "~/backend.server/models/api_key";
+import { PermissionId, roleHasPermission, RoleId } from "~/frontend/user/roles";
 import { getUserById } from "~/db/queries/user";
 
-export async function login(email: string, password: string): Promise<LoginResult> {
-	return await modelLogin(email, password)
+export async function login(
+	email: string,
+	password: string
+): Promise<LoginResult> {
+	return await modelLogin(email, password);
 }
 
-export async function loginTotp(userId: number, sessionId: string, code: string): Promise<LoginTotpResult> {
+export async function loginTotp(
+	userId: number,
+	sessionId: string,
+	code: string
+): Promise<LoginTotpResult> {
 	const res = await modelLoginTotp(userId, code);
 	if (!res.ok) {
-		return res
+		return res;
 	}
-	sessionMarkTotpAuthed(sessionId)
-	return {ok: true}
+	sessionMarkTotpAuthed(sessionId);
+	return { ok: true };
 }
 
 export async function logout(request: Request) {
-	return cookieSessionDestroy(request)
+	return cookieSessionDestroy(request);
 }
 
 export async function requireUser(request: Request) {
@@ -44,7 +56,7 @@ export async function requireUser(request: Request) {
 		const redirectTo = url.pathname + url.search;
 		throw redirect(`/user/login?redirectTo=${encodeURIComponent(redirectTo)}`);
 	}
-	const {user, session} = userSession
+	const { user, session } = userSession;
 	if (!user.emailVerified) {
 		throw redirect("/user/verify-email");
 	}
@@ -59,7 +71,7 @@ export async function optionalUser(request: Request) {
 	if (!userSession) {
 		return null;
 	}
-	const {user, session} = userSession
+	const { user, session } = userSession;
 	if (!user.emailVerified) {
 		throw redirect("/user/verify-email");
 	}
@@ -68,7 +80,6 @@ export async function optionalUser(request: Request) {
 	}
 	return userSession;
 }
-
 
 export async function requireUserAllowUnverifiedEmail(request: Request) {
 	const userSession = await getUserFromSession(request);
@@ -83,7 +94,7 @@ export async function requireUserAllowNoTotp(request: Request) {
 	if (!userSession) {
 		throw redirect("/user/login");
 	}
-	const {user} = userSession
+	const { user } = userSession;
 	if (!user.emailVerified) {
 		throw redirect("/user/verify-email");
 	}
@@ -101,11 +112,14 @@ export function authLoader<T extends LoaderFunction>(fn: T): T {
 	}) as T;
 }
 
-export function authLoaderWithPerm<T extends LoaderFunction>(permission: PermissionId, fn: T): T {
+export function authLoaderWithPerm<T extends LoaderFunction>(
+	permission: PermissionId,
+	fn: T
+): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUser(args.request);
 		if (!roleHasPermission(userSession.user.role, permission)) {
-			throw new Response("Forbidden", {status: 403});
+			throw new Response("Forbidden", { status: 403 });
 		}
 		return fn({
 			...(args as any),
@@ -115,48 +129,65 @@ export function authLoaderWithPerm<T extends LoaderFunction>(permission: Permiss
 }
 
 interface CustomLoaderArgs extends LoaderFunctionArgs {
-  userSession?: UserSession;
+	userSession?: UserSession;
 }
 
 export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
-  permission: PermissionId,
-  fn: T
+	permission: PermissionId,
+	fn: T
 ): T {
-  const wrappedLoader = async (args: LoaderFunctionArgs) => {
-    const settings = await getInstanceSystemSettings();
-    
-    if (!settings) {
-      throw new Response("System settings not found", { status: 500 });
-    }
+	const wrappedLoader = async (args: LoaderFunctionArgs) => {
+		let settings = await getCountrySettingsFromSession(args.request);
 
-    if (!settings.approvedRecordsArePublic) {
-      const authLoader = authLoaderWithPerm(permission, fn);
-      return await authLoader(args);
-    }
+		if (!settings) {
+			settings = {
+				id: null,
+				footerUrlPrivacyPolicy: null,
+				footerUrlTermsConditions: null,
+				adminSetupComplete: false,
+				websiteLogo: "/assets/country-instance-logo.png",
+				websiteName: "Disaster Tracking System",
+				websiteUrl: "http://localhost:3000",
+				approvedRecordsArePublic: false,
+				totpIssuer: "example-app",
+				dtsInstanceType: "country",
+				dtsInstanceCtryIso3: "USA",
+				currencyCodes: "USD",
+				countryName: "United State of America",
+				countryAccountsId: null,
+			};
+		}
 
-    const userSession = await optionalUser(args.request);
-    
-    if (!userSession) {
-      return await fn(args);
-    }
-    
-    if (!roleHasPermission(userSession.user.role, permission)) {
-      throw new Response("Forbidden", { status: 403 });
-    }
-    
-    // Create extended args with proper typing
-    const extendedArgs: CustomLoaderArgs = {
-      ...args,
-      userSession,  // Now properly typed
-    };
-    
-    return await fn(extendedArgs);
-  };
+		if (!settings.approvedRecordsArePublic) {
+			const authLoader = authLoaderWithPerm(permission, fn);
+			return await authLoader(args);
+		}
 
-  return wrappedLoader as T;
+		const userSession = await optionalUser(args.request);
+
+		if (!userSession) {
+			return await fn(args);
+		}
+
+		if (!roleHasPermission(userSession.user.role, permission)) {
+			throw new Response("Forbidden", { status: 403 });
+		}
+
+		// Create extended args with proper typing
+		const extendedArgs: CustomLoaderArgs = {
+			...args,
+			userSession, // Now properly typed
+		};
+
+		return await fn(extendedArgs);
+	};
+
+	return wrappedLoader as T;
 }
 
-export function authLoaderAllowUnverifiedEmail<T extends LoaderFunction>(fn: T): T {
+export function authLoaderAllowUnverifiedEmail<T extends LoaderFunction>(
+	fn: T
+): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUserAllowUnverifiedEmail(args.request);
 
@@ -188,46 +219,44 @@ export function authLoaderApi<T extends LoaderFunction>(fn: T): T {
 	}) as T;
 }
 
-
 export function authLoaderApiDocs<T extends LoaderFunction>(fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
-		const authToken = args.request.headers.get("X-Auth")
+		const authToken = args.request.headers.get("X-Auth");
 		if (authToken) {
-			await apiAuth(args.request)
-			return fn(args)
+			await apiAuth(args.request);
+			return fn(args);
 		}
-		return authLoaderWithPerm("ViewApiDocs", fn)(args)
-	}) as T
+		return authLoaderWithPerm("ViewApiDocs", fn)(args);
+	}) as T;
 }
-
 
 export function authLoaderGetAuth(args: any): UserSession {
 	if (!args.userSession || !args.userSession.user) {
-		throw new Error("Missing user session")
+		throw new Error("Missing user session");
 	}
-	return args.userSession
+	return args.userSession;
 }
 
 export interface UserForFrontend {
-	role: RoleId
-	firstName: string
-	lastName: string
+	role: RoleId;
+	firstName: string;
+	lastName: string;
 }
 
 export function authLoaderGetUserForFrontend(args: any): UserForFrontend {
-	let u = authLoaderGetAuth(args)
+	let u = authLoaderGetAuth(args);
 	return {
 		role: u.user.role as RoleId,
 		firstName: u.user.firstName,
-		lastName: u.user.lastName
-	}
+		lastName: u.user.lastName,
+	};
 }
 
 export function authLoaderIsPublic(args: any): boolean {
 	if (!args.userSession || !args.userSession.user) {
-		return true
+		return true;
 	}
-	return false
+	return false;
 }
 
 export function authAction<T extends ActionFunction>(fn: T): T {
@@ -240,12 +269,14 @@ export function authAction<T extends ActionFunction>(fn: T): T {
 	}) as T;
 }
 
-
-export function authActionWithPerm<T extends ActionFunction>(permission: PermissionId, fn: T): T {
+export function authActionWithPerm<T extends ActionFunction>(
+	permission: PermissionId,
+	fn: T
+): T {
 	return (async (args: ActionFunctionArgs) => {
 		const userSession = await requireUser(args.request);
 		if (!roleHasPermission(userSession.user.role, permission)) {
-			throw new Response("Forbidden", {status: 403});
+			throw new Response("Forbidden", { status: 403 });
 		}
 		return fn({
 			...(args as any),
@@ -254,7 +285,9 @@ export function authActionWithPerm<T extends ActionFunction>(permission: Permiss
 	}) as T;
 }
 
-export function authActionAllowUnverifiedEmail<T extends ActionFunction>(fn: T): T {
+export function authActionAllowUnverifiedEmail<T extends ActionFunction>(
+	fn: T
+): T {
 	return (async (args: ActionFunctionArgs) => {
 		const userSession = await requireUserAllowUnverifiedEmail(args.request);
 		return fn({
@@ -284,28 +317,28 @@ export function authActionApi<T extends ActionFunction>(fn: T): T {
 	}) as T;
 }
 
-
 export function authActionGetAuth(args: any): UserSession {
 	if (!args.userSession || !args.userSession.user) {
-		console.error("Missing user session", args)
-		throw new Error("Missing user session")
+		console.error("Missing user session", args);
+		throw new Error("Missing user session");
 	}
-	return args.userSession
+	return args.userSession;
 }
 
 export async function requireSuperAdmin(request: Request) {
-  const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-  const userId = session.get('userId') as string | undefined;
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const userId = session.get("userId") as string | undefined;
 
-  if (!userId) {
-    throw redirect('/login');
-  }
+	if (!userId) {
+		throw redirect("/login");
+	}
 
-  const user = await getUserById(Number(userId));
-  if (!user || user.role !== 'super_admin') {
-    throw redirect('/403');
-  }
+	const user = await getUserById(Number(userId));
+	if (!user || user.role !== "super_admin") {
+		throw redirect("/403");
+	}
 
-  return user;
+	return user;
 }
-

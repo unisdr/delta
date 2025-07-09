@@ -41,8 +41,8 @@ import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
 import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 // Define an interface for the structure of the JSON objects
 interface interfaceMap {
@@ -55,8 +55,8 @@ interface interfaceMap {
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
-	async () => {
-		const settings = await getInstanceSystemSettings();
+	async ({request}) => {
+		const settings = await getCountrySettingsFromSession(request);
 		let currencies: string[] = [];
 		if (settings) {
 			currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
@@ -100,8 +100,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		toDate,
 	};
 
-	const settings = await getInstanceSystemSettings();
-	let currency = "PHP";
+	const settings = await getCountrySettingsFromSession(request);
+	let currency = "USD";
 	if (settings) {
 		currency = settings.currencyCodes?.split(",")[0]
 	}

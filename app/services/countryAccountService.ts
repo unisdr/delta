@@ -14,6 +14,7 @@ import {
 	countryAccountStatuses,
 	countryAccountTypes,
 } from "~/drizzle/schema";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 // Create a custom error class for validation errors
 export class CountryAccountValidationError extends Error {
@@ -27,7 +28,8 @@ export async function createCountryAccountService(
 	countryId: string,
 	email: string,
 	status: number = countryAccountStatuses.ACTIVE,
-	countryAccountType: string = countryAccountTypes.OFFICIAL
+	countryAccountType: string = countryAccountTypes.OFFICIAL,
+	request: Request
 ) {
 	const errors: string[] = [];
 	if (!countryId) errors.push("Country is required");
@@ -109,7 +111,11 @@ export async function createCountryAccountService(
 			countryAccount.id,
 			tx
 		);
-		await sendInvite(adminUser, tx);
+		const url = new URL(request.url);
+  		const baseUrl = `${url.protocol}//${url.host}`;
+		const settings =  await getCountrySettingsFromSession(request);
+
+		await sendInvite(adminUser, baseUrl, settings.websiteName, tx);
 		return { countryAccount, adminUser, instanceSystemSetting };
 	});
 }

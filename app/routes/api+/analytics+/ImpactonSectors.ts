@@ -8,6 +8,7 @@ import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getImpactOnSector } from "~/backend.server/handlers/analytics/ImpactonSectors";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { z } from "zod";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 /**
  * Interface for impact analysis filter parameters
@@ -67,6 +68,9 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
 
+    const settings = await getCountrySettingsFromSession(request);
+    const currency = settings.currency;
+
     /**
      * Validate and transform query parameters using Zod schema
      * This ensures type safety and proper format of all inputs
@@ -108,7 +112,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
      * Calls the domain layer handler to fetch and process sector impact data
      * Handles both successful and error responses from the handler
      */
-    const result = await getImpactOnSector(String(sectorId), filters);
+    const result = await getImpactOnSector(String(sectorId), filters,currency);
 
     if (!result.success) {
       return Response.json(

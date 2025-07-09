@@ -23,7 +23,7 @@ import {
 } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
-import { redirectWithMessage, getUserFromSession } from "~/util/session";
+import { redirectWithMessage, getUserFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 import { MainContainer } from "~/frontend/container";
 import { getTenantContext } from "~/util/tenant";
@@ -65,6 +65,12 @@ type ErrorsType = {
 
 export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const { request } = actionArgs;
+	const url = new URL(request.url);
+  	const baseUrl = `${url.protocol}//${url.host}`;
+
+	const settings = await getCountrySettingsFromSession(request);
+	const siteName= settings.websiteName;
+	
 
 	// Get user session and tenant context
 	const userSession = await getUserFromSession(request);
@@ -103,7 +109,7 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 
 	try {
 		// Pass tenant context to ensure user is created within the correct tenant
-		const res = await adminInviteUser(data, tenantContext);
+		const res = await adminInviteUser(data, tenantContext, baseUrl, siteName);
 
 		if (!res.ok) {
 			return json<ActionResponse>({

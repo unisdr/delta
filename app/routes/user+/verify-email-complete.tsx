@@ -18,7 +18,8 @@ import {processHipsPage} from "~/backend.server/utils/hip";
 import {processSectorCsv} from "~/backend.server/utils/sector";
 import {processCategoryCsv} from "~/backend.server/utils/category";
 import {processAssetCsv} from "~/backend.server/utils/asset";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 export const meta: MetaFunction = (request) => {
 	// Extract the query string
@@ -52,7 +53,7 @@ export const meta: MetaFunction = (request) => {
 export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
 	const { user } = authActionGetAuth(actionArgs);
 
-	const settings= await getInstanceSystemSettings();
+	const settings= await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
 	if(!settings){
 		throw new Response ("System settings cannot be found.",{status:500})
 	}
@@ -135,7 +136,7 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	}
 	
 	var siteName="Disaster Losses Tracking System";
-	const settings = await getInstanceSystemSettings();
+	const settings = await getCountrySettingsFromSession(loaderArgs.request)
 	if(settings){
 		siteName=settings.websiteName
 	}

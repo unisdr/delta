@@ -9,11 +9,19 @@ import {
 import {
 	jsonApiDocs,
 } from "~/backend.server/handlers/form/form_api"
+import { getCountrySettingsFromSession } from "~/util/session";
 
-export const loader = authLoaderApiDocs(async () => {
+export const loader = authLoaderApiDocs(async ({request}) => {
+	const url = new URL(request.url);
+	const baseUrl = `${url.protocol}//${url.host}`;
+
+	const settings = await getCountrySettingsFromSession(request);
+	const currencies = settings.currencyCodes;
+
 	let docs = await jsonApiDocs({
 		baseUrl: "damages",
-		fieldsDef: await fieldsDefApi()
+		fieldsDef: await fieldsDefApi(currencies),
+		siteUrl: baseUrl,
 	})
 
 	return new Response(docs, {

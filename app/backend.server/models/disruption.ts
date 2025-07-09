@@ -6,17 +6,12 @@ import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handler
 import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
-import { getInstanceSystemSettings } from "../../db/queries/instanceSystemSetting"
-
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 
-// export const fieldsDef: FormInputDef<DisruptionFields>[] =
-export async function getFieldsDef(): Promise<FormInputDef<DisruptionFields>[]> {
-	const settings = await getInstanceSystemSettings();
-	let currencies:string[]=[];
-	if(settings){
-		currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+export async function getFieldsDef(currencies?: string[]): Promise<FormInputDef<DisruptionFields>[]> {
+
+	if(!currencies){
+		currencies = [];
 	}
 	return [
 		{key: "recordId", label: "", type: "uuid"},
@@ -38,12 +33,6 @@ export async function getFieldsDef(): Promise<FormInputDef<DisruptionFields>[]> 
 		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
 	]
 }
-
-// export const fieldsDefApi: FormInputDef<DisruptionFields>[] =
-// 	[
-// 		...await getFieldsDef(),
-// 		{key: "apiImportId", label: "", type: "other"}
-// 	]
 
 export async function getFieldsDefApi(): Promise<FormInputDef<DisruptionFields>[]> {
   const baseFields = await getFieldsDef();

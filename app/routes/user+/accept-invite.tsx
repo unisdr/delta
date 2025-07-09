@@ -16,7 +16,8 @@ import {
 } from "~/frontend/form";
 import { formStringData } from "~/util/httputil";
 import {
-	createUserSession
+	createUserSession,
+	getCountrySettingsFromSession
 } from "~/util/session";
 import {acceptInvite, AcceptInviteFieldsFromMap, validateInviteCode} from "~/backend.server/models/user/invite";
 
@@ -54,7 +55,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const data = formStringData(await request.formData());
 	const inviteCode = data["inviteCode"] || "";
 	const data2 = AcceptInviteFieldsFromMap(data) 
-	const res = await acceptInvite(inviteCode, data2);
+
+	const url = new URL(request.url);
+	const baseUrl = `${url.protocol}//${url.host}`;
+
+	const settings = await getCountrySettingsFromSession(request);
+	const res = await acceptInvite(inviteCode, data2, baseUrl, settings.websiteName);
 	if (!res.ok) {
 		return { data, errors: res.errors };
 	}

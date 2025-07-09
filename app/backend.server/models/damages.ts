@@ -7,20 +7,15 @@ import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
 import {deleteByIdForStringId} from "./common"
 import {unitsEnum} from "~/frontend/unit_picker"
 import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
-import { getInstanceSystemSettings } from "../../db/queries/instanceSystemSetting"
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency"
 
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}
 
 
-export async function fieldsForPd(pre: "pd" | "td"): Promise<FormInputDef<DamagesFields>[]> {
+export async function fieldsForPd(pre: "pd" | "td", currencies?: string[]): Promise<FormInputDef<DamagesFields>[]> {
 	let repairOrReplacement = pre == "pd" ? "Repair" : "Replacement"
-	const settings = await getInstanceSystemSettings();
-	let currencies:string[]=[];
-	if(settings){
-		currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+	if(!currencies){
+		currencies=[];
 	}
-
 	return [
 		{key: pre + "DamageAmount" as keyof DamagesFields, label: "Amount of units", type: "number", uiRow: {}},
 		{key: pre + repairOrReplacement + "CostUnit" as keyof DamagesFields, label: `Unit ${repairOrReplacement.toLowerCase()} cost`, type: "money", uiRow: {}},
@@ -49,14 +44,9 @@ export async function fieldsForPd(pre: "pd" | "td"): Promise<FormInputDef<Damage
 	]
 }
 
-export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
-	let cur = ""
-	const settings = await getInstanceSystemSettings();
-	let currencies:string[]=[];
-	if(settings){
-		currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
-	}
-	if (currencies.length > 0) {
+export async function fieldsDef(currencies?: string[]): Promise<FormInputDef<DamagesFields>[]> {
+	let cur = "USD"
+	if(currencies && currencies.length > 0) {
 		cur = currencies[0]
 	}
 
@@ -74,23 +64,23 @@ export async function fieldsDef(): Promise<FormInputDef<DamagesFields>[]> {
 		{key: "totalRepairReplacementOverride", label: "Override", type: "bool"},
 
 		// Partially destroyed
-		...await fieldsForPd("pd"),
+		...await fieldsForPd("pd",currencies),
 		// Totally damaged
-		...await fieldsForPd("td"),
+		...await fieldsForPd("td", currencies),
 
 		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
 	]
 }
 
-export async function fieldsDefApi(): Promise<FormInputDef<DamagesFields>[]> {
+export async function fieldsDefApi(currencies:string[]): Promise<FormInputDef<DamagesFields>[]> {
 	return [
-		...await fieldsDef(),
+		...await fieldsDef(currencies),
 		{key: "apiImportId", label: "", type: "other"}]
 }
 
-export async function fieldsDefView(): Promise<FormInputDef<DamagesFields>[]> {
-	return fieldsDef()
+export async function fieldsDefView(currencies: string[]): Promise<FormInputDef<DamagesFields>[]> {
+	return fieldsDef(currencies)
 }
 
 export function validate(fields: Partial<DamagesFields>): Errors<DamagesFields> {

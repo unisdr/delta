@@ -23,7 +23,7 @@ interface Filters {
   disasterEvent?: string | null;
 }
 
-export const getImpactOnSector = async (sectorId: string, filters?: Filters): Promise<SectorImpactResponse> => {
+export const getImpactOnSector = async (sectorId: string, filters?: Filters, currency?: string): Promise<SectorImpactResponse> => {
   try {
     // Input validation
     if (!sectorId) {
@@ -34,7 +34,7 @@ export const getImpactOnSector = async (sectorId: string, filters?: Filters): Pr
     }
 
     // Fetch data from the model
-    const data = await fetchSectorImpactData(sectorId, filters);
+    const data = await fetchSectorImpactData(sectorId, filters, currency);
 
     // Return successful response
     return {

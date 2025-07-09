@@ -59,12 +59,12 @@ export const action: ActionFunction = async ({ request }) => {
 			return { success: true, operation: "update" };
 		} else {
 			// Create new account
-			console.log("status = ", status)
 			await createCountryAccountService(
 				countryId,
 				email,
 				Number(status),
-				countryAccountType
+				countryAccountType,
+				request
 			);
 			return { success: true, operation: "create" };
 		}
@@ -74,6 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
 			errors = { errors: error.errors };
 		} else {
 			errors = { errors: ["An unexpected error occured"] };
+			console.log(error);
 		}
 		return {
 			...errors,

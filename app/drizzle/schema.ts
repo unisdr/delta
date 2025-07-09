@@ -1370,7 +1370,7 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	adminSetupComplete: boolean("admin_setup_complete").notNull().default(false),
 	websiteLogo: varchar("website_logo").notNull().default("/assets/country-instance-logo.png"),
 	websiteName: varchar("website_name", { length: 250 }).notNull().default("Disaster Tracking System"),
-	websiteUrl: url("website_url").notNull().default("http://localhost:3000"),
+	websiteUrl: url("website_url").notNull().default("http://localhost:3000"),//no need for this column. must be removed.
 	approvedRecordsArePublic: boolean().notNull().default(false),
 	totpIssuer: varchar("totp_issuer", { length: 250 }).notNull().default("example-app"),
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),

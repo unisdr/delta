@@ -16,17 +16,26 @@ import {
 import {
 	createScreen
 } from "~/frontend/csv_import"
+import { ActionFunctionArgs } from "@remix-run/server-runtime"
+import { getCountrySettingsFromSession } from "~/util/session"
 
 export const loader = authLoaderWithPerm("EditData", async () => {
 	return null
 })
 
-export const action = createAction({
-	fieldsDef: fieldsDefApi,
-	create: damagesCreate,
-	update: damagesUpdate,
-	idByImportId: damagesIdByImportId,
-})
+export const action = async (actionArgs: ActionFunctionArgs) => {
+  const { request } = actionArgs;
+  return createAction({
+    fieldsDef: async () => {
+      const settings = await getCountrySettingsFromSession(request);
+      const currencies = settings.currencyCodes ?? ["USD"];
+      return await fieldsDefApi(currencies);
+    },
+    create: damagesCreate,
+    update: damagesUpdate,
+    idByImportId: damagesIdByImportId,
+  })(actionArgs);
+}
 
 export default createScreen({
 	title: "Damages",

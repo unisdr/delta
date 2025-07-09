@@ -38,7 +38,7 @@ import { getAffected } from "~/backend.server/models/analytics/affected-people-b
 import CustomPieChart from '~/components/PieChart';
 import CustomStackedBarChart from '~/components/StackedBarChart';
 import HorizontalBarChart from '~/components/HorizontalBarChart';
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 
 // Define an interface for the structure of the JSON objects
@@ -104,8 +104,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let sectorParentArray: interfaceSector[] = [];
   let x: any = {};
 
-  const settings = await getInstanceSystemSettings();
-  let currency = "PHP";
+  const settings = await getCountrySettingsFromSession(loaderArgs.request);
+  let currency = "USD";
   if (settings) {
     currency = settings.currencyCodes?.split(",")[0];
   }
@@ -147,7 +147,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
             x.myChildren = ancestorIds;
             x.effects = {};
-            x.effects = await disasterEventSectorTotal__ById(qsDisEventId, ancestorIds);
+            x.effects = await disasterEventSectorTotal__ById(qsDisEventId, ancestorIds, currency);
 
             // Populate sectorData - will be used for the sector filter
             if (!sectortData[x.id]) {
@@ -218,7 +218,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // get the count of Disaster Records linked to the disaster event
         countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(qsDisEventId);
 
-        totalSectorEffects = await disasterEventSectorTotal__ById(qsDisEventId);
+        totalSectorEffects = await disasterEventSectorTotal__ById(qsDisEventId,[], currency);
 
         //retired, system is now using version 2
         // totalAffectedPeople = await getAffectedByDisasterEvent(dr, qsDisEventId); 
@@ -228,7 +228,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
         const divisionLevel1 = await getDivisionByLevel(1, public_tenant_context);
         for (const item of divisionLevel1) {
-          const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, [item.id]);
+          const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, [item.id], currency);
           const humanEffectsPerDivision = await getAffected(dr, qsDisEventId, { divisionId: item.id });
 
           // Populate the geoData for the map for the human effects

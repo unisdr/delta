@@ -24,8 +24,8 @@ import { useState, useEffect, useRef, RefObject } from 'react';
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfigSector } from "../content-picker-config";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
+import { getCountrySettingsFromSession } from "~/util/session";
 //#Sector: End
 
 // Meta function for page SEO
@@ -92,7 +92,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params} = actionArgs;
 	const req = actionArgs.request;
 
-	const settings= await getInstanceSystemSettings();
+	const settings= await getCountrySettingsFromSession(actionArgs.request)
 	var currencyCodes= '';
 	if(settings){
 		currencyCodes=settings.currencyCodes;

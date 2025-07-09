@@ -9,11 +9,14 @@ import {
   jsonApiDocs,
 } from "~/backend.server/handlers/form/form_api";
 
-export let loader = authLoaderApiDocs(async () => {
-  // Add await since jsonApiDocs is now async
+export let loader = authLoaderApiDocs(async ({request}) => {
+  const url = new URL(request.url);
+	const baseUrl = `${url.protocol}//${url.host}`;
+
   let docs = await jsonApiDocs({
     baseUrl: "asset",
-    fieldsDef: await fieldsDefApi()
+    fieldsDef: await fieldsDefApi(),
+    siteUrl: baseUrl,
   });
 
   return new Response(docs, {

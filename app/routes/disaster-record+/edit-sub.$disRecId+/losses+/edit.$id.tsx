@@ -25,7 +25,7 @@ import { buildTree } from "~/components/TreeView";
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 interface LoaderRes {
 	item: LossesViewModel | null;
@@ -56,7 +56,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	]);
 
 	let ctryIso3: string = "";
-	const settings = await getInstanceSystemSettings();
+	const settings = await getCountrySettingsFromSession(request)
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
 	}

@@ -23,7 +23,7 @@ import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 interface LoaderRes {
 	item: DisruptionViewModel | null;
@@ -53,7 +53,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	]);
 
 	let ctryIso3: string = "";
-	const settings = await getInstanceSystemSettings();
+	const settings = await getCountrySettingsFromSession(request);
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
 	}

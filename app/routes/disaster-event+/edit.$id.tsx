@@ -27,15 +27,14 @@ import {
 	authLoaderWithPerm
 } from "~/util/auth";
 import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
+import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
 import { and, eq, isNull, isNotNull, or } from "drizzle-orm";
 import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 // Helper function to get country ISO3 code
-async function getCountryIso3(): Promise<string> {
-	const settings = await getInstanceSystemSettings();
+async function getCountryIso3(request: Request): Promise<string> {
+	const settings = await getCountrySettingsFromSession(request);
 	return settings?.dtsInstanceCtryIso3 || "";
 }
 
@@ -84,6 +83,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 });
 
 import { getItem2 } from "~/backend.server/handlers/view";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params } = loaderArgs;
@@ -91,6 +91,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	// Extract tenant context for secure data access
 	const tenantContext = await getTenantContext(userSession);
+	const ctryIso3 = await getCountryIso3(loaderArgs.request);  
 
 	// Handle 'new' case without DB query
 	if (params.id === "new") {
@@ -98,7 +99,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			item: null, // No existing item for new disaster event
 			hip: await dataForHazardPicker(),
 			treeData: [], // Will be populated below
-			ctryIso3: await getCountryIso3(),
+			ctryIso3: ctryIso3,
 			divisionGeoJSON: await getDivisionGeoJSON(),
 			user: authLoaderGetUserForFrontend(loaderArgs)
 		};
@@ -131,9 +132,6 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	// Get hazard picker data
 	const hip = await dataForHazardPicker();
-
-	// Get country ISO3 code
-	const ctryIso3 = await getCountryIso3();
 
 	// Get division GeoJSON data
 	const divisionGeoJSON = await getDivisionGeoJSON();

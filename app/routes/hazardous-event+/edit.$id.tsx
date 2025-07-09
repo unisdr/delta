@@ -28,10 +28,10 @@ import { getItem2 } from "~/backend.server/handlers/view";
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 
 import { getTenantContext } from "~/util/tenant";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -74,12 +74,11 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	console.log(treeData);
 
 	let ctryIso3: string = "";
-	const settings = await getInstanceSystemSettings();
+	const settings = await getCountrySettingsFromSession(loaderArgs.request)
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
 	}
 
-	
 	const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson, import_id
 		FROM division
