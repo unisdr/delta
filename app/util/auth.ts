@@ -231,6 +231,7 @@ export function authLoaderApiDocs<T extends LoaderFunction>(fn: T): T {
 }
 
 export function authLoaderGetAuth(args: any): UserSession {
+	console.log("args.userSession", args.userSession)
 	if (!args.userSession || !args.userSession.user) {
 		throw new Error("Missing user session");
 	}
