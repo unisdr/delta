@@ -346,7 +346,6 @@ export default function CountryAccounts() {
 									disabled={editingCountryAccount?.id ? true : false}
 								></input>
 							</label>
-							{/* feature for official and country instance */}
 							<Fieldset
 								legend="Choose Instance Type"
 								disabled={editingCountryAccount?.id ? true : false}

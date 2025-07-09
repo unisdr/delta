@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { dr, Tx } from "../../db.server";
 import { User, userTable } from "../../drizzle/schema";
 
@@ -27,7 +27,7 @@ export async function createUser(
 	email: string,
 	role: string,
 	isPrimaryAdmin: boolean,
-    countryAccountId: string,
+	countryAccountId: string,
 	tx?: Tx
 ) {
 	const db = tx || dr;
@@ -36,10 +36,30 @@ export async function createUser(
 		.values({
 			email: email,
 			role: role,
-            isPrimaryAdmin: isPrimaryAdmin,
-            countryAccountsId: countryAccountId,
+			isPrimaryAdmin: isPrimaryAdmin,
+			countryAccountsId: countryAccountId,
 		})
 		.returning()
 		.execute();
 	return result[0];
+}
+
+export async function doesUserExistByEmailAndCountry(
+	email: string,
+	countryAccountsId: string,
+	tx?: Tx
+): Promise<boolean> {
+	const db = tx || dr;
+	const result = await db
+		.select({ id: userTable.id })
+		.from(userTable)
+		.where(
+			and(
+				eq(userTable.email, email),
+				eq(userTable.countryAccountsId, countryAccountsId)
+			)
+		)
+		.limit(1);
+
+	return result.length > 0;
 }

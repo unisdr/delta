@@ -440,6 +440,7 @@ export default function Screen() {
 									name="email"
 									defaultValue={fields.email}
 									required
+									disabled={true}
 									autoComplete="email"
 									className={safeErrors.fields.email ? "error" : ""}
 									aria-describedby={

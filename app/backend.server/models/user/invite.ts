@@ -7,13 +7,13 @@ import { Errors, hasErrors } from "~/frontend/form";
 
 import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
-import { errorIsNotUnique } from "~/util/db";
 
 import { randomBytes } from "crypto";
 
 import { validateName, validatePassword } from "./user_utils";
 import { passwordHash } from "./password";
 import { TenantContext } from "~/util/tenant";
+import { doesUserExistByEmailAndCountry } from "~/db/queries/user";
 
 type AdminInviteUserResult =
 	| { ok: true }
@@ -58,17 +58,26 @@ export async function adminInviteUser(
 	errors.form = [];
 	errors.fields = {};
 
-	if (fields.email == "") {
-		errors.fields.email = ["Email is required"];
-	}
-	if (fields.firstName == "") {
+	if (!fields.firstName || fields.firstName.trim() === "") {
 		errors.fields.firstName = ["First name is required"];
+	}
+	if (!fields.email || fields.email.trim() === "") {
+		errors.fields.email = ["Email is required"];
 	}
 	if (fields.role == "") {
 		errors.fields.role = ["Role is required"];
 	}
-	if (fields.organization == "") {
+	if (!fields.organization || fields.organization.trim() === "") {
 		errors.fields.organization = ["Organisation is required"];
+	}
+
+	const emailAndCountryIdExist = await doesUserExistByEmailAndCountry(
+		fields.email,
+		tenantContext.countryAccountId
+	);
+
+	if (emailAndCountryIdExist) {
+		errors.fields.email = ["A user with this email already exists"];
 	}
 
 	if (hasErrors(errors)) {
@@ -85,17 +94,12 @@ export async function adminInviteUser(
 				role: fields.role,
 				organization: fields.organization,
 				hydrometCheUser: fields.hydrometCheUser,
-				// Add tenant context to ensure user is created within the correct tenant
 				countryAccountsId: tenantContext.countryAccountId,
 			})
 			.returning();
 		const user = res[0];
 		await sendInvite(user, baseUrl, siteName);
 	} catch (e: any) {
-		if (errorIsNotUnique(e, "user", "email")) {
-			errors.fields.email = ["A user with this email already exists"];
-			return { ok: false, errors };
-		}
 		throw e;
 	}
 

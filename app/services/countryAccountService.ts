@@ -34,7 +34,7 @@ export async function createCountryAccountService(
 	const errors: string[] = [];
 	if (!countryId) errors.push("Country is required");
 	if (status=== null || status=== undefined) errors.push("Status is required");
-	if (!email) errors.push("Admin email is required");
+	if (!email || email.trim()=== "" ) errors.push("Admin email is required");
 	if (!countryAccountType) errors.push("Choose instance type");
 
 	if (countryId && countryId === "-1") {
@@ -54,11 +54,6 @@ export async function createCountryAccountService(
 		countryAccountType !== countryAccountTypes.TRAINING
 	) {
 		errors.push("Invalide instance type");
-	}
-
-	const existingUser = await getUserByEmail(email);
-	if (email && existingUser !== null) {
-		errors.push("Email already exist.");
 	}
 
 	if (
