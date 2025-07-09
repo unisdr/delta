@@ -2,7 +2,7 @@ import {
 	Link
 } from "@remix-run/react";
 
-import {HazardousEventFields, HazardousEventViewModel} from "~/backend.server/models/event"
+import { HazardousEventFields, HazardousEventViewModel } from "~/backend.server/models/event"
 
 import {
 	Field,
@@ -14,14 +14,14 @@ import {
 	ViewComponent
 } from "~/frontend/form";
 
-import {formatDate} from "~/util/date";
+import { formatDate } from "~/util/date";
 
-import {useEffect, useState} from 'react';
-import {approvalStatusField} from "~/frontend/approval";
+import { useEffect, useState } from 'react';
+import { approvalStatusField } from "~/frontend/approval";
 
 import AuditLogHistory from "~/components/AuditLogHistory";
-import {HazardPicker, Hip} from "~/frontend/hip/hazardpicker";
-import {HipHazardInfo} from "~/frontend/hip/hip";
+import { HazardPicker, Hip } from "~/frontend/hip/hazardpicker";
+import { HipHazardInfo } from "~/frontend/hip/hip";
 
 import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
 import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
@@ -35,51 +35,51 @@ export const fieldsDefCommon = [
 	approvalStatusField,
 	// {key: "otherId1", label: "Event id in other system", type: "text", uiRowNew: true, uiRow: {}},
 	// {key: "duration", label: "Duration", type: "text", uiRow: {}},
-	{key: "nationalSpecification", label: "National specification", type: "textarea"},
-	{key: "startDate", label: "Start Date", type: "date_optional_precision", required: true, uiRow: {}},
-	{key: "endDate", label: "End Date", type: "date_optional_precision", required: true},
-	{key: "description", label: "Description", type: "textarea", uiRowNew: true},
+	{ key: "nationalSpecification", label: "National specification", type: "textarea" },
+	{ key: "startDate", label: "Start Date", type: "date_optional_precision", required: true, uiRow: {} },
+	{ key: "endDate", label: "End Date", type: "date_optional_precision", required: true },
+	{ key: "description", label: "Description", type: "textarea", uiRowNew: true },
 	//{key: "warningIssuedSummary", label: "Summary", type: "textarea", uiRowNew: true},
 	//{key: "warningIssuedBy", label: "Issued By", type: "text", uiRow: {}},
 	//{key: "warningIssuedDate", label: "Date", type: "date"},
 	//{key: "warningIssuedCoverage", label: "Coverage", type: "textarea", uiRowNew: true},
 	//{key: "warningIssuedContent", label: "Warning content", type: "textarea", uiRowNew: true},
-	{key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "textarea"},
-	{key: "magnitude", label: "Magnitude", type: "text"},
-	{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
-	{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true},
-	{key: "recordOriginator", label: "Record Originator", type: "text", required: true, uiRow: {}},
+	{ key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "textarea" },
+	{ key: "magnitude", label: "Magnitude", type: "text" },
+	{ key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true },
+	{ key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb", uiRowNew: true },
+	{ key: "recordOriginator", label: "Record Originator", type: "text", required: true, uiRow: {} },
 	{
 		key: "hazardousEventStatus", label: "Hazardous Event Status", type: "enum", enumData: [
-			{key: "forecasted", label: "Forecasted"},
-			{key: "ongoing", label: "Ongoing"},
-			{key: "passed", label: "Passed"},
+			{ key: "forecasted", label: "Forecasted" },
+			{ key: "ongoing", label: "Ongoing" },
+			{ key: "passed", label: "Passed" },
 		],
 		uiRowNew: true,
 	},
-	{key: "dataSource", label: "Data Source", type: "text"},
+	{ key: "dataSource", label: "Data Source", type: "text" },
 
 
 ] as const;
 
 export const fieldsDef: FormInputDef<HazardousEventFields>[] = [
-	{key: "parent", label: "", type: "uuid"},
-	{key: "hipHazardId", label: "Hazard", type: "other", uiRow: {colOverride: 1}},
-	{key: "hipClusterId", label: "", type: "other"},
-	{key: "hipTypeId", label: "", type: "other"},
+	{ key: "parent", label: "", type: "uuid" },
+	{ key: "hipHazardId", label: "Hazard", type: "other", uiRow: { colOverride: 1 } },
+	{ key: "hipClusterId", label: "", type: "other" },
+	{ key: "hipTypeId", label: "", type: "other" },
 	...fieldsDefCommon
 ];
 
 export const fieldsDefApi: FormInputDef<HazardousEventFields>[] = [
 	...fieldsDef,
-	{key: "apiImportId", label: "API Import ID", type: "other"},
+	{ key: "apiImportId", label: "API Import ID", type: "other" },
 ];
 
 export const fieldsDefView: FormInputDef<HazardousEventViewModel>[] = [
-	{key: "hipHazard", label: "", type: "other"},
+	{ key: "hipHazard", label: "", type: "other" },
 	...fieldsDefCommon,
-	{key: "createdAt", label: "", type: "other"},
-	{key: "updatedAt", label: "", type: "other"},
+	{ key: "createdAt", label: "", type: "other" },
+	{ key: "updatedAt", label: "", type: "other" },
 ];
 
 interface HazardousEventFormProps extends UserFormProps<HazardousEventFields> {
@@ -93,7 +93,7 @@ interface HazardousEventFormProps extends UserFormProps<HazardousEventFields> {
 export function hazardousEventLabel(args: {
 	id?: string;
 	description?: string;
-	hazard?: {nameEn: string};
+	hazard?: { nameEn: string };
 }): string {
 	let parts: string[] = []
 	if (args.hazard) {
@@ -111,7 +111,7 @@ export function hazardousEventLabel(args: {
 export function hazardousEventLongLabel(args: {
 	id?: string;
 	description?: string;
-	hazard: {nameEn: string};
+	hazard: { nameEn: string };
 }) {
 	return <ul>
 		<li>ID: {args.id}</li>
@@ -122,7 +122,7 @@ export function hazardousEventLongLabel(args: {
 export function hazardousEventLink(args: {
 	id: string;
 	description: string;
-	hazard?: {nameEn: string};
+	hazard?: { nameEn: string };
 }) {
 	return <Link to={`/hazardous-event/${args.id}`}>
 		{hazardousEventLabel(args)}
@@ -168,7 +168,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 					<Field key="parent" label="Parent">
 						{selected ? hazardousEventLink(selected) : "-"}&nbsp;
 						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>Change</Link>
-						<button onClick={(e:any) => {
+						<button onClick={(e: any) => {
 							e.preventDefault()
 							setSelected(undefined)
 						}}>Unset</button>
@@ -186,12 +186,12 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 				),
 				spatialFootprint: (
 					<Field key="spatialFootprint" label="">
-							<SpatialFootprintFormView
-								divisions={divisionGeoJSON}
-								ctryIso3={ctryIso3 || ""}
-								treeData={treeData ?? []}
-								initialData={fields?.spatialFootprint}
-							/>
+						<SpatialFootprintFormView
+							divisions={divisionGeoJSON}
+							ctryIso3={ctryIso3 || ""}
+							treeData={treeData ?? []}
+							initialData={fields?.spatialFootprint}
+						/>
 					</Field>
 				),
 				attachments: (
@@ -236,7 +236,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 			}
 			extraInfo={
 				<>
-					{item.event.ps.length > 0 && (() => {
+					{item.event && item.event.ps && item.event.ps.length > 0 && (() => {
 						const parent = item.event.ps[0].p.he;
 						return (
 							<p>
@@ -246,7 +246,7 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 						);
 					})()}
 
-					{item.event.cs.length > 0 && (
+					{item.event && item.event.cs && item.event.cs.length > 0 && (
 						<>
 							<p>Causing:</p>
 							{item.event.cs.map((child) => {

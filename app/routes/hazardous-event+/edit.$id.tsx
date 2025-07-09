@@ -28,20 +28,20 @@ import { getItem2 } from "~/backend.server/handlers/view";
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
+import { sql } from "drizzle-orm";
 
 
 import { getTenantContext } from "~/util/tenant";
-import { getCountrySettingsFromSession } from "~/util/session";
 
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params } = loaderArgs;
 	const userSession = (loaderArgs as any).userSession; // 🔧 CHANGE: Use same pattern as existing codebase
 	const user = authLoaderGetUserForFrontend(loaderArgs);
-	
+
 	// Extract tenant context for secure data access
 	const tenantContext = await getTenantContext(userSession);
-	
+
 	const getHazardousEvent = async (id: string) => {
 		// Pass tenant context instead of userSession for data isolation
 		return hazardousEventById(id, tenantContext);
@@ -58,12 +58,16 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		return { hip, item, parent: parent2, treeData: [], user };
 	}
 
-	
+
 	// Define Keys Mapping (Make it Adaptable)
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
+	// Filter divisions by tenant context for security
+	const rawData = await dr
+		.select()
+		.from(divisionTable)
+		.where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
 		"geojson",
 		"importId",
@@ -73,19 +77,20 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	]);
 	console.log(treeData);
 
-	let ctryIso3: string = "";
-	const settings = await getCountrySettingsFromSession(loaderArgs.request)
-	if (settings) {
-		ctryIso3 = settings.dtsInstanceCtryIso3;
-	}
+	// Use tenant's ISO3 from tenant context
+	const ctryIso3 = tenantContext.iso3;
 
-	const divisionGeoJSON = await dr.execute(`
+
+	// Filter top-level divisions by tenant context
+	const divisionGeoJSON = await dr.execute(sql`
 		SELECT id, name, geojson, import_id
 		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+		WHERE (parent_id = 0 OR parent_id IS NULL) 
+		AND geojson IS NOT NULL
+		AND country_accounts_id = ${tenantContext.countryAccountId};
     `);
 
-	
+
 	return {
 		hip: hip,
 		item: item,
@@ -93,15 +98,16 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		ctryIso3: ctryIso3,
 		divisionGeoJSON: divisionGeoJSON?.rows || [],
 		user,
+		tenantContext,
 	};
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const userSession = authActionGetAuth(actionArgs);
-	
+
 	// Extract tenant context for secure updates
 	const tenantContext = await getTenantContext(userSession);
-	
+
 	// Keep existing formSave structure and logic
 	return formSave({
 		actionArgs,
@@ -137,6 +143,7 @@ export default function Screen() {
 			ctryIso3: ld.ctryIso3,
 			user: ld.user,
 			divisionGeoJSON: ld.divisionGeoJSON,
+			tenantContext: ld.tenantContext,
 		},
 		fieldsInitial,
 		form: HazardousEventForm,

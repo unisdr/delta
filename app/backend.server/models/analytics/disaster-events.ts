@@ -19,28 +19,30 @@ import {
 	or,
 	inArray
 } from "drizzle-orm";
+import { TenantContext } from "~/util/tenant";
 
 /**
- * Fetch disaster events from the database based on the query parameter.
+ * Fetch disaster events from the database based on the query parameter and tenant context.
+ * @param tenantContext The tenant context for filtering by country account
  * @param query Search query string (optional).
  * @returns an array of disaster events.
  */
-export const fetchDisasterEvents = async (query?: string) => {
-  try {
-    // Add conditions for searching multiple fields
-    const queryCondition = query
-      ? sql`
+export const fetchDisasterEvents = async (tenantContext: TenantContext, query?: string) => {
+	try {
+		// Add conditions for searching multiple fields
+		const queryCondition = query
+			? sql`
         LOWER(name_national) LIKE ${"%" + query.toLowerCase() + "%"} OR 
         LOWER(glide) LIKE ${"%" + query.toLowerCase() + "%"} OR
         LOWER(national_disaster_id) LIKE ${"%" + query.toLowerCase() + "%"} OR
         id::text LIKE ${"%" + query.toLowerCase() + "%"} OR
         LOWER(other_id1) LIKE ${"%" + query.toLowerCase() + "%"}
       `
-      : sql`TRUE`;
+			: sql`TRUE`;
 
-    // Execute query and return the full result object
-    const result = await dr.execute(
-      sql`
+		// Execute query and return the full result object with tenant isolation
+		const result = await dr.execute(
+			sql`
         SELECT 
           id, 
           name_national AS name, 
@@ -52,15 +54,16 @@ export const fetchDisasterEvents = async (query?: string) => {
           effects_total_usd
         FROM disaster_event
         WHERE ${queryCondition}
+        AND country_accounts_id = ${tenantContext.countryAccountId}
         ORDER BY start_date DESC
       `
-    );
+		);
 
-    return result; // Return the full QueryResult object
-  } catch (error) {
-    console.error(`[fetchDisasterEvents] Failed with query="${query}":`, error);
-    throw new Error("Database query failed. Please try again later.");
-  }
+		return result; // Return the full QueryResult object
+	} catch (error) {
+		console.error(`[fetchDisasterEvents] Failed with query="${query}":`, error);
+		throw new Error("Database query failed. Please try again later.");
+	}
 };
 
 
@@ -75,11 +78,11 @@ export async function disasterEventSectorsById(id: any, incAnsestorsDecentants: 
 		{
 			sectorname: sectorTable.sectorname,
 			id: sectorTable.id,
-			relatedAncestorsDecentants: incAnsestorsDecentants ? 
+			relatedAncestorsDecentants: incAnsestorsDecentants ?
 				sql`(
 					dts_get_sector_ancestors_decentants(${sectorTable.id})
 				)`.as('relatedAncestorsDecentants')
-			 : 
+				:
 				sql`(
 					NULL
 				)`.as('relatedAncestorsDecentants')
@@ -99,7 +102,7 @@ export async function disasterEventSectorsById(id: any, incAnsestorsDecentants: 
 			)
 		)
 		.orderBy(sectorTable.sectorname)
-	.execute();
+		.execute();
 }
 
 
@@ -120,7 +123,7 @@ export async function disasterEvent_DisasterRecordsCount__ById(id: any) {
 				eq(disasterEventTable.approvalStatus, "published"),
 			)
 		)
-	.execute();
+		.execute();
 
 	return record[0].count;
 }
@@ -257,7 +260,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 		throw new Error("Invalid ID: must be a string");
 	}
 
-	let division_ids:string = '';
+	let division_ids: string = '';
 	divisionId.forEach((item, index) => {
 		if (index === 0) {
 			division_ids = `@ == "${String(item)}"`;
@@ -305,12 +308,12 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 
 	// Execute the query
 	const record = await queryRecordSectorTable.execute();
-	let totalDamages:number = 0;
-	let totalLosses:number = 0;
-	let totalRecovery:number = 0;
-	let recordsAssetRecoveryIdArray:any[] = [];
-	let recordsAssetDamagesIdArray:any[] = [];
-	let recordsAssetLossesIdArray:any[] = [];
+	let totalDamages: number = 0;
+	let totalLosses: number = 0;
+	let totalRecovery: number = 0;
+	let recordsAssetRecoveryIdArray: any[] = [];
+	let recordsAssetDamagesIdArray: any[] = [];
+	let recordsAssetLossesIdArray: any[] = [];
 
 	let damageCurrency:string = currency;
 
@@ -321,7 +324,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 			}
 			else {
 				// get damage records from damages table
-				recordsAssetDamagesIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
+				recordsAssetDamagesIdArray.push({ sector_id: item.recordSector_SectorId, record_id: item.recordId });
 			}
 
 			if (item.damageRecoveryCost) {
@@ -329,7 +332,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 			}
 			else {
 				// get the recovery records from damages table
-				recordsAssetRecoveryIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
+				recordsAssetRecoveryIdArray.push({ sector_id: item.recordSector_SectorId, record_id: item.recordId });
 			}
 		}
 
@@ -341,7 +344,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 			else {
 				// get the losses records from losses table
 				// console.log(index, item);
-				recordsAssetLossesIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
+				recordsAssetLossesIdArray.push({ sector_id: item.recordSector_SectorId, record_id: item.recordId });
 			}
 		}
 		// console.log(index, item);
@@ -353,7 +356,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 			const recordsAssetRecovery = await disasterEventTotalRecovery_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
 			recordsAssetRecovery.forEach((item2) => {
 				// console.log( 'cccc', index2, item2.totalRecovery );
-				totalRecovery += Number( item2.totalRecovery );
+				totalRecovery += Number(item2.totalRecovery);
 				// console.log(item2.totalRepairReplacement);
 			});
 		} catch (error) {
@@ -367,7 +370,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 		try {
 			const recordsAssetDamages = await disasterEventTotalDamages_RecordsAssets__ById(disasterEventId, item.record_ids);
 			recordsAssetDamages.forEach((item2) => {
-				totalDamages += Number( item2.totalRepairReplacement );
+				totalDamages += Number(item2.totalRepairReplacement);
 				// console.log(item2.totalRepairReplacement);
 			});
 		} catch (error) {
@@ -378,21 +381,21 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 	// console.log( 'ID: ', recordsAssetLossesIdArray );
 	// Get losses from Asset level records
 	for (const item of recordsAssetLossesIdArray) {
-		
+
 		try {
 			const recordsAssetlosses = await disasterEventTotalLosses_RecordsAssets__ById(disasterEventId, item.record_id);
 			recordsAssetlosses.forEach((item2) => {
 				if (item2.publicCostTotalOverride) {
-					totalLosses += Number( item2.publicCostTotal );
+					totalLosses += Number(item2.publicCostTotal);
 				}
 				else {
-					totalLosses += (Number( item2.publicUnits ) * Number( item2.publicCostUnit ));
+					totalLosses += (Number(item2.publicUnits) * Number(item2.publicCostUnit));
 				}
 				if (item2.privateCostTotalOverride) {
-					totalLosses += Number( item2.privateCostTotal );
+					totalLosses += Number(item2.privateCostTotal);
 				}
 				else {
-					totalLosses += (Number( item2.privateUnits ) * Number( item2.privateCostUnit ));
+					totalLosses += (Number(item2.privateUnits) * Number(item2.privateCostUnit));
 				}
 				// console.log('Losses:', item2);
 			});
@@ -412,7 +415,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 		recovery: {
 			total: totalRecovery, currency: damageCurrency
 		}
-		
+
 	};
 
 }
@@ -458,12 +461,12 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 
 	// Execute the query
 	const record = await queryRecordSectorTable.execute();
-	let totalDamages:number = 0;
-	let totalLosses:number = 0;
-	let totalRecovery:number = 0;
-	let recordsAssetRecoveryIdArray:any[] = [];
-	let recordsAssetDamagesIdArray:any[] = [];
-	let recordsAssetLossesIdArray:any[] = [];
+	let totalDamages: number = 0;
+	let totalLosses: number = 0;
+	let totalRecovery: number = 0;
+	let recordsAssetRecoveryIdArray: any[] = [];
+	let recordsAssetDamagesIdArray: any[] = [];
+	let recordsAssetLossesIdArray: any[] = [];
 
 	let damageCurrency:string = currency;
 
@@ -474,7 +477,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 			}
 			else {
 				// get damage records from damages table
-				recordsAssetDamagesIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
+				recordsAssetDamagesIdArray.push({ sector_id: item.recordSector_SectorId, record_id: item.recordId });
 			}
 
 			if (item.damageRecoveryCost) {
@@ -482,7 +485,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 			}
 			else {
 				// get the recovery records from damages table
-				recordsAssetRecoveryIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
+				recordsAssetRecoveryIdArray.push({ sector_id: item.recordSector_SectorId, record_id: item.recordId });
 			}
 		}
 
@@ -493,7 +496,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 			}
 			else {
 				// get the losses records from losses table
-				recordsAssetLossesIdArray.push({sector_id: item.recordSector_SectorId, record_id: item.recordId});
+				recordsAssetLossesIdArray.push({ sector_id: item.recordSector_SectorId, record_id: item.recordId });
 			}
 		}
 		// console.log(index, item);
@@ -504,7 +507,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 		try {
 			const recordsAssetRecovery = await disasterEventTotalRecovery_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
 			recordsAssetRecovery.forEach((item2) => {
-				totalRecovery += Number( item2.totalRecovery );
+				totalRecovery += Number(item2.totalRecovery);
 			});
 		} catch (error) {
 			console.error(`Error processing item ${item}:`, error);
@@ -516,7 +519,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 		try {
 			const recordsAssetDamages = await disasterEventTotalDamages_RecordsAssets__ById(disasterEventId, item.record_id);
 			recordsAssetDamages.forEach((item2) => {
-				totalDamages += Number( item2.totalRepairReplacement );
+				totalDamages += Number(item2.totalRepairReplacement);
 			});
 		} catch (error) {
 			console.error(`Error processing item ${item}:`, error);
@@ -525,21 +528,21 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 
 	// Get losses from Asset level records
 	for (const item of recordsAssetLossesIdArray) {
-		
+
 		try {
 			const recordsAssetlosses = await disasterEventTotalLosses_RecordsAssets__ById(disasterEventId, item.record_id);
 			recordsAssetlosses.forEach((item2) => {
 				if (item2.publicCostTotalOverride) {
-					totalLosses += Number( item2.publicCostTotal );
+					totalLosses += Number(item2.publicCostTotal);
 				}
 				else {
-					totalLosses += (Number( item2.publicUnits ) * Number( item2.publicCostUnit ));
+					totalLosses += (Number(item2.publicUnits) * Number(item2.publicCostUnit));
 				}
 				if (item2.privateCostTotalOverride) {
-					totalLosses += Number( item2.privateCostTotal );
+					totalLosses += Number(item2.privateCostTotal);
 				}
 				else {
-					totalLosses += (Number( item2.privateUnits ) * Number( item2.privateCostUnit ));
+					totalLosses += (Number(item2.privateUnits) * Number(item2.privateCostUnit));
 				}
 			});
 		} catch (error) {
@@ -557,7 +560,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 		recovery: {
 			total: totalRecovery, currency: damageCurrency
 		}
-		
+
 	};
 }
 
@@ -596,14 +599,14 @@ export async function disasterEventSectorDamageDetails__ById(disasterEventId: st
 			// 	1
 			// )`.as('name'),
 		}).from(sectorDisasterRecordsRelationTable)
-		.innerJoin(disasterRecordsTable, 
+		.innerJoin(disasterRecordsTable,
 			and(
 				eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId),
 				eq(sectorDisasterRecordsRelationTable.withDamage, true),
 			)
 		)
 		.innerJoin(disasterEventTable, eq(disasterEventTable.id, disasterRecordsTable.disasterEventId))
-		.innerJoin(damagesTable, 
+		.innerJoin(damagesTable,
 			and(
 				eq(damagesTable.recordId, disasterRecordsTable.id),
 				eq(damagesTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
@@ -626,7 +629,7 @@ export async function disasterEventSectorDamageDetails__ById(disasterEventId: st
 
 	// const rawSQL2 = queryRecordSectorTable.toSQL();
 	// console.log(rawSQL2 );
-	
+
 
 	// Execute the query
 	const record = await queryRecordSectorTable.execute();
@@ -679,7 +682,7 @@ export async function disasterEventSectorLossesDetails__ById(disasterEventId: st
 			)
 		)
 		.innerJoin(disasterEventTable, eq(disasterEventTable.id, disasterRecordsTable.disasterEventId))
-		.innerJoin(lossesTable, 
+		.innerJoin(lossesTable,
 			and(
 				eq(lossesTable.recordId, disasterRecordsTable.id),
 				eq(lossesTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
@@ -697,7 +700,7 @@ export async function disasterEventSectorLossesDetails__ById(disasterEventId: st
 
 	// const rawSQL2 = queryRecordSectorTable.toSQL();
 	// console.log(rawSQL2 );
-	
+
 
 	// Execute the query
 	const record = await queryRecordSectorTable.execute();
@@ -746,7 +749,7 @@ export async function disasterEventSectorDisruptionDetails__ById(disasterEventId
 			)
 		)
 		.innerJoin(disasterEventTable, eq(disasterEventTable.id, disasterRecordsTable.disasterEventId))
-		.innerJoin(disruptionTable, 
+		.innerJoin(disruptionTable,
 			and(
 				eq(disruptionTable.recordId, disasterRecordsTable.id),
 				eq(disruptionTable.sectorId, sectorDisasterRecordsRelationTable.sectorId)
@@ -764,7 +767,7 @@ export async function disasterEventSectorDisruptionDetails__ById(disasterEventId
 
 	// const rawSQL2 = queryRecordSectorTable.toSQL();
 	// console.log(rawSQL2 );
-	
+
 
 	// Execute the query
 	const record = await queryRecordSectorTable.execute();

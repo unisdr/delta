@@ -54,7 +54,18 @@ export const loader = async ({
 
 	const getByIdPublic = async (id: string) => {
 		// For public access, use disasterEventBasicInfoById which supports optional tenant context
-		return await disasterEventBasicInfoById(id);
+		const event = await disasterEventBasicInfoById(id);
+
+		// If event is not found or not published, redirect to unauthorized page
+		if (!event || event.approvalStatus !== "published") {
+			// Create a URL object based on the current request URL
+			const url = new URL(request.url);
+			// Build the redirect URL using the same origin
+			const redirectUrl = `${url.origin}/error/unauthorized?reason=content-not-published`;
+			throw Response.redirect(redirectUrl, 302);
+		}
+
+		return event;
 	};
 
 	const loaderFunction = session ?

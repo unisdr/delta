@@ -24,14 +24,14 @@ import { getTenantContext } from "~/util/tenant";
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
   const { request } = loaderArgs;
   const user = authLoaderGetUserForFrontend(loaderArgs);
-  
+
   // Get tenant context - we need to use the full user session from loaderArgs
   const userSession = (loaderArgs as any).userSession as UserSession;
   if (!userSession) {
     throw new Response("Unauthorized", { status: 401 });
   }
   const tenantContext = await getTenantContext(userSession);
-  
+
   const hip = await dataForHazardPicker();
   const u = new URL(request.url);
 
@@ -45,21 +45,22 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
     if (parent.countryAccountsId !== tenantContext.countryAccountId) {
       throw new Response("Access denied", { status: 403 });
     }
-    return { 
-      hip, 
-      parentId, 
-      parent, 
-      treeData: [], 
-      ctryIso3: [], 
+    return {
+      hip,
+      parentId,
+      parent,
+      treeData: [],
+      ctryIso3: [],
       user,
       tenantContext
     };
   }
 
-  // Load all divisions (tenant filtering is handled at a higher level)
+  // Load divisions filtered by tenant context
   const rawData = await dr
     .select()
-    .from(divisionTable);
+    .from(divisionTable)
+    .where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
 
   const treeData = buildTree(
     rawData,
@@ -73,12 +74,13 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
   // Use tenant's ISO3
   const ctryIso3 = tenantContext.iso3;
 
-  // Load top-level divisions with geojson
+  // Load top-level divisions with geojson, filtered by tenant context
   const divisionGeoJSON = await dr.execute(sql`
     SELECT id, name, geojson
     FROM division
     WHERE (parent_id = 0 OR parent_id IS NULL) 
-    AND geojson IS NOT NULL;
+    AND geojson IS NOT NULL
+    AND country_accounts_id = ${tenantContext.countryAccountId};
   `);
 
   return {
@@ -94,7 +96,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
   const userSession = authActionGetAuth(actionArgs);
   const tenantContext = await getTenantContext(userSession);
-  
+
   return formSave({
     isCreate: true,
     actionArgs,
@@ -119,21 +121,22 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 });
 
 export default function Screen() {
-	let ld = useLoaderData<typeof loader>();
+  let ld = useLoaderData<typeof loader>();
 
-	let fieldsInitial = { parent: ld.parentId };
+  let fieldsInitial = { parent: ld.parentId };
 
-	return formScreen({
-		extraData: {
-			hip: ld.hip,
-			parent: ld.parent,
-			treeData: ld.treeData,
-			ctryIso3: ld.ctryIso3,
-			user: ld.user,
-			divisionGeoJSON: ld.divisionGeoJSON,
-		},
-		fieldsInitial,
-		form: HazardousEventForm,
-		edit: false,
-	});
+  return formScreen({
+    extraData: {
+      hip: ld.hip,
+      parent: ld.parent,
+      treeData: ld.treeData,
+      ctryIso3: ld.ctryIso3,
+      user: ld.user,
+      divisionGeoJSON: ld.divisionGeoJSON,
+      tenantContext: ld.tenantContext,
+    },
+    fieldsInitial,
+    form: HazardousEventForm,
+    edit: false,
+  });
 }

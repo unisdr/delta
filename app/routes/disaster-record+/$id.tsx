@@ -6,7 +6,7 @@ import {
 } from "~/backend.server/handlers/form/form";
 
 import { ViewScreenPublicApproved } from "~/frontend/form";
-import { disasterRecordsById } from "~/backend.server/models/disaster_record";
+import { disasterRecordsById, disasterRecordsBasicInfoById } from "~/backend.server/models/disaster_record";
 import {
 	disasterRecordsTable,
 	disruptionTable,
@@ -52,9 +52,19 @@ export const loader = async ({
 		if (tenantContext) {
 			return disasterRecordsById(idStr, tenantContext);
 		} else {
-			// For public access, modify the model function to accept a string ID only
-			// This requires updating the disaster_record model to handle public access
-			throw new Response("Public access to disaster records is not implemented", { status: 403 });
+			// For public access, use disasterRecordsBasicInfoById which only returns published records
+			const record = await disasterRecordsBasicInfoById(idStr);
+
+			// If record is not found or not published, redirect to unauthorized page
+			if (!record) {
+				// Create a URL object based on the current request URL
+				const url = new URL(request.url);
+				// Build the redirect URL using the same origin
+				const redirectUrl = `${url.origin}/error/unauthorized?reason=content-not-published`;
+				throw Response.redirect(redirectUrl, 302);
+			}
+
+			return record;
 		}
 	};
 

@@ -29,7 +29,7 @@ import {
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
-import { and, eq, isNull, isNotNull, or } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
 // Helper function to get country ISO3 code
@@ -38,21 +38,16 @@ async function getCountryIso3(request: Request): Promise<string> {
 	return settings?.dtsInstanceCtryIso3 || "";
 }
 
-// Helper function to get division GeoJSON data
-async function getDivisionGeoJSON() {
-	// Use select() for type safety
-	return dr.select({
-		id: divisionTable.id,
-		name: divisionTable.name,
-		geojson: divisionTable.geojson
-	}).from(divisionTable)
-		.where(and(
-			or(
-				eq(divisionTable.parentId, 0),
-				isNull(divisionTable.parentId)
-			),
-			isNotNull(divisionTable.geojson)
-		));
+// Helper function to get division GeoJSON data filtered by tenant context
+async function getDivisionGeoJSON(tenantContext: any) {
+	// Filter top-level divisions by tenant context
+	return dr.execute(sql`
+		SELECT id, name, geojson, import_id
+		FROM division
+		WHERE (parent_id = 0 OR parent_id IS NULL) 
+		AND geojson IS NOT NULL
+		AND country_accounts_id = ${tenantContext.countryAccountId};
+    `);
 }
 
 // export const loader = createLoader({
@@ -95,12 +90,37 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	// Handle 'new' case without DB query
 	if (params.id === "new") {
+		// Define Keys Mapping
+		const idKey = "id";
+		const parentKey = "parentId";
+		const nameKey = "name";
+
+		// Filter divisions by tenant context for security
+		const rawData = await dr
+			.select()
+			.from(divisionTable)
+			.where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
+
+		const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
+			"geojson",
+			"importId",
+			"nationalId",
+			"level",
+			"name",
+		]);
+
+		// Use tenant's ISO3 from tenant context
+		const ctryIso3 = tenantContext.iso3;
+
+		// Get division GeoJSON filtered by tenant context
+		const divisionGeoJSON = await getDivisionGeoJSON(tenantContext);
+
 		return {
 			item: null, // No existing item for new disaster event
 			hip: await dataForHazardPicker(),
-			treeData: [], // Will be populated below
+			treeData: treeData,
 			ctryIso3: ctryIso3,
-			divisionGeoJSON: await getDivisionGeoJSON(),
+			divisionGeoJSON: divisionGeoJSON?.rows || [],
 			user: authLoaderGetUserForFrontend(loaderArgs)
 		};
 	}
@@ -127,21 +147,26 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
+	// Filter divisions by tenant context for security
+	const rawData = await dr
+		.select()
+		.from(divisionTable)
+		.where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
+
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]);
 
 	// Get hazard picker data
 	const hip = await dataForHazardPicker();
 
 	// Get division GeoJSON data
-	const divisionGeoJSON = await getDivisionGeoJSON();
+	const divisionGeoJSON = await getDivisionGeoJSON(tenantContext);
 
 	return {
 		item,
 		hip,
 		treeData,
 		ctryIso3,
-		divisionGeoJSON,
+		divisionGeoJSON: divisionGeoJSON?.rows || [],
 		user: authLoaderGetUserForFrontend(loaderArgs)
 	};
 });

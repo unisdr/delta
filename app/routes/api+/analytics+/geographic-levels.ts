@@ -1,8 +1,9 @@
 import { LoaderFunction } from "@remix-run/node";
 import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
-import { eq } from "drizzle-orm";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { eq, and } from "drizzle-orm";
+import { authLoaderWithPerm, authLoaderGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 
 /**
  * Geographic Levels API Endpoint
@@ -30,9 +31,11 @@ import { authLoaderPublicOrWithPerm } from "~/util/auth";
  * @param {Request} params.request - The incoming HTTP request
  * @returns {Promise<Response>} JSON response with geographic levels or error details
  */
-export const loader: LoaderFunction = authLoaderPublicOrWithPerm("ViewData", async () => {
+export const loader: LoaderFunction = authLoaderWithPerm("ViewData", async (loaderArgs) => {
   try {
-
+    // Extract user session and tenant context
+    const userSession = authLoaderGetAuth(loaderArgs);
+    const tenantContext = await getTenantContext(userSession);
 
     /** Parameter extraction & validation
      * No query parameters are used for this endpoint.
@@ -41,6 +44,7 @@ export const loader: LoaderFunction = authLoaderPublicOrWithPerm("ViewData", asy
 
     /** Filter construction
      * Constructs a query to select level 1 divisions (regions) with essential fields.
+     * Filters by tenant context for data isolation.
      */
     const query = dr
       .select({
@@ -50,7 +54,13 @@ export const loader: LoaderFunction = authLoaderPublicOrWithPerm("ViewData", asy
         parentId: divisionTable.parentId,
       })
       .from(divisionTable)
-      .where(eq(divisionTable.level, 1));
+      .where(
+        and(
+          eq(divisionTable.level, 1),
+          // Filter by tenant's country account ID for tenant isolation
+          eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+        )
+      );
 
     /** Data retrieval
      * Executes the query to fetch geographic levels from the database.
