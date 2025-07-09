@@ -8,7 +8,7 @@ import {
 	updateCountryAccountStatus,
 } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
-import { createUser, getUserByEmail } from "~/db/queries/user";
+import { createUser } from "~/db/queries/user";
 import {
 	CountryAccountStatus,
 	countryAccountStatuses,
