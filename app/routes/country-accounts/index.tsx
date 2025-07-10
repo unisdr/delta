@@ -81,7 +81,6 @@ export const action: ActionFunction = async ({ request }) => {
 			formValues: { id, countryId, status, email, countryAccountType },
 		};
 	}
-	return { success: true };
 };
 
 export default function CountryAccounts() {
@@ -152,7 +151,7 @@ export default function CountryAccounts() {
 	}
 
 	useEffect(() => {
-		console.log("actiondata= ", actionData)
+		console.log("actiondata= ", actionData);
 		if (actionData?.success) {
 			setIsAddCountryAccountDialogOpen(false);
 			resetForm();
@@ -161,9 +160,10 @@ export default function CountryAccounts() {
 				toast.current.show({
 					severity: "info",
 					summary: "Success",
-					detail: actionData.operation === "update"
-						? "Country account updated successfully"
-						: "Country account created successfully",
+					detail:
+						actionData.operation === "update"
+							? "Country account updated successfully"
+							: "Country account created successfully",
 				});
 			}
 		}
@@ -281,12 +281,12 @@ export default function CountryAccounts() {
 						<Messages header="Errors" messages={actionData.errors} />
 					)}
 					<div className="dts-form__body">
+						<input
+							type="hidden"
+							name="id"
+							value={editingCountryAccount?.id || ""}
+						/>
 						<div className="dts-form-component">
-							<input
-								type="hidden"
-								name="id"
-								value={editingCountryAccount?.id || ""}
-							/>
 							<label>
 								<div className="dts-form-component__label">
 									<span>Country</span>
@@ -307,6 +307,8 @@ export default function CountryAccounts() {
 									))}
 								</select>
 							</label>
+						</div>
+						<div className="dts-form-component">
 							<label>
 								<div className="dts-form-component__label">
 									<span>Status</span>
@@ -332,6 +334,8 @@ export default function CountryAccounts() {
 									</option>
 								</select>
 							</label>
+						</div>
+						<div className="dts-form-component">
 							<label>
 								<div className="dts-form-component__label">
 									<span>Admin's email</span>
@@ -346,6 +350,8 @@ export default function CountryAccounts() {
 									disabled={editingCountryAccount?.id ? true : false}
 								></input>
 							</label>
+						</div>
+						<div className="dts-form-component">
 							<Fieldset
 								legend="Choose Instance Type"
 								disabled={editingCountryAccount?.id ? true : false}

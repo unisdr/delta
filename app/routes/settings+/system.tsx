@@ -3,15 +3,10 @@ import type {
 	LoaderFunction,
 	MetaFunction,
 } from "@remix-run/node";
-import {
-	Form,
-	useLoaderData,
-} from "@remix-run/react";
+import { Form, useLoaderData } from "@remix-run/react";
 import { useRef, useState } from "react";
-import { authLoaderGetAuth, authLoaderWithPerm } from "~/util/auth";
-import {
-	configApplicationEmail,
-} from "~/util/config";
+import { authLoaderWithPerm } from "~/util/auth";
+import { configApplicationEmail } from "~/util/config";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { getSystemInfo, SystemInfo } from "~/db/queries/dtsSystemInfo";
@@ -20,7 +15,10 @@ import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountrySettingsFromSession } from "~/util/session";
-import { Country, InstanceSystemSettings } from "~/drizzle/schema";
+import {
+	Country,
+	InstanceSystemSettings,
+} from "~/drizzle/schema";
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
 
@@ -36,20 +34,23 @@ interface LoaderData {
 	};
 	instanceSystemSettings: InstanceSystemSettings | null;
 	dtsSystemInfo: SystemInfo | null;
-  country: Country;
+	country: Country;
 }
 
 export const loader: LoaderFunction = authLoaderWithPerm(
 	"ViewData",
 	async (loaderArgs) => {
-    const settingsSession = await getCountrySettingsFromSession(loaderArgs.request);
+		const settingsSession = await getCountrySettingsFromSession(
+			loaderArgs.request
+		);
 		const settings = await getInstanceSystemSettingsByCountryAccountId(
 			settingsSession.countryAccountsId
 		);
-    const countryAccount  = await getCountryAccountById(settingsSession.countryAccountsId);
-    const country =  await getCountryById(countryAccount?.country.id);
-    const dtsSystemInfo = await getSystemInfo();
-    
+		const countryAccount = await getCountryAccountById(
+			settingsSession.countryAccountsId
+		);
+		const country = await getCountryById(countryAccount?.country.id);
+		const dtsSystemInfo = await getSystemInfo();
 
 		let currencies: string[] = [];
 		if (settings) {
@@ -62,14 +63,13 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 		const systemLanguage: string[] = ["English"];
 		const confEmailObj = configApplicationEmail();
 
-
 		return Response.json({
 			currencyArray: currency,
 			systemLanguage,
 			confEmailObj,
 			instanceSystemSettings: settings,
 			dtsSystemInfo,
-      country
+			country,
 		});
 	}
 );
@@ -78,7 +78,7 @@ export const action: ActionFunction = authLoaderWithPerm(
 	"EditData",
 	async (args) => {
 		const request = args.request;
-		const formData = await request.formData();
+		await request.formData();
 	}
 );
 
@@ -98,14 +98,7 @@ export default function Settings() {
 	const [websiteName, setWebsiteName] = useState("");
 	const [isApprovedRecordsPublic, setIsApprovedRecordsPublic] = useState(false);
 	const [totpIssuer, setTotpIssuer] = useState("");
-  
 
-	const [termsConditionsUrl, setTermsConditionsUrl] = useState(
-		loaderData.instanceSystemSettings?.footerUrlTermsConditions ?? "Not set"
-	);
-	const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState(
-		loaderData.instanceSystemSettings?.footerUrlPrivacyPolicy ?? "Not set"
-	);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const formRef = useRef<HTMLFormElement>(null);
 	const footerContent = (
@@ -127,6 +120,26 @@ export default function Settings() {
 		</>
 	);
 
+	function showEditSettings() {
+		if (loaderData.instanceSystemSettings) {
+			setPrivacyUrl(
+				loaderData.instanceSystemSettings.footerUrlPrivacyPolicy || ""
+			);
+			setTermsUrl(
+				loaderData.instanceSystemSettings.footerUrlTermsConditions || ""
+			);
+			setWebsiteLogoUrl(loaderData.instanceSystemSettings.websiteLogo || "");
+			setWebsiteName(loaderData.instanceSystemSettings.websiteName || "");
+			setIsApprovedRecordsPublic(
+				loaderData.instanceSystemSettings.approvedRecordsArePublic
+					? true
+					: false
+			);
+			setTotpIssuer(loaderData.instanceSystemSettings.totpIssuer || "");
+		}
+		setIsDialogOpen(true);
+	}
+
 	return (
 		<MainContainer title="System Settings" headerExtra={<NavSettings />}>
 			<div className="mg-container">
@@ -135,7 +148,7 @@ export default function Settings() {
 						<button
 							type="button"
 							className="mg-button mg-button-primary"
-							onClick={() => setIsDialogOpen(true)}
+							onClick={() => showEditSettings()}
 						>
 							Edit Settings
 						</button>
@@ -182,15 +195,18 @@ export default function Settings() {
 					<li>
 						<strong>Country instance:</strong>
 						<ul>
-								<li>
-									<strong>Country:</strong> {loaderData.country.name}
-								</li>
 							<li>
-								<strong>ISO 3:</strong> {loaderData.instanceSystemSettings?.dtsInstanceCtryIso3}
+								<strong>Country:</strong> {loaderData.country.name}
+							</li>
+							<li>
+								<strong>ISO 3:</strong>{" "}
+								{loaderData.instanceSystemSettings?.dtsInstanceCtryIso3}
 							</li>
 							<li>
 								<strong>Instance type:</strong>{" "}
-								{loaderData.instanceSystemSettings?.approvedRecordsArePublic ? "Public" : "Private"}
+								{loaderData.instanceSystemSettings?.approvedRecordsArePublic
+									? "Public"
+									: "Private"}
 							</li>
 						</ul>
 					</li>
@@ -225,14 +241,15 @@ export default function Settings() {
 					</li>
 					<li>
 						<strong>Page Footer for Privacy Policy URL:</strong>{" "}
-						{privacyPolicyUrl}{" "}
+						{loaderData.instanceSystemSettings?.footerUrlPrivacyPolicy}{" "}
 					</li>
 					<li>
 						<strong>Page Footer for Terms and Conditions URL:</strong>{" "}
-						{termsConditionsUrl}{" "}
+						{loaderData.instanceSystemSettings?.footerUrlTermsConditions}{" "}
 					</li>
 					<li>
-						<strong>2FA/TOTP Issuer Name:</strong> {loaderData.instanceSystemSettings?.totpIssuer}
+						<strong>2FA/TOTP Issuer Name:</strong>{" "}
+						{loaderData.instanceSystemSettings?.totpIssuer}
 					</li>
 					<li>
 						<strong>System up to date</strong>
@@ -257,11 +274,6 @@ export default function Settings() {
 						)} */}
 						<div className="dts-form__body">
 							<div className="dts-form-component">
-								{/* <input
-									type="hidden"
-									name="id"
-									value={editingCountryAccount?.id || ""}
-								/> */}
 								<label>
 									<div className="dts-form-component__label">
 										<span>Privacy Policy URL</span>
@@ -275,6 +287,8 @@ export default function Settings() {
 										onChange={(e) => setPrivacyUrl(e.target.value)}
 									></input>
 								</label>
+							</div>
+							<div className="dts-form-component">
 								<label>
 									<div className="dts-form-component__label">
 										<span>Terms and Conditions URL</span>
@@ -288,6 +302,8 @@ export default function Settings() {
 										onChange={(e) => setTermsUrl(e.target.value)}
 									></input>
 								</label>
+							</div>
+							<div className="dts-form-component">
 								<label>
 									<div className="dts-form-component__label">
 										<span>*Website Logo URL</span>
@@ -301,6 +317,8 @@ export default function Settings() {
 										onChange={(e) => setWebsiteLogoUrl(e.target.value)}
 									></input>
 								</label>
+							</div>
+							<div className="dts-form-component">
 								<label>
 									<div className="dts-form-component__label">
 										<span>*Website Name</span>
@@ -314,6 +332,8 @@ export default function Settings() {
 										onChange={(e) => setWebsiteName(e.target.value)}
 									></input>
 								</label>
+							</div>
+							<div className="dts-form-component">
 								<label>
 									<div className="dts-form-component__label">
 										<span>*Approved records visibility</span>
@@ -325,14 +345,16 @@ export default function Settings() {
 											setIsApprovedRecordsPublic(e.target.value === "true")
 										}
 									>
-										<option key={1} value={"true"}>
+										<option key={1} value="true">
 											Public
 										</option>
-										<option key={2} value={"false"}>
+										<option key={2} value="false">
 											Private
 										</option>
 									</select>
 								</label>
+							</div>
+							<div className="dts-form-component">
 								<label>
 									<div className="dts-form-component__label">
 										<span>Totp Issuer</span>
