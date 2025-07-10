@@ -4,7 +4,6 @@ import { Link } from "@remix-run/react";
 import { useLoaderData, Outlet } from "@remix-run/react";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
-import { public_tenant_context } from "~/util/tenant";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
@@ -117,7 +116,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
   if (qsDisEventId) {
     // Pass public tenant context for analytics access
-    record = await disasterEventById(qsDisEventId, public_tenant_context).catch(console.error);
+    record = await disasterEventById(qsDisEventId, settings.countryAccountsId).catch(console.error);
     if (record) {
       try {
         cpDisplayName = await contentPickerConfig.selectedDisplay(dr, qsDisEventId);
@@ -218,7 +217,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // get the count of Disaster Records linked to the disaster event
         countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(qsDisEventId);
 
-        totalSectorEffects = await disasterEventSectorTotal__ById(qsDisEventId,[], currency);
+        totalSectorEffects = await disasterEventSectorTotal__ById(qsDisEventId, [], currency);
 
         //retired, system is now using version 2
         // totalAffectedPeople = await getAffectedByDisasterEvent(dr, qsDisEventId); 
@@ -226,7 +225,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // console.log( totalAffectedPeople );
         // console.log( totalAffectedPeople, totalAffectedPeople2 );
 
-        const divisionLevel1 = await getDivisionByLevel(1, public_tenant_context);
+        const divisionLevel1 = await getDivisionByLevel(1, settings.countryAccountsId);
         for (const item of divisionLevel1) {
           const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, [item.id], currency);
           const humanEffectsPerDivision = await getAffected(dr, qsDisEventId, { divisionId: item.id });

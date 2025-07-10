@@ -45,14 +45,14 @@ export function Footer({
             </div>
             <nav>
               <ul>
-                {urlPrivacyPolicy.length > 0 && (
+                {urlPrivacyPolicy && urlPrivacyPolicy.length > 0 && (
                   <li>
                     <a href={urlPrivacyPolicy} target="_blank">
                       Privacy policy
                     </a>
                   </li>
                 )}
-                {urlTermsConditions.length > 0 && (
+                {urlTermsConditions && urlTermsConditions.length > 0 && (
                   <li>
                     <a href={urlTermsConditions} target="_blank">
                       Terms and conditions

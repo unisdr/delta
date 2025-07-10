@@ -933,11 +933,11 @@ export async function disasterEventIdByImportId(tx: Tx, importId: string, tenant
 	return res[0].id
 }
 
-export async function disasterEventById(id: any, tenantContext: TenantContext) {
-	return disasterEventByIdTx(dr, id, tenantContext);
+export async function disasterEventById(id: any, countryAccountId: string) {
+	return disasterEventByIdTx(dr, id, countryAccountId);
 }
 
-export async function disasterEventByIdTx(tx: Tx, id: any, tenantContext: TenantContext) {
+export async function disasterEventByIdTx(tx: Tx, id: any, countryAccountId: string) {
 	if (typeof id !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -946,7 +946,7 @@ export async function disasterEventByIdTx(tx: Tx, id: any, tenantContext: Tenant
 	const disasterEvent = await tx.query.disasterEventTable.findFirst({
 		where: and(
 			eq(disasterEventTable.id, id),
-			eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
+			eq(disasterEventTable.countryAccountsId, countryAccountId)
 		)
 	});
 

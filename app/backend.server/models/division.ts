@@ -540,14 +540,14 @@ async function processGeoJSON(tx: Tx, divisionId: number, geoJsonContent: string
         bbox = ST_Envelope(ST_GeomFromGeoJSON(${JSON.stringify(featureToProcess.geometry)}))
       WHERE id = ${divisionId}
     `);
-    
+
     // Generate spatial index for efficient querying
     await tx.execute(sql`
       UPDATE ${divisionTable}
       SET spatial_index = ST_GeoHash(ST_Centroid(geom), 10)
       WHERE id = ${divisionId} AND geom IS NOT NULL
     `);
-    
+
     logger.info(`Updated geometry for division ID ${divisionId}`);
   } catch (error) {
     if (error instanceof AppError) throw error;
@@ -1059,7 +1059,7 @@ export type DivisionIdAndNameResult = {
 }[];
 
 
-export async function getDivisionIdAndNameByLevel(level: number, tenantContext: TenantContext): Promise<DivisionIdAndNameResult> {
+export async function getDivisionIdAndNameByLevel(level: number, countryAccountId: string): Promise<DivisionIdAndNameResult> {
   try {
     const divisions = await dr
       .select({
@@ -1070,7 +1070,7 @@ export async function getDivisionIdAndNameByLevel(level: number, tenantContext: 
       .from(divisionTable)
       .where(and(
         eq(divisionTable.level, level),
-        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+        eq(divisionTable.countryAccountsId, countryAccountId)
       ));
 
     // Map results to ensure correct typing
@@ -1085,14 +1085,14 @@ export async function getDivisionIdAndNameByLevel(level: number, tenantContext: 
   }
 }
 
-export async function getDivisionByLevel(level: number, tenantContext: TenantContext) {
+export async function getDivisionByLevel(level: number, countryAccountId: string) {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
         const res = await tx.query.divisionTable.findMany({
           where: and(
             eq(divisionTable.level, level),
-            eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+            eq(divisionTable.countryAccountsId, countryAccountId)
           ),
           with: {
             divisionParent: true
