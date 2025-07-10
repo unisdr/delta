@@ -3,8 +3,8 @@ import type {
 	LoaderFunction,
 	MetaFunction,
 } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import { useRef, useState } from "react";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
 import { authLoaderWithPerm } from "~/util/auth";
 import { configApplicationEmail } from "~/util/config";
 import { NavSettings } from "~/routes/settings/nav";
@@ -12,7 +12,10 @@ import { MainContainer } from "~/frontend/container";
 import { getSystemInfo, SystemInfo } from "~/db/queries/dtsSystemInfo";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
-import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
+import {
+	getInstanceSystemSettingsByCountryAccountId,
+	updateInstanceSystemSetting,
+} from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountrySettingsFromSession } from "~/util/session";
 import {
@@ -21,6 +24,12 @@ import {
 } from "~/drizzle/schema";
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
+import {
+	SettingsValidationError,
+	updateSettingsService,
+} from "~/services/settingsService";
+import Messages from "~/components/Messages";
+import { Toast, ToastRef } from "~/components/Toast";
 
 // Define the loader data type
 interface LoaderData {
@@ -78,7 +87,38 @@ export const action: ActionFunction = authLoaderWithPerm(
 	"EditData",
 	async (args) => {
 		const request = args.request;
-		await request.formData();
+		const formData = await request.formData();
+		const id = formData.get("id") as string;
+		const privacyUrl = formData.get("privacyUrl") as string;
+		const termsUrl = formData.get("termsUrl") as string;
+		const websiteLogoUrl = formData.get("websiteLogoUrl") as string;
+		const websiteName = formData.get("websiteName") as string;
+		const isApprovedRecordsPublic = Boolean(
+			formData.get("approvedRecordsArePublic") as string
+		);
+		const totpIssuer = formData.get("totpIssuer") as string;
+
+		try {
+			await updateSettingsService(
+				id,
+				privacyUrl,
+				termsUrl,
+				websiteLogoUrl,
+				websiteName,
+				isApprovedRecordsPublic,
+				totpIssuer
+			);
+			return { success: "ok" };
+		} catch (error) {
+			let errors = {};
+			if (error instanceof SettingsValidationError) {
+				errors = { errors: error.errors };
+			} else {
+				errors = { errors: ["An unexpected error occured"] };
+				console.log(error);
+			}
+			return { ...errors };
+		}
 	}
 );
 
@@ -91,6 +131,10 @@ export const meta: MetaFunction = () => {
 
 export default function Settings() {
 	const loaderData = useLoaderData<LoaderData>();
+	const actionData = useActionData<{
+		errors?: string[];
+		success?: boolean;
+	}>();
 
 	const [privacyUrl, setPrivacyUrl] = useState("");
 	const [termsUrl, setTermsUrl] = useState("");
@@ -100,6 +144,7 @@ export default function Settings() {
 	const [totpIssuer, setTotpIssuer] = useState("");
 
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const toast = useRef<ToastRef>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 	const footerContent = (
 		<>
@@ -140,8 +185,24 @@ export default function Settings() {
 		setIsDialogOpen(true);
 	}
 
+	useEffect(() => {
+		if (actionData?.success) {
+			setIsDialogOpen(false);
+			// resetForm();
+
+			if (toast.current) {
+				toast.current.show({
+					severity: "info",
+					summary: "Success",
+					detail: "System settings updated successfully",
+				});
+			}
+		}
+	}, [actionData]);
+
 	return (
 		<MainContainer title="System Settings" headerExtra={<NavSettings />}>
+			<Toast ref={toast} />
 			<div className="mg-container">
 				<div className="dts-page-intro">
 					<div className="dts-additional-actions">
@@ -269,10 +330,15 @@ export default function Settings() {
 						className="dts-form"
 						ref={formRef}
 					>
-						{/* {actionData?.errors && (
+						{actionData?.errors && (
 							<Messages header="Errors" messages={actionData.errors} />
-						)} */}
+						)}
 						<div className="dts-form__body">
+							<input
+								type="hidden"
+								name="id"
+								value={loaderData.instanceSystemSettings?.id || ""}
+							/>
 							<div className="dts-form-component">
 								<label>
 									<div className="dts-form-component__label">
@@ -309,7 +375,7 @@ export default function Settings() {
 										<span>*Website Logo URL</span>
 									</div>
 									<input
-										type="url"
+										type="text"
 										name="websiteLogoUrl"
 										aria-label="Website Logo URL"
 										placeholder="https://example.com/logo.svg"
@@ -357,7 +423,7 @@ export default function Settings() {
 							<div className="dts-form-component">
 								<label>
 									<div className="dts-form-component__label">
-										<span>Totp Issuer</span>
+										<span>*Totp Issuer</span>
 									</div>
 									<input
 										type="text"

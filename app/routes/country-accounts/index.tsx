@@ -151,7 +151,6 @@ export default function CountryAccounts() {
 	}
 
 	useEffect(() => {
-		console.log("actiondata= ", actionData);
 		if (actionData?.success) {
 			setIsAddCountryAccountDialogOpen(false);
 			resetForm();
