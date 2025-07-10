@@ -24,7 +24,7 @@ interface Filters {
   disasterEvent?: string | null;
 }
 
-export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: string, filters?: Filters, _currency?: any): Promise<SectorImpactResponse> => {
+export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: string, filters?: Filters, currency?: any): Promise<SectorImpactResponse> => {
   try {
     // Input validation
     if (!sectorId) {
@@ -35,7 +35,7 @@ export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: 
     }
 
     // Fetch data from the model with tenant context for isolation
-    const data = await fetchSectorImpactData(tenantContext, sectorId, filters);
+    const data = await fetchSectorImpactData(tenantContext, sectorId, filters, currency);
 
     // Return successful response
     return {
