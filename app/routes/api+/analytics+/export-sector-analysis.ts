@@ -1,6 +1,7 @@
 import { json } from "@remix-run/node";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import type { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
+import { authLoaderPublicOrWithPerm, authLoaderGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 import { dr } from "~/db.server";
 import { fetchSectorImpactData } from "~/backend.server/models/analytics/ImpactonSectors";
 import { fetchHazardImpactData } from "~/backend.server/models/analytics/hazardImpact";
@@ -203,6 +204,22 @@ const resolveFilterNames = async (filters: ExportFilters) => {
   };
 };
 
+/**
+ * Interface for the API response structure
+ */
+interface ExportSectorAnalysisResponse {
+  success?: boolean;
+  sectorImpact?: any;
+  hazardImpact?: any;
+  geographicImpact?: any;
+  effectDetails?: any;
+  mostDamagingEvents?: any;
+  filters?: ExportFilters;
+  generatedAt?: string;
+  filterNames?: any;
+  error?: string;
+}
+
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (args: LoaderFunctionArgs) => {
   try {
     const url = new URL(args.request.url);
@@ -288,6 +305,32 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (args: Loader
     // Fetch names for all filters
     const filterNames = await resolveFilterNames(commonFilters);
 
+    /**
+     * Extract tenant context from user session
+     * Authentication is required for this API endpoint
+     */
+    // Get user session - will throw an error if not authenticated
+    const userSession = authLoaderGetAuth(args);
+    if (!userSession) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Authentication required'
+        },
+        {
+          status: 401,
+          headers: {
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff'
+          }
+        }
+      ) as TypedResponse<ExportSectorAnalysisResponse>;
+    }
+
+    // Extract tenant context from user session
+    const tenantContext = await getTenantContext(userSession);
+    console.log("Using authenticated tenant context for export-sector-analysis:", tenantContext);
+
     const [
       sectorImpact,
       hazardImpact,
@@ -295,11 +338,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (args: Loader
       effectDetails,
       mostDamagingEvents
     ] = await Promise.all([
-      fetchSectorImpactData(commonFilters.subSectorId ?? sectorId, sectorFilters),
-      fetchHazardImpactData(hazardFilters),
-      getGeographicImpact(geographicFilters),
-      getEffectDetails(commonFilters),
-      getMostDamagingEvents(mostDamagingParams)
+      fetchSectorImpactData(tenantContext, commonFilters.subSectorId ?? sectorId, sectorFilters),
+      fetchHazardImpactData(tenantContext, hazardFilters),
+      getGeographicImpact(tenantContext, geographicFilters),
+      getEffectDetails(tenantContext, commonFilters),
+      getMostDamagingEvents(tenantContext, mostDamagingParams)
     ]);
 
     // Extract unique sectorIds from damages, losses, disruptions

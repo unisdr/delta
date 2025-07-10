@@ -7,7 +7,10 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { handleGeographicImpactQuery } from "~/backend.server/handlers/analytics/geographicImpact";
 import { z } from "zod";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm, authLoaderGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
+
+
 
 // Input validation schema aligned with handler's GeographicImpactQuerySchema
 const GeographicImpactQuerySchema = z.object({
@@ -51,22 +54,40 @@ const GeographicImpactQuerySchema = z.object({
  *   - confidenceLevel {string} Optional. 'low', 'medium', or 'high'
  * @returns {Promise<Response>} GeoJSON response with geographic impact data or error message
  */
-export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: LoaderFunctionArgs) => {
     try {
         /**
          * Parameter Extraction & Validation
          * Extracts query parameters and validates them against the Zod schema
          */
+        const request = loaderArgs.request;
         const url = new URL(request.url);
         const params = Object.fromEntries(url.searchParams);
         const validParams = GeographicImpactQuerySchema.parse(params);
         console.log("Processing request with params:", JSON.stringify(validParams, null, 2));
 
+
+
+        /**
+         * Extract tenant context from user session
+         * Authentication is required for this API endpoint
+         */
+        // Get user session - will throw an error if not authenticated
+        const userSession = authLoaderGetAuth(loaderArgs);
+        if (!userSession) {
+            throw new Response("Authentication required", { status: 401 });
+        }
+
+        // Extract tenant context from user session
+        const tenantContext = await getTenantContext(userSession);
+        console.log("Using authenticated tenant context:", tenantContext);
+
         /**
          * Data Retrieval
          * Calls the domain layer handler to fetch and process geographic impact data
+         * with tenant isolation
          */
-        const result = await handleGeographicImpactQuery(validParams);
+        const result = await handleGeographicImpactQuery(tenantContext, validParams);
 
         if (!result.success) {
             return Response.json({

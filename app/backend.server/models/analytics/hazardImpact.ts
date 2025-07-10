@@ -1,5 +1,6 @@
 import { and, desc, eq, exists, inArray, sql, SQL } from "drizzle-orm";
 import { dr } from "~/db.server";
+import { TenantContext } from "~/util/tenant";
 import {
     damagesTable,
     lossesTable,
@@ -95,7 +96,7 @@ export interface HazardImpactResult {
     };
 }
 
-export async function fetchHazardImpactData(filters: HazardImpactFilters): Promise<HazardImpactResult> {
+export async function fetchHazardImpactData(tenantContext: TenantContext, filters: HazardImpactFilters): Promise<HazardImpactResult> {
     const {
         sectorId,
         hazardTypeId,
@@ -111,6 +112,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     } = filters;
 
     logger.info("Fetching hazard impact data", {
+        tenantId: tenantContext.countryAccountId,
         filters: {
             sectorId,
             hazardTypeId,
@@ -135,7 +137,9 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
 
     // Build base conditions array
     let baseConditions: SQL[] = [
-        sql`${disasterRecordsTable.approvalStatus} = 'published'`
+        sql`${disasterRecordsTable.approvalStatus} = 'published'`,
+        // Add tenant isolation filter
+        sql`${disasterRecordsTable.countryAccountsId} = ${tenantContext.countryAccountId}`
     ];
 
     // Get all sector IDs (including subsectors)

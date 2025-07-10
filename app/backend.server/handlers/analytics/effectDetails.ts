@@ -1,4 +1,5 @@
 import { getEffectDetails } from "~/backend.server/models/analytics/effectDetails";
+import { TenantContext } from "~/util/tenant";
 
 /**
  * Custom error class for effect details related errors
@@ -22,7 +23,7 @@ export class EffectDetailsError extends Error {
  * - DB_ERROR: Database operation failed
  * - DATE_RANGE_ERROR: Invalid date range specified
  */
-export async function getEffectDetailsHandler(params: {
+export async function getEffectDetailsHandler(tenantContext: TenantContext, params: {
   sectorId: string | null;
   subSectorId: string | null;
   hazardTypeId: string | null;
@@ -60,10 +61,11 @@ export async function getEffectDetailsHandler(params: {
     console.info('Processing effect details request', {
       timestamp: new Date().toISOString(),
       params,
+      tenantId: tenantContext.countryAccountId,
       requestId: crypto.randomUUID()
     });
 
-    const data = await getEffectDetails(params);
+    const data = await getEffectDetails(tenantContext, params);
 
     // Log successful response metrics
     console.info('Effect details request completed', {

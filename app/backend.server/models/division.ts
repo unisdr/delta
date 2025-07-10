@@ -530,19 +530,25 @@ async function processGeoJSON(tx: Tx, divisionId: number, geoJsonContent: string
       });
     }
 
-    // Store GeoJSON in a temporary column to trigger the geometry update
+    // Store GeoJSON and explicitly update the geometry fields using PostGIS functions
+    // This replaces reliance on a database trigger that doesn't exist
     await tx.execute(sql`
       UPDATE ${divisionTable}
-      SET geojson = ${JSON.stringify(featureToProcess.geometry)}::jsonb
+      SET 
+        geojson = ${JSON.stringify(featureToProcess.geometry)}::jsonb,
+        geom = ST_GeomFromGeoJSON(${JSON.stringify(featureToProcess.geometry)}),
+        bbox = ST_Envelope(ST_GeomFromGeoJSON(${JSON.stringify(featureToProcess.geometry)}))
       WHERE id = ${divisionId}
     `);
-
-    // Refresh the geometry using the trigger
+    
+    // Generate spatial index for efficient querying
     await tx.execute(sql`
       UPDATE ${divisionTable}
-      SET geojson = geojson
-      WHERE id = ${divisionId}
+      SET spatial_index = ST_GeoHash(ST_Centroid(geom), 10)
+      WHERE id = ${divisionId} AND geom IS NOT NULL
     `);
+    
+    logger.info(`Updated geometry for division ID ${divisionId}`);
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw new ImportError('Failed to process GeoJSON', { error });
@@ -1171,6 +1177,75 @@ export async function getDivisionsBySpatialQuery(
       throw error;
     }
     throw new TransactionError('Failed to execute spatial query transaction', { error });
+  }
+}
+
+/**
+ * Updates geometry data for all divisions that have GeoJSON but no geometry
+ * This function is used to fix data inconsistencies when divisions have been imported
+ * without proper geometry conversion
+ * 
+ * @param tenantContext - Tenant context for filtering divisions by tenant
+ * @returns Object with count of updated divisions and any errors
+ */
+export async function updateMissingGeometryForDivisions(tenantContext: TenantContext): Promise<{ updated: number; errors: string[] }> {
+  const errors: string[] = [];
+  let updated = 0;
+
+  try {
+    return await dr.transaction(async (tx: Tx) => {
+      // Find divisions with geojson but no geometry
+      const divisionsToUpdate = await tx.query.divisionTable.findMany({
+        where: and(
+          eq(divisionTable.countryAccountsId, tenantContext.countryAccountId),
+          sql`${divisionTable.geojson} IS NOT NULL`,
+          sql`${divisionTable.geom} IS NULL`
+        ),
+        columns: {
+          id: true,
+          geojson: true
+        }
+      });
+
+      logger.info(`Found ${divisionsToUpdate.length} divisions with missing geometry for tenant ${tenantContext.countryAccountId}`);
+
+      // Process each division
+      for (const division of divisionsToUpdate) {
+        try {
+          if (!division.geojson) continue;
+
+          // Update geometry using PostGIS functions
+          await tx.execute(sql`
+            UPDATE ${divisionTable}
+            SET 
+              geom = ST_GeomFromGeoJSON(${JSON.stringify(division.geojson)}),
+              bbox = ST_Envelope(ST_GeomFromGeoJSON(${JSON.stringify(division.geojson)}))
+            WHERE id = ${division.id}
+          `);
+
+          // Generate spatial index
+          await tx.execute(sql`
+            UPDATE ${divisionTable}
+            SET spatial_index = ST_GeoHash(ST_Centroid(geom), 10)
+            WHERE id = ${division.id} AND geom IS NOT NULL
+          `);
+
+          updated++;
+        } catch (error) {
+          const errorMessage = `Failed to update geometry for division ID ${division.id}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          logger.error(errorMessage);
+          errors.push(errorMessage);
+        }
+      }
+
+      logger.info(`Successfully updated geometry for ${updated} divisions`);
+      return { updated, errors };
+    });
+  } catch (error) {
+    const errorMessage = `Transaction failed during geometry update: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    logger.error(errorMessage);
+    errors.push(errorMessage);
+    return { updated, errors };
   }
 }
 

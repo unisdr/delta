@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getGeographicImpact } from "~/backend.server/models/analytics/geographicImpact";
+import type { TenantContext } from "~/util/tenant";
 
 // Input validation schema
 const GeographicImpactQuerySchema = z.object({
@@ -45,7 +46,7 @@ type GeographicImpactFilters = {
     disasterEventId?: string;
 };
 
-export async function handleGeographicImpactQuery(params: unknown) {
+export async function handleGeographicImpactQuery(tenantContext: TenantContext, params: unknown) {
     try {
         // Validate input parameters
         const validParams = GeographicImpactQuerySchema.parse(params);
@@ -63,8 +64,8 @@ export async function handleGeographicImpactQuery(params: unknown) {
             disasterEventId: validParams.disasterEventId
         };
 
-        // Get GeoJSON data with all filters
-        const result = await getGeographicImpact(filters);
+        // Get GeoJSON data with all filters and tenant isolation
+        const result = await getGeographicImpact(tenantContext, filters);
 
         return result;
     } catch (error) {

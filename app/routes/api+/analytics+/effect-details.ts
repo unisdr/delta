@@ -7,7 +7,8 @@
 import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getEffectDetailsHandler, EffectDetailsError } from "~/backend.server/handlers/analytics/effectDetails";
 import { checkRateLimit } from "~/utils/security";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm, authLoaderGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 import { z } from "zod";
 
 /**
@@ -35,9 +36,9 @@ const querySchema = z.object({
   hazardClusterId: z.string().regex(/^\d+$/).optional(),
   specificHazardId: z.string().regex(/^\d+$/).optional(),
   geographicLevelId: z.string().regex(/^\d+$/).optional(),
-  fromDate: z.string().optional(), 
-  toDate: z.string().optional(), 
-  disasterEventId: z.string().optional(), 
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+  disasterEventId: z.string().optional(),
 });
 
 /**
@@ -57,7 +58,8 @@ const querySchema = z.object({
  *   - disasterEventId {string} Optional. Filter by specific disaster event
  * @returns {Promise<Response>} JSON response with effect details data or error message
  */
-export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: LoaderFunctionArgs) => {
+  const { request } = loaderArgs;
   try {
     /**
      * Rate Limiting
@@ -107,11 +109,39 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
     }
 
     /**
+     * Extract tenant context from user session
+     * Authentication is required for this API endpoint
+     */
+    // Get user session - will throw an error if not authenticated
+    const userSession = authLoaderGetAuth(loaderArgs);
+    if (!userSession) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED'
+        },
+        {
+          status: 401,
+          headers: {
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff'
+          }
+        }
+      ) as TypedResponse<EffectDetailsResponse>;
+    }
+
+    // Extract tenant context from user session
+    const tenantContext = await getTenantContext(userSession);
+    console.log("Using authenticated tenant context:", tenantContext);
+
+    /**
      * Data Retrieval
      * Calls the domain layer handler to fetch and process effect details data
+     * with tenant isolation
      */
     const validatedData = validationResult.data;
-    const data = await getEffectDetailsHandler({
+    const data = await getEffectDetailsHandler(tenantContext, {
       sectorId: validatedData.sectorId?.toString() || null,
       subSectorId: validatedData.subSectorId?.toString() || null,
       hazardTypeId: validatedData.hazardTypeId || null,

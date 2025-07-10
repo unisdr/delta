@@ -3,6 +3,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
 import { createClientLogger } from "~/utils/clientLogger";
+import { redirect } from "@remix-run/node";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
@@ -291,9 +292,22 @@ queryClient.getMutationCache().config = {
   }
 };
 
-// Loader with public access or specific permission check for "ViewData"
+/**
+ * Loader with authentication restriction for sectors analytics page
+ * 
+ * TEMPORARY RESTRICTION: This page is currently restricted to authenticated users only
+ * until business rules and logic for public access are defined.
+ * 
+ * @returns {Promise<Response>} - Response object or redirect to unauthorized page
+ */
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
   const { request, userSession } = loaderArgs;
+
+  // TEMPORARY RESTRICTION: Redirect unauthenticated users to unauthorized page
+  // This is a temporary measure until business rules for public access are defined
+  if (!userSession) {
+    return redirect("/error/unauthorized?reason=content-not-published");
+  }
 
   // Generate request ID for tracking
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -315,11 +329,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
   try {
 
-    // Get currency from environment variable
-    const settings  = await getCountrySettingsFromSession(loaderArgs.request);
-    let currency = "USD";
-    if(settings){
-      currency = settings.currencyCodes?.split(",")[0]
+    // Get currency from instanceSystemSettings via session
+    const settings = await getCountrySettingsFromSession(loaderArgs.request);
+    let currency = "USD"; // Default fallback
+    if (settings && settings.currencyCodes) {
+      currency = settings.currencyCodes.split(",")[0];
     }
     contextLogger.info("Successfully loaded sectors analytics data", {
       currency,
@@ -938,7 +952,7 @@ function SectorsAnalysisContent() {
                 <div style={{ minHeight: "400px" }}>
                   <ErrorBoundary>
                     <MemoizedImpactByHazard filters={filters}
-                    currency={currency} />
+                      currency={currency} />
                   </ErrorBoundary>
                 </div>
 

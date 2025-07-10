@@ -1,13 +1,14 @@
 /**
  * @fileoverview API endpoint for retrieving hazard impact data for disaster analysis.
  * This route provides impact data based on various filter criteria.
- * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
+ * Access is controlled by authentication and tenant isolation.
  */
 
 import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getHazardImpact } from "~/backend.server/handlers/analytics/hazardImpact";
 import type { HazardImpactFilters } from "~/types/hazardImpact";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderWithPerm, authLoaderGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 import { z } from "zod";
 
 /**
@@ -52,8 +53,13 @@ const querySchema = z.object({
  *   - _disasterEventId {string} Optional. Alternative disaster event ID
  * @returns {Promise<Response>} JSON response with hazard impact data or error message
  */
-export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
+export const loader = authLoaderWithPerm("ViewData", async (loaderArgs: LoaderFunctionArgs) => {
   try {
+    // Extract user session and tenant context
+    const userSession = authLoaderGetAuth(loaderArgs);
+    const tenantContext = await getTenantContext(userSession);
+    const request = loaderArgs.request;
+
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
 
@@ -62,7 +68,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
      * This ensures type safety and proper format of all inputs
      */
     const validationResult = querySchema.safeParse(searchParams);
-    
+
     if (!validationResult.success) {
       return Response.json(
         {
@@ -90,10 +96,10 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
 
     /**
      * Data Retrieval and Processing
-     * Calls the domain layer handler to fetch and process hazard impact data
+     * Calls the domain layer handler to fetch and process hazard impact data with tenant isolation
      * Handles both successful and error responses from the handler
      */
-    const result = await getHazardImpact(filters);
+    const result = await getHazardImpact(tenantContext, filters);
 
     if (!result.success) {
       return Response.json(
