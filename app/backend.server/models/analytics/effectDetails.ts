@@ -83,7 +83,12 @@ interface FilterParams {
  * - Date comparisons use UTC for consistency
  * - Spatial queries use PostGIS functions with proper error handling
  */
-export async function getEffectDetails(filters: FilterParams) {
+/**
+ * Retrieves detailed effect data with tenant isolation
+ * @param tenantContext - The tenant context for data isolation
+ * @param filters - Object containing filter criteria
+ */
+export async function getEffectDetails(tenantContext: { countryAccountId: string }, filters: FilterParams) {
   const startTime = Date.now();
   logger.info("Processing effect details request", {
     filters: {
@@ -137,8 +142,12 @@ export async function getEffectDetails(filters: FilterParams) {
 
   // Base conditions for disaster records
   let baseConditions: SQL[] = [
-    sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`
+    sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`,
+    // Add tenant isolation filter
+    eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId)
   ];
+
+  logger.debug("Applied tenant isolation filter", { tenantId: tenantContext.countryAccountId });
 
   logger.debug("Initialized base query conditions", {
     hasSectorFilter: targetSectorIds.length > 0,
