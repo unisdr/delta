@@ -1,6 +1,7 @@
 import { eq, sql, SQL, and, inArray, gte, lte, exists, or, not } from "drizzle-orm";
 import { dr } from "~/db.server";
 import createLogger from "~/utils/logger.server";
+import type { TenantContext } from "~/util/tenant";
 
 // Initialize logger for this module
 const logger = createLogger("backend.server/models/analytics/geographicImpact");
@@ -241,7 +242,7 @@ function isValidGeoJSON(value: any): boolean {
  *    - Assessment types (rapid vs detailed)
  *    - Confidence levels for data quality
  */
-export async function getGeographicImpact(filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
+export async function getGeographicImpact(tenantContext: TenantContext, filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
     try {
         // Get sector IDs based on selection
         let sectorIds: number[] = [];
@@ -418,6 +419,8 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
             .where(
                 and(
                     eq(divisionTable.level, 1),
+                    // Apply tenant isolation by filtering divisions by the tenant's country account ID
+                    eq(divisionTable.countryAccountsId, tenantContext.countryAccountId),
                     filters.geographicLevelId
                         ? eq(divisionTable.id, parseInt(filters.geographicLevelId))
                         : undefined
@@ -455,6 +458,7 @@ export async function getGeographicImpact(filters: GeographicImpactFilters): Pro
         await Promise.all(divisions.map(async (division) => {
             try {
                 const disasterRecords = await getDisasterRecordsForDivision(
+                    tenantContext,
                     division.id.toString(),
                     {
                         startDate: filters.fromDate,
@@ -575,6 +579,7 @@ export async function getDescendantDivisionIds(divisionId: number): Promise<numb
  * @returns Array of matching disaster record IDs
  */
 async function getDisasterRecordsForDivision(
+    tenantContext: TenantContext,
     divisionId: string,
     filters?: GeographicFilters,
     sectorIds: number[] = [],
@@ -603,6 +608,12 @@ async function getDisasterRecordsForDivision(
         // Build conditions array
         const conditions: Array<SQL<unknown>> = [];
 
+        // Add tenant isolation filter
+        conditions.push(sql<string>`${disasterRecordsTable.countryAccountsId} = ${tenantContext.countryAccountId}`);
+
+        // Log tenant filtering for audit trail
+        logger.info(`Applying tenant filtering for countryAccountsId: ${tenantContext.countryAccountId}`);
+
         // Add approval status filter
         conditions.push(sql<string>`${disasterRecordsTable.approvalStatus} = 'published'`);
 
@@ -622,7 +633,7 @@ async function getDisasterRecordsForDivision(
             conditions.push(
                 inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
             );
-            console.log(`✔ Sector filter applied: ${sectorIds.length} sectors`);
+            console.log(`✔ Sector filter applied: ${sectorIds.join(', ')} sectors`);
         }
 
         // Add date filters if specified
@@ -694,7 +705,12 @@ async function getDisasterRecordsForDivision(
         const query = dr
             .select({
                 id: disasterRecordsTable.id,
-                spatialFootprint: disasterRecordsTable.spatialFootprint
+                spatialFootprint: disasterRecordsTable.spatialFootprint,
+                // Add additional fields for debugging
+                sectorId: sectorDisasterRecordsRelationTable.sectorId,
+                withDamage: sectorDisasterRecordsRelationTable.withDamage,
+                damageCost: sectorDisasterRecordsRelationTable.damageCost,
+                damageCostCurrency: sectorDisasterRecordsRelationTable.damageCostCurrency
             })
             .from(disasterRecordsTable)
             .innerJoin(
@@ -1029,6 +1045,7 @@ AND ST_Intersects(
  * @returns Geographic impact data with metadata
  */
 export async function fetchGeographicImpactData(
+    tenantContext: TenantContext,
     divisionId: string,
     filters?: GeographicFilters
 ): Promise<{ totalDamage: number, totalLoss: number, byYear: Map<number, number>, metadata?: DisasterImpactMetadata }> {
@@ -1047,7 +1064,7 @@ export async function fetchGeographicImpactData(
         }
 
         // Get disaster records for the division with improved spatial handling
-        const recordIds = await getDisasterRecordsForDivision(divisionId, filters,);
+        const recordIds = await getDisasterRecordsForDivision(tenantContext, divisionId, filters);
 
         if (recordIds.length === 0) {
             console.log(`No disaster records found for division ${divisionId}`);
@@ -1192,11 +1209,13 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
         const byYear = new Map<number, number>();
 
         // Process sector overrides first
+        console.log(`Found ${sectorOverrides.length} sector override records`);
         for (const row of sectorOverrides) {
             const year = Number(row.year);
             if (isNaN(year)) continue;
 
             const damage = safeMoneyToNumber(row.totalDamage);
+            console.log(`Adding sector override damage for year ${year}: ${damage}`);
             total += damage;
             byYear.set(year, (byYear.get(year) || 0) + damage);
         }
@@ -1342,9 +1361,9 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
 /**
  * Main function to get geographic impact following international standards
  */
-export async function getGeographicImpactGeoJSON(sectorId: string, subSectorId?: string): Promise<GeoJSONFeatureCollection> {
+export async function getGeographicImpactGeoJSON(tenantContext: TenantContext, sectorId: string, subSectorId?: string): Promise<GeoJSONFeatureCollection> {
     try {
-        const result = await getGeographicImpact({ sectorId, subSectorId });
+        const result = await getGeographicImpact(tenantContext, { sectorId, subSectorId });
 
         if (!result.success) {
             console.warn("Failed to get geographic impact data:", result.error);
