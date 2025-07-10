@@ -8,7 +8,6 @@ import {
 	useLoaderData,
 } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
-import { public_tenant_context } from "~/util/tenant";
 import { fetchHazardTypes } from "~/backend.server/models/analytics/hazard-types";
 import { fetchAllSpecificHazards } from "~/backend.server/models/analytics/specific-hazards";
 import {
@@ -55,7 +54,7 @@ interface interfaceMap {
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
-	async ({request}) => {
+	async ({ request }) => {
 		const settings = await getCountrySettingsFromSession(request);
 		let currencies: string[] = [];
 		if (settings) {
@@ -66,7 +65,7 @@ export const loader = authLoaderPublicOrWithPerm(
 		const hazardTypes = await fetchHazardTypes();
 		const hazardClusters = await fetchHazardClusters(null);
 		const specificHazards = await fetchAllSpecificHazards();
-		const level1DivisionNames = await getDivisionIdAndNameByLevel(1, public_tenant_context);
+		const level1DivisionNames = await getDivisionIdAndNameByLevel(1, settings.countryAccountsId);
 
 		return {
 			currency,
@@ -105,7 +104,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	if (settings) {
 		currency = settings.currencyCodes?.split(",")[0]
 	}
-	const geographicLevel1 = await getDivisionByLevel(1, public_tenant_context);
+	const geographicLevel1 = await getDivisionByLevel(1, settings.countryAccountsId);
 
 	const disasterCount = await getDisasterEventCount(filters);
 	const yearlyDisasterCounts = await getDisasterEventCountByYear(filters);
