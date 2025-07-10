@@ -35,7 +35,7 @@ interface DisasterImpactMetadata {
 export const createAssessmentMetadata = async (
   assessmentType: AssessmentType = 'rapid',
   confidenceLevel: ConfidenceLevel = 'medium',
-  currency: string ='USD'
+  currency: string = 'USD'
 ): Promise<DisasterImpactMetadata> => {
 
   return {
@@ -233,7 +233,6 @@ const getDisasterRecordsForSector = async (
         }
       }
 
-      // Improved disaster event filtering logic - using the same approach as in hazardImpact.ts
       if (filters.disasterEvent || filters._disasterEventId) {
         try {
           const eventId = filters._disasterEventId || filters.disasterEvent;
@@ -444,38 +443,51 @@ const aggregateDamagesData = async (
   for (const recordId of recordIds) {
     let recordDamageAmount = 0;
 
-    // Check sector override first
-    const sectorOverride = sectorOverrides.find(
+    // Check sector overrides for all matching subsectors
+    const matchingOverrides = sectorOverrides.filter(
       so => so.recordId === recordId && numericSectorIds.includes(so.sectorId)
     );
 
-    if (sectorOverride?.withDamage && sectorOverride?.damageCost !== null) {
-      // Use sector override value
-      recordDamageAmount = Number(sectorOverride.damageCost) || 0;
-      logger.debug("Using sector override for damage", {
-        recordId,
-        overrideAmount: recordDamageAmount
-      });
-    } else {
-      // If no sector override, check detailed damages
-      const damage = detailedDamages.find(
+    // Sum up all sector override damages
+    for (const override of matchingOverrides) {
+      if (override?.withDamage && override?.damageCost !== null) {
+        const overrideDamage = Number(override.damageCost) || 0;
+        recordDamageAmount += overrideDamage;
+
+        logger.debug("Using sector override for damage", {
+          recordId,
+          sectorId: override.sectorId,
+          overrideAmount: overrideDamage
+        });
+      }
+    }
+
+    // If no overrides with damage found, check detailed damages for all matching subsectors
+    if (recordDamageAmount === 0) {
+      const matchingDamages = detailedDamages.filter(
         d => d.recordId === recordId && numericSectorIds.includes(d.sectorId)
       );
 
-      if (damage) {
-        // Match HazardImpact.ts logic exactly
+      // Sum up all detailed damages
+      for (const damage of matchingDamages) {
+        let damageAmount = 0;
+
+
         if (damage.totalRepairReplacementOverride) {
-          recordDamageAmount = Number(damage.totalRepairReplacement) || 0;
+          damageAmount = Number(damage.totalRepairReplacement) || 0;
         } else {
           // Only include PD repair and TD replacement costs
-          recordDamageAmount =
+          damageAmount =
             (Number(damage.pdDamageAmount) || 0) * (Number(damage.pdRepairCostUnit) || 0) +
             (Number(damage.tdDamageAmount) || 0) * (Number(damage.tdReplacementCostUnit) || 0);
         }
 
+        recordDamageAmount += damageAmount;
+
         logger.debug("Calculated damage from detailed records", {
           recordId,
-          calculatedAmount: recordDamageAmount,
+          sectorId: damage.sectorId,
+          calculatedAmount: damageAmount,
           usedOverride: damage.totalRepairReplacementOverride
         });
       }
@@ -579,41 +591,54 @@ const aggregateLossesData = async (
   for (const recordId of recordIds) {
     let recordLossAmount = 0;
 
-    // Check sector override first
-    const sectorOverride = sectorOverrides.find(
+    // Check sector overrides for all matching subsectors
+    const matchingOverrides = sectorOverrides.filter(
       so => so.recordId === recordId && numericSectorIds.includes(so.sectorId)
     );
 
-    if (sectorOverride?.withLosses && sectorOverride?.lossesCost !== null) {
-      // Use sector override value
-      recordLossAmount = Number(sectorOverride.lossesCost) || 0;
-      logger.debug("Using sector override for loss", {
-        recordId,
-        overrideAmount: recordLossAmount
-      });
-    } else {
-      // If no sector override, check detailed losses
-      const loss = detailedLosses.find(
+    // Sum up all sector override losses
+    for (const override of matchingOverrides) {
+      if (override?.withLosses && override?.lossesCost !== null) {
+        const overrideLoss = Number(override.lossesCost) || 0;
+        recordLossAmount += overrideLoss;
+
+        logger.debug("Using sector override for loss", {
+          recordId,
+          sectorId: override.sectorId,
+          overrideAmount: overrideLoss
+        });
+      }
+    }
+
+    // If no overrides with losses found, check detailed losses for all matching subsectors
+    if (recordLossAmount === 0) {
+      const matchingLosses = detailedLosses.filter(
         l => l.recordId === recordId && numericSectorIds.includes(l.sectorId)
       );
 
-      if (loss) {
+      // Sum up all detailed losses
+      for (const loss of matchingLosses) {
+        let lossAmount = 0;
+
         // Calculate from public and private costs
         if (loss.publicCostTotalOverride) {
-          recordLossAmount += Number(loss.publicCostTotal) || 0;
+          lossAmount += Number(loss.publicCostTotal) || 0;
         } else {
-          recordLossAmount += (Number(loss.publicUnits) || 0) * (Number(loss.publicCostUnit) || 0);
+          lossAmount += (Number(loss.publicUnits) || 0) * (Number(loss.publicCostUnit) || 0);
         }
 
         if (loss.privateCostTotalOverride) {
-          recordLossAmount += Number(loss.privateCostTotal) || 0;
+          lossAmount += Number(loss.privateCostTotal) || 0;
         } else {
-          recordLossAmount += (Number(loss.privateUnits) || 0) * (Number(loss.privateCostUnit) || 0);
+          lossAmount += (Number(loss.privateUnits) || 0) * (Number(loss.privateCostUnit) || 0);
         }
+
+        recordLossAmount += lossAmount;
 
         logger.debug("Calculated loss from detailed records", {
           recordId,
-          calculatedAmount: recordLossAmount,
+          sectorId: loss.sectorId,
+          calculatedAmount: lossAmount,
           usedPublicOverride: loss.publicCostTotalOverride,
           usedPrivateOverride: loss.privateCostTotalOverride
         });
