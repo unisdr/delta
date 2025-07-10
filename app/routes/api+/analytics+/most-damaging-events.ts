@@ -5,10 +5,11 @@
  * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
  */
 
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { checkRateLimit } from "~/utils/security";
 import { handleMostDamagingEventsRequest } from "~/backend.server/handlers/analytics/mostDamagingEvents";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm, authLoaderGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 import { z } from "zod";
 
 /**
@@ -26,7 +27,18 @@ import { z } from "zod";
  * @param {LoaderFunctionArgs} args - The Remix loader function arguments
  * @returns {Promise<Response>} JSON response with most damaging events data or error message
  */
-export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
+/**
+ * Interface for the API response structure
+ */
+interface MostDamagingEventsResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+  code?: string;
+}
+
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: LoaderFunctionArgs) => {
+  const { request } = loaderArgs;
   // Rate limiting check
   if (!checkRateLimit(request, 100, 15 * 60 * 1000)) {
     return Response.json({
@@ -112,10 +124,37 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
     const params = validationResult.data;
 
     /**
-     * Data retrieval
-     * Call the handler with validated parameters to get the most damaging events data
+     * Extract tenant context from user session
+     * Authentication is required for this API endpoint
      */
-    const result = await handleMostDamagingEventsRequest({
+    // Get user session - will throw an error if not authenticated
+    const userSession = authLoaderGetAuth(loaderArgs);
+    if (!userSession) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED'
+        },
+        {
+          status: 401,
+          headers: {
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff'
+          }
+        }
+      ) as TypedResponse<MostDamagingEventsResponse>;
+    }
+
+    // Extract tenant context from user session
+    const tenantContext = await getTenantContext(userSession);
+    console.log("Using authenticated tenant context:", tenantContext);
+
+    /**
+     * Data retrieval
+     * Call the handler with validated parameters and tenant context to get the most damaging events data
+     */
+    const result = await handleMostDamagingEventsRequest(tenantContext, {
       sectorId: params.sectorId,
       subSectorId: params.subSectorId || null,
       hazardTypeId: params.hazardTypeId || null,
