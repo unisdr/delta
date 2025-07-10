@@ -1,6 +1,4 @@
-import type {
-	LinksFunction
-} from "@remix-run/node";
+import type { LinksFunction } from "@remix-run/node";
 
 import {
 	useLoaderData,
@@ -10,68 +8,85 @@ import {
 	Scripts,
 	useNavigation,
 	useFetcher,
-	useMatches
+	useMatches,
 } from "@remix-run/react";
 
-import {LoaderFunctionArgs} from "react-router-dom";
+import { LoaderFunctionArgs } from "react-router-dom";
 
-import {ToastContainer} from "react-toastify/unstyled"; // Import ToastContainer for notifications
+import { ToastContainer } from "react-toastify/unstyled"; // Import ToastContainer for notifications
 
 import {
 	sessionCookie,
 	getFlashMessage,
 	getUserFromSession,
+	getCountrySettingsFromSession,
 } from "~/util/session";
 
-import {useEffect, useState} from "react";
-
-
+import { useEffect, useState } from "react";
 
 import allStylesHref from "./styles/all.css?url";
 
-import {
-	Header,
-} from "~/frontend/header/header"
-import {
-	Footer,
-} from "~/frontend/footer/footer"
+import { Header } from "~/frontend/header/header";
+import { Footer } from "~/frontend/footer/footer";
 
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import {notifyError, notifyInfo} from "./frontend/utils/notifications";
-
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { notifyError, notifyInfo } from "./frontend/utils/notifications";
 
 export const links: LinksFunction = () => [
-	{rel: "stylesheet", href: '/assets/css/style-dts.css?asof=20250530'},
-	{rel: "stylesheet", href: allStylesHref},
+	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250530" },
+	{ rel: "stylesheet", href: allStylesHref },
 ];
 
-export const loader = async ({request}: LoaderFunctionArgs) => {
-	const user = await getUserFromSession(request)
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const user = await getUserFromSession(request);
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
 	const message = getFlashMessage(session);
+	const settings = await getCountrySettingsFromSession(request);
 
-	return Response.json({
-		hasPublicSite: true,
-		loggedIn: !!user,
-		userRole: user?.user.role || '',
-		flashMessage: message,
-		confSiteName: 'Disaster Tracking System',
-		confSiteLogo: '/assets/country-instance-logo.png',
-		confFooterURLPrivPolicy: '',
-		confFooterURLTermsConds: '',
-		env: {
-			CURRENCY_CODES: 'USD',
-			DTS_INSTANCE_CTRY_ISO3: 'USA'
+	const websiteName = settings
+		? settings.websiteName
+		: "Disaster Tracking System";
+	const websiteLogo = settings
+		? settings.websiteLogo
+		: "/assets/country-instance-logo.png";
+	const footerUrlPrivacyPolicy = settings
+		? settings.footerUrlPrivacyPolicy
+		: "";
+	const footerUrlTermsConditions = settings
+		? settings.footerUrlTermsConditions
+		: "";
+	const dtsInstanceCtryIso3 = settings ? settings.dtsInstanceCtryIso3 : "USA";
+	const currencyCodes = settings
+		? settings.dtsInstanceCtryIso3.split(",")[0]
+		: "USD";
+
+	return Response.json(
+		{
+			hasPublicSite: true,
+			loggedIn: !!user,
+			userRole: user?.user.role || "",
+			flashMessage: message,
+			confSiteName: websiteName,
+			confSiteLogo: websiteLogo,
+			confFooterURLPrivPolicy: footerUrlPrivacyPolicy,
+			confFooterURLTermsConds: footerUrlTermsConditions,
+			env: {
+				CURRENCY_CODES: currencyCodes,
+				DTS_INSTANCE_CTRY_ISO3: dtsInstanceCtryIso3,
+			},
 		},
-	}, {
-		headers: {
-			"Set-Cookie": await sessionCookie().commitSession(session),
+		{
+			headers: {
+				"Set-Cookie": await sessionCookie().commitSession(session),
+			},
 		}
-	});
+	);
 };
 
 interface InactivityWarningProps {
-	loggedIn: boolean
+	loggedIn: boolean;
 }
 function InactivityWarning(props: InactivityWarningProps) {
 	const sessionActivityTimeoutMinutes = 40;
@@ -89,17 +104,24 @@ function InactivityWarning(props: InactivityWarningProps) {
 
 	useEffect(() => {
 		const update = () => {
-			console.log("Checking login session expiration")
+			console.log("Checking login session expiration");
 			const now = new Date();
-			const minutesSinceLastActivity = (now.getTime() - lastActivity.getTime()) / (1000 * 60);
+			const minutesSinceLastActivity =
+				(now.getTime() - lastActivity.getTime()) / (1000 * 60);
 
-			if (minutesSinceLastActivity > (sessionActivityTimeoutMinutes - sessionActivityWarningBeforeTimeoutMinutes)) {
+			if (
+				minutesSinceLastActivity >
+				sessionActivityTimeoutMinutes -
+					sessionActivityWarningBeforeTimeoutMinutes
+			) {
 				setShowWarning(true);
-				setExpiresInMinutes(Math.max(0, sessionActivityTimeoutMinutes - minutesSinceLastActivity));
+				setExpiresInMinutes(
+					Math.max(0, sessionActivityTimeoutMinutes - minutesSinceLastActivity)
+				);
 			} else {
 				setShowWarning(false);
 			}
-		}
+		};
 		update();
 		const interval = setInterval(update, 10 * 1000);
 		return () => clearInterval(interval);
@@ -122,16 +144,29 @@ function InactivityWarning(props: InactivityWarningProps) {
 					<div className="container mx-auto">
 						<div className="dts-alert dts-alert--error">
 							<div className="dts-alert__icon">
-								<svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+								<svg
+									className="h-6 w-6"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+									/>
 								</svg>
 							</div>
 							<span>
 								{expiresInMinutes > 0.1 ? (
 									<div className="flex flex-col gap-4">
-										<p className="text-base">Login session expires in {Math.round(expiresInMinutes)} minutes due to inactivity.</p>
+										<p className="text-base">
+											Login session expires in {Math.round(expiresInMinutes)}{" "}
+											minutes due to inactivity.
+										</p>
 										<div>
-											<button 
+											<button
 												onClick={handleRefreshSession}
 												className="mg-button mg-button-outline mg-button-sm"
 											>
@@ -164,26 +199,48 @@ const queryClient = new QueryClient({
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
-	const {hasPublicSite, loggedIn, flashMessage, confSiteName, confSiteLogo, confFooterURLPrivPolicy, confFooterURLTermsConds, userRole} = loaderData
-	let boolShowHeaderFooter:boolean = true;
+	const {
+		hasPublicSite,
+		loggedIn,
+		flashMessage,
+		confSiteName,
+		confSiteLogo,
+		confFooterURLPrivPolicy,
+		confFooterURLTermsConds,
+		userRole,
+	} = loaderData;
+	let boolShowHeaderFooter: boolean = true;
 	const matches = useMatches();
-	const isUrlPathUserInvite = matches.some((match) => match.pathname.startsWith("/user/accept-invite"));
-	const isUrlPathUserVerifyEmail = matches.some((match) => match.pathname.startsWith("/user/verify-email"));
-	const isUrlPathAdminRegistration = matches.some((match) => match.pathname.startsWith("/setup/admin-account"));
-	const isUrlPathResetPassword = matches.some((match) => match.pathname.startsWith("/user/forgot-password"));
+	const isUrlPathUserInvite = matches.some((match) =>
+		match.pathname.startsWith("/user/accept-invite")
+	);
+	const isUrlPathUserVerifyEmail = matches.some((match) =>
+		match.pathname.startsWith("/user/verify-email")
+	);
+	const isUrlPathAdminRegistration = matches.some((match) =>
+		match.pathname.startsWith("/setup/admin-account")
+	);
+	const isUrlPathResetPassword = matches.some((match) =>
+		match.pathname.startsWith("/user/forgot-password")
+	);
 
 	// Do not show header and foother for certain pages [user invitation | admin registration]
-	if (isUrlPathUserInvite || isUrlPathAdminRegistration || isUrlPathUserVerifyEmail || isUrlPathResetPassword) {
+	if (
+		isUrlPathUserInvite ||
+		isUrlPathAdminRegistration ||
+		isUrlPathUserVerifyEmail ||
+		isUrlPathResetPassword
+	) {
 		boolShowHeaderFooter = false;
 	}
-	
+
 	// Display toast for flash messages
 	useEffect(() => {
 		if (flashMessage) {
 			if (flashMessage.type === "error") {
-				notifyError(flashMessage.text)
+				notifyError(flashMessage.text);
 			} else {
-				notifyInfo(flashMessage.text)
+				notifyInfo(flashMessage.text);
 			}
 		}
 	}, [flashMessage]);
@@ -214,7 +271,12 @@ export default function Screen() {
 						{(hasPublicSite || loggedIn) && boolShowHeaderFooter && (
 							<header>
 								<div className="mg-container">
-									<Header loggedIn={loggedIn} userRole={userRole} siteName={confSiteName} siteLogo={confSiteLogo} />
+									<Header
+										loggedIn={loggedIn}
+										userRole={userRole}
+										siteName={confSiteName}
+										siteLogo={confSiteLogo}
+									/>
 								</div>
 							</header>
 						)}
@@ -222,7 +284,7 @@ export default function Screen() {
 							<Outlet />
 						</main>
 						<footer>
-							{ boolShowHeaderFooter && (
+							{boolShowHeaderFooter && (
 								<Footer
 									siteName={confSiteName}
 									urlPrivacyPolicy={confFooterURLPrivPolicy}

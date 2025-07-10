@@ -6,7 +6,10 @@ export async function getCountries() {
 	return dr.select().from(countries).execute();
 }
 
-export async function getCountryById(id: string): Promise<Country | null> {
+export async function getCountryById(id: string | null | undefined): Promise<Country | null> {
+	if(!id){
+		return null;
+	}
 	const result = await dr
 		.select()
 		.from(countries)
