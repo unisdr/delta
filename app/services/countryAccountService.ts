@@ -14,7 +14,6 @@ import {
 	countryAccountStatuses,
 	countryAccountTypes,
 } from "~/drizzle/schema";
-import { getCountrySettingsFromSession } from "~/util/session";
 
 // Create a custom error class for validation errors
 export class CountryAccountValidationError extends Error {
@@ -78,7 +77,6 @@ export async function createCountryAccountService(
 		throw new CountryAccountValidationError(errors);
 	}
 
-	// generate password
 	const isPrimaryAdmin = true;
 	return dr.transaction(async (tx) => {
 		const countryAccount = await createCountryAccount(
@@ -108,9 +106,8 @@ export async function createCountryAccountService(
 		);
 		const url = new URL(request.url);
   		const baseUrl = `${url.protocol}//${url.host}`;
-		const settings =  await getCountrySettingsFromSession(request);
 
-		await sendInvite(adminUser, baseUrl, settings.websiteName, tx);
+		await sendInvite(adminUser, baseUrl, 'Disaster Tracking System', tx);
 		return { countryAccount, adminUser, instanceSystemSetting };
 	});
 }

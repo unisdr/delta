@@ -1401,7 +1401,6 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	websiteName: varchar("website_name", { length: 250 })
 		.notNull()
 		.default("Disaster Tracking System"),
-	websiteUrl: url("website_url").notNull().default("http://localhost:3000"), //no need for this column. must be removed.
 	approvedRecordsArePublic: boolean().notNull().default(false),
 	totpIssuer: varchar("totp_issuer", { length: 250 })
 		.notNull()
@@ -1411,7 +1410,7 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
 	countryName: varchar("country_name")
 		.notNull()
-		.default("United State of America"),
+		.default("United State of America"),//this column has to be removed
 	countryAccountsId: uuid("country_accounts_id").references(
 		() => countryAccounts.id,
 		{ onDelete: "cascade" }

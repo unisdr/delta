@@ -52,7 +52,8 @@ export const meta: MetaFunction = (request) => {
 
 export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
 	const { user } = authActionGetAuth(actionArgs);
-
+	const url = new URL(actionArgs.request.url);
+	
 	const settings= await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
 	if(!settings){
 		throw new Response ("System settings cannot be found.",{status:500})
@@ -65,7 +66,7 @@ export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
 	
 	//Send confirmation email
 	const subject = `Welcome to DTS ${settings.websiteName}`;
-	const siteURL = settings.websiteUrl;
+	const siteURL = `${url.protocol}//${url.host}`;
 	const html = `
     <p>
       Dear ${user.firstName} ${user.lastName},
