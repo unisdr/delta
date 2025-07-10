@@ -37,7 +37,6 @@ import {PermissionId, RoleId} from "~/frontend/user/roles";
 import {logAudit} from "../../models/auditLogs";
 import {auditLogsTable, userTable} from "~/drizzle/schema";
 import {and, desc, eq} from "drizzle-orm";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export type ErrorResult<T> = {ok: false; errors: Errors<T>};
 
@@ -448,12 +447,12 @@ export function createViewLoaderPublicApproved<
 >(args: CreateViewLoaderPublicApprovedArgs<T>) {
 	return async (loaderArgs: LoaderFunctionArgs) => {
     // Fetch approvedRecordsArePublic from the database
-    const settings = await getInstanceSystemSettings();
+    /*const settings = await getInstanceSystemSettingsByCountryAccountId();
 	if(!settings){
 		throw new Response("System settings was not found.", {status:500});
-	}
+	}*/
 
-    if (!settings.approvedRecordsArePublic) {
+    /*if (!settings.approvedRecordsArePublic) {
       // If records are not public, enforce ViewData permission
       return authLoaderWithPerm("ViewData", async (loaderArgs) => {
         const { params } = loaderArgs;
@@ -463,7 +462,7 @@ export function createViewLoaderPublicApproved<
         }
         return { item, isPublic: false };
       })(loaderArgs);
-    }
+     }*/
 
 	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 		const {params} = loaderArgs;
@@ -488,7 +487,7 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 	T extends {approvalStatus: string}
 >(args: CreateViewLoaderPublicApprovedWithAuditLogArgs<T>) {
 	return async (loaderArgs: LoaderFunctionArgs) => {
-    const settings = await getInstanceSystemSettings();
+   /* const settings = await getInstanceSystemSettingsByCountryAccountId();
 	if(!settings){
 		throw new Response("System settings was not found.",{status:500});
 	}
@@ -504,7 +503,7 @@ export function createViewLoaderPublicApprovedWithAuditLog<
         let user = authLoaderGetUserForFrontend(loaderArgs);
         return { item, isPublic: false, auditLogs: [], user };
       })(loaderArgs);
-    }
+    }*/
 
 	return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 		const {params} = loaderArgs;

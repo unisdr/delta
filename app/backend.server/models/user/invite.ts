@@ -7,14 +7,13 @@ import { Errors, hasErrors } from "~/frontend/form";
 
 import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
-import { errorIsNotUnique } from "~/util/db";
 
 import { randomBytes } from "crypto";
 
 import { validateName, validatePassword } from "./user_utils";
 import { passwordHash } from "./password";
-import { getInstanceSystemSettings, getInstanceSystemSettingsByCountryAccount } from "../../../db/queries/instanceSystemSetting";
 import { TenantContext } from "~/util/tenant";
+import { doesUserExistByEmailAndCountry } from "~/db/queries/user";
 
 type AdminInviteUserResult =
 	| { ok: true }
@@ -51,23 +50,34 @@ export function adminInviteUserFieldsFromMap(data: {
 
 export async function adminInviteUser(
 	fields: AdminInviteUserFields,
-	tenantContext: TenantContext
+	tenantContext: TenantContext,
+	baseUrl: string,
+	siteName: string
 ): Promise<AdminInviteUserResult> {
 	let errors: Errors<AdminInviteUserFields> = {};
 	errors.form = [];
 	errors.fields = {};
 
-	if (fields.email == "") {
-		errors.fields.email = ["Email is required"];
-	}
-	if (fields.firstName == "") {
+	if (!fields.firstName || fields.firstName.trim() === "") {
 		errors.fields.firstName = ["First name is required"];
+	}
+	if (!fields.email || fields.email.trim() === "") {
+		errors.fields.email = ["Email is required"];
 	}
 	if (fields.role == "") {
 		errors.fields.role = ["Role is required"];
 	}
-	if (fields.organization == "") {
+	if (!fields.organization || fields.organization.trim() === "") {
 		errors.fields.organization = ["Organisation is required"];
+	}
+
+	const emailAndCountryIdExist = await doesUserExistByEmailAndCountry(
+		fields.email,
+		tenantContext.countryAccountId
+	);
+
+	if (emailAndCountryIdExist) {
+		errors.fields.email = ["A user with this email already exists"];
 	}
 
 	if (hasErrors(errors)) {
@@ -84,24 +94,24 @@ export async function adminInviteUser(
 				role: fields.role,
 				organization: fields.organization,
 				hydrometCheUser: fields.hydrometCheUser,
-				// Add tenant context to ensure user is created within the correct tenant
-				countryAccountsId: tenantContext.countryAccountId
+				countryAccountsId: tenantContext.countryAccountId,
 			})
 			.returning();
 		const user = res[0];
-		await sendInvite(user);
+		await sendInvite(user, baseUrl, siteName);
 	} catch (e: any) {
-		if (errorIsNotUnique(e, "user", "email")) {
-			errors.fields.email = ["A user with this email already exists"];
-			return { ok: false, errors };
-		}
 		throw e;
 	}
 
 	return { ok: true };
 }
 
-export async function sendInvite(user: User,tx?: Tx) {
+export async function sendInvite(
+	user: User,
+	siteUrl: string,
+	siteName: string,
+	tx?: Tx
+) {
 	const inviteCode = randomBytes(32).toString("hex");
 	const expirationTime = addHours(new Date(), 7 * 24);
 
@@ -114,18 +124,6 @@ export async function sendInvite(user: User,tx?: Tx) {
 			inviteExpiresAt: expirationTime,
 		})
 		.where(eq(userTable.id, user.id));
-
-	var siteUrl = "http://localhost:3000";
-	var siteName = '';
-	let settings = null;
-	if(user.countryAccountsId){
-		settings = await getInstanceSystemSettingsByCountryAccount(user.countryAccountsId);
-	}
-
-	if (settings) {
-		siteUrl = settings.websiteUrl;
-		siteName = settings.websiteName;
-	}
 
 	const inviteURL =
 		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
@@ -211,7 +209,9 @@ export function AcceptInviteFieldsFromMap(data: {
 
 export async function acceptInvite(
 	inviteCode: string,
-	fields: AcceptInviteFields
+	fields: AcceptInviteFields,
+	siteUrl: string,
+	siteName: string
 ): Promise<AcceptInviteResult> {
 	let errors: Errors<AcceptInviteFields> = {};
 	errors.form = [];
@@ -253,14 +253,7 @@ export async function acceptInvite(
 
 	user = res[0];
 
-	var siteUrl = "http://localhost:3000";
-	var siteName = '';
-	const settings = await getInstanceSystemSettings();
-	if (settings) {
-		siteUrl = settings.websiteUrl;
-		siteName = settings.websiteName;
-	}
-	const accessAccountURL = siteUrl + '/user/settings/';
+	const accessAccountURL = siteUrl + "/user/settings/";
 	const subject = `Welcome to DTS ${siteName}`;
 	const html = `<p>Dear ${user.firstName} ${user.lastName},</p>
 

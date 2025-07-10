@@ -24,7 +24,6 @@ import {
 	updateMissingIDError,
 	errorForForm,
 } from "./form_utils";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 export interface JsonCreateArgs<T> {
 	data: any;
@@ -257,6 +256,7 @@ export async function jsonUpdate<T>(
 export interface JsonApiDocsArgs<T> {
 	baseUrl: string;
 	fieldsDef: FormInputDef<T>[];
+	siteUrl: string;
 }
 
 function jsonPayloadExample<T>(
@@ -318,13 +318,6 @@ export async function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): Promise<string> 
 		parts.push("\n");
 	};
 
-	const settings =  await getInstanceSystemSettings();
-	var siteUrl = "http://localhost:3000";
-	if(settings){
-		siteUrl=settings.websiteUrl;
-	}
-	
-
 	let docForEndpoint = function (
 		name: string,
 		urlPart: string,
@@ -337,7 +330,7 @@ export async function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): Promise<string> 
 		line(path);
 		line(desc);
 		line("# Example ");
-		let url = siteUrl + path;
+		let url = args.siteUrl + path;
 
 		line(`export DTS_KEY=YOUR_KEY`);
 

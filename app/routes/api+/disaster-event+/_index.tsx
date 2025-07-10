@@ -8,10 +8,14 @@ import {
 	jsonApiDocs,
 } from "~/backend.server/handlers/form/form_api";
 
-export const loader = authLoaderApiDocs(async () => {
+export const loader = authLoaderApiDocs(async ({request}) => {
+	const url = new URL(request.url);
+	const baseUrl = `${url.protocol}//${url.host}`;
+
 	let docs = await jsonApiDocs({
 		baseUrl: "disaster-event",
-		fieldsDef: fieldsDefApi
+		fieldsDef: fieldsDefApi,
+		siteUrl: baseUrl,
 	})
 
 	return new Response(docs, {

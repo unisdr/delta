@@ -5,7 +5,7 @@ import { userTable, User } from "~/drizzle/schema";
 
 import * as OTPAuth from "otpauth";
 import {loginTotp} from "./auth";
-import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
+import { getInstanceSystemSettingsByCountryAccountId } from "../../../db/queries/instanceSystemSetting";
 
 
 function totpSettings(userEmail: string, secret: string, totpIssuer: string) {
@@ -50,7 +50,7 @@ export async function generateTotpIfNotSet(
 
   const secret = new OTPAuth.Secret({ size: totpSecretSize }).base32;
 
-  const settings = await getInstanceSystemSettings();
+  const settings = await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
   let totpIssuer = "";
   if(settings){
     totpIssuer = settings.totpIssuer;
@@ -86,7 +86,7 @@ export async function isValidTotp(user: User, token: string): Promise<boolean> {
   if (!token) {
     return false;
   }
-  const settings = await getInstanceSystemSettings();
+  const settings = await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
   let totpIssuer = "";
   if(settings){
     totpIssuer = settings.totpIssuer;

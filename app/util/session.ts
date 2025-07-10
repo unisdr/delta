@@ -2,31 +2,25 @@ import {
 	createCookieSessionStorage,
 	Session,
 	SessionStorage,
-	SessionData
+	SessionData,
 } from "@remix-run/node";
-import {dr} from "~/db.server";
-import {
-	sessionTable,
-	userTable
-} from '~/drizzle/schema';
+import { dr } from "~/db.server";
+import { sessionTable, userTable } from "~/drizzle/schema";
 
-import {
-	redirect,
-} from "@remix-run/react";
+import { redirect } from "@remix-run/react";
 
-import {
-	InferSelectModel,
-	eq
-} from "drizzle-orm";
+import { InferSelectModel, eq } from "drizzle-orm";
+import { getUserById } from "~/db/queries/user";
+import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 
-
-export let _sessionCookie: SessionStorage<SessionData, SessionData> | null = null;
+export let _sessionCookie: SessionStorage<SessionData, SessionData> | null =
+	null;
 
 export function initCookieStorage() {
 	// we also store session activity time in the database, so this can be much longer
-	const cookieSessionExpiration = 60 * 60 * 24 * 7 * 1000 // 1 week
+	const cookieSessionExpiration = 60 * 60 * 24 * 7 * 1000; // 1 week
 	if (!process.env.SESSION_SECRET) {
-		throw "no SESSION_SECRET in .env"
+		throw "no SESSION_SECRET in .env";
 	}
 	_sessionCookie = createCookieSessionStorage({
 		cookie: {
@@ -45,9 +39,9 @@ export function initCookieStorage() {
 
 export function sessionCookie(): SessionStorage<SessionData, SessionData> {
 	if (!_sessionCookie) {
-		throw "initCookieStorage was not called"
+		throw "initCookieStorage was not called";
 	}
-	return _sessionCookie
+	return _sessionCookie;
 }
 
 export async function createUserSession(userId: number) {
@@ -62,7 +56,18 @@ export async function createUserSession(userId: number) {
 	const session = await sessionCookie().getSession();
 	session.set("sessionId", sessionId);
 	session.set("userId", userId);
-	const setCookie = await sessionCookie().commitSession(session)
+
+	//get instance settings by country account id
+	const user = await getUserById(userId);
+	if (user) {
+		const instanceSystemSetting =
+			await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
+		if (instanceSystemSetting) {
+			session.set("countrySettings", instanceSystemSetting);
+		}
+	}
+
+	const setCookie = await sessionCookie().commitSession(session);
 	return {
 		"Set-Cookie": setCookie,
 	};
@@ -70,36 +75,43 @@ export async function createUserSession(userId: number) {
 
 export async function sessionMarkTotpAuthed(sessionId: string) {
 	if (!sessionId) {
-		return
+		return;
 	}
 
-	await dr.update(sessionTable)
-		.set({totpAuthed: true})
+	await dr
+		.update(sessionTable)
+		.set({ totpAuthed: true })
 		.where(eq(sessionTable.id, sessionId));
 }
 
 export async function cookieSessionDestroy(request: Request) {
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
 	return {
 		"Set-Cookie": await sessionCookie().destroySession(session),
 	};
 }
 
-const sessionActivityTimeoutMinutes = 40
+const sessionActivityTimeoutMinutes = 40;
 
 export interface UserSession {
-	user: InferSelectModel<typeof userTable>
-	sessionId: string
-	session: InferSelectModel<typeof sessionTable>
+	user: InferSelectModel<typeof userTable>;
+	sessionId: string;
+	session: InferSelectModel<typeof sessionTable>;
 }
 
-export async function getUserFromSession(request: Request): Promise<UserSession | undefined> {
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+export async function getUserFromSession(
+	request: Request
+): Promise<UserSession | undefined> {
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
 	const sessionId = session.get("sessionId");
 
 	if (!sessionId) return;
 
-	if (typeof sessionId != "string") return
+	if (typeof sessionId != "string") return;
 
 	// TODO: currently sessions are not deleted when users are deleted, fix this
 
@@ -115,14 +127,16 @@ export async function getUserFromSession(request: Request): Promise<UserSession 
 	}
 
 	const now = new Date();
-	const minutesSinceLastActivity = (now.getTime() - sessionData?.lastActiveAt.getTime()) / (1000 * 60);
+	const minutesSinceLastActivity =
+		(now.getTime() - sessionData?.lastActiveAt.getTime()) / (1000 * 60);
 
 	if (minutesSinceLastActivity > sessionActivityTimeoutMinutes) {
 		return;
 	}
 
-	await dr.update(sessionTable)
-		.set({lastActiveAt: now})
+	await dr
+		.update(sessionTable)
+		.set({ lastActiveAt: now })
 		.where(eq(sessionTable.id, sessionId));
 
 	return {
@@ -137,35 +151,49 @@ export function flashMessage(session: Session, message: FlashMessage) {
 	session.flash("flashMessageType", message.type);
 }
 
-type FlashMessageType = "info" | "error"
+type FlashMessageType = "info" | "error";
 
 export interface FlashMessage {
-	type: FlashMessageType
-	text: string
+	type: FlashMessageType;
+	text: string;
 }
 
 export function getFlashMessage(session: Session): FlashMessage | undefined {
-	const text = session.get("flashMessageText")
+	const text = session.get("flashMessageText");
 	if (!text) {
-		return
+		return;
 	}
-	const typeStr = session.get("flashMessageType")
-	let type: FlashMessageType = "info"
+	const typeStr = session.get("flashMessageType");
+	let type: FlashMessageType = "info";
 	if (typeStr == "error") {
-		type = "error"
+		type = "error";
 	}
 	return {
 		text: text,
 		type: type,
-	}
+	};
 }
 
-export async function redirectWithMessage(request: Request, url: string, message: FlashMessage) {
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-	flashMessage(session, message)
+export async function redirectWithMessage(
+	request: Request,
+	url: string,
+	message: FlashMessage
+) {
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	flashMessage(session, message);
 	return redirect(url, {
 		headers: {
 			"Set-Cookie": await sessionCookie().commitSession(session),
 		},
 	});
+}
+
+export async function getCountrySettingsFromSession(request: Request){
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const countrySettings = session.get("countrySettings");
+	return countrySettings;
 }

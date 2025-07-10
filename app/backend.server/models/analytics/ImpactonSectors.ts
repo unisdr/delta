@@ -13,8 +13,8 @@ import { getSectorsByParentId } from "./sectors";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
 import { parseFlexibleDate, createDateCondition, extractYearFromDate } from "~/backend.server/utils/dateFilters";
 import createLogger from "~/utils/logger.server";
-import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
+
+
 import { TenantContext } from "~/util/tenant";
 
 // Create logger for this backend module
@@ -34,26 +34,14 @@ interface DisasterImpactMetadata {
 
 export const createAssessmentMetadata = async (
   assessmentType: AssessmentType = 'rapid',
-  confidenceLevel: ConfidenceLevel = 'medium'
+  confidenceLevel: ConfidenceLevel = 'medium',
+  currency: string ='USD'
 ): Promise<DisasterImpactMetadata> => {
-
-  const settings = await getInstanceSystemSettings()
-
-  let currencies: string[] = [];
-  if (settings) {
-    currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
-  }
-
-  logger.debug("Creating assessment metadata", {
-    assessmentType,
-    confidenceLevel,
-    availableCurrencies: currencies
-  });
 
   return {
     assessmentType,
     confidenceLevel,
-    currency: currencies[0] || 'USD', // Use first configured currency or USD as fallback
+    currency: currency,
     assessmentDate: new Date().toISOString(),
     assessedBy: 'DTS Analytics System',
     notes: 'Automatically generated assessment based on database records'
@@ -709,7 +697,8 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
 export async function fetchSectorImpactData(
   tenantContext: TenantContext,
   sectorId: string,
-  filters?: Filters
+  filters?: Filters,
+  currency?: string,
 ): Promise<SectorImpactData> {
   try {
     logger.info("Starting sector impact data fetch", {
@@ -776,7 +765,8 @@ export async function fetchSectorImpactData(
     // Create assessment metadata
     const metadata = await createAssessmentMetadata(
       filters?.assessmentType || 'detailed',
-      filters?.confidenceLevel || 'medium'
+      filters?.confidenceLevel || 'medium',
+      currency
     );
 
     // Only include FAO data if both damage and loss calculations are available

@@ -9,6 +9,7 @@ import { getImpactOnSector } from "~/backend.server/handlers/analytics/ImpactonS
 import { authLoaderWithPerm, authLoaderGetAuth } from "~/util/auth";
 import { getTenantContext } from "~/util/tenant";
 import { z } from "zod";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 /**
  * Interface for impact analysis filter parameters
@@ -73,6 +74,9 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs: LoaderFu
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
 
+    const settings = await getCountrySettingsFromSession(request);
+    const currency = settings.currency;
+
     /**
      * Validate and transform query parameters using Zod schema
      * This ensures type safety and proper format of all inputs
@@ -114,7 +118,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs: LoaderFu
      * Calls the domain layer handler to fetch and process sector impact data with tenant isolation
      * Handles both successful and error responses from the handler
      */
-    const result = await getImpactOnSector(tenantContext, String(sectorId), filters);
+    const result = await getImpactOnSector(tenantContext, String(sectorId), filters, currency);
 
     if (!result.success) {
       return Response.json(

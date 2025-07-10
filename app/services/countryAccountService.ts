@@ -8,12 +8,13 @@ import {
 	updateCountryAccountStatus,
 } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
-import { createUser, getUserByEmail } from "~/db/queries/user";
+import { createUser } from "~/db/queries/user";
 import {
 	CountryAccountStatus,
 	countryAccountStatuses,
 	countryAccountTypes,
 } from "~/drizzle/schema";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 // Create a custom error class for validation errors
 export class CountryAccountValidationError extends Error {
@@ -27,12 +28,13 @@ export async function createCountryAccountService(
 	countryId: string,
 	email: string,
 	status: number = countryAccountStatuses.ACTIVE,
-	countryAccountType: string = countryAccountTypes.OFFICIAL
+	countryAccountType: string = countryAccountTypes.OFFICIAL,
+	request: Request
 ) {
 	const errors: string[] = [];
 	if (!countryId) errors.push("Country is required");
 	if (status=== null || status=== undefined) errors.push("Status is required");
-	if (!email) errors.push("Admin email is required");
+	if (!email || email.trim()=== "" ) errors.push("Admin email is required");
 	if (!countryAccountType) errors.push("Choose instance type");
 
 	if (countryId && countryId === "-1") {
@@ -52,11 +54,6 @@ export async function createCountryAccountService(
 		countryAccountType !== countryAccountTypes.TRAINING
 	) {
 		errors.push("Invalide instance type");
-	}
-
-	const existingUser = await getUserByEmail(email);
-	if (email && existingUser !== null) {
-		errors.push("Email already exist.");
 	}
 
 	if (
@@ -109,7 +106,11 @@ export async function createCountryAccountService(
 			countryAccount.id,
 			tx
 		);
-		await sendInvite(adminUser, tx);
+		const url = new URL(request.url);
+  		const baseUrl = `${url.protocol}//${url.host}`;
+		const settings =  await getCountrySettingsFromSession(request);
+
+		await sendInvite(adminUser, baseUrl, settings.websiteName, tx);
 		return { countryAccount, adminUser, instanceSystemSetting };
 	});
 }

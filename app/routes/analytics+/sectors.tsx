@@ -18,7 +18,7 @@ import ImpactByHazard from "~/frontend/analytics/sectors/sections/ImpactByHazard
 import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 // Performance optimization hooks
 // Enhanced debounce hook with adaptive timing and user interaction awareness
@@ -330,7 +330,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   try {
 
     // Get currency from environment variable
-    const settings = await getInstanceSystemSettings();
+    const settings = await getCountrySettingsFromSession(loaderArgs.request);
     let currency = "PHP";
     if (settings) {
       currency = settings.currencyCodes?.split(",")[0]

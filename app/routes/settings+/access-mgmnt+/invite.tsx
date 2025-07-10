@@ -23,7 +23,7 @@ import {
 } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
-import { redirectWithMessage, getUserFromSession } from "~/util/session";
+import { redirectWithMessage, getUserFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 import { MainContainer } from "~/frontend/container";
 import { getTenantContext } from "~/util/tenant";
@@ -65,6 +65,12 @@ type ErrorsType = {
 
 export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const { request } = actionArgs;
+	const url = new URL(request.url);
+  	const baseUrl = `${url.protocol}//${url.host}`;
+
+	const settings = await getCountrySettingsFromSession(request);
+	const siteName= settings.websiteName;
+	
 
 	// Get user session and tenant context
 	const userSession = await getUserFromSession(request);
@@ -80,30 +86,8 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const formData = formStringData(await request.formData());
 	const data = adminInviteUserFieldsFromMap(formData);
 
-	const errors: ErrorsType = { fields: {} };
-
-	// Validate required fields
-	if (!data.firstName || data.firstName.trim() === "") {
-		errors.fields.firstName = ["First name is required"];
-	}
-	if (!data.email || data.email.trim() === "") {
-		errors.fields.email = ["Email is required"];
-	}
-	if (!data.organization || data.organization.trim() === "") {
-		errors.fields.organization = ["Organisation is required"];
-	}
-
-	if (Object.keys(errors.fields).length > 0) {
-		return json<ActionResponse>({
-			ok: false,
-			data: data,
-			errors: errors,
-		});
-	}
-
 	try {
-		// Pass tenant context to ensure user is created within the correct tenant
-		const res = await adminInviteUser(data, tenantContext);
+		const res = await adminInviteUser(data, tenantContext, baseUrl, siteName);
 
 		if (!res.ok) {
 			return json<ActionResponse>({
@@ -189,7 +173,6 @@ export default function Screen() {
 								name="firstName"
 								placeholder="Enter first name"
 								defaultValue={fields.firstName}
-								required
 								autoComplete="given-name"
 								className={errors.fields.firstName ? "error" : ""}
 								aria-describedby={errors.fields.firstName ? "firstNameError" : undefined}
@@ -205,7 +188,6 @@ export default function Screen() {
 									{errors.fields.firstName[0]}
 								</div>
 							)}
-							{/* Add description here if needed */}
 						</div>
 					</div>
 
@@ -252,7 +234,6 @@ export default function Screen() {
 								name="email"
 								placeholder="Enter Email"
 								defaultValue={fields.email}
-								required
 								autoComplete="email"
 								className={errors.fields.email ? "error" : ""}
 								aria-describedby={errors.fields.email ? "emailError" : undefined}
@@ -285,7 +266,6 @@ export default function Screen() {
 								name="organization"
 								placeholder="Enter organisation"
 								defaultValue={fields.organization}
-								required
 								autoComplete="organization"
 								className={errors.fields.organization ? "error" : ""}
 								aria-describedby={errors.fields.organization ? "organizationError" : undefined}
@@ -319,7 +299,6 @@ export default function Screen() {
 								name="role"
 								value={selectedRole}
 								onChange={(e) => setSelectedRole(e.target.value)}
-								required
 								autoComplete="off"
 								className={errors.fields.role ? "error" : ""}
 								aria-describedby={errors.fields.role ? "roleError" : undefined}

@@ -25,7 +25,7 @@ import { buildTree } from "~/components/TreeView";
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 async function getResponseData(
 	item: DamagesViewModel | null,
@@ -33,8 +33,9 @@ async function getResponseData(
 	sectorId: number,
 	treeData?: any[],
 	ctryIso3?: string,
+	currencies?: string[],
 	divisionGeoJSON?: any[],
-	_p0?: any[]
+	_p0?: any[],
 ) {
 	let assets = (await assetsForSector(dr, sectorId)).map((a: any) => {
 		return {
@@ -42,20 +43,12 @@ async function getResponseData(
 			label: a.name,
 		};
 	});
-	/*
-	let units = (await dr.query.unitTable.findMany()).map(u => {
-		return {
-			id: u.id,
-			label: u.name,
-		}
-	})*/
 	return {
 		assets,
-		//units,
 		item,
 		recordId,
 		sectorId,
-		fieldDef: await fieldsDef(),
+		fieldDef: await fieldsDef(currencies),
 		treeData,
 		ctryIso3,
 		divisionGeoJSON,
@@ -84,9 +77,11 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	]);
 
 	let ctryIso3: string = "";
-	const settings = await getInstanceSystemSettings();
+	let currencies: string[] =[];
+	const settings = await getCountrySettingsFromSession(request);
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
+		currencies = settings.currencyCodes;
 	}
 
 	const divisionGeoJSON = await dr.execute(`
@@ -107,7 +102,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			sectorId,
 			treeData,
 			ctryIso3,
-			divisionGeoJSON?.rows
+			currencies,
+			divisionGeoJSON?.rows,
 		);
 	}
 	const item = await damagesById(params.id);
@@ -121,7 +117,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		item.sectorId,
 		treeData,
 		ctryIso3,
-		divisionGeoJSON?.rows
+		currencies,
+		divisionGeoJSON?.rows,
 	);
 });
 

@@ -37,7 +37,7 @@ import { contentPickerConfig } from "./content-picker-config";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { DeleteButton } from "~/frontend/components/delete-dialog";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	// Extract user session and tenant context
@@ -81,7 +81,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (params.id === "new") {
 		const treeData = await initializeNewTreeView();
 		let ctryIso3: string = "";
-		const settings = await getInstanceSystemSettings();
+		const settings = await getCountrySettingsFromSession(loaderArgs.request)
 		if (settings) {
 			ctryIso3 = settings.dtsInstanceCtryIso3;
 		}
@@ -116,7 +116,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	// Define Keys Mapping (Make it Adaptable)
 	const treeData = await initializeNewTreeView();
 	let ctryIso3: string = "";
-	const settings = await getInstanceSystemSettings();
+	const settings = await getCountrySettingsFromSession(loaderArgs.request)
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
 	}

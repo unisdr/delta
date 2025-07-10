@@ -16,8 +16,8 @@ import {
 import CustomPieChart from '~/components/PieChart';
 
 import { unitName } from "~/frontend/unit_picker"
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 interface interfacePieChart {
   name: string;
@@ -91,7 +91,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let sectorData:any = {};
   let sectorId:number = 0;
 
-  const settings = await getInstanceSystemSettings();
+  const settings = await getCountrySettingsFromSession(req)
   let currencies:string[]=[];
   if(settings){
     currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
@@ -140,7 +140,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
     sectorAllChildrenIdsArray = [...sectorAllChildrenIdsArray, ...sectorChildrenIdsArray];
 
-    let effects = await disasterEventSectorTotal__ById(xId, sectorChildrenIdsArray);
+    let effects = await disasterEventSectorTotal__ById(xId, sectorChildrenIdsArray, currencies[0]);
 
     // console.log( 'effects', item.id, effects, sectorChildrenIdsArray );
 

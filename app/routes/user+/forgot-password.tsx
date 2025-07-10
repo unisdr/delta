@@ -10,7 +10,7 @@ import {
 } from "~/frontend/form";
 import { formStringData } from "~/util/httputil";
 import { resetPasswordSilentIfNotFound } from "~/backend.server/models/user/password";
-import { redirectWithMessage } from "~/util/session";
+import { getCountrySettingsFromSession, redirectWithMessage } from "~/util/session";
 
 import "react-toastify/dist/ReactToastify.css";
 
@@ -18,7 +18,6 @@ import { useEffect } from "react";
 import { randomBytes } from "crypto";
 import { sendEmail } from "~/util/email";
 import { toast } from "react-toastify/unstyled";
-import { getInstanceSystemSettings } from "~/db/queries/instanceSystemSetting";
 
 interface FormFields {
 	email: string;
@@ -46,7 +45,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const resetToken = randomBytes(32).toString("hex");
 	await resetPasswordSilentIfNotFound(data.email, resetToken);
 
-	const settings = await getInstanceSystemSettings();
+	// const settings = await getInstanceSystemSettingsByCountryAccountId();
+	const settings = await getCountrySettingsFromSession(request);
 	var siteUrl= "http://localhost";
 	if(settings){
 		siteUrl = settings.websiteUrl;

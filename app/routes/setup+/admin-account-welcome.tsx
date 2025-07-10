@@ -4,45 +4,14 @@ import { Link } from "react-router-dom";
 import { useLoaderData, } from "@remix-run/react";
 import { configAuthSupportedAzureSSOB2C } from "~/util/config";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { checkValidCurrency } from "~/util/currency";
-import { getInstanceSystemSettings } from '~/db/queries/instanceSystemSetting';
 
 export const action = async () => {
 	return (null);
 }
 
 // Function to validate required environment variables
-function validateRequiredEnvVars(websiteLogo: string, websiteName: string, websiteUrl: string, dtsInstanceType: string, dtsInstanceCrtyIso3: string, currencyCodes: string) {
+function validateRequiredEnvVars() {
 	const errors: { variable: string; message: string }[] = [];
-
-	// Check WEBSITE_LOGO
-	if (!websiteLogo) {
-		errors.push({
-			variable: 'WEBSITE_LOGO',
-			message: 'Website logo URL is missing'
-		});
-	}
-
-	// Check WEBSITE_NAME
-	if (!websiteName) {
-		errors.push({
-			variable: 'WEBSITE_NAME',
-			message: 'Website name is missing'
-		});
-	}
-
-	// Check WEBSITE_URL
-	if (!websiteUrl) {
-		errors.push({
-			variable: 'WEBSITE_URL',
-			message: 'Website URL is missing'
-		});
-	} else if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
-		errors.push({
-			variable: 'WEBSITE_URL',
-			message: 'Website URL must start with http:// or https://'
-		});
-	}
 
 	// Check DATABASE_URL
 	if (!process.env.DATABASE_URL) {
@@ -125,55 +94,6 @@ function validateRequiredEnvVars(websiteLogo: string, websiteName: string, websi
 		});
 	}
 
-	// Check DTS_INSTANCE_TYPE
-	if (!dtsInstanceType) {
-		errors.push({
-			variable: 'DTS_INSTANCE_TYPE',
-			message: 'DTS instance type is missing'
-		});
-	} else if (dtsInstanceType !== 'country' && dtsInstanceType !== 'undrr') {
-		errors.push({
-			variable: 'DTS_INSTANCE_TYPE',
-			message: 'DTS instance type must be either "country" or "undrr"'
-		});
-	}
-
-	// Check DTS_INSTANCE_CTRY_ISO3
-	if (!dtsInstanceCrtyIso3) {
-		errors.push({
-			variable: 'DTS_INSTANCE_CTRY_ISO3',
-			message: 'Country ISO3 code is missing'
-		});
-	} else {
-		// Check if ISO3 is valid (3 uppercase letters)
-		const iso3Regex = /^[A-Z]{3}$/;
-		if (!iso3Regex.test(dtsInstanceCrtyIso3)) {
-			errors.push({
-				variable: 'DTS_INSTANCE_CTRY_ISO3',
-				message: 'Country ISO3 code must be 3 uppercase letters (e.g., USA, GBR, JPN)'
-			});
-		}
-	}
-
-	// Check CURRENCY_CODES
-	if (!currencyCodes) {
-		errors.push({
-			variable: 'CURRENCY_CODES',
-			message: 'Currency code is missing'
-		});
-	} else {
-		// Split by comma in case multiple currencies are provided
-		const currencies = currencyCodes.split(',').map(c => c.trim());
-		for (const currency of currencies) {
-			if (!checkValidCurrency(currency)) {
-				errors.push({
-					variable: 'CURRENCY_CODES',
-					message: `Currency code "${currency}" is not a valid ISO 4217 currency code`
-				});
-			}
-		}
-	}
-
 	// Check AUTHENTICATION_SUPPORTED
 	if (!process.env.AUTHENTICATION_SUPPORTED) {
 		errors.push({
@@ -209,28 +129,9 @@ function validateRequiredEnvVars(websiteLogo: string, websiteName: string, websi
 
 export const loader = async () => {
 	console.log("NODE_ENV", process.env.NODE_ENV);
-	const settings = await getInstanceSystemSettings();
-	let websiteLogo = 'https://rawgit.com/PreventionWeb/templates/master/dts/dist/assets/images/dldt-logo-mark.svg';
-	let websiteName = "Disaster Losses Tracking System";
-	let websiteUrl = 'http://localhost:3000';
-	let dtsInstanceType = 'country'
-	let dtsInstanceCrtyIso3 = "";
-	let currencyCodes = "PHP"
-
-
-	if (settings) {
-		websiteLogo = settings.websiteLogo;
-		websiteName = settings.websiteName;
-		websiteUrl = settings.websiteUrl;
-		dtsInstanceType = settings.dtsInstanceType;
-		dtsInstanceCrtyIso3 = settings.dtsInstanceCtryIso3;
-		currencyCodes = settings.currencyCodes;
-
-	}
 
 	// Validate required environment variables
-	const configErrors = validateRequiredEnvVars(websiteLogo, websiteName, websiteUrl, dtsInstanceType, dtsInstanceCrtyIso3, currencyCodes);
-
+	const configErrors = validateRequiredEnvVars();
 	// Test database connection before proceeding
 	if (process.env.DATABASE_URL) {
 		try {
@@ -259,11 +160,8 @@ export const loader = async () => {
 		console.warn(`Found ${configErrors.length} configuration errors that need to be fixed before proceeding with setup.`);
 	}
 
-
-
-
 	return ({
-		configSiteName: websiteName,
+		configSiteName: 'Disaster Tracking System',
 		confAuthSupportedAzureSSOB2C: configAuthSupportedAzureSSOB2C(),
 		configErrors
 	});

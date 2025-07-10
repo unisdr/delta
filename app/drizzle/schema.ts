@@ -157,32 +157,44 @@ export const sessionsRelations = relations(sessionTable, ({ one }) => ({
 	}),
 }));
 
-export const userTable = pgTable("user", {
-	id: ourSerial("id").primaryKey(),
-	role: zeroText("role"),
-	firstName: zeroText("first_name"),
-	lastName: zeroText("last_name"),
-	email: text("email").notNull().unique(),
-	password: zeroText("password"),
-	emailVerified: zeroBool("email_verified"),
-	emailVerificationCode: zeroText("email_verification_code"),
-	emailVerificationSentAt: timestamp("email_verification_sent_at"),
-	emailVerificationExpiresAt: zeroTimestamp("email_verification_expires_at"),
-	inviteCode: zeroText("invite_code"),
-	inviteSentAt: timestamp("invite_sent_at"),
-	inviteExpiresAt: zeroTimestamp("invite_expires_at"),
-	resetPasswordToken: zeroText("reset_password_token"),
-	resetPasswordExpiresAt: zeroTimestamp("reset_password_expires_at"),
-	totpEnabled: zeroBool("totp_enabled"),
-	totpSecret: zeroText("totp_secret"),
-	totpSecretUrl: zeroText("totp_secret_url"),
-	organization: zeroText("organization"),
-	hydrometCheUser: zeroBool("hydromet_che_user"),
-	authType: text("auth_type").notNull().default("form"),
-	...createdUpdatedTimestamps,
-	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
-	isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
-});
+export const userTable = pgTable(
+	"user",
+	{
+		id: ourSerial("id").primaryKey(),
+		role: zeroText("role"),
+		firstName: zeroText("first_name"),
+		lastName: zeroText("last_name"),
+		email: text("email").notNull(),
+		password: zeroText("password"),
+		emailVerified: zeroBool("email_verified"),
+		emailVerificationCode: zeroText("email_verification_code"),
+		emailVerificationSentAt: timestamp("email_verification_sent_at"),
+		emailVerificationExpiresAt: zeroTimestamp("email_verification_expires_at"),
+		inviteCode: zeroText("invite_code"),
+		inviteSentAt: timestamp("invite_sent_at"),
+		inviteExpiresAt: zeroTimestamp("invite_expires_at"),
+		resetPasswordToken: zeroText("reset_password_token"),
+		resetPasswordExpiresAt: zeroTimestamp("reset_password_expires_at"),
+		totpEnabled: zeroBool("totp_enabled"),
+		totpSecret: zeroText("totp_secret"),
+		totpSecretUrl: zeroText("totp_secret_url"),
+		organization: zeroText("organization"),
+		hydrometCheUser: zeroBool("hydromet_che_user"),
+		authType: text("auth_type").notNull().default("form"),
+		...createdUpdatedTimestamps,
+		countryAccountsId: uuid("country_accounts_id").references(
+			() => countryAccounts.id,
+			{ onDelete: "cascade" }
+		),
+		isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
+	},
+	(table) => [
+		unique("email_country_accounts_unique").on(
+			table.email,
+			table.countryAccountsId
+		),
+	]
+);
 
 export type User = typeof userTable.$inferSelect;
 export type UserInsert = typeof userTable.$inferInsert;
@@ -252,7 +264,9 @@ export const divisionTable = pgTable(
 			(): AnyPgColumn => divisionTable.id
 		),
 		// Add country account reference for tenant isolation
-		countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id),
+		countryAccountsId: uuid("country_accounts_id").references(
+			() => countryAccounts.id
+		),
 		name: zeroStrMap("name"),
 		geojson: jsonb("geojson"),
 		level: ourBigint("level"), // value is parent level + 1 otherwise 1
@@ -276,8 +290,14 @@ export const divisionTable = pgTable(
 			index("division_level_idx").on(table.level),
 
 			// Tenant-scoped unique constraints
-			uniqueIndex("tenant_import_id_idx").on(table.countryAccountsId, table.importId),
-			uniqueIndex("tenant_national_id_idx").on(table.countryAccountsId, table.nationalId),
+			uniqueIndex("tenant_import_id_idx").on(
+				table.countryAccountsId,
+				table.importId
+			),
+			uniqueIndex("tenant_national_id_idx").on(
+				table.countryAccountsId,
+				table.nationalId
+			),
 
 			// Create GIST indexes via raw SQL since drizzle doesn't support USING clause directly
 			sql`CREATE INDEX IF NOT EXISTS "division_geom_idx" ON "division" USING GIST ("geom")`,
@@ -362,8 +382,9 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 	id: uuid("id")
 		.references((): AnyPgColumn => eventTable.id)
 		.primaryKey(),
-	countryAccountsId: uuid("country_accounts_id")
-		.references(() => countryAccounts.id),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id
+	),
 	status: text("status").notNull().default("pending"),
 	// otherId1: zeroText("otherId1"),
 	//duration: zeroText("duration"),
@@ -424,7 +445,10 @@ export const disasterEventTable = pgTable("disaster_event", {
 	...approvalFields,
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
-	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
 	id: uuid("id")
 		.primaryKey()
 		.references((): AnyPgColumn => eventTable.id),
@@ -616,7 +640,8 @@ export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
 
 export const disasterEventTableConstrains = {
 	hazardousEventId: "disaster_event_hazardous_event_id_hazardous_event_id_fk",
-	countryAccountsId: "disaster_event_country_accounts_id_country_accounts_id_fk",
+	countryAccountsId:
+		"disaster_event_country_accounts_id_country_accounts_id_fk",
 };
 
 export const disasterEventRel = relations(disasterEventTable, ({ one }) => ({
@@ -1062,7 +1087,6 @@ export const hipHazardRel = relations(hipHazardTable, ({ one }) => ({
 	}),
 }));
 
-
 /**
  * Pending final design confirmation from @sindicatoesp, this table's structure, especially its sector linkage,
  * may be revised to align with new requirements and ensure data integrity.
@@ -1074,7 +1098,10 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	...apiImportIdField(),
 	...hipRelationColumnsOptional(),
 	id: ourRandomUUID(),
-	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
 	disasterEventId: uuid("disaster_event_id").references(
 		(): AnyPgColumn => disasterEventTable.id
 	),
@@ -1368,34 +1395,45 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	footerUrlPrivacyPolicy: url("footer_url_privacy_policy"),
 	footerUrlTermsConditions: url("footer_url_terms_conditions"),
 	adminSetupComplete: boolean("admin_setup_complete").notNull().default(false),
-	websiteLogo: varchar("website_logo").notNull().default("/assets/country-instance-logo.png"),
-	websiteName: varchar("website_name", { length: 250 }).notNull().default("Disaster Tracking System"),
-	websiteUrl: url("website_url").notNull().default("http://localhost:3000"),
+	websiteLogo: varchar("website_logo")
+		.notNull()
+		.default("/assets/country-instance-logo.png"),
+	websiteName: varchar("website_name", { length: 250 })
+		.notNull()
+		.default("Disaster Tracking System"),
+	websiteUrl: url("website_url").notNull().default("http://localhost:3000"), //no need for this column. must be removed.
 	approvedRecordsArePublic: boolean().notNull().default(false),
-	totpIssuer: varchar("totp_issuer", { length: 250 }).notNull().default("example-app"),
+	totpIssuer: varchar("totp_issuer", { length: 250 })
+		.notNull()
+		.default("example-app"),
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
 	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default(""),
 	currencyCodes: varchar("currency_codes").notNull().default("USD"),
-	countryName: varchar("country_name").notNull().default("United State of America"),
-	countryAccountsId: uuid("country_accounts_id").references(() => countryAccounts.id, { onDelete: "cascade" }),
+	countryName: varchar("country_name")
+		.notNull()
+		.default("United State of America"),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
 });
 
 export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
-export type NewInstanceSystemSettings = typeof instanceSystemSettings.$inferInsert;
+export type NewInstanceSystemSettings =
+	typeof instanceSystemSettings.$inferInsert;
 
 export const countries = pgTable("countries", {
 	id: ourRandomUUID(),
-	name: varchar('name', { length: 100 }).notNull().unique(),
-	iso3: varchar('iso3', { length: 3 }).unique()
-})
+	name: varchar("name", { length: 100 }).notNull().unique(),
+	iso3: varchar("iso3", { length: 3 }).unique(),
+});
 
 export type Country = typeof countries.$inferSelect;
 export type NewCountry = typeof countries.$inferInsert;
 
-
 export const countryRelations = relations(countries, ({ one }) => ({
-	countryAccount: one(countryAccounts)
-}))
+	countryAccount: one(countryAccounts),
+}));
 
 export type CountryAccountType = "Official" | "Training";
 export const countryAccountTypes = {
@@ -1411,21 +1449,29 @@ export const countryAccountStatuses = {
 
 export const countryAccounts = pgTable("country_accounts", {
 	id: ourRandomUUID(),
-	countryId: uuid("country_id").notNull().references(() => countries.id),
+	countryId: uuid("country_id")
+		.notNull()
+		.references(() => countries.id),
 	status: integer("status").notNull().default(countryAccountStatuses.ACTIVE),
-	type: varchar("type", { length: 20 }).notNull().default(countryAccountTypes.OFFICIAL),
-	createdAt: timestamp("created_at", { mode: 'date', withTimezone: false }).notNull().defaultNow(),
-	updatedAt: timestamp("updated_at", { mode: 'date', withTimezone: false }),
-})
+	type: varchar("type", { length: 20 })
+		.notNull()
+		.default(countryAccountTypes.OFFICIAL),
+	createdAt: timestamp("created_at", { mode: "date", withTimezone: false })
+		.notNull()
+		.defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: "date", withTimezone: false }),
+});
 
 export type CountryAccount = typeof countryAccounts.$inferSelect;
 export type NewCountryAccount = typeof countryAccounts.$inferInsert;
 
-export const countryAccountsRelations = relations(countryAccounts, ({ one, many }) => ({
-	country: one(countries, {
-		fields: [countryAccounts.countryId],
-		references: [countries.id]
-	}),
-	users: many(userTable),
-}))
-
+export const countryAccountsRelations = relations(
+	countryAccounts,
+	({ one, many }) => ({
+		country: one(countries, {
+			fields: [countryAccounts.countryId],
+			references: [countries.id],
+		}),
+		users: many(userTable),
+	})
+);

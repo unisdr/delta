@@ -38,8 +38,6 @@ import {
 
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {notifyError, notifyInfo} from "./frontend/utils/notifications";
-import { getCurrenciesAsListFromCommaSeparated } from "./util/currency";
-import { getInstanceSystemSettings } from "./db/queries/instanceSystemSetting";
 
 
 export const links: LinksFunction = () => [
@@ -52,24 +50,18 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 	const message = getFlashMessage(session);
 
-	let settings = await getInstanceSystemSettings();
-	if(!settings){
-		throw new Response("System settings was not found", {status:500});
-	}
-
 	return Response.json({
-		hasPublicSite: settings.approvedRecordsArePublic,
+		hasPublicSite: true,
 		loggedIn: !!user,
 		userRole: user?.user.role || '',
 		flashMessage: message,
-		confSiteName: settings.websiteName,
-		confSiteLogo: settings.websiteLogo,
-		confFooterURLPrivPolicy: settings.footerUrlPrivacyPolicy || '',
-		confFooterURLTermsConds: settings.footerUrlTermsConditions || '',
-		systemSettings: settings,
+		confSiteName: 'Disaster Tracking System',
+		confSiteLogo: '/assets/country-instance-logo.png',
+		confFooterURLPrivPolicy: '',
+		confFooterURLTermsConds: '',
 		env: {
-			CURRENCY_CODES: getCurrenciesAsListFromCommaSeparated(settings.currencyCodes) || 'USD',
-			DTS_INSTANCE_CTRY_ISO3: settings.dtsInstanceCtryIso3 || ''
+			CURRENCY_CODES: 'USD',
+			DTS_INSTANCE_CTRY_ISO3: 'USA'
 		},
 	}, {
 		headers: {

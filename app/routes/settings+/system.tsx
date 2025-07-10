@@ -107,9 +107,10 @@ export const loader: LoaderFunction = authLoaderWithPerm('ViewData', async (load
   });
 });
 
-export const action: ActionFunction = authLoaderWithPerm('EditData', async ({ request }) => {
+export const action: ActionFunction = authLoaderWithPerm('EditData', async (args) => {
 
-  const { user } = authLoaderGetAuth(request);
+  const { user } = authLoaderGetAuth(args);
+  const request = args.request;
 
   // Get tenant context
   const userSession = { user, session: { id: '', userId: user.id, lastActiveAt: new Date(), totpAuthed: false }, sessionId: '' };

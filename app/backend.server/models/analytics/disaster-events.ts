@@ -19,9 +19,6 @@ import {
 	or,
 	inArray
 } from "drizzle-orm";
-
-import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 import { TenantContext } from "~/util/tenant";
 
 /**
@@ -258,7 +255,7 @@ export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEven
 	return queryDamageTable.execute();
 }
 
-export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: string, divisionId: number[]) {
+export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: string, divisionId: number[], currency: string) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -318,14 +315,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 	let recordsAssetDamagesIdArray: any[] = [];
 	let recordsAssetLossesIdArray: any[] = [];
 
-	const settings = await getInstanceSystemSettings();
-	var currenyCodes = '';
-	if (settings) {
-		currenyCodes = settings.currencyCodes;
-	}
-	const currenyCodesAsList = getCurrenciesAsListFromCommaSeparated(currenyCodes);
-
-	let damageCurrency: string = currenyCodesAsList[0];
+	let damageCurrency:string = currency;
 
 	record.forEach((item) => {
 		if (item.withDamage) {
@@ -430,7 +420,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 
 }
 
-export async function disasterEventSectorTotal__ById(disasterEventId: string, isInSectorIds: number[] = []) {
+export async function disasterEventSectorTotal__ById(disasterEventId: string, isInSectorIds: number[] = [], currency:string) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -478,14 +468,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 	let recordsAssetDamagesIdArray: any[] = [];
 	let recordsAssetLossesIdArray: any[] = [];
 
-	const settings = await getInstanceSystemSettings();
-	var currenyCodes = '';
-	if (settings) {
-		currenyCodes = settings.currencyCodes;
-	}
-	const currenyCodesAsList = getCurrenciesAsListFromCommaSeparated(currenyCodes);
-
-	let damageCurrency: string = currenyCodesAsList[0];
+	let damageCurrency:string = currency;
 
 	record.forEach((item) => {
 		if (item.withDamage) {
