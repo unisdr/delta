@@ -329,11 +329,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
   try {
 
-    // Get currency from environment variable
+    // Get currency from instanceSystemSettings via session
     const settings = await getCountrySettingsFromSession(loaderArgs.request);
-    let currency = "PHP";
-    if (settings) {
-      currency = settings.currencyCodes?.split(",")[0]
+    let currency = "USD"; // Default fallback
+    if (settings && settings.currencyCodes) {
+      currency = settings.currencyCodes.split(",")[0];
     }
     contextLogger.info("Successfully loaded sectors analytics data", {
       currency,
