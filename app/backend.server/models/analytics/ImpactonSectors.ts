@@ -15,6 +15,7 @@ import { parseFlexibleDate, createDateCondition, extractYearFromDate } from "~/b
 import createLogger from "~/utils/logger.server";
 import { getInstanceSystemSettings } from "../../../db/queries/instanceSystemSetting";
 import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
+import { TenantContext } from "~/util/tenant";
 
 // Create logger for this backend module
 const logger = createLogger("backend.server/models/analytics/ImpactOnSectors");
@@ -31,16 +32,16 @@ interface DisasterImpactMetadata {
   notes: string;
 }
 
-export const createAssessmentMetadata = async(
+export const createAssessmentMetadata = async (
   assessmentType: AssessmentType = 'rapid',
   confidenceLevel: ConfidenceLevel = 'medium'
 ): Promise<DisasterImpactMetadata> => {
-  
+
   const settings = await getInstanceSystemSettings()
 
-  let currencies: string[]=[];
-  if(settings){
-    currencies=getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
+  let currencies: string[] = [];
+  if (settings) {
+    currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
   }
 
   logger.debug("Creating assessment metadata", {
@@ -108,14 +109,16 @@ interface SectorImpactData {
   };
 }
 
-// Function to get all disaster records for a sector
+// Function to get all disaster records for a sector with tenant isolation
 const getDisasterRecordsForSector = async (
+  tenantContext: TenantContext,
   sectorId: string,
   filters?: Filters
 ): Promise<string[]> => {
   try {
     logger.info("Getting disaster records for sector", {
       sectorId,
+      tenantId: tenantContext.countryAccountId,
       hasFilters: !!filters,
       filterCount: filters ? Object.keys(filters).length : 0
     });
@@ -130,9 +133,10 @@ const getDisasterRecordsForSector = async (
       sectorIds: numericSectorIds
     });
 
-    // Initialize conditions array
+    // Initialize conditions array with tenant isolation
     let conditions: SQL[] = [
-      sql`${disasterRecordsTable.approvalStatus} = 'published'`
+      sql`${disasterRecordsTable.approvalStatus} = 'published'`,
+      sql`${disasterRecordsTable.countryAccountsId} = ${tenantContext.countryAccountId}`
     ];
 
     // Handle sector filtering using proper hierarchy
@@ -697,17 +701,20 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
 
 /**
  * Fetches comprehensive sector impact data following multiple international standards:
+ * @param tenantContext - Tenant context for filtering by country account
  * @param sectorId - ID of the sector to analyze
  * @param filters - Optional filters for data selection
  * @returns Comprehensive sector impact data with metadata
  */
 export async function fetchSectorImpactData(
+  tenantContext: TenantContext,
   sectorId: string,
   filters?: Filters
 ): Promise<SectorImpactData> {
   try {
     logger.info("Starting sector impact data fetch", {
       sectorId,
+      tenantId: tenantContext.countryAccountId,
       hasFilters: !!filters,
       filterDetails: filters ? {
         startDate: filters.startDate,
@@ -718,7 +725,7 @@ export async function fetchSectorImpactData(
       } : null
     });
 
-    const recordIds = await getDisasterRecordsForSector(sectorId, filters);
+    const recordIds = await getDisasterRecordsForSector(tenantContext, sectorId, filters);
 
     logger.info("Retrieved disaster records for sector", {
       sectorId,

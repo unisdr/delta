@@ -1,12 +1,13 @@
 /**
  * @fileoverview API endpoint for retrieving sector impact data for disaster analysis.
  * This route provides sector-specific impact data based on various filter criteria.
- * Access is controlled by APPROVED_RECORDS_ARE_PUBLIC environment setting.
+ * Access is controlled by authentication and tenant isolation.
  */
 
 import { LoaderFunctionArgs, TypedResponse } from "@remix-run/node";
 import { getImpactOnSector } from "~/backend.server/handlers/analytics/ImpactonSectors";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderWithPerm, authLoaderGetAuth } from "~/util/auth";
+import { getTenantContext } from "~/util/tenant";
 import { z } from "zod";
 
 /**
@@ -49,8 +50,8 @@ const querySchema = z.object({
 /**
  * Loader function for the ImpactOnSectors API endpoint.
  * @route GET /api/analytics/ImpactonSectors
- * @param {Object} request - The incoming request object
- * @authentication Requires ViewData permission if APPROVED_RECORDS_ARE_PUBLIC is false
+ * @param {Object} loaderArgs - The loader function arguments
+ * @authentication Requires ViewData permission and valid tenant context
  * @queryParams
  *   - sectorId {string} Required. Numeric ID of the sector to analyze
  *   - fromDate {string} Optional. Start date for the analysis period
@@ -62,8 +63,13 @@ const querySchema = z.object({
  *   - disasterEventId {string} Optional. Filter by specific disaster event
  * @returns {Promise<Response>} JSON response with sector impact data or error message
  */
-export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
+export const loader = authLoaderWithPerm("ViewData", async (loaderArgs: LoaderFunctionArgs) => {
   try {
+    // Extract user session and tenant context
+    const userSession = authLoaderGetAuth(loaderArgs);
+    const tenantContext = await getTenantContext(userSession);
+    const request = loaderArgs.request;
+
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
 
@@ -105,10 +111,10 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
     }
     /**
      * Data Retrieval and Processing
-     * Calls the domain layer handler to fetch and process sector impact data
+     * Calls the domain layer handler to fetch and process sector impact data with tenant isolation
      * Handles both successful and error responses from the handler
      */
-    const result = await getImpactOnSector(String(sectorId), filters);
+    const result = await getImpactOnSector(tenantContext, String(sectorId), filters);
 
     if (!result.success) {
       return Response.json(

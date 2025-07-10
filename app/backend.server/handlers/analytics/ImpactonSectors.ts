@@ -1,4 +1,5 @@
 import { fetchSectorImpactData } from "~/backend.server/models/analytics/ImpactonSectors";
+import { TenantContext } from "~/util/tenant";
 
 interface SectorImpactResponse {
   success: boolean;
@@ -23,7 +24,7 @@ interface Filters {
   disasterEvent?: string | null;
 }
 
-export const getImpactOnSector = async (sectorId: string, filters?: Filters): Promise<SectorImpactResponse> => {
+export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: string, filters?: Filters): Promise<SectorImpactResponse> => {
   try {
     // Input validation
     if (!sectorId) {
@@ -33,8 +34,8 @@ export const getImpactOnSector = async (sectorId: string, filters?: Filters): Pr
       };
     }
 
-    // Fetch data from the model
-    const data = await fetchSectorImpactData(sectorId, filters);
+    // Fetch data from the model with tenant context for isolation
+    const data = await fetchSectorImpactData(tenantContext, sectorId, filters);
 
     // Return successful response
     return {
