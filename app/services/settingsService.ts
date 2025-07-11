@@ -1,0 +1,94 @@
+import { dr } from "~/db.server";
+import {
+	getCountryAccountById,
+	updateCountryAccountStatus,
+} from "~/db/queries/countryAccounts";
+import { updateInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
+import { CountryAccountStatus, countryAccountStatuses } from "~/drizzle/schema";
+
+export class SettingsValidationError extends Error {
+	constructor(public errors: string[]) {
+		super("Settings validation failed");
+		this.name = "ValidationError";
+	}
+}
+
+export async function updateSettingsService(
+	id: string | null,
+	privacyUrl: string | null,
+	termsUrl: string | null,
+	websiteLogoUrl: string,
+	websiteName: string,
+	isApprovedRecordsPublic: boolean,
+	totpIssuer: string
+) {
+	const errors: string[] = [];
+
+	if (!id) {
+		errors.push("Instance system settings Id is required");
+	}
+	if (!websiteLogoUrl || websiteLogoUrl.trim().length === 0) {
+		errors.push("Website logo URL is rquired");
+	}
+	if (!websiteName || websiteName.trim().length === 0) {
+		errors.push("Website name is rquired");
+	}
+	if (!totpIssuer || totpIssuer.trim().length === 0) {
+		errors.push("Totp Issuer is rquired");
+	}
+	if (!privacyUrl || privacyUrl.trim().length === 0) {
+		privacyUrl = null;
+	}
+	if (!termsUrl || termsUrl.trim().length === 0) {
+		termsUrl = null;
+	}
+	if (
+		isApprovedRecordsPublic === null ||
+		isApprovedRecordsPublic === undefined
+	) {
+		errors.push("Approved records visibility is required");
+	}
+
+	if (errors.length > 0) {
+		throw new SettingsValidationError(errors);
+	}
+
+	return dr.transaction(async (tx) => {
+		const instanceSystemSettings = await updateInstanceSystemSetting(
+			id,
+			privacyUrl,
+			termsUrl,
+			websiteLogoUrl,
+			websiteName,
+			isApprovedRecordsPublic,
+			totpIssuer,
+			tx
+		);
+
+		return { instanceSystemSettings };
+	});
+}
+
+export async function updateCountryAccountStatusService(
+	id: string,
+	status: number
+) {
+	const countryAccount = await getCountryAccountById(id);
+	if (!countryAccount) {
+		throw new SettingsValidationError([
+			`Country accounts id:${id} does not exist`,
+		]);
+	}
+	if (
+		!Object.values(countryAccountStatuses).includes(
+			status as CountryAccountStatus
+		)
+	) {
+		throw new SettingsValidationError([
+			`Status: ${status} is not a valid value`,
+		]);
+	}
+
+	const updatedCountryAccount = await updateCountryAccountStatus(id, status);
+	return { updatedCountryAccount };
+}
