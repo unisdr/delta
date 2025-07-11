@@ -84,6 +84,7 @@ export function SpatialFootprintFormView({
                                 </>
                             );
                         }
+                        return null;
                     },
                     width: "40%",
                 },
@@ -135,7 +136,7 @@ export function SpatialFootprintFormView({
             data={parsedData}
             onChange={(items: any) => {
                 try {
-                    const parsedItems = Array.isArray(items) ? items : (items);
+                    Array.isArray(items) ? items : (items);
                 } catch {
                     console.error("Failed to process items.");
                 }

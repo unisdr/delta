@@ -17,6 +17,7 @@ export function paginationQueryFromURL(request: Request, extraParams: string[]) 
 	const url = new URL(request.url);
 	const page = parseInt(url.searchParams.get("page") || "1", 10);
 	let pageSize = parseInt(url.searchParams.get("pageSize") || DEFAULT_PAGE_SIZE.toString(), 10);
+
 	const isPageSizeValid = PAGE_SIZE_OPTIONS.includes(pageSize);
 
 	if (!isPageSizeValid) {

@@ -1,9 +1,11 @@
-import React, { useState, useCallback } from "react";
-import { useQuery, QueryClient, QueryClientProvider, UseQueryOptions } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
-import { formatCurrencyWithCode, useDefaultCurrency, formatCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
+import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
+
 
 // Create a client
 const queryClient = new QueryClient({
@@ -16,14 +18,7 @@ const queryClient = new QueryClient({
     }
 });
 
-// Colors for the pie chart slices
-// const COLORS = [
-//     "#003561", // Corporate Blue (Dark)
-//     "#004F91", // Corporate Blue (Brand)
-//     "#106C8B", // Corporate Blue
-//     "#6093BD", // Corporate Blue (Lighter)
-//     "#9ABDD6", // Corporate Blue (Lightest)
-// ];
+
 
 const COLORS = [
     "#205375", // A dark blue from UNDRR Blue (corporate blue)
@@ -167,7 +162,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
         setActiveIndex(-1);
     }, [setActiveIndex]);
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, value, index }: any) => {
+    const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent, name, value, index }: any) => {
         const RADIAN = Math.PI / 180;
         // Increase radius to push labels further out consistently
         const radius = outerRadius * 1.4; // Increased from 1.1 to 1.4 for more spacing
@@ -236,7 +231,6 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
     };
 
     const renderLegendText = (value: string, entry: any) => {
-        const { payload } = entry;
         return (
             <span style={{
                 color: activeIndex === entry.index ? '#000' : '#666',
@@ -266,8 +260,11 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
         index
     }));
 
-    // Add debug logging for the chart data
-    console.log('Chart data for', title, ':', dataWithIndex);
+
+    // Debug logging only in development
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`Chart data for ${title}:`, dataWithIndex);
+    }
 
     return (
         <div className="dts-data-box">
@@ -295,7 +292,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
                             animationDuration={1000}
                             animationEasing="ease-out"
                         >
-                            {dataWithIndex.map((entry, index) => (
+                            {dataWithIndex.map((_item, index) => (
                                 <Cell
                                     key={index}
                                     fill={COLORS[index % COLORS.length]}
@@ -324,7 +321,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
 function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     const enabled = !!filters.sectorId;
     const targetSectorId = filters.subSectorId || filters.sectorId;
-    const defaultCurrency = useDefaultCurrency();
+    // const defaultCurrency = useDefaultCurrency();
 
     const queryParams = new URLSearchParams();
     if (targetSectorId) queryParams.set("sectorId", targetSectorId);
@@ -349,17 +346,26 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     const { data, isLoading, error } = useQuery({
         queryKey: ["hazardImpact", targetSectorId, filters],
         queryFn: async () => {
-            console.log('Fetching hazard impact data for:', { targetSectorId, filters });
+            if (process.env.NODE_ENV === 'development') {
+                console.log('Fetching hazard impact data for:', { targetSectorId, filters });
+            }
+
             const response = await fetch(`/api/analytics/hazardImpact?${queryParams}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch hazard impact data");
             }
+
             const result = await response.json();
-            console.log('API Response:', result);
+            if (process.env.NODE_ENV === 'development') {
+                console.log('API Response:', result);
+            }
+
             return result as HazardImpactResponse;
         },
         enabled
     });
+
+
 
     if (!enabled) {
         return <div className="text-gray-500">Please select a sector to view hazard impact data.</div>;
@@ -412,7 +418,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
         if (!sectorsData?.sectors) return "Impact by Hazard Type";
 
         if (filters.sectorId) {
-            const { sector, parent } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+            const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
 
             if (filters.subSectorId && sector) {
                 // Case: Subsector is selected
@@ -462,7 +468,11 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 index
             }));
 
-        console.log('Filtered chart data:', filteredData);
+        // Debug logging only in development
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Filtered chart data:', filteredData);
+        }
+
 
         return {
             data: filteredData.length > 0 ? filteredData : [],
@@ -470,15 +480,13 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
         };
     };
 
-    // Process the data
+    // Process the data with performance tracking
     const eventsResult = formatChartData(data?.data?.eventsCount ?? []);
     const damagesResult = formatChartData(data?.data?.damages ?? []);
     const lossesResult = formatChartData(data?.data?.losses ?? []);
 
-    // Add debug logging for data processing
-    console.log('Processed events data:', eventsResult);
-    console.log('Processed damages data:', damagesResult);
-    console.log('Processed losses data:', lossesResult);
+
+
 
     if (!data?.success || !data?.data) {
         console.error("Invalid data structure:", data);
@@ -504,7 +512,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                         ) : (
                             <>
                                 <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
-                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                                <EmptyChartPlaceholder height={300} />
                             </>
                         )}
                     </div>
@@ -521,7 +529,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                         ) : (
                             <>
                                 <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
-                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                                <EmptyChartPlaceholder height={300} />
                             </>
                         )}
                     </div>
@@ -538,7 +546,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                         ) : (
                             <>
                                 <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>
-                                <p className="text-gray-500 text-center mt-4">No data available</p>
+                                <EmptyChartPlaceholder height={300} />
                             </>
                         )}
                     </div>

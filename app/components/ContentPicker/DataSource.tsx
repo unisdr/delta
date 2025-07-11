@@ -1,6 +1,6 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { formatDate, isDateLike, convertToISODate } from "~/util/date";
-import { sql, eq, ilike, or, asc, desc, count, and } from "drizzle-orm";
+import { sql, ilike, or, asc, desc, and } from "drizzle-orm";
 import { buildTree } from "~/components/TreeView";
 
 function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: any) {
@@ -170,7 +170,7 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
         // Extract nameKey dynamically
         const nameKey = pickerConfig.table_columns.find((col: any) => col.tree_field === "nameKey")?.column_field || "name";
         
-        return buildTree(rows, idKey, parentKey, nameKey, [], null, [], pickerConfig);
+        return buildTree(rows, idKey, parentKey, nameKey,  null, []);
     }
 }
 

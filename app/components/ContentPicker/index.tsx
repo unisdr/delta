@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
+import React, { useState, useRef, useEffect, forwardRef } from "react";
 import "./assets/content-picker.css";
-import { TreeView, buildTree } from "~/components/TreeView";
+import { TreeView } from "~/components/TreeView";
 
 const injectStyles = (appendCss?: string) => {
     const styleLayout = [
@@ -42,7 +42,7 @@ interface ContentPickerProps {
 }
 
 export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
-    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect, multiSelect = false, treeViewRootCaption = "", disabledOnEdit = false, selectAnyItem = false }, ref) => {
+    ({ id = "", viewMode = "grid", dataSources = "" as string | any[], table_columns = [], caption = "", defaultText = "", appendCss = "", base_path = "", displayName = "", value = "", required = true, onSelect, multiSelect = false, treeViewRootCaption = "", disabledOnEdit = false, selectAnyItem = false }, _forwardedRef) => {
       const dialogRef = useRef<HTMLDialogElement>(null);
       const componentRef = useRef<HTMLDivElement>(null);
       const [tableData, setTableData] = useState<any[]>([]);
@@ -243,10 +243,10 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
         // console.log('tableData: ', tableData);
         // console.log('selectedRow: ', selectedRow);
 
-        const selectedValues = table_columns
-        .filter((col) => col?.is_selected_field)
-        .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
-        .join(", "); // Convert array to comma-separated string
+        // const selectedValues = table_columns
+        // .filter((col) => col?.is_selected_field)
+        // .map((col) => selectedRow[col.column_field] || "N/A") // Get values only
+        // .join(", "); // Convert array to comma-separated string
         //console.log("Selected item:", selectedRow);
         //console.log("Selected Fields (is_selected_field):", selectedValues);
         //console.log("Selected item:", selectedRow['_CpID']);

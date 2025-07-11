@@ -2,13 +2,16 @@
 // Fully respects hierarchical relationships (type ➔ cluster ➔ hazard)
 // Validates filter logic and joins against disaster event and hazardous event tables
 
+import createLogger from "~/utils/logger.server";
+
+// Create logger for this utility module
+const logger = createLogger("backend.server/utils/hazardFilters");
+
 export async function applyHazardFilters(
     filters: any,
     dr: any,
     baseConditions: any[],
-    sql: any,
     eq: any,
-    inArray: any,
     hipTypeTable: any,
     hipClusterTable: any,
     hipHazardTable: any,
@@ -16,19 +19,16 @@ export async function applyHazardFilters(
     disasterEventTable: any,
     disasterRecordsTable: any,
     query: any,
-    and: any
 ): Promise<any> {
-    // const hazardTypeId = filters.hazardTypeId ? String(filters.hazardTypeId).trim() : null;
-    // const hazardClusterId = filters.hazardClusterId ? String(filters.hazardClusterId).trim() : null;
-    // const specificHazardId = filters.specificHazardId ? String(filters.specificHazardId).trim() : null;
     const hazardTypeId = filters.hazardTypeId != null ? String(filters.hazardTypeId).trim() : null;
     const hazardClusterId = filters.hazardClusterId != null ? String(filters.hazardClusterId).trim() : null;
     const specificHazardId = filters.specificHazardId != null ? String(filters.specificHazardId).trim() : null;
 
-    console.log("🌋 [HAZARD FILTERS]:", {
-        "Hazard Type ID": filters.hazardTypeId ?? "(none)",
-        "Hazard Cluster ID": filters.hazardClusterId ?? "(none)",
-        "Specific Hazard ID": filters.specificHazardId ?? "(none)",
+    logger.info("Starting hazard filter application", {
+        hazardTypeId: hazardTypeId || "(none)",
+        hazardClusterId: hazardClusterId || "(none)",
+        specificHazardId: specificHazardId || "(none)",
+        hasFilters: !!(hazardTypeId || hazardClusterId || specificHazardId)
     });
 
     const hazardFiltersExist = hazardTypeId || hazardClusterId || specificHazardId;
@@ -38,31 +38,55 @@ export async function applyHazardFilters(
         .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
         .innerJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id));
 
+    logger.debug("Added required table joins", {
+        joinsAdded: ["disasterEvent", "hazardousEvent"]
+    });
+
     // If no filters exist, return the query with joins
     if (!hazardFiltersExist) {
+        logger.info("No hazard filters provided, returning query with joins only");
         return query;
     }
 
-    console.log("🔍 Hazard filter cascade initiated:", {
-        hazardTypeId,
-        hazardClusterId,
-        specificHazardId,
+    logger.debug("Initiating hazard filter cascade", {
+        filtersToApply: {
+            hazardTypeId: !!hazardTypeId,
+            hazardClusterId: !!hazardClusterId,
+            specificHazardId: !!specificHazardId
+        }
     });
 
     // ✅ Apply WHERE filters based on hazard hierarchy
+    let conditionsAdded = 0;
+
     if (hazardTypeId) {
         baseConditions.push(eq(hazardousEventTable.hipTypeId, hazardTypeId));
+        conditionsAdded++;
+        logger.debug("Applied hazard type filter", { hazardTypeId });
     }
+
     if (hazardClusterId) {
         baseConditions.push(eq(hazardousEventTable.hipClusterId, hazardClusterId));
+        conditionsAdded++;
+        logger.debug("Applied hazard cluster filter", { hazardClusterId });
     }
+
     if (specificHazardId) {
         baseConditions.push(eq(hazardousEventTable.hipHazardId, specificHazardId));
+        conditionsAdded++;
+        logger.debug("Applied specific hazard filter", { specificHazardId });
     }
+
+    logger.info("Applied hazard filters to conditions", {
+        conditionsAdded,
+        totalConditions: baseConditions.length
+    });
 
     // ✅ Hierarchical validation (non-blocking)
     try {
         if (specificHazardId) {
+            logger.debug("Starting specific hazard validation", { specificHazardId });
+
             const hazardValidation = await dr
                 .select({
                     hazardId: hipHazardTable.id,
@@ -77,14 +101,44 @@ export async function applyHazardFilters(
 
             const record = hazardValidation[0];
             if (record) {
+                logger.debug("Found hazard hierarchy record", {
+                    hazardId: record.hazardId,
+                    clusterId: record.clusterId,
+                    typeId: record.typeId
+                });
+
                 if (hazardClusterId && record.clusterId !== hazardClusterId) {
-                    console.warn(`⚠️ Hazard mismatch: specificHazard ${specificHazardId} ➔ cluster ${record.clusterId}, expected ${hazardClusterId}`);
+                    logger.warn("Hazard cluster mismatch detected", {
+                        specificHazardId,
+                        actualClusterId: record.clusterId,
+                        expectedClusterId: hazardClusterId,
+                        issue: "specificHazard does not belong to expected cluster"
+                    });
                 }
+
                 if (hazardTypeId && record.typeId !== hazardTypeId) {
-                    console.warn(`⚠️ Hazard mismatch: specificHazard ${specificHazardId} ➔ type ${record.typeId}, expected ${hazardTypeId}`);
+                    logger.warn("Hazard type mismatch detected", {
+                        specificHazardId,
+                        actualTypeId: record.typeId,
+                        expectedTypeId: hazardTypeId,
+                        issue: "specificHazard hierarchy does not match expected type"
+                    });
                 }
+
+                logger.info("Specific hazard validation completed", {
+                    specificHazardId,
+                    validationPassed: (!hazardClusterId || record.clusterId === hazardClusterId) &&
+                        (!hazardTypeId || record.typeId === hazardTypeId)
+                });
+            } else {
+                logger.warn("Specific hazard not found in hierarchy", {
+                    specificHazardId,
+                    issue: "hazard ID does not exist in database"
+                });
             }
         } else if (hazardClusterId && hazardTypeId) {
+            logger.debug("Starting cluster-type validation", { hazardClusterId, hazardTypeId });
+
             const clusterValidation = await dr
                 .select({
                     clusterId: hipClusterTable.id,
@@ -95,15 +149,41 @@ export async function applyHazardFilters(
                 .limit(1);
 
             const record = clusterValidation[0];
-            if (record && record.typeId !== hazardTypeId) {
-                console.warn(`⚠️ Cluster mismatch: cluster ${hazardClusterId} ➔ type ${record.typeId}, expected ${hazardTypeId}`);
+            if (record) {
+                if (record.typeId !== hazardTypeId) {
+                    logger.warn("Cluster type mismatch detected", {
+                        hazardClusterId,
+                        actualTypeId: record.typeId,
+                        expectedTypeId: hazardTypeId,
+                        issue: "cluster does not belong to expected type"
+                    });
+                } else {
+                    logger.debug("Cluster-type validation passed", {
+                        hazardClusterId,
+                        hazardTypeId
+                    });
+                }
+            } else {
+                logger.warn("Hazard cluster not found", {
+                    hazardClusterId,
+                    issue: "cluster ID does not exist in database"
+                });
             }
         }
     } catch (error) {
-        console.error("🔥 Error during hazard hierarchy validation:", error);
+        logger.error("Error during hazard hierarchy validation", {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            hazardTypeId,
+            hazardClusterId,
+            specificHazardId
+        });
     }
 
-    console.log("✅ Hazard filters applied to baseConditions.");
+    logger.info("Hazard filter application completed successfully", {
+        filtersApplied: conditionsAdded,
+        validationCompleted: true
+    });
 
     return query;
 }

@@ -1,10 +1,9 @@
-import React, {
+import {
 	useState,
 	useRef,
 	useEffect,
 	forwardRef,
 	useImperativeHandle,
-	useCallback,
 } from "react";
 import { Link } from "@remix-run/react";
 
@@ -211,7 +210,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			treeData = [],
 			caption = "",
 			rootCaption = "Root",
-			targetObject = null,
 			base_path = "",
 			onApply = null,
 			onClose = null,
@@ -222,7 +220,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			disableButtonSelect = false,
 			dialogMode = true,
 			search = true,
-			expanded = false,
 			onItemClick = undefined,
 			defaultSelectedIds = [],
 			itemLink = "",
@@ -258,9 +255,9 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			});
 		}, [defaultSelectedIds]); // ✅ This avoids infinite re-renders
 
-		const [selectedItems, setSelectedItems] = useState<{
-			[key: number]: boolean;
-		}>({});
+		// const [selectedItems, setSelectedItems] = useState<{
+		// 	[key: number]: boolean;
+		// }>({});
 
 		const dialogRef = useRef<any>(null);
 
@@ -289,7 +286,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 				setIsCollapseDisabled(false);
 
 				const expandedState: { [key: number]: boolean } = {};
-				const filteredNodes = filterTree(treeData, searchTerm, expandedState);
+				filterTree(treeData, searchTerm, expandedState);
 
 				setExpandedNodes((prev) => {
 					if (JSON.stringify(prev) !== JSON.stringify(expandedState)) {
@@ -396,9 +393,9 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 		const itemSelect = (e: any) => {
 			e.preventDefault();
 
-			const textarea = e.target
-				.closest("li")
-				?.querySelector("textarea") as HTMLTextAreaElement;
+			// const textarea = e.target
+			// 	.closest("li")
+			// 	?.querySelector("textarea") as HTMLTextAreaElement;
 
 			const dataId = e.target.closest("li").getAttribute("data-id") || "";
 			const dataIds = e.target.closest("li").getAttribute("data-ids") || "";
@@ -493,7 +490,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			});
 		};
 
-		const renderItemName = (node: any, parentIds: any) => {
+		const renderItemName = (node: any) => {
 			return onRenderItemName ? onRenderItemName(node) : {};
 		};
 
@@ -544,7 +541,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 										/>
 									)}
 									<div
-										{...renderItemName(enrichedNode, parentIds)}
+										{...renderItemName(enrichedNode)}
 										onClick={treeViewClick}
 									>
 										{renderItem(enrichedNode)}
@@ -585,7 +582,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 									)}
 
 									<div
-										{...renderItemName(enrichedNode, parentIds)}
+										{...renderItemName(enrichedNode)}
 										onClick={treeViewClick}
 									>
 										{renderItem(enrichedNode)}
@@ -826,6 +823,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 						</a>
 						{search && (
 							<input
+							    id="search-input"
+								name="search"
 								type="text"
 								placeholder="Search..."
 								value={searchTerm}
@@ -952,10 +951,10 @@ export const buildTree = (
 	idKey: string,
 	parentKey: string,
 	nameKey: string,
-	nameObj: string[] = ["en"], // Default priority order
+	// nameObj: string[] = ["en"], // Default priority order
 	priorityKey?: string | null, // Explicitly optional
 	additionalFields?: string[], // Array of field keys for hidden data
-	pickerConfig?: any | null
+	// pickerConfig?: any | null
 ) => {
 	const map = new Map();
 

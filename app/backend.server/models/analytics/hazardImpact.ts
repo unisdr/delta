@@ -1,4 +1,4 @@
-import { and, desc, eq, exists, inArray, sql, SQL, or } from "drizzle-orm";
+import { and, desc, eq, exists, inArray, sql, SQL } from "drizzle-orm";
 import { dr } from "~/db.server";
 import {
     damagesTable,
@@ -9,11 +9,13 @@ import {
     hipTypeTable,
     sectorDisasterRecordsRelationTable
 } from "~/drizzle/schema";
+import createLogger from "~/utils/logger.server";
+
+// Initialize logger for this module
+const logger = createLogger("backend.server/models/analytics/hazardImpact");
 import { HazardDataPoint, HazardImpactFilters } from "~/types/hazardImpact";
 import { getSectorsByParentId } from "./sectors";
 import {
-    calculateDamages,
-    calculateLosses,
     createAssessmentMetadata,
     calculateFaoAgriculturalDamage,
     calculateFaoAgriculturalLoss
@@ -28,7 +30,10 @@ import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/
 import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null => {
-    if (!sectorId) return null;
+    if (!sectorId) {
+        logger.debug("No sector ID provided for agricultural subsector lookup");
+        return null;
+    }
     const subsectorMap: { [key: string]: FaoAgriSubsector } = {
         'agri_crops': 'crops',
         'agri_livestock': 'livestock',
@@ -46,7 +51,8 @@ const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null
 const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
     const numericSectorId = parseInt(sectorId, 10);
     if (isNaN(numericSectorId)) {
-        return []; // Return empty array if invalid ID
+        logger.warn(`Invalid sector ID format: ${sectorId}`, { sectorId });
+        return [];
     }
 
     // Get immediate subsectors
@@ -104,11 +110,28 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         confidenceLevel = 'medium'
     } = filters;
 
+    logger.info("Fetching hazard impact data", {
+        filters: {
+            sectorId,
+            hazardTypeId,
+            hazardClusterId,
+            specificHazardId,
+            geographicLevelId,
+            fromDate,
+            toDate,
+            disasterEventId,
+            assessmentType,
+            confidenceLevel
+        }
+    });
+
     // Create assessment metadata
     const metadata = createAssessmentMetadata(
         assessmentType,
         confidenceLevel
     );
+
+    logger.debug("Created assessment metadata", { metadata });
 
     // Build base conditions array
     let baseConditions: SQL[] = [
@@ -139,7 +162,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         if (parsedFromDate) {
             baseConditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
         } else {
-            console.error('Invalid from date format:', fromDate);
+            logger.error('Invalid from date format', { fromDate });
         }
     }
 
@@ -148,7 +171,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
         if (parsedToDate) {
             baseConditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
         } else {
-            console.error('Invalid to date format:', toDate);
+            logger.error('Invalid to date format', { toDate });
         }
     }
 
@@ -167,7 +190,7 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
     if (geographicLevelId) {
         const divisionInfo = await getDivisionInfo(geographicLevelId);
         if (!divisionInfo) {
-            // If the geographic level doesn't exist, return empty results
+            logger.warn('Geographic level not found', { geographicLevelId });
             return {
                 eventsCount: [],
                 damages: [],
@@ -187,7 +210,11 @@ export async function fetchHazardImpactData(filters: HazardImpactFilters): Promi
             const eventId = _disasterEventId || disasterEventId;
             baseConditions.push(eq(disasterRecordsTable.disasterEventId, eventId));
         } catch (error) {
-            console.error("Invalid disaster event ID format:", error);
+            logger.error("Invalid disaster event ID format", {
+                error: error instanceof Error ? error.message : String(error),
+                disasterEventId,
+                _disasterEventId
+            });
             return {
                 eventsCount: [],
                 damages: [],

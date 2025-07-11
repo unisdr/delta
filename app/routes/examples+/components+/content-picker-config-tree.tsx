@@ -1,5 +1,5 @@
 import { sectorTable } from "~/drizzle/schema";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export const contentPickerConfig = {
     id: "sector_id",

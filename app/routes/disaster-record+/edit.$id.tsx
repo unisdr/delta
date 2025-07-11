@@ -56,7 +56,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		const parentKey = "parentId";
 		const nameKey = "name";
 		const rawData = await dr.select().from(divisionTable);
-		return buildTree(rawData, idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId", "nationalId", "level", "name"]);
+		return buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
 	};
 
 	const hip = await dataForHazardPicker();
@@ -303,7 +303,7 @@ export default function Screen() {
 					<div className="mg-container">
 						<fieldset className="dts-form__section">
 							<div className="dts-form__intro">
-								<legend className="dts-heading-3">Sectors</legend>
+								<legend className="dts-heading-3">Sector Effects</legend>
 							</div>
 							<div className="dts-form__body no-border-bottom">
 								<div className="dts-form__section-remove">

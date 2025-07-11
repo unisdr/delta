@@ -1,19 +1,14 @@
-import {dr, Tx} from "~/db.server";
+import {dr} from "~/db.server";
 import {authActionWithPerm, authLoaderWithPerm} from "~/util/auth";
 
 import { MainContainer } from "~/frontend/container";
 import type { MetaFunction } from "@remix-run/node";
-
-import { useLocation } from 'react-router-dom';
-
 
 import {
 	upsertRecord as disRecSectorsUpsertRecord,
 	disRecSectorsById,
 } from "~/backend.server/models/disaster_record__sectors";
 
-
-import {getSectors, SectorType} from "~/backend.server/models/sector";
 
 import { 
 	useLoaderData, 
@@ -22,15 +17,10 @@ import {
 	useSubmit, 
 	useNavigation,
 	useActionData,
-	useNavigate,
-	Link
 } from "@remix-run/react";
 
-import { json, ActionFunction, LoaderFunction, } from "@remix-run/node";
-import { useState, useEffect, useRef, RefObject, MouseEvent } from 'react';
-import { string } from "prop-types";
+import { useState, useEffect, useRef, RefObject } from 'react';
 import { configCurrencies } from  "~/util/config";
-import { isEmpty } from "ol/extent";
 
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
@@ -38,17 +28,17 @@ import { contentPickerConfigSector } from "../content-picker-config";
 //#Sector: End
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
 	return [
 	  { title: " Sectors - Disaster Records - DTS" },
 	  { name: "description", content: " Sectors page" },
 	];
  };
 
-interface Category { 
-	id: number; 
-	name: string; 
-}
+// interface Category { 
+// 	id: number; 
+// 	name: string; 
+// }
 
 interface SubCategory { 
 	id: number; 
@@ -193,7 +183,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 export default function Screen() {
 	const loaderData = useLoaderData<PropsLoader>();
 	const actionData = useActionData<PropsAction>();
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
@@ -201,7 +191,7 @@ export default function Screen() {
 	const formRefHidden: RefObject<HTMLInputElement> = useRef(null);
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
 
-	const locationUrlPath = useLocation();
+	// const locationUrlPath = useLocation();
 
 	const formAction = loaderData?.formAction || 'new';
 
@@ -344,14 +334,14 @@ export default function Screen() {
 									<div className="dts-form-component__label"></div>
 									<div className="dts-form-component__field--horizontal">
 										<input type="checkbox" name="with_losses" aria-describedby="" defaultChecked={ (loaderData.record && loaderData.record.withLosses) ? true : false } />
-										<span>Has Lossses</span>
+										<span>Has Losses</span>
 									</div>
 								</label>					
 							</div>
 							<div className="dts-form-component mg-grid__col">
 								<label>
 									<div className="dts-form-component__label">
-										<span>Lossses Cost</span>
+										<span>Losses Cost</span>
 									</div>
 									<input type="number" name="losses_cost" placeholder="enter the losses cost" defaultValue={(loaderData.record && loaderData.record.lossesCost) ? loaderData.record.lossesCost : '' } />
 								</label>

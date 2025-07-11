@@ -7,8 +7,12 @@
  * 3. World Bank DaLA methodology for impact ranking
  */
 
-import { SQL, sql, eq, and, inArray, desc, ilike, exists, or } from "drizzle-orm";
+import { SQL, sql, eq, and, inArray, desc, exists, or } from "drizzle-orm";
 import { dr as db } from "~/db.server";
+import createLogger from "~/utils/logger.server";
+
+// Initialize logger for this module
+const logger = createLogger("backend.server/models/analytics/mostDamagingEvents");
 import {
   disasterRecordsTable,
   sectorDisasterRecordsRelationTable,
@@ -18,14 +22,12 @@ import {
   lossesTable,
   hipTypeTable,
   hipClusterTable,
-  divisionTable,
   hipHazardTable,
   sectorTable
 } from "~/drizzle/schema";
-import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
 import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/geographicFilters";
-import { getSectorsByParentId } from "./sectors";
 import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 /**
@@ -53,22 +55,6 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
   return result.map(r => r.id);
 };
 
-/**
- * Helper function to normalize text for matching
- * 
- * @param text - The text to normalize
- * @returns Normalized text
- */
-const normalizeText = (text: string): string => {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
 async function buildFilterConditions(params: MostDamagingEventsParams): Promise<{ conditions: SQL<unknown>[]; sectorIds?: string[] }> {
   let conditions: SQL[] = [
     sql`${disasterRecordsTable.approvalStatus} = 'published'`
@@ -84,7 +70,11 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
       // Convert numeric IDs to strings for return value
       sectorIds = allSectorIds.map(id => id.toString());
 
-      console.log('Most Damaging Events - Sector IDs:', sectorIds);
+      logger.debug("Processing sector IDs for filtering", {
+        sectorId: params.sectorId,
+        sectorIdsCount: sectorIds.length,
+        sectorIdsSample: sectorIds.slice(0, 5) // Log first 5 IDs to avoid huge logs
+      });
 
       // Convert string IDs back to numbers for the SQL query
       const numericSectorIds = allSectorIds.map(id => Number(id));
@@ -102,7 +92,11 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
         )
       );
     } catch (error) {
-      console.error('Error in sector handling:', error);
+      logger.error("Error in sector handling", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        sectorId: params.sectorId
+      });
     }
   }
 
@@ -111,8 +105,25 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     .select()
     .from(disasterRecordsTable);
 
-  console.log(" [PASSING FILTERS]: MostDamagingEventsParams");
-  console.table(params);
+  logger.info("Processing most damaging events request", {
+    filters: {
+      sectorId: params.sectorId,
+      subSectorId: params.subSectorId,
+      hazardTypeId: params.hazardTypeId,
+      hazardClusterId: params.hazardClusterId,
+      specificHazardId: params.specificHazardId,
+      geographicLevelId: params.geographicLevelId,
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+      disasterEventId: params.disasterEventId,
+      page: params.page,
+      pageSize: params.pageSize,
+      sortBy: params.sortBy,
+      sortDirection: params.sortDirection,
+      assessmentType: params.assessmentType,
+      confidenceLevel: params.confidenceLevel
+    }
+  });
 
   // Apply hazard filters using the utility function
   await applyHazardFilters(
@@ -123,9 +134,7 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     },
     db,
     conditions,
-    sql,
     eq,
-    inArray,
     hipTypeTable,
     hipClusterTable,
     hipHazardTable,
@@ -133,28 +142,7 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     disasterEventTable,
     disasterRecordsTable,
     queryBuilder,
-    and
   );
-
-  // Extract hazard ID values for debug
-  // console.log('HazardType:', params.hazardTypeId);
-  // console.log('HazardCluster:', params.hazardClusterId);
-  // console.log('SpecificHazard:', params.specificHazardId);
-
-  // Check actual hazard values in query
-  const debugHazards = await db
-    .select({
-      id: disasterRecordsTable.id,
-      hip_type: hazardousEventTable.hipTypeId,
-      hip_cluster: hazardousEventTable.hipClusterId,
-      hip_hazard: hazardousEventTable.hipHazardId,
-    })
-    .from(disasterRecordsTable)
-    .innerJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
-    .innerJoin(hazardousEventTable, eq(disasterEventTable.hazardousEventId, hazardousEventTable.id))
-    .where(and(...conditions));
-
-  // console.log(' Matching record hazard fields:', debugHazards);
 
   // Apply geographic level filter
   if (params.geographicLevelId) {
@@ -164,10 +152,16 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
         // Apply geographic filters from utility
         conditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, conditions);
       } else {
-        console.warn(`Division with ID ${params.geographicLevelId} not found. No geographic filtering will be applied.`);
+        logger.warn("Division not found, skipping geographic filtering", {
+          divisionId: params.geographicLevelId
+        });
       }
     } catch (error) {
-      console.error(`Error in geographic filtering for division ${params.geographicLevelId}:`, error);
+      logger.error("Error in geographic filtering", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        divisionId: params.geographicLevelId
+      });
     }
   }
 
@@ -177,7 +171,10 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     if (parsedFromDate) {
       conditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
     } else {
-      console.error('Invalid fromDate format:', params.fromDate);
+      logger.warn("Invalid fromDate format", {
+        fromDate: params.fromDate,
+        error: "Could not parse date"
+      });
     }
   }
 
@@ -186,7 +183,10 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
     if (parsedToDate) {
       conditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
     } else {
-      console.error('Invalid toDate format:', params.toDate);
+      logger.warn("Invalid toDate format", {
+        toDate: params.toDate,
+        error: "Could not parse date"
+      });
     }
   }
 
@@ -199,6 +199,8 @@ async function buildFilterConditions(params: MostDamagingEventsParams): Promise<
 }
 
 export async function getMostDamagingEvents(params: MostDamagingEventsParams): Promise<PaginatedResult> {
+  const startTime = Date.now();
+
   try {
     // Default values for pagination
     const page = params.page || 1;
@@ -206,32 +208,22 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     const sortBy = params.sortBy || 'damages';
     const sortDirection = params.sortDirection || 'desc';
 
-    console.log(' [MostDamagingEvents] Running with params:');
-    console.table(params);
-
-    // Generate cache key from params
-    const cacheKey = JSON.stringify(params);
-    // const cached = resultsCache.get(cacheKey);
-    // if (cached) {
-    //   return cached;
-    // }
+    logger.info("Starting most damaging events analysis", {
+      page: page,
+      pageSize: pageSize,
+      sortBy: sortBy,
+      sortDirection: sortDirection,
+      hasSectorFilter: !!params.sectorId,
+      hasDateRange: !!(params.fromDate || params.toDate)
+    });
 
     // Build filter conditions with improved geographic filtering
     const { conditions, sectorIds } = await buildFilterConditions(params);
-    console.log(' [Filters Applied] SQL Conditions count:', conditions.length);
-
-    // Base query builder with required joins for hazard filtering
-    let baseQuery = db
-      .select()
-      .from(disasterRecordsTable)
-      .innerJoin(
-        disasterEventTable,
-        eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-      )
-      .innerJoin(
-        hazardousEventTable,
-        eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
-      );
+    logger.debug("Applied filter conditions", {
+      conditionCount: conditions.length,
+      hasGeographicFilter: !!params.geographicLevelId,
+      hasHazardFilter: !!(params.hazardTypeId || params.hazardClusterId || params.specificHazardId)
+    });
 
     // Optimize the count query by separating it from the main query
     // This prevents unnecessary computations when counting total records
@@ -254,11 +246,23 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     const countResult = await countQuery;
     const total = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(total / pageSize);
-    console.log(` [Count] Found ${total} event(s) across ${totalPages} page(s).`);
+    logger.info("Query result count", {
+      totalEvents: total,
+      totalPages: totalPages,
+      pageSize: pageSize,
+      currentPage: page
+    });
 
     // If no results, return empty response with proper metadata
     if (total === 0) {
-      console.warn(' No results found for the current filter combination.');
+      logger.warn("No results found for filter combination", {
+        filters: {
+          sectorId: params.sectorId,
+          hazardTypeId: params.hazardTypeId,
+          dateRange: `${params.fromDate} to ${params.toDate}`,
+          geographicLevelId: params.geographicLevelId
+        }
+      });
       const metadata = createAssessmentMetadata(
         params.assessmentType || 'rapid',
         params.confidenceLevel || 'medium'
@@ -410,9 +414,17 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     let results: any[] = [];
     try {
       results = await paginatedQuery;
-      console.log(` [Results] Successfully fetched ${results.length} row(s).`);
+      logger.debug("Successfully fetched results", {
+        resultCount: results.length,
+        page: page,
+        pageSize: pageSize
+      });
     } catch (error) {
-      console.error(' [Query Error] Falling back to basic query:', error);
+      logger.error("Error in main query, falling back to basic query", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        query: "simplified fallback query"
+      });
       // Fallback to a simpler query if the complex one fails
       const fallbackQuery = db
         .select({
@@ -458,7 +470,15 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
       totalLosses: Number(row.totalLosses || 0)
     }));
 
-    console.log(' [Results] Events:', events);
+    logger.debug("Processed events data", {
+      eventCount: events.length,
+      sampleEvents: events.slice(0, 3).map(e => ({
+        eventId: e.eventId,
+        name: e.eventName,
+        damages: e.totalDamages,
+        losses: e.totalLosses
+      }))
+    });
 
 
     const metadata = createAssessmentMetadata(
@@ -485,11 +505,31 @@ export async function getMostDamagingEvents(params: MostDamagingEventsParams): P
     };
 
     // resultsCache.set(cacheKey, paginatedResult);
-    console.log('[Completed] Result returned.');
+    const executionTime = Date.now() - startTime;
+    logger.info("Successfully completed most damaging events analysis", {
+      totalResults: total,
+      returnedResults: events.length,
+      executionTime: `${executionTime}ms`,
+      executionTimeMs: executionTime
+    });
 
     return paginatedResult;
   } catch (error) {
-    console.error(' [Fatal Error] getMostDamagingEvents failed:', error);
+    const executionTime = Date.now() - startTime;
+    logger.error("Fatal error in getMostDamagingEvents", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      executionTime: `${executionTime}ms`,
+      executionTimeMs: executionTime,
+      params: {
+        sectorId: params.sectorId,
+        hazardTypeId: params.hazardTypeId,
+        page: params.page,
+        pageSize: params.pageSize,
+        sortBy: params.sortBy,
+        sortDirection: params.sortDirection
+      }
+    });
 
     // Return a graceful error response instead of throwing
     const metadata = createAssessmentMetadata(

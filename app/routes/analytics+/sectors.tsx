@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { json } from "@remix-run/node";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useLoaderData } from "@remix-run/react";
 
-import { authLoader, authLoaderGetAuth, authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
+import { ErrorMessage } from "~/frontend/components/ErrorMessage";
+import ErrorBoundary from "~/frontend/components/ErrorBoundary";
 
 import Filters from "~/frontend/analytics/sectors/sections/Filters";
 import ImpactOnSector from "~/frontend/analytics/sectors/sections/ImpactOnSector";
@@ -15,17 +16,41 @@ import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
-import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
-import { FaFileDownload } from 'react-icons/fa';
-import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
 
-
-// Types
-interface Sector {
-  id: number;
-  sectorname: string;
-  subsectors?: Sector[];
+// JavaScript Disabled Message Component
+function JavaScriptDisabledMessage() {
+  return (
+    <div className="dts-page-section">
+      <div className="mg-container">
+        <div className="dts-data-box" style={{ textAlign: "center", padding: "4rem 2rem" }}>
+          <h2 className="dts-heading-2" style={{ color: "#c10920", marginBottom: "2rem" }}>
+            JavaScript Required
+          </h2>
+          <ErrorMessage message="JavaScript is currently disabled in your browser. This interactive dashboard requires JavaScript to function properly." />
+          <div style={{ marginTop: "2rem" }}>
+            <h3 className="dts-heading-4" style={{ marginBottom: "1.6rem" }}>
+              To enable JavaScript:
+            </h3>
+            <div className="dts-body-text" style={{ textAlign: "left", maxWidth: "600px", margin: "0 auto" }}>
+              <strong>Chrome, Firefox, Safari, Edge:</strong>
+              <ol style={{ marginLeft: "2rem", marginTop: "0.8rem" }}>
+                <li>Click on the settings/menu icon in your browser</li>
+                <li>Go to "Settings" or "Preferences"</li>
+                <li>Find "Privacy & Security" or "Advanced"</li>
+                <li>Look for "JavaScript" or "Site Settings"</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
+
+// import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx';
+// import { Damage, Loss, Disruption } from '~/routes/api+/analytics+/export-sector-analysis';
+
+
 
 // Create QueryClient instance
 const queryClient = new QueryClient({
@@ -37,6 +62,7 @@ const queryClient = new QueryClient({
     },
   },
 });
+
 
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
@@ -50,21 +76,29 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 });
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
   return [
     { title: "Sectors Analysis - DTS" },
     { name: "description", content: "Sector analysis page under DTS." },
   ];
 };
 
+
+
 // React component for Sectors Analysis page
 function SectorsAnalysisContent() {
   const { currency } = useLoaderData<typeof loader>();
 
+  // Effect to show content when JavaScript is enabled
+  useEffect(() => {
+    const jsContent = document.getElementById('js-content');
+    if (jsContent) {
+      jsContent.style.display = 'block';
+    }
+  }, []);
+
   // State declarations
-  const [isMounted, setIsMounted] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  // const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [filters, setFilters] = useState<{
     sectorId: string | null;
     subSectorId: string | null;
@@ -77,10 +111,6 @@ function SectorsAnalysisContent() {
     disasterEventId: string | null;
   } | null>(null);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
 
   // Event handlers for Filters component
   const handleApplyFilters = (newFilters: typeof filters) => {
@@ -89,7 +119,9 @@ function SectorsAnalysisContent() {
 
   const handleAdvancedSearch = () => {
     // TODO: Implement advanced search functionality
-    console.log("Advanced search clicked");
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Advanced search clicked');
+    }
   };
 
   const handleClearFilters = () => {
@@ -97,7 +129,7 @@ function SectorsAnalysisContent() {
   };
 
   // Function to export Excel data
-  const handleExportToExcel = async () => {
+  /*const handleExportToExcel = async () => {
     console.log("Start export to Excel");
     if (!filters) return;
     console.log('handleExportToExcel triggered');
@@ -416,28 +448,29 @@ function SectorsAnalysisContent() {
     } finally {
       setIsExportingExcel(false);
     }
-  };
+  };*/
 
-  // Add sectors query for dynamic titles
-  const { data: sectorsData } = useQuery({
-    queryKey: ["sectors"],
-    queryFn: async () => {
-      const response = await fetch("/api/analytics/sectors");
-      if (!response.ok) throw new Error("Failed to fetch sectors");
-      return response.json() as Promise<{ sectors: Sector[] }>;
-    }
-  });
 
   return (
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       <div style={{ maxWidth: "100%", overflow: "hidden" }}>
-        <div className="sectors-page">
+
+        {/* Show message when JavaScript is disabled */}
+        <noscript>
+          <JavaScriptDisabledMessage />
+        </noscript>
+
+
+        {/* Main content - only shown when JavaScript is enabled */}
+        <div className="sectors-page" style={{ display: "none" }} id="js-content">
           {/* Filters Section */}
-          <Filters
-            onApplyFilters={handleApplyFilters}
-            onAdvancedSearch={handleAdvancedSearch}
-            onClearFilters={handleClearFilters}
-          />
+          <ErrorBoundary>
+            <Filters
+              onApplyFilters={handleApplyFilters}
+              onAdvancedSearch={handleAdvancedSearch}
+              onClearFilters={handleClearFilters}
+            />
+          </ErrorBoundary>
 
           {/* Conditional rendering: Display this message until filters are applied */}
           {!filters && (
@@ -499,75 +532,51 @@ function SectorsAnalysisContent() {
                   {isExportingExcel ? "Exporting Data..." : "Download Data"}
                 </button> */}
               </div>
-              <div className="sectors-content" style={{ marginTop: "1rem", maxWidth: "100%", overflow: "hidden" }}>
+
+              <div
+                className="sectors-content"
+                style={{
+                  marginTop: "1rem",
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  position: "relative",
+                  minHeight: "800px" // Prevent layout shift
+                }}
+              >
                 {/* Impact on Selected Sector */}
                 {filters.sectorId && (
-                  <div className="space-y-8">
+                  <ErrorBoundary>
                     <ImpactOnSector
                       sectorId={filters.sectorId}
                       filters={filters}
                       currency={currency}
                     />
-                  </div>
+                  </ErrorBoundary>
                 )}
 
                 {/* Impact by Hazard Section */}
-                <ImpactByHazard filters={filters} />
+                <ErrorBoundary>
+                  <ImpactByHazard filters={filters} />
+                </ErrorBoundary>
 
                 {/* Impact by Geographic Level */}
-                <ImpactMap filters={filters} />
+                <ErrorBoundary>
+                  <ImpactMap filters={filters} currency={currency} />
+                </ErrorBoundary>
 
                 {/* Effect Details Section */}
-                <EffectDetails filters={filters} currency={currency} />
+                <ErrorBoundary>
+                  <EffectDetails filters={filters} currency={currency} />
+                </ErrorBoundary>
 
                 {/* Most Damaging Events Section */}
-                <MostDamagingEvents filters={filters} currency={currency} />
+                <ErrorBoundary>
+                  <MostDamagingEvents filters={filters} currency={currency} />
+                </ErrorBoundary>
               </div>
             </>
           )}
 
-          {/* Work In Progress Message - Updated list
-          <div
-            className="construction-message"
-            style={{
-              marginTop: "2rem",
-              padding: "1.6rem",
-              backgroundColor: "#f9f9f9",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-            }}
-          >
-            <h3
-              style={{
-                fontSize: "1.8rem",
-                marginBottom: "1rem",
-                fontWeight: "600",
-                color: "#333",
-              }}
-            >
-              🚧 Work In Progress
-            </h3>
-            <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-              The remaining sections of this dashboard, including:
-            </p>
-            <ul
-              style={{
-                marginTop: "1rem",
-                marginBottom: "1rem",
-                paddingLeft: "1.5rem",
-                fontSize: "1.4rem",
-                lineHeight: "1.6",
-                color: "#555",
-              }}
-            >
-              <li>The most damaging events for sectors</li>
-            </ul>
-            <p style={{ fontSize: "1.4rem", lineHeight: "1.5", color: "#555" }}>
-              are still under construction. Please stay tuned for future updates!
-            </p>
-          </div> */}
-
-          <p></p>
           <div className="dts-caption mt-4">
             * Data shown is based on published records
           </div>

@@ -76,7 +76,7 @@ export default function Data() {
 		headerElement: (
 			<Link to={"/disaster-record/edit/" + ld.recordId}>Back to disaster record</Link>
 		),
-		plural: "Disruptions: Sectors: " + ld.sectorFullPath,
+		plural: "Disruptions: Sector Effects: " + ld.sectorFullPath,
 		resourceName: "Disruption",
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", String(ld.sectorId)]]),

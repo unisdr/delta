@@ -1,6 +1,6 @@
 import { getMostDamagingEvents, type MostDamagingEventsParams, type SortColumn, type SortDirection } from "~/backend.server/models/analytics/mostDamagingEvents";
 import { sanitizeInput } from "~/utils/security";
-import { calculateDamages, calculateLosses, createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
+import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 
 interface MostDamagingEventsRequestParams {
   sectorId: string | null;
@@ -14,6 +14,8 @@ interface MostDamagingEventsRequestParams {
   disasterEventId: string | null;
   sortBy?: string | null;
   sortDirection?: string | null;
+  page?: number;
+  pageSize?: number;
 }
 
 const VALID_SORT_COLUMNS: readonly SortColumn[] = ['damages', 'losses', 'eventName', 'createdAt'] as const;
@@ -57,8 +59,8 @@ export async function handleMostDamagingEventsRequest(params: MostDamagingEvents
     // Prepare sanitized parameters for model
     const modelParams: MostDamagingEventsParams = {
       ...sanitizedParams,
-      page: 1,
-      pageSize: 20,
+      page: params.page || 1,
+      pageSize: params.pageSize || 20,
       sortBy,
       sortDirection,
     };

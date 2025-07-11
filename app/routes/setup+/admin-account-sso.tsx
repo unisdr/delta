@@ -1,6 +1,3 @@
-import {
-	json,
-} from "@remix-run/node";
 import { loginGetCode }  from "~/util/ssoauzeb2c";
 import {configAuthSupportedAzureSSOB2C} from "~/util/config"
 

@@ -5,8 +5,7 @@ import { featureCollection } from "@turf/helpers";
 import { multiPolygon } from "@turf/helpers";
 import { booleanWithin } from "@turf/boolean-within";
 import { booleanClockwise } from "@turf/boolean-clockwise";
-import { booleanOverlap } from "@turf/boolean-overlap";
-import { Feature, Point, LineString, Polygon, MultiPolygon, Geometry, Position, FeatureCollection } from "geojson";
+import { Feature, Point, LineString, Polygon, MultiPolygon} from "geojson";
 
 export function convertTurfPolygon(
     polygonGeoJSON: Feature<Polygon | MultiPolygon>

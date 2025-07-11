@@ -118,25 +118,6 @@ export function configApprovedRecordsArePublic(): boolean {
 };
 
 /**
- * Get footer URL for Privacy policy.
- * @returns string | default value empty string
- */
-export function configFooterURLPrivPolicy(): string {
-	const value = process.env.FOOTER_URL_PRIVACY_POLICY || "";
-	return value;
-};
-
-/**
- * Get footer URL for Terms and conditions.
- * @returns string | default value empty string
- */
-export function configFooterURLTermsConds(): string {
-	const value = process.env.FOOTER_URL_TERMS_CONDS || "";
-	return value;
-};
-
-
-/**
  * Get configuration for supported autentication.
  * @returns array string[] | default value ['form']
  */
@@ -150,7 +131,7 @@ function _configAuthSupported(): string[] {
 	value = value.replace(/\s+/g, '');
 	valueArray = value.split(",");
 
-	valueArray.forEach(function(item, index) { 
+	valueArray.forEach(function(item) { 
 		if ((authAllowedArray.indexOf(item) !== -1) == false) {
 			console.log('Authentication configuration (.env): ' + item + ' is invalid.'); 
 		}
@@ -207,7 +188,7 @@ export function configCurrencies(): string[] {
 	value = value.replace(/\s+/g, '');
 	valueArray = value.split(",");
 
-	valueArray.forEach(function(item, index) { 
+	valueArray.forEach(function(item) { 
 		if (checkValidCurrency(item)) {
 			returnArray.push(item.toUpperCase());
 		}

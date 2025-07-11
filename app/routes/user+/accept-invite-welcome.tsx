@@ -1,23 +1,16 @@
 import {
-	ActionFunctionArgs,
-	json,
 	LoaderFunctionArgs,
-	redirect
 } from "@remix-run/node";
 import {
-	useActionData,
 	useLoaderData,
 } from "@remix-run/react";
 import { Link } from "react-router-dom";
 
-import {
-	createUserSession
-} from "~/util/session";
 import { 
 	configAuthSupportedAzureSSOB2C
 } from "~/util/config";
 
-import {acceptInvite, AcceptInviteFieldsFromMap, validateInviteCode} from "~/backend.server/models/user/invite";
+import {validateInviteCode} from "~/backend.server/models/user/invite";
 
 export const loader = async ({request}:LoaderFunctionArgs) => {
 	const confAuthSupportedAzureSSOB2C:boolean = configAuthSupportedAzureSSOB2C();

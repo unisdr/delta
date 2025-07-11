@@ -14,17 +14,17 @@ const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
 
 export function Pagination(props: PaginationProps) {
 	let {
-		itemsOnThisPage,
 		totalItems,
 		page,
 		pageSize,
 		extraParams,
 		onPageSizeChange,
 	} = props;
+
 	const isPageSizeValid = PAGE_SIZE_OPTIONS.includes(pageSize);
 
 	if (!isPageSizeValid) {
-		pageSize = 50;
+		pageSize = 10;
 	}
 
 	const navigate = useNavigate();
@@ -52,7 +52,27 @@ export function Pagination(props: PaginationProps) {
 	};
 
 	// Helper to generate page numbers (simple version: show all pages)
-	const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+	const getPaginationWindow = () => {
+		const delta = 2;
+		const range: (number | string)[] = [];
+		const left = Math.max(2, page - delta);
+		const right = Math.min(totalPages - 1, page + delta);
+
+		range.push(1);
+		if (left > 2) range.push("...");
+
+		for (let i = left; i <= right; i++) {
+			range.push(i);
+		}
+
+		if (right < totalPages - 1) range.push("...");
+		if (totalPages > 1) range.push(totalPages);
+
+		return range;
+	};
+
+	const pageNumbers = getPaginationWindow();
+
 
 	return (
 		<nav className="dts-pagination" role="navigation" aria-label="Pagination">
@@ -69,9 +89,14 @@ export function Pagination(props: PaginationProps) {
 						</Link>
 					</li>
 				)}
-				{pageNumbers.map((num) => (
-					<li key={num}>
-						{num === page ? (
+				{pageNumbers.map((num, idx) => (
+					<li key={idx}>
+						{num === "..." ? (
+							<span className="mg-button mg-button--small mg-button-ghost"
+								aria-hidden="true"
+								tabIndex={-1}
+							>...</span>
+						) : num === page ? (
 							<span
 								className="mg-button mg-button--small mg-button-ghost"
 								aria-label={`Current page, page ${num}`}
@@ -82,7 +107,7 @@ export function Pagination(props: PaginationProps) {
 						) : (
 							<Link
 								className="mg-button mg-button--small mg-button-ghost"
-								to={buildQueryString(num)}
+								to={buildQueryString(num as number)}
 								aria-label={`Page ${num}`}
 							>
 								{num}
@@ -90,6 +115,7 @@ export function Pagination(props: PaginationProps) {
 						)}
 					</li>
 				))}
+
 				{/* Only show next button if not on last page */}
 				{page < totalPages && (
 					<li>
@@ -105,7 +131,7 @@ export function Pagination(props: PaginationProps) {
 			</ul>
 			<div className="dts-form-component">
 				<select value={pageSize} onChange={handlePageSizeChange} aria-label="Items per page"
-				  id="dts-pagination-page-size"
+					id="dts-pagination-page-size"
 				>
 					{PAGE_SIZE_OPTIONS.map((size) => (
 						<option key={size} value={size}>

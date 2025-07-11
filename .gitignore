@@ -1,70 +1,58 @@
+# Dependencies
+node_modules/
+jspm_packages/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+
+# Build outputs
+build/
+dist/
+.next/
+.remix/
+out/
+public/build/
+*.tgz
+*.tsbuildinfo
+
+
+# Environment variables
+.env
+.env.*
+.env.local
+
+
+# Database
+app/drizzle/out/
+app/drizzle/meta/
+migrations/
+*.db
+*.sqlite
+*.sqlite3
+*.sql.gz
+*.dump
+
+
+# Logs
+logs/
+
+# Uploads
+public/uploads/
+
 # IDE
 .vscode/
 .idea/
 *.iml
 
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build
-build/
-dist/
-.next/
-out/
-
-# Environment
-.env
-.env.*
-
-# Local database files
-/local/db-backups/
-.env.local
-
-# Database
-# app/backend.server/db/
-# app/backend.server/utils/
-app/drizzle/out/
-
-# Scripts and Data
-backup.sh
-backups/
-# utils/
-data/
-# scripts/
-
-# Drizzle
-app/drizzle/meta/
-migrations/
-# *.sql
-# drizzle.config.js
-# *_schema_snapshot.json
-app/utils/sync-db.ts
-
 # OS
 .DS_Store
 Thumbs.db
 
-public/uploads/
-
-
-
-schema_2025_02_24.ts
-
-
-# Division data
-division1 1.zip
-temp-geodata
-temp-download
-yemen_import_fixed
-import-data/divisions_new.csv
-import-data/divisions_new.csv
-import-data/
-yemen_import/
-yemen_import_fixed2/
-
-drc_divisions/divisions.csv
-
-drc_divisions
+# Cache
+.cache
+.parcel-cache
+tmp/
+temp/

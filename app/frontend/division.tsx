@@ -1,48 +1,31 @@
-import {
-	Link
-} from "@remix-run/react";
+import { Link } from "@remix-run/react";
 
+import { Form, Field, SubmitButton, FieldErrors } from "~/frontend/form";
+import { DivisionInsert } from "~/drizzle/schema";
 
-import {
-	Form,
-	Field,
-	SubmitButton,
-	FieldErrors,
-	Errors
-} from "~/frontend/form";
-import {DivisionInsert} from "~/drizzle/schema";
-
-import {divisionBreadcrumb, DivisionBreadcrumbRow, divisionsAllLanguages} from "~/backend.server/models/division";
-
+import { DivisionBreadcrumbRow } from "~/backend.server/models/division";
 
 interface DivisionFormProps {
 	edit: boolean;
 	fields: DivisionInsert;
-	errors: any
-	breadcrumbs: DivisionBreadcrumbRow[] | null
-	view?: string | null
+	errors: any;
+	breadcrumbs: DivisionBreadcrumbRow[] | null;
+	view?: string | null;
 }
 
-/*
-export function dataFieldsFromMap(data: { [key: string]: string }): DataFields {
-	const fields: (keyof DataFields)[] = [
-		"field1",
-		"field2",
-	];
-	 return Object.fromEntries(
-		fields.map(field => [field, data[field] || ""])
-	) as unknown as DataFields;
-}
-*/
-
-
-export function DivisionForm({edit, fields, errors, breadcrumbs, view}: DivisionFormProps) {
+export function DivisionForm({
+	edit,
+	fields,
+	errors,
+	breadcrumbs,
+	view,
+}: DivisionFormProps) {
 	return (
 		<>
 			<h2>{edit ? "Edit Division" : "Create Division"}</h2>
 			<Breadcrumb rows={breadcrumbs} linkLast={true} />
-			<Form errors={errors}>
-				<Field label="Parent ID">
+			<Form errors={errors} className="dts-form">
+				<Field label="Parent ID" extraClassName="dts-form-component">
 					<input
 						type="text"
 						name="parentId"
@@ -53,7 +36,11 @@ export function DivisionForm({edit, fields, errors, breadcrumbs, view}: Division
 
 				{fields.name &&
 					Object.keys(fields.name).map((lang) => (
-						<Field key={lang} label={`Name (${lang})`}>
+						<Field
+							key={lang}
+							label={`Name (${lang})`}
+							extraClassName="dts-form-component"
+						>
 							<input
 								type="text"
 								name={`names[${lang}]`}
@@ -63,23 +50,30 @@ export function DivisionForm({edit, fields, errors, breadcrumbs, view}: Division
 						</Field>
 					))}
 
-
-				<SubmitButton className="mg-button mg-button-primary" label={edit ? "Update Division" : "Create Division"} />
+				<div className="dts-form__actions">
+					<SubmitButton
+						className="mg-button mg-button-primary"
+						label={edit ? "Update Division" : "Create Division"}
+					/>
+				</div>
 			</Form>
 
-		    {!view && <Link to={"/settings/geography?parent=" + fields.parentId}>Back to List</Link>}
-			{view && <Link to={"/settings/geography/tree"}>Back to List</Link>}
+			{!view && (
+				<Link to={"/settings/geography?parent=" + fields.parentId}>
+					Back to List
+				</Link>
+			)}
+			{view && <Link to={"/settings/geography"}>Back to List</Link>}
 		</>
 	);
 }
 
-
 type BreadcrumbProps = {
 	rows: DivisionBreadcrumbRow[] | null;
-	linkLast?: boolean
+	linkLast?: boolean;
 };
 
-export function Breadcrumb({rows, linkLast}: BreadcrumbProps) {
+export function Breadcrumb({ rows, linkLast }: BreadcrumbProps) {
 	if (!rows) {
 		return null;
 	}
@@ -92,7 +86,9 @@ export function Breadcrumb({rows, linkLast}: BreadcrumbProps) {
 				{rows.map((row, index) => (
 					<li key={row.id}>
 						{index < rows.length - 1 || linkLast ? (
-							<Link to={`/settings/geography?parent=${row.id}`}>{row.name}</Link>
+							<Link to={`/settings/geography?parent=${row.id}`}>
+								{row.name}
+							</Link>
 						) : (
 							<span>{row.name}</span>
 						)}
@@ -102,6 +98,3 @@ export function Breadcrumb({rows, linkLast}: BreadcrumbProps) {
 		</nav>
 	);
 }
-
-
-

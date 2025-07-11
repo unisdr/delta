@@ -8,6 +8,8 @@ import {
 	useDefaultCurrency,
 } from "~/frontend/utils/formatters";
 import AreaChart from "~/components/AreaChart";
+import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
+
 
 // Types
 interface ApiResponse {
@@ -26,14 +28,14 @@ interface ApiResponse {
 	};
 }
 
-interface ImpactData {
-	eventCount: number;
-	totalDamage: string;
-	totalLoss: string;
-	eventsOverTime: { year: number; count: number }[];
-	damageOverTime: { year: number; amount: number }[];
-	lossOverTime: { year: number; amount: number }[];
-}
+// interface ImpactData {
+// 	eventCount: number;
+// 	totalDamage: string;
+// 	totalLoss: string;
+// 	eventsOverTime: { year: number; count: number }[];
+// 	damageOverTime: { year: number; amount: number }[];
+// 	lossOverTime: { year: number; amount: number }[];
+// }
 
 interface Props {
 	sectorId: string | null;
@@ -74,20 +76,15 @@ interface SpecificHazardsResponse {
 	hazards: Hazard[];
 }
 
-// Utility functions
-const calculateTotal = (data: { year: number; amount: number }[]) => {
-	return data.reduce((acc, curr) => acc + curr.amount, 0);
-};
-
 // Transform time series data
-const transformTimeSeriesData = (data: Record<string, string>) => {
-	return Object.entries(data)
-		.map(([year, value]) => ({
-			year: parseInt(year),
-			amount: parseFloat(value),
-		}))
-		.sort((a, b) => a.year - b.year);
-};
+// const transformTimeSeriesData = (data: Record<string, string>) => {
+// 	return Object.entries(data)
+// 		.map(([year, value]) => ({
+// 			year: parseInt(year),
+// 			amount: parseFloat(value),
+// 		}))
+// 		.sort((a, b) => a.year - b.year);
+// };
 
 // Custom tooltip for charts
 interface CustomTooltipProps {
@@ -146,43 +143,51 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		}
 	};
 
-	const handlePointerEnter = (
-		e: React.PointerEvent<HTMLButtonElement>,
-		content: string
-	) => {
-		console.log("Pointer Enter Event:", {
-			target: e.currentTarget,
-			content: content,
-		});
+	// const handlePointerEnter = (
+	// 	e: React.PointerEvent<HTMLButtonElement>,
+	// 	content: string
+	// ) => {
+	// 	console.log("Pointer Enter Event:", {
+	// 		target: e.currentTarget,
+	// 		content: content,
+	// 	});
 
-		if (e.currentTarget === eventsImpactingRef.current) {
-			createTooltip(eventsImpactingRef, content);
-		} else if (e.currentTarget === eventsOverTimeRef.current) {
-			createTooltip(eventsOverTimeRef, content);
-		} else if (e.currentTarget === damageTooltipRef.current) {
-			createTooltip(damageTooltipRef, content);
-		} else if (e.currentTarget === lossTooltipRef.current) {
-			createTooltip(lossTooltipRef, content);
-		}
-	};
+	// 	if (e.currentTarget === eventsImpactingRef.current) {
+	// 		createTooltip(eventsImpactingRef, content);
+	// 	} else if (e.currentTarget === eventsOverTimeRef.current) {
+	// 		createTooltip(eventsOverTimeRef, content);
+	// 	} else if (e.currentTarget === damageTooltipRef.current) {
+	// 		createTooltip(damageTooltipRef, content);
+	// 	} else if (e.currentTarget === lossTooltipRef.current) {
+	// 		createTooltip(lossTooltipRef, content);
+	// 	}
+	// };
 
 	// Debug logging for tooltip state changes
 	useEffect(() => {
-		console.log("Tooltip Props Changed:");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Cleaning up tooltip");
+		}
 	}, []);
 
 	// Handle the creation of the floating tooltip
 	useEffect(() => {
 		return () => {
-			console.log("Cleaning up tooltip");
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Cleaning up tooltip");
+			}
 		};
 	}, []);
 
-	console.log("Component Render - Props:", { sectorId, filters });
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Component Render", { sectorId, filters });
+	}
 
 	// Determine which ID to use for the API call
 	const targetSectorId = filters.subSectorId || sectorId;
-	console.log("Target Sector ID:", targetSectorId);
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Target Sector ID", { targetSectorId });
+	}
 
 	// Track previous values for debugging
 	const prevTargetSectorIdRef = useRef(targetSectorId);
@@ -190,17 +195,21 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	useEffect(() => {
 		if (prevTargetSectorIdRef.current !== targetSectorId) {
-			console.log("Target Sector ID Changed:", {
-				from: prevTargetSectorIdRef.current,
-				to: targetSectorId,
-			});
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Target Sector ID Changed", {
+					from: prevTargetSectorIdRef.current,
+					to: targetSectorId,
+				});
+			}
 			prevTargetSectorIdRef.current = targetSectorId;
 		}
 		if (prevGeographicLevelRef.current !== filters.geographicLevelId) {
-			console.log("Geographic Level Changed:", {
-				from: prevGeographicLevelRef.current,
-				to: filters.geographicLevelId,
-			});
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Geographic Level Changed", {
+					from: prevGeographicLevelRef.current,
+					to: filters.geographicLevelId,
+				});
+			}
 			prevGeographicLevelRef.current = filters.geographicLevelId;
 		}
 	}, [targetSectorId, filters.geographicLevelId]);
@@ -262,7 +271,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	} = useQuery<ApiResponse>({
 		queryKey: ["sectorImpact", targetSectorId, filters],
 		queryFn: async () => {
-			console.log("Fetching data for:", { targetSectorId, filters });
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Fetching data for:", { targetSectorId, filters });
+			}
 
 			if (!targetSectorId) throw new Error("Sector ID is required");
 
@@ -279,24 +290,33 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 					key !== "subSectorId"
 				) {
 					params.append(key, value.toString());
-					console.log(`Adding filter: ${key}=${value}`);
+					if (process.env.NODE_ENV === 'development') {
+						console.log(`Adding filter parameter`, { key, value });
+					}
 				}
 			});
 
-			console.log(
-				"API Request URL:",
-				`/api/analytics/ImpactonSectors?${params}`
-			);
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Making API request", {
+					url: `/api/analytics/ImpactonSectors?${params}`,
+					targetSectorId
+				});
+			}
 
 			const response = await fetch(`/api/analytics/ImpactonSectors?${params}`);
 			if (!response.ok) {
-				console.error("API Error:", response.status, response.statusText);
+				console.error("API Error", {
+					status: response.status,
+					statusText: response.statusText
+				});
 				const errorText = await response.text();
-				console.error("API Error Details:", errorText);
+				console.error("API Error Details", { errorText });
 				throw new Error("Failed to fetch sector impact data");
 			}
 			const data = await response.json();
-			console.log("API Response:", data);
+			if (process.env.NODE_ENV === 'development') {
+				console.log("API Response:", data);
+			}
 			return data;
 		},
 		enabled: !!targetSectorId,
@@ -308,15 +328,20 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	useEffect(() => {
 		if (isSuccess && apiResponse) {
-			console.log("Query Success - New Data:", apiResponse);
+			if (process.env.NODE_ENV === 'development') {
+				console.log("Query Success - New Data:", apiResponse);
+			}
 		}
 	}, [isSuccess, apiResponse]);
 
 	useEffect(() => {
 		if (isError && error) {
-			console.error("Query Error:", error);
+			console.error("Query Error", {
+				error: error instanceof Error ? error.message : String(error),
+				targetSectorId
+			});
 		}
-	}, [isError, error]);
+	}, [isError, error, targetSectorId]);
 
 	// const { data: sectorsData } = useQuery<{ sectors: Sector[] }>("sectors", async () => {
 	//     const response = await fetch("/api/analytics/sectors");
@@ -405,23 +430,23 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 			value >= 1_000_000_000
 				? "billions"
 				: value >= 1_000_000
-				? "millions"
-				: value >= 1_000
-				? "thousands"
-				: undefined
+					? "millions"
+					: value >= 1_000
+						? "thousands"
+						: undefined
 		);
 	};
 
-	console.log("Debug - Component State:", {
-		sectorId,
-		hasError: !!error,
-		isLoading,
-		hasData: !!apiResponse,
-		apiResponseData: apiResponse?.data,
-	});
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Debug - Component State:", {
+			apiResponseData: apiResponse?.data,
+		});
+	}
 
 	if (isLoading) {
-		console.log("Debug - Loading state");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - Loading state");
+		}
 		return (
 			<section className="dts-page-section">
 				<div className="mg-container">
@@ -469,7 +494,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Error state
 	if (error) {
-		console.log("Debug - Error state:", error);
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - Error state:", error);
+		}
 
 		// Extract the actual error message from the error object
 		let errorMessage = "An error occurred while fetching the data.";
@@ -484,10 +511,12 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 				.then((json: any) => {
 					if (json.error) {
 						errorMessage = json.error;
-						console.log("Extracted API error:", errorMessage);
+						if (process.env.NODE_ENV === 'development') {
+							console.log("Extracted API error:", errorMessage);
+						}
 					}
 				})
-				.catch(() => {});
+				.catch(() => { });
 		}
 
 		return (
@@ -528,7 +557,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 
 	// Empty state - no sector selected
 	if (!targetSectorId) {
-		console.log("Debug - No sector selected state");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - No sector selected state");
+		}
 		return (
 			<div className="dts-data-box dts-data-box--error">
 				<h3 className="dts-body-label">
@@ -544,7 +575,9 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	}
 
 	if (!apiResponse?.data) {
-		console.log("Debug - No data state");
+		if (process.env.NODE_ENV === 'development') {
+			console.log("Debug - No data state");
+		}
 		return (
 			<div className="dts-data-box dts-data-box--error">
 				<div className="dts-error-content">
@@ -561,14 +594,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 	const data = apiResponse?.data || {};
 
 	// Add debug logging for the data that will be used for display
-	console.log("Data for display:", {
-		apiResponseExists: !!apiResponse,
-		dataExists: !!data,
-		eventCount: data.eventCount,
-		totalDamage: data.totalDamage,
-		totalLoss: data.totalLoss,
-		dataAvailability: data.dataAvailability,
-	});
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Data for display:", {
+			apiResponseExists: !!apiResponse,
+			dataExists: !!data,
+			eventCount: data.eventCount,
+			totalDamage: data.totalDamage ? true : false,
+			totalLoss: data.totalLoss ? true : false,
+			dataAvailability: data.dataAvailability,
+		});
+	}
 
 	// Transform time series data with proper typing and logging
 	const eventsData = Object.entries(data.eventsOverTime || {})
@@ -594,71 +629,70 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 		eventsData.length > 0
 			? eventsData[0].year
 			: filters.fromDate
-			? parseInt(filters.fromDate.split("-")[0])
-			: new Date().getFullYear();
+				? parseInt(filters.fromDate.split("-")[0])
+				: new Date().getFullYear();
 
 	// Fix damage data transformation to ensure it properly handles string values and zero impact
 	const damageData =
 		data?.dataAvailability?.damage === "zero"
 			? [{ year: referenceYear, amount: 0 }]
 			: Object.entries(data.damageOverTime || {})
-					.map(([year, amount]) => {
-						const parsedAmount =
-							typeof amount === "string" ? parseFloat(amount) : Number(amount);
-						return {
-							year: parseInt(year),
-							amount: isNaN(parsedAmount) ? 0 : parsedAmount,
-						};
-					})
-					.filter((entry) => {
-						if (!filters.fromDate && !filters.toDate) return true;
-						const yearNum = entry.year;
-						const fromYear = filters.fromDate
-							? parseInt(filters.fromDate.split("-")[0])
-							: 0;
-						const toYear = filters.toDate
-							? parseInt(filters.toDate.split("-")[0])
-							: 9999;
-						return yearNum >= fromYear && yearNum <= toYear;
-					})
-					.sort((a, b) => a.year - b.year);
+				.map(([year, amount]) => {
+					const parsedAmount =
+						typeof amount === "string" ? parseFloat(amount) : Number(amount);
+					return {
+						year: parseInt(year),
+						amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+					};
+				})
+				.filter((entry) => {
+					if (!filters.fromDate && !filters.toDate) return true;
+					const yearNum = entry.year;
+					const fromYear = filters.fromDate
+						? parseInt(filters.fromDate.split("-")[0])
+						: 0;
+					const toYear = filters.toDate
+						? parseInt(filters.toDate.split("-")[0])
+						: 9999;
+					return yearNum >= fromYear && yearNum <= toYear;
+				})
+				.sort((a, b) => a.year - b.year);
 
 	// Fix loss data transformation to ensure it properly handles string values and zero impact
 	const lossData =
 		data?.dataAvailability?.loss === "zero"
 			? [{ year: referenceYear, amount: 0 }]
 			: Object.entries(data.lossOverTime || {})
-					.map(([year, amount]) => {
-						const parsedAmount =
-							typeof amount === "string" ? parseFloat(amount) : Number(amount);
-						return {
-							year: parseInt(year),
-							amount: isNaN(parsedAmount) ? 0 : parsedAmount,
-						};
-					})
-					.filter((entry) => {
-						if (!filters.fromDate && !filters.toDate) return true;
-						const yearNum = entry.year;
-						const fromYear = filters.fromDate
-							? parseInt(filters.fromDate.split("-")[0])
-							: 0;
-						const toYear = filters.toDate
-							? parseInt(filters.toDate.split("-")[0])
-							: 9999;
-						return yearNum >= fromYear && yearNum <= toYear;
-					})
-					.sort((a, b) => a.year - b.year);
+				.map(([year, amount]) => {
+					const parsedAmount =
+						typeof amount === "string" ? parseFloat(amount) : Number(amount);
+					return {
+						year: parseInt(year),
+						amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+					};
+				})
+				.filter((entry) => {
+					if (!filters.fromDate && !filters.toDate) return true;
+					const yearNum = entry.year;
+					const fromYear = filters.fromDate
+						? parseInt(filters.fromDate.split("-")[0])
+						: 0;
+					const toYear = filters.toDate
+						? parseInt(filters.toDate.split("-")[0])
+						: 9999;
+					return yearNum >= fromYear && yearNum <= toYear;
+				})
+				.sort((a, b) => a.year - b.year);
 
-	console.log("Final transformed data:", {
-		eventsData,
-		damageData,
-		lossData,
-		rawDamage: data.totalDamage,
-		rawLoss: data.totalLoss,
-	});
 
-	const totalDamage = calculateTotal(damageData);
-	const totalLoss = calculateTotal(lossData);
+
+	if (process.env.NODE_ENV === 'development') {
+		console.log("Final transformed data:", {
+			eventsData,
+			damageData,
+			lossData
+		});
+	}
 
 	return (
 		<section
@@ -679,14 +713,14 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 				<div className="mg-grid mg-grid--gap-default">
 					<div className="dts-data-box">
 						<h3 className="dts-body-label">
-							<span id="elementId01">Events impacting sectors</span>
+							<span id="elementId01">Disaster events impacting sectors</span>
 							<button
 								ref={eventsImpactingRef}
 								className="dts-tooltip__button"
 								onPointerEnter={() =>
 									createTooltip(
 										eventsImpactingRef,
-										"Total number of events that have impacted this sector"
+										"Total number of disaster events that have impacted this sector"
 									)
 								}
 							>
@@ -695,13 +729,20 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
 							{/* <span>{data?.eventCount ? formatNumber(data.eventCount) : "No data available"}</span> */}
-							<span>
-								{eventsData.length > 0
-									? formatNumber(
-											eventsData.reduce((sum, event) => sum + event.count, 0)
-									  )
-									: "No data available"}
-							</span>
+							{eventsData.length > 0 ? (
+								<span>
+									{formatNumber(
+										eventsData.reduce((sum, event) => sum + event.count, 0)
+									)}
+								</span>
+							) : (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-g">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							)}
 						</div>
 					</div>
 
@@ -723,12 +764,16 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 							</button>
 						</h3>
 						<div style={{ height: "300px" }}>
-							<AreaChart
-								data={eventsData}
-								variant="events"
-								formatter={formatNumber}
-								CustomTooltip={CustomTooltip}
-							/>
+							{eventsData.length > 0 ? (
+								<AreaChart
+									data={eventsData}
+									variant="events"
+									formatter={formatNumber}
+									CustomTooltip={CustomTooltip}
+								/>
+							) : (
+								<EmptyChartPlaceholder />
+							)}
 						</div>
 					</div>
 				</div>
@@ -755,25 +800,39 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 							</button>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-d">
-							<span>
-								{data?.dataAvailability?.damage === "zero"
-									? "Zero Impact (Confirmed)"
-									: data?.dataAvailability?.damage === "no_data"
-									? "No data available"
-									: data?.totalDamage !== undefined &&
-									  data?.totalDamage !== null &&
-									  data?.totalDamage !== ""
-									? formatCurrencyWithCode(Number(data.totalDamage), currency)
-									: "No data available"}
-							</span>
+							{data?.dataAvailability?.damage === "zero" ? (
+								<span>Zero Impact (Confirmed)</span>
+							) : data?.dataAvailability?.damage === "no_data" ? (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-d">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							) : data?.totalDamage !== undefined &&
+								data?.totalDamage !== null &&
+								data?.totalDamage !== "" ? (
+								<span>
+									{formatCurrencyWithCode(Number(data.totalDamage), currency)}
+								</span>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 						<div style={{ height: "300px" }}>
-							<AreaChart
-								data={damageData}
-								variant="damage"
-								formatter={formatMoneyValue}
-								CustomTooltip={CustomTooltip}
-							/>
+							{damageData.length > 0 ? (
+								<AreaChart
+									data={damageData}
+									variant="damage"
+									formatter={formatMoneyValue}
+									CustomTooltip={CustomTooltip}
+								/>
+							) : (
+								<EmptyChartPlaceholder />
+							)}
 						</div>
 					</div>
 
@@ -795,25 +854,41 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters }) => {
 							</button>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-c">
-							<span>
-								{data?.dataAvailability?.loss === "zero"
-									? "Zero Impact (Confirmed)"
-									: data?.dataAvailability?.loss === "no_data"
-									? "No data available"
-									: data?.totalLoss !== undefined &&
-									  data?.totalLoss !== null &&
-									  data?.totalLoss !== ""
-									? formatCurrencyWithCode(Number(data.totalLoss), currency)
-									: "No data available"}
-							</span>
+							{data?.dataAvailability?.loss === "zero" ? (
+								<span>Zero Impact (Confirmed)</span>
+							) : data?.dataAvailability?.loss === "no_data" ? (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-c">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							) : data?.totalLoss !== undefined &&
+								data?.totalLoss !== null &&
+								data?.totalLoss !== "" ? (
+								<span>
+									{formatCurrencyWithCode(Number(data.totalLoss), currency)}
+								</span>
+							) : (
+								<>
+									<div className="dts-indicator dts-indicator--target-box-c">
+										<img src="/assets/images/empty.png" alt="No data" />
+										<span className="dts-body-text">No data available</span>
+									</div>
+								</>
+							)}
 						</div>
 						<div style={{ height: "300px" }}>
-							<AreaChart
-								data={lossData}
-								variant="loss"
-								formatter={formatMoneyValue}
-								CustomTooltip={CustomTooltip}
-							/>
+							{lossData.length > 0 ? (
+								<AreaChart
+									data={lossData}
+									variant="loss"
+									formatter={formatMoneyValue}
+									CustomTooltip={CustomTooltip}
+								/>
+							) : (
+								<EmptyChartPlaceholder />
+							)}
 						</div>
 					</div>
 				</div>

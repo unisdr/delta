@@ -1,5 +1,4 @@
 import {
-	json,
 	redirect,
 	LoaderFunction
 } from "@remix-run/node";
@@ -138,7 +137,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 	console.log("NODE_ENV", process.env.NODE_ENV)
 	// console.log("NODE_ENV", process.env.SSO_AZURE_B2C_CLIENT_SECRET)
 
-	const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
+	// const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
     const confAuthSupportedAzureSSOB2C:boolean = configAuthSupportedAzureSSOB2C();
 	const url = new URL(request.url);
 	const queryStringCode = url.searchParams.get('code') || '';

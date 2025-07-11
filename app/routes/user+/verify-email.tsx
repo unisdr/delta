@@ -1,4 +1,4 @@
-import { json, MetaFunction } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/node";
 
 import {
 	authLoaderGetAuth,
@@ -19,12 +19,6 @@ import { errorToString } from "~/frontend/form";
 import { redirect } from "@remix-run/node";
 
 import { formatTimestamp } from "~/util/time";
-import { sendEmail } from "~/util/email";
-import {
-	configCountryName,
-	configSiteName,
-	configSiteURL,
-} from "~/util/config";
 
 import React from "react";
 import { useNavigate } from "@remix-run/react";
@@ -132,7 +126,7 @@ export default function Data() {
 	}, []);
 
 	// Handler to clear OTP when resending
-	const handleResend = React.useCallback(() => {
+	React.useCallback(() => {
 		setOtp("");
 		const input = document.querySelector(
 			'input[name="code"]'

@@ -9,8 +9,6 @@ interface LoaderData {
 // Loader to Fetch & Transform Data
 export const loader = async () => {
 
-    let arrDisasterEventTable = [] as any[];
-
     const rawData = [
         { id: 1, parentId: null, name: "Productive Sector" },
         { id: 2, parentId: 1, name: "Mining and quarrying" },

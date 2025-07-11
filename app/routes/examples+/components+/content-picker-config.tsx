@@ -1,5 +1,5 @@
 import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
-import { eq, ilike, or, asc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { disasterEventTable, hazardousEventTable, hipHazardTable } from "~/drizzle/schema";
 import { formatDate, formatDateDisplay } from "~/util/date";
 

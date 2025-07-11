@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AiOutlineSearch } from "react-icons/ai";
 
@@ -20,7 +20,6 @@ interface FiltersProps {
 
 export function Filters({
   onApplyFilters,
-  onAdvancedSearch,
   onClearFilters,
 }: FiltersProps) {
   const [isMounted, setIsMounted] = useState(false);

@@ -1,9 +1,7 @@
-import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { dr } from "~/db.server"; // Drizzle ORM instance
-import { divisionTable, disasterEventTable } from "~/drizzle/schema";
-import { eq, not, and, isNotNull, sql, desc } from "drizzle-orm";
-import { useEffect, useState, useRef } from "react";
+import { divisionTable } from "~/drizzle/schema";
+import { useRef } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 
 // Define the expected return type
@@ -13,8 +11,6 @@ interface LoaderData {
 
 // Loader to Fetch & Transform Data
 export const loader = async () => {
-
-    let arrDisasterEventTable = [] as any[];
 
     const rawData = [
         await dr.select().from(divisionTable)
@@ -72,7 +68,7 @@ export const loader = async () => {
     const nameKey = "name"; 
     
     // Data from Database
-    const treeData = buildTree(rawData[0], idKey, parentKey, nameKey, ["fr", "de", "en"], "en", ["geojson", "importId"]);
+    const treeData = buildTree(rawData[0], idKey, parentKey, nameKey, "en", ["geojson", "importId"]);
     // Data from Array
     //const treeData = buildTree(rawData[1], idKey, parentKey, nameKey, ["fr", "de", "en"], "");
 

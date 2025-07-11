@@ -23,7 +23,7 @@ export default function Screen() {
 					<li><a href="/api/sector-disaster-record-relation">Sector Disaster Record Relation</a></li>
 					<li><a href="/api/damage">Damages</a></li>
 					<li><a href="/api/disruption">Disruptions</a></li>
-					<li><a href="/api/human-effects">Human Direct Effects</a></li>
+					<li><a href="/api/human-effects">Human Effects</a></li>
 					<li><a href="/api/losses">Losses</a></li>
 					<li><a href="/api/nonecolosses">Non Economic Losses</a></li>
 				</ul>

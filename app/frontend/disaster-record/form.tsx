@@ -17,7 +17,7 @@ import {
 	WrapInputBasic
 } from "~/frontend/form";
 
-import {useEffect, useState, useRef} from 'react';
+import {useEffect, useState} from 'react';
 import {approvalStatusField} from "~/frontend/approval";
 
 import {ContentPicker} from "~/components/ContentPicker";

@@ -1,7 +1,6 @@
 import {
 	useLoaderData,
 	Link,
-	Form
 } from "@remix-run/react";
 
 import {Pagination} from "~/frontend/pagination/view"

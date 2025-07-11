@@ -1,6 +1,20 @@
 # UNDRR DTS License Documentation
 
-This directory contains all documentation related to licensing for the UNDRR Disaster Tracking System (DTS).
+## Project Overview
+
+The UNDRR Disaster Tracking System (DTS) is a comprehensive platform designed to support country-level disaster tracking and management. This directory contains all documentation related to licensing and Digital Public Goods (DPG) compliance for DTS.
+
+## Quick Navigation
+
+- [License Status](#license-status)
+- [Available Documents](#available-documents)
+- [DPG Application Status](#dpg-application-status)
+- [Document Status](#document-status)
+- [Related Resources](#related-resources)
+
+## License Status
+
+DTS is currently evaluating the implementation of the Apache License 2.0, as recommended in the license recommendation document. This license has been selected for its patent protection, international deployment suitability, and alignment with DPG requirements.
 
 ## Available Documents
 
@@ -27,17 +41,29 @@ This directory contains all documentation related to licensing for the UNDRR Dis
    - Used for automated license compliance checks
    - Contains detailed license information per package
 
-## Upcoming Documents
+5. [license-recommendation.md](./license-recommendation.md)
+   - Comprehensive license recommendation
+   - Analysis of MIT vs Apache 2.0 for DTS
+   - Detailed rationale for Apache 2.0
+   - Risk assessment and compatibility analysis
 
-1. License Recommendation Document (Planned)
-   - Team validation and decision-making
-   - Final license selection rationale
-   - Implementation guidelines
+6. [DPG-compliance-matrix.md](./DPG-compliance-matrix.md)
+   - Comprehensive DPG standard compliance assessment
+   - Detailed analysis of all 9 DPG indicators
+   - Current compliance score (72%)
+   - Gap analysis and prioritized action items
+   - Implementation roadmap for full compliance
+   - Documentation templates for missing evidence
 
-2. DPG Compliance Matrix (Planned)
-   - Comprehensive DPG standard compliance tracking
-   - Evidence of compliance for each criterion
-   - Gap analysis and action items
+## DPG Application Status
+
+The DTS project is actively working toward Digital Public Goods (DPG) registry inclusion. Current status:
+
+- **Compliance Assessment**: Completed (June 2025)
+- **Current Compliance Score**: 72% (5 fully compliant indicators, 3 partially compliant)
+- **Primary Gap**: Implementation of Apache License 2.0
+- **Target for Full Compliance**: September 2025
+- **DPG Registry Application**: Planned for October 2025
 
 ## Document Status
 
@@ -46,5 +72,21 @@ This directory contains all documentation related to licensing for the UNDRR Dis
 | LICENSE.md | Draft | May 2025 |
 | License-comparison.md | Complete | May 2025 |
 | third-party-dependencies-review.md | Complete | May 2025 |
-| License Recommendation | Planned | TBD |
-| DPG Compliance Matrix | Planned | TBD |
+| license-recommendation.md | Complete | May 2025 |
+| DPG-compliance-matrix.md | Complete | June 2025 |
+| Contribution-guidelines.md | Planned | TBD |
+
+## Upcoming Documents
+
+- **Contribution Guidelines** (Planned)
+  - Alignment with DPG openness requirements
+  - Attribution and credit guidelines
+  - Contributor workflow and processes
+  - Code of conduct for contributors
+  - License compliance for contributions
+
+## Related Resources
+
+- [DPG Standard](https://github.com/DPGAlliance/DPG-Standard/blob/main/standard.md) - Official Digital Public Goods Standard
+- [DPG Registry](https://digitalpublicgoods.net/registry/) - Official registry of recognized Digital Public Goods
+- [UNDRR DTS Technical Documentation](../_docs/technical-documentation.md) - Main technical documentation for the DTS platform

@@ -1,10 +1,40 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ClientOnly } from "remix-utils/client-only";
+import { useCallback, useMemo } from "react";
 import { formatCurrencyWithCode, formatNumber } from "~/frontend/utils/formatters";
 import "~/frontend/styles/analytics/sectors/effect-details.css";
 import { useDebounce } from "~/frontend/hooks/useDebounce";
 import { typeEnumAgriculture, typeEnumNotAgriculture } from "~/frontend/losses_enums";
+import { Pagination } from "~/frontend/pagination/view";
+import { useSearchParams } from "@remix-run/react";
+
+// Client-side URL parameter parsing
+const parseUrlParams = (searchParams: URLSearchParams) => {
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10)) || 1;
+  const pageSize = Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10)) || 10;
+
+  const extraParams: Record<string, string[]> = {};
+  const allowedParams = [
+    'sectorId', 'subSectorId', 'hazardTypeId', 'hazardClusterId',
+    'specificHazardId', 'geographicLevelId', 'fromDate', 'toDate', 'disasterEventId'
+  ];
+
+  searchParams.forEach((value, key) => {
+    if (allowedParams.includes(key)) {
+      if (!extraParams[key]) {
+        extraParams[key] = [];
+      }
+      extraParams[key].push(value);
+    }
+  });
+
+  return {
+    page,
+    pageSize,
+    extraParams
+  };
+};
 
 interface Props {
   filters: {
@@ -27,12 +57,24 @@ interface Sector {
   subsectors?: Sector[];
 }
 
+interface PaginationData {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 interface EffectDetailsResponse {
   success: boolean;
   data: {
     damages: DamageRecord[];
     losses: LossRecord[];
     disruptions: DisruptionRecord[];
+  };
+  pagination?: {
+    damages?: PaginationData;
+    losses?: PaginationData;
+    disruptions?: PaginationData;
   };
 }
 
@@ -94,7 +136,103 @@ interface TableProps {
   currency: string;
 }
 
+interface SortableTableProps extends TableProps {
+  formatValue: (value: string | number | null, key: string) => string;
+}
+
+const SortableTable: React.FC<SortableTableProps> = ({ title, columns, data, formatValue }) => {
+  const [sortConfig, setSortConfig] = React.useState<{
+    key: string;
+    direction: 'ascending' | 'descending';
+  } | null>(null);
+
+  const sortedData = React.useMemo(() => {
+    if (!sortConfig) return data;
+
+    return [...data].sort((a, b) => {
+      if (a[sortConfig.key] === null) return 1;
+      if (b[sortConfig.key] === null) return -1;
+      if (a[sortConfig.key] === b[sortConfig.key]) return 0;
+
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'ascending'
+          ? aValue - bValue
+          : bValue - aValue;
+      }
+
+      return sortConfig.direction === 'ascending'
+        ? String(aValue) > String(bValue) ? 1 : -1
+        : String(bValue) > String(aValue) ? 1 : -1;
+    });
+  }, [data, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === 'ascending'
+    ) {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  return (
+    <div className="dts-data-box">
+      <h3 className="dts-body-label">
+        <span>{title}</span>
+      </h3>
+      <div className="mg-container">
+        <div className="dts-table-wrapper">
+          <table className="dts-table">
+            <thead>
+              <tr>
+                {columns.map((column) => (
+                  <th
+                    key={column.key}
+                    onClick={() => requestSort(column.key)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {column.label}
+                    {sortConfig?.key === column.key && (
+                      <span>{sortConfig.direction === 'ascending' ? ' ↑' : ' ↓'}</span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedData.map((item, index) => (
+                <tr key={index}>
+                  {columns.map((column) => (
+                    <td key={`${column.key}-${index}`}>
+                      {formatValue(item[column.key], column.key)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function EffectDetails({ filters, currency }: Props) {
+  // URL search params for pagination
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
+
+  // Parse URL parameters for pagination
+  const { page, pageSize, extraParams: urlExtraParams } = useMemo(
+    () => parseUrlParams(urlSearchParams),
+    [urlSearchParams]
+  );
+
   // Debounce filters to prevent too many API calls
   const debouncedFilters = useDebounce(filters, 500);
 
@@ -155,41 +293,85 @@ export function EffectDetails({ filters, currency }: Props) {
     return "Effect Details";
   };
 
+  // Build query parameters with pagination
+  const buildQueryParams = useCallback((filters: any, table: 'damages' | 'losses' | 'disruptions') => {
+    const searchParams = new URLSearchParams();
+
+    // Only use sectorId if no subsectorId is selected
+    if (filters.subSectorId) {
+      searchParams.append('sectorId', filters.subSectorId);
+    } else if (filters.sectorId) {
+      searchParams.append('sectorId', filters.sectorId);
+    }
+
+    // Add other filters with proper type checking
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '' && key !== 'sectorId' && key !== 'subSectorId') {
+        // Ensure we're only appending string values
+        const stringValue = String(value);
+        searchParams.append(key, stringValue);
+      }
+    });
+
+    // Add pagination parameters from URL
+    searchParams.append('page', page.toString());
+    searchParams.append('pageSize', pageSize.toString());
+    searchParams.append('table', table);
+
+    return searchParams;
+  }, [page, pageSize]);
+
   // Fetch effect details data
   const { data: effectDetailsResponse, isLoading, error } = useQuery<EffectDetailsResponse>({
-    queryKey: ["effectDetails", debouncedFilters],
+    queryKey: ["effectDetails", debouncedFilters, page, pageSize],
     queryFn: async () => {
       try {
-        const searchParams = new URLSearchParams();
+        // Fetch data for each table with its own pagination
+        const [damagesResponse, lossesResponse, disruptionsResponse] = await Promise.all([
+          fetch(`/api/analytics/effect-details?${buildQueryParams(debouncedFilters, 'damages')}`, {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }),
+          fetch(`/api/analytics/effect-details?${buildQueryParams(debouncedFilters, 'losses')}`, {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }),
+          fetch(`/api/analytics/effect-details?${buildQueryParams(debouncedFilters, 'disruptions')}`, {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          })
+        ]);
 
-        // Only use sectorId if no subsectorId is selected
-        if (debouncedFilters.subSectorId) {
-          searchParams.append('sectorId', debouncedFilters.subSectorId);
-        } else if (debouncedFilters.sectorId) {
-          searchParams.append('sectorId', debouncedFilters.sectorId);
-        }
+        // Process responses
+        const [damagesData, lossesData, disruptionsData] = await Promise.all([
+          damagesResponse.json(),
+          lossesResponse.json(),
+          disruptionsResponse.json()
+        ]);
 
-        // Add other filters
-        Object.entries(debouncedFilters).forEach(([key, value]) => {
-          if (value && key !== 'sectorId' && key !== 'subSectorId') {
-            searchParams.append(key, value);
+        // Combine responses
+        return {
+          success: true,
+          data: {
+            damages: damagesData.data?.data?.damages || damagesData.data?.damages || [],
+            losses: lossesData.data?.data?.losses || lossesData.data?.losses || [],
+            disruptions: disruptionsData.data?.data?.disruptions || disruptionsData.data?.disruptions || []
+          },
+          pagination: {
+            damages: damagesData.data?.data?.pagination || damagesData.pagination,
+            losses: lossesData.data?.data?.pagination || lossesData.pagination,
+            disruptions: disruptionsData.data?.data?.pagination || disruptionsData.pagination
           }
-        });
-
-        const response = await fetch(`/api/analytics/effect-details?${searchParams}`, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("No data found for the selected criteria");
-          }
-          throw new Error(`Failed to fetch effect details: ${response.statusText}`);
-        }
-        return response.json();
+        };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
         throw new Error(`Error fetching effect details: ${errorMessage}`);
@@ -214,169 +396,6 @@ export function EffectDetails({ filters, currency }: Props) {
     if (nonAgricultureType) return nonAgricultureType.type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
     return type;
-  };
-
-  return (
-    <ClientOnly>
-      {() => (
-        <section className="dts-page-section">
-          <div className="mg-container">
-            <h2 className="dts-heading-2">{sectionTitle()}</h2>
-            <p className="dts-body-text mb-6">
-              View detailed information about damages, losses, and disruptions in the selected sector.
-            </p>
-
-            {isLoading && (
-              <div className="dts-data-box">
-                <h3 className="dts-body-label">Loading Data</h3>
-                <div className="skeleton-loader" role="progressbar" aria-label="Loading data" />
-              </div>
-            )}
-
-            {error && (
-              <div className="dts-data-box" role="alert">
-                <h3 className="dts-body-label">Error</h3>
-                <div className="flex items-center justify-center h-[300px]">
-                  <p className="text-gray-500">{error instanceof Error ? error.message : "Failed to load data"}</p>
-                </div>
-              </div>
-            )}
-
-            {effectDetailsResponse && (
-              <div>
-                <div className="dts-data-box">
-                  <h3 className="dts-body-label">
-                    <span>Damages</span>
-                  </h3>
-                  {effectDetailsResponse.data.damages && effectDetailsResponse.data.damages.length > 0 ? (
-                    <SortableTable
-                      title="Damages"
-                      columns={[
-                        { key: 'assetName', label: 'Asset' },
-                        { key: 'totalDamageAmount', label: 'Total Damage' },
-                        { key: 'totalRepairReplacement', label: 'Repair/Replacement' },
-                        { key: 'totalRecovery', label: 'Recovery' },
-                      ]}
-                      data={effectDetailsResponse.data.damages.map(damage => ({
-                        assetName: damage.assetName,
-                        totalDamageAmount: damage.totalDamageAmount,
-                        totalRepairReplacement: damage.totalRepairReplacement,
-                        totalRecovery: damage.totalRecovery,
-                      }))}
-                      currency={currency}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-[300px]" role="status">
-                      <p className="text-gray-500">No damage data available for the selected criteria.</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="dts-data-box">
-                  <h3 className="dts-body-label">
-                    <span>Losses</span>
-                  </h3>
-                  {effectDetailsResponse.data.losses && effectDetailsResponse.data.losses.length > 0 ? (
-                    <SortableTable
-                      title="Losses"
-                      columns={[
-                        { key: 'type', label: 'Type' },
-                        { key: 'description', label: 'Description' },
-                        { key: 'publicCostTotal', label: 'Public Cost' },
-                        { key: 'privateCostTotal', label: 'Private Cost' },
-                      ]}
-                      data={effectDetailsResponse.data.losses.map(loss => ({
-                        type: getTypeLabel(loss.type),
-                        description: loss.description,
-                        publicCostTotal: loss.publicCostTotal || '-',
-                        privateCostTotal: loss.privateCostTotal || '-',
-                      }))}
-                      currency={currency}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-[300px]" role="status">
-                      <p className="text-gray-500">No loss data available for the selected criteria.</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="dts-data-box">
-                  <h3 className="dts-body-label">
-                    <span>Disruptions</span>
-                  </h3>
-                  {effectDetailsResponse.data.disruptions && effectDetailsResponse.data.disruptions.length > 0 ? (
-                    <SortableTable
-                      title="Disruptions"
-                      columns={[
-                        { key: 'comment', label: 'Description' },
-                        { key: 'durationDays', label: 'Duration (Days)' },
-                        { key: 'usersAffected', label: 'Users Affected' },
-                        { key: 'peopleAffected', label: 'People Affected' },
-                        { key: 'responseCost', label: 'Response Cost' },
-                      ]}
-                      data={effectDetailsResponse.data.disruptions.map(disruption => ({
-                        comment: disruption.comment,
-                        durationDays: disruption.durationDays || '-',
-                        usersAffected: disruption.usersAffected || '-',
-                        peopleAffected: disruption.peopleAffected || '-',
-                        responseCost: disruption.responseCost || '-',
-                      }))}
-                      currency={currency}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-[300px]" role="status">
-                      <p className="text-gray-500">No disruption data available for the selected criteria.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-    </ClientOnly>
-  );
-};
-
-const SortableTable: React.FC<TableProps> = ({ title, columns, data, currency }) => {
-  const [sortConfig, setSortConfig] = React.useState<{
-    key: string;
-    direction: 'ascending' | 'descending';
-  } | null>(null);
-
-  const sortedData = React.useMemo(() => {
-    if (!sortConfig) return data;
-
-    return [...data].sort((a, b) => {
-      if (a[sortConfig.key] === null) return 1;
-      if (b[sortConfig.key] === null) return -1;
-      if (a[sortConfig.key] === b[sortConfig.key]) return 0;
-
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
-
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'ascending'
-          ? aValue - bValue
-          : bValue - aValue;
-      }
-
-      return sortConfig.direction === 'ascending'
-        ? String(aValue) > String(bValue) ? 1 : -1
-        : String(bValue) > String(aValue) ? 1 : -1;
-    });
-  }, [data, sortConfig]);
-
-  const requestSort = (key: string) => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === 'ascending'
-    ) {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
   };
 
   const formatValue = (value: string | number | null, key: string): string => {
@@ -414,44 +433,301 @@ const SortableTable: React.FC<TableProps> = ({ title, columns, data, currency })
     return String(value);
   };
 
+  const renderTable = ({
+    title,
+    columns,
+    data,
+    emptyMessage,
+    loadingMessage,
+    isLoading
+  }: {
+    title: string;
+    columns: { key: string; label: string }[];
+    data: any[] | undefined;
+    emptyMessage: string;
+    loadingMessage: string;
+    isLoading: boolean;
+  }) => {
+    if (isLoading) {
+      return (
+        <div className="dts-data-box">
+          <h3 className="dts-body-label">
+            <span>{title}</span>
+          </h3>
+          <div className="mg-container">
+            <div className="dts-table-wrapper">
+              <table className="dts-table">
+                <thead>
+                  <tr>
+                    {columns.map((column) => (
+                      <th key={column.key}>
+                        {column.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colSpan={columns.length} className="text-center p-4">
+                      {loadingMessage}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return (
+        <div className="dts-data-box">
+          <h3 className="dts-body-label">
+            <span>{title}</span>
+          </h3>
+          <div className="mg-container">
+            <div className="dts-table-wrapper">
+              <table className="dts-table">
+                <thead>
+                  <tr>
+                    {columns.map((column) => (
+                      <th key={column.key}>
+                        {column.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colSpan={columns.length} className="text-center p-4">
+                      {emptyMessage}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <SortableTable
+        title={title}
+        columns={columns}
+        data={data}
+        formatValue={formatValue}
+        currency={currency}
+      />
+    );
+  };
+
+  if (error) {
+    return (
+      <ClientOnly>
+        {() => (
+          <section className="dts-page-section">
+            <div className="mg-container">
+              <h2 className="dts-heading-2">{sectionTitle()}</h2>
+              <div className="dts-data-box" role="alert">
+                <h3 className="dts-body-label">Error</h3>
+                <div className="flex items-center justify-center h-[300px]">
+                  <p className="text-gray-500">
+                    {error instanceof Error ? error.message : "Failed to load data"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+      </ClientOnly>
+    );
+  }
+
   return (
-    <div className="table-wrapper">
-      <table className="dts-table" role="grid" aria-label={title}>
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th
-                key={column.key}
-                onClick={() => requestSort(column.key)}
-                aria-sort={sortConfig?.key === column.key ? sortConfig.direction : undefined}
-                role="columnheader"
-                aria-label={`${column.label}, click to sort`}
-                tabIndex={0}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    requestSort(column.key);
-                  }
-                }}
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedData.map((item, index) => (
-            <tr key={index} role="row">
-              {columns.map((column) => (
-                <td key={column.key} role="gridcell">
-                  {formatValue(item[column.key], column.key)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ClientOnly>
+      {() => (
+        <section className="dts-page-section">
+          <div className="mg-container">
+            <h2 className="dts-heading-2">{sectionTitle()}</h2>
+            <p className="dts-body-text mb-6">
+              View detailed information about damages, losses, and disruptions in the selected sector.
+            </p>
+
+            {isLoading ? (
+              <div>
+                {renderTable({
+                  title: 'Damages',
+                  columns: [
+                    { key: 'assetName', label: 'Asset' },
+                    { key: 'totalDamageAmount', label: 'Total Damage' },
+                    { key: 'totalRepairReplacement', label: 'Repair/Replacement' },
+                    { key: 'totalRecovery', label: 'Recovery' },
+                  ],
+                  data: [],
+                  emptyMessage: '',
+                  loadingMessage: 'Loading damages data...',
+                  isLoading: true
+                })}
+
+                {renderTable({
+                  title: 'Losses',
+                  columns: [
+                    { key: 'type', label: 'Type' },
+                    { key: 'description', label: 'Description' },
+                    { key: 'publicCostTotal', label: 'Public Cost' },
+                    { key: 'privateCostTotal', label: 'Private Cost' },
+                  ],
+                  data: [],
+                  emptyMessage: '',
+                  loadingMessage: 'Loading losses data...',
+                  isLoading: true
+                })}
+
+                {renderTable({
+                  title: 'Disruptions',
+                  columns: [
+                    { key: 'comment', label: 'Comment' },
+                    { key: 'durationDays', label: 'Duration (Days)' },
+                    { key: 'usersAffected', label: 'Users Affected' },
+                    { key: 'peopleAffected', label: 'People Affected' },
+                    { key: 'responseCost', label: 'Response Cost' },
+                  ],
+                  data: [],
+                  emptyMessage: '',
+                  loadingMessage: 'Loading disruptions data...',
+                  isLoading: true
+                })}
+              </div>
+            ) : effectDetailsResponse ? (
+              <div>
+                {renderTable({
+                  title: 'Damages',
+                  columns: [
+                    { key: 'assetName', label: 'Asset' },
+                    { key: 'totalDamageAmount', label: 'Total Damage' },
+                    { key: 'totalRepairReplacement', label: 'Repair/Replacement' },
+                    { key: 'totalRecovery', label: 'Recovery' },
+                  ],
+                  data: effectDetailsResponse.data.damages?.map(damage => ({
+                    assetName: damage.assetName,
+                    totalDamageAmount: formatValue(damage.totalDamageAmount, 'totalDamageAmount'),
+                    totalRepairReplacement: formatValue(damage.totalRepairReplacement, 'totalRepairReplacement'),
+                    totalRecovery: formatValue(damage.totalRecovery, 'totalRecovery'),
+                  })),
+                  emptyMessage: 'No damage records details available for the selected criteria.',
+                  loadingMessage: 'Loading damages data...',
+                  isLoading: false
+                })}
+
+                {effectDetailsResponse.pagination?.damages && effectDetailsResponse.data.damages && effectDetailsResponse.data.damages.length > 0 && (
+                  <div className="mt-4 w-full">
+                    <div className="inline-block">
+                      <Pagination
+                        itemsOnThisPage={effectDetailsResponse.data.damages.length}
+                        totalItems={effectDetailsResponse.pagination.damages.total}
+                        page={effectDetailsResponse.pagination.damages.page}
+                        pageSize={effectDetailsResponse.pagination.damages.pageSize}
+                        extraParams={urlExtraParams}
+                        onPageSizeChange={(newSize) => {
+                          const params = new URLSearchParams(urlSearchParams);
+                          params.set('pageSize', newSize.toString());
+                          params.set('page', '1'); // Reset to first page when changing page size
+                          setUrlSearchParams(params, { replace: true });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Losses Table */}
+                {renderTable({
+                  title: 'Losses',
+                  columns: [
+                    { key: 'type', label: 'Type' },
+                    { key: 'description', label: 'Description' },
+                    { key: 'publicCostTotal', label: 'Public Cost' },
+                    { key: 'privateCostTotal', label: 'Private Cost' },
+                  ],
+                  data: effectDetailsResponse.data.losses?.map(loss => ({
+                    type: getTypeLabel(loss.type),
+                    description: loss.description,
+                    publicCostTotal: loss.publicCostTotal ? formatValue(loss.publicCostTotal, 'publicCostTotal') : '-',
+                    privateCostTotal: loss.privateCostTotal ? formatValue(loss.privateCostTotal, 'privateCostTotal') : '-',
+                  })),
+                  emptyMessage: 'No loss records details available for the selected criteria.',
+                  loadingMessage: 'Loading losses data...',
+                  isLoading: false,
+                })}
+
+                {effectDetailsResponse.pagination?.losses && effectDetailsResponse.data.losses && effectDetailsResponse.data.losses.length > 0 && (
+                  <div className="mt-4 w-full">
+                    <div className="inline-block">
+                      <Pagination
+                        itemsOnThisPage={effectDetailsResponse.data.losses.length}
+                        totalItems={effectDetailsResponse.pagination.losses.total}
+                        page={effectDetailsResponse.pagination.losses.page}
+                        pageSize={effectDetailsResponse.pagination.losses.pageSize}
+                        extraParams={urlExtraParams}
+                        onPageSizeChange={(newSize) => {
+                          const params = new URLSearchParams(urlSearchParams);
+                          params.set('pageSize', newSize.toString());
+                          params.set('page', '1'); // Reset to first page when changing page size
+                          setUrlSearchParams(params, { replace: true });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Disruptions Table */}
+                {renderTable({
+                  title: 'Disruptions',
+                  columns: [
+                    { key: 'comment', label: 'Comment' },
+                    { key: 'durationDays', label: 'Duration (Days)' },
+                    { key: 'usersAffected', label: 'Users Affected' },
+                    { key: 'peopleAffected', label: 'People Affected' },
+                    { key: 'responseCost', label: 'Response Cost' },
+                  ],
+                  data: effectDetailsResponse.data.disruptions?.map(disruption => ({
+                    comment: disruption.comment,
+                    durationDays: disruption.durationDays ?? '-',
+                    usersAffected: disruption.usersAffected ?? '-',
+                    peopleAffected: disruption.peopleAffected ?? '-',
+                    responseCost: disruption.responseCost ? formatValue(disruption.responseCost, 'responseCost') : '-',
+                  })),
+                  emptyMessage: 'No disruption records details available for the selected criteria.',
+                  loadingMessage: 'Loading disruptions data...',
+                  isLoading: false,
+                })}
+
+                {effectDetailsResponse.pagination?.disruptions && effectDetailsResponse.data.disruptions && effectDetailsResponse.data.disruptions.length > 0 && (
+                  <div className="mt-4 w-full">
+                    <div className="inline-block">
+                      <Pagination
+                        itemsOnThisPage={effectDetailsResponse.data.disruptions.length}
+                        totalItems={effectDetailsResponse.pagination.disruptions.total}
+                        page={effectDetailsResponse.pagination.disruptions.page}
+                        pageSize={effectDetailsResponse.pagination.disruptions.pageSize}
+                        extraParams={urlExtraParams}
+                        onPageSizeChange={(newSize) => {
+                          const params = new URLSearchParams(urlSearchParams);
+                          params.set('pageSize', newSize.toString());
+                          params.set('page', '1'); // Reset to first page when changing page size
+                          setUrlSearchParams(params, { replace: true });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      )}
+    </ClientOnly>
   );
 };
 

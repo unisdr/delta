@@ -6,7 +6,6 @@
  */
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { checkRateLimit } from "~/utils/security";
 import { handleMostDamagingEventsRequest } from "~/backend.server/handlers/analytics/mostDamagingEvents";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { z } from "zod";
@@ -14,12 +13,12 @@ import { z } from "zod";
 /**
  * Interface for the API response structure
  */
-interface MostDamagingEventsResponse {
-  success: boolean;
-  data?: any; // TODO: Replace with specific type from getMostDamagingEvents
-  error?: string;
-  code?: string;
-}
+// interface MostDamagingEventsResponse {
+//   success: boolean;
+//   data?: any; // TODO: Replace with specific type from getMostDamagingEvents
+//   error?: string;
+//   code?: string;
+// }
 
 /**
  * Loader function that handles the most damaging events API request
@@ -27,21 +26,7 @@ interface MostDamagingEventsResponse {
  * @returns {Promise<Response>} JSON response with most damaging events data or error message
  */
 export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: LoaderFunctionArgs) => {
-  // Rate limiting check
-  if (!checkRateLimit(request, 100, 15 * 60 * 1000)) {
-    return Response.json({
-      success: false,
-      error: "Rate limit exceeded. Please try again later.",
-      code: 'RATE_LIMIT_EXCEEDED'
-    }, {
-      status: 429,
-      headers: {
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff',
-        'Retry-After': '900'
-      }
-    });
-  }
+
 
   /**
    * Parameter extraction & validation
@@ -77,30 +62,31 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
         .transform(value => value || null)
         .optional(),
       fromDate: z.string()
-        .datetime("Invalid date format")
         .transform(value => value || null)
-        .optional(),
+        .optional(), // Allow flexible date formats for compatibility with database records
       toDate: z.string()
-        .datetime("Invalid date format")
         .transform(value => value || null)
-        .optional(),
+        .optional(), // Allow flexible date formats for compatibility with database records
       disasterEventId: z.string()
-        .regex(/^\d+$/, "Disaster event ID must be numeric")
         .transform(value => value || null)
-        .optional(),
+        .optional(), // Allow UUID format for disaster event IDs
       sortBy: z.enum(['damages', 'losses', 'eventName', 'createdAt'])
         .transform(value => value || null)
         .optional(),
       sortDirection: z.enum(['asc', 'desc'])
         .transform(value => value || null)
-        .optional()
-    }).refine(
-      (data) => (!data.fromDate || data.toDate) && (!data.toDate || data.fromDate),
-      {
-        message: "Both fromDate and toDate must be provided together",
-        path: ["fromDate", "toDate"]
-      }
-    );
+        .optional(),
+      page: z.string()
+        .regex(/^\d+$/, "Page must be a positive number")
+        .default('1')
+        .transform(Number)
+        .refine(n => n > 0, "Page must be greater than 0"),
+      pageSize: z.string()
+        .regex(/^\d+$/, "Page size must be a positive number")
+        .default('20')
+        .transform(Number)
+        .refine(n => [10, 20, 30, 40, 50].includes(n), "Page size must be 10, 20, 30, 40, or 50")
+    });
 
     const validationResult = querySchema.safeParse(searchParams);
 
@@ -135,7 +121,9 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
       toDate: params.toDate || null,
       disasterEventId: params.disasterEventId || null,
       sortBy: params.sortBy || null,
-      sortDirection: params.sortDirection || null
+      sortDirection: params.sortDirection || null,
+      page: params.page,
+      pageSize: params.pageSize
     });
 
     return Response.json({

@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { json } from "@remix-run/node";
 import { useLoaderData, Outlet } from "@remix-run/react";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
@@ -25,18 +23,15 @@ import {
 } from "~/backend.server/models/event";
 
 import {
-	getSectorAncestorById, 
   sectorChildrenById
 } from "~/backend.server/models/sector";
 
 
 import {
-	getAllChildren,
   getDivisionByLevel,
 } from "~/backend.server/models/division";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import MapChart, { MapChartRef } from "~/components/MapChart";
-import { getAffectedByDisasterEvent } from "~/backend.server/models/analytics/affected-people-by-disaster-event";
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
 
 import CustomPieChart from '~/components/PieChart';
@@ -96,7 +91,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let datamageGeoData:interfaceMap[] = [];
   let lossesGeoData:interfaceMap[] = [];
   let humanEffectsGeoData:interfaceMap[] = [];
-  let totalAffectedPeople:any = {};
+  // let totalAffectedPeople:any = {};
   let totalAffectedPeople2:any = {};
   const sectortData: Record<number, { id: number; sectorname: string; subSector?: interfaceSector[]; }> = {};
   
@@ -107,10 +102,10 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let sectorParentArray: interfaceSector[] = [];
   let x: any = {};
   
-
-  const sectorExistsInSectorParentArray = (id: number): boolean => {
-    return sectorParentArray.some(item => item.id === id);
-  };
+  const currency = process.env.CURRENCY_CODES?.split(",")[0] || "PHP";
+  // const sectorExistsInSectorParentArray = (id: number): boolean => {
+  //   return sectorParentArray.some(item => item.id === id);
+  // };
   
   if (qsDisEventId) {
     record = await disasterEventById(qsDisEventId).catch(console.error);
@@ -284,11 +279,12 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     sectorRecoveryPieChartData: sectorRecoveryPieChartData,
     sectorBarChartData: sectorBarChartData,
     sectorParentArray: sectorParentArray,
+    currency,
   };
 });
 
 // Meta function for page SEO
-export const meta: MetaFunction = ({ data }) => {
+export const meta: MetaFunction = () => {
   return [
     { title: "Disaster Events Analysis - DTS" },
     { name: "description", content: "Disaster events analysis page under DTS." },
@@ -320,6 +316,7 @@ function DisasterEventsAnalysisContent() {
     sectorRecoveryPieChartData: interfacePieChart[],
     sectorBarChartData: interfaceBarChart[],
     sectorParentArray: interfaceSector[],
+    currency: string;
   }>();
   let disaggregationsAge2:{
     children:number|undefined, adult: number|undefined, senior: number|undefined
@@ -417,6 +414,7 @@ function DisasterEventsAnalysisContent() {
           btnCancelRef.current.disabled = true;
         }
       }
+      mapChartRef.current?.setLegendTitle(`Total damages in ${ld.currency}`);
     }, []);
 
   // console.log(ld.datamageGeoData);
@@ -452,7 +450,7 @@ function DisasterEventsAnalysisContent() {
                                     value={ ld.record ? ld.record.id : '' } 
                                     displayName={ ld.cpDisplayName } 
                                     onSelect={
-                                        (item) => {
+                                        () => {
                                           if (btnCancelRef.current) {
                                             btnCancelRef.current.disabled = false;
                                           }
@@ -771,7 +769,7 @@ function DisasterEventsAnalysisContent() {
                 <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
                   <li role="presentation">
                     <button onClick={(e) => handleSwitchMapData(e, ld.datamageGeoData, '#208f04')} type="button" className="dts-tablist__button" role="tab" id="tab01" aria-selected="true" aria-controls="tabpanel01">
-                      <span>Total Damage</span>
+                      <span>Total Damage in {ld.currency}</span>
                     </button>
                   </li>
                   <li role="presentation">
@@ -781,7 +779,7 @@ function DisasterEventsAnalysisContent() {
                   </li>
                   <li role="presentation">
                     <button onClick={(e) => handleSwitchMapData(e, ld.lossesGeoData, '#58508d')} type="button" className="dts-tablist__button" role="tab" id="tab03" aria-controls="tabpanel03" aria-selected="false">
-                      <span>Total Losses</span>
+                      <span>Total Losses in {ld.currency}</span>
                     </button>
                   </li>
                 </ul>

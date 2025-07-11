@@ -3,10 +3,6 @@ import type {
 } from "@remix-run/node";
 
 import {
-	json
-} from "@remix-run/node";
-
-import {
 	useLoaderData,
 	Links,
 	Meta,
@@ -33,8 +29,6 @@ import {
 	configApprovedRecordsArePublic,
 	configSiteLogo,
 	configSiteName,
-	configFooterURLPrivPolicy,
-	configFooterURLTermsConds,
 } from "~/util/config";
 
 import allStylesHref from "./styles/all.css?url";
@@ -48,6 +42,7 @@ import {
 
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {notifyError, notifyInfo} from "./frontend/utils/notifications";
+import { getInstanceSystemSettings } from "./backend.server/models/instanceSystemSettingDAO";
 
 
 export const links: LinksFunction = () => [
@@ -57,6 +52,7 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({request}: LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request)
+	const instanceSystemSetting = await getInstanceSystemSettings();
 
 	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 
@@ -69,8 +65,8 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 		flashMessage: message,
 		confSiteName: configSiteName(),
 		confSiteLogo: configSiteLogo(),
-		confFooterURLPrivPolicy: configFooterURLPrivPolicy(),
-		confFooterURLTermsConds: configFooterURLTermsConds(),
+		confFooterURLPrivPolicy: instanceSystemSetting?.footerUrlPrivacyPolicy || '',
+		confFooterURLTermsConds: instanceSystemSetting?.footerUrlTermsConditions || '',
 		env: {
 			CURRENCY_CODES: process.env.CURRENCY_CODES || '',
 			DTS_INSTANCE_CTRY_ISO3: process.env.DTS_INSTANCE_CTRY_ISO3 || ''

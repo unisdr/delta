@@ -1,5 +1,5 @@
 import {
-  SQL, sql, eq, isNull, aliasedTable, and, or, inArray, asc
+  SQL, sql, eq, isNull
 } from 'drizzle-orm';
 
 import { selectTranslated } from './common';
@@ -15,7 +15,7 @@ import { parse } from 'csv-parse';
 import JSZip from "jszip";
 
 // Import utility functions
-import { createLogger } from '~/utils/logger';
+import createLogger from '~/utils/logger.server';
 import {
   ValidationError,
   DatabaseError,
@@ -23,31 +23,16 @@ import {
   ImportError,
   HierarchyError,
   TransactionError,
-  TriggerError,
   AppError
 } from '~/utils/errors';
 import {
-  processBatches,
   processParallelBatches
 } from '~/utils/batchProcessing';
 import {
-  verifyTriggerExistence,
-  divisionExists,
-  validateGeometryWithPostGIS,
-  validateCoordinateSystem,
-  transformToWGS84,
-  calculateDivisionLevel,
-  optimizeSpatialIndexing,
-  restoreDefaultSettings,
   GeoDatabaseUtils
 } from '~/utils/geoDatabase';
 import {
   validateGeoJSON,
-  validateCSVStructure,
-  detectCircularReferences,
-  validateParentChildRelationships,
-  featureSchema,
-  featureCollectionSchema
 } from '~/utils/geoValidation';
 
 // Create logger
@@ -197,15 +182,15 @@ async function parseCSV(data: string): Promise<string[][]> {
   });
 }
 
-interface ImportItem {
-  ImportID: string;
-  GeodataFileName: string;
-}
+// interface ImportItem {
+//   ImportID: string;
+//   GeodataFileName: string;
+// }
 
-interface FailedUpdate {
-  id: string;
-  error: string;
-}
+// interface FailedUpdate {
+//   id: string;
+//   error: string;
+// }
 
 interface BatchResult {
   id: string;
@@ -223,7 +208,7 @@ interface ImportRes {
 export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
   const successfulImports = new Set<string>();
   const failedImports = new Map<string, string>();
-  const results = new Map<string, ImportRes>();
+  // const results = new Map<string, ImportRes>();
   const zip = await JSZip.loadAsync(zipBytes);
 
   try {
@@ -316,7 +301,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
     });
 
     // Process root divisions first
-    const rootResults = await processParallelBatches(
+    await processParallelBatches(
       rootDivisions,
       10, // batchSize
       2,  // concurrency
@@ -383,7 +368,7 @@ export async function importZip(zipBytes: Uint8Array): Promise<ImportRes> {
     );
 
     // Then process child divisions
-    const childResults = await processParallelBatches(
+    await processParallelBatches(
       childDivisions,
       10, // batchSize
       2,  // concurrency
@@ -790,6 +775,36 @@ export async function getAllChildren(divisionId: number) {
   }
 }
 
+export type DivisionIdAndNameResult = {
+  id: number;
+  name: Record<string,string>;
+  level: number | null;
+}[];
+
+
+export async function getDivisionIdAndNameByLevel(level: number): Promise<DivisionIdAndNameResult> {
+  try {
+    const divisions = await dr
+      .select({
+        id: divisionTable.id,
+        name: divisionTable.name,
+        level: divisionTable.level
+      })
+      .from(divisionTable)
+      .where(eq(divisionTable.level, level));
+
+    // Map results to ensure correct typing
+    return divisions.map((division) => ({
+      id: division.id,
+      name: division.name,
+      level: division.level 
+    }));
+  } catch (error) {
+    console.error("Error fetching divisions by level:", error);
+    throw new Error("Failed to fetch divisions");
+  }
+}
+
 export async function getDivisionByLevel(level: number) {
   try {
     return await dr.transaction(async (tx: Tx) => {
@@ -831,9 +846,6 @@ export async function getDivisionsBySpatialQuery(
             validationError: validationResult.error
           });
         }
-
-        // Build query conditions
-        const conditions = [];
 
         // Add spatial relationship condition
         const relationshipType = options.relationshipType || 'intersects';
@@ -890,7 +902,7 @@ export async function getDivisionsByBoundingBox(
   } = {}
 ): Promise<any[]> {
   try {
-    return await dr.transaction(async (tx: Tx) => {
+    return await dr.transaction(async () => {
       try {
         // Validate bounding box coordinates
         const [minLon, minLat, maxLon, maxLat] = bbox;

@@ -20,11 +20,10 @@ export const loader = authLoaderWithPerm("EditData", async () => {
 import {dr} from '~/db.server';
 import {formatTimestamp} from "~/util/time";
 import {formStringData} from "~/util/httputil";
-import hipsDataJson from "~/hips/hips.json"
 
 interface Hip {
 	//type: string
-	nid: number
+	id: number
 	title: string
 	description: string
 	notation: string
@@ -68,7 +67,7 @@ async function upsertHip(item: Hip) {
 	await dr
 		.insert(hipHazardTable)
 		.values({
-			id: String(item.nid),
+			id: String(item.id),
 			code: item.notation,
 			clusterId: String(cluster.id),
 			nameEn: item.title,
@@ -149,7 +148,7 @@ function hipDevData(): Hip[] {
 			id++;
 			let type = clu.type;
 			data.push({
-				nid: id,
+				id: id,
 				title: `Title ${id} (${type.name} - ${clu.name})`,
 				description: `Description ${id} (${type.name} - ${clu.name})`,
 				notation: `DEV${id}`,

@@ -1,15 +1,16 @@
-import {dr} from "~/db.server";
-import {HumanEffectsTableFromString, HumanEffectTablesDefs} from "~/frontend/human_effects/defs";
+import { dr } from "~/db.server";
+import { HumanEffectsTableFromString, HumanEffectTablesDefs } from "~/frontend/human_effects/defs";
 import {
 	get,
 	GetRes,
 	categoryPresenceGet,
-	categoryPresenceDeleteAll
+	categoryPresenceDeleteAll,
+	categoryPresenceSet
 } from '~/backend.server/models/human_effects'
-import {PreviousUpdatesFromJson} from "~/frontend/editabletable/data";
-import {HumanEffectsTable} from "~/frontend/human_effects/defs";
-import {create, update, deleteRows, HEError, validate, defsForTable, clearData} from "~/backend.server/models/human_effects"
-import {eqArr} from "~/util/array";
+import { PreviousUpdatesFromJson } from "~/frontend/editabletable/data";
+import { HumanEffectsTable } from "~/frontend/human_effects/defs";
+import { create, update, deleteRows, HEError, validate, defsForTable, clearData } from "~/backend.server/models/human_effects"
+import { eqArr } from "~/util/array";
 
 
 export async function loadData(recordId: string | undefined, tblStr: string) {
@@ -52,7 +53,7 @@ interface Req {
 function convertUpdatesToIdsAndData(
 	updates: Record<string, Record<number, any>>,
 	cols: number
-): {ids: string[]; data: any[][]} {
+): { ids: string[]; data: any[][] } {
 	let ids: string[] = []
 	let data: any[][] = []
 	if (updates) {
@@ -65,7 +66,7 @@ function convertUpdatesToIdsAndData(
 			data.push(row)
 		}
 	}
-	return {ids, data}
+	return { ids, data }
 }
 
 export async function saveData(req: Request, recordId: string) {
@@ -73,7 +74,7 @@ export async function saveData(req: Request, recordId: string) {
 	try {
 		d = await req.json() as Req
 	} catch {
-		return Response.json({ok: false, error: "Invalid JSON"}, {status: 400})
+		return Response.json({ ok: false, error: "Invalid JSON" }, { status: 400 })
 	}
 	if (!recordId) {
 		throw new Error("no record id")
@@ -81,17 +82,19 @@ export async function saveData(req: Request, recordId: string) {
 	let defs = await defsForTable(d.table)
 	let expectedCols = defs.map(d => d.jsName)
 
-	if (!eqArr(d.columns, expectedCols)){
-		return Response.json({ok: false, error: `columns passed do not match expected: ${expectedCols} got ${d.columns}`}, {status: 400})
+	if (!eqArr(d.columns, expectedCols)) {
+		return Response.json({ ok: false, error: `columns passed do not match expected: ${expectedCols} got ${d.columns}` }, { status: 400 })
 	}
 
 	try {
+		let dataModified = false;
 		await dr.transaction(async (tx) => {
 			if (d.data.deletes) {
 				let res = await deleteRows(tx, d.table, d.data.deletes)
 				if (!res.ok) {
 					throw res.error
 				}
+				dataModified = true;
 			}
 			if (d.data.updates) {
 				let data2 = convertUpdatesToIdsAndData(d.data.updates, defs.length)
@@ -99,6 +102,7 @@ export async function saveData(req: Request, recordId: string) {
 				if (!res.ok) {
 					throw res.error
 				}
+				dataModified = true;
 			}
 			let idMap = new Map<string, string>()
 			if (d.data.newRows) {
@@ -119,6 +123,7 @@ export async function saveData(req: Request, recordId: string) {
 					for (let [i, id] of res.ids.entries()) {
 						idMap.set(id, ids[i])
 					}
+					dataModified = true;
 				}
 			}
 			let res = await validate(tx, d.table, recordId, defs)
@@ -137,17 +142,62 @@ export async function saveData(req: Request, recordId: string) {
 					throw new Error("unknown validate error")
 				}
 			}
+
+			// Update category presence if data was modified
+			if (dataModified) {
+				try {
+					// Get current data to determine category presence
+					const currentData = await get(tx, d.table, recordId, defs);
+					if (currentData.ok) {
+						// Calculate category presence based on current data
+						const categoryPresence: Record<string, boolean> = {};
+
+						// First, initialize all metric fields to true
+						for (const def of defs) {
+							if (def.role === 'metric' && def.jsName) {
+								// Use the JavaScript name for the presence flag (categoryPresenceSet will map to DB column)
+								categoryPresence[def.jsName] = true;
+							}
+						}
+
+						// Check each row for each metric field
+						for (const row of currentData.data) {
+							const rowData = row as unknown as Record<string, any>;
+							for (const def of defs) {
+								if (def.role === 'metric' && def.jsName && rowData[def.jsName] != null) {
+									// If we find any non-null value, set presence to true
+									categoryPresence[def.jsName] = false;
+								}
+							}
+						}
+
+						// Debug log the presence data being sent
+						console.log('Updating category presence:', {
+							recordId,
+							table: d.table,
+							presence: categoryPresence,
+							data: currentData.data
+						});
+
+						// Update category presence
+						await categoryPresenceSet(recordId, d.table, defs, categoryPresence);
+					}
+				} catch (error) {
+					// Log error but don't fail the operation
+					console.error('Failed to update category presence:', error);
+				}
+			}
 		})
 	} catch (e) {
 		if (Array.isArray(e)) {
-			return Response.json({ok: false, errors: e})
+			return Response.json({ ok: false, errors: e })
 		} else if (e instanceof HEError) {
-			return Response.json({ok: false, error: e})
+			return Response.json({ ok: false, error: e })
 		} else {
 			throw e
 		}
 	}
-	return Response.json({ok: true})
+	return Response.json({ ok: true })
 }
 
 export async function clear(tableIdStr: string, recordId: string) {
@@ -158,7 +208,7 @@ export async function clear(tableIdStr: string, recordId: string) {
 	try {
 		table = HumanEffectsTableFromString(tableIdStr)
 	} catch (e) {
-		return Response.json({ok: false, error: String(e)})
+		return Response.json({ ok: false, error: String(e) })
 	}
 	try {
 		await dr.transaction(async (tx) => {
@@ -169,24 +219,24 @@ export async function clear(tableIdStr: string, recordId: string) {
 		})
 	} catch (e) {
 		if (e instanceof HEError) {
-			return Response.json({ok: false, error: e})
+			return Response.json({ ok: false, error: e })
 		} else {
 			throw e
 		}
 	}
-	return Response.json({ok: true})
+	return Response.json({ ok: true })
 }
 
 export async function deleteAllData(recordId: string) {
 	if (!recordId) {
 		throw new Error("no record id")
 	}
-	for (let def of HumanEffectTablesDefs){
+	for (let def of HumanEffectTablesDefs) {
 		let r = await clear(def.id, recordId)
-		if (!r.ok){
+		if (!r.ok) {
 			return r
 		}
 	}
 	await categoryPresenceDeleteAll(recordId)
-	return Response.json({ok: true})
+	return Response.json({ ok: true })
 }

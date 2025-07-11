@@ -30,7 +30,7 @@ import { authLoaderPublicOrWithPerm } from "~/util/auth";
  * @param {Request} params.request - The incoming HTTP request
  * @returns {Promise<Response>} JSON response with geographic levels or error details
  */
-export const loader: LoaderFunction = authLoaderPublicOrWithPerm("ViewData", async ({ request }) => {
+export const loader: LoaderFunction = authLoaderPublicOrWithPerm("ViewData", async () => {
   try {
 
 

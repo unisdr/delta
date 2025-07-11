@@ -3,19 +3,16 @@ import Map from "ol/Map";
 import View from "ol/View";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import { fromLonLat } from "ol/proj";
 import GeoJSON from "ol/format/GeoJSON";
 import { Fill, Stroke, Style } from "ol/style";
 import type { StyleFunction } from "ol/style/Style";
 import { defaults as defaultControls } from "ol/control";
 import { defaults as defaultInteractions } from "ol/interaction";
 import { unByKey } from "ol/Observable";
-import { EventsKey } from "ol/events";
 import { FeatureLike } from "ol/Feature"; // Import FeatureLike to handle both Feature and RenderFeature
 import { Feature } from "ol";
 import { getCenter } from "ol/extent";
 import { Geometry } from "ol/geom";
-import Swal from "sweetalert2";
 import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
 import ErrorBoundary from "~/frontend/components/ErrorBoundary";
 import Legend from "~/frontend/analytics/sectors/sections/Map/Legend";
@@ -77,6 +74,7 @@ export interface CustomMapProps {
   apiEndpoint?: string;
   levelCap?: number;
   calculateColorRanges?: (values: number[], defaultCurrency: string) => ColorRange[];
+  currency: string;
 }
 
 // Helper function to check if a color is light
@@ -104,19 +102,17 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   geoData,
   selectedMetric,
   filters,
-  apiEndpoint = "/api/analytics/geographic-impacts",
-  levelCap = 3,
+  // apiEndpoint = "/api/analytics/geographic-impacts",
+  // levelCap = 3,
   calculateColorRanges: customCalculateColorRanges,
+  currency
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<Map | null>(null);
   const [legendRanges, setLegendRanges] = useState<Array<{ color: string; range: string }>>([]);
-  const [currentLevel, setCurrentLevel] = useState(1);
-  const [currentParentId, setCurrentParentId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [hoveredFeatureColor, setHoveredFeatureColor] = useState<string | null>(null);
-  const [hoveredFeature, setHoveredFeature] = useState<FeatureLike | null>(null);
+  const loading = false;
+  let hoveredFeature : FeatureLike | null = null;
   const defaultCurrency = useDefaultCurrency();
 
   // Default color range calculation if not provided via props
@@ -218,69 +214,69 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
   };
 
   // Fetch data for drill-down
-  const fetchGeoData = async (level: number, parentId: number | null): Promise<GeoData | null> => {
-    setLoading(true);
-    try {
-      const url = new URL(apiEndpoint, window.location.origin);
-      const params = new URLSearchParams();
+  // const fetchGeoData = async (level: number, parentId: number | null): Promise<GeoData | null> => {
+  //   setLoading(true);
+  //   try {
+  //     const url = new URL(apiEndpoint, window.location.origin);
+  //     const params = new URLSearchParams();
 
-      if (filters.sectorId) {
-        params.set("sectorId", filters.sectorId);
-      }
+  //     if (filters.sectorId) {
+  //       params.set("sectorId", filters.sectorId);
+  //     }
 
-      const optionalParams: Array<[keyof Filters, string]> = [
-        ["subSectorId", "subSectorId"],
-        ["hazardTypeId", "hazardTypeId"],
-        ["hazardClusterId", "hazardClusterId"],
-        ["specificHazardId", "specificHazardId"],
-        ["geographicLevelId", "geographicLevelId"],
-        ["fromDate", "fromDate"],
-        ["toDate", "toDate"],
-        ["disasterEventId", "disasterEventId"],
-        ["assessmentType", "assessmentType"],
-        ["confidenceLevel", "confidenceLevel"],
-      ];
+  //     const optionalParams: Array<[keyof Filters, string]> = [
+  //       ["subSectorId", "subSectorId"],
+  //       ["hazardTypeId", "hazardTypeId"],
+  //       ["hazardClusterId", "hazardClusterId"],
+  //       ["specificHazardId", "specificHazardId"],
+  //       ["geographicLevelId", "geographicLevelId"],
+  //       ["fromDate", "fromDate"],
+  //       ["toDate", "toDate"],
+  //       ["disasterEventId", "disasterEventId"],
+  //       ["assessmentType", "assessmentType"],
+  //       ["confidenceLevel", "confidenceLevel"],
+  //     ];
 
-      optionalParams.forEach(([key, paramName]) => {
-        const value = filters[key];
-        if (value) {
-          params.set(paramName, value);
-        }
-      });
+  //     optionalParams.forEach(([key, paramName]) => {
+  //       const value = filters[key];
+  //       if (value) {
+  //         params.set(paramName, value);
+  //       }
+  //     });
 
-      params.set("level", level.toString());
-      if (parentId !== null) {
-        params.set("parentId", parentId.toString());
-      }
+  //     params.set("level", level.toString());
+  //     if (parentId !== null) {
+  //       params.set("parentId", parentId.toString());
+  //     }
 
-      const response = await fetch(`${url.toString()}?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch geographic impact data: ${response.statusText}`);
-      }
+  //     const response = await fetch(`${url.toString()}?${params.toString()}`);
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch geographic impact data: ${response.statusText}`);
+  //     }
 
-      const data: GeoData = await response.json();
-      if (!data || !data.features) {
-        throw new Error("Invalid response format from geographic impacts API");
-      }
+  //     const data: GeoData = await response.json();
+  //     if (!data || !data.features) {
+  //       throw new Error("Invalid response format from geographic impacts API");
+  //     }
 
-      return data;
-    } catch (error) {
-      console.error("🧭 Unable to load map data. Please check your internet connection or filters.", error);
-      Swal.fire({
-        title: "Could not load map",
-        text: error instanceof Error
-          ? error.message
-          : "Please check your filters or try reloading the page. If the issue persists, contact support.",
-        icon: "error",
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     return data;
+  //   } catch (error) {
+  //     console.error("🧭 Unable to load map data. Please check your internet connection or filters.", error);
+  //     Swal.fire({
+  //       title: "Could not load map",
+  //       text: error instanceof Error
+  //         ? error.message
+  //         : "Please check your filters or try reloading the page. If the issue persists, contact support.",
+  //       icon: "error",
+  //     });
+  //     return null;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Handle feature click for drill-down
-  const handleFeatureClick = async (feature: Feature<Geometry>) => {
+  /*const handleFeatureClick = async (feature: Feature<Geometry>) => {
     // Drilldown functionality temporarily disabled
     return;
 
@@ -328,35 +324,95 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
     } finally {
       setLoading(false);
     }
-    */
-  };
+    
+  };*/
 
-  // Calculate color ranges
+  // Calculate color ranges - Updated to show only present values
   const colorRanges = useMemo(() => {
     if (!geoData?.features) return [];
 
-    const values = geoData.features
-      .map((f) => f.properties?.values?.[selectedMetric])
-      .filter((v): v is number => typeof v === "number" && v > 0);
+    // Extract all values and categorize them
+    const allValues: number[] = [];
+    const categorizedData = {
+      hasPositiveValues: false,
+      hasZeroValues: false,
+      hasNoData: false
+    };
 
+    geoData.features.forEach((f) => {
+      const values = f.properties?.values?.[selectedMetric];
+      const dataAvailability = f.properties?.values?.dataAvailability;
+      
+      if (dataAvailability === "no_data") {
+        categorizedData.hasNoData = true;
+      } else if (values === 0) {
+        categorizedData.hasZeroValues = true;
+      } else if (typeof values === "number" && values > 0) {
+        allValues.push(values);
+        categorizedData.hasPositiveValues = true;
+      }
+    });
+
+    // Calculate ranges for positive values
     const ranges = (customCalculateColorRanges || defaultCalculateColorRanges)(
-      values,
-      defaultCurrency
+      allValues,
+      currency
     );
 
+    // Filter ranges to only include those that have actual data points
+    const filteredRanges: ColorRange[] = [];
+
+    if (categorizedData.hasPositiveValues && allValues.length > 0) {
+      // Only include color ranges that have actual values falling within them
+      ranges.forEach((range) => {
+        // Skip the special cases (zero and no data) for now
+        if (range.min === 0 && range.max === 0) return;
+        if (range.min === -1 && range.max === -1) return;
+        
+        // Check if any actual values fall within this range
+        const hasValuesInRange = allValues.some(value => 
+          value >= range.min && value <= range.max
+        );
+        
+        if (hasValuesInRange) {
+          filteredRanges.push(range);
+        }
+      });
+    }
+
+    // Add special categories only if they exist in the data
+    if (categorizedData.hasZeroValues) {
+      filteredRanges.push({
+        min: 0,
+        max: 0,
+        color: "rgba(255, 255, 255, 0.9)",
+        label: "Zero Impact (Confirmed)"
+      });
+    }
+
+    if (categorizedData.hasNoData) {
+      filteredRanges.push({
+        min: -1,
+        max: -1,
+        color: "rgba(200, 200, 200, 0.9)",
+        label: "No Data Available"
+      });
+    }
+
+    // Update legend with only the ranges that are actually present
     setLegendRanges(
-      ranges.map((r) => ({
+      filteredRanges.map((r) => ({
         color: r.color,
         range: r.label,
       }))
     );
 
-    return ranges;
+    return filteredRanges;
   }, [geoData?.features, selectedMetric, defaultCurrency, customCalculateColorRanges]);
 
   // Feature style function - Updated to match OpenLayers StyleFunction type
   const getFeatureStyle = useCallback(
-    (feature: FeatureLike, resolution: number) => {
+    (feature: FeatureLike) => {
       // Safely access properties using get() method, which works for both Feature and RenderFeature
       const values = feature.get("values");
       const value = values?.[selectedMetric];
@@ -409,7 +465,6 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       const style = getFeatureStyle(feature, 0);
       const fill = style instanceof Style ? style.getFill() : null;
       const backgroundColor = fill ? fill.getColor() as string : "#FFFFFF";
-      setHoveredFeatureColor(backgroundColor);
 
       const textColor = isLightColor(backgroundColor) ? "#333333" : "#FFFFFF";
       const subTextColor = isLightColor(backgroundColor) ? "#666666" : "#EEEEEE";
@@ -521,7 +576,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       newMap.forEachFeatureAtPixel(event.pixel, (feature) => {
         // Ensure the feature is a Feature<Geometry> for drill-down
         if (feature instanceof Feature) {
-          handleFeatureClick(feature as Feature<Geometry>);
+          // handleFeatureClick(feature as Feature<Geometry>);
         }
       });
     });
@@ -642,17 +697,11 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       });
     }
 
-    // Reset to initial view state
-    setCurrentLevel(0);
-    setCurrentParentId(null);
-
   }, [map, geoData, selectedMetric, getFeatureStyle]); // Added selectedMetric to dependencies
 
   // Reset view when filters change
   useEffect(() => {
     if (!map || !filters) return;
-    setCurrentLevel(1);
-    setCurrentParentId(null);
   }, [filters, map]);
 
   // Empty state
@@ -694,7 +743,7 @@ const ReusableImpactMap: React.FC<CustomMapProps> = ({
       <div className="impact-map-container">
         <div ref={mapRef} className="map" />
         <div ref={tooltipRef} className="map-tooltip" />
-        <Legend ranges={legendRanges} selectedMetric={selectedMetric} />
+        <Legend ranges={legendRanges} selectedMetric={selectedMetric} currency={currency}/>
         {loading && (
           <div className="loading-overlay">
             <div className="loading-spinner" />
