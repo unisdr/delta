@@ -86,7 +86,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	// Extract tenant context for secure data access
 	const tenantContext = await getTenantContext(userSession);
-	const ctryIso3 = await getCountryIso3(loaderArgs.request);  
+	const ctryIso3 = await getCountryIso3(loaderArgs.request);
 
 	// Handle 'new' case without DB query
 	if (params.id === "new") {
@@ -128,7 +128,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	// For existing items, fetch the disaster event
 	const getDisasterEvent = async (id: string) => {
 		// Pass tenant context for data isolation
-		return disasterEventById(id, tenantContext);
+		return disasterEventById(id, tenantContext.countryAccountId);
 	};
 
 	let item = null;

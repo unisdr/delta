@@ -33,7 +33,7 @@ export const action = async (args: any) => {
 		},
 		tableName: getTableName(disasterEventTable),
 		getById: async (id: string) => {
-			return disasterEventById(id, tenantContext);
+			return disasterEventById(id, tenantContext.countryAccountId);
 		},
 		postProcess: async (_id: string, data: any) => {
 			if (data.attachments) {
