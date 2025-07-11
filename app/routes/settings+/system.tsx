@@ -14,14 +14,10 @@ import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 import {
 	getInstanceSystemSettingsByCountryAccountId,
-	updateInstanceSystemSetting,
 } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountrySettingsFromSession } from "~/util/session";
-import {
-	Country,
-	InstanceSystemSettings,
-} from "~/drizzle/schema";
+import { Country, InstanceSystemSettings } from "~/drizzle/schema";
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
 import {
@@ -93,9 +89,7 @@ export const action: ActionFunction = authLoaderWithPerm(
 		const termsUrl = formData.get("termsUrl") as string;
 		const websiteLogoUrl = formData.get("websiteLogoUrl") as string;
 		const websiteName = formData.get("websiteName") as string;
-		const isApprovedRecordsPublic = Boolean(
-			formData.get("approvedRecordsArePublic") as string
-		);
+		const approvedRecordsArePublic = formData.get("approvedRecordsArePublic") === "true"
 		const totpIssuer = formData.get("totpIssuer") as string;
 
 		try {
@@ -105,7 +99,7 @@ export const action: ActionFunction = authLoaderWithPerm(
 				termsUrl,
 				websiteLogoUrl,
 				websiteName,
-				isApprovedRecordsPublic,
+				approvedRecordsArePublic,
 				totpIssuer
 			);
 			return { success: "ok" };
@@ -140,7 +134,8 @@ export default function Settings() {
 	const [termsUrl, setTermsUrl] = useState("");
 	const [websiteLogoUrl, setWebsiteLogoUrl] = useState("");
 	const [websiteName, setWebsiteName] = useState("");
-	const [isApprovedRecordsPublic, setIsApprovedRecordsPublic] = useState(false);
+	const [approvedRecordsArePublic, setApprovedRecordsArePublic] =
+		useState(false);
 	const [totpIssuer, setTotpIssuer] = useState("");
 
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -175,10 +170,8 @@ export default function Settings() {
 			);
 			setWebsiteLogoUrl(loaderData.instanceSystemSettings.websiteLogo || "");
 			setWebsiteName(loaderData.instanceSystemSettings.websiteName || "");
-			setIsApprovedRecordsPublic(
+			setApprovedRecordsArePublic(
 				loaderData.instanceSystemSettings.approvedRecordsArePublic
-					? true
-					: false
 			);
 			setTotpIssuer(loaderData.instanceSystemSettings.totpIssuer || "");
 		}
@@ -194,7 +187,8 @@ export default function Settings() {
 				toast.current.show({
 					severity: "info",
 					summary: "Success",
-					detail: "System settings updated successfully",
+					detail:
+						"System settings updated successfully. Changes will take effect after you login again.",
 				});
 			}
 		}
@@ -406,10 +400,12 @@ export default function Settings() {
 									</div>
 									<select
 										name="approvedRecordsArePublic"
-										value={isApprovedRecordsPublic ? "true" : "false"}
-										onChange={(e) =>
-											setIsApprovedRecordsPublic(e.target.value === "true")
-										}
+										value={approvedRecordsArePublic ? "true" : "false"}
+										onChange={(e) => {
+											console.log("e.target.value = ",e.target.value);
+											console.log(typeof e.target.value);
+											setApprovedRecordsArePublic(e.target.value === "true");
+										}}
 									>
 										<option key={1} value="true">
 											Public

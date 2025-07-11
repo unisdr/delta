@@ -45,7 +45,7 @@ export const Toast = forwardRef<ToastRef, {}>((_props, ref) => {
       <div className={`dts-alert dts-alert--${message.severity}`}>
         <div className="dts-alert__icon">
           <svg aria-hidden="true" focusable="false" role="img">
-            <use href={`assets/icons/${message.severity}.svg#${message.severity}`} />
+            <use href={`/assets/icons/${message.severity}.svg#${message.severity}`} />
           </svg>
         </div>
         <div >

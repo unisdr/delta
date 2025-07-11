@@ -23,7 +23,6 @@ export async function updateSettingsService(
 	totpIssuer: string
 ) {
 	const errors: string[] = [];
-
 	if (!id) {
 		errors.push("Instance system settings Id is required");
 	}
