@@ -1,7 +1,10 @@
 import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { disasterEventTable, hazardousEventTable, hipHazardTable } from "~/drizzle/schema";
 import { formatDateDisplay } from "~/util/date";
+import { TenantContext } from "~/util/tenant";
+
+
 
 export const contentPickerConfig = {
     id: "disasterEventId",
@@ -91,11 +94,17 @@ export const contentPickerConfig = {
         ],
         orderBy: [{ column: disasterEventTable.startDate, direction: "desc" }] // Sorting
     },
-    selectedDisplay: async (dr: any, id: any) => {
+    selectedDisplay: async (dr: any, id: any, tenantContext?: TenantContext) => {
+        const whereConditions = [eq(disasterEventTable.id, id)];
+
+        // ADD TENANT FILTERING
+        if (tenantContext?.countryAccountId) {
+            whereConditions.push(eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId));
+        }
         const row = await dr
             .select()
             .from(disasterEventTable)
-            .where(eq(disasterEventTable.id, id))
+            .where(whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0]) // USE PROPER AND CONDITION
             .limit(1)
             .execute();
     

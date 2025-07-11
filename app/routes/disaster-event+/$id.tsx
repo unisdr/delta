@@ -49,7 +49,7 @@ export const loader = async ({
 		if (!tenantContext) {
 			throw new Response("Unauthorized: Missing tenant context", { status: 401 });
 		}
-		return await disasterEventById(id, tenantContext);
+		return await disasterEventById(id, tenantContext.countryAccountId);
 	};
 
 	const getByIdPublic = async (id: string) => {

@@ -1,6 +1,5 @@
 import {
-	MetaFunction,
-	ActionFunctionArgs,
+	MetaFunction
 } from "@remix-run/node";
 import { useEffect, useState } from "react";
 import {
@@ -52,36 +51,45 @@ interface interfaceMap {
 	geojson: any;
 }
 
-export const loader = authLoaderPublicOrWithPerm(
-	"ViewData",
-	async ({ request }) => {
-		const settings = await getCountrySettingsFromSession(request);
-		let currencies: string[] = [];
-		if (settings) {
-			currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
-		}
-
-		const currency = currencies[0] || "PHP";
-		const hazardTypes = await fetchHazardTypes();
-		const hazardClusters = await fetchHazardClusters(null);
-		const specificHazards = await fetchAllSpecificHazards();
-		const level1DivisionNames = await getDivisionIdAndNameByLevel(1, settings.countryAccountsId);
-
-		return {
-			currency,
-			hazardTypes,
-			hazardClusters,
-			specificHazards,
-			level1DivisionNames
-		};
+/**
+ * Loader for hazards analytics page
+ * 
+ * @returns {Promise<Response>} - Response object
+ */
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
+	const { request } = loaderArgs;
+	const settings = await getCountrySettingsFromSession(request);
+	let currencies: string[] = [];
+	if (settings) {
+		currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
 	}
+
+	const currency = currencies[0] || "PHP";
+	const hazardTypes = await fetchHazardTypes();
+	const hazardClusters = await fetchHazardClusters(null);
+	const specificHazards = await fetchAllSpecificHazards();
+	const level1DivisionNames = await getDivisionIdAndNameByLevel(1, settings.countryAccountsId);
+
+	return {
+		currency,
+		hazardTypes,
+		hazardClusters,
+		specificHazards,
+		level1DivisionNames
+	};
+}
 );
 
 function getStringValue(value: FormDataEntryValue | null): string | null {
 	return typeof value === "string" ? value : null;
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+/**
+ * Action handler for hazards analytics page
+ */
+export const action = async (actionArgs: any) => {
+	const { request } = actionArgs;
+
 	const formData = await request.formData();
 	const hazardTypeId = getStringValue(formData.get("hazardTypeId"));
 	const hazardClusterId = getStringValue(formData.get("hazardClusterId"));
@@ -90,7 +98,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const fromDate = getStringValue(formData.get("fromDate"));
 	const toDate = getStringValue(formData.get("toDate"));
 
+	const settings = await getCountrySettingsFromSession(request);
+	let currency = "USD";
+	if (settings) {
+		currency = settings.currencyCodes?.split(",")[0]
+	}
+
+	// Create tenant context from user session
 	const filters = {
+		tenantContext: {
+			countryAccountId: settings.countryAccountsId,
+			countryId: settings.countryId || "",
+			countryName: settings.countryName || "",
+			iso3: settings.iso3 || ""
+		},
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -99,11 +120,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		toDate,
 	};
 
-	const settings = await getCountrySettingsFromSession(request);
-	let currency = "USD";
-	if (settings) {
-		currency = settings.currencyCodes?.split(",")[0]
-	}
 	const geographicLevel1 = await getDivisionByLevel(1, settings.countryAccountsId);
 
 	const disasterCount = await getDisasterEventCount(filters);

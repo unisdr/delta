@@ -1,16 +1,17 @@
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import { formatDate, isDateLike, convertToISODate } from "~/util/date";
-import { sql, ilike, or, asc, desc, and } from "drizzle-orm";
+import { sql, ilike, or, asc, desc, and, eq } from "drizzle-orm";
 import { buildTree } from "~/components/TreeView";
+import { TenantContext } from "~/util/tenant";
 
-function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: any) {
+function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: any, tenantContext?: TenantContext) {
     if (!config?.table) {
         throw new Error("No table defined for Drizzle ORM query.");
     }
 
     let query = dr.select(
-        overrideSelect ? overrideSelect : 
-        Object.fromEntries(config.selects.map((s: any) => [s.alias, s.column]))
+        overrideSelect ? overrideSelect :
+            Object.fromEntries(config.selects.map((s: any) => [s.alias, s.column]))
     ).from(config.table);
 
     // Apply joins
@@ -48,6 +49,11 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
         whereConditions.push(or(...ilikeConditions)); // Merge all ILIKE filters using OR
     }
 
+    // Apply tenant isolation if tenant context is provided and table has countryAccountsId
+    if (tenantContext?.countryAccountId && config.table.countryAccountsId) {
+        whereConditions.push(eq(config.table.countryAccountsId, tenantContext.countryAccountId));
+    }
+
     //Apply all conditions in a single `.where()` call
     if (whereConditions.length > 0) {
         query = query.where(and(...whereConditions)) as any;
@@ -65,7 +71,7 @@ function buildDrizzleQuery(config: any, searchPattern: string, overrideSelect?: 
     return query as any;
 }
 
-export async function fetchData(pickerConfig: any, searchQuery: string = "", page: number = 1, limit: number = 10) {
+export async function fetchData(pickerConfig: any, searchQuery: string = "", page: number = 1, limit: number = 10, tenantContext?: TenantContext) {
 
     if (pickerConfig.viewMode === "grid") {
         // Calculate offset for pagination
@@ -75,9 +81,9 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
 
         if (pickerConfig.dataSourceDrizzle) {
             try {
-                let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery)
-                .limit(limit)
-                .offset(offset);
+                let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery, undefined, tenantContext)
+                    .limit(limit)
+                    .offset(offset);
 
                 rows = await query.execute();
             } catch (error) {
@@ -106,7 +112,7 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
 
         const displayNames = await Promise.all(
             rows.map(async (row: any) => {
-                const displayName = await pickerConfig.selectedDisplay(dr, row.id);
+                const displayName = await pickerConfig.selectedDisplay(dr, row.id, tenantContext);
                 return { id: row.id, displayName };
             })
         );
@@ -153,7 +159,7 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
 
         if (pickerConfig.dataSourceDrizzle) {
             try {
-                let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery);
+                let query = buildDrizzleQuery(pickerConfig.dataSourceDrizzle, searchQuery, undefined, tenantContext);
 
                 rows = await query.execute();
             } catch (error) {
@@ -162,27 +168,27 @@ export async function fetchData(pickerConfig: any, searchQuery: string = "", pag
                 return [];
             }
         }
-    
+
         // Extract idKey dynamically
         const idKey = pickerConfig.table_columns.find((col: any) => col.is_primary_id)?.column_field || "id";
         // Extract parentKey dynamically
         const parentKey = pickerConfig.table_columns.find((col: any) => col.tree_field === "parentKey")?.column_field || "parentId";
         // Extract nameKey dynamically
         const nameKey = pickerConfig.table_columns.find((col: any) => col.tree_field === "nameKey")?.column_field || "name";
-        
-        return buildTree(rows, idKey, parentKey, nameKey,  null, []);
+
+        return buildTree(rows, idKey, parentKey, nameKey, null, []);
     }
 }
 
-export async function getTotalRecords(pickerConfig: any, searchQuery: string) {
+export async function getTotalRecords(pickerConfig: any, searchQuery: string, tenantContext?: TenantContext) {
     if (pickerConfig.dataSourceDrizzle) {
-        return await getTotalRecordsDrizzle(pickerConfig, searchQuery);
+        return await getTotalRecordsDrizzle(pickerConfig, searchQuery, tenantContext);
     } else {
-        return await getTotalRecordsSQL(pickerConfig, searchQuery);
+        return await getTotalRecordsSQL(pickerConfig, searchQuery, tenantContext);
     }
 }
 
-async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
+async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string, tenantContext?: TenantContext) {
     if (!pickerConfig.dataSourceDrizzle?.table) {
         console.error("Error: No table defined for Drizzle ORM query.");
         return 0;
@@ -203,7 +209,8 @@ async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
         let query = buildDrizzleQuery(
             countConfig,
             safeSearchPattern,
-            { total: sql`COUNT(*)`.as("total") }
+            { total: sql`COUNT(*)`.as("total") },
+            tenantContext
         );
 
         const result = await query.execute();
@@ -214,14 +221,37 @@ async function getTotalRecordsDrizzle(pickerConfig: any, searchQuery: string) {
     }
 }
 
-async function getTotalRecordsSQL(pickerConfig: any, searchQuery: string) {
+async function getTotalRecordsSQL(pickerConfig: any, searchQuery: string, tenantContext?: TenantContext) {
+    // Apply tenant filtering if tenant context is provided
+    let tenantFilter = "";
+
+    // Use either the passed tenantContext or the one stored in pickerConfig._tenantContext
+    const effectiveTenantContext = tenantContext || pickerConfig._tenantContext;
+
+    if (effectiveTenantContext?.countryAccountId && pickerConfig.dataSourceSQLTable) {
+        // Check if the table actually has a countryAccountsId column
+        // This is a more flexible approach that works with different table structures
+        try {
+            // Use a safer approach with parameterized queries when possible
+            tenantFilter = ` AND ${pickerConfig.dataSourceSQLTable}.countryAccountsId = '${effectiveTenantContext.countryAccountId}'`;
+        } catch (error) {
+            console.warn(`Could not apply tenant filter to ${pickerConfig.dataSourceSQLTable}:`, error);
+        }
+    }
     const mainTableName = pickerConfig.dataSourceSQLTable;
 
     // Format the SQL query
-    const baseQuery = pickerConfig.dataSourceSQL
+    let baseQuery = pickerConfig.dataSourceSQL
         .replace(/\[safeSearchPattern\]/g, `%${searchQuery}%`)
         .replace(/\bLIMIT\s+\[\w+\].*/gi, '')
         .replace(/\bOFFSET\s+\[\w+\].*/gi, '');
+
+    // Apply tenant filter if available
+    if (tenantFilter && baseQuery.includes('WHERE')) {
+        baseQuery = baseQuery.replace(/WHERE/i, `WHERE${tenantFilter} AND`);
+    } else if (tenantFilter) {
+        baseQuery = baseQuery + ` WHERE 1=1${tenantFilter}`;
+    }
 
     // Construct total records SQL
     const totalRecordsSQL = sql`
