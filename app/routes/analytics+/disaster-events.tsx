@@ -524,12 +524,12 @@ function DisasterEventsAnalysisContent() {
                 Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.length > 0 && <>
                   <p>
                     {
-                      Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.map((sector, index) => (<>
+                      Array.isArray(ld.recordsRelatedSectors) && ld.recordsRelatedSectors.map((sector, index) => (
                         <span key={index}>
                           {sector.sectorname}
                           {ld.recordsRelatedSectors.length == (index + 1) ? ' ' : ', '}
                         </span>
-                      </>))
+                      ))
                     }
                   </p>
                 </>
