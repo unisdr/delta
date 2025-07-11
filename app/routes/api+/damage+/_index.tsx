@@ -10,13 +10,14 @@ import {
 	jsonApiDocs,
 } from "~/backend.server/handlers/form/form_api"
 import { getCountrySettingsFromSession } from "~/util/session";
+import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
 export const loader = authLoaderApiDocs(async ({request}) => {
 	const url = new URL(request.url);
 	const baseUrl = `${url.protocol}//${url.host}`;
 
 	const settings = await getCountrySettingsFromSession(request);
-	const currencies = settings.currencyCodes;
+	const currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
 
 	let docs = await jsonApiDocs({
 		baseUrl: "damages",
