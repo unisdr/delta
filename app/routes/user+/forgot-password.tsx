@@ -10,7 +10,7 @@ import {
 } from "~/frontend/form";
 import { formStringData } from "~/util/httputil";
 import { resetPasswordSilentIfNotFound } from "~/backend.server/models/user/password";
-import { getCountrySettingsFromSession, redirectWithMessage } from "~/util/session";
+import { redirectWithMessage } from "~/util/session";
 
 import "react-toastify/dist/ReactToastify.css";
 
@@ -45,12 +45,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const resetToken = randomBytes(32).toString("hex");
 	await resetPasswordSilentIfNotFound(data.email, resetToken);
 
-	// const settings = await getInstanceSystemSettingsByCountryAccountId();
-	const settings = await getCountrySettingsFromSession(request);
-	var siteUrl= "http://localhost";
-	if(settings){
-		siteUrl = settings.websiteUrl;
-	}
+	const url = new URL(request.url);
+	const siteUrl = `${url.protocol}//${url.host}`;
+
 	//Send email
 	const resetURL = `${siteUrl}/user/reset-password?token=${resetToken}&email=${encodeURIComponent(
 		data.email

@@ -147,7 +147,6 @@ export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
 				adminSetupComplete: false,
 				websiteLogo: "/assets/country-instance-logo.png",
 				websiteName: "Disaster Tracking System",
-				websiteUrl: "http://localhost:3000",
 				approvedRecordsArePublic: false,
 				totpIssuer: "example-app",
 				dtsInstanceType: "country",
