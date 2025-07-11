@@ -6,7 +6,7 @@ import { passwordHashCompare } from "./password";
 import { isValidTotp } from "./totp";
 
 export type LoginResult =
-	| { ok: true; userId: number; countryAccountId?: string | null }
+	| { ok: true; userId: number; countryAccountId?: string | null; role?:string }
 	| { ok: false };
 
 export async function login(
@@ -27,6 +27,7 @@ export async function login(
 			ok: true,
 			userId: user.id,
 			countryAccountId: user.countryAccountsId,
+			role: user.role
 		};
 	}
 
