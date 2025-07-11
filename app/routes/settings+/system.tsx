@@ -295,6 +295,14 @@ export default function Settings() {
 						</ul>
 					</li>
 					<li>
+						<strong>Website Name:</strong>{" "}
+						{loaderData.instanceSystemSettings?.websiteName}{" "}
+					</li>
+					<li>
+						<strong>Website Logo URL:</strong>{" "}
+						{loaderData.instanceSystemSettings?.websiteLogo}{" "}
+					</li>
+					<li>
 						<strong>Page Footer for Privacy Policy URL:</strong>{" "}
 						{loaderData.instanceSystemSettings?.footerUrlPrivacyPolicy}{" "}
 					</li>
