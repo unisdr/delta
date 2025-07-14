@@ -1,5 +1,6 @@
 import React from "react";
 import HorizontalBarChart from "~/components/HorizontalBarChart";
+import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 import { createFloatingTooltip } from "~/util/tooltip";
 
 interface HumanAffectsProps {
@@ -64,6 +65,11 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 		},
 	];
 
+	// Helper functions to check if data exists for charts
+	const hasGenderData = noOfMen > 0 || noOfWomen > 0 || noOfNonBinary > 0;
+	const hasAgeData = totalChildren > 0 || totalAdults > 0 || totalSeniors > 0;
+	const hasDisabilityPovertyData = totalDisability > 0 || totalNationalPoorPeople > 0 || totalInternationalPoorPeople > 0;
+
 	return (
 		<>
 			<section className="dts-page-section">
@@ -91,9 +97,16 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
-							<span className="dts-indicator__value">
-								{totalPeopleAffected}
-							</span>
+							{totalPeopleAffected > 0 ? (
+								<span className="dts-indicator__value">
+									{totalPeopleAffected}
+								</span>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 					</div>
 				</div>
@@ -127,14 +140,23 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								width: "100%",
 							}}
 						>
-							<img
-								src="/assets/icons/Dead.svg"
-								alt="Dead Icon"
-								style={{ width: "60px", height: "60px" }}
-							/>
-							<span style={{ marginLeft: "130px", fontSize: "1.2em" }}>
-								{totalDeaths}
-							</span>
+							{totalDeaths > 0 ? (
+								<>
+									<img
+										src="/assets/icons/Dead.svg"
+										alt="Dead Icon"
+										style={{ width: "60px", height: "60px" }}
+									/>
+									<span style={{ marginLeft: "130px", fontSize: "1.2em" }}>
+										{totalDeaths}
+									</span>
+								</>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 					</div>
 
@@ -166,14 +188,23 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								width: "100%",
 							}}
 						>
-							<img
-								src="/assets/icons/Injured.svg"
-								alt="Injured Icon"
-								style={{ width: "60px", height: "60px" }}
-							/>
-							<span style={{ marginLeft: "150px", fontSize: "1.2em" }}>
-								{totalInjured}
-							</span>
+							{totalInjured > 0 ? (
+								<>
+									<img
+										src="/assets/icons/Injured.svg"
+										alt="Injured Icon"
+										style={{ width: "60px", height: "60px" }}
+									/>
+									<span style={{ marginLeft: "150px", fontSize: "1.2em" }}>
+										{totalInjured}
+									</span>
+								</>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 					</div>
 
@@ -205,14 +236,23 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								width: "100%",
 							}}
 						>
-							<img
-								src="/assets/icons/Missing.svg"
-								alt="Missing Icon"
-								style={{ width: "60px", height: "60px" }}
-							/>
-							<span style={{ marginLeft: "150px", fontSize: "1.2em" }}>
-								{totalMissing}
-							</span>
+							{totalMissing > 0 ? (
+								<>
+									<img
+										src="/assets/icons/Missing.svg"
+										alt="Missing Icon"
+										style={{ width: "60px", height: "60px" }}
+									/>
+									<span style={{ marginLeft: "150px", fontSize: "1.2em" }}>
+										{totalMissing}
+									</span>
+								</>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 					</div>
 				</div>
@@ -246,14 +286,23 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								width: "100%",
 							}}
 						>
-							<img
-								src="/assets/icons/AffectedPopulation.svg"
-								alt="Affected Population Icon"
-								style={{ width: "60px", height: "60px" }}
-							/>
-							<span style={{ marginLeft: "250px", fontSize: "1.2em" }}>
-								{totalPeopleDirectlyAffected}
-							</span>
+							{totalPeopleDirectlyAffected > 0 ? (
+								<>
+									<img
+										src="/assets/icons/AffectedPopulation.svg"
+										alt="Affected Population Icon"
+										style={{ width: "60px", height: "60px" }}
+									/>
+									<span style={{ marginLeft: "250px", fontSize: "1.2em" }}>
+										{totalPeopleDirectlyAffected}
+									</span>
+								</>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 					</div>
 
@@ -285,14 +334,23 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								width: "100%",
 							}}
 						>
-							<img
-								src="/assets/icons/Internally-displaced.svg"
-								alt="Internally displaced Icon"
-								style={{ width: "60px", height: "60px" }}
-							/>
-							<span style={{ marginLeft: "250px", fontSize: "1.2em" }}>
-								{totalDisplaced}
-							</span>
+							{totalDisplaced > 0 ? (
+								<>
+									<img
+										src="/assets/icons/Internally-displaced.svg"
+										alt="Internally displaced Icon"
+										style={{ width: "60px", height: "60px" }}
+									/>
+									<span style={{ marginLeft: "250px", fontSize: "1.2em" }}>
+										{totalDisplaced}
+									</span>
+								</>
+							) : (
+								<>
+									<img src="/assets/images/empty.png" alt="No data" />
+									<span className="dts-body-text">No data available</span>
+								</>
+							)}
 						</div>
 					</div>
 				</div>
@@ -320,10 +378,14 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-						<HorizontalBarChart
-							data={data}
-							imgSrc="/assets/icons/Male&Female.svg"
-						/>
+						{hasGenderData ? (
+							<HorizontalBarChart
+								data={data}
+								imgSrc="/assets/icons/Male&Female.svg"
+							/>
+						) : (
+							<EmptyChartPlaceholder height={220} />
+						)}
 					</div>
 
 					{/* Persons with disabilities and living in poverty affected*/}
@@ -349,13 +411,17 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-						<HorizontalBarChart
-							data={disbilityAndPovertyData}
-							imgSrc="/assets/icons/People-with-physical-impairments.svg"
-							colorScheme="cerulean"
-						/>
+						{hasDisabilityPovertyData ? (
+							<HorizontalBarChart
+								data={disbilityAndPovertyData}
+								imgSrc="/assets/icons/People-with-physical-impairments.svg"
+								colorScheme="cerulean"
+							/>
+						) : (
+							<EmptyChartPlaceholder height={220} />
+						)}
 					</div>
-					
+
 					{/* Children adult and senior affected*/}
 					<div className="dts-data-box" style={{ height: "300px" }}>
 						<h3 className="dts-body-label">
@@ -376,11 +442,14 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								</svg>
 							</div>
 						</h3>
-
-						<HorizontalBarChart
-							data={ageData}
-							imgSrc="/assets/icons/Male&Female.svg"
-						/>
+						{hasAgeData ? (
+							<HorizontalBarChart
+								data={ageData}
+								imgSrc="/assets/icons/Male&Female.svg"
+							/>
+						) : (
+							<EmptyChartPlaceholder height={220} />
+						)}
 					</div>
 				</div>
 			</section>

@@ -38,6 +38,7 @@ import CustomPieChart from '~/components/PieChart';
 import CustomStackedBarChart from '~/components/StackedBarChart';
 import HorizontalBarChart from '~/components/HorizontalBarChart';
 import { getCountrySettingsFromSession } from "~/util/session";
+import { createFloatingTooltip } from "~/util/tooltip";
 
 
 // Define an interface for the structure of the JSON objects
@@ -602,6 +603,22 @@ function DisasterEventsAnalysisContent() {
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Total people affected</span>
+                      <div
+                        className="dts-tooltip__button"
+                        onPointerEnter={(e) =>
+                          createFloatingTooltip({
+                            content:
+                              "Total people affected is the sum of injured, missing, directly affected people and displaced",
+                            target: e.currentTarget,
+                            placement: "top",
+                            offsetValue: 8,
+                          })
+                        }
+                      >
+                        <svg aria-hidden="true" focusable="false" role="img">
+                          <use href="/assets/icons/information_outline.svg#information"></use>
+                        </svg>
+                      </div>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-f">
                       <span>{(ld.totalAffectedPeople2.noDisaggregations.total - ld.totalAffectedPeople2.noDisaggregations.tables.deaths).toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
@@ -617,6 +634,22 @@ function DisasterEventsAnalysisContent() {
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Death</span>
+                      <div
+                        className="dts-tooltip__button"
+                        onPointerEnter={(e) =>
+                          createFloatingTooltip({
+                            content:
+                              "Death is the number of people who died as a result of the disaster event.",
+                            target: e.currentTarget,
+                            placement: "top",
+                            offsetValue: 8,
+                          })
+                        }
+                      >
+                        <svg aria-hidden="true" focusable="false" role="img">
+                          <use href="/assets/icons/information_outline.svg#information"></use>
+                        </svg>
+                      </div>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-g">
                       <span>{ld.totalAffectedPeople2.noDisaggregations.tables.deaths.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
@@ -625,6 +658,22 @@ function DisasterEventsAnalysisContent() {
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Injured</span>
+                      <div
+                        className="dts-tooltip__button"
+                        onPointerEnter={(e) =>
+                          createFloatingTooltip({
+                            content:
+                              "Injured is the number of people who were injured as a result of the disaster event.",
+                            target: e.currentTarget,
+                            placement: "top",
+                            offsetValue: 8,
+                          })
+                        }
+                      >
+                        <svg aria-hidden="true" focusable="false" role="img">
+                          <use href="/assets/icons/information_outline.svg#information"></use>
+                        </svg>
+                      </div>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-g">
                       <span>{ld.totalAffectedPeople2.noDisaggregations.tables.injured.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
@@ -633,6 +682,22 @@ function DisasterEventsAnalysisContent() {
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Missing</span>
+                      <div
+                        className="dts-tooltip__button"
+                        onPointerEnter={(e) =>
+                          createFloatingTooltip({
+                            content:
+                              "Missing is the number of people who were missing as a result of the disaster event.",
+                            target: e.currentTarget,
+                            placement: "top",
+                            offsetValue: 8,
+                          })
+                        }
+                      >
+                        <svg aria-hidden="true" focusable="false" role="img">
+                          <use href="/assets/icons/information_outline.svg#information"></use>
+                        </svg>
+                      </div>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-g">
                       <span>{ld.totalAffectedPeople2.noDisaggregations.tables.missing.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
@@ -648,6 +713,22 @@ function DisasterEventsAnalysisContent() {
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>People directly affected (old DesInventar)</span>
+                      <div
+                        className="dts-tooltip__button"
+                        onPointerEnter={(e) =>
+                          createFloatingTooltip({
+                            content:
+                              "People directly affected (old DesInventar) is the number of people who were directly affected by the disaster event.",
+                            target: e.currentTarget,
+                            placement: "top",
+                            offsetValue: 8,
+                          })
+                        }
+                      >
+                        <svg aria-hidden="true" focusable="false" role="img">
+                          <use href="/assets/icons/information_outline.svg#information"></use>
+                        </svg>
+                      </div>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-g">
                       <span>{ld.totalAffectedPeople2.noDisaggregations.tables.directlyAffected.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
@@ -656,6 +737,22 @@ function DisasterEventsAnalysisContent() {
                   <div className="dts-data-box">
                     <h3 className="dts-body-label">
                       <span>Displaced</span>
+                      <div
+                        className="dts-tooltip__button"
+                        onPointerEnter={(e) =>
+                          createFloatingTooltip({
+                            content:
+                              "Displaced is the number of people who were displaced as a result of the disaster event.",
+                            target: e.currentTarget,
+                            placement: "top",
+                            offsetValue: 8,
+                          })
+                        }
+                      >
+                        <svg aria-hidden="true" focusable="false" role="img">
+                          <use href="/assets/icons/information_outline.svg#information"></use>
+                        </svg>
+                      </div>
                     </h3>
                     <div className="dts-indicator dts-indicator--target-box-g">
                       <span>{ld.totalAffectedPeople2.noDisaggregations.tables.displaced.toLocaleString(navigator.language, { minimumFractionDigits: 0 })}</span>
@@ -682,6 +779,22 @@ function DisasterEventsAnalysisContent() {
                       <div className="dts-data-box">
                         <h3 className="dts-body-label">
                           <span>Men and women affected</span>
+                          <div
+                            className="dts-tooltip__button"
+                            onPointerEnter={(e) =>
+                              createFloatingTooltip({
+                                content:
+                                  "Men and women affected is the number of men and women who were affected by the disaster event.",
+                                target: e.currentTarget,
+                                placement: "top",
+                                offsetValue: 8,
+                              })
+                            }
+                          >
+                            <svg aria-hidden="true" focusable="false" role="img">
+                              <use href="/assets/icons/information_outline.svg#information"></use>
+                            </svg>
+                          </div>
                         </h3>
                         <div style={{ height: '300px' }}>
                           <HorizontalBarChart data={
@@ -711,6 +824,22 @@ function DisasterEventsAnalysisContent() {
                       <div className="dts-data-box">
                         <h3 className="dts-body-label">
                           <span>Persons with disabilities and living in poverty affected</span>
+                          <div
+                            className="dts-tooltip__button"
+                            onPointerEnter={(e) =>
+                              createFloatingTooltip({
+                                content:
+                                  "Persons with disabilities and living in poverty affected is the number of persons with disabilities and living in poverty who were affected by the disaster event.",
+                                target: e.currentTarget,
+                                placement: "top",
+                                offsetValue: 8,
+                              })
+                            }
+                          >
+                            <svg aria-hidden="true" focusable="false" role="img">
+                              <use href="/assets/icons/information_outline.svg#information"></use>
+                            </svg>
+                          </div>
                         </h3>
                         <div style={{ height: '350px' }}>
                           <HorizontalBarChart data={
@@ -735,6 +864,22 @@ function DisasterEventsAnalysisContent() {
                       <div className="dts-data-box">
                         <h3 className="dts-body-label">
                           <span>Children, adults, and seniors affected</span>
+                          <div
+                            className="dts-tooltip__button"
+                            onPointerEnter={(e) =>
+                              createFloatingTooltip({
+                                content:
+                                  "Children, adults, and seniors affected is the number of children, adults, and seniors who were affected by the disaster event.",
+                                target: e.currentTarget,
+                                placement: "top",
+                                offsetValue: 8,
+                              })
+                            }
+                          >
+                            <svg aria-hidden="true" focusable="false" role="img">
+                              <use href="/assets/icons/information_outline.svg#information"></use>
+                            </svg>
+                          </div>
                         </h3>
                         <div style={{ height: '300px' }}>
                           <HorizontalBarChart data={
