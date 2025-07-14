@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFloatingTooltip } from "~/util/tooltip";
-import { IoInformationCircleOutline } from "react-icons/io5";
 import {
 	formatCurrencyWithCode,
 	formatNumber,
@@ -110,24 +109,6 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
 		filters: JSON.stringify(filters)
 	});
 
-	const eventsImpactingRef = useRef<HTMLButtonElement>(null);
-	const eventsOverTimeRef = useRef<HTMLButtonElement>(null);
-	const damageTooltipRef = useRef<HTMLButtonElement>(null);
-	const lossTooltipRef = useRef<HTMLButtonElement>(null);
-
-	const createTooltip = (
-		ref: React.RefObject<HTMLButtonElement>,
-		content: string
-	) => {
-		if (ref.current) {
-			createFloatingTooltip({
-				content,
-				target: ref.current,
-				placement: "top",
-				offsetValue: 8,
-			});
-		}
-	};
 	// Debug logging for tooltip state changes
 	useEffect(() => {
 		logger.debug("Tooltip Props Changed");
@@ -608,21 +589,23 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
 					<div className="dts-data-box">
 						<h3 className="dts-body-label">
 							<span id="elementId01">Disaster events impacting sectors</span>
-							<button
-								ref={eventsImpactingRef}
+							<div
 								className="dts-tooltip__button"
-								onPointerEnter={() =>
-									createTooltip(
-										eventsImpactingRef,
-										"Total number of disaster events that have impacted this sector"
-									)
+								onPointerEnter={(e) =>
+									createFloatingTooltip({
+										content: "Total number of disaster events that have impacted this sector",
+										target: e.currentTarget,
+										placement: "top",
+										offsetValue: 8,
+									})
 								}
 							>
-								<IoInformationCircleOutline aria-hidden="true" />
-							</button>
+								<svg aria-hidden="true" focusable="false" role="img">
+									<use href="/assets/icons/information_outline.svg#information"></use>
+								</svg>
+							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
-							{/* <span>{data?.eventCount ? formatNumber(data.eventCount) : "No data available"}</span> */}
 							{eventsData.length > 0 ? (
 								<span>
 									{formatNumber(
@@ -644,18 +627,21 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
 					<div className="dts-data-box mg-grid__col--span-2">
 						<h3 className="dts-body-label">
 							<span id="elementId02">Events over time</span>
-							<button
-								ref={eventsOverTimeRef}
+							<div
 								className="dts-tooltip__button"
-								onPointerEnter={() =>
-									createTooltip(
-										eventsOverTimeRef,
-										"Distribution of events over time showing frequency and patterns"
-									)
+								onPointerEnter={(e) =>
+									createFloatingTooltip({
+										content: "Distribution of events over time showing frequency and patterns",
+										target: e.currentTarget,
+										placement: "top",
+										offsetValue: 8,
+									})
 								}
 							>
-								<IoInformationCircleOutline aria-hidden="true" />
-							</button>
+								<svg aria-hidden="true" focusable="false" role="img">
+									<use href="/assets/icons/information_outline.svg#information"></use>
+								</svg>
+							</div>
 						</h3>
 						<div style={{ height: "300px" }}>
 							{eventsData.length > 0 ? (
@@ -680,18 +666,21 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
 							<span id="elementId03">
 								Damages in {currency} due to {getHazardTypeDisplay()}
 							</span>
-							<button
-								ref={damageTooltipRef}
+							<div
 								className="dts-tooltip__button"
-								onPointerEnter={() =>
-									createTooltip(
-										damageTooltipRef,
-										`Total monetary damage in ${currency} caused by events in this sector`
-									)
+								onPointerEnter={(e) =>
+									createFloatingTooltip({
+										content: `Total monetary damage in ${currency} caused by events in this sector`,
+										target: e.currentTarget,
+										placement: "top",
+										offsetValue: 8,
+									})
 								}
 							>
-								<IoInformationCircleOutline aria-hidden="true" />
-							</button>
+								<svg aria-hidden="true" focusable="false" role="img">
+									<use href="/assets/icons/information_outline.svg#information"></use>
+								</svg>
+							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-d">
 							{data?.dataAvailability?.damage === "zero" ? (
@@ -734,18 +723,21 @@ const ImpactOnSector: React.FC<Props> = ({ sectorId, filters, currency }) => {
 					<div className="dts-data-box">
 						<h3 className="dts-body-label">
 							<span id="elementId04">Losses in {currency}</span>
-							<button
-								ref={lossTooltipRef}
+							<div
 								className="dts-tooltip__button"
-								onPointerEnter={() =>
-									createTooltip(
-										lossTooltipRef,
-										`Total financial losses in ${currency} incurred in this sector`
-									)
+								onPointerEnter={(e) =>
+									createFloatingTooltip({
+										content: `Total financial losses in ${currency} incurred in this sector`,
+										target: e.currentTarget,
+										placement: "top",
+										offsetValue: 8,
+									})
 								}
 							>
-								<IoInformationCircleOutline aria-hidden="true" />
-							</button>
+								<svg aria-hidden="true" focusable="false" role="img">
+									<use href="/assets/icons/information_outline.svg#information"></use>
+								</svg>
+							</div>
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-c">
 							{data?.dataAvailability?.loss === "zero" ? (
