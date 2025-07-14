@@ -48,9 +48,7 @@ export default function Screen() {
 					<li><a href="/api/analytics">Analytics</a></li>
 					<li><a href="/api/disaster-events/$disaster_event_id">Disaster Events by ID</a></li>
 					<li><a href="/api/geographic-levels">Geographic Levels</a></li>
-					<li><a href="/api/measure">Measures</a></li>
 					<li><a href="/api/qrcode">QR Code</a></li>
-					<li><a href="/api/unit">Unit</a></li>
 					<li><a href="/api/hazards">Hazards</a></li>
 				</ul>
 
