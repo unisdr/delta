@@ -1,31 +1,62 @@
+import { LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { apiAuth2 } from "~/backend.server/models/api_key";
 import {
-	divisionTable,
-} from "~/drizzle/schema";
+	getDivisionByCountryAccountsId,
+	getDivisionCountByCountryAccountsId,
+} from "~/db/queries/divisonTable";
+import { getPaginationParams } from "~/frontend/pagination/api.server";
 
-import {dr} from "~/db.server";
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	try {
+		const apiKey = await apiAuth2(request);
+		const countryAccountsId = apiKey.managedByUser.countryAccountsId;
 
-import {sql, desc} from "drizzle-orm";
+		// Extract pagination parameters from the request URL
+		const { page, pageSize, offset } = getPaginationParams(request);
 
-import {createApiListLoader} from "~/backend.server/handlers/view";
+		// Get the data
+		const data = await getDivisionByCountryAccountsId(
+			countryAccountsId,
+			offset,
+			pageSize
+		);
 
-export const loader = createApiListLoader(
-	divisionTable,
-	async (offsetLimit) => {
-		return dr.query.divisionTable.findMany({
-			columns: {
-				id: true,
-				importId: true,
-				nationalId: true,
-				parentId: true,
-				name: true,
-				level: true,
+		//Get the total count for pagination metadata
+		const totalCount = await getDivisionCountByCountryAccountsId(
+			countryAccountsId
+		);
+
+		return Response.json({
+			data,
+			pagination: {
+				page: page,
+				pageSize: pageSize,
+				totalItems: totalCount,
+				totalPages: Math.ceil(totalCount / pageSize),
+				itemsOnThisPage: data.length,
 			},
-			extras: {
-				hasGeoData: sql`${divisionTable.geojson} IS NOT NULL`.as('hasGeoData'),
-			},
-			...offsetLimit,
-			orderBy: [desc(divisionTable.id)],
 		});
-	},
-);
+	} catch (error) {
+		console.log(error);
+		if (error instanceof Response) {
+			const errorMessage = await error.text();
+			return Response.json(
+				{ errorMessge: errorMessage || "Unknown error" },
+				{ status: error.status }
+			);
+		}
 
+		// Handle non-Response errors
+		return Response.json(
+			{ errorMessge: "Internal server error" },
+			{ status: 500 }
+		);
+	}
+};
+
+export const action = async () => {
+	return Response.json(
+		{ errorMessge: "Method not allowed, use GET" },
+		{ status: 405 }
+	);
+};

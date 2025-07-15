@@ -218,6 +218,13 @@ export const apiKeyTable = pgTable("api_key", {
 
 export type ApiKey = typeof apiKeyTable.$inferSelect;
 export type ApiKeyInsert = typeof apiKeyTable.$inferInsert;
+export type ApiKeyWithUser = ApiKey & {
+  managedByUser: {
+    id: number;
+    email: string;
+    countryAccountsId: string;
+  };
+};
 
 export const apiKeyRelations = relations(apiKeyTable, ({ one }) => ({
 	managedByUser: one(userTable, {

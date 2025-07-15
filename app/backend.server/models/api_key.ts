@@ -1,28 +1,18 @@
 import {dr, Tx} from "~/db.server";
-import {apiKeyTable, ApiKey} from "~/drizzle/schema";
+import {apiKeyTable, ApiKey, ApiKeyWithUser} from "~/drizzle/schema";
 import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
 import {deleteByIdForStringId} from "./common";
 import {randomBytes} from 'crypto';
+import { getApiKeyBySecrectWithUser } from "~/db/queries/apiKey";
 
 export interface ApiKeyFields extends Omit<ApiKey, "id"> {}
 
-/*
-export function validate(fields: ApiKeyFields): Errors<ApiKeyFields> {
-	let errors: Errors<{name: string}> = {};
-	errors.fields = {};
-	return errors
-}
-*/
 function generateSecret(): string {
 	return randomBytes(32).toString("hex");
 }
 
 export async function apiKeyCreate(tx: Tx, fields: ApiKeyFields): Promise<CreateResult<ApiKeyFields>> {
-	//	let errors = validate(fields);
-	//if (hasErrors(errors)) {
-	//return {ok: false, errors};
-	//}
 	const res = await tx.insert(apiKeyTable)
 		.values({
 			createdAt: new Date(),
@@ -37,10 +27,6 @@ export async function apiKeyCreate(tx: Tx, fields: ApiKeyFields): Promise<Create
 
 export async function apiKeyUpdate(tx: Tx, idStr: string, fields: ApiKeyFields): Promise<UpdateResult<ApiKeyFields>> {
 	const id = Number(idStr);
-	//let errors = validate(fields);
-	//if (hasErrors(errors)) {
-	//return {ok: false, errors};
-	//}
 	await tx.update(apiKeyTable)
 		.set({
 			updatedAt: new Date(),
@@ -93,5 +79,20 @@ export async function apiAuth(request: Request): Promise<ApiKey> {
 	return key;
 }
 
+export async function apiAuth2(request: Request): Promise<ApiKeyWithUser> {
+	const authToken = request.headers.get("X-Auth");
+
+	if (!authToken) {
+		throw new Response("X-auth is missing in header", {status: 401});
+	}
+
+	const key = await getApiKeyBySecrectWithUser(authToken);
+
+	if (!key) {
+		throw new Response("Unauthorized access", {status: 401});
+	}
+
+	return key;
+}
 
 

@@ -4,12 +4,6 @@ import {
 	count,
 } from "drizzle-orm";
 
-
-
-
-
-
-
 const DEFAULT_PAGE_SIZE = 50;
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50];
 
@@ -44,42 +38,29 @@ export function paginationQueryFromURL(request: Request, extraParams: string[]) 
 	}
 }
 
-/*
-export async function executeQueryForPaginationPrisma<T, K extends keyof T>(request: Request, prismaObject: any, select: K[], where: any){
 
-	let selectMap = {} as { [key in K]: boolean };
-
-select.forEach((field) => {
-	  selectMap[field] = true;
-});
-
-	const pagination = paginationQueryFromURL(request);
-	const userQuery = {
-		select: selectMap,
-		where,
-		...pagination.query
-	}
-
-	const [totalItems, items] = await prisma.$transaction([
-		prismaObject.count({
-			where: where,
-		}),
-		prismaObject.findMany(userQuery)
-	]);
-
-	const items2: Pick<T,K>[] = items
-
-	return {
-		items: items2,
-		pagination: {
-			totalItems: totalItems as number,
-			itemsOnThisPage: items2.length,
-			...pagination.viewData,
-		}
-	}
+// Interface for pagination parameters
+interface PaginationParams {
+  page: number;
+  pageSize: number;
+  offset: number;
 }
 
-*/
+// Function to extract and validate pagination parameters
+export function getPaginationParams(request: Request, defaultPageSize: number = 10, maxPageSize: number = 100): PaginationParams {
+  const url = new URL(request.url);
+  
+  // Extract pagination parameters
+  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  let pageSize = parseInt(url.searchParams.get("pageSize") || defaultPageSize.toString(), 10);
+
+  // Validate pagination values
+  const pageNumber = Math.max(1, isNaN(page) ? 1 : page);
+  pageSize = Math.max(1, Math.min(maxPageSize, isNaN(pageSize) ? defaultPageSize : pageSize));
+  const offset = (pageNumber - 1) * pageSize;
+
+  return { page: pageNumber, pageSize, offset };
+}
 
 export async function executeQueryForPagination<T>(
 	request: Request,
