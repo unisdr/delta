@@ -25,7 +25,6 @@ const initialFilters = {
 };
 
 // Interfaces for filter data
-// Updated to be compatible with the backend model
 interface Sector {
   id: string;
   sectorname: string;
@@ -61,9 +60,10 @@ interface FiltersProps {
   }) => void;
   onAdvancedSearch: () => void;
   onClearFilters: () => void;
-  // New props to receive data from loader instead of fetching via API
+  // Props to receive data from loader instead of fetching via API
   sectorsData?: any;
   geographicLevelsData?: any;
+  disasterEventsData?: any;
 }
 
 const Filters: React.FC<FiltersProps> = ({
@@ -71,6 +71,7 @@ const Filters: React.FC<FiltersProps> = ({
   onClearFilters,
   sectorsData,
   geographicLevelsData,
+  disasterEventsData,
 }) => {
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
@@ -99,13 +100,8 @@ const Filters: React.FC<FiltersProps> = ({
   });
 
   // Fetch data from the REST API
-  // Define response interface for disaster events
-
-  interface DisasterEventsResponse {
-    disasterEvents: {
-      rows: DisasterEvent[];
-    };
-  }
+  // Interface for disaster events data structure
+  // Note: Using the DisasterEvent interface directly instead of a response wrapper
 
   // Use sectorsData from props instead of fetching via API
   // Track loading state for sectors
@@ -133,29 +129,51 @@ const Filters: React.FC<FiltersProps> = ({
     }
   }, [sectorsData, sectorsLoading]);
 
-  // React Query for fetching disaster events with enhanced logging
-  const { data: disasterEventsData, isLoading: eventsLoading } = useQuery<DisasterEventsResponse, Error>({
-    queryKey: ["disasterEvents"],
-    queryFn: async () => {
+  // Use disasterEventsData from props instead of API call
+  // Track loading state for disaster events
+  const [disasterEvents, setDisasterEvents] = useState<DisasterEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
 
-
-
+  // Initialize disaster events from props passed by the loader
+  useEffect(() => {
+    // Get disaster events data from the route loader via props
+    const initializeDisasterEvents = () => {
       try {
-        const response = await fetch("/api/analytics/disaster-events");
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-          throw error;
+        // Simulate API call timing for smooth transition
+        setEventsLoading(true);
+
+        // Use disaster events from the route's loader data
+        // Handle different possible data structures
+        if (disasterEventsData) {
+          if (Array.isArray(disasterEventsData)) {
+            // If it's directly an array
+            setDisasterEvents(disasterEventsData);
+          } else if (disasterEventsData.rows && Array.isArray(disasterEventsData.rows)) {
+            // If it has a rows property that is an array
+            setDisasterEvents(disasterEventsData.rows);
+          } else if (disasterEventsData.disasterEvents) {
+            // If it has a disasterEvents property
+            if (Array.isArray(disasterEventsData.disasterEvents)) {
+              setDisasterEvents(disasterEventsData.disasterEvents);
+            } else if (disasterEventsData.disasterEvents.rows && Array.isArray(disasterEventsData.disasterEvents.rows)) {
+              setDisasterEvents(disasterEventsData.disasterEvents.rows);
+            } else {
+              console.warn('Disaster events data structure not recognized:', disasterEventsData);
+              setDisasterEvents([]);
+            }
+          } else {
+            console.warn('Disaster events data structure not recognized:', disasterEventsData);
+            setDisasterEvents([]);
+          }
+        } else {
+          // Handle case where data is not provided
+          console.warn('No disaster events data provided');
+          setDisasterEvents([]);
         }
-
-        const data = await response.json();
-
-
-
-
-        return data;
+        setEventsLoading(false);
       } catch (error) {
-
-
+        console.error('Error initializing disaster events:', error);
+        setEventsLoading(false);
 
         // Show user-friendly error message
         Swal.fire({
@@ -169,11 +187,11 @@ const Filters: React.FC<FiltersProps> = ({
             confirmButton: 'swal2-custom-button',
           },
         });
-
-        throw error;
       }
-    }
-  });
+    };
+
+    initializeDisasterEvents();
+  }, [disasterEventsData]);
 
   // Define response interfaces for type safety
   interface HazardTypesResponse {
@@ -187,8 +205,6 @@ const Filters: React.FC<FiltersProps> = ({
   interface SpecificHazardsResponse {
     hazards: Array<{ id: string; name: string }>;
   }
-
-  // Geographic levels interface is no longer needed as we're using the prop directly
 
   // React Query for fetching hazard types with enhanced logging and type safety
   const { data: hazardTypesData } = useQuery<HazardTypesResponse, Error>({
@@ -350,9 +366,6 @@ const Filters: React.FC<FiltersProps> = ({
     enabled: !!filters.hazardClusterId,
   });
 
-  // Using geographic levels data from props instead of API call
-  // This data is now fetched via the Remix loader in sectors.tsx
-
   // Function to handle specific hazard selection
   const handleSpecificHazardSelection = async (specificHazardId: string) => {
     try {
@@ -435,7 +448,7 @@ const Filters: React.FC<FiltersProps> = ({
     }
   }, [specificHazards, filters.hazardClusterId]);
 
-  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
+  // Use the disasterEvents state that was set in the useEffect
 
   // Filter events based on search input with enhanced logging
   const filteredEvents = React.useMemo(() => {
