@@ -61,14 +61,16 @@ interface FiltersProps {
   }) => void;
   onAdvancedSearch: () => void;
   onClearFilters: () => void;
-  // New prop to receive sectors data from loader instead of fetching via API
+  // New props to receive data from loader instead of fetching via API
   sectorsData?: any;
+  geographicLevelsData?: any;
 }
 
 const Filters: React.FC<FiltersProps> = ({
   onApplyFilters,
   onClearFilters,
   sectorsData,
+  geographicLevelsData,
 }) => {
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
@@ -117,7 +119,6 @@ const Filters: React.FC<FiltersProps> = ({
   // Handle error case if sectorsData is missing
   useEffect(() => {
     if (!sectorsLoading && !sectorsData) {
-      // Show user-friendly error message
       Swal.fire({
         icon: 'error',
         title: 'Error Loading Sectors',
@@ -187,9 +188,7 @@ const Filters: React.FC<FiltersProps> = ({
     hazards: Array<{ id: string; name: string }>;
   }
 
-  interface GeographicLevelsResponse {
-    levels: Array<{ id: number; name: { en: string } }>;
-  }
+  // Geographic levels interface is no longer needed as we're using the prop directly
 
   // React Query for fetching hazard types with enhanced logging and type safety
   const { data: hazardTypesData } = useQuery<HazardTypesResponse, Error>({
@@ -351,31 +350,8 @@ const Filters: React.FC<FiltersProps> = ({
     enabled: !!filters.hazardClusterId,
   });
 
-  // React Query for fetching geographic levels with enhanced logging
-  const { data: geographicLevelsData } = useQuery<GeographicLevelsResponse, Error>({
-    queryKey: ["geographicLevels", filters.geographicLevelId],
-    queryFn: async () => {
-
-
-
-      try {
-        const response = await fetch(`/api/analytics/geographic-levels`);
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-
-          throw error;
-        }
-
-        const data = await response.json();
-
-
-
-        return data;
-      } catch (error) {
-        throw error;
-      }
-    }
-  });
+  // Using geographic levels data from props instead of API call
+  // This data is now fetched via the Remix loader in sectors.tsx
 
   // Function to handle specific hazard selection
   const handleSpecificHazardSelection = async (specificHazardId: string) => {
