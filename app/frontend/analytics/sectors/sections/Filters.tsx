@@ -25,12 +25,13 @@ const initialFilters = {
 };
 
 // Interfaces for filter data
+// Updated to be compatible with the backend model
 interface Sector {
-  id: number;
+  id: string;
   sectorname: string;
-  parentId: number | null;
+  parentId: string | null;
   description: string | null;
-  subsectors: Sector[];
+  subsectors?: Sector[];
 }
 
 interface DisasterEvent {
@@ -60,11 +61,14 @@ interface FiltersProps {
   }) => void;
   onAdvancedSearch: () => void;
   onClearFilters: () => void;
+  // New prop to receive sectors data from loader instead of fetching via API
+  sectorsData?: any;
 }
 
 const Filters: React.FC<FiltersProps> = ({
   onApplyFilters,
   onClearFilters,
+  sectorsData,
 }) => {
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
@@ -93,10 +97,7 @@ const Filters: React.FC<FiltersProps> = ({
   });
 
   // Fetch data from the REST API
-  // Define response interfaces for sectors and disaster events
-  interface SectorsResponse {
-    sectors: Sector[];
-  }
+  // Define response interface for disaster events
 
   interface DisasterEventsResponse {
     disasterEvents: {
@@ -104,50 +105,32 @@ const Filters: React.FC<FiltersProps> = ({
     };
   }
 
-  // React Query for fetching sectors with enhanced logging
-  const { data: sectorsData, isLoading: sectorsLoading } = useQuery<SectorsResponse, Error>({
-    queryKey: ["sectors"],
-    queryFn: async () => {
+  // Use sectorsData from props instead of fetching via API
+  // Track loading state for sectors
+  const [sectorsLoading, setSectorsLoading] = useState(true);
 
+  // Effect to update loading state when sectorsData changes
+  useEffect(() => {
+    setSectorsLoading(sectorsData === undefined || sectorsData === null);
+  }, [sectorsData]);
 
-
-
-      try {
-        const response = await fetch("/api/analytics/sectors");
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-
-          throw error;
-        }
-
-        const data = await response.json();
-
-
-
-
-        return data;
-      } catch (error) {
-
-
-
-
-        // Show user-friendly error message
-        Swal.fire({
-          icon: 'error',
-          title: 'Error Loading Sectors',
-          text: 'Failed to load sector data. Please try again later.',
-          confirmButtonText: 'OK',
-          buttonsStyling: false,
-          customClass: {
-            popup: 'swal2-custom-popup',
-            confirmButton: 'swal2-custom-button',
-          },
-        });
-
-        throw error;
-      }
+  // Handle error case if sectorsData is missing
+  useEffect(() => {
+    if (!sectorsLoading && !sectorsData) {
+      // Show user-friendly error message
+      Swal.fire({
+        icon: 'error',
+        title: 'Error Loading Sectors',
+        text: 'Failed to load sector data. Please try again later.',
+        confirmButtonText: 'OK',
+        buttonsStyling: false,
+        customClass: {
+          popup: 'swal2-custom-popup',
+          confirmButton: 'swal2-custom-button',
+        },
+      });
     }
-  });
+  }, [sectorsData, sectorsLoading]);
 
   // React Query for fetching disaster events with enhanced logging
   const { data: disasterEventsData, isLoading: eventsLoading } = useQuery<DisasterEventsResponse, Error>({
@@ -417,8 +400,26 @@ const Filters: React.FC<FiltersProps> = ({
 
 
 
-  // Extract data from the fetched data
-  const sectors: Sector[] = sectorsData?.sectors || [];
+  // State to hold processed sectors
+  const [processedSectors, setSectors] = useState<Sector[]>([]);
+
+  // Process sectorsData to extract sectors regardless of structure
+  useEffect(() => {
+    if (sectorsData) {
+      try {
+        // If sectorsData is already an array, use it directly
+        if (Array.isArray(sectorsData)) {
+          setSectors(sectorsData as unknown as Sector[]);
+        }
+        // If sectorsData has a sectors property that is an array, use that
+        else if (sectorsData.sectors && Array.isArray(sectorsData.sectors)) {
+          setSectors(sectorsData.sectors as unknown as Sector[]);
+        }
+      } catch (error) {
+        console.error('Error processing sectors data:', error);
+      }
+    }
+  }, [sectorsData]);
   const hazardTypes: Hazard[] = hazardTypesData?.hazardTypes || [];
   const hazardClusters: Hazard[] = hazardClustersData?.clusters || [];
   const specificHazards: Hazard[] = specificHazardsData?.hazards || [];
@@ -781,10 +782,10 @@ const Filters: React.FC<FiltersProps> = ({
           <option value="" disabled>
             {sectorsLoading ? "Loading sectors..." : "Select Sector"}
           </option>
-          {sectors.length === 0 ? (
+          {processedSectors.length === 0 ? (
             <option disabled>No sectors found in database</option>
           ) : (
-            [...sectors]
+            [...processedSectors]
               .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
               .map((sector) => (
                 <option key={sector.id} value={sector.id}>
@@ -809,7 +810,7 @@ const Filters: React.FC<FiltersProps> = ({
             {filters.sectorId ? "Select Sub Sector" : "Select Sector First"}
           </option>
           {(() => {
-            const selectedSector = sectors.find(s => s.id.toString() === filters.sectorId);
+            const selectedSector = processedSectors.find((s: Sector) => s.id.toString() === filters.sectorId);
             const subsectors = selectedSector?.subsectors || [];
 
             if (subsectors.length === 0 && filters.sectorId) {
@@ -817,8 +818,8 @@ const Filters: React.FC<FiltersProps> = ({
             }
 
             return subsectors
-              .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
-              .map((subsector) => (
+              .sort((a: Sector, b: Sector) => a.sectorname.localeCompare(b.sectorname))
+              .map((subsector: Sector) => (
                 <option key={subsector.id} value={subsector.id}>
                   {subsector.sectorname}
                 </option>

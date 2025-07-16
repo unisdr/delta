@@ -535,6 +535,7 @@ function SectorsAnalysisContent() {
               onApplyFilters={handleApplyFilters}
               onAdvancedSearch={handleAdvancedSearch}
               onClearFilters={handleClearFilters}
+              sectorsData={sectorsData}
             />
           </ErrorBoundary>
 
