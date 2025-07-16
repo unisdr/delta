@@ -10,6 +10,10 @@ interface SectorImpactResponse {
     eventsOverTime: { [key: string]: string };
     damageOverTime: { [key: string]: string };
     lossOverTime: { [key: string]: string };
+    dataAvailability?: {
+      damage: string;
+      loss: string;
+    };
   };
   error?: string;
 }
@@ -31,6 +35,15 @@ export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: 
       return {
         success: false,
         error: "Invalid sector ID provided",
+      };
+    }
+
+    // Validate tenant context
+    if (!tenantContext || !tenantContext.countryAccountId) {
+      console.error("Invalid tenant context provided to getImpactOnSector:", tenantContext);
+      return {
+        success: false,
+        error: "Invalid tenant context. Please ensure you are logged in with a valid country account.",
       };
     }
 
