@@ -24,6 +24,7 @@ import { getHazardImpact } from "~/backend.server/handlers/analytics/hazardImpac
 import { getEffectDetailsHandler } from "~/backend.server/handlers/analytics/effectDetails";
 import { handleMostDamagingEventsRequest } from "~/backend.server/handlers/analytics/mostDamagingEvents";
 import { getSectorsWithSubsectors } from "~/backend.server/handlers/analytics/sectorsHandlers";
+import { getGeographicLevelsHandler } from "~/backend.server/handlers/analytics/geographicLevelsHandler";
 
 import type { HazardImpactFilters } from "~/types/hazardImpact";
 
@@ -145,6 +146,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     let effectDetailsData: any = null;
     let mostDamagingEventsData: any = null;
     let sectorsData = null;
+    let geographicLevelsData = null;
 
     // Fetch sectors data for dynamic titles
     try {
@@ -152,6 +154,25 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     } catch (error) {
       console.error('LOADER ERROR - Failed to fetch sectors data:', error);
       sectorsData = null;
+    }
+
+    // Fetch geographic levels data for filters
+    try {
+      if (tenantContext) {
+        const geographicLevelsResponse = await getGeographicLevelsHandler(tenantContext);
+        if (geographicLevelsResponse.success && geographicLevelsResponse.levels) {
+          geographicLevelsData = geographicLevelsResponse;
+        } else {
+          console.error('LOADER ERROR - Failed to fetch geographic levels data:', geographicLevelsResponse.error);
+          geographicLevelsData = null;
+        }
+      } else {
+        console.error('LOADER ERROR - Missing tenant context for geographic levels');
+        geographicLevelsData = null;
+      }
+    } catch (error) {
+      console.error('LOADER ERROR - Failed to fetch geographic levels data:', error);
+      geographicLevelsData = null;
     }
 
     if (sectorId || subSectorId) {
@@ -364,7 +385,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
       geographicImpactData,
       effectDetailsData,
       mostDamagingEventsData,
-      sectorsData: { sectors: sectorsData }
+      sectorsData: { sectors: sectorsData },
+      geographicLevelsData
     };
 
   } catch (error) {
@@ -388,7 +410,7 @@ export const meta: MetaFunction = () => {
 };
 function SectorsAnalysisContent() {
   // Get data from loader
-  const { currency, sectorImpactData, hazardImpactData, geographicImpactData, effectDetailsData, mostDamagingEventsData, sectorsData } = useLoaderData<typeof loader>();
+  const { currency, sectorImpactData, hazardImpactData, geographicImpactData, effectDetailsData, mostDamagingEventsData, sectorsData, geographicLevelsData } = useLoaderData<typeof loader>();
   const submit = useSubmit();
 
   // Effect to show content when JavaScript is enabled
@@ -536,6 +558,7 @@ function SectorsAnalysisContent() {
               onAdvancedSearch={handleAdvancedSearch}
               onClearFilters={handleClearFilters}
               sectorsData={sectorsData}
+              geographicLevelsData={geographicLevelsData}
             />
           </ErrorBoundary>
 
