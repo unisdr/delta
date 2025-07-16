@@ -1,10 +1,8 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ClientOnly } from "remix-utils/client-only";
 import { formatCurrencyWithCode, formatNumber } from "~/frontend/utils/formatters";
 import "~/frontend/styles/analytics/sectors/effect-details.css";
-import { useDebounce } from "~/frontend/hooks/useDebounce";
 import { typeEnumAgriculture, typeEnumNotAgriculture } from "~/frontend/losses_enums";
+import { ClientOnly } from "remix-utils/client-only";
 
 interface Props {
   filters: {
@@ -19,6 +17,9 @@ interface Props {
     disasterEventId: string | null;
   };
   currency: string;
+  // New props to receive data from loader instead of fetching via API
+  effectDetailsData?: EffectDetailsResponse | null;
+  sectorsData?: { sectors: Sector[] | null };
 }
 
 interface Sector {
@@ -94,31 +95,12 @@ interface TableProps {
   currency: string;
 }
 
-export function EffectDetails({ filters, currency }: Props) {
-  // Debounce filters to prevent too many API calls
-  const debouncedFilters = useDebounce(filters, 500);
-
-  // Fetch sectors data
-  const { data: sectorsData } = useQuery<{ sectors: Sector[] }>({
-    queryKey: ["sectors"],
-    queryFn: async () => {
-      const response = await fetch("/api/analytics/sectors", {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) throw new Error("Failed to fetch sectors");
-      return response.json();
-    },
-    gcTime: 0, // Disable garbage collection (formerly cacheTime)
-    refetchOnMount: 'always', // Always refetch on mount
-    refetchOnWindowFocus: true // Refetch when window regains focus
-  });
+export function EffectDetails({ filters, currency, effectDetailsData, sectorsData }: Props) {
 
   // Function to find a sector and its parent by ID
-  const findSectorWithParent = (sectors: Sector[], targetId: string): { sector: Sector | null; parent: Sector | null } => {
+  const findSectorWithParent = (sectors: Sector[] | null, targetId: string): { sector: Sector | null; parent: Sector | null } => {
+    if (!sectors) return { sector: null, parent: null };
+
     for (const sector of sectors) {
       if (sector.subsectors) {
         for (const subsector of sector.subsectors) {
@@ -155,52 +137,9 @@ export function EffectDetails({ filters, currency }: Props) {
     return "Effect Details";
   };
 
-  // Fetch effect details data
-  const { data: effectDetailsResponse, isLoading, error } = useQuery<EffectDetailsResponse>({
-    queryKey: ["effectDetails", debouncedFilters],
-    queryFn: async () => {
-      try {
-        const searchParams = new URLSearchParams();
-
-        // Only use sectorId if no subsectorId is selected
-        if (debouncedFilters.subSectorId) {
-          searchParams.append('sectorId', debouncedFilters.subSectorId);
-        } else if (debouncedFilters.sectorId) {
-          searchParams.append('sectorId', debouncedFilters.sectorId);
-        }
-
-        // Add other filters
-        Object.entries(debouncedFilters).forEach(([key, value]) => {
-          if (value && key !== 'sectorId' && key !== 'subSectorId') {
-            searchParams.append(key, value);
-          }
-        });
-
-        const response = await fetch(`/api/analytics/effect-details?${searchParams}`, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("No effect details found for the selected criteria");
-          }
-          throw new Error(`Failed to fetch effect details: ${response.statusText}`);
-        }
-        return response.json();
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-        throw new Error(`Error fetching effect details: ${errorMessage}`);
-      }
-    },
-    retry: 1,
-    gcTime: 0, // Disable garbage collection (formerly cacheTime)
-    refetchOnMount: 'always', // Always refetch on mount
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    enabled: !!(debouncedFilters.sectorId || debouncedFilters.subSectorId || debouncedFilters.hazardTypeId || debouncedFilters.hazardClusterId || debouncedFilters.specificHazardId || debouncedFilters.geographicLevelId || debouncedFilters.fromDate || debouncedFilters.toDate || debouncedFilters.disasterEventId),
-  });
+  // Check if we have effect details data from the loader
+  const isLoading = !effectDetailsData;
+  const error = effectDetailsData && !effectDetailsData.success ? new Error("Failed to load effect details data") : null;
 
   const getTypeLabel = (type: string | null) => {
     if (!type) return '-';
@@ -242,13 +181,13 @@ export function EffectDetails({ filters, currency }: Props) {
               </div>
             )}
 
-            {effectDetailsResponse && (
+            {effectDetailsData && effectDetailsData.success && (
               <div>
                 <div className="dts-data-box">
                   <h3 className="dts-body-label">
                     <span>Damages</span>
                   </h3>
-                  {effectDetailsResponse.data.damages && effectDetailsResponse.data.damages.length > 0 ? (
+                  {effectDetailsData.data.damages && effectDetailsData.data.damages.length > 0 ? (
                     <SortableTable
                       title="Damages"
                       columns={[
@@ -257,7 +196,7 @@ export function EffectDetails({ filters, currency }: Props) {
                         { key: 'totalRepairReplacement', label: 'Repair/Replacement' },
                         { key: 'totalRecovery', label: 'Recovery' },
                       ]}
-                      data={effectDetailsResponse.data.damages.map(damage => ({
+                      data={effectDetailsData.data.damages.map(damage => ({
                         assetName: damage.assetName,
                         totalDamageAmount: damage.totalDamageAmount,
                         totalRepairReplacement: damage.totalRepairReplacement,
@@ -276,7 +215,7 @@ export function EffectDetails({ filters, currency }: Props) {
                   <h3 className="dts-body-label">
                     <span>Losses</span>
                   </h3>
-                  {effectDetailsResponse.data.losses && effectDetailsResponse.data.losses.length > 0 ? (
+                  {effectDetailsData.data.losses && effectDetailsData.data.losses.length > 0 ? (
                     <SortableTable
                       title="Losses"
                       columns={[
@@ -285,7 +224,7 @@ export function EffectDetails({ filters, currency }: Props) {
                         { key: 'publicCostTotal', label: 'Public Cost' },
                         { key: 'privateCostTotal', label: 'Private Cost' },
                       ]}
-                      data={effectDetailsResponse.data.losses.map(loss => ({
+                      data={effectDetailsData.data.losses.map(loss => ({
                         type: getTypeLabel(loss.type),
                         description: loss.description,
                         publicCostTotal: loss.publicCostTotal || '-',
@@ -304,7 +243,7 @@ export function EffectDetails({ filters, currency }: Props) {
                   <h3 className="dts-body-label">
                     <span>Disruptions</span>
                   </h3>
-                  {effectDetailsResponse.data.disruptions && effectDetailsResponse.data.disruptions.length > 0 ? (
+                  {effectDetailsData.data.disruptions && effectDetailsData.data.disruptions.length > 0 ? (
                     <SortableTable
                       title="Disruptions"
                       columns={[
@@ -314,7 +253,7 @@ export function EffectDetails({ filters, currency }: Props) {
                         { key: 'peopleAffected', label: 'People Affected' },
                         { key: 'responseCost', label: 'Response Cost' },
                       ]}
-                      data={effectDetailsResponse.data.disruptions.map(disruption => ({
+                      data={effectDetailsData.data.disruptions.map(disruption => ({
                         comment: disruption.comment,
                         durationDays: disruption.durationDays || '-',
                         usersAffected: disruption.usersAffected || '-',
