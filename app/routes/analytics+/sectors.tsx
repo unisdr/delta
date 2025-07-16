@@ -25,6 +25,7 @@ import { getEffectDetailsHandler } from "~/backend.server/handlers/analytics/eff
 import { handleMostDamagingEventsRequest } from "~/backend.server/handlers/analytics/mostDamagingEvents";
 import { getSectorsWithSubsectors } from "~/backend.server/handlers/analytics/sectorsHandlers";
 import { getGeographicLevelsHandler } from "~/backend.server/handlers/analytics/geographicLevelsHandler";
+import { getDisasterEvents } from "~/backend.server/handlers/analytics/disaster-events";
 
 import type { HazardImpactFilters } from "~/types/hazardImpact";
 
@@ -101,8 +102,6 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     return redirect("/error/unauthorized?reason=content-not-published");
   }
 
-
-
   try {
     // Get tenant context from session using requireTenantContext
     const tenantContext = userSession ? await requireTenantContext(userSession) : undefined;
@@ -147,6 +146,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     let mostDamagingEventsData: any = null;
     let sectorsData = null;
     let geographicLevelsData = null;
+    let disasterEventsData = null;
 
     // Fetch sectors data for dynamic titles
     try {
@@ -173,6 +173,30 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     } catch (error) {
       console.error('LOADER ERROR - Failed to fetch geographic levels data:', error);
       geographicLevelsData = null;
+    }
+
+    // Fetch disaster events data for filters
+    try {
+      if (tenantContext) {
+        // Get raw data from handler
+        const rawDisasterEvents = await getDisasterEvents(tenantContext);
+
+        // Format it to match the original API response structure
+        disasterEventsData = { disasterEvents: rawDisasterEvents };
+
+        // Debug log to verify structure
+        console.log('LOADER DEBUG - Disaster events data structure:',
+          JSON.stringify({
+            hasDisasterEvents: !!disasterEventsData?.disasterEvents,
+            rowCount: disasterEventsData?.disasterEvents?.rows?.length || 0
+          }));
+      } else {
+        console.error('LOADER ERROR - Missing tenant context for disaster events');
+        disasterEventsData = null;
+      }
+    } catch (error) {
+      console.error('LOADER ERROR - Failed to fetch disaster events data:', error);
+      disasterEventsData = null;
     }
 
     if (sectorId || subSectorId) {
@@ -386,7 +410,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
       effectDetailsData,
       mostDamagingEventsData,
       sectorsData: { sectors: sectorsData },
-      geographicLevelsData
+      geographicLevelsData,
+      disasterEventsData,
     };
 
   } catch (error) {
@@ -410,26 +435,8 @@ export const meta: MetaFunction = () => {
 };
 function SectorsAnalysisContent() {
   // Get data from loader
-  const { currency, sectorImpactData, hazardImpactData, geographicImpactData, effectDetailsData, mostDamagingEventsData, sectorsData, geographicLevelsData } = useLoaderData<typeof loader>();
+  const { currency, sectorImpactData, hazardImpactData, geographicImpactData, effectDetailsData, mostDamagingEventsData, sectorsData, geographicLevelsData, disasterEventsData } = useLoaderData<typeof loader>();
   const submit = useSubmit();
-
-  // Effect to show content when JavaScript is enabled
-  useEffect(() => {
-    try {
-      const jsContent = document.getElementById('js-content');
-      if (jsContent) {
-        jsContent.style.display = 'block';
-      }
-    } catch (error) {
-      console.error('Error showing main content', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        businessCritical: false,
-        operation: 'showJsContent'
-      });
-    }
-  }, []);
-
 
   const [filters, setFilters] = useState<{
     sectorId: string | null;
@@ -498,7 +505,6 @@ function SectorsAnalysisContent() {
         // Submit the form to reload the loader data
         submit(formData, { method: "get", replace: true });
 
-
         // Simulate network delay for demonstration
         const timer = setTimeout(() => {
 
@@ -516,7 +522,6 @@ function SectorsAnalysisContent() {
         return noop; // Return no-op cleanup function in error case
       }
     }
-
     // Return no-op cleanup function for the case when debouncedFilters is null
     return noop;
   }, [pendingFilters]);
@@ -528,29 +533,18 @@ function SectorsAnalysisContent() {
 
   const handleAdvancedSearch = useCallback(() => {
     // TODO: Implement advanced search functionality
-
   }, []);
 
   const handleClearFilters = useCallback(() => {
     setPendingFilters(null);
     setFilters(null);
-
-
-
-
   }, []);
-
-
-
 
   return (
     <MainContainer title="Sectors Analysis" headerExtra={<NavSettings />}>
       <div style={{ maxWidth: "100%", overflow: "hidden" }}>
-
-
-
         {/* Main content - only shown when JavaScript is enabled */}
-        <div className="sectors-page" style={{ display: "none" }} id="js-content">
+        <div className="sectors-page" >
           {/* Filters Section */}
           <ErrorBoundary>
             <Filters
@@ -559,6 +553,7 @@ function SectorsAnalysisContent() {
               onClearFilters={handleClearFilters}
               sectorsData={sectorsData}
               geographicLevelsData={geographicLevelsData}
+              disasterEventsData={disasterEventsData}
             />
           </ErrorBoundary>
 
