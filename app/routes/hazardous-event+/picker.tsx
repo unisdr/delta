@@ -1,18 +1,23 @@
-import {hazardousEventsLoader} from "~/backend.server/handlers/events/hazardevent"
-
-import {ListView} from "~/frontend/events/hazardeventlist"
-
+import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent"
+import { ListView } from "~/frontend/events/hazardeventlist"
 import {
 	authLoaderWithPerm,
 } from "~/util/auth";
-
-
-import {Link} from "@remix-run/react";
-
-import {MainContainer} from "~/frontend/container"
+import { Link } from "@remix-run/react";
+import { MainContainer } from "~/frontend/container"
+import { getTenantContext } from "~/util/tenant";
+import type { UserSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
-	return hazardousEventsLoader({loaderArgs})
+	// Extract tenant context from user session (injected by authLoaderWithPerm)
+	const userSession = (loaderArgs as any).userSession as UserSession;
+	const tenantContext = await getTenantContext(userSession);
+
+	// Pass tenant context to the loader
+	return hazardousEventsLoader({
+		loaderArgs,
+		tenantContext
+	});
 })
 
 
@@ -44,7 +49,7 @@ export default function Data() {
 							onClick={
 								() => {
 									if (window.opener) {
-										window.opener.postMessage({selected: item, type:"select_hazard"}, "*");
+										window.opener.postMessage({ selected: item, type: "select_hazard" }, "*");
 										window.close();
 									} else {
 										alert("Can't get window that opened this window. Close and try again.")
