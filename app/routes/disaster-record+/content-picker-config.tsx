@@ -1,7 +1,8 @@
 import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { disasterEventTable, hazardousEventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
 import { formatDateDisplay } from "~/util/date";
+import { TenantContext } from "~/util/tenant";
 
 export const contentPickerConfig = {
     id: "disasterEventId",
@@ -12,14 +13,16 @@ export const contentPickerConfig = {
     defaultText: "Select Disaster Event...",
     table_column_primary_key: "id",
     table_columns: [
-        { column_type: "db", column_field: "display", column_title: "Event", is_primary_id: true, is_selected_field: true,
+        {
+            column_type: "db", column_field: "display", column_title: "Event", is_primary_id: true, is_selected_field: true,
             render: (_item: any, displayName: string) => {
                 return `${displayName}`;
             }
         },
         //{ column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event" },
-        { column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event", 
-            render: (item: any) => { 
+        {
+            column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event",
+            render: (item: any) => {
                 return hazardousEventLabel({
                     id: item.hazardousEventId,
                     description: "", // Assuming there's a description field
@@ -27,10 +30,12 @@ export const contentPickerConfig = {
                 })
             }
         },
-        { column_type: "db", column_field: "startDateUTC", column_title: "Start Date",
+        {
+            column_type: "db", column_field: "startDateUTC", column_title: "Start Date",
             render: (item: any) => formatDateDisplay(item.startDateUTC, "d MMM yyyy")
-         },
-        { column_type: "db", column_field: "endDateUTC", column_title: "End Date",
+        },
+        {
+            column_type: "db", column_field: "endDateUTC", column_title: "End Date",
             render: (item: any) => formatDateDisplay(item.endDateUTC, "d MMM yyyy")
         },
         { column_type: "custom", column_field: "action", column_title: "Action" },
@@ -88,27 +93,35 @@ export const contentPickerConfig = {
         ],
         orderBy: [{ column: disasterEventTable.startDate, direction: "desc" }] // Sorting
     },
-    selectedDisplay: async (dr: any, id: any) => {
+    selectedDisplay: async (dr: any, id: any, tenantContext?: TenantContext) => {
+        // Build where conditions with tenant filtering
+        const whereConditions = [eq(disasterEventTable.id, id)];
+
+        // Add tenant filtering if tenant context is available
+        if (tenantContext?.countryAccountId) {
+            whereConditions.push(eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId));
+        }
+
         const row = await dr
             .select()
             .from(disasterEventTable)
-            .where(eq(disasterEventTable.id, id))
+            .where(and(...whereConditions))
             .limit(1)
             .execute();
-    
+
         if (!row.length) return "No event found";
-    
+
         const event = row[0];
         let displayName = event.nameGlobalOrRegional || event.nameNational || "";
         let displayDate = "";
-    
+
         if (event.startDate && event.endDate) {
             const startDate = new Date(event.startDate);
             const endDate = new Date(event.endDate);
-    
+
             const startYear = startDate.getFullYear();
             const endYear = endDate.getFullYear();
-    
+
             if (startYear !== endYear) {
                 // Show full format including the year in start date
                 displayDate = `${formatDateDisplay(startDate, "d MMM yyyy")} to ${formatDateDisplay(endDate, "d MMM yyyy")}`;
@@ -122,15 +135,15 @@ export const contentPickerConfig = {
                 displayDate = `${formatDateDisplay(startDate, "d MMM")} to ${formatDateDisplay(endDate, "d MMM yyyy")}`;
             }
         }
-    
+
         let displayId = event.id || "";
         // Truncate the display ID to 5 characters
         if (displayId.length > 5) {
             displayId = displayId.substring(0, 5);
         }
-    
+
         return `${displayName} (${displayDate}) - ${displayId}`;
-    },    
+    },
 };
 
 export const contentPickerConfigSector = {
@@ -162,7 +175,7 @@ export const contentPickerConfigSector = {
     selectedDisplay: async (dr: any, id: any) => {
         const sectorId = Number(id);
         if (!Number.isInteger(sectorId)) return "";
-    
+
         try {
             const { rows } = await dr.execute(sql`SELECT get_sector_full_path(${sectorId}) AS full_path`);
             return rows[0]?.full_path || "No sector found";
@@ -209,7 +222,7 @@ export const contentPickerConfigCategory = {
     selectedDisplay: async (dr: any, id: any) => {
         const categoryId = Number(id);
         if (!Number.isInteger(categoryId)) return "";
-    
+
         try {
             const { rows } = await dr.execute(sql`SELECT get_category_full_path(${categoryId}) AS full_path`);
             return rows[0]?.full_path || "No category found";
@@ -228,5 +241,5 @@ export const contentPickerConfigCategory = {
             `);
             return rows[0]?.full_path || "No category found";
         }
-    }    
+    }
 }
