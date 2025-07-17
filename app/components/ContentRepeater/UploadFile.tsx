@@ -1,19 +1,21 @@
 import fs from "fs";
 import path from "path";
 import ContentRepeaterFileValidator from "./FileValidator";
+import { TenantContext, isTenantContext } from "~/util/tenant";
 
 interface Item {
   file?: {
     name: string;
     content_type: string;
     view?: string;
+    tenantPath?: string; // Added to support tenant isolation
   };
 }
 
 const debug = false;
 
 class ContentRepeaterUploadFile {
-  static delete(itemsData: any[], publicPath: string = path.join(process.cwd(), "public")): Item[] {
+  static delete(itemsData: any[], publicPath: string = path.join(process.cwd(), "public"), tenantContext?: TenantContext): Item[] {
     let items: Item[];
 
     try {
@@ -25,9 +27,31 @@ class ContentRepeaterUploadFile {
     // Iterate over items and delete the specified files
     items.forEach((item) => {
       if (item.file?.name) {
-        const relativeFilePath = item.file.name.startsWith("/")
+        // Handle tenant path from item if available, otherwise use tenantContext
+        let tenantPath = "";
+        if (item.file.tenantPath) {
+          tenantPath = item.file.tenantPath;
+        } else if (tenantContext && isTenantContext(tenantContext)) {
+          tenantPath = `/tenant-${tenantContext.countryAccountId}`;
+        }
+
+        // Check if the file path already includes tenant path
+        const hasExistingTenantPath = item.file.name.includes('/tenant-');
+
+        let relativeFilePath = item.file.name.startsWith("/")
           ? item.file.name.substring(1) // Remove leading slash
           : item.file.name;
+
+        // Add tenant path if it's not already included
+        if (!hasExistingTenantPath && tenantPath && !relativeFilePath.includes(`tenant-`)) {
+          const pathParts = relativeFilePath.split('/');
+          // Insert tenant path after the first segment
+          if (pathParts.length > 1) {
+            pathParts.splice(1, 0, `tenant-${tenantContext?.countryAccountId}`);
+            relativeFilePath = pathParts.join('/');
+          }
+        }
+
         const absoluteFilePath = path.resolve(publicPath, relativeFilePath);
 
         if (fs.existsSync(absoluteFilePath)) {
@@ -87,20 +111,20 @@ class ContentRepeaterUploadFile {
     publicPath: string = path.join(process.cwd(), "public") // Dynamic Public Path
   ): Item[] {
     let items: Item[];
-  
+
     try {
       items = itemsData;
     } catch (error) {
       throw new Error("Invalid JSON data.");
     }
-  
+
     // Normalize paths
     tempPath = tempPath.startsWith("/") ? tempPath.slice(1) : tempPath;
     destinationPath = destinationPath.startsWith("/") ? destinationPath.slice(1) : destinationPath;
     publicPath = path.normalize(publicPath);
-  
+
     const absoluteDestinationPath = path.resolve(publicPath, destinationPath);
-  
+
     // Ensure destination directory exists
     if (!fs.existsSync(absoluteDestinationPath)) {
       try {
@@ -109,21 +133,21 @@ class ContentRepeaterUploadFile {
         throw new Error(`Failed to create destination path: ${absoluteDestinationPath}`);
       }
     }
-  
+
     const expectedFiles = new Set();
-  
+
     items = items.map((item) => {
       if (!item.file?.name) {
         // Return item unmodified if no file exists
         return item;
       }
-  
+
       const tempFilePath = path.resolve(
         publicPath,
         tempPath,
         path.basename(item.file.name)
       );
-  
+
       const originalFileName = path.basename(item.file.name);
 
       if (!ContentRepeaterFileValidator.isValidExtension(originalFileName)) {
@@ -137,7 +161,7 @@ class ContentRepeaterUploadFile {
       if (debug) console.log('originalFileName: ', originalFileName);
       if (debug) console.log('cleanedFileName: ', cleanedFileName);
       if (debug) console.log('tempFilePath: ', tempFilePath);
-  
+
       if (fs.existsSync(tempFilePath)) {
         try {
           // Move file and update item
@@ -154,10 +178,10 @@ class ContentRepeaterUploadFile {
       } else {
         console.warn(`File not found in temp directory: ${tempFilePath}. Skipping.`);
       }
-  
+
       return item;
     });
-  
+
     // Remove unreferenced files in destination
     fs.readdirSync(absoluteDestinationPath).forEach((file) => {
       if (!expectedFiles.has(file)) {
@@ -169,11 +193,11 @@ class ContentRepeaterUploadFile {
         }
       }
     });
-  
+
     if (debug) console.log("Final data items:", JSON.stringify(items, null, 2));
     return items; // Return updated items
   }
-  
+
 }
 
 export { ContentRepeaterUploadFile };
