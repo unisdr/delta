@@ -14,7 +14,9 @@ export const loader = async (loaderArgs: LoaderFunctionArgs) => {
 		getById: damagesById,
 		extra: async (_item) => {
 			const settings = await getCountrySettingsFromSession(request);
-			const currencies = settings.currencyCodes;
+			const currencies = settings.currencyCode
+				? [settings.currencyCode]
+				: ["USD"];
 			return { def: await fieldsDefView(currencies) };
 		},
 	})(loaderArgs);

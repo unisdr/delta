@@ -24,7 +24,6 @@ import { useState, useEffect, useRef, RefObject } from 'react';
 //#Sector: Start
 import { ContentPicker } from "~/components/ContentPicker";
 import { contentPickerConfigSector } from "../content-picker-config";
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 import { getCountrySettingsFromSession } from "~/util/session";
 //#Sector: End
 
@@ -93,11 +92,10 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const req = actionArgs.request;
 
 	const settings= await getCountrySettingsFromSession(actionArgs.request)
-	var currencyCodes= '';
+	var currencyCodes= [];
 	if(settings){
-		currencyCodes=settings.currencyCodes;
+		currencyCodes.push(settings.currencyCode);
 	}
-	const arrayCurrency = getCurrenciesAsListFromCommaSeparated(currencyCodes);
 	let sectorDisplayName:string = '';
 
 	// Parse the request URL
@@ -119,7 +117,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 
 	return { 
 		ok:'loader', 
-		arrayCurrency: arrayCurrency, 
+		arrayCurrency: currencyCodes, 
 		record:record, 
 		sectorDisplayName:sectorDisplayName,
 		disRecId: params.disRecId, 

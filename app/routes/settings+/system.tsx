@@ -10,11 +10,8 @@ import { configApplicationEmail } from "~/util/config";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { getSystemInfo, SystemInfo } from "~/db/queries/dtsSystemInfo";
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 
-import {
-	getInstanceSystemSettingsByCountryAccountId,
-} from "~/db/queries/instanceSystemSetting";
+import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountrySettingsFromSession } from "~/util/session";
 import { Country, InstanceSystemSettings } from "~/drizzle/schema";
@@ -26,6 +23,7 @@ import {
 } from "~/services/settingsService";
 import Messages from "~/components/Messages";
 import { Toast, ToastRef } from "~/components/Toast";
+import { getCurrencyList } from "~/util/currency";
 
 // Define the loader data type
 interface LoaderData {
@@ -59,17 +57,14 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 
 		let currencies: string[] = [];
 		if (settings) {
-			currencies = getCurrenciesAsListFromCommaSeparated(
-				settings.currencyCodes
-			);
+			currencies.push(settings.currencyCode);
 		}
 
-		const currency: string[] = currencies;
 		const systemLanguage: string[] = ["English"];
 		const confEmailObj = configApplicationEmail();
 
 		return Response.json({
-			currencyArray: currency,
+			currencyArray: currencies,
 			systemLanguage,
 			confEmailObj,
 			instanceSystemSettings: settings,
@@ -89,8 +84,10 @@ export const action: ActionFunction = authLoaderWithPerm(
 		const termsUrl = formData.get("termsUrl") as string;
 		const websiteLogoUrl = formData.get("websiteLogoUrl") as string;
 		const websiteName = formData.get("websiteName") as string;
-		const approvedRecordsArePublic = formData.get("approvedRecordsArePublic") === "true"
+		const approvedRecordsArePublic =
+			formData.get("approvedRecordsArePublic") === "true";
 		const totpIssuer = formData.get("totpIssuer") as string;
+		const currency = formData.get("currency") as string;
 
 		try {
 			await updateSettingsService(
@@ -100,7 +97,8 @@ export const action: ActionFunction = authLoaderWithPerm(
 				websiteLogoUrl,
 				websiteName,
 				approvedRecordsArePublic,
-				totpIssuer
+				totpIssuer,
+				currency
 			);
 			return { success: "ok" };
 		} catch (error) {
@@ -136,6 +134,7 @@ export default function Settings() {
 	const [websiteName, setWebsiteName] = useState("");
 	const [approvedRecordsArePublic, setApprovedRecordsArePublic] =
 		useState(false);
+	const [currency, setCurrency] = useState("");
 	const [totpIssuer, setTotpIssuer] = useState("");
 
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -174,6 +173,7 @@ export default function Settings() {
 				loaderData.instanceSystemSettings.approvedRecordsArePublic
 			);
 			setTotpIssuer(loaderData.instanceSystemSettings.totpIssuer || "");
+			setCurrency(loaderData.instanceSystemSettings.currencyCode); 
 		}
 		setIsDialogOpen(true);
 	}
@@ -181,7 +181,6 @@ export default function Settings() {
 	useEffect(() => {
 		if (actionData?.success) {
 			setIsDialogOpen(false);
-			// resetForm();
 
 			if (toast.current) {
 				toast.current.show({
@@ -410,7 +409,7 @@ export default function Settings() {
 										name="approvedRecordsArePublic"
 										value={approvedRecordsArePublic ? "true" : "false"}
 										onChange={(e) => {
-											console.log("e.target.value = ",e.target.value);
+											console.log("e.target.value = ", e.target.value);
 											console.log(typeof e.target.value);
 											setApprovedRecordsArePublic(e.target.value === "true");
 										}}
@@ -421,6 +420,26 @@ export default function Settings() {
 										<option key={2} value="false">
 											Private
 										</option>
+									</select>
+								</label>
+							</div>
+							<div className="dts-form-component">
+								<label>
+									<div className="dts-form-component__label">
+										<span>*Currency</span>
+									</div>
+									<select
+										name="currency"
+										value={currency}
+										onChange={(e) => {
+											setCurrency(e.target.value);
+										}}
+									>
+										{getCurrencyList().map((currency) => (
+											<option key={currency} value={currency}>
+												{currency}
+											</option>
+										))}
 									</select>
 								</label>
 							</div>
