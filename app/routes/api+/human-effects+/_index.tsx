@@ -2,8 +2,6 @@ import {authLoaderWithPerm} from "~/util/auth";
 
 export const loader = authLoaderWithPerm("ViewApiDocs", async () => {
 	let docs = `
-/api/human-effects/category-presence
-
 GET /api/human-effects/list?recordId=XXX&table=Injured
 POST /api/human-effects/save?recordId=XXX
 {

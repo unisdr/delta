@@ -12,8 +12,6 @@ export const loader = authLoaderApiDocs(async ({request}) => {
 	const url = new URL(request.url);
 	const baseUrl = `${url.protocol}//${url.host}`;
 
-	console.log("baseUrl haroon= ", baseUrl)
-
 	let docs = await jsonApiDocs({
 		baseUrl: "hazardous-event",
 		fieldsDef: fieldsDefApi,
