@@ -26,6 +26,10 @@ import { handleMostDamagingEventsRequest } from "~/backend.server/handlers/analy
 import { getSectorsWithSubsectors } from "~/backend.server/handlers/analytics/sectorsHandlers";
 import { getGeographicLevelsHandler } from "~/backend.server/handlers/analytics/geographicLevelsHandler";
 import { getDisasterEvents } from "~/backend.server/handlers/analytics/disaster-events";
+import { getHazardTypes } from "~/backend.server/handlers/analytics/hazard-types";
+import { getHazardClustersHandler } from "~/backend.server/handlers/analytics/hazard-clusters";
+import { getSpecificHazardsHandler } from "~/backend.server/handlers/analytics/specific-hazards";
+import { getRelatedHazardDataHandler } from "~/backend.server/handlers/analytics/related-hazard-data";
 
 import type { HazardImpactFilters } from "~/types/hazardImpact";
 
@@ -144,6 +148,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     let geographicImpactData: any = null;
     let effectDetailsData: any = null;
     let mostDamagingEventsData: any = null;
+
+    // Variables for hazard-related data
+    let hazardTypesData: any = null;
+    let hazardClustersData: any = null;
+    let specificHazardsData: any = null;
     let sectorsData = null;
     let geographicLevelsData = null;
     let disasterEventsData = null;
@@ -154,6 +163,49 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     } catch (error) {
       console.error('LOADER ERROR - Failed to fetch sectors data:', error);
       sectorsData = null;
+    }
+
+    // Fetch hazard types data
+    try {
+      const hazardTypes = await getHazardTypes();
+      hazardTypesData = { hazardTypes };
+    } catch (error) {
+      console.error('LOADER ERROR - Failed to fetch hazard types data:', error);
+      hazardTypesData = null;
+    }
+
+
+
+    // Fetch hazard clusters data
+    try {
+      if (hazardTypeId) {
+        // Fetch clusters using the handler with the specific hazardTypeId
+        const clusters = await getHazardClustersHandler(hazardTypeId);
+
+        // Ensure clusters is always an array
+        const clusterArray = Array.isArray(clusters) ? clusters : [];
+
+        // Assign the clusters to the hazardClustersData object
+        hazardClustersData = { clusters: clusterArray };
+      } else {
+        // If no hazardTypeId is provided, fetch all clusters
+        const allClusters = await getHazardClustersHandler();
+        hazardClustersData = { clusters: allClusters };
+      }
+    } catch (error) {
+      console.error('LOADER ERROR - Failed to fetch hazard clusters data:', error);
+      hazardClustersData = { clusters: [] };
+    }
+
+
+    // Fetch ALL specific hazards data regardless of hazardClusterId
+    try {
+      // Fetch all specific hazards without filtering by cluster
+      const allHazards = await getSpecificHazardsHandler();
+      specificHazardsData = { hazards: allHazards };
+    } catch (error) {
+      console.error('LOADER ERROR - Failed to fetch specific hazards data:', error);
+      specificHazardsData = { hazards: [] };
     }
 
     // Fetch geographic levels data for filters
@@ -184,12 +236,6 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // Format it to match the original API response structure
         disasterEventsData = { disasterEvents: rawDisasterEvents };
 
-        // Debug log to verify structure
-        console.log('LOADER DEBUG - Disaster events data structure:',
-          JSON.stringify({
-            hasDisasterEvents: !!disasterEventsData?.disasterEvents,
-            rowCount: disasterEventsData?.disasterEvents?.rows?.length || 0
-          }));
       } else {
         console.error('LOADER ERROR - Missing tenant context for disaster events');
         disasterEventsData = null;
@@ -272,8 +318,6 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
             }
           };
 
-        } else {
-          console.log('LOADER DEBUG - Hazard handler response invalid:', hazardHandlerResponse);
         }
       } catch (error) {
         hazardImpactData = null;
@@ -401,6 +445,17 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
       mostDamagingEventsData = null;
     }
 
+    // Fetch related hazard data for cascading filters if specificHazardId is provided
+    let relatedHazardData = null;
+    try {
+      if (filters.specificHazardId) {
+        relatedHazardData = await getRelatedHazardDataHandler(filters.specificHazardId);
+      }
+    } catch (error) {
+      console.error('LOADER ERROR - Failed to fetch related hazard data:', error);
+      relatedHazardData = null;
+    }
+
     return {
       settings,
       currency,
@@ -412,6 +467,10 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
       sectorsData: { sectors: sectorsData },
       geographicLevelsData,
       disasterEventsData,
+      hazardTypesData,
+      hazardClustersData,
+      specificHazardsData,
+      relatedHazardData
     };
 
   } catch (error) {
@@ -435,7 +494,21 @@ export const meta: MetaFunction = () => {
 };
 function SectorsAnalysisContent() {
   // Get data from loader
-  const { currency, sectorImpactData, hazardImpactData, geographicImpactData, effectDetailsData, mostDamagingEventsData, sectorsData, geographicLevelsData, disasterEventsData } = useLoaderData<typeof loader>();
+  const {
+    currency,
+    sectorImpactData,
+    hazardImpactData,
+    geographicImpactData,
+    effectDetailsData,
+    mostDamagingEventsData,
+    sectorsData,
+    geographicLevelsData,
+    disasterEventsData,
+    // Destructure hazard-related data
+    hazardTypesData,
+    hazardClustersData,
+    specificHazardsData } = useLoaderData<typeof loader>();
+
   const submit = useSubmit();
 
   const [filters, setFilters] = useState<{
@@ -554,6 +627,9 @@ function SectorsAnalysisContent() {
               sectorsData={sectorsData}
               geographicLevelsData={geographicLevelsData}
               disasterEventsData={disasterEventsData}
+              hazardTypesData={hazardTypesData}
+              hazardClustersData={hazardClustersData}
+              specificHazardsData={specificHazardsData}
             />
           </ErrorBoundary>
 
