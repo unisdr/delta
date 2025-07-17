@@ -5,6 +5,7 @@ import {
 } from "~/db/queries/countryAccounts";
 import { updateInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
 import { CountryAccountStatus, countryAccountStatuses } from "~/drizzle/schema";
+import { checkValidCurrency } from "~/util/currency";
 
 export class SettingsValidationError extends Error {
 	constructor(public errors: string[]) {
@@ -20,7 +21,8 @@ export async function updateSettingsService(
 	websiteLogoUrl: string,
 	websiteName: string,
 	isApprovedRecordsPublic: boolean,
-	totpIssuer: string
+	totpIssuer: string,
+	currency: string,
 ) {
 	const errors: string[] = [];
 	if (!id) {
@@ -47,6 +49,9 @@ export async function updateSettingsService(
 	) {
 		errors.push("Approved records visibility is required");
 	}
+	if(!checkValidCurrency(currency)){
+		errors.push("Invalid currency.")
+	}
 
 	if (errors.length > 0) {
 		throw new SettingsValidationError(errors);
@@ -61,6 +66,7 @@ export async function updateSettingsService(
 			websiteName,
 			isApprovedRecordsPublic,
 			totpIssuer,
+			currency,
 			tx
 		);
 

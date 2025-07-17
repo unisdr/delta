@@ -107,11 +107,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   const settings = await getCountrySettingsFromSession(loaderArgs.request);
   let currency = "USD";
   if (settings) {
-    currency = settings.currencyCodes?.split(",")[0];
+    currency = settings.currencyCode;
   }
-  // const sectorExistsInSectorParentArray = (id: number): boolean => {
-  //   return sectorParentArray.some(item => item.id === id);
-  // };
 
   // Use the shared public tenant context for analytics
 

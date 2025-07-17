@@ -58,9 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? settings.footerUrlTermsConditions
 		: "";
 	const dtsInstanceCtryIso3 = settings ? settings.dtsInstanceCtryIso3 : "USA";
-	const currencyCodes = settings
-		? settings.dtsInstanceCtryIso3.split(",")[0]
-		: "USD";
+	const currencyCode = settings ? settings.currencyCode : 'USD';
 
 	return Response.json(
 		{
@@ -73,7 +71,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			confFooterURLPrivPolicy: footerUrlPrivacyPolicy,
 			confFooterURLTermsConds: footerUrlTermsConditions,
 			env: {
-				CURRENCY_CODES: currencyCodes,
+				CURRENCY_CODES: currencyCode,
 				DTS_INSTANCE_CTRY_ISO3: dtsInstanceCtryIso3,
 			},
 		},

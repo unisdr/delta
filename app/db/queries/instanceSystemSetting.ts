@@ -48,6 +48,7 @@ export async function updateInstanceSystemSetting(
 	websiteName: string,
 	approvedRecordsArePublic: boolean,
 	totpIssuer: string,
+	currency: string,
 	tx?: Tx
 ): Promise<InstanceSystemSettings | null> {
 	if (!id) {
@@ -63,6 +64,7 @@ export async function updateInstanceSystemSetting(
 			websiteName,
 			approvedRecordsArePublic,
 			totpIssuer,
+			currencyCode: currency,
 		})
 		.where(eq(instanceSystemSettings.id, id))
 		.returning()

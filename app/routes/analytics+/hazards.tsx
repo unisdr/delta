@@ -59,12 +59,8 @@ interface interfaceMap {
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
 	const { request } = loaderArgs;
 	const settings = await getCountrySettingsFromSession(request);
-	let currencies: string[] = [];
-	if (settings) {
-		currencies = getCurrenciesAsListFromCommaSeparated(settings.currencyCodes);
-	}
 
-	const currency = currencies[0] || "PHP";
+	const currency = settings.currencyCode;
 	const hazardTypes = await fetchHazardTypes();
 	const hazardClusters = await fetchHazardClusters(null);
 	const specificHazards = await fetchAllSpecificHazards();
@@ -101,7 +97,7 @@ export const action = async (actionArgs: any) => {
 	const settings = await getCountrySettingsFromSession(request);
 	let currency = "USD";
 	if (settings) {
-		currency = settings.currencyCodes?.split(",")[0]
+		currency = settings.currencyCode;
 	}
 
 	// Create tenant context from user session

@@ -1389,7 +1389,7 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 		.default("example-app"),
 	dtsInstanceType: varchar("dts_instance_type").notNull().default("country"),
 	dtsInstanceCtryIso3: varchar("dts_instance_ctry_iso3").notNull().default(""),
-	currencyCodes: varchar("currency_codes").notNull().default("USD"),
+	currencyCode: varchar("currency_code").notNull().default("USD"),
 	countryName: varchar("country_name")
 		.notNull()
 		.default("United State of America"),//this column has to be removed

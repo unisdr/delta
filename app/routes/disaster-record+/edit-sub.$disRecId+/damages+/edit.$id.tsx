@@ -35,7 +35,7 @@ async function getResponseData(
 	ctryIso3?: string,
 	currencies?: string[],
 	divisionGeoJSON?: any[],
-	_p0?: any[],
+	_p0?: any[]
 ) {
 	let assets = (await assetsForSector(dr, sectorId)).map((a: any) => {
 		return {
@@ -77,11 +77,11 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	]);
 
 	let ctryIso3: string = "";
-	let currencies: string[] =[];
+	let currencies: string[] = [];
 	const settings = await getCountrySettingsFromSession(request);
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
-		currencies = settings.currencyCodes;
+		currencies.push(settings.currencyCode);
 	}
 
 	const divisionGeoJSON = await dr.execute(`
@@ -103,7 +103,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			treeData,
 			ctryIso3,
 			currencies,
-			divisionGeoJSON?.rows,
+			divisionGeoJSON?.rows
 		);
 	}
 	const item = await damagesById(params.id);
@@ -118,7 +118,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		treeData,
 		ctryIso3,
 		currencies,
-		divisionGeoJSON?.rows,
+		divisionGeoJSON?.rows
 	);
 });
 

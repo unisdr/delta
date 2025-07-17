@@ -27,7 +27,7 @@ export const action = authActionApi(async (args: ActionFunctionArgs) => {
   const { request } = args;
   const data = await args.request.json();
   const settings = await getCountrySettingsFromSession(request);
-  const currencies = settings.currencyCodes ?? ["USD"];
+  const currencies = settings.currencyCode? [settings.currencyCode] : ["USD"];
   const fieldsDef = await fieldsDefApi(currencies); 
   const saveRes = await jsonUpsert({
     data,
