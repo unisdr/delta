@@ -1,7 +1,6 @@
 import { useState, memo, useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
-import { useDebounce } from "~/frontend/hooks/useDebounce";
+
 
 interface MostDamagingEventsProps {
   filters: {
@@ -13,8 +12,11 @@ interface MostDamagingEventsProps {
     geographicLevelId: string | null;
     fromDate: string | null;
     toDate: string | null;
+    disasterEventId?: string | null;
   };
   currency: string;
+  mostDamagingEventsData: ApiResponse | null;
+  sectorsData: any; // Using any to handle various structures from the loader
 }
 
 interface DisasterEvent {
@@ -54,7 +56,7 @@ interface ApiResponse {
   };
 }
 
-const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency }: MostDamagingEventsProps) {
+const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency, mostDamagingEventsData, sectorsData }: MostDamagingEventsProps) {
   const [page, setPage] = useState(1);
   const [sortState, setSortState] = useState<{ column: SortColumn; direction: "asc" | "desc" }>({
     column: "damages",
@@ -65,45 +67,64 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
   const sortColumn = sortState.column;
   const sortDirection = sortState.direction;
 
-  // Fetch sectors data for dynamic title
-  const { data: sectorsData } = useQuery({
-    queryKey: ["sectors"],
-    queryFn: async () => {
-      const response = await fetch("/api/analytics/sectors");
-      if (!response.ok) throw new Error("Failed to fetch sectors");
-      return response.json() as Promise<{ sectors: Sector[] }>;
-    }
-  });
-
   // Helper function to find sector and its parent
-  const findSectorWithParent = (sectors: Sector[], targetId: string) => {
-    for (const sector of sectors) {
-      // Check if this is the main sector
-      if (sector.id.toString() === targetId) {
-        return { sector, parent: undefined };
-      }
-      // Check subsectors
-      if (sector.subsectors) {
-        const subsector = sector.subsectors.find(sub => sub.id.toString() === targetId);
-        if (subsector) {
-          return { sector: subsector, parent: sector };
+  const findSectorWithParent = (sectorsArray: Sector[] | null | undefined) => {
+    // Return a function that can be used to find sectors
+    return (targetId: string) => {
+      if (!sectorsArray) return { sector: undefined, parent: undefined };
+
+      for (const sector of sectorsArray) {
+        // Check if this is the main sector
+        if (sector.id.toString() === targetId) {
+          return { sector, parent: undefined };
+        }
+        // Check subsectors
+        if (sector.subsectors) {
+          const subsector = sector.subsectors.find(sub => sub.id.toString() === targetId);
+          if (subsector) {
+            return { sector: subsector, parent: sector };
+          }
         }
       }
-    }
-    return { sector: undefined, parent: undefined };
+      return { sector: undefined, parent: undefined };
+    };
   };
+
+  // Extract sectors array from the sectorsData prop safely
+  const getSectorsArray = () => {
+    try {
+      if (!sectorsData) return null;
+
+      // Handle different possible structures
+      if ('sectors' in sectorsData) {
+        const sectors = sectorsData.sectors;
+        if (Array.isArray(sectors)) {
+          return sectors;
+        } else if (sectors && 'sectors' in sectors) {
+          return sectors.sectors;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error extracting sectors array:', error);
+      return null;
+    }
+  };
+
+  const sectorsArray = getSectorsArray();
+  const sectorFinder = findSectorWithParent(sectorsArray);
 
   // Memoized title calculation based on sector/subsector selection
   const sectionTitle = useMemo(() => {
     try {
-      if (!sectorsData?.sectors) return "Most Damaging Events";
+      if (!sectorsArray) return "Most Damaging Events";
 
       if (filters.sectorId) {
-        const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+        const { sector } = sectorFinder(filters.sectorId);
 
         if (filters.subSectorId && sector) {
           // Case: Subsector is selected
-          const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsData.sectors, filters.subSectorId);
+          const { sector: subsector, parent: mainSector } = sectorFinder(filters.subSectorId);
           if (subsector && mainSector) {
             return `The Most Damaging Events for ${subsector.sectorname} (${mainSector.sectorname} Sector)`;
           }
@@ -120,54 +141,12 @@ const MostDamagingEvents = memo(function MostDamagingEvents({ filters, currency 
       console.error("Error generating section title:", error);
       return "The Most Damaging Events";
     }
-  }, [sectorsData?.sectors, filters.sectorId, filters.subSectorId]);
+  }, [sectorsArray, sectorFinder, filters.sectorId, filters.subSectorId]);
 
-  // Debounce filters to prevent too many API calls
-  const debouncedFilters = useDebounce(filters, 300);
-
-  // Fetch data using React Query
-  const { data, isLoading, isError } = useQuery<ApiResponse>({
-    queryKey: ["mostDamagingEvents", debouncedFilters, page, sortColumn, sortDirection],
-    queryFn: async () => {
-      try {
-        const searchParams = new URLSearchParams();
-
-        // Only use sectorId if no subsectorId is selected
-        if (debouncedFilters.subSectorId) {
-          searchParams.append('sectorId', debouncedFilters.subSectorId);
-        } else if (debouncedFilters.sectorId) {
-          searchParams.append('sectorId', debouncedFilters.sectorId);
-        }
-
-        // Add other filters (excluding sectorId and subSectorId since we handled them above)
-        Object.entries(debouncedFilters).forEach(([key, value]) => {
-          if (value && key !== 'sectorId' && key !== 'subSectorId') {
-            searchParams.append(key, value);
-          }
-        });
-
-        // Add pagination and sorting params
-        searchParams.append("page", page.toString());
-        searchParams.append("pageSize", "20");
-        searchParams.append("sortBy", sortColumn);
-        searchParams.append("sortDirection", sortDirection);
-
-        const response = await fetch(`/api/analytics/most-damaging-events?${searchParams}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("No data found for the selected criteria");
-          }
-          throw new Error(`Failed to fetch data: ${response.statusText}`);
-        }
-        return response.json();
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-        throw new Error(`Error fetching data: ${errorMessage}`);
-      }
-    },
-    retry: 1,
-    enabled: !!(debouncedFilters.sectorId || debouncedFilters.subSectorId || debouncedFilters.hazardTypeId || debouncedFilters.hazardClusterId || debouncedFilters.specificHazardId || debouncedFilters.geographicLevelId || debouncedFilters.fromDate || debouncedFilters.toDate),
-  });
+  // Process the loader data
+  const data = mostDamagingEventsData;
+  const isLoading = false; // Loader handles loading state
+  const isError = !mostDamagingEventsData?.success;
 
   // Memoized currency formatting function to prevent recreation on each render
   const formatCurrencyValue = useCallback((amount: number) => {

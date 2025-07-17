@@ -1,38 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { AiOutlineSearch } from "react-icons/ai";
-import createClientLogger from "~/utils/clientLogger";
+import { useSubmit } from "@remix-run/react";
 
-// Initialize component loggers with appropriate context
-const logger = createClientLogger('Filters', {
-  feature: 'analytics',
-  section: 'sectors',
-  componentType: 'filter-controls'
-});
-
-// Create specialized loggers for different categories
-const userLogger = logger.withTags({
-  category: 'user-interaction',
-  operation: 'filter-selection',
-  businessCritical: true
-});
-
-const apiLogger = logger.withTags({
-  category: 'api-call',
-  operation: 'data-fetch',
-  businessCritical: false
-});
-
-const validationLogger = logger.withTags({
-  category: 'form-validation',
-  operation: 'user-input-validation'
-});
-
-const performanceLogger = logger.withTags({
-  category: 'performance',
-  operation: 'filter-processing'
-});
 
 // Define initial filters for type safety
 const initialFilters = {
@@ -50,11 +20,11 @@ const initialFilters = {
 
 // Interfaces for filter data
 interface Sector {
-  id: number;
+  id: string;
   sectorname: string;
-  parentId: number | null;
+  parentId: string | null;
   description: string | null;
-  subsectors: Sector[];
+  subsectors?: Sector[];
 }
 
 interface DisasterEvent {
@@ -68,6 +38,8 @@ interface DisasterEvent {
 interface Hazard {
   id: string;
   name: string;
+  hazardClusterId?: string;
+  hazardTypeId?: string;
 }
 
 interface FiltersProps {
@@ -84,11 +56,26 @@ interface FiltersProps {
   }) => void;
   onAdvancedSearch: () => void;
   onClearFilters: () => void;
+  // Props to receive data from loader instead of fetching via API
+  sectorsData?: any;
+  geographicLevelsData?: any;
+  disasterEventsData?: any;
+  // New props for hazard-related data
+  hazardTypesData?: any;
+  hazardClustersData?: any;
+  specificHazardsData?: any;
 }
 
 const Filters: React.FC<FiltersProps> = ({
   onApplyFilters,
   onClearFilters,
+  sectorsData,
+  geographicLevelsData,
+  disasterEventsData,
+  // Destructure hazard-related props
+  hazardTypesData: hazardTypesDataProp,
+  hazardClustersData: hazardClustersDataProp,
+  specificHazardsData: specificHazardsDataProp,
 }) => {
   const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
 
@@ -105,20 +92,8 @@ const Filters: React.FC<FiltersProps> = ({
     _disasterEventId: "", // Store UUID separately
   });
 
-  // Component lifecycle logging
-  useEffect(() => {
-    logger.info('Filters component mounted', {
-      componentState: 'mounted',
-      initialFilters: Object.keys(filters).filter(key => filters[key as keyof typeof filters] !== '').length
-    });
-
-    return () => {
-      logger.debug('Filters component unmounting', {
-        finalFiltersState: filters,
-        totalInteractions: Object.keys(filters).length
-      });
-    };
-  }, []);
+  // Use Remix's useSubmit hook to update URL params when filters change
+  const submit = useSubmit();
 
   const [dropdownVisibility, setDropdownVisibility] = useState<{
     [key: string]: boolean;
@@ -129,124 +104,74 @@ const Filters: React.FC<FiltersProps> = ({
     geographicLevelId: false,
   });
 
-  // Fetch data from the REST API
-  // Define response interfaces for sectors and disaster events
-  interface SectorsResponse {
-    sectors: Sector[];
-  }
+  // Track loading state for sectors
+  const [sectorsLoading, setSectorsLoading] = useState(true);
 
-  interface DisasterEventsResponse {
-    disasterEvents: {
-      rows: DisasterEvent[];
-    };
-  }
+  // Effect to update loading state when sectorsData changes
+  useEffect(() => {
+    setSectorsLoading(sectorsData === undefined || sectorsData === null);
+  }, [sectorsData]);
 
-  // React Query for fetching sectors with enhanced logging
-  const { data: sectorsData, isLoading: sectorsLoading } = useQuery<SectorsResponse, Error>({
-    queryKey: ["sectors"],
-    queryFn: async () => {
-      const startTime = performance.now();
-      const operationId = `sectors-fetch-${Date.now()}`;
-
-      apiLogger.info('Fetching sectors data', { operationId });
-
-      try {
-        const response = await fetch("/api/analytics/sectors");
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-          apiLogger.error('Sectors API request failed', {
-            operationId,
-            status: response.status,
-            statusText: response.statusText,
-            error: error.message
-          });
-          throw error;
-        }
-
-        const data = await response.json();
-        const endTime = performance.now();
-        const loadTime = endTime - startTime;
-
-        apiLogger.info('Sectors data loaded successfully', {
-          operationId,
-          sectorsCount: data.sectors?.length || 0,
-          loadTimeMs: loadTime,
-          isSlowLoad: loadTime > 1000
-        });
-
-        return data;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorType = error instanceof Error ? error.constructor.name : 'Unknown';
-
-        apiLogger.error('Failed to fetch sectors', {
-          operationId,
-          error: errorMessage,
-          errorType,
-          durationMs: performance.now() - startTime
-        });
-
-        // Show user-friendly error message
-        Swal.fire({
-          icon: 'error',
-          title: 'Error Loading Sectors',
-          text: 'Failed to load sector data. Please try again later.',
-          confirmButtonText: 'OK',
-          buttonsStyling: false,
-          customClass: {
-            popup: 'swal2-custom-popup',
-            confirmButton: 'swal2-custom-button',
-          },
-        });
-
-        throw error;
-      }
+  // Handle error case if sectorsData is missing
+  useEffect(() => {
+    if (!sectorsLoading && !sectorsData) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error Loading Sectors',
+        text: 'Failed to load sector data. Please try again later.',
+        confirmButtonText: 'OK',
+        buttonsStyling: false,
+        customClass: {
+          popup: 'swal2-custom-popup',
+          confirmButton: 'swal2-custom-button',
+        },
+      });
     }
-  });
+  }, [sectorsData, sectorsLoading]);
 
-  // React Query for fetching disaster events with enhanced logging
-  const { data: disasterEventsData, isLoading: eventsLoading } = useQuery<DisasterEventsResponse, Error>({
-    queryKey: ["disasterEvents"],
-    queryFn: async () => {
-      const startTime = performance.now();
-      const operationId = `disaster-events-fetch-${Date.now()}`;
+  // Track loading state for disaster events
+  const [disasterEvents, setDisasterEvents] = useState<DisasterEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
 
-      apiLogger.info('Fetching disaster events data', { operationId });
-
+  // Initialize disaster events from props passed by the loader
+  useEffect(() => {
+    // Get disaster events data from the route loader via props
+    const initializeDisasterEvents = () => {
       try {
-        const response = await fetch("/api/analytics/disaster-events");
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-          apiLogger.error('Disaster events API request failed', {
-            operationId,
-            status: response.status,
-            statusText: response.statusText
-          });
-          throw error;
+        setEventsLoading(true);
+
+        // Use disaster events from the route's loader data
+        // Handle different possible data structures
+        if (disasterEventsData) {
+          if (Array.isArray(disasterEventsData)) {
+            // If it's directly an array
+            setDisasterEvents(disasterEventsData);
+          } else if (disasterEventsData.rows && Array.isArray(disasterEventsData.rows)) {
+            // If it has a rows property that is an array
+            setDisasterEvents(disasterEventsData.rows);
+          } else if (disasterEventsData.disasterEvents) {
+            // If it has a disasterEvents property
+            if (Array.isArray(disasterEventsData.disasterEvents)) {
+              setDisasterEvents(disasterEventsData.disasterEvents);
+            } else if (disasterEventsData.disasterEvents.rows && Array.isArray(disasterEventsData.disasterEvents.rows)) {
+              setDisasterEvents(disasterEventsData.disasterEvents.rows);
+            } else {
+              console.warn('Disaster events data structure not recognized:', disasterEventsData);
+              setDisasterEvents([]);
+            }
+          } else {
+            console.warn('Disaster events data structure not recognized:', disasterEventsData);
+            setDisasterEvents([]);
+          }
+        } else {
+          // Handle case where data is not provided
+          console.warn('No disaster events data provided');
+          setDisasterEvents([]);
         }
-
-        const data = await response.json();
-        const endTime = performance.now();
-        const loadTime = endTime - startTime;
-
-        apiLogger.info('Disaster events data loaded', {
-          operationId,
-          eventsCount: data.disasterEvents?.rows?.length || 0,
-          loadTimeMs: loadTime,
-          isSlowLoad: loadTime > 1000
-        });
-
-        return data;
+        setEventsLoading(false);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorType = error instanceof Error ? error.constructor.name : 'Unknown';
-
-        apiLogger.error('Failed to fetch disaster events', {
-          operationId,
-          error: errorMessage,
-          errorType,
-          durationMs: performance.now() - startTime
-        });
+        console.error('Error initializing disaster events:', error);
+        setEventsLoading(false);
 
         // Show user-friendly error message
         Swal.fire({
@@ -260,11 +185,11 @@ const Filters: React.FC<FiltersProps> = ({
             confirmButton: 'swal2-custom-button',
           },
         });
-
-        throw error;
       }
-    }
-  });
+    };
+
+    initializeDisasterEvents();
+  }, [disasterEventsData]);
 
   // Define response interfaces for type safety
   interface HazardTypesResponse {
@@ -272,76 +197,37 @@ const Filters: React.FC<FiltersProps> = ({
   }
 
   interface HazardClustersResponse {
-    clusters: Array<{ id: string; name: string }>;
+    hazardClusters: Array<{ id: string; name: string; hazardTypeId?: string }>;
   }
 
   interface SpecificHazardsResponse {
     hazards: Array<{ id: string; name: string }>;
   }
 
-  interface GeographicLevelsResponse {
-    levels: Array<{ id: number; name: { en: string } }>;
-  }
+  // State for processed hazard types data
+  const [hazardTypesData, setHazardTypesData] = useState<HazardTypesResponse | null>(null);
 
-  // React Query for fetching hazard types with enhanced logging and type safety
-  const { data: hazardTypesData } = useQuery<HazardTypesResponse, Error>({
-    queryKey: ["hazardTypes", filters.hazardTypeId],
-    queryFn: async () => {
-      const startTime = performance.now();
-      const operationId = `hazard-types-fetch-${Date.now()}`;
-
-      apiLogger.info('Fetching hazard types', { operationId });
-
+  // Use hazard types data from props instead of API call
+  useEffect(() => {
+    if (hazardTypesDataProp) {
       try {
-        const response = await fetch(`/api/analytics/hazard-types`);
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-          apiLogger.error('Hazard types API request failed', {
-            operationId,
-            status: response.status,
-            statusText: response.statusText
-          });
-          throw error;
-        }
-
-        const responseData = await response.json();
-        const endTime = performance.now();
-        const loadTime = endTime - startTime;
-
         // Transform data to ensure Hazard interface compatibility (id as string)
         const transformedData: HazardTypesResponse = {
-          hazardTypes: Array.isArray(responseData.hazardTypes)
-            ? responseData.hazardTypes.map((hazard: any) => ({
+          hazardTypes: Array.isArray(hazardTypesDataProp.hazardTypes)
+            ? hazardTypesDataProp.hazardTypes.map((hazard: any) => ({
               ...hazard,
               id: String(hazard.id) // Ensure ID is string to match Hazard interface
             }))
             : []
         };
-
-        apiLogger.info('Hazard types loaded', {
-          operationId,
-          count: transformedData.hazardTypes.length,
-          loadTimeMs: loadTime,
-          isSlowLoad: loadTime > 1000
-        });
-
-        return transformedData;
+        setHazardTypesData(transformedData);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorType = error instanceof Error ? error.constructor.name : 'Unknown';
-
-        apiLogger.error('Failed to fetch hazard types', {
-          operationId,
-          error: errorMessage,
-          errorType,
-          durationMs: performance.now() - startTime
-        });
-
+        console.error('Error processing hazard types data:', error);
         // Show user-friendly error message
         Swal.fire({
           icon: 'error',
-          title: 'Error Loading Hazard Types',
-          text: 'Failed to load hazard types. Please try again later.',
+          title: 'Error Processing Hazard Types',
+          text: 'Failed to process hazard types data. Please try again later.',
           confirmButtonText: 'OK',
           buttonsStyling: false,
           customClass: {
@@ -349,231 +235,239 @@ const Filters: React.FC<FiltersProps> = ({
             confirmButton: 'swal2-custom-button',
           },
         });
-
-        throw error;
       }
     }
-  });
+  }, [hazardTypesDataProp]);
 
-  // React Query for fetching hazard clusters with enhanced logging
-  const { data: hazardClustersData, isFetching: isFetchingClusters } = useQuery<HazardClustersResponse, Error>({
-    queryKey: ["hazardClusters", filters.hazardTypeId],
-    queryFn: async () => {
-      if (!filters.hazardTypeId) {
-        return { clusters: [] };
-      }
+  // State for processed hazard clusters data
+  const [hazardClustersData, setHazardClustersData] = useState<HazardClustersResponse>({ hazardClusters: [] });
+  const [isFetchingClusters, setIsFetchingClusters] = useState(false);
 
-      const startTime = performance.now();
-      const operationId = `hazard-clusters-fetch-${Date.now()}`;
+  // Process hazard clusters when hazard type is selected
+  useEffect(() => {
+    if (filters.hazardTypeId) {
+      setIsFetchingClusters(true);
 
-      apiLogger.info('Fetching hazard clusters', {
-        operationId,
-        hazardTypeId: filters.hazardTypeId
-      });
+      // Process the hazard clusters data from loader props
+      const processHazardClustersData = async () => {
+        try {
+          // Process the data from props
+          let clustersArray: any[] = [];
 
-      try {
-        const response = await fetch(`/api/analytics/hazard-clusters?typeId=${filters.hazardTypeId}`);
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-          apiLogger.error('Hazard clusters API request failed', {
-            operationId,
-            status: response.status,
-            statusText: response.statusText,
-            hazardTypeId: filters.hazardTypeId
+          // Extract clusters from the prop data structure with enhanced logging
+          if (hazardClustersDataProp?.clusters) {
+            clustersArray = hazardClustersDataProp.clusters;
+          } else if (Array.isArray(hazardClustersDataProp)) {
+            clustersArray = hazardClustersDataProp;
+          } else if (typeof hazardClustersDataProp === 'object' && hazardClustersDataProp !== null) {
+            // If it's an object but doesn't have a clusters property, it might be the direct result from the loader
+            // Try to extract any array property
+            const arrayProps = Object.entries(hazardClustersDataProp)
+              .find(([_, value]) => Array.isArray(value));
+
+            if (arrayProps) {
+              clustersArray = arrayProps[1] as any[];
+            } else {
+              // If no array property is found, try to use the object itself if it looks like an array of objects
+              const values = Object.values(hazardClustersDataProp);
+              if (values.length > 0 && typeof values[0] === 'object') {
+                clustersArray = values;
+              }
+            }
+          }
+
+          // Filter clusters by the selected hazard type if one is selected
+          let filteredClusters = clustersArray;
+          if (filters.hazardTypeId) {
+            filteredClusters = clustersArray.filter((cluster: any) => {
+              const clusterTypeId = String(cluster.typeId || ''); // Ensure typeId is string
+              const selectedTypeId = String(filters.hazardTypeId || ''); // Ensure selected typeId is string
+              const isMatch = clusterTypeId === selectedTypeId;
+              return isMatch;
+            });
+          }
+
+          // Transform the data to ensure interface compatibility
+          const transformedData: HazardClustersResponse = {
+            hazardClusters: filteredClusters.map((cluster: any) => {
+              const transformed = {
+                ...cluster,
+                id: String(cluster.id), // Ensure ID is string
+                name: cluster.name || cluster.nameEn || cluster.clustername || "Unknown Cluster", // Handle different name properties
+                typeId: String(cluster.typeId) // Ensure typeId is string
+              };
+              return transformed;
+            })
+          };
+
+          setHazardClustersData(transformedData);
+        } catch (error) {
+          console.error('Error processing hazard clusters data:', error);
+          // Show user-friendly error message
+          Swal.fire({
+            icon: 'error',
+            title: 'Error Processing Hazard Clusters',
+            text: 'Failed to process hazard clusters data. Please try again later.',
+            confirmButtonText: 'OK',
+            buttonsStyling: false,
+            customClass: {
+              popup: 'swal2-custom-popup',
+              confirmButton: 'swal2-custom-button',
+            },
           });
-          throw error;
+
+          // Return empty array to prevent UI errors
+          setHazardClustersData({ hazardClusters: [] });
+        } finally {
+          setIsFetchingClusters(false);
         }
+      };
 
-        const data: HazardClustersResponse = await response.json();
-        const endTime = performance.now();
-        const loadTime = endTime - startTime;
+      // Process the hazard clusters data from props
+      processHazardClustersData();
+    } else {
+      // Reset clusters when no hazard type is selected
+      setHazardClustersData({ hazardClusters: [] });
+    }
+  }, [hazardClustersDataProp, filters.hazardTypeId]);
 
-        apiLogger.info('Hazard clusters loaded', {
-          operationId,
-          count: data.clusters?.length || 0,
-          loadTimeMs: loadTime,
-          isSlowLoad: loadTime > 1000,
-          hazardTypeId: filters.hazardTypeId
-        });
-
-        // Transform data to match Hazard interface (id must be string)
-        const transformedClusters = {
-          clusters: data.clusters?.map(cluster => ({
-            ...cluster,
-            id: String(cluster.id) // Ensure ID is string to match Hazard interface
-          })) || []
-        };
-
-        return transformedClusters;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorType = error instanceof Error ? error.constructor.name : 'Unknown';
-
-        apiLogger.error('Failed to fetch hazard clusters', {
-          operationId,
-          error: errorMessage,
-          errorType,
-          hazardTypeId: filters.hazardTypeId,
-          durationMs: performance.now() - startTime
-        });
-
-        // Show user-friendly error message
-        Swal.fire({
-          icon: 'error',
-          title: 'Error Loading Hazard Clusters',
-          text: 'Failed to load hazard clusters. Please try again later.',
-          confirmButtonText: 'OK',
-          buttonsStyling: false,
-          customClass: {
-            popup: 'swal2-custom-popup',
-            confirmButton: 'swal2-custom-button',
-          },
-        });
-
-        throw error;
-      }
-    },
-    enabled: !!filters.hazardTypeId,
-  });
-
-  // React Query for fetching specific hazards with enhanced logging
+  // State for processed specific hazards data
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: specificHazardsData } = useQuery<SpecificHazardsResponse, Error>({
-    queryKey: ["specificHazards", filters.hazardClusterId, searchQuery],
-    queryFn: async () => {
-      if (!filters.hazardClusterId) {
-        return { hazards: [] };
-      }
+  const [specificHazardsData, setSpecificHazardsData] = useState<SpecificHazardsResponse>({ hazards: [] });
+  const [isFetchingHazards, setIsFetchingHazards] = useState(false);
 
-      const startTime = performance.now();
-      const operationId = `specific-hazards-fetch-${Date.now()}`;
+  // Process specific hazards when hazard cluster is selected
+  useEffect(() => {
+    if (filters.hazardClusterId) {
+      setIsFetchingHazards(true);
 
-      apiLogger.info('Fetching specific hazards', {
-        operationId,
-        hazardClusterId: filters.hazardClusterId,
-        searchQuery: searchQuery || '(none)'
-      });
+      // Process the specific hazards data from loader props
+      const processSpecificHazardsData = async () => {
+        try {
+          // Process the data from props
+          let hazardsArray: any[] = [];
 
-      try {
-        const response = await fetch(
-          `/api/analytics/specific-hazards?clusterId=${filters.hazardClusterId}&searchQuery=${searchQuery}`
-        );
+          // Extract hazards from the prop data structure
+          if (specificHazardsDataProp?.hazards) {
+            hazardsArray = specificHazardsDataProp.hazards;
+          } else if (Array.isArray(specificHazardsDataProp)) {
+            hazardsArray = specificHazardsDataProp;
+          } else if (specificHazardsDataProp && typeof specificHazardsDataProp === 'object') {
+            // If no array property is found, try to use the object itself if it looks like an array of objects
+            const values = Object.values(specificHazardsDataProp);
+            if (values.length > 0 && typeof values[0] === 'object') {
+              hazardsArray = values;
+            }
+          }
 
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-          apiLogger.error('Specific hazards API request failed', {
-            operationId,
-            status: response.status,
-            statusText: response.statusText,
-            hazardClusterId: filters.hazardClusterId,
-            searchQuery: searchQuery || '(none)'
+          // Filter hazards by the selected cluster ID
+          const filteredHazards = hazardsArray.filter((hazard: any) => {
+            const hazardClusterId = String(hazard.hazardClusterId || hazard.cluster_id || hazard.clusterId || '');
+            const filterClusterId = String(filters.hazardClusterId);
+            return hazardClusterId === filterClusterId;
           });
-          throw error;
-        }
 
-        const responseData = await response.json();
-        const endTime = performance.now();
-        const loadTime = endTime - startTime;
+          // Apply search query filter if provided
+          let searchFilteredHazards = filteredHazards;
+          if (searchQuery) {
+            const lowerCaseQuery = searchQuery.toLowerCase();
+            searchFilteredHazards = filteredHazards.filter(
+              (hazard: any) => hazard.name.toLowerCase().includes(lowerCaseQuery)
+            );
+          }
 
-        // Transform data to ensure Hazard interface compatibility (id as string)
-        const transformedData: SpecificHazardsResponse = {
-          hazards: Array.isArray(responseData.hazards)
-            ? responseData.hazards.map((hazard: any) => ({
+          // Transform data to ensure Hazard interface compatibility
+          const transformedData: SpecificHazardsResponse = {
+            hazards: searchFilteredHazards.map((hazard: any) => ({
               ...hazard,
-              id: String(hazard.id) // Ensure ID is string to match Hazard interface
+              id: String(hazard.id), // Ensure ID is string
+              hazardClusterId: String(hazard.hazardClusterId || hazard.cluster_id || hazard.clusterId || ""),
+              hazardTypeId: String(hazard.hazardTypeId || hazard.type_id || hazard.typeId || "")
             }))
-            : []
-        };
+          };
 
-        apiLogger.info('Specific hazards loaded', {
-          operationId,
-          count: transformedData.hazards.length,
-          loadTimeMs: loadTime,
-          isSlowLoad: loadTime > 1000,
-          hazardClusterId: filters.hazardClusterId,
-          hasSearchQuery: !!searchQuery
-        });
-
-        return transformedData;
-      } catch (error) {
-        apiLogger.error('Failed to fetch specific hazards', {
-          error: error instanceof Error ? error.message : String(error),
-          errorType: error instanceof Error ? error.constructor.name : 'Unknown',
-          hazardClusterId: filters.hazardClusterId,
-          searchQuery: searchQuery || '(none)',
-          durationMs: performance.now() - startTime
-        });
-        throw error;
-      }
-    },
-    enabled: !!filters.hazardClusterId,
-  });
-
-  // React Query for fetching geographic levels with enhanced logging
-  const { data: geographicLevelsData } = useQuery<GeographicLevelsResponse, Error>({
-    queryKey: ["geographicLevels", filters.geographicLevelId],
-    queryFn: async () => {
-      const startTime = performance.now();
-      apiLogger.info('Fetching geographic levels');
-
-      try {
-        const response = await fetch(`/api/analytics/geographic-levels`);
-        if (!response.ok) {
-          const error = new Error(`HTTP error! status: ${response.status}`);
-          apiLogger.error('Geographic levels API request failed', {
-            status: response.status,
-            statusText: response.statusText
+          setSpecificHazardsData(transformedData);
+        } catch (error) {
+          console.error('Error processing specific hazards data:', error);
+          // Show user-friendly error message
+          Swal.fire({
+            icon: 'error',
+            title: 'Error Processing Specific Hazards',
+            text: 'Failed to process specific hazards data. Please try again later.',
+            confirmButtonText: 'OK',
+            buttonsStyling: false,
+            customClass: {
+              popup: 'swal2-custom-popup',
+              confirmButton: 'swal2-custom-button',
+            },
           });
-          throw error;
+
+          // Return empty array to prevent UI errors
+          setSpecificHazardsData({ hazards: [] });
+        } finally {
+          setIsFetchingHazards(false);
         }
+      };
 
-        const data = await response.json();
-        const endTime = performance.now();
-
-        apiLogger.info('Geographic levels loaded', {
-          count: data.levels?.length || 0,
-          loadTimeMs: endTime - startTime
-        });
-
-        return data;
-      } catch (error) {
-        apiLogger.error('Failed to fetch geographic levels', {
-          error: error instanceof Error ? error.message : String(error),
-          errorType: error instanceof Error ? error.constructor.name : 'Unknown',
-          durationMs: performance.now() - startTime
-        });
-        throw error;
-      }
+      // Process the specific hazards data from props
+      processSpecificHazardsData();
+    } else {
+      // Reset hazards when no hazard cluster is selected
+      setSpecificHazardsData({ hazards: [] });
     }
-  });
+  }, [specificHazardsDataProp, filters.hazardClusterId, searchQuery]);
 
   // Function to handle specific hazard selection
   const handleSpecificHazardSelection = async (specificHazardId: string) => {
     try {
-      const response = await fetch(`/api/analytics/related-hazard-data?specificHazardId=${specificHazardId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch related hazard data");
-      }
-
-      const { hazardClusterId, hazardTypeId } = await response.json();
-
-      // Convert IDs to strings before updating the filters
+      // First, update the specificHazardId in filters
       setFilters((prev) => ({
         ...prev,
-        hazardClusterId: hazardClusterId?.toString() || "",
-        hazardTypeId: hazardTypeId?.toString() || "",
+        specificHazardId: specificHazardId,
       }));
+
+      // Find the specific hazard in the data to get its related hazard type and cluster
+      if (specificHazardsData && specificHazardsData.hazards) {
+        const selectedHazard = specificHazardsData.hazards.find(
+          (hazard: any) => hazard.id.toString() === specificHazardId
+        ) as any;
+
+        if (selectedHazard && selectedHazard.hazardClusterId && selectedHazard.hazardTypeId) {
+          // If we found the hazard with its related data, update the filters
+          setFilters((prev) => ({
+            ...prev,
+            hazardClusterId: selectedHazard.hazardClusterId.toString(),
+            hazardTypeId: selectedHazard.hazardTypeId.toString(),
+          }));
+        }
+      }
     } catch (error) {
-      console.error("Error fetching related hazard data:", error);
+      console.error("Error processing specific hazard selection:", error);
     }
   };
 
+  // State to hold processed sectors
+  const [processedSectors, setSectors] = useState<Sector[]>([]);
 
-
-  // Extract data from the fetched data
-  const sectors: Sector[] = sectorsData?.sectors || [];
+  // Process sectorsData to extract sectors regardless of structure
+  useEffect(() => {
+    if (sectorsData) {
+      try {
+        // If sectorsData is already an array, use it directly
+        if (Array.isArray(sectorsData)) {
+          setSectors(sectorsData as unknown as Sector[]);
+        }
+        // If sectorsData has a sectors property that is an array, use that
+        else if (sectorsData.sectors && Array.isArray(sectorsData.sectors)) {
+          setSectors(sectorsData.sectors as unknown as Sector[]);
+        }
+      } catch (error) {
+        console.error('Error processing sectors data:', error);
+      }
+    }
+  }, [sectorsData]);
   const hazardTypes: Hazard[] = hazardTypesData?.hazardTypes || [];
-  const hazardClusters: Hazard[] = hazardClustersData?.clusters || [];
+  const hazardClusters: Hazard[] = hazardClustersData?.hazardClusters || [];
   const specificHazards: Hazard[] = specificHazardsData?.hazards || [];
   const geographicLevels: Hazard[] =
     geographicLevelsData?.levels.map((level: { id: number; name: { en: string } }) => ({
@@ -611,7 +505,7 @@ const Filters: React.FC<FiltersProps> = ({
     }
   }, [specificHazards, filters.hazardClusterId]);
 
-  const disasterEvents: DisasterEvent[] = disasterEventsData?.disasterEvents?.rows || [];
+  // Use the disasterEvents state that was set in the useEffect
 
   // Filter events based on search input with enhanced logging
   const filteredEvents = React.useMemo(() => {
@@ -634,34 +528,17 @@ const Filters: React.FC<FiltersProps> = ({
 
     // Log the search operation if it took significant time
     if (endTime - startTime > 50) { // Only log if search took more than 50ms
-      performanceLogger.debug('Event search completed', {
-        searchTerm: searchTerm,
-        totalEvents: disasterEvents.length,
-        resultsCount: results.length,
-        searchTimeMs: endTime - startTime
-      });
+
     }
 
     return results;
   }, [filters.disasterEventId, disasterEvents]);
 
-  // Debug to ensure correct data mapping
-  // console.log("Hazard Types:", hazardTypes);
-  // console.log("Hazard Clusters:", hazardClusters);
-  // console.log("Specific Hazards:", specificHazards);
-  // console.log("Geographic Levels:", geographicLevels);
 
   // Handle filter changes with enhanced logging
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
-    const startTime = performance.now();
     const operationId = `filter-change-${field}-${Date.now()}`;
 
-    userLogger.info('Filter change initiated', {
-      operationId,
-      field,
-      value,
-      previousValue: filters[field]
-    });
 
     setFilters((prev) => {
       const updatedFilters = { ...prev, [field]: value };
@@ -680,12 +557,8 @@ const Filters: React.FC<FiltersProps> = ({
         logPayload.updatedFields.push('toDate');
 
         // Log the validation warning
-        validationLogger.warn('Date validation: fromDate > toDate', {
-          operationId,
-          fromDate: value,
-          toDate: prev.toDate,
-          action: 'toDate cleared'
-        });
+
+
 
         // Show warning to user
         Swal.fire({
@@ -730,8 +603,9 @@ const Filters: React.FC<FiltersProps> = ({
         }));
       }
 
+
       // Log the filter update
-      userLogger.debug('Filter state updated', logPayload);
+
 
       // Trigger back-propagation when specificHazardId is updated
       if (field === "specificHazardId") {
@@ -740,20 +614,26 @@ const Filters: React.FC<FiltersProps> = ({
 
       // Immediately apply filters when geographic level changes
       if (field === "geographicLevelId") {
-        userLogger.info('Auto-applying filters due to geographic level change', {
-          operationId,
-          geographicLevelId: value
-        });
         onApplyFilters(updatedFilters);
       }
 
-      const endTime = performance.now();
-      performanceLogger.debug('Filter update processed', {
-        operationId,
-        field,
-        processingTimeMs: endTime - startTime,
-        updatedFields: logPayload.updatedFields
-      });
+      // Synchronize URL parameters with filter state for loader data
+      // This ensures the loader receives the correct parameters
+      if (["hazardTypeId", "hazardClusterId", "specificHazardId"].includes(field)) {
+        // Create form data with current filter values
+        const formData = new FormData();
+
+        // Only include non-empty values
+        Object.entries(updatedFilters).forEach(([key, val]) => {
+          if (val && key !== '_disasterEventId') { // Skip internal fields
+            formData.append(key, val);
+          }
+        });
+
+        // Submit the form to update URL parameters
+        // This will trigger the loader with the updated parameters
+        submit(formData, { method: 'get', replace: true });
+      }
 
       return updatedFilters;
     });
@@ -766,26 +646,14 @@ const Filters: React.FC<FiltersProps> = ({
 
   // Apply filters with enhanced logging and validation
   const handleApplyFilters = () => {
-    const operationId = `apply-filters-${Date.now()}`;
-    const startTime = performance.now();
 
-    userLogger.info('Applying filters', {
-      operationId,
-      filters: {
-        ...filters,
-        // Don't log the entire disaster event ID for privacy
-        _disasterEventId: filters._disasterEventId ? '[FILTERED]' : ''
-      }
-    });
+
+
 
     // Validate sector is selected
     if (!filters.sectorId) {
-      const errorMessage = 'Sector is required';
-      validationLogger.warn('Validation failed: missing sector', {
-        operationId,
-        error: errorMessage,
-        validation: 'sector-required'
-      });
+
+
 
       Swal.fire({
         icon: 'warning',
@@ -802,18 +670,11 @@ const Filters: React.FC<FiltersProps> = ({
 
     // Validate date range
     if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) {
-      const errorMessage = 'From date cannot be later than To date';
-      validationLogger.warn('Validation failed: invalid date range', {
-        operationId,
-        error: errorMessage,
-        fromDate: filters.fromDate,
-        toDate: filters.toDate,
-        validation: 'date-range'
-      });
+
 
       Swal.fire({
         icon: 'warning',
-        text: errorMessage + '. Please adjust your date selection.',
+        text: 'From date cannot be later than To date. Please adjust your date selection.',
         confirmButtonText: 'OK',
         buttonsStyling: false,
         customClass: {
@@ -837,29 +698,34 @@ const Filters: React.FC<FiltersProps> = ({
       disasterEventId: filters._disasterEventId || null,
     };
 
-    userLogger.info('Filters applied successfully', {
-      operationId,
-      filterCount: Object.values(appliedFilters).filter(Boolean).length,
-      processingTimeMs: performance.now() - startTime
+
+
+    // Create form data with current filter values for URL synchronization
+    const formData = new FormData();
+
+    // Only include non-empty values
+    Object.entries(filters).forEach(([key, val]) => {
+      if (val && key !== '_disasterEventId' && key !== 'disasterEventId') {
+        formData.append(key, val);
+      }
     });
 
-    // Apply the filters
+    // If we have a disaster event ID from the internal field, use that
+    if (filters._disasterEventId) {
+      formData.append('disasterEventId', filters._disasterEventId);
+    }
+
+    // Submit the form to update URL parameters
+    // This will trigger the loader with the updated parameters
+    submit(formData, { method: 'get', replace: true });
+
+    // Also call the parent's onApplyFilters for backward compatibility
     onApplyFilters(appliedFilters);
   };
 
 
   // Clear all filters with enhanced logging
   const handleClearFilters = () => {
-    const operationId = `clear-filters-${Date.now()}`;
-    const startTime = performance.now();
-
-    // Log the current filter state before clearing
-    const activeFilterCount = Object.values(filters).filter(Boolean).length;
-    userLogger.info('Clearing all filters', {
-      operationId,
-      activeFilterCount,
-      previousFilters: Object.keys(filters).filter(key => filters[key as keyof typeof filters])
-    });
 
     // Reset all filters to initial state
     setFilters(initialFilters);
@@ -873,11 +739,9 @@ const Filters: React.FC<FiltersProps> = ({
     };
     setDisplayValues(resetDisplayValues);
 
-    // Log the completion of the clear operation
-    userLogger.info('All filters cleared', {
-      operationId,
-      processingTimeMs: performance.now() - startTime
-    });
+    // Clear URL parameters by submitting an empty form
+    // This will trigger the loader with empty parameters
+    submit(new FormData(), { method: 'get', replace: true });
 
     // Call parent clear handler
     onClearFilters();
@@ -950,7 +814,7 @@ const Filters: React.FC<FiltersProps> = ({
                     onMouseDown={() => {
                       setFilters((prev) => ({
                         ...prev,
-                        [field]: item.id, // Save the ID for API calls
+                        [field]: item.id,
                       }));
                       // Trigger the back-propagation for Specific Hazard
                       if (field === "specificHazardId") {
@@ -998,10 +862,10 @@ const Filters: React.FC<FiltersProps> = ({
           <option value="" disabled>
             {sectorsLoading ? "Loading sectors..." : "Select Sector"}
           </option>
-          {sectors.length === 0 ? (
+          {processedSectors.length === 0 ? (
             <option disabled>No sectors found in database</option>
           ) : (
-            [...sectors]
+            [...processedSectors]
               .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
               .map((sector) => (
                 <option key={sector.id} value={sector.id}>
@@ -1026,7 +890,7 @@ const Filters: React.FC<FiltersProps> = ({
             {filters.sectorId ? "Select Sub Sector" : "Select Sector First"}
           </option>
           {(() => {
-            const selectedSector = sectors.find(s => s.id.toString() === filters.sectorId);
+            const selectedSector = processedSectors.find((s: Sector) => s.id.toString() === filters.sectorId);
             const subsectors = selectedSector?.subsectors || [];
 
             if (subsectors.length === 0 && filters.sectorId) {
@@ -1034,8 +898,8 @@ const Filters: React.FC<FiltersProps> = ({
             }
 
             return subsectors
-              .sort((a, b) => a.sectorname.localeCompare(b.sectorname))
-              .map((subsector) => (
+              .sort((a: Sector, b: Sector) => a.sectorname.localeCompare(b.sectorname))
+              .map((subsector: Sector) => (
                 <option key={subsector.id} value={subsector.id}>
                   {subsector.sectorname}
                 </option>
@@ -1054,7 +918,7 @@ const Filters: React.FC<FiltersProps> = ({
       </div>
 
       <div className="dts-form-component mg-grid__col--span-2">
-        {renderAutocomplete(specificHazards, "specificHazardId", false, "Specific Hazard")}
+        {renderAutocomplete(specificHazards, "specificHazardId", isFetchingHazards, "Specific Hazard")}
       </div>
 
       {/* Row 3: Geographic Level, From, and To */}

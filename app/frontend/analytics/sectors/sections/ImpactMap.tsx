@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import ImpactMapOl from "./Map/ImpactMapOl";
 
 interface Sector {
@@ -28,6 +27,9 @@ type Filters = FilterValues | null;
 type ImpactMapProps = {
   filters: Filters;
   currency: string;
+  geographicImpactData: any;
+  // New prop to receive sectors data from loader instead of fetching via API
+  sectorsData?: { sectors: Sector[] | null };
 };
 
 const DEFAULT_FILTERS: FilterValues = {
@@ -44,22 +46,31 @@ const DEFAULT_FILTERS: FilterValues = {
   confidenceLevel: 'low'
 };
 
-export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: ImpactMapProps) {
-  const [geoData, setGeoData] = useState<any>(null);
+export default function ImpactMap({ filters = DEFAULT_FILTERS, currency, geographicImpactData, sectorsData }: ImpactMapProps) {
+
   const [selectedMetric, setSelectedMetric] = useState<"totalDamage" | "totalLoss">("totalDamage");
   const [selectedTab, setSelectedTab] = useState<string>('tab01');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Add sectors query for dynamic titles
-  const { data: sectorsResponse } = useQuery({
-    queryKey: ["sectors"],
-    queryFn: async () => {
-      const response = await fetch("/api/analytics/sectors");
-      if (!response.ok) throw new Error("Failed to fetch sectors");
-      return response.json() as Promise<{ sectors: Sector[] }>;
+  // More lenient check for valid data
+  const hasValidData = Boolean(
+    geographicImpactData &&
+    // Either it has features array with items
+    ((geographicImpactData.features &&
+      Array.isArray(geographicImpactData.features) &&
+      geographicImpactData.features.length > 0) ||
+      // Or it has type='FeatureCollection' which indicates it's GeoJSON
+      (geographicImpactData.type === 'FeatureCollection'))
+  );
+
+  // Check if geographicImpactData is a GeoJSON FeatureCollection
+  if (geographicImpactData) {
+    if ('features' in geographicImpactData) {
     }
-  });
+  }
+
+  // Use sectors data from props for dynamic titles
+  const sectors = sectorsData?.sectors || [];
 
   // Function to get sector with parent
   const findSectorWithParent = (sectors: Sector[], targetId: string): { sector: Sector | undefined; parent: Sector | undefined } => {
@@ -79,13 +90,13 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: Impac
 
   // Function to get section title based on selected sector
   const sectionTitle = () => {
-    if (!sectorsResponse?.sectors) return "Impact by Geographic Level";
+    if (!sectors || sectors.length === 0) return "Impact by Geographic Level";
 
     if (filters?.sectorId) {
-      const { sector } = findSectorWithParent(sectorsResponse.sectors, filters.sectorId);
+      const { sector } = findSectorWithParent(sectors, filters.sectorId);
 
       if (filters?.subSectorId && sector) {
-        const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsResponse.sectors, filters.subSectorId);
+        const { sector: subsector, parent: mainSector } = findSectorWithParent(sectors, filters.subSectorId);
         if (subsector && mainSector) {
           return `Impact in ${subsector.sectorname} (${mainSector.sectorname} Sector) by Geographic Level`;
         }
@@ -105,61 +116,29 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: Impac
     setSelectedMetric(tabId === 'tab01' ? 'totalDamage' : 'totalLoss');
   };
 
-  // Fetch geographic impact data
+  // Set error message if there's an issue with the data
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    if (!geographicImpactData) {
+      setError("Failed to load geographic impact data");
+    } else if (geographicImpactData.error) {
+      const errorMessage = geographicImpactData.error === "No divisions found for the given criteria"
+        ? "No administrative divisions are available in the system. Please contact your administrator to set up geographic boundaries."
+        : geographicImpactData.message || geographicImpactData.error || "Failed to fetch geographic data";
+      setError(errorMessage);
+    } else {
       setError(null);
-      try {
-        const url = new URL('/api/analytics/geographic-impacts', window.location.origin);
-        const activeFilters = filters || DEFAULT_FILTERS;
-  
-        Object.entries(activeFilters).forEach(([key, value]) => {
-          if (value !== null && value !== '') {
-            url.searchParams.append(key, value);
-          }
-        });
-  
-        const response = await fetch(url.toString());
-        const data = await response.json();
-  
-        // Handle both 404 and explicit error messages
-        if (!response.ok || data.error) {
-          const errorMessage = data.error === "No divisions found for the given criteria"
-            ? "No administrative divisions are available in the system. Please contact your administrator to set up geographic boundaries."
-            : data.message || data.error || "Failed to fetch geographic data";
-          setError(errorMessage);
-          setGeoData({ type: "FeatureCollection", features: [] });
-          return;
-        }
-  
-        if (!data || !data.features) {
-          setGeoData({ type: "FeatureCollection", features: [] });
-          return;
-        }
-  
-        setGeoData(data);
-      } catch (error) {
-        console.error('Error fetching geographic data:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch geographic data');
-        setGeoData({ type: "FeatureCollection", features: [] });
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchData();
-  }, [filters]);
-  
+    }
+  }, [geographicImpactData]);
+
   return (
     <section className="dts-page-section">
       <div className="mg-container">
         <h2 className="dts-heading-2">{sectionTitle()}</h2>
         <p className="dts-body-text mb-6">Distribution of impacts across different geographic levels</p>
-  
+
         <div className="map-section">
           <h2 className="mg-u-sr-only" id="tablist01">Geographic Impact View</h2>
-  
+
           <ul className="dts-tablist" role="tablist" aria-labelledby="tablist01">
             <li role="presentation">
               <button
@@ -190,7 +169,7 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: Impac
               </button>
             </li>
           </ul>
-  
+
           <div id="tabpanel01" role="tabpanel" aria-labelledby="tab01" hidden={selectedTab !== 'tab01'}>
             {error ? (
               <div className="map-error">
@@ -201,25 +180,20 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: Impac
                   {error}
                 </div>
               </div>
-            ) : loading ? (
-              <div className="map-loading">
-                <div className="loading-spinner"></div>
-                <p>Loading map data...</p>
-              </div>
-            ) : !geoData || !geoData.features || geoData.features.length === 0 ? (
+            ) : !hasValidData ? (
               <div className="map-no-data">
                 <p>No geographic data available for the selected filters.</p>
               </div>
             ) : (
               <ImpactMapOl
-                geoData={geoData}
+                geoData={geographicImpactData}
                 selectedMetric={selectedMetric}
                 filters={filters || DEFAULT_FILTERS}
                 currency={currency}
               />
             )}
           </div>
-  
+
           <div id="tabpanel02" role="tabpanel" aria-labelledby="tab02" hidden={selectedTab !== 'tab02'}>
             {error ? (
               <div className="map-error">
@@ -230,18 +204,13 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: Impac
                   {error}
                 </div>
               </div>
-            ) : loading ? (
-              <div className="map-loading">
-                <div className="loading-spinner"></div>
-                <p>Loading map data...</p>
-              </div>
-            ) : !geoData || !geoData.features || geoData.features.length === 0 ? (
+            ) : !hasValidData ? (
               <div className="map-no-data">
                 <p>No geographic data available for the selected filters.</p>
               </div>
             ) : (
               <ImpactMapOl
-                geoData={geoData}
+                geoData={geographicImpactData}
                 selectedMetric={selectedMetric}
                 filters={filters || DEFAULT_FILTERS}
                 currency={currency}
@@ -252,5 +221,5 @@ export default function ImpactMap({ filters = DEFAULT_FILTERS, currency }: Impac
       </div>
     </section>
   );
-  
+
 }
