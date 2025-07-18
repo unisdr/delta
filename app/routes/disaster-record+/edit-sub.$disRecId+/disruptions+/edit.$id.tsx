@@ -53,9 +53,18 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	]);
 
 	let ctryIso3: string = "";
+	let currencies: string[] = [];
 	const settings = await getCountrySettingsFromSession(request);
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
+		if (settings.currencyCode) {
+			currencies.push(settings.currencyCode);
+		}
+	}
+
+	// Default to USD if no currencies are available
+	if (currencies.length === 0) {
+		currencies.push("USD");
 	}
 
 	const divisionGeoJSON = await dr.execute(`
@@ -72,7 +81,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		}
 		let res: LoaderRes = {
 			item: null,
-			fieldDef: await getFieldsDef(),
+			fieldDef: await getFieldsDef(currencies),
 			recordId: params.disRecId,
 			sectorId: sectorId,
 			treeData: treeData || [],
@@ -88,7 +97,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let res: LoaderRes = {
 		item: item,
-		fieldDef: await getFieldsDef(),
+		fieldDef: await getFieldsDef(currencies),
 		recordId: item.recordId,
 		sectorId: item.sectorId,
 		treeData: treeData || [],
@@ -99,7 +108,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 });
 
 export const action = createAction({
-	fieldsDef: await getFieldsDef(),
+	fieldsDef: await getFieldsDef(["USD"]),
 	create: disruptionCreate,
 	update: disruptionUpdate,
 	getById: disruptionByIdTx,
