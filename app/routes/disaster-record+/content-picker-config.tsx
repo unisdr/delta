@@ -23,10 +23,13 @@ export const contentPickerConfig = {
         {
             column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event",
             render: (item: any) => {
+                if (!item.hazardousEventId) {
+                    return "Not linked to a hazardous event";
+                }
                 return hazardousEventLabel({
                     id: item.hazardousEventId,
                     description: "", // Assuming there's a description field
-                    hazard: { nameEn: item.hazardousEventName }
+                    hazard: { nameEn: item.hazardousEventName || "" }
                 })
             }
         },
@@ -50,8 +53,8 @@ export const contentPickerConfig = {
             { alias: "hazardousEventName", column: hipHazardTable.nameEn }
         ],
         joins: [ // Define joins
-            { type: "inner", table: hazardousEventTable, condition: eq(disasterEventTable.hazardousEventId, hazardousEventTable.id) },
-            { type: "inner", table: hipHazardTable, condition: eq(hazardousEventTable.hipHazardId, hipHazardTable.id) }
+            { type: "left", table: hazardousEventTable, condition: eq(disasterEventTable.hazardousEventId, hazardousEventTable.id) },
+            { type: "left", table: hipHazardTable, condition: eq(hazardousEventTable.hipHazardId, hipHazardTable.id) }
         ],
         whereIlike: [ // Define search filters
             { column: disasterEventTable.otherId1, placeholder: "[safeSearchPattern]" },
