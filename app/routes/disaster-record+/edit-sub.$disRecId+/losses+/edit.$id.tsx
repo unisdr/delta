@@ -6,6 +6,7 @@ import {
 	lossesById,
 	lossesByIdTx,
 	fieldsDef,
+	fieldsForPubOrPriv,
 	LossesViewModel,
 	LossesFields,
 } from "~/backend.server/models/losses";
@@ -56,9 +57,18 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	]);
 
 	let ctryIso3: string = "";
+	let currencies: string[] = [];
 	const settings = await getCountrySettingsFromSession(request)
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
+		if (settings.currencyCode) {
+			currencies.push(settings.currencyCode);
+		}
+	}
+
+	// Default to USD if no currencies are available
+	if (currencies.length === 0) {
+		currencies.push("USD");
 	}
 
 	const divisionGeoJSON = await dr.execute(`
@@ -75,7 +85,29 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		}
 		let res: LoaderRes = {
 			item: null,
-			fieldDef: fieldsDef,
+			fieldDef: await Promise.all([
+				Promise.resolve(fieldsDef),
+				fieldsForPubOrPriv(true, currencies),
+				fieldsForPubOrPriv(false, currencies)
+			]).then(([baseDef, pubFields, privFields]) => {
+				// Fix the empty enumData in currency fields from baseDef
+				const fixedBaseDef = baseDef.map(field => {
+					if ((field.key === 'publicCostUnitCurrency' || field.key === 'privateCostUnitCurrency') &&
+						(!field.enumData || field.enumData.length === 0)) {
+						return {
+							...field,
+							enumData: currencies.map(currency => ({ key: currency, label: currency }))
+						};
+					}
+					return field;
+				});
+
+				return [
+					...fixedBaseDef,
+					...pubFields,
+					...privFields
+				];
+			}),
 			recordId: params.disRecId,
 			sectorId: sectorId,
 			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId),
@@ -92,7 +124,29 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let res: LoaderRes = {
 		item: item,
-		fieldDef: fieldsDef,
+		fieldDef: await Promise.all([
+			Promise.resolve(fieldsDef),
+			fieldsForPubOrPriv(true, currencies),
+			fieldsForPubOrPriv(false, currencies)
+		]).then(([baseDef, pubFields, privFields]) => {
+			// Fix the empty enumData in currency fields from baseDef
+			const fixedBaseDef = baseDef.map(field => {
+				if ((field.key === 'publicCostUnitCurrency' || field.key === 'privateCostUnitCurrency') &&
+					(!field.enumData || field.enumData.length === 0)) {
+					return {
+						...field,
+						enumData: currencies.map(currency => ({ key: currency, label: currency }))
+					};
+				}
+				return field;
+			});
+
+			return [
+				...fixedBaseDef,
+				...pubFields,
+				...privFields
+			];
+		}),
 		recordId: item.recordId,
 		sectorId: item.sectorId,
 		treeData: treeData || [],
@@ -103,7 +157,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 });
 
 export const action = createAction({
-	fieldsDef: fieldsDef,
+	fieldsDef: await Promise.all([
+		fieldsForPubOrPriv(true, ["USD"]),
+		fieldsForPubOrPriv(false, ["USD"])
+	]).then(([pubFields, privFields]) => [
+		...fieldsDef.filter(f => !['publicCostUnitCurrency', 'privateCostUnitCurrency'].includes(f.key as string)),
+		...pubFields,
+		...privFields
+	]),
 	create: lossesCreate,
 	update: lossesUpdate,
 	getById: lossesByIdTx,
