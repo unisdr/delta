@@ -9,6 +9,10 @@ interface SectorImpactResponse {
     eventsOverTime: { [key: string]: string };
     damageOverTime: { [key: string]: string };
     lossOverTime: { [key: string]: string };
+    dataAvailability?: {
+      damage: string;
+      loss: string;
+    };
   };
   error?: string;
 }
