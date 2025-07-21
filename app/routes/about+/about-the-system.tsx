@@ -47,7 +47,7 @@ export default function AboutTheSystem() {
             <>
               <PreventionWebLandingPageWidget
                 pageId="92272"
-                activeDomain="www.preventionweb.net"
+                activeDomain="syndication.preventionweb.net"
               />
               {appendContent && (
                 <div

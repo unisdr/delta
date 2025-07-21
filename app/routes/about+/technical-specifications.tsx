@@ -51,7 +51,7 @@ export default function TechnicalSpecifications() {
             <>
               <PreventionWebLandingPageWidget
                 pageId="92279"
-                activeDomain="www.preventionweb.net"
+                activeDomain="syndication.preventionweb.net"
               />
               {appendContent && (
                 <div

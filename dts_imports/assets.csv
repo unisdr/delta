@@ -194,284 +194,284 @@ apiImportId,id,sectorId,sectorIds,isBuiltIn,name,category,nationalId,notes
 31003,63a2e871-0ca9-4f46-bffc-feb834da0935,13,13,1,Applicance,Furniture and equipment,,Tourism
 31004,4aee9ace-ce22-48c0-84a3-9798c34a712c,13,13,1,Technological equipment,Furniture and equipment,,Tourism
 31005,be3e645a-538f-4c11-9002-0bd4db996c9e,13,13,1,In-room appliances,Furniture and equipment,,Tourism
-40001,,14,14,1,Buildings,,,Commerce and Trade
-40002,,14,14,1,Storefronts,,,Commerce and Trade
-40003,,14,14,1,Shopping centers,,,Commerce and Trade
-40004,,14,14,1,Retail outlets,,,Commerce and Trade
-40005,,14,14,1,Marketplaces,,,Commerce and Trade
-40006,,14,14,1,Warehouses,,,Commerce and Trade
-40007,,14,14,1,Distribution centeres,,,Commerce and Trade
-40008,,14,14,1,Stalls,,,Commerce and Trade
-41001,,14,14,1,Merchandise,Inventory and stock,,Commerce and Trade
-41002,,14,14,1,Raw material,Inventory and stock,,Commerce and Trade
-41003,,14,14,1,Supplies ,Inventory and stock,,Commerce and Trade
-41004,,14,14,1,E-commerce platforms,Technological assets,,Commerce and Trade
-41005,,14,14,1,Online storefronts,Technological assets,,Commerce and Trade
-50001,,15,15,1,Buildings,,,Services
-50002,,15,15,1,Office space,,,Services
-50003,,15,15,1,Technological platforms,,,Services
-50004,,15,15,1,Studios,,,Services
-60001,,21,21,1,Primary health centers,,,Health
-60002,,21,21,1,Outpatient centers,,,Health
-60003,,21,21,1,Dispensary,,,Health
-60004,,21,21,1,district hospital,,,Health
-60005,,21,21,1,specialist clinics,,,Health
-60006,,21,21,1,regional medical centers,,,Health
-60007,,21,21,1,University hospital,,,Health
-60008,,21,21,1,Diagnostic & laboratory services,,,Health
-60009,,21,21,1,Emergency medical services,,,Health
-60010,,21,21,1,Pharmacy,,,Health
-60011,,21,21,1,Laboratories,,,Health
-60012,,21,21,1,Record storage sites,,,Health
-60013,,21,21,1,Blood banks,,,Health
-60014,,21,21,1,Operating room,,,Health
-60015,,21,21,1,Surgical block,,,Health
-61001,,21,21,1,Imaging equipments,Assets - equipments,,Health
-61002,,21,21,1,Medical equipments,Assets - equipments,,Health
-61003,,21,21,1,Laboratory diagnostic equipments,Assets - equipments,,Health
-61004,,21,21,1,Mobile healthcare unit,Assets - equipments,,Health
-61005,,21,21,1,Other specialized treatment devices,Assets - equipments,,Health
-62001,,21,21,1,Health management system,Digital assets,,Health
-62002,,21,21,1,Electronic health records,Digital assets,,Health
-62003,,21,21,1,Servers,Digital assets,,Health
-63001,,21,21,1,Vaccines,Consumables,,Health
-63002,,21,21,1,Biologics,Consumables,,Health
-63003,,21,21,1,Medicines,Consumables,,Health
-63004,,21,21,1,Other consumables,Consumables,,Health
-63005,,21,21,1,Laboratory consumables,Consumables,,Health
-64001,,22,22,1,Kindergarden,Facilities,,Education
-64002,,22,22,1,Day care center,Facilities,,Education
-64003,,22,22,1,Early childhood center,Facilities,,Education
-64004,,22,22,1,Primary school,Facilities,,Education
-64005,,22,22,1,Middle school,Facilities,,Education
-64006,,22,22,1,Junior high school,Facilities,,Education
-64007,,22,22,1,Vocational training center,Facilities,,Education
-64008,,22,22,1,Teacher training,Facilities,,Education
-64009,,22,22,1,High school,Facilities,,Education
-64010,,22,22,1,College,Facilities,,Education
-64011,,22,22,1,Community colleague,Facilities,,Education
-64012,,22,22,1,Pollytecnic institute,Facilities,,Education
-64013,,22,22,1,University campus,Facilities,,Education
-64014,,22,22,1,Faculty,Facilities,,Education
-64015,,22,22,1,Student residences,Facilities,,Education
-64016,,22,22,1,Student dorms,Facilities,,Education
-64017,,22,22,1,Sport facilities,Facilities,,Education
-64018,,22,22,1,Sport pavilions,Facilities,,Education
-64019,,22,22,1,Computer labs,Facilities,,Education
-64020,,22,22,1,Students libraries,Facilities,,Education
-64021,,22,22,1,Teachers housing,Facilities,,Education
-64022,,22,22,1,Recreation grounds,Facilities,,Education
-64023,,22,22,1,School gymnasium,Facilities,,Education
-64024,,22,22,1,School sanitation facilities,Facilities,,Education
-64025,,22,22,1,School water facilities,Facilities,,Education
-64026,,22,22,1,School cafeteria,Facilities,,Education
-64027,,22,22,1,School cantine,Facilities,,Education
-64028,,22,22,1,School kitchen,Facilities,,Education
-64029,,22,22,1,School dispensaire/ nurse,Facilities,,Education
-64030,,22,22,1,Colleague health unit,Facilities,,Education
-65001,,22,22,1,"Vehicles - students or teachers transport (school buses, vans, boats, etc.)",Equipments & Furniture,,Education
-65002,,22,22,1,Vehicles - management,Equipments & Furniture,,Education
-65003,,22,22,1,Desks,Equipments & Furniture,,Education
-65004,,22,22,1,Chairs,Equipments & Furniture,,Education
-65005,,22,22,1,Boards,Equipments & Furniture,,Education
-65006,,22,22,1,Storage furniture,Equipments & Furniture,,Education
-65007,,22,22,1,Computers,Equipments & Furniture,,Education
-65008,,22,22,1,Printers,Equipments & Furniture,,Education
-65009,,22,22,1,Projectors,Equipments & Furniture,,Education
-65010,,22,22,1,Printers,Equipments & Furniture,,Education
-65011,,22,22,1,Scanners,Equipments & Furniture,,Education
-70001,,23,23,1,Precarious housing - Single family houses - detached houses,,,Housing
-70002,,23,23,1,Precarious housing - Single family houses - attached houses,,,Housing
-70003,,23,23,1,Precarious housing - Multi family housing - appartment buildings,,,Housing
-70004,,23,23,1,Precarious housing - Multi family housing - condominiums,,,Housing
-70005,,23,23,1,Precarious housing - Multi family housing - House Complex,,,Housing
-70006,,23,23,1,Recreational Vehicles (RVs) - motorhomes,,,Housing
-70007,,23,23,1,Recreational Vehicles (RVs) - travel trailers,,,Housing
-70008,,23,23,1,Recreational Vehicles (RVs) - camper vans ,,,Housing
-70009,,23,23,1,Mobile/ manufactured houses,,,Housing
-70010,,23,23,1,Boat houses,,,Housing
-70011,,23,23,1,Houseboats,,,Housing
-70012,,23,23,1,House trailers,,,Housing
-70013,,23,23,1,Shelter,,,Housing
-70014,,23,23,1,Tents,,,Housing
-70015,,23,23,1,Kitchen appliances,Furniture and Equipment,,Housing
-70016,,23,23,1,Laundry appliances,Furniture and Equipment,,Housing
-70017,,23,23,1,Other electronics,Furniture and Equipment,,Housing
-70018,,23,23,1,Furniture,Furniture and Equipment,,Housing
-70019,,23,23,1,Major fixtures,Furniture and Equipment,,Housing
-70020,,23,23,1,Other equipments,Furniture and Equipment,,Housing
-71001,,24,24,1,Monuments,,,Culture
-71002,,24,24,1,Historic buildings,,,Culture
-71003,,24,24,1,Landmark,,,Culture
-71004,,24,24,1,Museums,,,Culture
-71005,,24,24,1,Art centers,,,Culture
-71006,,24,24,1,Art galleries,,,Culture
-71007,,24,24,1,Culture centeres,,,Culture
-71008,,24,24,1,Artifacts,,,Culture
-71009,,24,24,1,Artworks,,,Culture
-71010,,24,24,1,Colections,,,Culture
-71011,,24,24,1,Archives,,,Culture
-71012,,24,24,1,Libraries,,,Culture
-71013,,24,24,1,Religious sites,,,Culture
-71014,,24,24,1,Religious buildings,,,Culture
-72001,,31,31,1,"Per type of road ( paved, gravel, dirt roads)",Assets - Road infrastructure,,Transportation
-72002,,31,31,1,"Per type of terrain ( flat, undulating, mountanious)",Assets - Road infrastructure,,Transportation
-72003,,31,31,1,"Roads per categories - highways, national, regional, local, community roads",Assets - Road infrastructure,,Transportation
-72004,,31,31,1,"Assets: viaducts, roads ",Assets - Road infrastructure,,Transportation
-72005,,31,31,1,Light passenger,Assets - Road infrastructure,,Transportation
-72006,,31,31,1,Medium passenger services,Assets - Road infrastructure,,Transportation
-72007,,31,31,1,Large passenger bus,Assets - Road infrastructure,,Transportation
-72008,,31,31,1,Rigid ( 2-3 axle) cargo vehicle,Assets - Road infrastructure,,Transportation
-73001,,32,32,1,Generation plants,,,Energy and Electricity 
-73002,,32,32,1,Power plants,,,Energy and Electricity 
-73003,,32,32,1,Extraction of oil - offshore,,,Energy and Electricity 
-73004,,32,32,1,Extraction of oil - inland,,,Energy and Electricity 
-73005,,32,32,1,Distributed energy generation systems,,,Energy and Electricity 
-73006,,32,32,1,Turbines,,,Energy and Electricity 
-73007,,32,32,1,Solar PV,,,Energy and Electricity 
-73008,,32,32,1,Batteries,,,Energy and Electricity 
-73009,,32,32,1,Storage systems,,,Energy and Electricity 
-73010,,32,32,1,Storage facilities,,,Energy and Electricity 
-73011,,32,32,1,Storage tanks,,,Energy and Electricity 
-73012,,32,32,1,Refineries,,,Energy and Electricity 
-73013,,32,32,1,Processing plants,,,Energy and Electricity 
-73014,,32,32,1,Regasification terminals,,,Energy and Electricity 
-73015,,32,32,1,Pipelines oil - oleduct,,,Energy and Electricity 
-73016,,32,32,1,Driling rigs onshore,,,Energy and Electricity 
-73017,,32,32,1,Driling rigs offshore,,,Energy and Electricity 
-73018,,32,32,1,Drill wells,,,Energy and Electricity 
-73019,,32,32,1,Welleheads,,,Energy and Electricity 
-73020,,32,32,1,Completion systems,,,Energy and Electricity 
-73021,,32,32,1,Pump jacks,,,Energy and Electricity 
-73022,,32,32,1,Production platforms,,,Energy and Electricity 
-73023,,32,32,1,Compressors,,,Energy and Electricity 
-73024,,32,32,1,Pumping stations,,,Energy and Electricity 
-73025,,32,32,1,Separation units,,,Energy and Electricity 
-73026,,32,32,1,Pipeline network,,,Energy and Electricity 
-73027,,32,32,1,Pipelines gas- gaseoduct,,,Energy and Electricity 
-73028,,32,32,1,Electricity transmission lines overhead,,,Energy and Electricity 
-73029,,32,32,1,Electricity transmission underground ,,,Energy and Electricity 
-73030,,32,32,1,Electricity transmission underwater,,,Energy and Electricity 
-73031,,32,32,1,Power grids,,,Energy and Electricity 
-73032,,32,32,1,Poles,,,Energy and Electricity 
-73033,,32,32,1,Meters,,,Energy and Electricity 
-73034,,32,32,1,Wiring,,,Energy and Electricity 
-75001,,33,33,1,Buildings,,,Information and Communication
-75002,,33,33,1,Aerial telephone lines,,,Information and Communication
-75003,,33,33,1,Poles,,,Information and Communication
-75004,,33,33,1,Electronic switching ,,,Information and Communication
-75005,,33,33,1,Studios music,,,Information and Communication
-75006,,33,33,1,TV studios,,,Information and Communication
-75007,,33,33,1,Movie studios,,,Information and Communication
-75008,,33,33,1,Photo studies,,,Information and Communication
-75009,,33,33,1,Printing presses ,,,Information and Communication
-75010,,33,33,1,Distribution warehouses,,,Information and Communication
-75011,,33,33,1,Binding machines,,,Information and Communication
-75012,,33,33,1,Office space,,,Information and Communication
-75013,,33,33,1,Editing hardwarde,,,Information and Communication
-75014,,33,33,1,Recording studios,,,Information and Communication
-75015,,33,33,1,Sound stages,,,Information and Communication
-75016,,33,33,1,Post production facilities,,,Information and Communication
-75017,,33,33,1,Mixing rooms,,,Information and Communication
-75018,,33,33,1,Filming locations,,,Information and Communication
-75019,,33,33,1,Specialized stages for movie production,,,Information and Communication
-75020,,33,33,1,Equiments,,,Information and Communication
-75021,,33,33,1,Cameras,,,Information and Communication
-75022,,33,33,1,Color grading labs,,,Information and Communication
-75023,,33,33,1,Inventory,,,Information and Communication
-75024,,33,33,1,Books,,,Information and Communication
-75025,,33,33,1,Magazines,,,Information and Communication
-75026,,33,33,1,Newspapers,,,Information and Communication
-75027,,33,33,1,Editing software,,,Information and Communication
-76001,,34,34,1,Water sources,,,Water
-76002,,34,34,1,Ground extraction systems,,,Water
-76003,,34,34,1,Wells,,,Water
-76004,,34,34,1,Boreholdes,,,Water
-76005,,34,34,1,Mechanized wells,,,Water
-76006,,34,34,1,Hand-dug wells ,,,Water
-76007,,34,34,1,Ponds,,,Water
-76008,,34,34,1,Intake structures,,,Water
-76009,,34,34,1,Dams,,,Water
-76010,,34,34,1,weirs,,,Water
-76011,,34,34,1,river intakes,,,Water
-76012,,34,34,1,Pumping systems submersible,,,Water
-76013,,34,34,1,Pumping systems surface,,,Water
-76014,,34,34,1,Treatment facilities,,,Water
-76015,,34,34,1,Storage facilities,,,Water
-76016,,34,34,1,Monitoring stations,,,Water
-76017,,34,34,1,Metering systems,,,Water
-76018,,34,34,1,Water quality laboratories,,,Water
-76019,,34,34,1,Associated energy supplies,,,Water
-76020,,34,34,1,boreholes,,,Water
-77001,,35,35,1,Public toilets,,,Sanitation
-77002,,35,35,1,Septic tanks,,,Sanitation
-77003,,35,35,1,Letrines,,,Sanitation
-77004,,35,35,1,Treatment plants,,,Sanitation
-77005,,35,35,1,Decentralized plants,,,Sanitation
-77006,,35,35,1,French drains,,,Sanitation
-77007,,35,35,1,Sewage pipelines,,,Sanitation
-77008,,35,35,1,Vacuum trucks,,,Sanitation
-77009,,35,35,1,Sludge transports,,,Sanitation
-77010,,35,35,1,Mobile treatment units,,,Sanitation
-77011,,35,35,1,Pipes,,,Sanitation
-77012,,35,35,1,Pumps,,,Sanitation
-77013,,35,35,1,Drainage system,,,Sanitation
-77014,,35,35,1,Supporting equipments,,,Sanitation
-77015,,35,35,1,Waste water treatment plant,,,Sanitation
-78001,,36,36,1,internal roads,,,Community Infrastructure
-78002,,36,36,1,pathways,,,Community Infrastructure
-78003,,36,36,1,walkways,,,Community Infrastructure
-78004,,36,36,1,footpaths,,,Community Infrastructure
-78005,,36,36,1,Other connective ,,,Community Infrastructure
-78006,,36,36,1,rainage structures,,,Community Infrastructure
-78007,,36,36,1,pipe culverts,,,Community Infrastructure
-78008,,36,36,1,box culverts,,,Community Infrastructure
-78009,,36,36,1,footbridges ,,,Community Infrastructure
-78010,,36,36,1,retaining walls,,,Community Infrastructure
-78011,,36,36,1,protection of slopes,,,Community Infrastructure
-78012,,36,36,1,jetties,,,Community Infrastructure
-78013,,36,36,1,small embankments ,,,Community Infrastructure
-78014,,36,36,1,protection walls,,,Community Infrastructure
-78015,,36,36,1,small earthen dam,,,Community Infrastructure
-78016,,36,36,1,Other protective,,,Community Infrastructure
-78017,,36,36,1,small marketplaces ,,,Community Infrastructure
-78018,,36,36,1,infrastructure within market grounds,,,Community Infrastructure
-78019,,36,36,1,sheds,,,Community Infrastructure
-78020,,36,36,1,drains,,,Community Infrastructure
-78021,,36,36,1,community shops,,,Community Infrastructure
-78022,,36,36,1,community resource centers,,,Community Infrastructure
-78023,,36,36,1,religious centers,,,Community Infrastructure
-78024,,36,36,1,graveyards,,,Community Infrastructure
-78025,,36,36,1,playgrounds,,,Community Infrastructure
-78026,,36,36,1,water reservoirs ,,,Community Infrastructure
-78027,,36,36,1,community water supply,,,Community Infrastructure
-78028,,36,36,1,ponds,,,Community Infrastructure
-78029,,36,36,1,pump houses ,,,Community Infrastructure
-78030,,36,36,1,deep tube wells,,,Community Infrastructure
-78031,,36,36,1,basic drainage lines,,,Community Infrastructure
-78032,,36,36,1,community waste disposal and composting plants,,,Community Infrastructure
-78033,,36,36,1,biogassifiers,,,Community Infrastructure
-78034,,36,36,1,solar home systems for electrification,,,Community Infrastructure
-78035,,36,36,1,other low cost off-grid systems,,,Community Infrastructure
-78036,,36,36,1,community telephone centers,,,Community Infrastructure
-78037,,36,36,1,community-based early warning systems and communication devices,,,Community Infrastructure
-78038,,36,36,1,community-run radio and communication systems,,,Community Infrastructure
-78039,,36,36,1,other community communication lifelines,,,Community Infrastructure
-79001,,43,43,1,Buildings,,,Governance
-79002,,43,43,1,Police stations,,,Governance
-79003,,43,43,1,Office space,,,Governance
-79004,,43,43,1,Barracks,,,Governance
-79005,,43,43,1,Prisons,,,Governance
-79006,,43,43,1,Parliament house,,,Governance
-79007,,43,43,1,Government house,,,Governance
-79008,,43,43,1,Official residencies,,,Governance
-79009,,43,43,1,Arquives,,,Governance
-79010,,43,43,1,Storage facilities,,,Governance
-79011,,43,43,1,Correctionaries,,,Governance
-79012,,43,43,1,Tribunal facilities,,,Governance
-79013,,43,43,1,Official Vehicles,Equipments,,Governance
-79014,,43,43,1,Office furniture,Equipments,,Governance
-79015,,43,43,1,Trucks,Equipments,,Governance
-79016,,43,43,1,Fire trucks,Equipments,,Governance
-79017,,43,43,1,Tanks,Equipments,,Governance
-79018,,43,43,1,Water trucks,Equipments,,Governance
+40001,07249e18-8c3e-4d96-9d96-7109dcb54185,14,14,1,Buildings,,,Commerce and Trade
+40002,64973982-18b7-4d69-b55d-17a0cb04a3cb,14,14,1,Storefronts,,,Commerce and Trade
+40003,f2512530-e6a8-40fe-99af-b6ca2cdd1eb8,14,14,1,Shopping centers,,,Commerce and Trade
+40004,b67f0526-d616-4992-bc9c-3d4774b4d7ce,14,14,1,Retail outlets,,,Commerce and Trade
+40005,8314fbdb-05df-4099-a270-0a1ccb7079c5,14,14,1,Marketplaces,,,Commerce and Trade
+40006,ed3b6cc5-a655-4a9e-9849-e5064e5c6c00,14,14,1,Warehouses,,,Commerce and Trade
+40007,887c31e8-9854-48ae-a1c9-1ffa89102894,14,14,1,Distribution centeres,,,Commerce and Trade
+40008,c9e5088b-9af5-4e67-80e2-58bc09dc1269,14,14,1,Stalls,,,Commerce and Trade
+41001,b615f9f5-cbea-4efa-9bce-62aaef22a353,14,14,1,Merchandise,Inventory and stock,,Commerce and Trade
+41002,a73f597b-c608-4a62-9a3c-42335581b8be,14,14,1,Raw material,Inventory and stock,,Commerce and Trade
+41003,23a5fa57-b2b1-46eb-b30e-e57b95f03c1a,14,14,1,Supplies ,Inventory and stock,,Commerce and Trade
+41004,8a7ceaaf-3f60-4e91-b941-7ee99da357bc,14,14,1,E-commerce platforms,Technological assets,,Commerce and Trade
+41005,a8ea231c-404b-4c91-8a2b-bad8185659fb,14,14,1,Online storefronts,Technological assets,,Commerce and Trade
+50001,e4a72ac4-9c3b-427e-be44-edfd51694a95,15,15,1,Buildings,,,Services
+50002,3115c3e2-5c77-499c-b2d2-155ecb932c07,15,15,1,Office space,,,Services
+50003,12f35372-dcee-4d53-9739-52e7eced2a1d,15,15,1,Technological platforms,,,Services
+50004,6826c103-5d88-4997-88a4-03fd652838f6,15,15,1,Studios,,,Services
+60001,966b1aa4-ac0a-46c8-8b6c-12482886dff8,21,21,1,Primary health centers,,,Health
+60002,aea9d149-1a1e-4a3c-a811-c9a20df89a0a,21,21,1,Outpatient centers,,,Health
+60003,c0641bd2-2bc3-481c-bfd7-42f2f40e0b67,21,21,1,Dispensary,,,Health
+60004,4f38b659-7176-4aed-8291-c6079f10038d,21,21,1,district hospital,,,Health
+60005,14a7a88b-f82f-4e82-86d3-39dee58caf04,21,21,1,specialist clinics,,,Health
+60006,4820ac23-e157-43e2-acfc-020b15667243,21,21,1,regional medical centers,,,Health
+60007,535b20c1-737b-4bcd-b099-1e6f523b4757,21,21,1,University hospital,,,Health
+60008,c0e660eb-17d7-4469-bcc5-50be016a4d9b,21,21,1,Diagnostic & laboratory services,,,Health
+60009,a7c348da-0e68-4684-888e-263aed112666,21,21,1,Emergency medical services,,,Health
+60010,c78bf768-8a82-409c-9ceb-625bac4bc96b,21,21,1,Pharmacy,,,Health
+60011,dbaf671f-ec33-4736-8c5b-7595ba56a22c,21,21,1,Laboratories,,,Health
+60012,d8656d68-7d7f-4001-9650-bac4ee70b5c1,21,21,1,Record storage sites,,,Health
+60013,8d0ad683-d358-411a-978f-7d5e11c7c74d,21,21,1,Blood banks,,,Health
+60014,58016281-c070-4785-bdaf-141f5f565133,21,21,1,Operating room,,,Health
+60015,07e7abbb-bd3b-4149-a2dd-fb49a16486e7,21,21,1,Surgical block,,,Health
+61001,714f7327-ead1-44bb-88c9-60410773ccef,21,21,1,Imaging equipments,Assets - equipments,,Health
+61002,e9cb3b54-a7ba-4426-98e1-ca1950f7fbd7,21,21,1,Medical equipments,Assets - equipments,,Health
+61003,6b0614d0-367f-4327-8d08-39600639d88b,21,21,1,Laboratory diagnostic equipments,Assets - equipments,,Health
+61004,ff9c003b-940a-414f-8aae-f3951bf825fb,21,21,1,Mobile healthcare unit,Assets - equipments,,Health
+61005,9d685f6e-4798-4455-bb07-3ed74a91047f,21,21,1,Other specialized treatment devices,Assets - equipments,,Health
+62001,56a92055-4c7b-48cb-a468-7f24b420dcb5,21,21,1,Health management system,Digital assets,,Health
+62002,3fa8bb1a-1f80-4fb4-8f91-e8411fd556c3,21,21,1,Electronic health records,Digital assets,,Health
+62003,3c1aad4e-7f22-4cdc-b50d-cbaf10794177,21,21,1,Servers,Digital assets,,Health
+63001,558c2f56-51ce-4a5e-b08b-8c1e110e9128,21,21,1,Vaccines,Consumables,,Health
+63002,3dd667b9-2d85-4a41-b544-400a0935d126,21,21,1,Biologics,Consumables,,Health
+63003,dc0ef026-80a3-4c98-aaea-2bd3f02bc1db,21,21,1,Medicines,Consumables,,Health
+63004,91346dc1-c798-4935-9475-8aecfc98f34f,21,21,1,Other consumables,Consumables,,Health
+63005,bbe03809-c3e9-48b0-9095-03d1df57048d,21,21,1,Laboratory consumables,Consumables,,Health
+64001,c7b3e5de-689f-4652-bad5-31921ef35168,22,22,1,Kindergarden,Facilities,,Education
+64002,790d07cd-bce1-4931-a671-32bef4aca39f,22,22,1,Day care center,Facilities,,Education
+64003,ad9d970b-931c-43c9-bf50-2474c6082ba0,22,22,1,Early childhood center,Facilities,,Education
+64004,0b3caa9c-71bb-467a-b1b4-82c9333aabc1,22,22,1,Primary school,Facilities,,Education
+64005,601b203a-e7ea-4ec8-ad40-a4d9dbfa4ba9,22,22,1,Middle school,Facilities,,Education
+64006,22bf98c3-cee6-4df0-a592-b73ffd1fad2d,22,22,1,Junior high school,Facilities,,Education
+64007,b197e924-f831-443c-a5bc-e6eeaba9eea7,22,22,1,Vocational training center,Facilities,,Education
+64008,397b25a3-86ac-4569-af12-84facca40d78,22,22,1,Teacher training,Facilities,,Education
+64009,47553293-ab99-4bab-b970-fbe51e6aed8f,22,22,1,High school,Facilities,,Education
+64010,970ebb47-b753-47fc-8dad-d3424d525441,22,22,1,College,Facilities,,Education
+64011,23bc380d-6b58-4f9d-bc5d-1ced0834b8d1,22,22,1,Community colleague,Facilities,,Education
+64012,07bd10c3-5c78-45a4-8b23-e421d151b626,22,22,1,Pollytecnic institute,Facilities,,Education
+64013,87f907f1-e6b3-4f42-a00a-60c5cff9f6aa,22,22,1,University campus,Facilities,,Education
+64014,6c30c00c-6761-4aba-8bc0-e5cb49b0f8ed,22,22,1,Faculty,Facilities,,Education
+64015,9dd2fbcf-d225-4403-85cf-64664d2decc0,22,22,1,Student residences,Facilities,,Education
+64016,40f53f44-1c51-47ab-8fbe-2895017f17b1,22,22,1,Student dorms,Facilities,,Education
+64017,e9c739da-c85f-4722-bed2-cd9055130e58,22,22,1,Sport facilities,Facilities,,Education
+64018,40d0948c-e15a-49fa-b562-a83994b8e856,22,22,1,Sport pavilions,Facilities,,Education
+64019,25986495-90fe-42d8-83e4-e585c6f2e884,22,22,1,Computer labs,Facilities,,Education
+64020,de978594-29b4-4ee6-aaf5-1356366ba4d9,22,22,1,Students libraries,Facilities,,Education
+64021,54d73e09-613e-40d6-9704-8e5ef1cbbcd5,22,22,1,Teachers housing,Facilities,,Education
+64022,b8f786da-038a-4e8b-a681-f70d1eabd7ed,22,22,1,Recreation grounds,Facilities,,Education
+64023,e790a060-3983-4cf5-9c28-a9ef3bcca6d2,22,22,1,School gymnasium,Facilities,,Education
+64024,78836c2c-9120-4ee3-99a8-32b72a9313a9,22,22,1,School sanitation facilities,Facilities,,Education
+64025,b463b5af-828d-4fb5-b29a-96b8dcb87810,22,22,1,School water facilities,Facilities,,Education
+64026,eb02cba8-d1bb-4c16-bae1-8fa24f9e67f3,22,22,1,School cafeteria,Facilities,,Education
+64027,bb713b78-497e-4e0c-bfed-d49c4b42ec0e,22,22,1,School cantine,Facilities,,Education
+64028,b703347d-175b-4264-9b13-73cd935750d6,22,22,1,School kitchen,Facilities,,Education
+64029,57b621e8-b148-4ac2-9f61-10f320d95808,22,22,1,School dispensaire/ nurse,Facilities,,Education
+64030,0aeb5f6e-f69b-49ca-888e-d1c986797c01,22,22,1,Colleague health unit,Facilities,,Education
+65001,437d0984-58cb-4979-a93b-5b42d570087c,22,22,1,"Vehicles - students or teachers transport (school buses, vans, boats, etc.)",Equipments & Furniture,,Education
+65002,11b6fb9e-0521-4292-9e65-183d3da17d6f,22,22,1,Vehicles - management,Equipments & Furniture,,Education
+65003,cfeb1f1a-7f09-4086-a15f-9a5d5b56748d,22,22,1,Desks,Equipments & Furniture,,Education
+65004,b7129883-5d43-4d06-94c1-fcc8895359dd,22,22,1,Chairs,Equipments & Furniture,,Education
+65005,3e3c3f6d-ff27-4fbd-903a-90ed373aaf40,22,22,1,Boards,Equipments & Furniture,,Education
+65006,9f59839e-e957-493a-beaf-7e8c27536290,22,22,1,Storage furniture,Equipments & Furniture,,Education
+65007,240b31f0-7e83-4080-8a6a-0e2bd258c8f5,22,22,1,Computers,Equipments & Furniture,,Education
+65008,70a91d28-707a-41e8-9675-785da27e2204,22,22,1,Printers,Equipments & Furniture,,Education
+65009,3b86a4d9-5dec-4080-bff0-db73d1dc2be5,22,22,1,Projectors,Equipments & Furniture,,Education
+65010,86ae6ad4-aa75-49b9-9964-fa799237306c,22,22,1,Printers,Equipments & Furniture,,Education
+65011,750d1a6b-7bda-4397-b97d-20ee58956191,22,22,1,Scanners,Equipments & Furniture,,Education
+70001,e2f26abf-a73c-4149-9bc7-fbed4eaa148f,23,23,1,Precarious housing - Single family houses - detached houses,,,Housing
+70002,f1527655-55c3-4291-bb7d-fdaaad7cae78,23,23,1,Precarious housing - Single family houses - attached houses,,,Housing
+70003,7092275f-b130-46c4-b986-c92749e72c09,23,23,1,Precarious housing - Multi family housing - appartment buildings,,,Housing
+70004,173b19aa-49aa-4036-b633-2c18b4002d93,23,23,1,Precarious housing - Multi family housing - condominiums,,,Housing
+70005,ded03c8b-a468-4a85-bac9-27ad949c2a09,23,23,1,Precarious housing - Multi family housing - House Complex,,,Housing
+70006,2a296db5-faff-4d42-8c8a-e244f0707101,23,23,1,Recreational Vehicles (RVs) - motorhomes,,,Housing
+70007,171eb06f-33dc-4002-97ab-8b84e3473d0c,23,23,1,Recreational Vehicles (RVs) - travel trailers,,,Housing
+70008,b2c9ecb7-1119-4fd0-9cc1-251f8e2a3b5b,23,23,1,Recreational Vehicles (RVs) - camper vans ,,,Housing
+70009,ff31857e-5e13-49c8-bbae-fce0a9be3020,23,23,1,Mobile/ manufactured houses,,,Housing
+70010,b9241ef3-9161-403c-8e22-3bf1c92b0cfb,23,23,1,Boat houses,,,Housing
+70011,91060c21-e3bb-4b76-b551-0d101e43361c,23,23,1,Houseboats,,,Housing
+70012,ab6ec417-d284-4908-91e7-c80ed8253b34,23,23,1,House trailers,,,Housing
+70013,cdd78a1e-2730-406e-a0fe-21b9e422f51c,23,23,1,Shelter,,,Housing
+70014,861e5d90-fedf-4bcf-b632-d865f0b12d3a,23,23,1,Tents,,,Housing
+70015,07d5eb1a-3290-4b3a-b3fd-ffa8d701e6ad,23,23,1,Kitchen appliances,Furniture and Equipment,,Housing
+70016,82241c59-78c7-4275-8c1b-0481552cefbf,23,23,1,Laundry appliances,Furniture and Equipment,,Housing
+70017,72b5963c-9bb7-4eed-81e5-569326edc9c2,23,23,1,Other electronics,Furniture and Equipment,,Housing
+70018,39ea137c-61fd-41c2-8a46-bb27ced4a4ba,23,23,1,Furniture,Furniture and Equipment,,Housing
+70019,e1f4448c-ea73-4a2f-9fcc-dd9c6e6562ec,23,23,1,Major fixtures,Furniture and Equipment,,Housing
+70020,65ead99a-c6f7-47dc-925f-00f4b19e7a84,23,23,1,Other equipments,Furniture and Equipment,,Housing
+71001,9201d57c-4aa5-47d7-9f05-64a4ece458f8,24,24,1,Monuments,,,Culture
+71002,50c37075-30ba-40e2-8762-7754b335ea93,24,24,1,Historic buildings,,,Culture
+71003,81bde15a-429d-46d4-a027-e8632d4880ea,24,24,1,Landmark,,,Culture
+71004,eda5c0f3-c42a-437b-9e8a-ffaef9383d00,24,24,1,Museums,,,Culture
+71005,b34ef229-5f0e-4b73-b57d-336f0613fe1b,24,24,1,Art centers,,,Culture
+71006,9123f3d1-9c79-4251-b5e4-c0c83ffaf8e0,24,24,1,Art galleries,,,Culture
+71007,95c9b83a-c28b-49cf-b5e1-7fcd3e3e77d5,24,24,1,Culture centeres,,,Culture
+71008,5b3ef4e5-097d-49a8-ab52-93e3bdaefb86,24,24,1,Artifacts,,,Culture
+71009,3f603498-c258-4dfd-9eb7-d06eff817386,24,24,1,Artworks,,,Culture
+71010,d4c90296-f83b-40d2-805a-a833db5a151b,24,24,1,Colections,,,Culture
+71011,15de048d-11c7-4302-8d8c-64e0fe042433,24,24,1,Archives,,,Culture
+71012,e977ad27-f0c2-4611-bbcf-5b03d460495a,24,24,1,Libraries,,,Culture
+71013,96a58b9b-7844-4d3d-b4b0-4116701eb826,24,24,1,Religious sites,,,Culture
+71014,abcb8b8c-fbf4-480a-9461-641baf0c0a53,24,24,1,Religious buildings,,,Culture
+72001,828b4c11-e9a7-4f5f-bfc3-abcd35643619,31,31,1,"Per type of road ( paved, gravel, dirt roads)",Assets - Road infrastructure,,Transportation
+72002,764c06f4-9204-4243-bef3-83ef916754cf,31,31,1,"Per type of terrain ( flat, undulating, mountanious)",Assets - Road infrastructure,,Transportation
+72003,276c857d-a47e-4295-8c35-e53b44dadcc0,31,31,1,"Roads per categories - highways, national, regional, local, community roads",Assets - Road infrastructure,,Transportation
+72004,b49275ca-2c28-4418-8899-33a6888b4d0c,31,31,1,"Assets: viaducts, roads ",Assets - Road infrastructure,,Transportation
+72005,6b314aa9-a08c-4d5c-89ea-d43210ab2746,31,31,1,Light passenger,Assets - Road infrastructure,,Transportation
+72006,9dcd4c31-5a1b-4a3c-af88-681f25200ba2,31,31,1,Medium passenger services,Assets - Road infrastructure,,Transportation
+72007,84328ccf-92d7-40d0-9013-f49d47e4d1e4,31,31,1,Large passenger bus,Assets - Road infrastructure,,Transportation
+72008,8d444136-9124-450b-8782-0a1cd93e73cf,31,31,1,Rigid ( 2-3 axle) cargo vehicle,Assets - Road infrastructure,,Transportation
+73001,139adf31-e6ef-4de9-b126-b72ac6f886fe,32,32,1,Generation plants,,,Energy and Electricity 
+73002,dc42d908-55c9-4047-8f61-392235ef9f05,32,32,1,Power plants,,,Energy and Electricity 
+73003,de48cecf-ee75-4ec2-a9d9-bb215d97db79,32,32,1,Extraction of oil - offshore,,,Energy and Electricity 
+73004,8a2b8807-9875-45d5-b6af-a5aa234defc6,32,32,1,Extraction of oil - inland,,,Energy and Electricity 
+73005,9b5744a3-1a9b-43c4-9958-299369a98233,32,32,1,Distributed energy generation systems,,,Energy and Electricity 
+73006,c6cbd2db-963d-42f4-b42e-128e6146fb1c,32,32,1,Turbines,,,Energy and Electricity 
+73007,9bb96832-87b4-4f6c-8aaa-5de12fae9bd0,32,32,1,Solar PV,,,Energy and Electricity 
+73008,c42231ba-bfda-45c5-8284-c0c3030e0c69,32,32,1,Batteries,,,Energy and Electricity 
+73009,ba44e960-d4b7-4a07-b046-aeffe3537acf,32,32,1,Storage systems,,,Energy and Electricity 
+73010,c7a0653d-0247-4590-b100-ff6ca2545988,32,32,1,Storage facilities,,,Energy and Electricity 
+73011,acadf718-6fca-4546-a71c-0938ec57c9a6,32,32,1,Storage tanks,,,Energy and Electricity 
+73012,82a406bc-a31b-4e2b-99d4-08a58006c9b8,32,32,1,Refineries,,,Energy and Electricity 
+73013,90871241-eba2-470c-8a6f-b8cb5e00a1f9,32,32,1,Processing plants,,,Energy and Electricity 
+73014,b2ed1990-a17d-4e61-8b5d-856aaaf0bfa2,32,32,1,Regasification terminals,,,Energy and Electricity 
+73015,0710307f-03e5-43b5-a317-d6b64a91c30d,32,32,1,Pipelines oil - oleduct,,,Energy and Electricity 
+73016,bb36a742-0359-4f86-9a80-c9c57203664c,32,32,1,Driling rigs onshore,,,Energy and Electricity 
+73017,0b5b8885-290f-42b3-a87c-9885f8f212bf,32,32,1,Driling rigs offshore,,,Energy and Electricity 
+73018,32c682f4-1af5-4841-81e3-12eadbf6aab2,32,32,1,Drill wells,,,Energy and Electricity 
+73019,68c1d475-41ab-48e7-80de-4b867c971efe,32,32,1,Welleheads,,,Energy and Electricity 
+73020,1bea769a-86b4-4326-b170-6d9885f8cad6,32,32,1,Completion systems,,,Energy and Electricity 
+73021,32e469e1-35e2-411e-9cfd-d04cae4c0126,32,32,1,Pump jacks,,,Energy and Electricity 
+73022,5faaa20b-dbef-410d-ad17-60f994f7961c,32,32,1,Production platforms,,,Energy and Electricity 
+73023,5ce1daf6-70ca-4179-8c44-57a3b42a99ae,32,32,1,Compressors,,,Energy and Electricity 
+73024,b9344dd0-071d-4b92-bb28-233ce6e7623b,32,32,1,Pumping stations,,,Energy and Electricity 
+73025,0a8f5e48-a70e-4ff7-ba4c-f29f8b5bd8a4,32,32,1,Separation units,,,Energy and Electricity 
+73026,ed829f9b-d45c-4565-b2b7-4de311dec533,32,32,1,Pipeline network,,,Energy and Electricity 
+73027,1fca46ba-0b92-41bf-8546-08dce39383ed,32,32,1,Pipelines gas- gaseoduct,,,Energy and Electricity 
+73028,4a70c242-0ce7-45a9-97d7-6cf75208f8e9,32,32,1,Electricity transmission lines overhead,,,Energy and Electricity 
+73029,02660f64-64ed-4fad-99fa-54525bdfc933,32,32,1,Electricity transmission underground ,,,Energy and Electricity 
+73030,5caf8ecc-c86e-4d9b-923e-388299253935,32,32,1,Electricity transmission underwater,,,Energy and Electricity 
+73031,b70c5bd2-5a0c-4e8e-8fd3-528187360505,32,32,1,Power grids,,,Energy and Electricity 
+73032,ab629788-0708-4bf0-9e2f-deaed667af60,32,32,1,Poles,,,Energy and Electricity 
+73033,0f467d81-867a-4850-ad3c-d4973681bfe5,32,32,1,Meters,,,Energy and Electricity 
+73034,d5a47c7b-4817-4a2b-95e8-44688031438b,32,32,1,Wiring,,,Energy and Electricity 
+75001,5c3bcbd3-4a8c-4a97-bfd4-10db3c58eba9,33,33,1,Buildings,,,Information and Communication
+75002,845b008b-be31-48c1-82af-d95833194d93,33,33,1,Aerial telephone lines,,,Information and Communication
+75003,39754bb5-d27e-4987-aafc-b6389405b5e1,33,33,1,Poles,,,Information and Communication
+75004,6f0b75cc-94e0-4965-ad51-3525ea0140c4,33,33,1,Electronic switching ,,,Information and Communication
+75005,ecbacbca-c803-4233-8551-d14f48504733,33,33,1,Studios music,,,Information and Communication
+75006,26d94e9a-dffa-425d-8797-c5a2eb8f65d9,33,33,1,TV studios,,,Information and Communication
+75007,fc343ac8-8666-4538-ac1e-17a6e0f54524,33,33,1,Movie studios,,,Information and Communication
+75008,2e92e4ed-f9fb-4738-8282-8b0333909e7f,33,33,1,Photo studies,,,Information and Communication
+75009,4a92b447-5561-4a97-9211-d34b64a9aa63,33,33,1,Printing presses ,,,Information and Communication
+75010,3bfbf3f3-9f40-4163-a069-a76112e36efe,33,33,1,Distribution warehouses,,,Information and Communication
+75011,6bcdbcbc-a021-4960-9259-907b17cd2430,33,33,1,Binding machines,,,Information and Communication
+75012,839e4f4e-7a98-44b3-aadd-f57d649ae1ac,33,33,1,Office space,,,Information and Communication
+75013,cb85d0e0-6442-44b7-97ec-fdddd92bd866,33,33,1,Editing hardwarde,,,Information and Communication
+75014,67783d9d-b251-4258-96fd-4baeb0aad172,33,33,1,Recording studios,,,Information and Communication
+75015,cabd0c81-7c37-4ec2-b8fb-9b8ccd510779,33,33,1,Sound stages,,,Information and Communication
+75016,d492d23d-9017-4ce7-916b-4f39c10a9860,33,33,1,Post production facilities,,,Information and Communication
+75017,284e318d-dc1a-4950-87a2-44de2761a64d,33,33,1,Mixing rooms,,,Information and Communication
+75018,c1118063-e81e-41fe-b8d2-429658473b79,33,33,1,Filming locations,,,Information and Communication
+75019,90b45f2b-da57-42cb-829b-d1ccff46b1cd,33,33,1,Specialized stages for movie production,,,Information and Communication
+75020,5003a606-db7c-41b7-9231-c01cecb04b7c,33,33,1,Equiments,,,Information and Communication
+75021,d71acd7c-5153-4513-ad17-40dd77e92f4e,33,33,1,Cameras,,,Information and Communication
+75022,348e8821-ae4a-476e-8abc-4b912cbec15d,33,33,1,Color grading labs,,,Information and Communication
+75023,2a5e75a5-2283-4160-aec9-11e3cfdce569,33,33,1,Inventory,,,Information and Communication
+75024,900f0b53-0cc1-4eb8-b6aa-ebf8a46a5e8d,33,33,1,Books,,,Information and Communication
+75025,1efb83c0-3967-42cf-80fd-e9a1f47dbf2d,33,33,1,Magazines,,,Information and Communication
+75026,9920d104-4fd6-4c6d-af38-7255092d812d,33,33,1,Newspapers,,,Information and Communication
+75027,45b7c5ae-d3d1-42b8-8db7-aa71056459b2,33,33,1,Editing software,,,Information and Communication
+76001,bb848101-8875-429d-82db-333ac6a40a01,34,34,1,Water sources,,,Water
+76002,6c824c11-9bce-4b23-aa16-d88f84ff4e4c,34,34,1,Ground extraction systems,,,Water
+76003,f7d72226-fc26-4573-be10-98124f28ccee,34,34,1,Wells,,,Water
+76004,a0d75d43-31af-4d0e-b343-741126a0852b,34,34,1,Boreholdes,,,Water
+76005,56108ffa-3c66-4d1d-9cbf-80d8c65306b2,34,34,1,Mechanized wells,,,Water
+76006,00dd23f2-abc9-4670-a34c-5b29b9737ec9,34,34,1,Hand-dug wells ,,,Water
+76007,d4be69df-beed-4f86-bf42-b90a3fcfa9f7,34,34,1,Ponds,,,Water
+76008,09519eef-862a-44f6-95aa-31f9059d638d,34,34,1,Intake structures,,,Water
+76009,868cbacd-7c5b-4041-8d8f-779e6a27d91a,34,34,1,Dams,,,Water
+76010,8626139d-32fa-42d4-86b4-fcc00f4a81ca,34,34,1,weirs,,,Water
+76011,f03801ec-f7e2-47d7-9cf0-284fb91e52e6,34,34,1,river intakes,,,Water
+76012,bea6a2c7-9265-4c2c-a3a6-94e8d3c5f86c,34,34,1,Pumping systems submersible,,,Water
+76013,745a0e41-c96f-4118-8b6f-697e0167f831,34,34,1,Pumping systems surface,,,Water
+76014,51c07ea1-d324-4ef6-a005-a9d1430c411c,34,34,1,Treatment facilities,,,Water
+76015,e12423fc-4549-4e2c-9885-4ca4024134b1,34,34,1,Storage facilities,,,Water
+76016,76f4aa82-3919-40e3-8608-6f482c4cb3e7,34,34,1,Monitoring stations,,,Water
+76017,004397c5-166b-4ccc-9765-d45e2d228bdc,34,34,1,Metering systems,,,Water
+76018,58a5e280-0026-41d7-8064-15070e76b0af,34,34,1,Water quality laboratories,,,Water
+76019,9d16d1da-0d3f-4656-931e-7ed08e174bd9,34,34,1,Associated energy supplies,,,Water
+76020,3f9dcebd-ed55-4fea-aeb7-105aa50f9f17,34,34,1,boreholes,,,Water
+77001,2be3d877-a6b7-425e-bdf3-4aaebbbbb361,35,35,1,Public toilets,,,Sanitation
+77002,34e545e3-6857-4fb3-81af-8978ec53a427,35,35,1,Septic tanks,,,Sanitation
+77003,52fcbd9f-af3e-4d6d-8571-1dd3c6259f1b,35,35,1,Letrines,,,Sanitation
+77004,e972dbd4-8f3d-4737-bc58-3e0e74a4ec53,35,35,1,Treatment plants,,,Sanitation
+77005,308939ef-17a0-4a9e-80dc-c4e20fa49be0,35,35,1,Decentralized plants,,,Sanitation
+77006,2e568e75-9239-4744-be03-369d2f22e095,35,35,1,French drains,,,Sanitation
+77007,d528ed2c-90c7-49ba-a05e-1533c062d077,35,35,1,Sewage pipelines,,,Sanitation
+77008,db3a9957-7be5-4bd1-86d6-96b5321cf4fe,35,35,1,Vacuum trucks,,,Sanitation
+77009,a732b3df-bca5-42ec-9b87-851dd00ce9e9,35,35,1,Sludge transports,,,Sanitation
+77010,9509deb3-8a24-48bc-832c-906261ac180f,35,35,1,Mobile treatment units,,,Sanitation
+77011,e5e1f01e-b1f6-4d1a-8428-ba1a234599bb,35,35,1,Pipes,,,Sanitation
+77012,d94ad3ec-1dbe-4f88-bfbb-ddcd52ac40b6,35,35,1,Pumps,,,Sanitation
+77013,7b2a5afc-9990-4a02-a462-fbfd0414691c,35,35,1,Drainage system,,,Sanitation
+77014,cd4f1ba5-6a5e-405f-9a5a-2a975ad9169c,35,35,1,Supporting equipments,,,Sanitation
+77015,360ce210-adf7-4966-acc9-b4b5fb1b1d0f,35,35,1,Waste water treatment plant,,,Sanitation
+78001,091df712-12e3-4b54-b1cb-c0e391a6ffa2,36,36,1,internal roads,,,Community Infrastructure
+78002,417e8188-14c4-491b-b557-42c199bd63d5,36,36,1,pathways,,,Community Infrastructure
+78003,8d15c404-9750-4237-993a-85c707fe101d,36,36,1,walkways,,,Community Infrastructure
+78004,3a36156b-026b-48e9-b951-8c1448f2ca74,36,36,1,footpaths,,,Community Infrastructure
+78005,d20f6a08-7cfe-4b74-ae4f-217c6263f3bb,36,36,1,Other connective ,,,Community Infrastructure
+78006,517539d4-e73a-4592-9526-fba1d04f5aab,36,36,1,rainage structures,,,Community Infrastructure
+78007,d1a42d7f-9818-48f7-b368-ea1edcd87eb7,36,36,1,pipe culverts,,,Community Infrastructure
+78008,8ae5e800-8ba2-42d6-b54b-c92a3643c7e5,36,36,1,box culverts,,,Community Infrastructure
+78009,a1789d46-711a-4a38-88c7-3462939720d5,36,36,1,footbridges ,,,Community Infrastructure
+78010,2961e26b-36f6-4738-9036-59e24713a740,36,36,1,retaining walls,,,Community Infrastructure
+78011,e1652bec-020b-4802-b3ed-01c474691836,36,36,1,protection of slopes,,,Community Infrastructure
+78012,63f5ba5d-1d73-4b3c-8c15-c0dec0822f6a,36,36,1,jetties,,,Community Infrastructure
+78013,3932ca75-1ee0-4a2c-8153-c0f6807679d0,36,36,1,small embankments ,,,Community Infrastructure
+78014,c64f1321-25f7-41b4-a73e-6b7f4a0898a5,36,36,1,protection walls,,,Community Infrastructure
+78015,0ff0f328-2dba-406b-9d62-3ac01772302c,36,36,1,small earthen dam,,,Community Infrastructure
+78016,915f9e4e-3de2-4a47-aa8e-150328d30792,36,36,1,Other protective,,,Community Infrastructure
+78017,574a0769-5551-4cb2-898d-df0b29a48f28,36,36,1,small marketplaces ,,,Community Infrastructure
+78018,0823edc2-32ec-4f6f-b6de-ebf3e691b567,36,36,1,infrastructure within market grounds,,,Community Infrastructure
+78019,92f672d3-831d-4a0f-9181-d7328402b63f,36,36,1,sheds,,,Community Infrastructure
+78020,8ada5c77-925a-4283-bf02-1b02ef51b78c,36,36,1,drains,,,Community Infrastructure
+78021,270be00b-bb13-43ac-8fff-1e72c24ffd1a,36,36,1,community shops,,,Community Infrastructure
+78022,4dcbdd1c-0bec-4c37-a20c-997853ecf18b,36,36,1,community resource centers,,,Community Infrastructure
+78023,6d783f74-a175-44a9-bc69-6d5b503b8f40,36,36,1,religious centers,,,Community Infrastructure
+78024,c8f4c061-42fb-4471-8511-f8de1b08fb6d,36,36,1,graveyards,,,Community Infrastructure
+78025,82594492-8857-45b8-9b0b-c0d1cdce3db3,36,36,1,playgrounds,,,Community Infrastructure
+78026,1c666545-0b79-49fd-a82c-9e927e86a330,36,36,1,water reservoirs ,,,Community Infrastructure
+78027,96ed053b-db47-46f5-9b3c-ad4a8780be37,36,36,1,community water supply,,,Community Infrastructure
+78028,c7ea373f-c5b7-46d3-948d-ebb6b73e9a61,36,36,1,ponds,,,Community Infrastructure
+78029,913cd6a8-726e-486e-a5e1-1d053043fc4c,36,36,1,pump houses ,,,Community Infrastructure
+78030,17ab719c-4705-4665-a858-bf0f0c2c49fa,36,36,1,deep tube wells,,,Community Infrastructure
+78031,0c794785-f590-47e5-a7fe-ee61a81bed2f,36,36,1,basic drainage lines,,,Community Infrastructure
+78032,c41ce43f-ae33-4650-a517-7db8dfba5e89,36,36,1,community waste disposal and composting plants,,,Community Infrastructure
+78033,42eb4a4c-2be7-4630-8dfc-d9003df3e4db,36,36,1,biogassifiers,,,Community Infrastructure
+78034,5bdefab6-5987-4bc5-8bba-d25cf13548b4,36,36,1,solar home systems for electrification,,,Community Infrastructure
+78035,6922ca3b-56df-4f58-8ae0-ac00484317e1,36,36,1,other low cost off-grid systems,,,Community Infrastructure
+78036,3c8d47a4-25d8-462e-b7ee-b42dd42fc9d1,36,36,1,community telephone centers,,,Community Infrastructure
+78037,10b0d02e-7a60-4400-ab63-7db0716d018b,36,36,1,community-based early warning systems and communication devices,,,Community Infrastructure
+78038,773e20e1-e128-4f20-8e51-f465a6ad0cdf,36,36,1,community-run radio and communication systems,,,Community Infrastructure
+78039,f8f57c74-14bf-478e-890f-b4f5b9c26bb6,36,36,1,other community communication lifelines,,,Community Infrastructure
+79001,bd344d1c-a067-4e7e-ad64-7bf70db4083b,43,43,1,Buildings,,,Governance
+79002,1f3215e6-a108-49d0-b30e-ef9af195c003,43,43,1,Police stations,,,Governance
+79003,8f18d2bf-e55a-46dc-b0c9-c2fefb922ad9,43,43,1,Office space,,,Governance
+79004,a5f65443-960d-4b55-9fbe-076221b7fd01,43,43,1,Barracks,,,Governance
+79005,f62fc5fe-7919-44a3-ba57-9a3977084c3f,43,43,1,Prisons,,,Governance
+79006,914b0a03-16b3-471b-ba34-77023047fd59,43,43,1,Parliament house,,,Governance
+79007,600c8a50-4aca-4b3e-bf77-f973eab831f5,43,43,1,Government house,,,Governance
+79008,912e29c5-8208-4ef0-af64-5aebef9fae7e,43,43,1,Official residencies,,,Governance
+79009,23a439b0-6205-4601-bfa5-9767599a3790,43,43,1,Arquives,,,Governance
+79010,6393dc7d-152a-4e8d-b1f1-941c1b7b34cd,43,43,1,Storage facilities,,,Governance
+79011,da1f389e-5a17-4415-833b-31f750b9b29f,43,43,1,Correctionaries,,,Governance
+79012,35a74151-ce5a-4407-bbee-c2922f569bfb,43,43,1,Tribunal facilities,,,Governance
+79013,cf0183db-c27c-436c-91d4-a4e6e0fc1007,43,43,1,Official Vehicles,Equipments,,Governance
+79014,12420163-6d99-4172-b3cb-cac192494670,43,43,1,Office furniture,Equipments,,Governance
+79015,8de342b8-7ee5-4b17-9bed-d83c70545d2b,43,43,1,Trucks,Equipments,,Governance
+79016,ba1eec30-ff7b-4291-ab08-7fde9f35ff20,43,43,1,Fire trucks,Equipments,,Governance
+79017,8732a6a5-ed26-4378-babf-a706b9aa296b,43,43,1,Tanks,Equipments,,Governance
+79018,e65e7a04-234a-48b4-9d90-d59ffd86c146,43,43,1,Water trucks,Equipments,,Governance
