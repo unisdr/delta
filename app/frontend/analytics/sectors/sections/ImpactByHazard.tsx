@@ -1,25 +1,18 @@
-import { useState, useCallback } from "react";
-import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState, useCallback, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { LoadingSpinner } from "~/frontend/components/LoadingSpinner";
 import { ErrorMessage } from "~/frontend/components/ErrorMessage";
-import { formatCurrencyWithCode, useDefaultCurrency } from "~/frontend/utils/formatters";
+import { formatCurrencyWithCode } from "~/frontend/utils/formatters";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 
+// Types
+interface Sector {
+    id: number;
+    sectorname: string;
+    subsectors?: Sector[];
+}
 
-// Create a client
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            staleTime: 0,
-            gcTime: 0,
-            refetchOnWindowFocus: false
-        }
-    }
-});
-
-
-
+// Colors for the pie chart slices
 const COLORS = [
     "#205375", // A dark blue from UNDRR Blue (corporate blue)
     "#FAA635", // A vivid orange from Target C (loss)
@@ -40,25 +33,29 @@ interface ImpactByHazardProps {
         toDate: string | null;
         subSectorId: string | null;
     };
+    currency: string;
+    hazardImpactData: HazardImpactResponse | null;
+    // New prop to receive sectors data from loader instead of fetching via API
+    sectorsData?: { sectors: Sector[] | null };
 }
 
 interface HazardImpactResponse {
     success: boolean;
     data: {
         eventsCount: Array<{
-            hazardId: number;
+            hazardId: string;
             hazardName: string;
-            value: number;
+            value: string;
             percentage: number;
         }>;
         damages: Array<{
-            hazardId: number;
+            hazardId: string;
             hazardName: string;
             value: string;
             percentage: number;
         }>;
         losses: Array<{
-            hazardId: number;
+            hazardId: string;
             hazardName: string;
             value: string;
             percentage: number;
@@ -72,8 +69,8 @@ interface Sector {
     subsectors?: Sector[];
 }
 
-const CustomTooltip = ({ active, payload, title }: any) => {
-    const defaultCurrency = useDefaultCurrency();
+const CustomTooltip = ({ active, payload, title, currency }: any) => {
+    const defaultCurrency = currency;
 
     if (active && payload && payload.length) {
         const data = payload[0].payload;
@@ -148,7 +145,7 @@ const CustomTooltip = ({ active, payload, title }: any) => {
     return null;
 };
 
-const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
+const CustomPieChart = ({ data, title, currency }: { data: any[], title: string, currency: string }) => {
     const [activeIndex, setActiveIndex] = useState(-1);
 
     const onPieEnter = useCallback(
@@ -260,12 +257,6 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
         index
     }));
 
-
-    // Debug logging only in development
-    if (process.env.NODE_ENV === 'development') {
-        console.log(`Chart data for ${title}:`, dataWithIndex);
-    }
-
     return (
         <div className="dts-data-box">
             <h3 className="dts-body-label">
@@ -302,7 +293,7 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
                                 />
                             ))}
                         </Pie>
-                        <Tooltip content={<CustomTooltip title={title} />} />
+                        <Tooltip content={<CustomTooltip title={title} currency={currency} />} />
                         <Legend
                             verticalAlign="bottom"
                             align="center"
@@ -318,70 +309,46 @@ const CustomPieChart = ({ data, title }: { data: any[], title: string }) => {
     );
 };
 
-function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
+function ImpactByHazardComponent({ filters, currency, hazardImpactData, sectorsData }: ImpactByHazardProps) {
     const enabled = !!filters.sectorId;
     const targetSectorId = filters.subSectorId || filters.sectorId;
-    // const defaultCurrency = useDefaultCurrency();
 
-    const queryParams = new URLSearchParams();
-    if (targetSectorId) queryParams.set("sectorId", targetSectorId);
-    if (filters.hazardTypeId) queryParams.set("hazardTypeId", filters.hazardTypeId);
-    if (filters.hazardClusterId) queryParams.set("hazardClusterId", filters.hazardClusterId);
-    if (filters.specificHazardId) queryParams.set("specificHazardId", filters.specificHazardId);
-    if (filters.fromDate) queryParams.set("fromDate", filters.fromDate);
-    if (filters.toDate) queryParams.set("toDate", filters.toDate);
-    if (filters.geographicLevelId) queryParams.set("geographicLevelId", filters.geographicLevelId);
-    if (filters.disasterEventId) queryParams.set("disasterEventId", filters.disasterEventId);
+    // Use sectors data from props
+    const sectors = sectorsData?.sectors || [];
 
-    // Add sectors query
-    const { data: sectorsData } = useQuery({
-        queryKey: ["sectors"],
-        queryFn: async () => {
-            const response = await fetch("/api/analytics/sectors");
-            if (!response.ok) throw new Error("Failed to fetch sectors");
-            return response.json() as Promise<{ sectors: Sector[] }>;
+
+
+    // Debug output for hazard impact data
+    useEffect(() => {
+        if (hazardImpactData) {
         }
-    });
-
-    const { data, isLoading, error } = useQuery({
-        queryKey: ["hazardImpact", targetSectorId, filters],
-        queryFn: async () => {
-            if (process.env.NODE_ENV === 'development') {
-                console.log('Fetching hazard impact data for:', { targetSectorId, filters });
-            }
-
-            const response = await fetch(`/api/analytics/hazardImpact?${queryParams}`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch hazard impact data");
-            }
-
-            const result = await response.json();
-            if (process.env.NODE_ENV === 'development') {
-                console.log('API Response:', result);
-            }
-
-            return result as HazardImpactResponse;
-        },
-        enabled
-    });
-
-
+    }, [hazardImpactData]);
 
     if (!enabled) {
         return <div className="text-gray-500">Please select a sector to view hazard impact data.</div>;
     }
 
-    if (isLoading) {
+    if (!hazardImpactData) {
         return <LoadingSpinner />;
     }
 
-    if (error || !data?.success) {
-        console.error('Error loading hazard impact data:', error);
+    if (!hazardImpactData.success) {
+        console.error('Failed to load hazard impact data', {
+            targetSectorId,
+            hasFilters: Object.values(filters).some(value => value !== null)
+        });
         return <ErrorMessage message="Failed to load hazard impact data" />;
     }
 
-    if (!data?.data?.eventsCount || !data?.data?.damages || !data?.data?.losses) {
-        console.error('Invalid data structure:', data);
+    if (!hazardImpactData.data?.eventsCount || !hazardImpactData.data?.damages || !hazardImpactData.data?.losses) {
+        console.error('Invalid data structure received from loader', {
+            hasData: !!hazardImpactData,
+            hasSuccess: hazardImpactData.success,
+            hasDataProperty: !!(hazardImpactData.data),
+            expectedProperties: ['eventsCount', 'damages', 'losses'],
+            receivedProperties: hazardImpactData.data ? Object.keys(hazardImpactData.data) : [],
+            dataStructure: typeof hazardImpactData
+        });
         return <ErrorMessage message="Invalid data structure received from server" />;
     }
 
@@ -415,14 +382,14 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
 
     // Construct title based on sector/subsector selection
     const sectionTitle = () => {
-        if (!sectorsData?.sectors) return "Impact by Hazard Type";
+        if (!sectors || sectors.length === 0) return "Impact by Hazard Type";
 
         if (filters.sectorId) {
-            const { sector } = findSectorWithParent(sectorsData.sectors, filters.sectorId);
+            const { sector } = findSectorWithParent(sectors, filters.sectorId);
 
             if (filters.subSectorId && sector) {
                 // Case: Subsector is selected
-                const { sector: subsector, parent: mainSector } = findSectorWithParent(sectorsData.sectors, filters.subSectorId);
+                const { sector: subsector, parent: mainSector } = findSectorWithParent(sectors, filters.subSectorId);
                 if (subsector && mainSector) {
                     return `Impact in ${subsector.sectorname} (${mainSector.sectorname} Sector) by Hazard Type`;
                 }
@@ -468,12 +435,6 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                 index
             }));
 
-        // Debug logging only in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log('Filtered chart data:', filteredData);
-        }
-
-
         return {
             data: filteredData.length > 0 ? filteredData : [],
             dataAvailability: filteredData.length > 0 ? 'available' : 'no_data'
@@ -481,15 +442,21 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
     };
 
     // Process the data with performance tracking
-    const eventsResult = formatChartData(data?.data?.eventsCount ?? []);
-    const damagesResult = formatChartData(data?.data?.damages ?? []);
-    const lossesResult = formatChartData(data?.data?.losses ?? []);
+    const eventsResult = formatChartData(hazardImpactData?.data?.eventsCount ?? []);
+    const damagesResult = formatChartData(hazardImpactData?.data?.damages ?? []);
+    const lossesResult = formatChartData(hazardImpactData?.data?.losses ?? []);
 
-
-
-
-    if (!data?.success || !data?.data) {
-        console.error("Invalid data structure:", data);
+    if (!hazardImpactData?.success || !hazardImpactData?.data) {
+        console.error('Invalid data structure after processing', {
+            hasData: !!hazardImpactData,
+            hasSuccess: !!hazardImpactData?.success,
+            hasDataProperty: !!(hazardImpactData?.data),
+            processingResults: {
+                events: eventsResult.dataAvailability,
+                damages: damagesResult.dataAvailability,
+                losses: lossesResult.dataAvailability
+            }
+        });
         return <ErrorMessage message="Invalid data structure received from server" />;
     }
 
@@ -503,7 +470,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                     {/* Number of Disaster Events */}
                     <div className="dts-data-box">
                         {eventsResult.dataAvailability === 'available' ? (
-                            <CustomPieChart data={eventsResult.data} title="Number of Disaster Events" />
+                            <CustomPieChart data={eventsResult.data} title="Number of Disaster Events" currency={currency} />
                         ) : eventsResult.dataAvailability === 'zero' ? (
                             <>
                                 <h3 className="dts-body-label mb-2">Number of Disaster Events</h3>
@@ -520,7 +487,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                     {/* Damages by Hazard Type */}
                     <div className="dts-data-box">
                         {damagesResult.dataAvailability === 'available' ? (
-                            <CustomPieChart data={damagesResult.data} title="Damages by Hazard Type" />
+                            <CustomPieChart data={damagesResult.data} title="Damages by Hazard Type" currency={currency} />
                         ) : damagesResult.dataAvailability === 'zero' ? (
                             <>
                                 <h3 className="dts-body-label mb-2">Damages by Hazard Type</h3>
@@ -537,7 +504,7 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
                     {/* Losses by Hazard Type */}
                     <div className="dts-data-box">
                         {lossesResult.dataAvailability === 'available' ? (
-                            <CustomPieChart data={lossesResult.data} title="Losses by Hazard Type" />
+                            <CustomPieChart data={lossesResult.data} title="Losses by Hazard Type" currency={currency} />
                         ) : lossesResult.dataAvailability === 'zero' ? (
                             <>
                                 <h3 className="dts-body-label mb-2">Losses by Hazard Type</h3>
@@ -557,9 +524,5 @@ function ImpactByHazardComponent({ filters }: ImpactByHazardProps) {
 }
 
 export default function ImpactByHazard(props: ImpactByHazardProps) {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <ImpactByHazardComponent {...props} />
-        </QueryClientProvider>
-    );
+    return <ImpactByHazardComponent {...props} />;
 }
