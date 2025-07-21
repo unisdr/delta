@@ -21,8 +21,6 @@ export default function ImpactMapOl({ geoData, selectedMetric, filters, currency
         geoData={geoData}
         selectedMetric={selectedMetric}
         filters={filters}
-        apiEndpoint="/api/analytics/geographic-impacts"
-        levelCap={3}
         currency={currency}
       />
     </ErrorBoundary>
