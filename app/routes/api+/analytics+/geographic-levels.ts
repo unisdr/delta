@@ -1,68 +1,73 @@
+// app/routes/api+/analytics+/geographic-levels.ts
+
 import { LoaderFunction } from "@remix-run/node";
-import { dr } from "~/db.server";
-import { divisionTable } from "~/drizzle/schema";
-import { eq } from "drizzle-orm";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { authLoaderWithPerm } from "~/util/auth";
+import { getGeographicLevelsHandler } from "~/backend.server/handlers/analytics/geographicLevelsHandler";
 
 /**
  * Geographic Levels API Endpoint
- * 
- * Purpose:
- * - Provides a list of all available geographic levels for the Filters component
  * - Used to populate the geographic level dropdown in the UI
  * - Returns only essential data (id, name, level) to keep response size minimal
+ * 
+ * Architecture:
+ * - API Layer: Handles HTTP request/response and authentication
+ * - Handler Layer: Contains business logic and validation
+ * - Model Layer: Contains database queries
  * 
  * Related Endpoints:
  * - /geographic-levels/$id/boundary - Fetches geographic boundary data for a specific level
  * 
- * Usage:
- * - Called when initializing the Filters component
- * - No parameters required, returns all level 1 divisions (regions)
- * 
  * Response Format:
  * {
- *   levels: [
- *     { id: number, name: string, level: number, parentId: number | null }
- *   ]
+ *   success: boolean,
+ *   levels?: [
+ *     { id: number, name: Record<string, string>, level: number, parentId: number | null }
+ *   ],
+ *   error?: string
  * }
  * 
  * @param {Object} params - Loader function parameters
- * @param {Request} params.request - The incoming HTTP request
- * @returns {Promise<Response>} JSON response with geographic levels or error details
  */
-export const loader: LoaderFunction = authLoaderPublicOrWithPerm("ViewData", async () => {
+export const loader: LoaderFunction = authLoaderWithPerm("ViewData", async () => {
   try {
 
 
-    /** Parameter extraction & validation
-     * No query parameters are used for this endpoint.
+    /**
+     * Business Logic Delegation
+     * Delegate all business logic and database operations to the handler.
+     * The API layer only handles HTTP concerns.
      */
-    // No parameters extracted from request
+    const result = await getGeographicLevelsHandler();
 
-    /** Filter construction
-     * Constructs a query to select level 1 divisions (regions) with essential fields.
+    /**
+     * Response Handling
+     * Return the handler result directly as JSON response.
+     * The handler already includes proper success/error formatting.
      */
-    const query = dr
-      .select({
-        id: divisionTable.id,
-        name: divisionTable.name,
-        level: divisionTable.level,
-        parentId: divisionTable.parentId,
-      })
-      .from(divisionTable)
-      .where(eq(divisionTable.level, 1));
+    if (!result.success) {
+      return Response.json(
+        { success: false, error: result.error },
+        { status: 400 }
+      );
+    }
 
-    /** Data retrieval
-     * Executes the query to fetch geographic levels from the database.
+    /**
+     * Successful Response
+     * Return the geographic levels data with success status.
      */
-    const levels = await query;
+    return Response.json({
+      success: true,
+      levels: result.levels
+    });
 
-    /** Typed API response
-     * Returns the geographic levels in a JSON response with cache control headers.
-     */
-    return Response.json({ levels });
   } catch (error) {
-    console.error("Error fetching geographic levels:", error);
-    throw new Response("Failed to fetch geographic levels", { status: 500 });
+    console.error("Error in geographic levels API:", error);
+    return Response.json(
+      {
+        success: false,
+        error: "Internal server error"
+      },
+      { status: 500 }
+    );
   }
 });
