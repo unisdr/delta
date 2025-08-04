@@ -15,6 +15,7 @@ import { formStringData } from "~/util/httputil";
 import {
 	createUserSession,
 	getCountrySettingsFromSession,
+	sessionCookie,
 } from "~/util/session";
 import {
 	acceptInvite,
@@ -23,6 +24,8 @@ import {
 } from "~/backend.server/models/user/invite";
 
 import { useState, useEffect } from "react";
+import { getUserCountryAccountsByUserId } from "~/db/queries/userCountryAccounts";
+import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -69,6 +72,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return { data, errors: res.errors };
 	}
 	const headers = await createUserSession(res.userId);
+	const userCountryAccounts = await getUserCountryAccountsByUserId(
+		res.userId
+	);
+
+	if (userCountryAccounts && userCountryAccounts.length === 1) {
+		const countrySettings = await getInstanceSystemSettingsByCountryAccountId(
+			userCountryAccounts[0].countryAccountsId
+		);
+
+		const session = await sessionCookie().getSession(headers["Set-Cookie"]);
+		session.set("countryAccountsId", userCountryAccounts[0].countryAccountsId);
+		session.set("userRole", userCountryAccounts[0].role);
+		session.set("countrySettings", countrySettings);
+		const setCookie = await sessionCookie().commitSession(session);
+
+		return redirect("/", {
+			headers: { "Set-Cookie": setCookie },
+		});
+	} else if (userCountryAccounts && userCountryAccounts.length > 1) {
+		return redirect("/select-instance", { headers: headers });
+	}
 	return redirect("/", { headers });
 };
 
