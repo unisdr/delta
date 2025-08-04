@@ -10,13 +10,17 @@ import { getCountrySettingsFromSession } from "~/util/session";
 
 export const loader = async (loaderArgs: LoaderFunctionArgs) => {
 	const { request } = loaderArgs;
+	const countryAccountsId = await getCountrySettingsFromSession(request);
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+	const settings = await getCountrySettingsFromSession(request);
+
+	const currencies = settings.currencyCode ? [settings.currencyCode] : ["USD"];
+
 	return createViewLoader({
 		getById: damagesById,
 		extra: async (_item) => {
-			const settings = await getCountrySettingsFromSession(request);
-			const currencies = settings.currencyCode
-				? [settings.currencyCode]
-				: ["USD"];
 			return { def: await fieldsDefView(currencies) };
 		},
 	})(loaderArgs);

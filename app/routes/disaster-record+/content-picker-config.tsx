@@ -2,7 +2,6 @@ import { hazardousEventLabel } from "~/frontend/events/hazardeventform";
 import { eq, sql, and } from "drizzle-orm";
 import { disasterEventTable, hazardousEventTable, hipHazardTable, sectorTable, categoriesTable } from "~/drizzle/schema";
 import { formatDateDisplay } from "~/util/date";
-import { TenantContext } from "~/util/tenant";
 
 export const contentPickerConfig = {
     id: "disasterEventId",
@@ -19,7 +18,6 @@ export const contentPickerConfig = {
                 return `${displayName}`;
             }
         },
-        //{ column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event" },
         {
             column_type: "db", column_field: "hazardousEventName", column_title: "Hazardous Event",
             render: (item: any) => {
@@ -93,13 +91,13 @@ export const contentPickerConfig = {
         ],
         orderBy: [{ column: disasterEventTable.startDate, direction: "desc" }] // Sorting
     },
-    selectedDisplay: async (dr: any, id: any, tenantContext?: TenantContext) => {
+    selectedDisplay: async (dr: any, id: any, countryAccountsId?: string) => {
         // Build where conditions with tenant filtering
         const whereConditions = [eq(disasterEventTable.id, id)];
 
         // Add tenant filtering if tenant context is available
-        if (tenantContext?.countryAccountId) {
-            whereConditions.push(eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId));
+        if (countryAccountsId) {
+            whereConditions.push(eq(disasterEventTable.countryAccountsId, countryAccountsId));
         }
 
         const row = await dr

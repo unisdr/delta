@@ -3,8 +3,6 @@ import {
 	authLoaderWithPerm
 } from "~/util/auth";
 
-import { getTenantContext } from "~/util/tenant";
-
 import {
 	fromForm,
 	update
@@ -31,9 +29,11 @@ import { formStringData } from "~/util/httputil";
 import { NavSettings } from "~/routes/settings/nav";
 
 import { MainContainer } from "~/frontend/container";
+import { sessionCookie } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
+	const {request} = loaderArgs;
 	if (!id) {
 		throw new Response("Missing item ID", { status: 400 });
 	}
@@ -42,17 +42,13 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const url = new URL(loaderArgs.request.url);
 	const viewParam = url.searchParams.get("view");
 
-	const userSession = (loaderArgs as any).userSession;
-	if (!userSession) {
-		throw new Error("User session is required");
-	}
-
-	const tenantContext = await getTenantContext(userSession);
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
 	const res = await dr.select().from(divisionTable).where(
 		and(
 			eq(divisionTable.id, Number(id)),
-			eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+			eq(divisionTable.countryAccountsId, countryAccountsId)
 		)
 	);
 
@@ -64,7 +60,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let breadcrumbs: DivisionBreadcrumbRow[] | null = null;
 	if (item.parentId) {
-		breadcrumbs = await divisionBreadcrumb(["en"], item.parentId, tenantContext)
+		breadcrumbs = await divisionBreadcrumb(["en"], item.parentId, countryAccountsId)
 	}
 
 	return {
@@ -83,29 +79,25 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		throw new Response("Missing ID", { status: 400 });
 	}
 
-	const userSession = (actionArgs as any).userSession;
-	if (!userSession) {
-		throw new Error("User session is required");
-	}
-
-	const tenantContext = await getTenantContext(userSession);
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
 	const formData = formStringData(await request.formData());
 	let recordDivision: any = {};
 	let data = fromForm(formData);
 
 	// Ensure the division belongs to the user's tenant
-	data.countryAccountsId = tenantContext.countryAccountId;
+	data.countryAccountsId = countryAccountsId;
 
 	if (data.parentId) {
-		recordDivision = await divisionById(Number(data.parentId), tenantContext);
+		recordDivision = await divisionById(Number(data.parentId), countryAccountsId);
 		data.level = recordDivision && recordDivision.level ? recordDivision.level + 1 : 1;
 	}
 	else {
 		data.level = 1;
 	}
 
-	const res = await update(id, data, tenantContext);
+	const res = await update(id, data, countryAccountsId);
 
 	if (!res.ok) {
 		return {

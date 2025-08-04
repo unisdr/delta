@@ -1,4 +1,4 @@
-import { disasterEventById, disasterEventBasicInfoById } from "~/backend.server/models/event";
+import { disasterEventById } from "~/backend.server/models/event";
 
 import { DisasterEventView } from "~/frontend/events/disastereventform";
 
@@ -12,10 +12,10 @@ import { getTableName } from "drizzle-orm";
 import { disasterEventTable } from "~/drizzle/schema";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { optionalUser } from "~/util/auth";
-import { getTenantContext } from "~/util/tenant";
 
 import { dr } from "~/db.server";
 import { sql } from "drizzle-orm";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 interface LoaderData {
 	item: any;
@@ -34,51 +34,23 @@ export const loader = async ({
 		throw new Response("ID is required", { status: 400 });
 	}
 
-	// Check if user is logged in
-	const session = await optionalUser(request);
+	const userSession = await optionalUser(request);
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
-	// Extract tenant context for authenticated users
-	let tenantContext = undefined;
-	if (session) {
-		tenantContext = await getTenantContext(session);
-	}
-
-	// Create wrapper functions with the expected signature
-	const getByIdWithTenant = async (id: string) => {
-		// Ensure tenant context is defined before passing it
-		if (!tenantContext) {
-			throw new Response("Unauthorized: Missing tenant context", { status: 401 });
-		}
-		return await disasterEventById(id, tenantContext.countryAccountId);
-	};
-
-	const getByIdPublic = async (id: string) => {
-		// For public access, use disasterEventBasicInfoById which supports optional tenant context
-		const event = await disasterEventBasicInfoById(id);
-
-		// If event is not found or not published, redirect to unauthorized page
-		if (!event || event.approvalStatus !== "published") {
-			// Create a URL object based on the current request URL
-			const url = new URL(request.url);
-			// Build the redirect URL using the same origin
-			const redirectUrl = `${url.origin}/error/unauthorized?reason=content-not-published`;
-			throw Response.redirect(redirectUrl, 302);
-		}
-
-		return event;
-	};
-
-	const loaderFunction = session ?
-		createViewLoaderPublicApprovedWithAuditLog({
-			getById: getByIdWithTenant,
-			recordId: id,
-			tableName: getTableName(disasterEventTable),
-		}) :
-		createViewLoaderPublicApproved({
-			getById: getByIdPublic,
-		});
+	const loaderFunction = userSession
+		? createViewLoaderPublicApprovedWithAuditLog({
+				getById: disasterEventById,
+				recordId: id,
+				tableName: getTableName(disasterEventTable),
+		  })
+		: createViewLoaderPublicApproved({
+				getById: disasterEventById,
+		  });
 
 	const result = await loaderFunction({ request, params, context });
+	if (result.item.countryAccountsId !== countryAccountsId) {
+		throw new Response("Unauthorized access", { status: 401 });
+	}
 
 	const disasterEvents = await dr.execute(sql`
 	  SELECT 
@@ -145,7 +117,11 @@ export const loader = async ({
   
 	  WHERE de.id = ${id}
 	  -- Apply tenant filtering for authenticated users
-	  ${tenantContext ? sql`AND de.country_accounts_id = ${tenantContext.countryAccountId}` : sql``}
+	  ${
+			countryAccountsId
+				? sql`AND de.country_accounts_id = ${countryAccountsId}`
+				: sql``
+		}
   
 	  GROUP BY 
 		de.id, 
@@ -153,8 +129,6 @@ export const loader = async ({
 		de.name_global_or_regional, 
 		de.name_national;
 	`);
-
-	console.log('disasterEvents.rows', disasterEvents.rows);
 
 	return {
 		...result,

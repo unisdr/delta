@@ -11,7 +11,7 @@ import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cos
 export interface DamagesFields extends Omit<DamagesInsert, "id"> {}
 
 
-export async function fieldsForPd(pre: "pd" | "td", currencies?: string[]): Promise<FormInputDef<DamagesFields>[]> {
+export function fieldsForPd(pre: "pd" | "td", currencies?: string[]): FormInputDef<DamagesFields>[] {
 	let repairOrReplacement = pre == "pd" ? "Repair" : "Replacement"
 	if(!currencies){
 		currencies=[];
@@ -45,9 +45,9 @@ export async function fieldsForPd(pre: "pd" | "td", currencies?: string[]): Prom
 }
 
 export async function fieldsDef(currencies?: string[]): Promise<FormInputDef<DamagesFields>[]> {
-	let cur = "USD"
+	let currency = ""
 	if(currencies && currencies.length > 0) {
-		cur = currencies[0]
+		currency = currencies[0]
 	}
 
 	return [
@@ -58,15 +58,15 @@ export async function fieldsDef(currencies?: string[]): Promise<FormInputDef<Dam
 		{key: "unit", label: "Unit", type: "enum", enumData: unitsEnum},
 		{key: "totalDamageAmount", label: "Total number of assets affected (partially damaged + totally destroyed)", type: "number", uiRow: {}},
 		{key: "totalDamageAmountOverride", label: "Override", type: "bool"},
-		{key: "totalRecovery", label: `Total recovery cost (${cur})`, type: "money"},
+		{key: "totalRecovery", label: `Total recovery cost (${currency})`, type: "money"},
 		{key: "totalRecoveryOverride", label: "Override", type: "bool"},
-		{key: "totalRepairReplacement", label: `Total damage in monetary terms (total repair + replacement cost) (${cur})`, type: "money"},
+		{key: "totalRepairReplacement", label: `Total damage in monetary terms (total repair + replacement cost) (${currency})`, type: "money"},
 		{key: "totalRepairReplacementOverride", label: "Override", type: "bool"},
 
 		// Partially destroyed
-		...await fieldsForPd("pd",currencies),
+		...fieldsForPd("pd",currencies),
 		// Totally damaged
-		...await fieldsForPd("td", currencies),
+		...fieldsForPd("td", currencies),
 
 		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
 		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},

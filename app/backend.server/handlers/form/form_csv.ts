@@ -25,7 +25,7 @@ import {validateFromMap, validateFromMapFull} from "~/frontend/form_validate";
 export interface CsvCreateArgs<T> {
 	data: string[][];
 	fieldsDef: FormInputDef<T>[];
-	create: (tx: Tx, data: T) => Promise<SaveResult<T>>;
+	create: (tx: Tx, data: T, countryAccountsId: string) => Promise<SaveResult<T>>;
 }
 
 export interface CsvCreateRes {
@@ -36,7 +36,8 @@ export interface CsvCreateRes {
 }
 
 export async function csvCreate<T>(
-	args: CsvCreateArgs<T>
+	args: CsvCreateArgs<T>,
+	countryAccountsId: string
 ): Promise<CsvCreateRes> {
 	if (args.data.length <= 1) {
 		return {ok: false, error: {code: "no_data", message: "Empty file"}};
@@ -69,7 +70,7 @@ export async function csvCreate<T>(
 				if (!validateRes.ok) {
 					return rerr(firstError(validateRes.errors)!);
 				}
-				const one = await args.create(tx, validateRes.resOk!);
+				const one = await args.create(tx, validateRes.resOk!,countryAccountsId);
 				if (!one.ok) {
 					return rerr(firstError(one.errors)!);
 				}
@@ -89,7 +90,7 @@ export async function csvCreate<T>(
 export interface CsvUpdateArgs<T> {
 	data: string[][];
 	fieldsDef: FormInputDef<T>[];
-	update: (tx: Tx, id: string, data: Partial<T>) => Promise<SaveResult<T>>;
+	update: (tx: Tx, id: string, data: Partial<T>, countryAccountsId: string) => Promise<SaveResult<T>>;
 }
 
 export interface CsvUpdateRes {
@@ -100,7 +101,8 @@ export interface CsvUpdateRes {
 
 
 export async function csvUpdate<T>(
-	args: CsvUpdateArgs<T>
+	args: CsvUpdateArgs<T>,
+	countryAccountsId: string,
 ): Promise<CsvUpdateRes> {
 	if (args.data.length <= 1) {
 		return {ok: false, error: {code: "no_data", message: "Empty file"}};
@@ -133,7 +135,7 @@ export async function csvUpdate<T>(
 				if (!validateRes.ok) {
 					return rerr(firstError(validateRes.errors)!);
 				}
-				const one = await args.update(tx, id, validateRes.resOk!);
+				const one = await args.update(tx, id, validateRes.resOk!,countryAccountsId);
 				if (!one.ok) {
 					return rerr(firstError(one.errors)!);
 				}
@@ -152,8 +154,8 @@ export async function csvUpdate<T>(
 export interface CsvUpsertArgs<T extends ObjectWithImportId> {
 	data: string[][];
 	fieldsDef: FormInputDef<T>[];
-	create: (tx: Tx, data: T) => Promise<CreateResult<T>>;
-	update: (tx: Tx, id: string, data: Partial<T>) => Promise<UpdateResult<T>>;
+	create: (tx: Tx, data: T, countryAccountsId: string) => Promise<CreateResult<T>>;
+	update: (tx: Tx, id: string, data: Partial<T>, countryAccountsId: string) => Promise<UpdateResult<T>>;
 	idByImportId: (tx: Tx, importId: string) => Promise<string | null>;
 }
 
@@ -164,7 +166,8 @@ export interface CsvUpsertRes {
 }
 
 export async function csvUpsert<T extends ObjectWithImportId>(
-	args: CsvUpsertArgs<T>
+	args: CsvUpsertArgs<T>,
+	countryAccountsId: string,
 ): Promise<CsvUpsertRes> {
 	if (args.data.length <= 1) {
 		return {ok: false, error: {code: "no_data", message: "Empty file"}};
@@ -202,13 +205,14 @@ export async function csvUpsert<T extends ObjectWithImportId>(
 					const updateRes = await args.update(
 						tx,
 						existingId,
-						validateRes.resOk!
+						validateRes.resOk!,
+						countryAccountsId
 					);
 					if (!updateRes.ok) {
 						return rerr(firstError(updateRes.errors)!);
 					}
 				} else {
-					const createRes = await args.create(tx, validateRes.resOk!);
+					const createRes = await args.create(tx, validateRes.resOk!,countryAccountsId);
 					if (!createRes.ok) {
 						return rerr(firstError(createRes.errors)!);
 					}

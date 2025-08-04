@@ -23,6 +23,7 @@ import {
 	generateTotpIfNotSet
 } from "~/backend.server/models/user/totp";
 import {
+	getCountrySettingsFromSession,
 	redirectWithMessage,
 } from "~/util/session";
 import {MainContainer} from "~/frontend/container";
@@ -31,10 +32,11 @@ export const action = authAction(async (actionArgs) => {
 	const {request} = actionArgs;
 	const {user} = authActionGetAuth(actionArgs);
 	const formData = formStringData(await request.formData());
+	const settings = await getCountrySettingsFromSession(request);
 
 	const token = formData.code || "";
 
-	const res = await setTotpEnabled(user.id, token, true);
+	const res = await setTotpEnabled(user.id, token, true, settings.totpIssuer);
 
 	let errors: FormErrors<{}> = {}
 	if (!res.ok) {
@@ -46,11 +48,19 @@ export const action = authAction(async (actionArgs) => {
 });
 
 export const loader = authLoader(async (loaderArgs) => {
+	const {request} = loaderArgs;
 	const {user} = authLoaderGetAuth(loaderArgs)
 	if (user.totpEnabled) {
 		return redirect("/user/totp-disable")
 	}
-	const res = await generateTotpIfNotSet(user.id)
+	
+	const settings = await getCountrySettingsFromSession(request);
+	let totpIssuer = "";
+	if(settings){
+		totpIssuer = settings.totpIssuer;
+	}
+
+	const res = await generateTotpIfNotSet(user.id, totpIssuer)
 	return res;
 });
 

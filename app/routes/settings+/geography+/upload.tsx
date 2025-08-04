@@ -3,8 +3,6 @@ import {
 	authLoaderWithPerm
 } from "~/util/auth";
 
-import { getTenantContext } from "~/util/tenant";
-
 import type { } from "@remix-run/node";
 import {
 	unstable_composeUploadHandlers,
@@ -23,6 +21,7 @@ import {
 import { NavSettings } from "~/routes/settings/nav";
 
 import { MainContainer } from "~/frontend/container";
+import { sessionCookie } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async () => {
 	return null;
@@ -32,12 +31,14 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const { request } = actionArgs;
 	let fileBytes: Uint8Array | null = null;
 
-	const userSession = (actionArgs as any).userSession;
-	if (!userSession) {
-		throw new Error("User session is required");
-	}
+	// const userSession = (actionArgs as any).userSession;
+	// if (!userSession) {
+	// 	throw new Error("User session is required");
+	// }
 
-	const tenantContext = await getTenantContext(userSession);
+	// const tenantContext = await getTenantContext(userSession);
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
 	const uploadHandler = unstable_composeUploadHandlers(
 		async ({ name, contentType, data, filename }) => {
@@ -60,7 +61,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			throw "File was not set"
 		}
 		// Pass tenant context to importZip function
-		const res = await importZip(fileBytes, tenantContext)
+		const res = await importZip(fileBytes, countryAccountsId)
 		if (!res.success) {
 			throw new UserError(res.error || "Import failed");
 		}

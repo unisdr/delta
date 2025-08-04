@@ -44,6 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 	const message = getFlashMessage(session);
 	const settings = await getCountrySettingsFromSession(request);
+	const userRole = session.get("userRole");
 
 	const websiteName = settings
 		? settings.websiteName
@@ -64,7 +65,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		{
 			hasPublicSite: true,
 			loggedIn: !!user,
-			userRole: user?.user.role || "",
+			userRole: userRole || "",
 			flashMessage: message,
 			confSiteName: websiteName,
 			confSiteLogo: websiteLogo,
@@ -221,13 +222,17 @@ export default function Screen() {
 	const isUrlPathResetPassword = matches.some((match) =>
 		match.pathname.startsWith("/user/forgot-password")
 	);
+	const isUrlSuperAdmin = matches.some((match) =>
+		match.pathname.startsWith("/admin")
+	);
 
 	// Do not show header and foother for certain pages [user invitation | admin registration]
 	if (
 		isUrlPathUserInvite ||
 		isUrlPathAdminRegistration ||
 		isUrlPathUserVerifyEmail ||
-		isUrlPathResetPassword
+		isUrlPathResetPassword ||
+		isUrlSuperAdmin
 	) {
 		boolShowHeaderFooter = false;
 	}

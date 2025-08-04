@@ -11,23 +11,18 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 
 import {
 	authLoaderWithPerm,
-	authLoaderGetAuth
 } from "~/util/auth";
+import { sessionCookie } from "~/util/session";
 
-import { getTenantContext } from "~/util/tenant";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	// Extract tenant context from session
-	const userSession = authLoaderGetAuth(loaderArgs);
-	if (!userSession) {
-		throw new Response("Unauthorized", { status: 401 });
-	}
-	const tenantContext = await getTenantContext(userSession);
+	const {request} = loaderArgs;
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
-	// Create tenant-aware data fetcher
 	const fetchDataWithTenant = async () => {
 		return dr.query.disasterEventTable.findMany({
-			where: eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId),
+			where: eq(disasterEventTable.countryAccountsId, countryAccountsId),
 			orderBy: [asc(disasterEventTable.id)],
 		});
 	};

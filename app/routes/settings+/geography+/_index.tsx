@@ -1,5 +1,4 @@
 import { authLoaderWithPerm } from "~/util/auth";
-import { getTenantContext } from "~/util/tenant";
 
 import { NavSettings } from "~/routes/settings/nav";
 import {
@@ -22,6 +21,7 @@ import "./style.css";
 import { DataMainLinks } from "~/frontend/data_screen";
 import { useState } from "react";
 import { buildTree, TreeView } from "~/components/TreeView";
+import { sessionCookie } from "~/util/session";
 
 interface ItemRes {
 	id: number;
@@ -32,15 +32,14 @@ interface ItemRes {
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const { request } = loaderArgs;
-	const userSession = (loaderArgs as any).userSession;
-	if (!userSession) {
-		throw new Error("User session is required");
-	}
-	const tenantContext = await getTenantContext(userSession);
+
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
+
 
 	const url = new URL(request.url);
 	const parentId = Number(url.searchParams.get("parent")) || null;
-	const langs = await divisionsAllLanguages(parentId, [], tenantContext);
+	const langs = await divisionsAllLanguages(parentId, [], countryAccountsId);
 
 	const selectedLangs = Object.entries(langs)
 		.sort(([ak, ac], [bk, bc]) => {
@@ -73,14 +72,14 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 					parentId
 						? eq(divisionTable.parentId, parentId)
 						: isNull(divisionTable.parentId),
-					eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+					eq(divisionTable.countryAccountsId, countryAccountsId)
 				)
 			);
 	};
 
 	let breadcrumbs: DivisionBreadcrumbRow[] | null = null;
 	if (parentId) {
-		breadcrumbs = await divisionBreadcrumb(selectedLangs, parentId, tenantContext);
+		breadcrumbs = await divisionBreadcrumb(selectedLangs, parentId, countryAccountsId);
 	}
 
 	const res = await executeQueryForPagination2<ItemRes>(request, q1, q2, [
@@ -92,7 +91,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const nameKey = "name";
 	const rawData = await dr.select()
 		.from(divisionTable)
-		.where(eq(divisionTable.countryAccountsId, tenantContext.countryAccountId));
+		.where(eq(divisionTable.countryAccountsId, countryAccountsId));
 	const treeData = buildTree(
 		rawData,
 		idKey,

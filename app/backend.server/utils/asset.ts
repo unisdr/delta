@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import {parseCSV} from "~/util/csv";
-import {AssetInsert as AssetType} from "~/drizzle/schema";
+import {InsertAsset as AssetType} from "~/drizzle/schema";
 import {
     upsertRecord as upsertRecordAsset,
 } from "~/backend.server/models/asset";

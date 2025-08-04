@@ -16,7 +16,6 @@ import JSZip from "jszip";
 
 // Import utility functions
 import { createLogger } from '~/utils/logger';
-import { TenantContext } from '~/util/tenant';
 import {
   ValidationError,
   DatabaseError,
@@ -46,7 +45,7 @@ export class UserError extends Error {
   }
 }
 
-export async function divisionsAllLanguages(parentId: number | null, _langs: string[], tenantContext: TenantContext): Promise<Record<string, number>> {
+export async function divisionsAllLanguages(parentId: number | null, _langs: string[], countryAccountsId: string): Promise<Record<string, number>> {
   // Note: Parameter is prefixed with underscore to indicate it's intentionally unused but kept for API consistency
   try {
     return await dr.transaction(async (tx: Tx) => {
@@ -61,7 +60,7 @@ export async function divisionsAllLanguages(parentId: number | null, _langs: str
           .where(
             and(
               parentId ? eq(divisionTable.parentId, parentId) : isNull(divisionTable.parentId),
-              eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+              eq(divisionTable.countryAccountsId, countryAccountsId)
             )
           )
           .groupBy(sql`jsonb_object_keys(${divisionTable.name})`);
@@ -96,7 +95,7 @@ export type DivisionBreadcrumbRow = {
 export async function divisionBreadcrumb(
   langs: string[],
   divisionId: number,
-  tenantContext: TenantContext,
+  countryAccountsId: string,
 ): Promise<DivisionBreadcrumbRow[]> {
   try {
     return await dr.transaction(async (tx: Tx) => {
@@ -124,7 +123,7 @@ export async function divisionBreadcrumb(
             .where(
               and(
                 eq(divisionTable.id, currentId),
-                eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+                eq(divisionTable.countryAccountsId, countryAccountsId)
               )
             )
             .limit(1);
@@ -149,7 +148,7 @@ export async function divisionBreadcrumb(
   }
 }
 
-export function divisionSelect(langs: string[], tenantContext: TenantContext) {
+export function divisionSelect(langs: string[], countryAccountsId: string) {
   let tr = selectTranslated(divisionTable.name, "name", langs)
   let select: {
     id: typeof divisionTable.id,
@@ -164,7 +163,7 @@ export function divisionSelect(langs: string[], tenantContext: TenantContext) {
     try {
       return await tx.select(select)
         .from(divisionTable)
-        .where(eq(divisionTable.countryAccountsId, tenantContext.countryAccountId));
+        .where(eq(divisionTable.countryAccountsId, countryAccountsId));
     } catch (error) {
       logger.error('Failed to select divisions', { error });
       throw new DatabaseError('Failed to select divisions', { error });
@@ -221,10 +220,9 @@ interface ImportRes {
   error?: string;
 }
 
-export async function importZip(zipBytes: Uint8Array, tenantContext: TenantContext): Promise<ImportRes> {
+export async function importZip(zipBytes: Uint8Array, countryAccountsId: string): Promise<ImportRes> {
   const successfulImports = new Set<string>();
   const failedImports = new Map<string, string>();
-  // const results = new Map<string, ImportRes>();
   const zip = await JSZip.loadAsync(zipBytes);
 
   try {
@@ -337,7 +335,7 @@ export async function importZip(zipBytes: Uint8Array, tenantContext: TenantConte
 
             // Process within transaction
             const result = await dr.transaction(async (tx) => {
-              const result = await importDivision(tx, divisions, divisionId, idMap, tenantContext, geoJsonContent);
+              const result = await importDivision(tx, divisions, divisionId, idMap, countryAccountsId, geoJsonContent);
               if (!result) return null;
 
               successfulImports.add(divisionId);
@@ -404,7 +402,7 @@ export async function importZip(zipBytes: Uint8Array, tenantContext: TenantConte
 
             // Process within transaction
             const result = await dr.transaction(async (tx) => {
-              const result = await importDivision(tx, divisions, divisionId, idMap, tenantContext, geoJsonContent);
+              const result = await importDivision(tx, divisions, divisionId, idMap, countryAccountsId, geoJsonContent);
               if (!result) return null;
 
               successfulImports.add(divisionId);
@@ -580,7 +578,7 @@ async function importDivision(
   },
   importId: string,
   idMap: Map<string, number>,
-  tenantContext: TenantContext,
+  countryAccountsId: string,
   geoJsonContent?: string
 ): Promise<BatchResult | null> {
   try {
@@ -603,7 +601,7 @@ async function importDivision(
     if (division.parent) {
       // Import parent first if exists and not already imported
       if (!idMap.has(division.parent)) {
-        const parentResult = await importDivision(tx, divisions, division.parent, idMap, tenantContext, undefined);
+        const parentResult = await importDivision(tx, divisions, division.parent, idMap, countryAccountsId, undefined);
         if (!parentResult?.success) {
           throw new HierarchyError(`Failed to import parent division ${division.parent}`, {
             parentId: division.parent,
@@ -636,7 +634,7 @@ async function importDivision(
       .from(divisionTable)
       .where(and(
         sql`${divisionTable.importId} = ${importId}::text`,
-        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+        eq(divisionTable.countryAccountsId, countryAccountsId)
       ))
       .limit(1)
       .then(res => res[0]);
@@ -647,7 +645,7 @@ async function importDivision(
     const validation = await validateDivisionData(
       tx,
       divisionData,
-      tenantContext,
+      countryAccountsId,
       existingDivision?.id
     );
 
@@ -666,7 +664,7 @@ async function importDivision(
         .set({
           ...divisionData,
           level: validation.level,
-          countryAccountsId: tenantContext.countryAccountId
+          countryAccountsId: countryAccountsId
         })
         .where(eq(divisionTable.id, existingDivision.id));
 
@@ -678,7 +676,7 @@ async function importDivision(
         .values({
           ...divisionData,
           level: validation.level,
-          countryAccountsId: tenantContext.countryAccountId
+          countryAccountsId: countryAccountsId
         })
         .returning({ id: divisionTable.id });
 
@@ -733,7 +731,7 @@ export function fromForm(formData: Record<string, string>): DivisionInsert {
 async function validateDivisionData(
   tx: Tx,
   data: DivisionInsert,
-  tenantContext: TenantContext,
+  countryAccountsId: string,
   existingId?: number
 ): Promise<{ valid: boolean; errors: string[]; level?: number }> {
   const errors: string[] = [];
@@ -744,7 +742,7 @@ async function validateDivisionData(
     const parent = await tx.query.divisionTable.findFirst({
       where: and(
         eq(divisionTable.id, data.parentId),
-        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+        eq(divisionTable.countryAccountsId, countryAccountsId)
       )
     });
 
@@ -760,7 +758,7 @@ async function validateDivisionData(
           tx,
           existingId,
           data.parentId,
-          tenantContext.countryAccountId
+          countryAccountsId
         );
 
         if (wouldCreateCircularReference) {
@@ -780,7 +778,7 @@ async function validateDivisionData(
       const query = and(
         sql`${divisionTable.name}->>${firstLang} = ${nameValue}`,
         eq(divisionTable.level, level),
-        eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+        eq(divisionTable.countryAccountsId, countryAccountsId)
       );
 
       // If updating an existing division, exclude it from the duplicate check
@@ -804,7 +802,7 @@ async function validateDivisionData(
   if (data.nationalId) {
     const query = and(
       eq(divisionTable.nationalId, data.nationalId),
-      eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+      eq(divisionTable.countryAccountsId, countryAccountsId)
     );
 
     // If updating an existing division, exclude it from the duplicate check
@@ -825,7 +823,7 @@ async function validateDivisionData(
   if (data.importId) {
     const query = and(
       eq(divisionTable.importId, data.importId),
-      eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+      eq(divisionTable.countryAccountsId, countryAccountsId)
     );
 
     // If updating an existing division, exclude it from the duplicate check
@@ -907,12 +905,12 @@ async function checkCircularReference(
   return false;
 }
 
-export async function createDivision(data: DivisionInsert, tenantContext: TenantContext): Promise<{ ok: boolean; errors?: string[] }> {
+export async function createDivision(data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
         // Validate division data
-        const validation = await validateDivisionData(tx, data, tenantContext);
+        const validation = await validateDivisionData(tx, data, countryAccountsId);
 
         if (!validation.valid) {
           return { ok: false, errors: validation.errors };
@@ -924,7 +922,7 @@ export async function createDivision(data: DivisionInsert, tenantContext: Tenant
           .values({
             ...data,
             level: validation.level,
-            countryAccountsId: tenantContext.countryAccountId
+            countryAccountsId: countryAccountsId
           });
 
         return { ok: true };
@@ -939,7 +937,7 @@ export async function createDivision(data: DivisionInsert, tenantContext: Tenant
   }
 }
 
-export async function update(id: number, data: DivisionInsert, tenantContext: TenantContext): Promise<{ ok: boolean; errors?: string[] }> {
+export async function update(id: number, data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
@@ -947,7 +945,7 @@ export async function update(id: number, data: DivisionInsert, tenantContext: Te
         const existingDivision = await tx.query.divisionTable.findFirst({
           where: and(
             eq(divisionTable.id, id),
-            eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+            eq(divisionTable.countryAccountsId, countryAccountsId)
           )
         });
 
@@ -956,7 +954,7 @@ export async function update(id: number, data: DivisionInsert, tenantContext: Te
         }
 
         // Validate division data
-        const validation = await validateDivisionData(tx, data, tenantContext, id);
+        const validation = await validateDivisionData(tx, data, countryAccountsId, id);
 
         if (!validation.valid) {
           return { ok: false, errors: validation.errors };
@@ -972,7 +970,7 @@ export async function update(id: number, data: DivisionInsert, tenantContext: Te
           .where(
             and(
               eq(divisionTable.id, id),
-              eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+              eq(divisionTable.countryAccountsId, countryAccountsId)
             )
           );
 
@@ -988,14 +986,14 @@ export async function update(id: number, data: DivisionInsert, tenantContext: Te
   }
 }
 
-export async function divisionById(id: number, tenantContext: TenantContext) {
+export async function divisionById(id: number, countryAccountsId: string) {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
         const res = await tx.query.divisionTable.findFirst({
           where: and(
             eq(divisionTable.id, id),
-            eq(divisionTable.countryAccountsId, tenantContext.countryAccountId)
+            eq(divisionTable.countryAccountsId, countryAccountsId)
           ),
           with: {
             divisionParent: true
@@ -1015,7 +1013,7 @@ export async function divisionById(id: number, tenantContext: TenantContext) {
   }
 }
 
-export async function getAllChildren(divisionId: number, tenantContext: TenantContext) {
+export async function getAllChildren(divisionId: number, countryAccountsId: string) {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
@@ -1024,14 +1022,14 @@ export async function getAllChildren(divisionId: number, tenantContext: TenantCo
             SELECT id, parent_id
             FROM division
             WHERE id = ${divisionId}
-            AND country_accounts_id = ${tenantContext.countryAccountId}
+            AND country_accounts_id = ${countryAccountsId}
 
             UNION ALL
 
             SELECT t.id, t.parent_id
             FROM division t
             INNER JOIN DivisionChildren c ON t.parent_id = c.id
-            WHERE t.country_accounts_id = ${tenantContext.countryAccountId}
+            WHERE t.country_accounts_id = ${countryAccountsId}
           )
 
           SELECT id
@@ -1117,7 +1115,7 @@ export async function getDivisionsBySpatialQuery(
   options: {
     relationshipType?: 'intersects' | 'contains' | 'within';
   } = {},
-  tenantContext: TenantContext
+  countryAccountsId: string
 ): Promise<any[]> {
   try {
     return await dr.transaction(async (tx: Tx) => {
@@ -1155,7 +1153,7 @@ export async function getDivisionsBySpatialQuery(
             d.geom,
             ST_GeomFromGeoJSON(${JSON.stringify(geojson)})
           )
-          AND d.country_accounts_id = ${tenantContext.countryAccountId};
+          AND d.country_accounts_id = ${countryAccountsId};
         `;
 
         const results = await tx.execute(query);
@@ -1185,10 +1183,10 @@ export async function getDivisionsBySpatialQuery(
  * This function is used to fix data inconsistencies when divisions have been imported
  * without proper geometry conversion
  * 
- * @param tenantContext - Tenant context for filtering divisions by tenant
+ * @param countryAccountsId - Tenant context for filtering divisions by tenant
  * @returns Object with count of updated divisions and any errors
  */
-export async function updateMissingGeometryForDivisions(tenantContext: TenantContext): Promise<{ updated: number; errors: string[] }> {
+export async function updateMissingGeometryForDivisions(countryAccountsId: string): Promise<{ updated: number; errors: string[] }> {
   const errors: string[] = [];
   let updated = 0;
 
@@ -1197,7 +1195,7 @@ export async function updateMissingGeometryForDivisions(tenantContext: TenantCon
       // Find divisions with geojson but no geometry
       const divisionsToUpdate = await tx.query.divisionTable.findMany({
         where: and(
-          eq(divisionTable.countryAccountsId, tenantContext.countryAccountId),
+          eq(divisionTable.countryAccountsId, countryAccountsId),
           sql`${divisionTable.geojson} IS NOT NULL`,
           sql`${divisionTable.geom} IS NULL`
         ),
@@ -1207,7 +1205,7 @@ export async function updateMissingGeometryForDivisions(tenantContext: TenantCon
         }
       });
 
-      logger.info(`Found ${divisionsToUpdate.length} divisions with missing geometry for tenant ${tenantContext.countryAccountId}`);
+      logger.info(`Found ${divisionsToUpdate.length} divisions with missing geometry for tenant ${countryAccountsId}`);
 
       // Process each division
       for (const division of divisionsToUpdate) {
@@ -1254,7 +1252,7 @@ export async function getDivisionsByBoundingBox(
   options: {
     relationshipType?: 'intersects' | 'contains' | 'within';
   } = {},
-  tenantContext: TenantContext
+  countryAccountsId: string
 ): Promise<any[]> {
   try {
     return await dr.transaction(async () => {
@@ -1289,7 +1287,7 @@ export async function getDivisionsByBoundingBox(
         };
 
         // Use spatial query function
-        return await getDivisionsBySpatialQuery(bboxPolygon, options, tenantContext);
+        return await getDivisionsBySpatialQuery(bboxPolygon, options, countryAccountsId);
       } catch (error) {
         logger.error('Failed to get divisions by bounding box', { error, bbox, options });
         if (error instanceof ValidationError) {

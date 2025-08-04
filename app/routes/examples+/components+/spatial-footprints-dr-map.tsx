@@ -76,8 +76,6 @@ export const loader = async () => {
         de.name_national;
     `);
 
-    console.log(disasterEvents.rows);
-  
     return { disasterEvents: disasterEvents.rows };
   };
 

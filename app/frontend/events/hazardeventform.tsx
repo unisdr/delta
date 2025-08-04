@@ -33,17 +33,10 @@ export const route = "/hazardous-event"
 // 2025-02-25 - removed all fields not in DTS Variables and baselines
 export const fieldsDefCommon = [
 	approvalStatusField,
-	// {key: "otherId1", label: "Event id in other system", type: "text", uiRowNew: true, uiRow: {}},
-	// {key: "duration", label: "Duration", type: "text", uiRow: {}},
 	{ key: "nationalSpecification", label: "National specification", type: "textarea" },
 	{ key: "startDate", label: "Start Date", type: "date_optional_precision", required: true, uiRow: {} },
 	{ key: "endDate", label: "End Date", type: "date_optional_precision", required: true },
 	{ key: "description", label: "Description", type: "textarea", uiRowNew: true },
-	//{key: "warningIssuedSummary", label: "Summary", type: "textarea", uiRowNew: true},
-	//{key: "warningIssuedBy", label: "Issued By", type: "text", uiRow: {}},
-	//{key: "warningIssuedDate", label: "Date", type: "date"},
-	//{key: "warningIssuedCoverage", label: "Coverage", type: "textarea", uiRowNew: true},
-	//{key: "warningIssuedContent", label: "Warning content", type: "textarea", uiRowNew: true},
 	{ key: "chainsExplanation", label: "Composite Event - Chains Explanation", type: "textarea" },
 	{ key: "magnitude", label: "Magnitude", type: "text" },
 	{ key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true },
@@ -134,7 +127,6 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 	const treeData = props.treeData;
 	const ctryIso3 = props.ctryIso3;
 	const divisionGeoJSON = props.divisionGeoJSON;
-	//console.log('divisionGeoJSON: ', divisionGeoJSON);
 
 	const [selected, setSelected] = useState(props.parent);
 

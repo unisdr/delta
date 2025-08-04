@@ -1,20 +1,35 @@
-import {
-  assetTable,
-} from "~/drizzle/schema";
+import { assetTable } from "~/drizzle/schema";
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
-import {desc} from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
-import {createApiListLoader} from "~/backend.server/handlers/view";
+import { createApiListLoader } from "~/backend.server/handlers/view";
+import { LoaderFunction, LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { apiAuth } from "~/backend.server/models/api_key";
 
-export let loader = createApiListLoader(
-  assetTable,
-  async (offsetLimit) => {
-    return dr.query.assetTable.findMany({
-      ...offsetLimit,
-      columns: {id: true, name: true, nationalId: true, notes: true},
-      orderBy: [desc(assetTable.name)],
-    });
-  },
-)
+export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
+	const { request } = args;
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	return createApiListLoader(
+		async () => {
+			return dr.$count(
+				assetTable,
+				eq(assetTable.countryAccountsId, assetTable)
+			);
+		},
+		async (offsetLimit) => {
+			return dr.query.assetTable.findMany({
+				...offsetLimit,
+				where: eq(assetTable.countryAccountsId, countryAccountsId),
+				columns: { id: true, name: true, nationalId: true, notes: true },
+				orderBy: [desc(assetTable.name)],
+			});
+		}
+	)(args);
+};

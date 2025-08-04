@@ -1,6 +1,3 @@
-import { dr } from "~/db.server";
-import { eq, sql, and } from "drizzle-orm";
-import { userTable } from "~/drizzle/schema";
 import { json, MetaFunction } from "@remix-run/node";
 import {
 	useLoaderData,
@@ -18,7 +15,6 @@ import { ValidRoles } from "~/frontend/user/roles";
 import { authLoaderWithPerm, authActionWithPerm } from "~/util/auth";
 import { formStringData } from "~/util/httputil";
 import { MainContainer } from "~/frontend/container";
-import { getTenantContext } from "~/util/tenant";
 import { redirectWithMessage, sessionCookie, getUserFromSession } from "~/util/session";
 import {
 	adminUpdateUser,
@@ -29,6 +25,7 @@ import { format } from "date-fns";
 import { ConfirmDialog } from "~/frontend/components/ConfirmDialog";
 import { notifyError } from "~/frontend/utils/notifications";
 import { useEffect, useRef } from "react";
+import { getUserCountryAccountsByUserIdAndCountryAccountsId } from "~/db/queries/userCountryAccounts";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -50,50 +47,26 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const tenantContext = await getTenantContext(userSession);
-	if (!tenantContext) {
-		throw new Response("Unauthorized - No tenant context", { status: 401 });
-	}
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
-	// Query user with tenant isolation
-	const res = await dr
-		.select({
-			id: userTable.id,
-			email: userTable.email,
-			firstName: userTable.firstName,
-			lastName: userTable.lastName,
-			role: userTable.role,
-			organization: userTable.organization,
-			emailVerified: userTable.emailVerified,
-			dateAdded: userTable.createdAt,
-			addedBy: sql<string>`'System Admin'`.as("addedBy"),
-			countryAccountsId: userTable.countryAccountsId,
-		})
-		.from(userTable)
-		.where(
-			and(
-				eq(userTable.id, Number(id)),
-				eq(userTable.countryAccountsId, tenantContext.countryAccountId)
-			)
-		);
+	const item = await getUserCountryAccountsByUserIdAndCountryAccountsId(Number(id), countryAccountsId);
 
-	if (!res || res.length === 0) {
+	if (!item) {
 		throw new Response("User not found or you don't have permission to edit this user", { status: 404 });
 	}
 
-	const item = res[0];
-
 	return {
 		data: {
-			id: item.id,
-			email: item.email,
-			firstName: item.firstName,
-			lastName: item.lastName,
-			organization: item.organization,
-			role: item.role,
-			emailVerified: item.emailVerified,
-			dateAdded: item.dateAdded || null,
-			addedBy: item.addedBy || "System Admin",
+			id: item.user.id,
+			email: item.user.email,
+			firstName: item.user.firstName,
+			lastName: item.user.lastName,
+			organization: item.user.organization,
+			role: item.user_country_accounts.role,
+			emailVerified: item.user.emailVerified,
+			dateAdded: item.user.createdAt || null,
+			addedBy: "System Admin",
 		},
 	};
 });
@@ -108,35 +81,29 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 		throw new Response("Missing ID", { status: 400 });
 	}
 
-	// Get user session and tenant context
-	const userSession = await getUserFromSession(request);
-	if (!userSession) {
-		throw new Response("Unauthorized", { status: 401 });
-	}
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
-	const tenantContext = await getTenantContext(userSession);
-	if (!tenantContext) {
+	if (!countryAccountsId) {
 		throw new Response("Unauthorized - No tenant context", { status: 401 });
 	}
+	
+	const userCountryAccounts = await getUserCountryAccountsByUserIdAndCountryAccountsId(id,countryAccountsId)
+	if(!userCountryAccounts){
+		throw new Response("Unauthorized Access", { status: 401 });
+	}
 
-	// Verify the user belongs to the current tenant
-	const userToEdit = await dr
-		.select({ countryAccountsId: userTable.countryAccountsId })
-		.from(userTable)
-		.where(eq(userTable.id, id))
-		.limit(1);
+	const userToEdit = userCountryAccounts.user;
 
-	if (!userToEdit || userToEdit.length === 0) {
+	if (!userToEdit) {
 		throw new Response("User not found", { status: 404 });
 	}
 
-	// Ensure user belongs to the same tenant
-	if (userToEdit[0].countryAccountsId !== tenantContext.countryAccountId) {
-		throw new Response("Unauthorized - Cannot edit users from other tenants", { status: 403 });
-	}
-
 	const formData = formStringData(await request.formData());
+	console.log("formData",formData)
+	
 	const updatedData = adminUpdateUserFieldsFromMap(formData);
+	console.log("updatedData", updatedData)
 
 	if (!updatedData.firstName || updatedData.firstName.trim() === "") {
 		return json<ActionResponse>({
@@ -168,41 +135,7 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 		});
 	}
 
-	const existingUser = await dr
-		.select({
-			email: userTable.email,
-			firstName: userTable.firstName,
-			lastName: userTable.lastName,
-			organization: userTable.organization,
-			role: userTable.role,
-		})
-		.from(userTable)
-		.where(eq(userTable.id, id))
-		.limit(1);
-
-	if (!existingUser || existingUser.length === 0) {
-		throw new Response("User not found", { status: 404 });
-	}
-
-	const currentUser = existingUser[0];
-
-	const hasChanges = Object.keys(updatedData).some(
-		(key) =>
-			(updatedData as Record<string, any>)[key] !==
-			(currentUser as Record<string, any>)[key]
-	);
-
-	if (!hasChanges) {
-		return redirectWithMessage(request, "/settings/access-mgmnt/", {
-			type: "info",
-			text: "No changes were made",
-		});
-	}
-
-	const session = await sessionCookie().getSession(
-		request.headers.get("Cookie")
-	);
-	const res = await adminUpdateUser(id, updatedData, session.get("userId"));
+	const res = await adminUpdateUser(id, updatedData, session.get("userId"), countryAccountsId);
 
 	if (!res.ok) {
 		return json<ActionResponse>({
@@ -440,7 +373,7 @@ export default function Screen() {
 									name="email"
 									defaultValue={fields.email}
 									required
-									disabled={true}
+									readOnly={true}
 									autoComplete="email"
 									className={safeErrors.fields.email ? "error" : ""}
 									aria-describedby={

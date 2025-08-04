@@ -1,27 +1,10 @@
 import { dr } from "~/db.server";
 import { eq } from "drizzle-orm";
 
-import { userTable, User } from "~/drizzle/schema";
+import { userTable, SelectUser } from "~/drizzle/schema";
 
 import * as OTPAuth from "otpauth";
 import {loginTotp} from "./auth";
-import { getInstanceSystemSettingsByCountryAccountId } from "../../../db/queries/instanceSystemSetting";
-
-
-function totpSettings(userEmail: string, secret: string, totpIssuer: string) {
-  if (!secret) {
-    throw "provide secret";
-  }
-
-  return new OTPAuth.TOTP({
-    issuer: totpIssuer,
-    label: userEmail,
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: secret,
-  });
-}
 
 type GenerateTotpResult =
   | { ok: true; secret: string; secretUrl: string }
@@ -30,7 +13,8 @@ type GenerateTotpResult =
 const totpSecretSize = 16;
 
 export async function generateTotpIfNotSet(
-  userId: number
+  userId: number,
+  totpIssuer: string,
 ): Promise<GenerateTotpResult> {
   const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
 
@@ -49,13 +33,14 @@ export async function generateTotpIfNotSet(
   }
 
   const secret = new OTPAuth.Secret({ size: totpSecretSize }).base32;
-
-  const settings = await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
-  let totpIssuer = "";
-  if(settings){
-    totpIssuer = settings.totpIssuer;
-  }
-  const totp = totpSettings(user.email, secret, totpIssuer);
+  const totp = new OTPAuth.TOTP({
+    issuer: totpIssuer,
+    label: user.email,
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
+    secret: secret,
+  });
 
   if (!secret) {
     throw "Application Error";
@@ -79,19 +64,26 @@ export async function generateTotpIfNotSet(
   };
 }
 
-export async function isValidTotp(user: User, token: string): Promise<boolean> {
+export async function isValidTotp(user: SelectUser, token: string, totpIssuer: string): Promise<boolean> {
   if (!user.totpSecret) {
     throw "TOTP secret not set";
   }
   if (!token) {
     return false;
   }
-  const settings = await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
-  let totpIssuer = "";
-  if(settings){
-    totpIssuer = settings.totpIssuer;
+
+  if(!user.totpSecret){
+    throw "provide secret"
   }
-  const totp = totpSettings(user.email, user.totpSecret, totpIssuer);
+  const totp = new OTPAuth.TOTP({
+    issuer: totpIssuer,
+    label: user.email,
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
+    secret: user.totpSecret,
+  });
+
   let delta = totp.validate({ token, window: 1 });
   if (delta === null) {
     return false;
@@ -104,7 +96,8 @@ type SetTotpEnabledResult = { ok: true } | { ok: false; error: string };
 export async function setTotpEnabled(
   userId: number,
   token: string,
-  enabled: boolean
+  enabled: boolean,
+  totpIssuer: string,
 ): Promise<SetTotpEnabledResult> {
   const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
 
@@ -118,7 +111,7 @@ export async function setTotpEnabled(
     return { ok: false, error: "Empty token" };
   }
 
-  const isValid = await isValidTotp(user, token);
+  const isValid = await isValidTotp(user, token, totpIssuer);
 
   if (!isValid) {
     return { ok: false, error: "Invalid token" };
@@ -141,7 +134,7 @@ export async function setTotpEnabled(
   await dr.update(userTable).set(data).where(eq(userTable.id, userId));
 
   if (enabled) {
-    return await loginTotp(userId, token);
+    return await loginTotp(userId, token,totpIssuer);
   }
 
   return { ok: true };

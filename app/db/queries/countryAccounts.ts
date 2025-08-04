@@ -1,20 +1,24 @@
-import { countryAccounts, userTable } from "../../drizzle/schema";
+import { countryAccounts, userCountryAccounts } from "../../drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { dr, Tx } from "~/db.server";
 
-export async function getCountryAccountsWithCountryAndPrimaryAdminUser() {
-	return dr.query.countryAccounts.findMany({
+export async function getCountryAccountsWithUserCountryAccountsAndUser() {
+	return await dr.query.countryAccounts.findMany({
 		with: {
 			country: true,
-			users: {
-				where: eq(userTable.isPrimaryAdmin, true),
+			userCountryAccounts: {
+				where: eq(userCountryAccounts.isPrimaryAdmin, true),
 				limit: 1,
+				with: {
+					user: true,
+				},
 			},
 		},
 		columns: {
 			id: true,
 			status: true,
 			type: true,
+			shortDescription: true,
 			createdAt: true,
 			updatedAt: true,
 		},
@@ -22,7 +26,7 @@ export async function getCountryAccountsWithCountryAndPrimaryAdminUser() {
 	});
 }
 export type CountryAccountWithCountryAndPrimaryAdminUser = Awaited<
-	ReturnType<typeof getCountryAccountsWithCountryAndPrimaryAdminUser>
+	ReturnType<typeof getCountryAccountsWithUserCountryAccountsAndUser>
 >[number];
 
 export async function getCountryAccountById(id: string) {
@@ -65,29 +69,30 @@ export async function createCountryAccount(
 	countryId: string,
 	status: number,
 	type: string,
+	shortDescription: string,
 	tx?: Tx
 ) {
 	const db = tx || dr;
 	const result = await db
 		.insert(countryAccounts)
-		.values({ countryId, status, type })
+		.values({ countryId, status, type, shortDescription })
 		.returning()
 		.execute();
 	return result[0];
 }
 
-export async function updateCountryAccountStatus(
+export async function updateCountryAccount(
 	id: string,
 	status: number,
+	shortDescription: string,
 	tx?: Tx
 ) {
 	const db = tx || dr;
 	const result = await db
 		.update(countryAccounts)
-		.set({ status, updatedAt: new Date() })
+		.set({ status, updatedAt: new Date(), shortDescription })
 		.where(eq(countryAccounts.id, id))
 		.returning()
 		.execute();
 	return result[0] || null;
 }
-

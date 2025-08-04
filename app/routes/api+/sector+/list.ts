@@ -1,20 +1,19 @@
-import {
-	sectorTable,
-} from "~/drizzle/schema";
+import { sectorTable } from "~/drizzle/schema";
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
-import {desc} from "drizzle-orm";
+import { desc } from "drizzle-orm";
 
-import {createApiListLoader} from "~/backend.server/handlers/view";
+import { createApiListLoader } from "~/backend.server/handlers/view";
 
 export const loader = createApiListLoader(
-	sectorTable,
+	async () => {
+		return dr.$count(sectorTable);
+	},
 	async (offsetLimit) => {
 		return dr.query.sectorTable.findMany({
 			...offsetLimit,
 			orderBy: [desc(sectorTable.id)],
 		});
-	},
+	}
 );
-

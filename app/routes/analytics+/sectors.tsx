@@ -4,7 +4,6 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import { redirect } from "@remix-run/node";
 
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
-import { requireTenantContext } from "~/util/tenant";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 
@@ -17,7 +16,7 @@ import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
-import { getCountrySettingsFromSession } from "~/util/session";
+import { getCountrySettingsFromSession, sessionCookie } from "~/util/session";
 import { getImpactOnSector } from "~/backend.server/handlers/analytics/ImpactonSectors";
 import { handleGeographicImpactQuery } from "~/backend.server/handlers/analytics/geographicImpact";
 import { getHazardImpact } from "~/backend.server/handlers/analytics/hazardImpact";
@@ -99,20 +98,17 @@ interface HazardImpactApiResponse {
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
 	async (loaderArgs: any) => {
-		const { request, userSession } = loaderArgs;
+		const { request } = loaderArgs;
+		const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+		const countryAccountsId = session.get("countryAccountsId")
 
 		// TEMPORARY RESTRICTION: Redirect unauthenticated users to unauthorized page
 		// This is a temporary measure until business rules for public access are defined
-		if (!userSession) {
+		if (!countryAccountsId) {
 			return redirect("/error/unauthorized?reason=content-not-published");
 		}
 
 		try {
-			// Get tenant context from session using requireTenantContext
-			const tenantContext = userSession
-				? await requireTenantContext(userSession)
-				: undefined;
-
 			// Parse URL to extract query parameters
 			const url = new URL(request.url);
 			const sectorId = url.searchParams.get("sectorId");
@@ -219,9 +215,9 @@ export const loader = authLoaderPublicOrWithPerm(
 
 			// Fetch geographic levels data for filters
 			try {
-				if (tenantContext) {
+				if (countryAccountsId) {
 					const geographicLevelsResponse = await getGeographicLevelsHandler(
-						tenantContext
+						countryAccountsId
 					);
 					if (
 						geographicLevelsResponse.success &&
@@ -251,9 +247,9 @@ export const loader = authLoaderPublicOrWithPerm(
 
 			// Fetch disaster events data for filters
 			try {
-				if (tenantContext) {
+				if (countryAccountsId) {
 					// Get raw data from handler
-					const rawDisasterEvents = await getDisasterEvents(tenantContext);
+					const rawDisasterEvents = await getDisasterEvents(countryAccountsId);
 
 					// Format it to match the original API response structure
 					disasterEventsData = { disasterEvents: rawDisasterEvents };
@@ -284,7 +280,7 @@ export const loader = authLoaderPublicOrWithPerm(
 				};
 
 				// Call the handler directly with tenant context
-				if (!tenantContext) {
+				if (!countryAccountsId) {
 					console.error("LOADER ERROR - No valid tenant context available");
 					return {
 						settings,
@@ -297,7 +293,7 @@ export const loader = authLoaderPublicOrWithPerm(
 
 				// Fetch sector impact data
 				const sectorHandlerResponse = await getImpactOnSector(
-					tenantContext,
+					countryAccountsId,
 					subSectorId || sectorId || "",
 					handlerFilters,
 					currency
@@ -337,7 +333,7 @@ export const loader = authLoaderPublicOrWithPerm(
 					};
 
 					const hazardHandlerResponse = await getHazardImpact(
-						tenantContext,
+						countryAccountsId,
 						hazardFilters
 					);
 
@@ -370,7 +366,7 @@ export const loader = authLoaderPublicOrWithPerm(
 					};
 
 					const geoHandlerResponse = await handleGeographicImpactQuery(
-						tenantContext,
+						countryAccountsId,
 						geoFilters
 					);
 
@@ -431,9 +427,9 @@ export const loader = authLoaderPublicOrWithPerm(
 				};
 
 				// Ensure tenantContext is defined before calling the handler
-				if (tenantContext) {
+				if (countryAccountsId) {
 					const effectDetailsResponse = await getEffectDetailsHandler(
-						tenantContext,
+						countryAccountsId,
 						effectDetailsFilters
 					);
 
@@ -474,10 +470,10 @@ export const loader = authLoaderPublicOrWithPerm(
 				};
 
 				// Ensure tenantContext is defined before calling the handler
-				if (tenantContext) {
+				if (countryAccountsId) {
 					const mostDamagingEventsResponse =
 						await handleMostDamagingEventsRequest(
-							tenantContext,
+							countryAccountsId,
 							mostDamagingEventsFilters
 						);
 

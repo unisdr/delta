@@ -1,39 +1,39 @@
-import {
-	useLoaderData,
-	Link,
-} from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 
-import {
-	devExample1Table,
-} from "~/drizzle/schema";
+import { devExample1Table } from "~/drizzle/schema";
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
-import {createPaginatedLoader} from "~/backend.server/handlers/view";
+import { createPaginatedLoader } from "~/backend.server/handlers/view";
 
-import {desc} from "drizzle-orm";
-import {DataScreen} from "~/frontend/data_screen";
+import { desc, eq } from "drizzle-orm";
+import { DataScreen } from "~/frontend/data_screen";
 
-import {ActionLinks} from "~/frontend/form"
+import { ActionLinks } from "~/frontend/form";
 
-import {
-	route
-} from "~/frontend/dev_example1";
+import { LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { route } from "~/frontend/dev_example1";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
-export const loader = createPaginatedLoader(
-	devExample1Table,
-	async (offsetLimit) => {
+export const loader = async (args: LoaderFunctionArgs) => {
+	const { request } = args;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+
+	return createPaginatedLoader(async (offsetLimit) => {
 		return dr.query.devExample1Table.findMany({
 			...offsetLimit,
-			columns: {id: true, field1: true},
+			columns: { id: true, field1: true },
+			where: eq(devExample1Table.countryAccountsId, countryAccountsId),
 			orderBy: [desc(devExample1Table.field1)],
 		});
-	},
-);
+	}, await dr.$count(devExample1Table, eq(devExample1Table.countryAccountsId, countryAccountsId)))(
+		args
+	);
+};
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
-	const {items, pagination} = ld.data;
+	const { items, pagination } = ld.data;
 
 	return DataScreen({
 		plural: "Dev examples",
@@ -56,4 +56,3 @@ export default function Data() {
 		),
 	});
 }
-

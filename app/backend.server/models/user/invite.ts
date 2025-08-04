@@ -1,7 +1,7 @@
 import { dr, Tx } from "~/db.server";
 import { eq } from "drizzle-orm";
 
-import { userTable, User } from "~/drizzle/schema";
+import { userTable, SelectUser } from "~/drizzle/schema";
 
 import { Errors, hasErrors } from "~/frontend/form";
 
@@ -12,8 +12,8 @@ import { randomBytes } from "crypto";
 
 import { validateName, validatePassword } from "./user_utils";
 import { passwordHash } from "./password";
-import { TenantContext } from "~/util/tenant";
-import { doesUserExistByEmailAndCountry } from "~/db/queries/user";
+import { createUserCountryAccounts, doesUserCountryAccountExistByEmailAndCountryAccountsId } from "~/db/queries/userCountryAccounts";
+import { createUser, getUserByEmail } from "~/db/queries/user";
 
 type AdminInviteUserResult =
 	| { ok: true }
@@ -50,7 +50,7 @@ export function adminInviteUserFieldsFromMap(data: {
 
 export async function adminInviteUser(
 	fields: AdminInviteUserFields,
-	tenantContext: TenantContext,
+	countryAccountsId: string,
 	baseUrl: string,
 	siteName: string
 ): Promise<AdminInviteUserResult> {
@@ -71,9 +71,9 @@ export async function adminInviteUser(
 		errors.fields.organization = ["Organisation is required"];
 	}
 
-	const emailAndCountryIdExist = await doesUserExistByEmailAndCountry(
+	const emailAndCountryIdExist = await doesUserCountryAccountExistByEmailAndCountryAccountsId(
 		fields.email,
-		tenantContext.countryAccountId
+		countryAccountsId
 	);
 
 	if (emailAndCountryIdExist) {
@@ -84,32 +84,33 @@ export async function adminInviteUser(
 		return { ok: false, errors };
 	}
 
-	try {
-		const res = await dr
-			.insert(userTable)
-			.values({
-				email: fields.email,
-				firstName: fields.firstName,
-				lastName: fields.lastName,
-				role: fields.role,
-				organization: fields.organization,
-				hydrometCheUser: fields.hydrometCheUser,
-				countryAccountsId: tenantContext.countryAccountId,
-			})
-			.returning();
-		const user = res[0];
-		await sendInvite(user, baseUrl, siteName);
-	} catch (e: any) {
-		throw e;
+	const user = await getUserByEmail(fields.email);
+	if(!user){
+		//create new user
+		//create new user country account with it
+		//send invitation for new user
+		dr.transaction(async (tx) => {
+			const newUser =	await createUser(fields.email, tx)
+			await createUserCountryAccounts(newUser.id,countryAccountsId,fields.role,false,tx);
+			await sendInviteForNewUser(newUser, baseUrl,siteName,fields.role);
+		});
+	}else{
+		//create new user country accounts associate to it
+		//send invitation for existing user
+		dr.transaction(async (tx) => {
+			await createUserCountryAccounts(user.id,countryAccountsId,fields.role,false,tx);
+			await sendInviteForExistingUser(user,baseUrl,siteName,fields.role);
+		});
 	}
 
 	return { ok: true };
 }
 
-export async function sendInvite(
-	user: User,
+export async function sendInviteForNewUser(
+	user: SelectUser,
 	siteUrl: string,
 	siteName: string,
+	role: string,
 	tx?: Tx
 ) {
 	const inviteCode = randomBytes(32).toString("hex");
@@ -129,7 +130,7 @@ export async function sendInvite(
 		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
 	const subject = `Invitation to join DTS ${siteName}`;
 	const html = `<p>You have been invited to join the DTS ${siteName} system as 
-                   a ${user.role} user.
+                   a ${role} user.
                 </p>
                 <p>Click on the link below to create your account.</p>
                 <p>
@@ -142,9 +143,37 @@ export async function sendInvite(
                 <p><a href="${inviteURL}">${inviteURL}</a></p>`;
 
 	const text = `You have been invited to join the DTS ${siteName} system as 
-                a ${user.role} user. 
+                a ${role} user. 
                 Copy and paste the following link into your browser url to create your account:
                 ${inviteURL}`;
+	await sendEmail(user.email, subject, text, html);
+}
+
+export async function sendInviteForExistingUser(
+	user: SelectUser,
+	siteUrl: string,
+	siteName: string,
+	role: string,
+) {
+	
+	const subject = `Invitation to join DTS ${siteName}`;
+	const html = `<p>You have been invited to join the DTS ${siteName} system as 
+                   a ${role} user.
+                </p>
+                <p>Click on the link below to login to your account.</p>
+                <p>
+                  <a href="${siteUrl}" 
+                    style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+                    background-color: #007BFF; text-decoration: none; border-radius: 5px;">
+                    Login in
+                  </a>
+                </p>
+                <p><a href="${siteUrl}">${siteUrl}</a></p>`;
+
+	const text = `You have been invited to join the DTS ${siteName} system as 
+                a ${role} user. 
+                Copy and paste the following link into your browser url to login to your account:
+                ${siteUrl}`;
 	await sendEmail(user.email, subject, text, html);
 }
 
@@ -232,7 +261,7 @@ export async function acceptInvite(
 		return { ok: false, errors };
 	}
 
-	let user: User;
+	let user: SelectUser;
 
 	const res = await dr
 		.update(userTable)

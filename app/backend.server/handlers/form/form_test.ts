@@ -14,6 +14,7 @@ import {jsonCreate, JsonCreateArgs, jsonUpdate, JsonUpdateArgs, jsonUpsert} from
 import {csvCreate, CsvCreateArgs, csvImportExample, csvUpdate, CsvUpdateArgs, csvUpsert, CsvUpsertArgs} from './form_csv';
 import {RowError} from './form_utils';
 
+const countryAccountsId ="1234";
 interface TestFields {
 	field1: string;
 	field2?: string;
@@ -47,7 +48,6 @@ describe("formSave", () => {
 			save: saveMock,
 			redirectTo: (id: any) => `/test/${id}`,
 		}) as any;
-		console.log("res", res)
 		assert.equal(res.headers.get("Location"), "/test/1")
 	});
 });
@@ -221,7 +221,6 @@ describe('jsonUpsert', () => {
 		assert.equal(res.res.length, 1)
 		assert(!res.res[0].ok)
 		assert(res.res[0].errors)
-		console.log("errs", res.res[0].errors)
 		let field1Errs = res.res[0].errors.fields?.field1
 		// this assert freezes test runner when it fails
 		// looks like a bug in nodejs
@@ -304,11 +303,9 @@ describe('csvCreate', () => {
 			fieldsDef: fieldsDef3,
 			create: createMock
 		}
-
-		const res = await csvCreate(args)
+		const res = await csvCreate(args, countryAccountsId)
 		assert(!res.ok)
 		let err = res.rowError! as RowError
-		console.log("err res", res)
 		assert.equal(err.def?.key, "field1")
 		assert.equal(err.code, "invalid_type")
 	})
@@ -328,7 +325,7 @@ describe('csvCreate', () => {
 			create: createMock
 		}
 
-		const res = await csvCreate(args)
+		const res = await csvCreate(args, countryAccountsId)
 		assert(res.ok)
 		assert.deepEqual(res.res!, [
 			["id", "field1", "field2"],
@@ -353,10 +350,9 @@ describe('csvUpdate', () => {
 			update: updateMock
 		}
 
-		const res = await csvUpdate(args)
+		const res = await csvUpdate(args, countryAccountsId)
 		assert(!res.ok)
 		let err = res.rowError! as FormError
-		console.log("err", err)
 		assert.equal(err.def?.key, "field1")
 		assert.equal(err.code, "invalid_type")
 	})
@@ -375,7 +371,7 @@ describe('csvUpdate', () => {
 			update: updateMock
 		}
 
-		const res = await csvUpdate(args)
+		const res = await csvUpdate(args,countryAccountsId)
 		assert(!res.ok)
 		let err = res.rowError! as FormError
 		assert.equal(err.code, "missingId")
@@ -396,7 +392,7 @@ describe('csvUpdate', () => {
 			update: updateMock
 		}
 
-		const res = await csvUpdate(args)
+		const res = await csvUpdate(args,countryAccountsId)
 		assert(res.ok)
 	})
 })
@@ -433,7 +429,7 @@ describe('csvUpsert', () => {
 			idByImportId: idByImportId
 		}
 
-		const res = await csvUpsert(args)
+		const res = await csvUpsert(args,countryAccountsId)
 		assert(!res.ok)
 		let rowError = res.rowError! as RowError
 		assert.equal(rowError.code, "UpsertApiImportIdMissingError")
@@ -460,9 +456,8 @@ describe('csvUpsert', () => {
 			idByImportId: idByImportId
 		}
 
-		const res = await csvUpsert(args)
+		const res = await csvUpsert(args,countryAccountsId)
 		assert(!res.ok)
-		console.log("res", res)
 		let rowError = res.rowError! as RowError
 		assert.equal(rowError.code, "invalid_type")
 		assert.equal(rowError.row, 0)
@@ -488,7 +483,7 @@ describe('csvUpsert', () => {
 			idByImportId: idByImportId
 		}
 
-		const res = await csvUpsert(args)
+		const res = await csvUpsert(args,countryAccountsId)
 		assert(res.ok)
 	})
 
@@ -512,7 +507,7 @@ describe('csvUpsert', () => {
 			idByImportId: idByImportId
 		}
 
-		const res = await csvUpsert(args)
+		const res = await csvUpsert(args,countryAccountsId)
 		assert(res.ok)
 	})
 })

@@ -17,14 +17,3 @@ export const loader = async () => {
 		throw new Error("Azure SSO B2C not allowed in the system.");
 	}
 };
-
-// export default function Screen() {
-// 	const actionData = useActionData<typeof action>();
-
-
-// 	return (
-// 		<>
-// 		</>
-// 	);
-// }
-

@@ -1,28 +1,22 @@
-import {
-	fieldsDefApi
-} from "~/backend.server/models/losses"
+import { authLoaderApiDocs } from "~/util/auth";
 
-import {
-	authLoaderApiDocs,
-} from "~/util/auth"
+import { jsonApiDocs } from "~/backend.server/handlers/form/form_api";
+import { LoaderFunction } from "@remix-run/server-runtime";
+import { createFieldsDefApi } from "~/backend.server/models/losses";
 
-import {
-	jsonApiDocs,
-} from "~/backend.server/handlers/form/form_api"
-
-export const loader = authLoaderApiDocs(async ({request}) => {
+export const loader: LoaderFunction = authLoaderApiDocs(async ({ request }) => {
 	const url = new URL(request.url);
 	const baseUrl = `${url.protocol}//${url.host}`;
+	const currencies = ["USD"];
 
 	let docs = await jsonApiDocs({
 		baseUrl: "losses",
-		fieldsDef: fieldsDefApi,
-		siteUrl: baseUrl
-	})
+		fieldsDef: createFieldsDefApi(currencies),
+		siteUrl: baseUrl,
+	});
 
 	return new Response(docs, {
 		status: 200,
-		headers: {"Content-Type": "text/plain"},
-	})
-})
-
+		headers: { "Content-Type": "text/plain" },
+	});
+});

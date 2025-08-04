@@ -1,4 +1,4 @@
-import type { MetaFunction } from '@remix-run/node';
+/*import type { MetaFunction } from '@remix-run/node';
 
 import { Link } from "react-router-dom";
 import { useLoaderData, } from "@remix-run/react";
@@ -173,9 +173,10 @@ export const meta: MetaFunction = () => {
 		{ name: "description", content: "Admin setup." },
 	];
 };
-
+*/
 export default function Screen() {
-	const loaderData = useLoaderData<typeof loader>();
+	return <div>Page removed</div>
+	/*const loaderData = useLoaderData<typeof loader>();
 	const { configSiteName, configErrors } = loaderData;
 
 	return (
@@ -257,5 +258,5 @@ export default function Screen() {
 				</form>
 			</div>
 		</>
-	);
+	);*/
 }

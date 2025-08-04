@@ -1,8 +1,7 @@
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
 import { contentPickerConfig, contentPickerConfigSector, contentPickerConfigCategory } from "./content-picker-config";
-import { getTenantContext } from "~/util/tenant";
-import type { UserSession } from "~/util/session";
+import { sessionCookie } from "~/util/session";
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
     const { request } = loaderArgs;
@@ -23,18 +22,19 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     const config = configMap[view] || contentPickerConfig;
 
     try {
+        const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+        let countryAccountsId = undefined;
+        
         // Extract tenant context from user session (if available)
-        let tenantContext = undefined;
         if (loaderArgs.userSession) {
-            const userSession = loaderArgs.userSession as UserSession;
-            tenantContext = await getTenantContext(userSession);
+            countryAccountsId = session.get("countryAccountsId")
         }
 
         // Pass tenant context to fetchData and getTotalRecords
-        const results = await fetchData(config, searchQuery, page, limit, tenantContext);
-        const totalRecords = await getTotalRecords(config, searchQuery, tenantContext);
+        const results = await fetchData(config, searchQuery, page, limit, countryAccountsId);
+        const totalRecords = await getTotalRecords(config, searchQuery, countryAccountsId);
 
-        return { data: results, totalRecords, page, limit, tenantContext };
+        return { data: results, totalRecords, page, limit, countryAccountsId };
     } catch (error) {
         console.error("Error fetching data:", error);
         return Response.json({ error: "Error fetching data" }, { status: 500 });

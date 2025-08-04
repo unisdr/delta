@@ -19,7 +19,7 @@ import {processSectorCsv} from "~/backend.server/utils/sector";
 import {processCategoryCsv} from "~/backend.server/utils/category";
 import {processAssetCsv} from "~/backend.server/utils/asset";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
-import { getCountrySettingsFromSession } from "~/util/session";
+import { getCountrySettingsFromSession, sessionCookie } from "~/util/session";
 
 export const meta: MetaFunction = (request) => {
 	// Extract the query string
@@ -51,10 +51,14 @@ export const meta: MetaFunction = (request) => {
 };
 
 export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
+	const {request} = actionArgs;
 	const { user } = authActionGetAuth(actionArgs);
-	const url = new URL(actionArgs.request.url);
+	const url = new URL(request.url);
+
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 	
-	const settings= await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
+	const settings= await getInstanceSystemSettingsByCountryAccountId(countryAccountsId);
 	if(!settings){
 		throw new Response ("System settings cannot be found.",{status:500})
 	}

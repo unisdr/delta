@@ -5,7 +5,6 @@ import {
 import fs from "fs";
 import path from "path";
 import ContentRepeaterFileValidator from "./FileValidator";
-import { TenantContext, isTenantContext } from "~/util/tenant";
 
 export default class ContentRepeaterPreUploadFile {
   static async loader() {
@@ -15,8 +14,8 @@ export default class ContentRepeaterPreUploadFile {
     );
   }
 
-  static async action({ request, tenantContext }: { request: Request; tenantContext?: TenantContext }) {
-    console.log("PreUploadFile action called with tenant context:", tenantContext);
+  static async action({ request, countryAccountsId }: { request: Request; countryAccountsId?: string }) {
+    console.log("PreUploadFile action called with tenant context:", countryAccountsId);
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({ error: "Method not allowed" }),
@@ -25,9 +24,6 @@ export default class ContentRepeaterPreUploadFile {
     }
 
     const uploadHandler = unstable_createMemoryUploadHandler({});
-    // const uploadHandler = unstable_createMemoryUploadHandler({
-    //   maxFileSize: ContentRepeaterFileValidator.maxFileSize, // Max file size in bytes
-    // });
 
     try {
       const formData = await unstable_parseMultipartFormData(request, uploadHandler);
@@ -40,7 +36,6 @@ export default class ContentRepeaterPreUploadFile {
       const tempFilenamePrev = formData.get("temp_filename_prev") as string | null; // Previous file with full path
 
       const fileViewerTempUrl = formData.get("file_viewer_temp_url") as string | null;
-      // const fileViewerUrl = formData.get("file_viewer_url") as string | null;
 
       // Validate required fields
       if (!savePathTemp || !tempFilename || !originalFilename || !uploadedFile) {
@@ -73,9 +68,9 @@ export default class ContentRepeaterPreUploadFile {
 
       // Prepare paths with tenant isolation if tenant context is available
       let tenantPath = "";
-      if (tenantContext && isTenantContext(tenantContext)) {
+      if (countryAccountsId) {
         // Use countryAccountId for tenant isolation in file paths
-        tenantPath = `/tenant-${tenantContext.countryAccountId}`;
+        tenantPath = `/tenant-${countryAccountsId}`;
         console.log("Using tenant path:", tenantPath);
       } else {
         console.log("No valid tenant context available for file paths");
@@ -92,9 +87,9 @@ export default class ContentRepeaterPreUploadFile {
         // If the previous path already includes tenant path, use it as is
         // Otherwise, add tenant path if tenant context is available
         let prevPathWithTenant = tempFilenamePrev;
-        if (tenantContext && isTenantContext(tenantContext) && !tempFilenamePrev.includes(`/tenant-`)) {
+        if (countryAccountsId && !tempFilenamePrev.includes(`/tenant-`)) {
           const pathParts = tempFilenamePrev.split('/');
-          pathParts.splice(1, 0, `tenant-${tenantContext.countryAccountId}`);
+          pathParts.splice(1, 0, `tenant-${countryAccountsId}`);
           prevPathWithTenant = pathParts.join('/');
         }
 

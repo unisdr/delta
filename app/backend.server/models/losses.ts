@@ -1,5 +1,5 @@
 import { dr, Tx } from "~/db.server";
-import { lossesTable, LossesInsert } from "~/drizzle/schema";
+import { lossesTable, InsertLosses } from "~/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 import {
@@ -15,16 +15,16 @@ import {
 	typeEnumNotAgriculture,
 } from "~/frontend/losses_enums";
 
-export interface LossesFields extends Omit<LossesInsert, "id"> {}
+export interface LossesFields extends Omit<InsertLosses, "id"> {}
 
-export async function fieldsForPubOrPriv(
+export function fieldsForPubOrPriv(
 	pub: boolean,
 	currencies?: string[]
-): Promise<FormInputDef<LossesFields>[]> {
+): FormInputDef<LossesFields>[] {
 	let pre = pub ? "public" : "private";
 
 	if (!currencies) {
-		currencies = [];
+		currencies = ["USD"];
 	}
 
 	return [
@@ -65,112 +65,133 @@ export async function fieldsForPubOrPriv(
 	];
 }
 
-export const fieldsDef: FormInputDef<LossesFields>[] = [
-	{ key: "recordId", label: "", type: "uuid" },
-	{ key: "sectorId", label: "", type: "other" },
-	{ key: "sectorIsAgriculture", label: "", type: "bool" },
-	{
-		key: "typeNotAgriculture",
-		label: "Type",
-		type: "enum",
-		enumData: [
-			{
-				key: "infrastructure_temporary",
-				label: "Infrastructure- temporary for service/production continuity",
-			},
-			{
-				key: "production_service_delivery_and_availability",
-				label:
-					"Production,Service delivery and availability of/access to goods and services",
-			},
-			{
-				key: "governance_and_decision_making",
-				label: "Governance and decision-making",
-			},
-			{ key: "risk_and_vulnerabilities", label: "Risk and vulnerabilities" },
-			{ key: "other_losses", label: "Other losses" },
-			{
-				key: "employment_and_livelihoods_losses",
-				label: "Employment and Livelihoods losses",
-			},
-		],
-		uiRow: {},
-	},
-	{
-		key: "typeAgriculture",
-		label: "Type",
-		type: "enum",
-		enumData: [
-			{
-				key: "infrastructure_temporary",
-				label: "Infrastructure- temporary for service/production continuity",
-			},
-			{ key: "production_losses", label: "Production losses" },
-			{
-				key: "production_service_delivery_and_availability",
-				label:
-					"Production, Service delivery and availability of/access to goods and services",
-			},
-			{
-				key: "governance_and_decision_making",
-				label: "Governance and decision-making",
-			},
-			{ key: "risk_and_vulnerabilities", label: "Risk and vulnerabilities" },
-			{ key: "other_losses", label: "Other losses" },
-			{
-				key: "employment_and_livelihoods_losses",
-				label: "Employment and Livelihoods losses",
-			},
-		],
-		uiRow: {},
-	},
-	{
-		key: "relatedToNotAgriculture",
-		label: "Related To",
-		type: "enum",
-		enumData: typeEnumNotAgriculture.map((v) => ({
-			key: v.key,
-			label: v.label,
-		})),
-	},
-	{
-		key: "relatedToAgriculture",
-		label: "Related To",
-		type: "enum",
-		enumData: typeEnumAgriculture.map((v) => ({ key: v.key, label: v.label })),
-	},
-	{
-		key: "description",
-		label: "Description",
-		type: "textarea",
-		uiRowNew: true,
-	},
+// export function fieldsDef(): FormInputDef<LossesFields>[] {
+export const createFieldsDef = (currencies: string[]) => {
+	const fieldsDef: FormInputDef<LossesFields>[] = [
+		{ key: "recordId", label: "", type: "uuid" },
+		{ key: "sectorId", label: "", type: "other" },
+		{ key: "sectorIsAgriculture", label: "", type: "bool" },
+		{
+			key: "typeNotAgriculture",
+			label: "Type",
+			type: "enum",
+			enumData: [
+				{
+					key: "infrastructure_temporary",
+					label: "Infrastructure- temporary for service/production continuity",
+				},
+				{
+					key: "production_service_delivery_and_availability",
+					label:
+						"Production,Service delivery and availability of/access to goods and services",
+				},
+				{
+					key: "governance_and_decision_making",
+					label: "Governance and decision-making",
+				},
+				{ key: "risk_and_vulnerabilities", label: "Risk and vulnerabilities" },
+				{ key: "other_losses", label: "Other losses" },
+				{
+					key: "employment_and_livelihoods_losses",
+					label: "Employment and Livelihoods losses",
+				},
+			],
+			uiRow: {},
+		},
+		{
+			key: "typeAgriculture",
+			label: "Type",
+			type: "enum",
+			enumData: [
+				{
+					key: "infrastructure_temporary",
+					label: "Infrastructure- temporary for service/production continuity",
+				},
+				{ key: "production_losses", label: "Production losses" },
+				{
+					key: "production_service_delivery_and_availability",
+					label:
+						"Production, Service delivery and availability of/access to goods and services",
+				},
+				{
+					key: "governance_and_decision_making",
+					label: "Governance and decision-making",
+				},
+				{ key: "risk_and_vulnerabilities", label: "Risk and vulnerabilities" },
+				{ key: "other_losses", label: "Other losses" },
+				{
+					key: "employment_and_livelihoods_losses",
+					label: "Employment and Livelihoods losses",
+				},
+			],
+			uiRow: {},
+		},
+		{
+			key: "relatedToNotAgriculture",
+			label: "Related To",
+			type: "enum",
+			enumData: typeEnumNotAgriculture.map((v) => ({
+				key: v.key,
+				label: v.label,
+			})),
+		},
+		{
+			key: "relatedToAgriculture",
+			label: "Related To",
+			type: "enum",
+			enumData: typeEnumAgriculture.map((v) => ({
+				key: v.key,
+				label: v.label,
+			})),
+		},
+		{
+			key: "description",
+			label: "Description",
+			type: "textarea",
+			uiRowNew: true,
+		},
 
-	// Public
-	...(await fieldsForPubOrPriv(true)),
-	// Private
-	...(await fieldsForPubOrPriv(false)),
+		// Public
+		...fieldsForPubOrPriv(true, currencies),
+		// Private
+		...fieldsForPubOrPriv(false, currencies),
 
-	{
-		key: "spatialFootprint",
-		label: "Spatial Footprint",
-		type: "other",
-		psqlType: "jsonb",
-		uiRowNew: true,
-	},
-	{
-		key: "attachments",
-		label: "Attachments",
-		type: "other",
-		psqlType: "jsonb",
-	},
-];
+		{
+			key: "spatialFootprint",
+			label: "Spatial Footprint",
+			type: "other",
+			psqlType: "jsonb",
+			uiRowNew: true,
+		},
+		{
+			key: "attachments",
+			label: "Attachments",
+			type: "other",
+			psqlType: "jsonb",
+		},
+	];
+	return fieldsDef;
+};
 
-export const fieldsDefApi: FormInputDef<LossesFields>[] = [
-	...fieldsDef,
-	{ key: "apiImportId", label: "", type: "other" },
-];
-export const fieldsDefView: FormInputDef<LossesFields>[] = [...fieldsDef];
+export const createFieldsDefApi = (currencies: string[]) => {
+	const fieldsDefApi: FormInputDef<LossesFields>[] = [
+		...createFieldsDef(currencies),
+		{ key: "apiImportId", label: "", type: "other" },
+	];
+	return fieldsDefApi;
+};
+
+// export const fieldsDefApi: FormInputDef<LossesFields>[] = [
+// 	...fieldsDef,
+// 	{ key: "apiImportId", label: "", type: "other" },
+// ];
+export async function fieldsDefView(
+	currencies: string[]
+): Promise<FormInputDef<LossesFields>[]> {
+	return createFieldsDef(currencies);
+}
+
+// export const fieldsDefView: FormInputDef<LossesFields>[] = [...fieldsDef];
 
 export function validate(fields: Partial<LossesFields>): Errors<LossesFields> {
 	let errors: Errors<LossesFields> = { fields: {} };

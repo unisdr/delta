@@ -13,8 +13,6 @@ export const action = createDeleteAction({
 	tableName: getTableName(damagesTable),
 	getById: damagesById,
 	postProcess: async (_id, data) => {
-		//console.log(`Post-processing record: ${id}`);
-		//console.log(`data: `, data);
 		ContentRepeaterUploadFile.delete(data.attachments);
 	}
 })

@@ -1,56 +1,37 @@
-import {
-	authLoaderApi,
-	authActionApi,
-	authActionGetAuth
-} from "~/util/auth";
+import { authLoaderApi } from "~/util/auth";
 
-import {
-	fieldsDefApi,
-} from "~/frontend/events/hazardeventform";
+import { fieldsDefApi } from "~/frontend/events/hazardeventform";
 
-import {
-	jsonUpdate,
-} from "~/backend.server/handlers/form/form_api";
-import {hazardousEventUpdate, HazardousEventFields} from "~/backend.server/models/event";
-import { getTenantContext } from "~/util/tenant";
-import { Tx } from "~/db.server";
-import { SaveResult } from "~/backend.server/handlers/form/form";
+import { jsonUpdate } from "~/backend.server/handlers/form/form_api";
+import { hazardousEventUpdate } from "~/backend.server/models/event";
+import { apiAuth } from "~/backend.server/models/api_key";
+import { ActionFunction, ActionFunctionArgs } from "@remix-run/server-runtime";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
 });
 
-export const action = authActionApi(async (args) => {
+export const action: ActionFunction = async (args: ActionFunctionArgs) => {
+	const { request } = args;
+	if (request.method !== "POST") {
+		throw new Response("Method Not Allowed: Only POST requests are supported", {
+			status: 405,
+		});
+	}
+
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
 	const data = await args.request.json();
-	
-	// Extract user session from API request
-	const userSession = authActionGetAuth(args);
-	
-	// Create a wrapper function that extracts tenant context and passes it to hazardousEventUpdate
-	const updateWithTenant = async (tx: Tx, id: string, fields: Partial<HazardousEventFields>): Promise<SaveResult<HazardousEventFields>> => {
-		try {
-			// Extract tenant context from user session
-			const tenantContext = await getTenantContext(userSession);
-			
-			// Call the original function with tenant context
-			return hazardousEventUpdate(tx, id, fields, tenantContext, userSession.user.id);
-		} catch (error) {
-			console.error("Failed to extract tenant context:", error);
-			return {
-				ok: false,
-				errors: {
-					form: ["Failed to initialize tenant context. User may not be associated with a tenant."],
-					fields: {}
-				}
-			};
-		}
-	};
 
 	const saveRes = await jsonUpdate({
 		data,
 		fieldsDef: fieldsDefApi,
-		update: updateWithTenant
+		update: hazardousEventUpdate,
 	});
 
-	return Response.json(saveRes)
-});
+	return Response.json(saveRes);
+};

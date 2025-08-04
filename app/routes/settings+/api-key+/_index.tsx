@@ -1,42 +1,47 @@
-import {useLoaderData, Link} from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 
-import {apiKeyTable} from "~/drizzle/schema";
+import { apiKeyTable } from "~/drizzle/schema";
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
-import {createPaginatedLoader} from "~/backend.server/handlers/view";
+import { createPaginatedLoader } from "~/backend.server/handlers/view";
 
-import {desc} from "drizzle-orm";
-import {DataScreen} from "~/frontend/data_screen";
+import { desc, eq } from "drizzle-orm";
+import { DataScreen } from "~/frontend/data_screen";
 
-import {ActionLinks} from "~/frontend/form"
+import { ActionLinks } from "~/frontend/form";
 
-import {
-	route
-} from "~/frontend/api_key";
-import {formatDate} from "~/util/date";
+import { LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { route } from "~/frontend/api_key";
+import { formatDate } from "~/util/date";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
-export const loader = createPaginatedLoader(
-	apiKeyTable,
-	async (offsetLimit) => {
+export const loader = async (args: LoaderFunctionArgs) => {
+	const { request } = args;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+
+	return createPaginatedLoader(async (offsetLimit) => {
 		return dr.query.apiKeyTable.findMany({
 			...offsetLimit,
 			columns: {
-					id: true,
-					createdAt: true,
-					name: true,
+				id: true,
+				createdAt: true,
+				name: true,
 			},
+			where: eq(apiKeyTable.countryAccountsId, countryAccountsId),
 			orderBy: [desc(apiKeyTable.name)],
 			with: {
-				managedByUser: true
-			}
+				managedByUser: true,
+			},
 		});
-	}
-);
+	}, await dr.$count(apiKeyTable, eq(apiKeyTable.countryAccountsId, countryAccountsId)))(
+		args
+	);
+};
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
-	const {items, pagination} = ld.data;
+	const { items, pagination } = ld.data;
 	return DataScreen({
 		plural: "API keys",
 		resourceName: "API key",
@@ -59,4 +64,3 @@ export default function Data() {
 		),
 	});
 }
-

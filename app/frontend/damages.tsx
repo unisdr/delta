@@ -221,12 +221,11 @@ export function DamagesForm(props: DamagesFormProps) {
 	}
 	tdDam.label = `Amount of units (${unitNameLocal()})`
 
-	//	let [pdDamageAmountDef, setPdDamageAmountDef] = useState(pdDam)
 	let pdDamageAmountErrors: string[] | undefined;
 	if (props.errors && props.errors.fields) {
 		assetIdErrors = errorsToStrings(props.errors.fields.pdDamageAmount);
 	}
-	//let [tdDamageAmountDef, setTdDamageAmountDef] = useState(tdDam)
+
 	let tdDamageAmountErrors: string[] | undefined;
 	if (props.errors && props.errors.fields) {
 		assetIdErrors = errorsToStrings(props.errors.fields.tdDamageAmount);

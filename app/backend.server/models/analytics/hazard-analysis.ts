@@ -1,13 +1,12 @@
 import { and, SQL, sql } from "drizzle-orm";
 import { dr } from "~/db.server";
-import { TenantContext } from "~/util/tenant";
 import createLogger from "~/utils/logger.server";
 
 // Initialize logger for this module
 const logger = createLogger("backend.server/models/analytics/hazard-analysis");
 
 interface HazardFilters {
-	tenantContext: TenantContext;
+	countryAccountsId: string;
 	hazardTypeId: string | null;
 	hazardClusterId: string | null;
 	specificHazardId: string | null;
@@ -25,7 +24,7 @@ export async function getDisasterEventCount(
 	filters: HazardFilters
 ): Promise<number> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -34,12 +33,12 @@ export async function getDisasterEventCount(
 		toDate,
 	} = filters;
 
-	logger.debug(`Getting disaster event count for tenant ${tenantContext.countryAccountId}`);
+	logger.debug(`Getting disaster event count for tenant ${countryAccountsId}`);
 
 	// Build WHERE conditions for disaster_event as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -128,7 +127,7 @@ export interface YearlyDisasterCount {
 
 export async function getDisasterEventCountByYear(filters: HazardFilters): Promise<YearlyDisasterCount[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -140,7 +139,7 @@ export async function getDisasterEventCountByYear(filters: HazardFilters): Promi
 	// Build WHERE conditions for disaster_event as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
@@ -252,7 +251,7 @@ interface AffectedPeopleResult {
 
 export async function getAffectedPeopleByHazardFilters(filters: HazardFilters): Promise<AffectedPeopleResult> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -261,12 +260,12 @@ export async function getAffectedPeopleByHazardFilters(filters: HazardFilters): 
 		toDate,
 	} = filters;
 
-	logger.debug(`Getting affected people by hazard filters for tenant ${tenantContext.countryAccountId}`);
+	logger.debug(`Getting affected people by hazard filters for tenant ${countryAccountsId}`);
 
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
@@ -394,7 +393,7 @@ interface GenderTotals {
 
 export async function getGenderTotalsByHazardFilters(filters: HazardFilters): Promise<GenderTotals> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -406,7 +405,7 @@ export async function getGenderTotalsByHazardFilters(filters: HazardFilters): Pr
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
@@ -547,7 +546,7 @@ interface AgeTotals {
 
 export async function getAgeTotalsByHazardFilters(filters: HazardFilters): Promise<AgeTotals> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -559,7 +558,7 @@ export async function getAgeTotalsByHazardFilters(filters: HazardFilters): Promi
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
@@ -693,7 +692,7 @@ export async function getAgeTotalsByHazardFilters(filters: HazardFilters): Promi
 
 export async function getDisabilityTotalByHazardFilters(filters: HazardFilters): Promise<number> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -705,7 +704,7 @@ export async function getDisabilityTotalByHazardFilters(filters: HazardFilters):
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
@@ -820,7 +819,7 @@ export async function getDisabilityTotalByHazardFilters(filters: HazardFilters):
 }
 export async function getInternationalPovertyTotalByHazardFilters(filters: HazardFilters): Promise<number> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -832,7 +831,7 @@ export async function getInternationalPovertyTotalByHazardFilters(filters: Hazar
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
@@ -934,7 +933,7 @@ export async function getInternationalPovertyTotalByHazardFilters(filters: Hazar
 
 export async function getNationalPovertyTotalByHazardFilters(filters: HazardFilters): Promise<number> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -946,7 +945,7 @@ export async function getNationalPovertyTotalByHazardFilters(filters: HazardFilt
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
@@ -1050,7 +1049,7 @@ export async function getTotalDamagesByHazardFilters(
 	filters: HazardFilters
 ): Promise<number> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1062,7 +1061,7 @@ export async function getTotalDamagesByHazardFilters(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1150,7 +1149,7 @@ export async function getTotalLossesByHazardFilters(
 	filters: HazardFilters
 ): Promise<number> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1162,7 +1161,7 @@ export async function getTotalLossesByHazardFilters(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1255,7 +1254,7 @@ export async function getTotalDamagesByYear(
 	filters: HazardFilters
 ): Promise<DamageByYear[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1267,7 +1266,7 @@ export async function getTotalDamagesByYear(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1384,7 +1383,7 @@ export async function getTotalLossesByYear(
 	filters: HazardFilters
 ): Promise<LossByYear[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1396,7 +1395,7 @@ export async function getTotalLossesByYear(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1516,7 +1515,7 @@ export async function getTotalDamagesByDivision(
 	filters: HazardFilters
 ): Promise<DamageByDivision[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1528,7 +1527,7 @@ export async function getTotalDamagesByDivision(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1625,7 +1624,7 @@ export async function getTotalLossesByDivision(
 	filters: HazardFilters
 ): Promise<LossByDivision[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1637,7 +1636,7 @@ export async function getTotalLossesByDivision(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1734,7 +1733,7 @@ export async function getTotalDeathsByDivision(
 	filters: HazardFilters
 ): Promise<DeathsByDivision[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1746,7 +1745,7 @@ export async function getTotalDeathsByDivision(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1857,7 +1856,7 @@ export async function getTotalAffectedPeopleByDivision(
 	filters: HazardFilters
 ): Promise<AffectedPeopleByDivision[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1869,7 +1868,7 @@ export async function getTotalAffectedPeopleByDivision(
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -1987,7 +1986,7 @@ export async function getDisasterEventCountByDivision(
 	filters: HazardFilters
 ): Promise<DisasterEventCountByDivision[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -1999,7 +1998,7 @@ export async function getDisasterEventCountByDivision(
 	// Build WHERE conditions for disaster_event as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId)
 		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
@@ -2098,7 +2097,7 @@ export interface DisasterSummary {
 
 export async function getDisasterSummary(filters: HazardFilters): Promise<DisasterSummary[]> {
 	const {
-		tenantContext,
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -2110,7 +2109,7 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 	// Build WHERE conditions for disaster_event as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${tenantContext.countryAccountId}`);
+	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
 	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
 	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);

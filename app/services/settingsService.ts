@@ -1,7 +1,7 @@
 import { dr } from "~/db.server";
 import {
 	getCountryAccountById,
-	updateCountryAccountStatus,
+	updateCountryAccount,
 } from "~/db/queries/countryAccounts";
 import { updateInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
 import { CountryAccountStatus, countryAccountStatuses } from "~/drizzle/schema";
@@ -74,9 +74,10 @@ export async function updateSettingsService(
 	});
 }
 
-export async function updateCountryAccountStatusService(
+export async function updateCountryAccountService(
 	id: string,
-	status: number
+	status: number,
+	shortDescription: string,
 ) {
 	const countryAccount = await getCountryAccountById(id);
 	if (!countryAccount) {
@@ -94,6 +95,6 @@ export async function updateCountryAccountStatusService(
 		]);
 	}
 
-	const updatedCountryAccount = await updateCountryAccountStatus(id, status);
+	const updatedCountryAccount = await updateCountryAccount(id, status, shortDescription);
 	return { updatedCountryAccount };
 }

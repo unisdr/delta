@@ -2,19 +2,15 @@ import { divisionTable } from "~/drizzle/schema";
 import { dr } from "~/db.server";
 import { asc, eq } from "drizzle-orm";
 import { authLoaderWithPerm } from "~/util/auth";
-import { getTenantContext } from "~/util/tenant";
 import { stringifyCSV } from "~/util/csv";
+import { sessionCookie } from "~/util/session";
 
 // Create a custom loader that enforces tenant isolation
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const { request } = loaderArgs;
 
-	const userSession = (loaderArgs as any).userSession;
-	if (!userSession) {
-		throw new Error("User session is required");
-	}
-
-	const tenantContext = await getTenantContext(userSession);
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
 	// Get divisions with tenant filtering
 	let rows = await dr.query.divisionTable.findMany({
@@ -24,7 +20,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 			parentId: true,
 			name: true,
 		},
-		where: eq(divisionTable.countryAccountsId, tenantContext.countryAccountId),
+		where: eq(divisionTable.countryAccountsId, countryAccountsId),
 		orderBy: [asc(divisionTable.id)],
 	});
 

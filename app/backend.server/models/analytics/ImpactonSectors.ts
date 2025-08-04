@@ -15,8 +15,6 @@ import { parseFlexibleDate, createDateCondition, extractYearFromDate } from "~/b
 import createLogger from "~/utils/logger.server";
 
 
-import { TenantContext } from "~/util/tenant";
-
 // Create logger for this backend module
 const logger = createLogger("backend.server/models/analytics/ImpactOnSectors");
 
@@ -99,14 +97,14 @@ interface SectorImpactData {
 
 // Function to get all disaster records for a sector with tenant isolation
 const getDisasterRecordsForSector = async (
-  tenantContext: TenantContext,
+  countryAccountsId: string,
   sectorId: string,
   filters?: Filters
 ): Promise<string[]> => {
   try {
     logger.info("Getting disaster records for sector", {
       sectorId,
-      tenantId: tenantContext.countryAccountId,
+      tenantId: countryAccountsId,
       hasFilters: !!filters,
       filterCount: filters ? Object.keys(filters).length : 0
     });
@@ -124,7 +122,7 @@ const getDisasterRecordsForSector = async (
     // Initialize conditions array with tenant isolation
     let conditions: SQL[] = [
       sql`${disasterRecordsTable.approvalStatus} = 'published'`,
-      sql`${disasterRecordsTable.countryAccountsId} = ${tenantContext.countryAccountId}`
+      sql`${disasterRecordsTable.countryAccountsId} = ${countryAccountsId}`
     ];
 
     // Handle sector filtering using proper hierarchy
@@ -714,13 +712,13 @@ const getEventCountsByYear = async (recordIds: string[]): Promise<Map<number, nu
 
 /**
  * Fetches comprehensive sector impact data following multiple international standards:
- * @param tenantContext - Tenant context for filtering by country account
+ * @param countryAccountsId - Tenant context for filtering by country account
  * @param sectorId - ID of the sector to analyze
  * @param filters - Optional filters for data selection
  * @returns Comprehensive sector impact data with metadata
  */
 export async function fetchSectorImpactData(
-  tenantContext: TenantContext,
+  countryAccountsId: string,
   sectorId: string,
   filters?: Filters,
   currency?: string,
@@ -728,7 +726,7 @@ export async function fetchSectorImpactData(
   try {
     logger.info("Starting sector impact data fetch", {
       sectorId,
-      tenantId: tenantContext.countryAccountId,
+      tenantId: countryAccountsId,
       hasFilters: !!filters,
       filterDetails: filters ? {
         startDate: filters.startDate,
@@ -739,7 +737,7 @@ export async function fetchSectorImpactData(
       } : null
     });
 
-    const recordIds = await getDisasterRecordsForSector(tenantContext, sectorId, filters);
+    const recordIds = await getDisasterRecordsForSector(countryAccountsId, sectorId, filters);
 
     logger.info("Retrieved disaster records for sector", {
       sectorId,

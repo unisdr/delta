@@ -13,6 +13,7 @@ import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
 import {stringToBoolean} from '~/util/string';
+import { getCountryAccountsIdFromSession} from '~/util/session';
 
 interface assetLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
@@ -21,6 +22,7 @@ interface assetLoaderArgs {
 export async function assetLoader(args: assetLoaderArgs) {
 	const {loaderArgs} = args;
 	const {request} = loaderArgs;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const url = new URL(request.url);
 	const extraParams = ["search", "builtIn"]
@@ -38,6 +40,10 @@ export async function assetLoader(args: assetLoaderArgs) {
 	let searchIlike = "%" + filters.search + "%"
 
 	let condition = and(
+		eq(
+			assetTable.countryAccountsId,
+			countryAccountsId
+		),
 		filters.search !== "" ? or(
 			sql`${assetTable.id}::text ILIKE ${searchIlike}`,
 			ilike(assetTable.nationalId, searchIlike),

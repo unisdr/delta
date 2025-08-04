@@ -1,5 +1,4 @@
 import { fetchSectorImpactData } from "~/backend.server/models/analytics/ImpactonSectors";
-import { TenantContext } from "~/util/tenant";
 
 interface SectorImpactResponse {
   success: boolean;
@@ -28,7 +27,7 @@ interface Filters {
   disasterEvent?: string | null;
 }
 
-export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: string, filters?: Filters, currency?: any): Promise<SectorImpactResponse> => {
+export const getImpactOnSector = async (countryAccountsId: string, sectorId: string, filters?: Filters, currency?: any): Promise<SectorImpactResponse> => {
   try {
     // Input validation
     if (!sectorId) {
@@ -39,8 +38,8 @@ export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: 
     }
 
     // Validate tenant context
-    if (!tenantContext || !tenantContext.countryAccountId) {
-      console.error("Invalid tenant context provided to getImpactOnSector:", tenantContext);
+    if (!countryAccountsId) {
+      console.error("Invalid tenant context provided to getImpactOnSector:", countryAccountsId);
       return {
         success: false,
         error: "Invalid tenant context. Please ensure you are logged in with a valid country account.",
@@ -48,7 +47,7 @@ export const getImpactOnSector = async (tenantContext: TenantContext, sectorId: 
     }
 
     // Fetch data from the model with tenant context for isolation
-    const data = await fetchSectorImpactData(tenantContext, sectorId, filters, currency);
+    const data = await fetchSectorImpactData(countryAccountsId, sectorId, filters, currency);
 
     // Return successful response
     return {

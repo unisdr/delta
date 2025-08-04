@@ -8,7 +8,7 @@ import {
 
 import {useLoaderData} from "@remix-run/react"
 import {authLoaderWithPerm} from "~/util/auth";
-import {getItem2} from "~/backend.server/handlers/view";
+import {getItem1} from "~/backend.server/handlers/view";
 
 import {
 	getFieldsDefView
@@ -16,7 +16,7 @@ import {
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const {params} = loaderArgs;
-	const item = await getItem2(params, disruptionById);
+	const item = await getItem1(params, disruptionById);
 	if (!item) {
 		throw new Response("Not Found", {status: 404});
 	}

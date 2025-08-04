@@ -363,7 +363,6 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 	let hcp = humanCategoryPresenceTable
 
 	if (![hd.sex, hd.age, hd.disability, hd.globalPovertyLine, hd.nationalPovertyLine].includes(groupBy)) {
-		console.log("groupBy", groupBy)
 		throw new Error("unknown group by column")
 	}
 

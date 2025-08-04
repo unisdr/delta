@@ -1,9 +1,8 @@
 import { getTableName } from "drizzle-orm";
 import {
-	createDeleteAction,
+	createDeleteActionWithCountryAccounts,
 } from "~/backend.server/handlers/form/form";
 import { requireUser } from "~/util/auth";
-import { getTenantContext } from "~/util/tenant";
 
 import {
 	disasterEventById,
@@ -15,31 +14,35 @@ import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFi
 import {
 	route,
 } from "~/frontend/events/disastereventform";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const action = async (args: any) => {
-	// Get user session
+	const {request} = args;
 	const userSession = await requireUser(args.request);
 	if (!userSession) {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	// Get tenant context
-	const tenantContext = await getTenantContext(userSession);
+	const countryAccountsId =  await getCountryAccountsIdFromSession(request);
+	if(!countryAccountsId){
+		throw new Response("Unauthorized, no instance selected.", {status:401});
+	}
 
-	return createDeleteAction({
+	return createDeleteActionWithCountryAccounts({
 		baseRoute: route,
 		delete: async (id: string) => {
-			return disasterEventDelete(id, tenantContext);
+			return disasterEventDelete(id, countryAccountsId);
 		},
 		tableName: getTableName(disasterEventTable),
 		getById: async (id: string) => {
-			return disasterEventById(id, tenantContext.countryAccountId);
+			return disasterEventById(id);
 		},
 		postProcess: async (_id: string, data: any) => {
 			if (data.attachments) {
 				ContentRepeaterUploadFile.delete(data.attachments);
 			}
-		}
+		},
+		countryAccountsId,
 	})(args);
 };
 

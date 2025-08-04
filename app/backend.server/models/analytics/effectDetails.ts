@@ -85,10 +85,10 @@ interface FilterParams {
  */
 /**
  * Retrieves detailed effect data with tenant isolation
- * @param tenantContext - The tenant context for data isolation
+ * @param countryAccountsId - The tenant context for data isolation
  * @param filters - Object containing filter criteria
  */
-export async function getEffectDetails(tenantContext: { countryAccountId: string }, filters: FilterParams) {
+export async function getEffectDetails(countryAccountsId: string , filters: FilterParams) {
   const startTime = Date.now();
   logger.info("Processing effect details request", {
     filters: {
@@ -144,10 +144,10 @@ export async function getEffectDetails(tenantContext: { countryAccountId: string
   let baseConditions: SQL[] = [
     sql`${disasterRecordsTable.approvalStatus} ILIKE 'published'`,
     // Add tenant isolation filter
-    eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId)
+    eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
   ];
 
-  logger.debug("Applied tenant isolation filter", { tenantId: tenantContext.countryAccountId });
+  logger.debug("Applied tenant isolation filter", { tenantId: countryAccountsId });
 
   logger.debug("Initialized base query conditions", {
     hasSectorFilter: targetSectorIds.length > 0,

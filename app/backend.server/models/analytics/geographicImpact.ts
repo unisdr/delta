@@ -1,7 +1,6 @@
 import { eq, sql, SQL, and, inArray, gte, lte, exists, or, not } from "drizzle-orm";
 import { dr } from "~/db.server";
 import createLogger from "~/utils/logger.server";
-import type { TenantContext } from "~/util/tenant";
 
 // Initialize logger for this module
 const logger = createLogger("backend.server/models/analytics/geographicImpact");
@@ -81,14 +80,6 @@ interface GeographicFilters {
     sectorId?: string;
     baseQuery?: any;
 }
-
-// interface DivisionValues {
-//     totalDamage: number | null;
-//     totalLoss: number | null;
-//     sources: Set<string>;
-//     metadata: DisasterImpactMetadata;
-//     dataAvailability: 'available' | 'no_data' | 'zero';
-// }
 
 interface CleanDivisionValues {
     totalDamage: number | null;
@@ -242,7 +233,7 @@ function isValidGeoJSON(value: any): boolean {
  *    - Assessment types (rapid vs detailed)
  *    - Confidence levels for data quality
  */
-export async function getGeographicImpact(tenantContext: TenantContext, filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
+export async function getGeographicImpact(countryAccountsId: string, filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
     try {
         // Get sector IDs based on selection
         let sectorIds: number[] = [];
@@ -355,9 +346,6 @@ export async function getGeographicImpact(tenantContext: TenantContext, filters:
             .select()
             .from(disasterRecordsTable);
 
-        // console.log("🧾 [PASSING FILTERS]: GeographicImpactFilters");
-        // console.table(filters);
-
         // Hazard filtering with improved hierarchical structure handling
         await applyHazardFilters(
             {
@@ -419,8 +407,7 @@ export async function getGeographicImpact(tenantContext: TenantContext, filters:
             .where(
                 and(
                     eq(divisionTable.level, 1),
-                    // Apply tenant isolation by filtering divisions by the tenant's country account ID
-                    eq(divisionTable.countryAccountsId, tenantContext.countryAccountId),
+                    eq(divisionTable.countryAccountsId, countryAccountsId),
                     filters.geographicLevelId
                         ? eq(divisionTable.id, parseInt(filters.geographicLevelId))
                         : undefined
@@ -458,7 +445,7 @@ export async function getGeographicImpact(tenantContext: TenantContext, filters:
         await Promise.all(divisions.map(async (division) => {
             try {
                 const disasterRecords = await getDisasterRecordsForDivision(
-                    tenantContext,
+                    countryAccountsId,
                     division.id.toString(),
                     {
                         startDate: filters.fromDate,
@@ -514,10 +501,6 @@ export async function getGeographicImpact(tenantContext: TenantContext, filters:
                 };
             }
         }));
-
-        // console.timeEnd("DivisionLoop"); // End timing for the loop
-
-
 
         return {
             success: true,
@@ -579,11 +562,10 @@ export async function getDescendantDivisionIds(divisionId: number): Promise<numb
  * @returns Array of matching disaster record IDs
  */
 async function getDisasterRecordsForDivision(
-    tenantContext: TenantContext,
+    countryAccountsId: string,
     divisionId: string,
     filters?: GeographicFilters,
     sectorIds: number[] = [],
-    // divisionGeom?: GeoJSON.Geometry
 ): Promise<string[]> {
     try {
         console.log(`[Start] Fetching disaster records for Division ID: ${divisionId}`);
@@ -609,10 +591,10 @@ async function getDisasterRecordsForDivision(
         const conditions: Array<SQL<unknown>> = [];
 
         // Add tenant isolation filter
-        conditions.push(sql<string>`${disasterRecordsTable.countryAccountsId} = ${tenantContext.countryAccountId}`);
+        conditions.push(sql<string>`${disasterRecordsTable.countryAccountsId} = ${countryAccountsId}`);
 
         // Log tenant filtering for audit trail
-        logger.info(`Applying tenant filtering for countryAccountsId: ${tenantContext.countryAccountId}`);
+        logger.info(`Applying tenant filtering for countryAccountsId: ${countryAccountsId}`);
 
         // Add approval status filter
         conditions.push(sql<string>`${disasterRecordsTable.approvalStatus} = 'published'`);
@@ -706,7 +688,6 @@ async function getDisasterRecordsForDivision(
             .select({
                 id: disasterRecordsTable.id,
                 spatialFootprint: disasterRecordsTable.spatialFootprint,
-                // Add additional fields for debugging
                 sectorId: sectorDisasterRecordsRelationTable.sectorId,
                 withDamage: sectorDisasterRecordsRelationTable.withDamage,
                 damageCost: sectorDisasterRecordsRelationTable.damageCost,
@@ -729,12 +710,10 @@ async function getDisasterRecordsForDivision(
         const descendantIds = await getDescendantDivisionIds(parseInt(divisionId));
 
         const quoted = descendantIds.map((id) => `@ == "${id}"`).join(" || ");
-        console.log(`✔ Division path filter applied: ${descendantIds.length} divisions`);
 
         sql.raw(
             `jsonb_path_exists("disaster_records"."spatial_footprint", '$[*].geojson.properties.division_ids[*] ? (${quoted})')`
         );
-        console.log("✔ JSONB path condition constructed for spatial filter");
 
         // First try to get records with spatial data
         const spatialQuery = query.where(
@@ -894,17 +873,8 @@ AND ST_Intersects(
             )
         );
 
-        // console.log('Executing spatial query first');
-        // console.log('Spatial SQL Query:', spatialQuery.toSQL().sql);
-        // console.log('Query parameters:', spatialQuery.toSQL().params);
-        // console.log("🚀 Executing spatial query (SQL + params)");
-        // console.log(spatialQuery.toSQL());
-
         // Execute spatial query
         const spatialRecords = await spatialQuery;
-        console.log(`Spatial query returned ${spatialRecords.length} records`);
-        console.log("Matching disaster record IDs:", spatialRecords.map(r => r.id));
-        console.log(`✔ Found ${spatialRecords.length} matching disaster records`);
 
         const regionResult = await dr.execute(sql`
             SELECT name->>'en' as name FROM "division" WHERE name->>'en' IS NOT NULL
@@ -916,9 +886,6 @@ AND ST_Intersects(
         const confirmed = spatialRecords.filter((record) => {
             const footprint = record.spatialFootprint;
             if (!Array.isArray(footprint)) {
-                console.warn(`[SKIP ${record.id}] No valid spatial_footprint array`);
-                // console.log(`Spatial footprint: ${footprint}`);
-                console.debug("[FilterFail] spatialFootprint is not an array", record);
                 return false;
             }
 
@@ -976,11 +943,9 @@ AND ST_Intersects(
         // Use verified records for the rest of the function
         spatialRecords.length = 0;
         spatialRecords.push(...confirmed);
-        console.log(`✔ Verified ${confirmed.length} records for Division ${divisionId}`);
 
         // If no spatial matches, try text matching as fallback
         if (spatialRecords.length === 0) {
-            console.log('No spatial matches found, trying text matching as fallback');
             try {
                 // Fetch division name for text matching
                 const divisionDetails = await dr
@@ -995,7 +960,6 @@ AND ST_Intersects(
                 if (divisionDetails.length > 0 && divisionDetails[0].name) {
                     const divisionName = divisionDetails[0].name.en || '';
                     const normalizedDivName = normalizeText(divisionName);
-                    console.log(`[DIVISION NAME MATCH] Raw: "${divisionName}" (normalized: "${normalizedDivName}")`);
 
                     const textQuery = query.where(and(
                         ...conditions,
@@ -1008,8 +972,6 @@ AND ST_Intersects(
                     ));
 
                     const textRecords = await textQuery;
-                    console.log(`[TEXT MATCH] ➜ Returned ${textRecords.length} additional records`);
-
                     return [...spatialRecords, ...textRecords].map(r => r.id);
                 }
             } catch (error) {
@@ -1045,7 +1007,7 @@ AND ST_Intersects(
  * @returns Geographic impact data with metadata
  */
 export async function fetchGeographicImpactData(
-    tenantContext: TenantContext,
+    countryAccountsId: string,
     divisionId: string,
     filters?: GeographicFilters
 ): Promise<{ totalDamage: number, totalLoss: number, byYear: Map<number, number>, metadata?: DisasterImpactMetadata }> {
@@ -1064,7 +1026,7 @@ export async function fetchGeographicImpactData(
         }
 
         // Get disaster records for the division with improved spatial handling
-        const recordIds = await getDisasterRecordsForDivision(tenantContext, divisionId, filters);
+        const recordIds = await getDisasterRecordsForDivision(countryAccountsId, divisionId, filters);
 
         if (recordIds.length === 0) {
             console.log(`No disaster records found for division ${divisionId}`);
@@ -1361,9 +1323,9 @@ async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): P
 /**
  * Main function to get geographic impact following international standards
  */
-export async function getGeographicImpactGeoJSON(tenantContext: TenantContext, sectorId: string, subSectorId?: string): Promise<GeoJSONFeatureCollection> {
+export async function getGeographicImpactGeoJSON(countryAccountsId: string, sectorId: string, subSectorId?: string): Promise<GeoJSONFeatureCollection> {
     try {
-        const result = await getGeographicImpact(tenantContext, { sectorId, subSectorId });
+        const result = await getGeographicImpact(countryAccountsId, { sectorId, subSectorId });
 
         if (!result.success) {
             console.warn("Failed to get geographic impact data:", result.error);

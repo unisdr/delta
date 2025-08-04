@@ -22,6 +22,7 @@ import {
 	setTotpEnabled
 } from "~/backend.server/models/user/totp";
 import {
+	getCountrySettingsFromSession,
 	redirectWithMessage
 } from "~/util/session";
 
@@ -38,7 +39,8 @@ export const action = authAction(async (actionArgs) => {
 
 	const token = formData.code || "";
 
-	const res = await setTotpEnabled(user.id, token, false);
+	const settings = await getCountrySettingsFromSession(request);
+	const res = await setTotpEnabled(user.id, token, false, settings?.totpIssuer);
 
 	let errors: FormErrors<Fields> = {}
 	if (!res.ok) {

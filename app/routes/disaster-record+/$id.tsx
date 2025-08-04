@@ -6,7 +6,9 @@ import {
 } from "~/backend.server/handlers/form/form";
 
 import { ViewScreenPublicApproved } from "~/frontend/form";
-import { disasterRecordsById, disasterRecordsBasicInfoById } from "~/backend.server/models/disaster_record";
+import {
+	disasterRecordsById,
+} from "~/backend.server/models/disaster_record";
 import {
 	disasterRecordsTable,
 	disruptionTable,
@@ -20,7 +22,7 @@ import { dr } from "~/db.server";
 import { contentPickerConfig } from "./content-picker-config";
 import { sql, eq } from "drizzle-orm";
 import { optionalUser } from "~/util/auth";
-import { getTenantContext } from "~/util/tenant";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 interface LoaderData {
 	item: any;
@@ -38,47 +40,31 @@ export const loader = async ({
 		throw new Response("ID is required", { status: 400 });
 	}
 
-	// Check if user is logged in
-	const session = await optionalUser(request);
-
-	// Extract tenant context for authenticated users
-	let tenantContext = null;
-	if (session) {
-		tenantContext = await getTenantContext(session);
+	const userSession = await optionalUser(request);
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	if(!countryAccountsId){
+		throw new Response("Unauthorized, no selected instance", {status:401});
 	}
 
 	// Create a wrapper function that includes tenant context
 	const getByIdWithTenant = async (idStr: string) => {
-		if (tenantContext) {
-			return disasterRecordsById(idStr, tenantContext);
-		} else {
-			// For public access, use disasterRecordsBasicInfoById which only returns published records
-			const record = await disasterRecordsBasicInfoById(idStr);
-
-			// If record is not found or not published, redirect to unauthorized page
-			if (!record) {
-				// Create a URL object based on the current request URL
-				const url = new URL(request.url);
-				// Build the redirect URL using the same origin
-				const redirectUrl = `${url.origin}/error/unauthorized?reason=content-not-published`;
-				throw Response.redirect(redirectUrl, 302);
-			}
-
-			return record;
-		}
+			return disasterRecordsById(idStr);
 	};
 
-	const loaderFunction = session
+	const loaderFunction = userSession
 		? createViewLoaderPublicApprovedWithAuditLog({
-			getById: getByIdWithTenant,
-			recordId: id,
-			tableName: getTableName(disasterRecordsTable),
-		})
+				getById: getByIdWithTenant,
+				recordId: id,
+				tableName: getTableName(disasterRecordsTable),
+		  })
 		: createViewLoaderPublicApproved({
-			getById: getByIdWithTenant,
-		});
+				getById: getByIdWithTenant,
+		  });
 
 	const result = await loaderFunction({ request, params, context });
+	if (result.item.countryAccountsId !== countryAccountsId) {
+		throw new Response("Unauthorized access", { status: 401 });
+	}
 
 	const cpDisplayName =
 		(await contentPickerConfig.selectedDisplay(

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+/*import { useState, useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
@@ -35,7 +35,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       email: userSession.user.email || "",
       firstName: userSession.user.firstName || "",
       lastName: userSession.user.lastName || "",
-      // password and passwordRepeat cannot be prefilled for security reasons
     };
   }
   return { prefill };
@@ -59,10 +58,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     console.error('Error during form submission:', error);
     return ({ error: 'Unexpected error occurred.' });
   }
-};
+};*/
 
 export default function Screen() {
-  const loaderData = useLoaderData<{ prefill?: Partial<SetupAdminAccountFields> }>() || { prefill: {} };
+  <div> Page removed</div>
+  /*const loaderData = useLoaderData<{ prefill?: Partial<SetupAdminAccountFields> }>() || { prefill: {} };
   const location = useLocation();
   const [showSecurityMsg, setShowSecurityMsg] = useState(false);
 
@@ -146,173 +146,173 @@ export default function Screen() {
 
   const toggleConfirmPasswordVisibility = () => {
     setPasswordRepeatType(passwordRepeatType === "password" ? "text" : "password");
-  };
-
-  return (
-    <div className="dts-page-container">
-      <main className="dts-main-container">
-        <div className="mg-container">
-          <Form method="post" className="dts-form dts-form--vertical">
-            <div className="dts-form__header">
-              <a
-                href="/setup/admin-account-welcome"
-                className="mg-button mg-button--small mg-button-system"
-              >
-                Back
-              </a>
-              <span>Disaster Tracking System</span>
-            </div>
-            <div className="dts-form__intro">
-              <h2 className="dts-heading-1">Set up account</h2>
-              <p>Create your account by filling in the required details.</p>
-            </div>
-            <div className="dts-form__body">
-              <p>*Required information</p>
-              <div className="dts-form-component">
-                <label htmlFor="email">
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="Email address*"
-                    autoFocus
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={
-                      actionData?.errors?.fields?.email 
-                        ? "input-error"
-                        : "input-normal"
-                    }
-                  />
-                  </label>
-                {actionData?.errors?.fields?.email && (
-                  <div className="dts-form-component__hint--error">
-                    <div className="dts-form-component__hint--error" aria-live="assertive">
-                      {(actionData.errors.fields as any).email?.[0]}
-                    </div>
-                  </div>
-                )}
+  };*/
+  
+  // return (
+    // <div className="dts-page-container">
+    //   <main className="dts-main-container">
+    //     <div className="mg-container">
+    //       <Form method="post" className="dts-form dts-form--vertical">
+    //         <div className="dts-form__header">
+    //           <a
+    //             href="/setup/admin-account-welcome"
+    //             className="mg-button mg-button--small mg-button-system"
+    //           >
+    //             Back
+    //           </a>
+    //           <span>Disaster Tracking System</span>
+    //         </div>
+    //         <div className="dts-form__intro">
+    //           <h2 className="dts-heading-1">Set up account</h2>
+    //           <p>Create your account by filling in the required details.</p>
+    //         </div>
+    //         <div className="dts-form__body">
+    //           <p>*Required information</p>
+    //           <div className="dts-form-component">
+    //             <label htmlFor="email">
+    //               <input
+    //                 type="email"
+    //                 id="email"
+    //                 name="email"
+    //                 placeholder="Email address*"
+    //                 autoFocus
+    //                 required
+    //                 value={email}
+    //                 onChange={(e) => setEmail(e.target.value)}
+    //                 className={
+    //                   actionData?.errors?.fields?.email 
+    //                     ? "input-error"
+    //                     : "input-normal"
+    //                 }
+    //               />
+    //               </label>
+    //             {actionData?.errors?.fields?.email && (
+    //               <div className="dts-form-component__hint--error">
+    //                 <div className="dts-form-component__hint--error" aria-live="assertive">
+    //                   {(actionData.errors.fields as any).email?.[0]}
+    //                 </div>
+    //               </div>
+    //             )}
                 
-              </div>
-              <div className="dts-form-component">
-                <label htmlFor="firstName">
-                  <input
-                    type="text"
-                    id="firstName"
-                    name="firstName"
-                    placeholder="First name*"
-                    required
-                    value={firstname}
-                    onChange={(e) => setFirstname(e.target.value)}
-                  />
-                </label>
-              </div>
-              <div className="dts-form-component">
-                <label htmlFor="secondname">
-                  <input
-                    type="text"
-                    id="secondname"
-                    name="secondname"
-                    placeholder="Last name"
-                    value={secondname}
-                    onChange={(e) => setSecondname(e.target.value)}
-                  />
-                </label>
-              </div>
-              <div className="dts-form-component">
-                <label htmlFor="password">
-                  <div className="dts-form-component__pwd">
-                      <input
-                        type={passwordType}
-                        id="password"
-                        name="password"
-                        placeholder="Enter password*"
-                        minLength={12}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        onClick={togglePasswordVisibility}
-                        aria-label="Toggle password visibility"
-                        className="dts-form-component__pwd-toggle mg-button"
-                      >
-                        {passwordType === "password" ?
-                          <img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img> :
-											    <img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img>
-                        }
-                      </button>
-                  </div>
-                </label>
-              </div>
-              <div className="dts-form-component">
-                <label htmlFor="passwordRepeat">
-                  <div className="dts-form-component__pwd">
-                    <input
-                      type={passwordRepeatType}
-                      id="passwordRepeat"
-                      name="passwordRepeat"
-                      placeholder="Confirm password*"
-                      minLength={12}
-                      required
-                      value={passwordRepeat}
-                      onChange={(e) => setPasswordRepeat(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={toggleConfirmPasswordVisibility}
-                      aria-label="Toggle confirm password visibility"
-                      className="dts-form-component__pwd-toggle mg-button"
-                    >
-                      {passwordRepeatType === "password" ?
-												<img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img> :
-												<img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img>
-                      }
-                    </button>
-                  </div>
-                </label>
-              </div>
-            </div>
+    //           </div>
+    //           <div className="dts-form-component">
+    //             <label htmlFor="firstName">
+    //               <input
+    //                 type="text"
+    //                 id="firstName"
+    //                 name="firstName"
+    //                 placeholder="First name*"
+    //                 required
+    //                 value={firstname}
+    //                 onChange={(e) => setFirstname(e.target.value)}
+    //               />
+    //             </label>
+    //           </div>
+    //           <div className="dts-form-component">
+    //             <label htmlFor="secondname">
+    //               <input
+    //                 type="text"
+    //                 id="secondname"
+    //                 name="secondname"
+    //                 placeholder="Last name"
+    //                 value={secondname}
+    //                 onChange={(e) => setSecondname(e.target.value)}
+    //               />
+    //             </label>
+    //           </div>
+    //           <div className="dts-form-component">
+    //             <label htmlFor="password">
+    //               <div className="dts-form-component__pwd">
+    //                   <input
+    //                     type={passwordType}
+    //                     id="password"
+    //                     name="password"
+    //                     placeholder="Enter password*"
+    //                     minLength={12}
+    //                     required
+    //                     value={password}
+    //                     onChange={(e) => setPassword(e.target.value)}
+    //                   />
+    //                   <button
+    //                     type="button"
+    //                     onClick={togglePasswordVisibility}
+    //                     aria-label="Toggle password visibility"
+    //                     className="dts-form-component__pwd-toggle mg-button"
+    //                   >
+    //                     {passwordType === "password" ?
+    //                       <img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img> :
+		// 									    <img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg" style={{display:"none"}} alt=""></img>
+    //                     }
+    //                   </button>
+    //               </div>
+    //             </label>
+    //           </div>
+    //           <div className="dts-form-component">
+    //             <label htmlFor="passwordRepeat">
+    //               <div className="dts-form-component__pwd">
+    //                 <input
+    //                   type={passwordRepeatType}
+    //                   id="passwordRepeat"
+    //                   name="passwordRepeat"
+    //                   placeholder="Confirm password*"
+    //                   minLength={12}
+    //                   required
+    //                   value={passwordRepeat}
+    //                   onChange={(e) => setPasswordRepeat(e.target.value)}
+    //                 />
+    //                 <button
+    //                   type="button"
+    //                   onClick={toggleConfirmPasswordVisibility}
+    //                   aria-label="Toggle confirm password visibility"
+    //                   className="dts-form-component__pwd-toggle mg-button"
+    //                 >
+    //                   {passwordRepeatType === "password" ?
+		// 										<img src="/assets/icons/eye-hide-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img> :
+		// 										<img src="/assets/icons/eye-show-password.svg" id="passwordToggleImg2" style={{display:"none"}} alt=""></img>
+    //                   }
+    //                 </button>
+    //               </div>
+    //             </label>
+    //           </div>
+    //         </div>
 
-            {/* Show security message if coming from verify-email */}
-            {showSecurityMsg && (
-              <div className="dts-form-component__hint dts-form-component__hint--error">
-                For your security, please re-enter your password and then confirm it to continue.
-              </div>
-            )}
+    //         {/* Show security message if coming from verify-email */}
+    //         {showSecurityMsg && (
+    //           <div className="dts-form-component__hint dts-form-component__hint--error">
+    //             For your security, please re-enter your password and then confirm it to continue.
+    //           </div>
+    //         )}
 
-            {/* Password Requirements */}
-            <div className="dts-form-component__hint">
-              <ul id="passwordDescription">
-                <li>At least 12 characters long</li>
-                <li>
-                  Must include two of the following:
-                  <ul>
-                    <li>Uppercase letters</li>
-                    <li>Lowercase letters</li>
-                    <li>Numbers</li>
-                    <li>Special characters</li>
-                  </ul>
-                </li>
-                <li>Cannot be the same as the username</li>
-                <li>Should not be a simple or commonly used password</li>
-              </ul>
-            </div>
+    //         {/* Password Requirements */}
+    //         <div className="dts-form-component__hint">
+    //           <ul id="passwordDescription">
+    //             <li>At least 12 characters long</li>
+    //             <li>
+    //               Must include two of the following:
+    //               <ul>
+    //                 <li>Uppercase letters</li>
+    //                 <li>Lowercase letters</li>
+    //                 <li>Numbers</li>
+    //                 <li>Special characters</li>
+    //               </ul>
+    //             </li>
+    //             <li>Cannot be the same as the username</li>
+    //             <li>Should not be a simple or commonly used password</li>
+    //           </ul>
+    //         </div>
 
-            <div className="dts-form__actions">
-              <button
-                type="submit"
-                className="mg-button mg-button-primary"
-              //disabled={!isFormValid()}
-              >
-                Set up account
-              </button>
-            </div>
-          </Form>
-        </div>
-      </main>
-    </div>
-  );
+    //         <div className="dts-form__actions">
+    //           <button
+    //             type="submit"
+    //             className="mg-button mg-button-primary"
+    //           >
+    //             Set up account
+    //           </button>
+    //         </div>
+    //       </Form>
+    //     </div>
+    //   </main>
+    // </div>
+  // );
+  
 }

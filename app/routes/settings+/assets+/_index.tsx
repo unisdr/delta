@@ -59,15 +59,6 @@ export default function Data() {
 			}
 		/>,
 		renderRow: (item, route) => {
-			/*
-			 we don't have a page for sector nothing to link to
-			let sectorIdList = item.sectorIds?.split(',').map(s => s.trim()) ?? []
-			let sectorNameList = item.sectorNames?.split(',').map(s => s.trim()) ?? []
-			let sectors = sectorIdList.map((id, i) => ({
-				id,
-				name: sectorNameList[i] ?? ''
-			}))
-		 */
 			return (
 				<tr key={item.id}>
 					<td>

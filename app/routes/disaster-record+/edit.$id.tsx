@@ -1,13 +1,16 @@
-import { authLoaderGetUserForFrontend, authLoaderWithPerm, authActionGetAuth, authActionWithPerm } from "~/util/auth";
+import {
+	authLoaderGetUserForFrontend,
+	authLoaderWithPerm,
+	authActionWithPerm,
+} from "~/util/auth";
 import type { ActionFunctionArgs } from "@remix-run/node";
-// UserSession type is handled through casting
-import { getTenantContext } from "~/util/tenant";
 import {
 	disasterRecordsCreate,
 	disasterRecordsUpdate,
 	disasterRecordsById,
 	disasterRecordsByIdTx,
 	getHumanEffectRecordsById,
+	DisasterRecordsFields,
 } from "~/backend.server/models/disaster_record";
 
 import { useLoaderData, Link } from "@remix-run/react";
@@ -24,12 +27,12 @@ import { getAffectedByDisasterRecord } from "~/backend.server/models/analytics/a
 
 import { FormScreen } from "~/frontend/form";
 
-import { createAction } from "~/backend.server/handlers/form/form";
+import { createOrUpdateAction } from "~/backend.server/handlers/form/form";
 import { getTableName, eq, sql } from "drizzle-orm";
 import { disasterRecordsTable } from "~/drizzle/schema";
 
 import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
+import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
 import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
@@ -37,15 +40,21 @@ import { contentPickerConfig } from "./content-picker-config";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { DeleteButton } from "~/frontend/components/delete-dialog";
-import { getCountrySettingsFromSession } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	// Extract user session and tenant context
-	const userSession = (loaderArgs as any).userSession;
-	const tenantContext = await getTenantContext(userSession);
-	const { params } = loaderArgs;
+	const { request, params } = loaderArgs;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+
 	if (!params.id) {
 		throw "Route does not have $id param";
+	}
+	const item = await disasterRecordsById(params.id);
+	if (!item || item.countryAccountsId !== countryAccountsId) {
+		throw new Response("Not Found", { status: 404 });
+	}
+	if (item.countryAccountsId !== countryAccountsId) {
+		throw new Response("Unauthorized access", { status: 401 });
 	}
 
 	const initializeNewTreeView = async (): Promise<any[]> => {
@@ -56,7 +65,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		const rawData = await dr
 			.select()
 			.from(divisionTable)
-			.where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
+			.where(sql`country_accounts_id = ${countryAccountsId}`);
 		return buildTree(rawData, idKey, parentKey, nameKey, "en", [
 			"geojson",
 			"importId",
@@ -75,13 +84,13 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		FROM division
 		WHERE (parent_id = 0 OR parent_id IS NULL) 
 		AND geojson IS NOT NULL
-		AND country_accounts_id = ${tenantContext.countryAccountId};
+		AND country_accounts_id = ${countryAccountsId};
     `);
 
 	if (params.id === "new") {
 		const treeData = await initializeNewTreeView();
 		let ctryIso3: string = "";
-		const settings = await getCountrySettingsFromSession(loaderArgs.request)
+		const settings = await getCountrySettingsFromSession(request);
 		if (settings) {
 			ctryIso3 = settings.dtsInstanceCtryIso3;
 		}
@@ -100,14 +109,12 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		};
 	}
 
-	const item = await disasterRecordsById(params.id, tenantContext);
-	if (!item) {
-		throw new Response("Not Found", { status: 404 });
-	}
-
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
 	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
-	const dbDisRecHumanEffects = await getHumanEffectRecordsById(params.id, tenantContext);
+	const dbDisRecHumanEffects = await getHumanEffectRecordsById(
+		params.id,
+		countryAccountsId
+	);
 	const dbDisRecHumanEffectsSummaryTable = await getAffectedByDisasterRecord(
 		dr,
 		params.id
@@ -116,7 +123,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	// Define Keys Mapping (Make it Adaptable)
 	const treeData = await initializeNewTreeView();
 	let ctryIso3: string = "";
-	const settings = await getCountrySettingsFromSession(loaderArgs.request)
+	const settings = await getCountrySettingsFromSession(loaderArgs.request);
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
 	}
@@ -141,67 +148,68 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	};
 });
 
-export const action = authActionWithPerm("EditData", async (args: ActionFunctionArgs) => {
-	// Extract tenant context from user session
-	const userSession = authActionGetAuth(args);
+export const action = authActionWithPerm(
+	"EditData",
+	async (args: ActionFunctionArgs) => {
+		const { request } = args;
+		const countryAccountsId = await getCountrySettingsFromSession(request);
 
-	const tenantContext = await getTenantContext(userSession);
+		const updateWithTenant = async (tx: any, id: string, fields: any) => {
+			return disasterRecordsUpdate(tx, id, fields, countryAccountsId);
+		};
 
-	// Create wrapper functions that include tenant context
-	const createWithTenant = async (tx: any, fields: any) => {
-		return disasterRecordsCreate(tx, fields, tenantContext);
-	};
+		const getByIdWithTenant = async (tx: any, id: string) => {
+			const record = await disasterRecordsByIdTx(tx, id);
+			if (!record) {
+				throw new Error(
+					"Record not found or you don't have permission to access it"
+				);
+			}
+			return record;
+		};
 
-	const updateWithTenant = async (tx: any, id: string, fields: any) => {
-		return disasterRecordsUpdate(tx, id, fields, tenantContext);
-	};
+		// Use the createAction function with our tenant-aware wrappers
+		const actionHandler = createOrUpdateAction<DisasterRecordsFields>({
+			fieldsDef,
+			create: async (tx: any, fields: any) => {
+				return disasterRecordsCreate(tx, fields);
+			},
+			update: updateWithTenant,
+			getById: getByIdWithTenant,
+			redirectTo: (id) => `${route}/${id}`,
+			tableName: getTableName(disasterRecordsTable),
+			action: (isCreate) =>
+				isCreate ? "Create disaster record" : "Update disaster record",
+			postProcess: async (id, data) => {
+				// Ensure attachments is an array, even if it's undefined or empty
+				const attachmentsArray = Array.isArray(data?.attachments)
+					? data.attachments
+					: [];
 
-	const getByIdWithTenant = async (tx: any, id: string) => {
-		const record = await disasterRecordsByIdTx(tx, id, tenantContext);
-		if (!record) {
-			throw new Error("Record not found or you don't have permission to access it");
-		}
-		return record;
-	};
+				const save_path = `/uploads/disaster-record/${id}`;
+				const save_path_temp = `/uploads/temp`;
 
-	// Use the createAction function with our tenant-aware wrappers
-	const actionHandler = createAction({
-		fieldsDef,
-		create: createWithTenant,
-		update: updateWithTenant,
-		redirectTo: (id) => `${route}/${id}`,
-		getById: getByIdWithTenant,
-		tableName: getTableName(disasterRecordsTable),
-		action: (isCreate) =>
-			isCreate ? "Create disaster record" : "Update disaster record",
-		postProcess: async (id, data) => {
-			// Ensure attachments is an array, even if it's undefined or empty
-			const attachmentsArray = Array.isArray(data?.attachments)
-				? data.attachments
-				: [];
+				// Process the attachments data
+				const processedAttachments = ContentRepeaterUploadFile.save(
+					attachmentsArray,
+					save_path_temp,
+					save_path
+				);
 
-			const save_path = `/uploads/disaster-record/${id}`;
-			const save_path_temp = `/uploads/temp`;
+				// Update the `attachments` field in the database
+				await dr
+					.update(disasterRecordsTable)
+					.set({
+						attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+					})
+					.where(eq(disasterRecordsTable.id, id));
+			},
+			countryAccountsId,
+		});
 
-			// Process the attachments data
-			const processedAttachments = ContentRepeaterUploadFile.save(
-				attachmentsArray,
-				save_path_temp,
-				save_path
-			);
-
-			// Update the `attachments` field in the database
-			await dr
-				.update(disasterRecordsTable)
-				.set({
-					attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
-				})
-				.where(eq(disasterRecordsTable.id, id));
-		},
-	});
-
-	return actionHandler(args);
-});
+		return actionHandler(args);
+	}
+);
 
 export default function Screen() {
 	const ld = useLoaderData<typeof loader>();
@@ -269,14 +277,14 @@ export default function Screen() {
 														<td>
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.deaths == "number" && (
-																	<>
-																		<Link
-																			to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}
-																		>
-																			{ld.dbDisRecHumanEffectsSummaryTable.deaths}
-																		</Link>
-																	</>
-																)}
+																<>
+																	<Link
+																		to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Deaths`}
+																	>
+																		{ld.dbDisRecHumanEffectsSummaryTable.deaths}
+																	</Link>
+																</>
+															)}
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.deaths == "boolean" &&
 																ld.dbDisRecHumanEffectsSummaryTable.deaths && (
@@ -297,17 +305,17 @@ export default function Screen() {
 														<td>
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.injured == "number" && (
-																	<>
-																		<Link
-																			to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}
-																		>
-																			{
-																				ld.dbDisRecHumanEffectsSummaryTable
-																					.injured
-																			}
-																		</Link>
-																	</>
-																)}
+																<>
+																	<Link
+																		to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Injured`}
+																	>
+																		{
+																			ld.dbDisRecHumanEffectsSummaryTable
+																				.injured
+																		}
+																	</Link>
+																</>
+															)}
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.injured == "boolean" &&
 																ld.dbDisRecHumanEffectsSummaryTable.injured && (
@@ -327,17 +335,17 @@ export default function Screen() {
 														<td>
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.missing == "number" && (
-																	<>
-																		<Link
-																			to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}
-																		>
-																			{
-																				ld.dbDisRecHumanEffectsSummaryTable
-																					.missing
-																			}
-																		</Link>
-																	</>
-																)}
+																<>
+																	<Link
+																		to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Missing`}
+																	>
+																		{
+																			ld.dbDisRecHumanEffectsSummaryTable
+																				.missing
+																		}
+																	</Link>
+																</>
+															)}
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.missing == "boolean" &&
 																ld.dbDisRecHumanEffectsSummaryTable.missing && (
@@ -357,17 +365,17 @@ export default function Screen() {
 														<td>
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.directlyAffected == "number" && (
-																	<>
-																		<Link
-																			to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}
-																		>
-																			{
-																				ld.dbDisRecHumanEffectsSummaryTable
-																					.directlyAffected
-																			}
-																		</Link>
-																	</>
-																)}
+																<>
+																	<Link
+																		to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}
+																	>
+																		{
+																			ld.dbDisRecHumanEffectsSummaryTable
+																				.directlyAffected
+																		}
+																	</Link>
+																</>
+															)}
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.directlyAffected == "boolean" &&
 																ld.dbDisRecHumanEffectsSummaryTable
@@ -388,17 +396,17 @@ export default function Screen() {
 														<td>
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.indirectlyAffected == "number" && (
-																	<>
-																		<Link
-																			to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}
-																		>
-																			{
-																				ld.dbDisRecHumanEffectsSummaryTable
-																					.indirectlyAffected
-																			}
-																		</Link>
-																	</>
-																)}
+																<>
+																	<Link
+																		to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Affected`}
+																	>
+																		{
+																			ld.dbDisRecHumanEffectsSummaryTable
+																				.indirectlyAffected
+																		}
+																	</Link>
+																</>
+															)}
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.indirectlyAffected == "boolean" &&
 																ld.dbDisRecHumanEffectsSummaryTable
@@ -419,17 +427,17 @@ export default function Screen() {
 														<td>
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.displaced == "number" && (
-																	<>
-																		<Link
-																			to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}
-																		>
-																			{
-																				ld.dbDisRecHumanEffectsSummaryTable
-																					.displaced
-																			}
-																		</Link>
-																	</>
-																)}
+																<>
+																	<Link
+																		to={`/disaster-record/edit-sub/${ld.item.id}/human-effects?tbl=Displaced`}
+																	>
+																		{
+																			ld.dbDisRecHumanEffectsSummaryTable
+																				.displaced
+																		}
+																	</Link>
+																</>
+															)}
 															{typeof ld.dbDisRecHumanEffectsSummaryTable
 																.displaced == "boolean" &&
 																ld.dbDisRecHumanEffectsSummaryTable

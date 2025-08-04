@@ -1,11 +1,11 @@
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
 import { contentPickerConfig } from "./content-picker-config";
-import { getTenantContext } from "~/util/tenant";
+import { sessionCookie } from "~/util/session";
 
 
 
-export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request, userSession }: any) => {
+export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: any) => {
     const url = new URL(request.url);
     const searchQuery = url.searchParams.get("query")?.trim().toLowerCase() || "";
     const page = parseInt(url.searchParams.get("page") || "1", 10);
@@ -21,11 +21,12 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request, u
     const config = configMap[view] || contentPickerConfig;
 
     // Extract tenant context from user session or use public tenant context if no user session
-    const tenantContext = await getTenantContext(userSession)
+    const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+    const countryAccountsId = session.get("countryAccountsId")
 
     try {
-        const results = await fetchData(config, searchQuery, page, limit, tenantContext);
-        const totalRecords = await getTotalRecords(config, searchQuery, tenantContext);
+        const results = await fetchData(config, searchQuery, page, limit, countryAccountsId);
+        const totalRecords = await getTotalRecords(config, searchQuery, countryAccountsId);
 
         return Response.json({ data: results, totalRecords, page, limit });
     } catch (error) {

@@ -1,14 +1,11 @@
 import { dr } from "~/db.server";
 import { eq } from "drizzle-orm";
 
-import { userTable, User } from "~/drizzle/schema";
+import { userTable } from "~/drizzle/schema";
 
 import { Errors, hasErrors } from "~/frontend/form";
 
 import { errorIsNotUnique } from "~/util/db";
-import { validateEmail, validateName, validatePassword } from "./user_utils";
-import { passwordHash } from "./password";
-import { sendEmailVerification } from "./verify_email";
 
 type SetupAdminAccountResult =
   | { ok: true; userId: number; pendingActivation?: boolean }
@@ -37,7 +34,7 @@ export function setupAdminAccountFieldsFromMap(data: {
   ) as unknown as SetupAdminAccountFields;
 }
 
-export async function setupAdminAccount(
+/*export async function setupAdminAccount(
   fields: SetupAdminAccountFields
 ): Promise<SetupAdminAccountResult> {
   let errors: Errors<SetupAdminAccountFields> = {};
@@ -52,7 +49,7 @@ export async function setupAdminAccount(
     return { ok: false, errors };
   }
 
-  let user: User;
+  let user: SelectUser;
 
   try {
     const existing = await dr.select().from(userTable).where(eq(userTable.email, fields.email));
@@ -86,9 +83,8 @@ export async function setupAdminAccount(
   await sendEmailVerification(user);
 
   return { ok: true, userId: user.id };
-}
-
-export async function setupAdminAccountSSOAzureB2C(
+}*/
+/*export async function setupAdminAccountSSOAzureB2C(
   fields: SetupAdminAccountFields
 ): Promise<SetupAdminAccountResult> {
   let errors: Errors<SetupAdminAccountFields> = {};
@@ -105,7 +101,7 @@ export async function setupAdminAccountSSOAzureB2C(
     return { ok: false, errors };
   }
 
-  let user: User;
+  let user: SelectUser;
 
   try {
     const res = await dr
@@ -131,7 +127,7 @@ export async function setupAdminAccountSSOAzureB2C(
   sendEmailVerification(user);
 
   return { ok: true, userId: user.id };
-}
+}*/
 
 export async function setupAccountSSOAzureB2C(
   fields: SetupAdminAccountFields

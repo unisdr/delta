@@ -1,49 +1,47 @@
-import { hazardousEventCreate } from "~/backend.server/models/event";
+import { useLoaderData } from "@remix-run/react";
+import { sql } from "drizzle-orm";
+import { formSave } from "~/backend.server/handlers/form/form";
+import { hazardousEventById, hazardousEventCreate } from "~/backend.server/models/event";
+import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server";
+import { divisionTable } from "~/drizzle/schema";
 import {
   fieldsDef,
   HazardousEventForm,
 } from "~/frontend/events/hazardeventform";
 import { formScreen } from "~/frontend/form";
-import { formSave } from "~/backend.server/handlers/form/form";
 import {
   authActionGetAuth,
   authActionWithPerm,
   authLoaderGetUserForFrontend,
   authLoaderWithPerm,
 } from "~/util/auth";
-import { useLoaderData } from "@remix-run/react";
-import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
-import { hazardousEventById } from "~/backend.server/models/event";
-import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server";
-import { divisionTable } from "~/drizzle/schema";
-import { sql } from "drizzle-orm";
-import type { UserSession } from "~/util/session";
-import { getTenantContext } from "~/util/tenant";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession, type UserSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
   const { request } = loaderArgs;
-  const user = authLoaderGetUserForFrontend(loaderArgs);
+  const user = await authLoaderGetUserForFrontend(loaderArgs);
 
   // Get tenant context - we need to use the full user session from loaderArgs
   const userSession = (loaderArgs as any).userSession as UserSession;
   if (!userSession) {
     throw new Response("Unauthorized", { status: 401 });
   }
-  const tenantContext = await getTenantContext(userSession);
-
   const hip = await dataForHazardPicker();
   const u = new URL(request.url);
 
   const parentId = u.searchParams.get("parent") || "";
+  const countryAccountsId = await getCountryAccountsIdFromSession(request)
+
   if (parentId) {
-    const parent = await hazardousEventById(parentId, tenantContext);
+    const parent = await hazardousEventById(parentId);
     if (!parent) {
       throw new Response("Parent not found", { status: 404 });
     }
     // Verify parent belongs to the same tenant
-    if (parent.countryAccountsId !== tenantContext.countryAccountId) {
-      throw new Response("Access denied", { status: 403 });
+    if (parent.countryAccountsId !== countryAccountsId) {
+      throw new Response("Unauthorized Access denied", { status: 403 });
     }
     return {
       hip,
@@ -52,7 +50,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
       treeData: [],
       ctryIso3: [],
       user,
-      tenantContext
+      countryAccountsId
     };
   }
 
@@ -60,7 +58,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
   const rawData = await dr
     .select()
     .from(divisionTable)
-    .where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
+    .where(sql`country_accounts_id = ${countryAccountsId}`);
 
   const treeData = buildTree(
     rawData,
@@ -72,7 +70,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
   );
 
   // Use tenant's ISO3
-  const ctryIso3 = tenantContext.iso3;
+  const settings = await getCountrySettingsFromSession(request);
+  const ctryIso3 = settings.crtyIso3;
 
   // Load top-level divisions with geojson, filtered by tenant context
   const divisionGeoJSON = await dr.execute(sql`
@@ -80,7 +79,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
     FROM division
     WHERE (parent_id = 0 OR parent_id IS NULL) 
     AND geojson IS NOT NULL
-    AND country_accounts_id = ${tenantContext.countryAccountId};
+    AND country_accounts_id = ${countryAccountsId};
   `);
 
   return {
@@ -89,13 +88,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
     ctryIso3,
     divisionGeoJSON: divisionGeoJSON?.rows || [],
     user,
-    tenantContext
+    countryAccountsId
   };
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
+  const {request} = actionArgs;
   const userSession = authActionGetAuth(actionArgs);
-  const tenantContext = await getTenantContext(userSession);
+  const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
   return formSave({
     isCreate: true,
@@ -103,15 +103,13 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
     fieldsDef,
     save: async (tx, id, data) => {
       if (!id) {
-        // Add tenant context to the event data
         const eventData = {
           ...data,
-          countryAccountsId: tenantContext.countryAccountId,
-          countryId: tenantContext.countryId,
+          countryAccountsId: countryAccountsId,
           createdBy: userSession.user.id,
           updatedBy: userSession.user.id
         };
-        return hazardousEventCreate(tx, eventData, tenantContext, userSession.user.id);
+        return hazardousEventCreate(tx, eventData);
       } else {
         throw new Error("Not an update screen");
       }
@@ -133,7 +131,7 @@ export default function Screen() {
       ctryIso3: ld.ctryIso3,
       user: ld.user,
       divisionGeoJSON: ld.divisionGeoJSON,
-      tenantContext: ld.tenantContext,
+      countryAccountsId: ld.countryAccountsId,
     },
     fieldsInitial,
     form: HazardousEventForm,

@@ -4,8 +4,6 @@ import {
 	authActionGetAuth
 } from "~/util/auth";
 
-import { getTenantContext } from "~/util/tenant";
-
 import {
 	fieldsDefApi,
 } from "~/frontend/events/disastereventform";
@@ -36,19 +34,18 @@ export const action = authActionApi(async (args) => {
 			}
 		}, { status: 401 });
 	}
-	const tenantContext = await getTenantContext(userSession);
 
 	// Create wrapper functions that include tenant context
 	const createWithTenant = (tx: any, data: any) => {
-		return disasterEventCreate(tx, data, tenantContext);
+		return disasterEventCreate(tx, data);
 	};
 
 	const updateWithTenant = (tx: any, id: string, data: any) => {
-		return disasterEventUpdate(tx, id, data, tenantContext);
+		return disasterEventUpdate(tx, id, data);
 	};
 
 	const idByImportIdWithTenant = (tx: any, importId: string) => {
-		return disasterEventIdByImportId(tx, importId, tenantContext);
+		return disasterEventIdByImportId(tx, importId);
 	};
 
 	const saveRes = await jsonUpsert({

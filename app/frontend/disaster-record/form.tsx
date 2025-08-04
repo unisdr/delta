@@ -122,8 +122,6 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 		hazardousEventLinkInitial = "disaster_event"
 	}
 
-	console.log("disaster: initial link:", hazardousEventLinkInitial, "fields", props.fields)
-
 	const [hazardousEventLinkType, setHazardousEventLinkType] = useState(hazardousEventLinkInitial)
 
 	return (

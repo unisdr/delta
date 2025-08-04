@@ -19,7 +19,7 @@ export const loader = authLoaderApiDocs(async ({request}) => {
 	const currencies = [settings.currencyCode];
 
 	let docs = await jsonApiDocs({
-		baseUrl: "damages",
+		baseUrl: "damage",
 		fieldsDef: await fieldsDefApi(currencies),
 		siteUrl: baseUrl,
 	})

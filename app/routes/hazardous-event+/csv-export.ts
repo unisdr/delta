@@ -1,23 +1,23 @@
-import { hazardousEventTable } from "~/drizzle/schema";
-import { dr } from "~/db.server";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { asc, eq } from "drizzle-orm";
 import { csvExportLoader } from "~/backend.server/handlers/form/csv_export";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { authLoaderWithPerm, authLoaderGetAuth } from "~/util/auth";
-import { getTenantContext } from "~/util/tenant";
+import { dr } from "~/db.server";
+import { hazardousEventTable } from "~/drizzle/schema";
+import { authLoaderGetAuth, authLoaderWithPerm } from "~/util/auth";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
-	// Extract tenant context from session
+	const { request } = loaderArgs;
 	const userSession = authLoaderGetAuth(loaderArgs);
 	if (!userSession) {
 		throw new Response("Unauthorized", { status: 401 });
 	}
-	const tenantContext = await getTenantContext(userSession);
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	
 
-	// Create tenant-aware data fetcher
 	const fetchDataWithTenant = async () => {
 		return dr.query.hazardousEventTable.findMany({
-			where: eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId),
+			where: eq(hazardousEventTable.countryAccountsId, countryAccountsId),
 			orderBy: [asc(hazardousEventTable.id)],
 		});
 	};
@@ -32,7 +32,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const loaderFunctionArgs: LoaderFunctionArgs = {
 		request: loaderArgs.request,
 		params: loaderArgs.params,
-		context: {}
+		context: {},
 	};
 
 	// Call the export loader with the proper args

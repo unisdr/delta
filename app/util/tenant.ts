@@ -1,4 +1,4 @@
-import { UserSession } from "./session";
+/*import { UserSession } from "./session";
 import { redirect } from "@remix-run/node";
 import { eq } from "drizzle-orm";
 import { dr } from "~/db.server";
@@ -7,11 +7,12 @@ import createLogger from "~/utils/logger.server";
 
 // Initialize logger for this module
 const logger = createLogger("util/tenant");
+*/
 
 /**
  * Base class for tenant-related errors
  */
-export class TenantError extends Error {
+/*export class TenantError extends Error {
     constructor(message: string) {
         super(message);
         this.name = "TenantError";
@@ -21,7 +22,7 @@ export class TenantError extends Error {
 /**
  * Error thrown when a user is not associated with any tenant
  */
-export class NoTenantAssociationError extends TenantError {
+/*export class NoTenantAssociationError extends TenantError {
     userId: string;
 
     constructor(userId: string) {
@@ -34,7 +35,7 @@ export class NoTenantAssociationError extends TenantError {
 /**
  * Error thrown when a tenant cannot be found
  */
-export class TenantNotFoundError extends TenantError {
+/*export class TenantNotFoundError extends TenantError {
     tenantId: string;
 
     constructor(tenantId: string) {
@@ -47,7 +48,7 @@ export class TenantNotFoundError extends TenantError {
 /**
  * Error thrown when a user doesn't have access to a specific tenant
  */
-export class TenantAccessDeniedError extends TenantError {
+/*export class TenantAccessDeniedError extends TenantError {
     userId: string;
     tenantId: string;
 
@@ -63,7 +64,7 @@ export class TenantAccessDeniedError extends TenantError {
  * Public tenant context used for unauthenticated access to public data
  * This is a special tenant context that represents public/anonymous access
  */
-export const public_tenant_context: TenantContext = {
+/*export const public_tenant_context: TenantContext = {
     countryAccountId: "",
     countryId: "",
     countryName: "Public",
@@ -73,7 +74,7 @@ export const public_tenant_context: TenantContext = {
 /**
  * Type guard to check if a tenant context is the public tenant context
  */
-export function isPublicTenantContext(context: TenantContext): boolean {
+/*export function isPublicTenantContext(context: TenantContext): boolean {
     return (
         context.countryAccountId === "" &&
         context.countryId === "" &&
@@ -93,7 +94,7 @@ export interface TenantContext {
  * Extracts tenant context from user session
  * Throws an error if user has no tenant context
  */
-export async function getTenantContext(userSession: UserSession): Promise<TenantContext> {
+/*export async function getTenantContext(userSession: UserSession): Promise<TenantContext> {
     const { user } = userSession;
 
     if (!user.countryAccountsId) {
@@ -137,7 +138,7 @@ export async function getTenantContext(userSession: UserSession): Promise<Tenant
  * Middleware to ensure user has valid tenant context
  * Redirects to error page if tenant context is invalid
  */
-export async function requireTenantContext(userSession: UserSession) {
+/*export async function requireTenantContext(userSession: UserSession) {
     try {
         return await getTenantContext(userSession);
     } catch (error) {
@@ -165,7 +166,7 @@ export async function requireTenantContext(userSession: UserSession) {
 /**
  * Type guard to check if an object is a valid TenantContext
  */
-export function isTenantContext(obj: unknown): obj is TenantContext {
+/*export function isTenantContext(obj: unknown): obj is TenantContext {
     return (
         typeof obj === 'object' &&
         obj !== null &&
@@ -179,7 +180,7 @@ export function isTenantContext(obj: unknown): obj is TenantContext {
 /**
  * Helper to extract tenant context from loader/action arguments
  */
-export async function getTenantContextFromArgs(args: { userSession: UserSession }) {
+/*export async function getTenantContextFromArgs(args: { userSession: UserSession }) {
     return requireTenantContext(args.userSession);
 }
 
@@ -188,32 +189,33 @@ type WithTenantContext<T> = T & { tenantContext: TenantContext };
 /**
  * Composable function to add tenant context to loader/action arguments
  */
-export function withTenantContext<T extends { userSession: UserSession }>(
-    fn: (args: WithTenantContext<T>) => Promise<unknown>
-) {
-    return async (args: T): Promise<unknown> => {
-        const tenantContext = await requireTenantContext(args.userSession);
-        return fn({ ...args, tenantContext } as WithTenantContext<T>);
-    };
-}
+// export function withTenantContext<T extends { userSession: UserSession }>(
+//     fn: (args: WithTenantContext<T>) => Promise<unknown>
+// ) {
+//     return async (args: T): Promise<unknown> => {
+//         const tenantContext = await requireTenantContext(args.userSession);
+//         return fn({ ...args, tenantContext } as WithTenantContext<T>);
+//     };
+// }
 
-/**
- * Validates that a user has access to a specific country account
- * Throws an error if access is denied
- */
-export function validateTenantAccess(
-    userSession: UserSession,
-    targetCountryAccountId: string
-) {
-    if (!userSession.user.countryAccountsId) {
-        const userId = userSession.user.id ? String(userSession.user.id) : 'unknown';
-        logger.warn(`User ${userId} is not associated with any tenant`);
-        throw new NoTenantAssociationError(userId);
-    }
+// /**
+//  * Validates that a user has access to a specific country account
+//  * Throws an error if access is denied
+//  */
+// export function validateTenantAccess(
+//     userSession: UserSession,
+//     targetCountryAccountId: string
+// ) {
+//     if (!userSession.user.countryAccountsId) {
+//         const userId = userSession.user.id ? String(userSession.user.id) : 'unknown';
+//         logger.warn(`User ${userId} is not associated with any tenant`);
+//         throw new NoTenantAssociationError(userId);
+//     }
 
-    if (userSession.user.countryAccountsId !== targetCountryAccountId) {
-        const userId = userSession.user.id ? String(userSession.user.id) : 'unknown';
-        logger.warn(`User ${userId} does not have access to tenant ${targetCountryAccountId}`);
-        throw new TenantAccessDeniedError(userId, targetCountryAccountId);
-    }
-}
+//     if (userSession.user.countryAccountsId !== targetCountryAccountId) {
+//         const userId = userSession.user.id ? String(userSession.user.id) : 'unknown';
+//         logger.warn(`User ${userId} does not have access to tenant ${targetCountryAccountId}`);
+//         throw new TenantAccessDeniedError(userId, targetCountryAccountId);
+//     }
+// }
+// */

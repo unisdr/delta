@@ -30,6 +30,7 @@ export function route2(recordId: string): string {
 
 interface LossesFormProps extends UserFormProps<LossesFields> {
 	ctryIso3?: string;
+	curriencies?: string[];
 	treeData?: any;
 	fieldDef: FormInputDef<LossesFields>[]
 	divisionGeoJSON?: any[]

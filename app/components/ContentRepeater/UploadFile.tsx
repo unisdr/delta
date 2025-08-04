@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import ContentRepeaterFileValidator from "./FileValidator";
-import { TenantContext, isTenantContext } from "~/util/tenant";
 
 interface Item {
   file?: {
@@ -15,7 +14,7 @@ interface Item {
 const debug = false;
 
 class ContentRepeaterUploadFile {
-  static delete(itemsData: any[], publicPath: string = path.join(process.cwd(), "public"), tenantContext?: TenantContext): Item[] {
+  static delete(itemsData: any[], publicPath: string = path.join(process.cwd(), "public"), countryAccountsId?: string): Item[] {
     let items: Item[];
 
     try {
@@ -31,8 +30,8 @@ class ContentRepeaterUploadFile {
         let tenantPath = "";
         if (item.file.tenantPath) {
           tenantPath = item.file.tenantPath;
-        } else if (tenantContext && isTenantContext(tenantContext)) {
-          tenantPath = `/tenant-${tenantContext.countryAccountId}`;
+        } else if (countryAccountsId) {
+          tenantPath = `/tenant-${countryAccountsId}`;
         }
 
         // Check if the file path already includes tenant path
@@ -47,7 +46,7 @@ class ContentRepeaterUploadFile {
           const pathParts = relativeFilePath.split('/');
           // Insert tenant path after the first segment
           if (pathParts.length > 1) {
-            pathParts.splice(1, 0, `tenant-${tenantContext?.countryAccountId}`);
+            pathParts.splice(1, 0, `tenant-${countryAccountsId}`);
             relativeFilePath = pathParts.join('/');
           }
         }

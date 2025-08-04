@@ -1,10 +1,6 @@
-import {dr, Tx} from "~/db.server";
+import { dr, Tx } from "~/db.server";
 
-
-import {
-	Errors,
-	FormInputDef,
-} from "~/frontend/form";
+import { Errors, FormInputDef } from "~/frontend/form";
 
 import {
 	validateFromJson,
@@ -51,7 +47,7 @@ export async function jsonCreate<T>(
 		};
 	}
 
-	const res: {id: string | null; errors?: Errors<T>}[] = [];
+	const res: { id: string | null; errors?: Errors<T> }[] = [];
 
 	const fail = function () {
 		throw "fail";
@@ -62,20 +58,20 @@ export async function jsonCreate<T>(
 			for (const item of args.data) {
 				const validateRes = validateFromJsonFull(item, args.fieldsDef, true);
 				if (!validateRes.ok) {
-					res.push({id: null, errors: validateRes.errors});
+					res.push({ id: null, errors: validateRes.errors });
 					return fail();
 				}
 				const one = await args.create(tx, validateRes.resOk!);
 				if (!one.ok) {
-					res.push({id: null, errors: one.errors});
+					res.push({ id: null, errors: one.errors });
 					return fail();
 				}
-				res.push({id: one.id});
+				res.push({ id: one.id });
 			}
 		});
 	} catch (error) {
 		if (error == "fail") {
-			return {ok: false, res: res};
+			return { ok: false, res: res };
 		} else {
 			throw error;
 		}
@@ -86,7 +82,6 @@ export async function jsonCreate<T>(
 		res,
 	};
 }
-
 
 export interface JsonUpsertArgs<T extends ObjectWithImportId> {
 	data: any;
@@ -101,7 +96,6 @@ export interface JsonUpsertRes<T> {
 	res: UpsertResult<T>[];
 	error?: string;
 }
-
 
 export async function jsonUpsert<T extends ObjectWithImportId>(
 	args: JsonUpsertArgs<T>
@@ -130,7 +124,7 @@ export async function jsonUpsert<T extends ObjectWithImportId>(
 
 				const validateRes = validateFromJsonFull(item, args.fieldsDef, true);
 				if (!validateRes.ok) {
-					res.push({ok: false, errors: validateRes.errors});
+					res.push({ ok: false, errors: validateRes.errors });
 					return fail();
 				}
 
@@ -143,23 +137,23 @@ export async function jsonUpsert<T extends ObjectWithImportId>(
 						validateRes.resOk!
 					);
 					if (!updateRes.ok) {
-						res.push({ok: false, errors: updateRes.errors});
+						res.push({ ok: false, errors: updateRes.errors });
 						return fail();
 					}
-					res.push({ok: true, status: "update", id: existingId});
+					res.push({ ok: true, status: "update", id: existingId });
 				} else {
 					const createRes = await args.create(tx, validateRes.resOk!);
 					if (!createRes.ok) {
-						res.push({ok: false, errors: createRes.errors});
+						res.push({ ok: false, errors: createRes.errors });
 						return fail();
 					}
-					res.push({ok: true, status: "create", id: createRes.id});
+					res.push({ ok: true, status: "create", id: createRes.id });
 				}
 			}
 		});
 	} catch (error) {
 		if (error == "fail") {
-			return {ok: false, res};
+			return { ok: false, res };
 		} else {
 			throw error;
 		}
@@ -174,7 +168,11 @@ export async function jsonUpsert<T extends ObjectWithImportId>(
 export interface JsonUpdateArgs<T> {
 	data: any;
 	fieldsDef: FormInputDef<T>[];
-	update: (tx: Tx, id: string, data: Partial<T>) => Promise<SaveResult<T>>;
+	update: (
+		tx: Tx,
+		id: string,
+		data: Partial<T>
+	) => Promise<SaveResult<T>>;
 }
 
 export interface JsonUpdateRes<T> {
@@ -184,7 +182,6 @@ export interface JsonUpdateRes<T> {
 	}[];
 	error?: string;
 }
-
 
 export async function jsonUpdate<T>(
 	args: JsonUpdateArgs<T>
@@ -197,7 +194,7 @@ export async function jsonUpdate<T>(
 		};
 	}
 
-	const res: {ok: boolean; errors?: Errors<T>}[] = [];
+	const res: { ok: boolean; errors?: Errors<T> }[] = [];
 
 	try {
 		await dr.transaction(async (tx) => {
@@ -226,22 +223,22 @@ export async function jsonUpdate<T>(
 				const validateRes = validateFromJson(item, args.fieldsDef, true, true);
 
 				if (!validateRes.ok) {
-					res.push({ok: false, errors: validateRes.errors});
+					res.push({ ok: false, errors: validateRes.errors });
 					return fail();
 				}
 
 				const one = await args.update(tx, id, validateRes.resOk!);
 
 				if (!one.ok) {
-					res.push({ok: false, errors: one.errors});
+					res.push({ ok: false, errors: one.errors });
 					return fail();
 				}
-				res.push({ok: true});
+				res.push({ ok: true });
 			}
 		});
 	} catch (error) {
 		if (error == "fail") {
-			return {ok: false, res};
+			return { ok: false, res };
 		} else {
 			throw error;
 		}
@@ -273,14 +270,14 @@ function jsonPayloadExample<T>(
 				val = "example string";
 				break;
 			case "uuid":
-				val = "f41bd013-23cc-41ba-91d2-4e325f785171"
+				val = "f41bd013-23cc-41ba-91d2-4e325f785171";
 				break;
 			case "date":
 				val = new Date().toISOString();
 				break;
 			case "date_optional_precision":
-				val = "2025-12-30"
-				break
+				val = "2025-12-30";
+				break;
 			case "number":
 				val = 123;
 				break;
@@ -292,15 +289,15 @@ function jsonPayloadExample<T>(
 				if (item.enumData!.length) {
 					val = item.enumData![0].key;
 				} else {
-					val = ""
+					val = "";
 				}
 				break;
 			case "approval_status":
-				val = "draft"
-				break
+				val = "draft";
+				break;
 			case "json":
-				val = {"k": "any json"}
-				break
+				val = { k: "any json" };
+				break;
 			default:
 				val = null;
 		}
@@ -311,7 +308,9 @@ function jsonPayloadExample<T>(
 	return data;
 }
 
-export async function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): Promise<string> {
+export async function jsonApiDocs<T>(
+	args: JsonApiDocsArgs<T>
+): Promise<string> {
 	let parts: string[] = [];
 	let line = function (s: string) {
 		parts.push(s);
@@ -375,4 +374,3 @@ export async function jsonApiDocs<T>(args: JsonApiDocsArgs<T>): Promise<string> 
 
 	return parts.join("");
 }
-

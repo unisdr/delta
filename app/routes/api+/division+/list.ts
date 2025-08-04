@@ -1,62 +1,47 @@
-import { LoaderFunctionArgs } from "@remix-run/server-runtime";
-import { apiAuth2 } from "~/backend.server/models/api_key";
-import {
-	getDivisionByCountryAccountsId,
-	getDivisionCountByCountryAccountsId,
-} from "~/db/queries/divisonTable";
-import { getPaginationParams } from "~/frontend/pagination/api.server";
+import { divisionTable } from "~/drizzle/schema";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	try {
-		const apiKey = await apiAuth2(request);
-		const countryAccountsId = apiKey.managedByUser.countryAccountsId;
+import { dr } from "~/db.server";
 
-		// Extract pagination parameters from the request URL
-		const { page, pageSize, offset } = getPaginationParams(request);
+import { sql, desc, eq } from "drizzle-orm";
 
-		// Get the data
-		const data = await getDivisionByCountryAccountsId(
-			countryAccountsId,
-			offset,
-			pageSize
-		);
+import { createApiListLoader } from "~/backend.server/handlers/view";
+import { LoaderFunction, LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { apiAuth } from "~/backend.server/models/api_key";
 
-		//Get the total count for pagination metadata
-		const totalCount = await getDivisionCountByCountryAccountsId(
-			countryAccountsId
-		);
-
-		return Response.json({
-			data,
-			pagination: {
-				page: page,
-				pageSize: pageSize,
-				totalItems: totalCount,
-				totalPages: Math.ceil(totalCount / pageSize),
-				itemsOnThisPage: data.length,
-			},
-		});
-	} catch (error) {
-		console.log(error);
-		if (error instanceof Response) {
-			const errorMessage = await error.text();
-			return Response.json(
-				{ errorMessge: errorMessage || "Unknown error" },
-				{ status: error.status }
-			);
-		}
-
-		// Handle non-Response errors
-		return Response.json(
-			{ errorMessge: "Internal server error" },
-			{ status: 500 }
-		);
+export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
+	const { request } = args;
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
 	}
-};
 
-export const action = async () => {
-	return Response.json(
-		{ errorMessge: "Method not allowed, use GET" },
-		{ status: 405 }
-	);
+	return createApiListLoader(
+		async () => {
+			return dr.$count(
+				divisionTable,
+				eq(divisionTable.countryAccountsId, countryAccountsId)
+			);
+		},
+		async (offsetLimit) => {
+			return dr.query.divisionTable.findMany({
+				columns: {
+					id: true,
+					importId: true,
+					nationalId: true,
+					parentId: true,
+					name: true,
+					level: true,
+				},
+				where: eq(divisionTable.countryAccountsId, countryAccountsId),
+				extras: {
+					hasGeoData: sql`${divisionTable.geojson} IS NOT NULL`.as(
+						"hasGeoData"
+					),
+				},
+				...offsetLimit,
+				orderBy: [desc(divisionTable.id)],
+			});
+		}
+	)(args);
 };

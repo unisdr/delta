@@ -18,6 +18,7 @@ import {
 	authLoaderAllowNoTotp,
 	authActionAllowNoTotp,
 } from "~/util/auth";
+import { getCountrySettingsFromSession } from "~/util/session";
 
 
 interface LoginFields {
@@ -30,7 +31,8 @@ export const action = authActionAllowNoTotp(async (actionArgs) => {
 	const {user, sessionId} = authActionGetAuth(actionArgs);
 	const formData = formStringData(await request.formData());
 	const code = formData.code || "";
-	const res = await loginTotp(user.id, sessionId, code);
+	const settings = await getCountrySettingsFromSession(request);
+	const res = await loginTotp(user.id, sessionId, code, settings.totpIssuer);
 	if (!res.ok){
 		let errors: FormErrors<LoginFields> = {
 			form: [res.error],

@@ -1,21 +1,20 @@
 import { dr } from "~/db.server";
-
 import {
 	lossesCreate,
 	lossesUpdate,
 	lossesById,
 	lossesByIdTx,
-	fieldsDef,
 	LossesViewModel,
 	LossesFields,
+	createFieldsDef,
 } from "~/backend.server/models/losses";
 
 import { LossesForm, route } from "~/frontend/losses";
 
 import { FormInputDef, formScreen } from "~/frontend/form";
 
-import { createAction } from "~/backend.server/handlers/form/form";
-import { getTableName, eq } from "drizzle-orm";
+import { createOrUpdateAction } from "~/backend.server/handlers/form/form";
+import { getTableName, eq, sql } from "drizzle-orm";
 import { lossesTable } from "~/drizzle/schema";
 import { authLoaderWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
@@ -25,7 +24,8 @@ import { buildTree } from "~/components/TreeView";
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { getCountrySettingsFromSession } from "~/util/session";
+import { ActionFunction, ActionFunctionArgs } from "@remix-run/server-runtime";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 interface LoaderRes {
 	item: LossesViewModel | null;
@@ -40,31 +40,44 @@ interface LoaderRes {
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params, request } = loaderArgs;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	if (!params.id) {
 		throw new Error("Route does not have id param");
 	}
 	if (!params.disRecId) {
 		throw new Error("Route does not have disRecId param");
 	}
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized access", { status: 401 });
+	}
 
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
-		"geojson",
-	]);
+	const rawData = await dr
+		.select()
+		.from(divisionTable)
+		.where(eq(divisionTable.countryAccountsId, countryAccountsId));
 
-	let ctryIso3: string = "";
-	const settings = await getCountrySettingsFromSession(request)
-	if (settings) {
-		ctryIso3 = settings.dtsInstanceCtryIso3;
-	}
+	const treeData = buildTree(
+		rawData,
+		idKey,
+		parentKey,
+		nameKey,
+		// ["fr", "de", "en"],
+		"en",
+		["geojson"]
+	);
 
-	const divisionGeoJSON = await dr.execute(`
+	const settings = await getCountrySettingsFromSession(request);
+	let ctryIso3 = settings?.crtyIso3 || "";
+	const currencies = [settings?.curriencyCode || "USD"]
+
+	const divisionGeoJSON = await dr.execute(sql`
 		SELECT id, name, geojson
 		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL
+		AND division.country_accounts_id = ${countryAccountsId} ;
     `);
 
 	if (params.id === "new") {
@@ -75,7 +88,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		}
 		let res: LoaderRes = {
 			item: null,
-			fieldDef: fieldsDef,
+			fieldDef: createFieldsDef(currencies),
 			recordId: params.disRecId,
 			sectorId: sectorId,
 			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId),
@@ -92,7 +105,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let res: LoaderRes = {
 		item: item,
-		fieldDef: fieldsDef,
+		fieldDef: createFieldsDef(currencies),
 		recordId: item.recordId,
 		sectorId: item.sectorId,
 		treeData: treeData || [],
@@ -102,41 +115,46 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	return res;
 });
 
-export const action = createAction({
-	fieldsDef: fieldsDef,
-	create: lossesCreate,
-	update: lossesUpdate,
-	getById: lossesByIdTx,
-	redirectTo: (id) => `${route}/${id}`,
-	tableName: getTableName(lossesTable),
-	postProcess: async (id, data) => {
-		//console.log(`Post-processing record: ${id}`);
-		//console.log(`data: `, data);
+export const action: ActionFunction = async (args: ActionFunctionArgs) => {
+	const { request } = args;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	const settings = await getCountrySettingsFromSession(request);
+	const currencies = [settings?.curriencyCode || "USD"]
 
-		const save_path = `/uploads/disaster-record/losses/${id}`;
-		const save_path_temp = `/uploads/temp`;
+	return createOrUpdateAction({
+		fieldsDef: createFieldsDef(currencies),
+		create: lossesCreate,
+		update: lossesUpdate,
+		getById: lossesByIdTx,
+		redirectTo: (id) => `${route}/${id}`,
+		tableName: getTableName(lossesTable),
+		postProcess: async (id, data) => {
+			const save_path = `/uploads/disaster-record/losses/${id}`;
+			const save_path_temp = `/uploads/temp`;
 
-		// Ensure attachments is an array, even if it's undefined or empty
-		const attachmentsArray = Array.isArray(data?.attachments)
-			? data.attachments
-			: [];
+			// Ensure attachments is an array, even if it's undefined or empty
+			const attachmentsArray = Array.isArray(data?.attachments)
+				? data.attachments
+				: [];
 
-		// Process the attachments data
-		const processedAttachments = ContentRepeaterUploadFile.save(
-			attachmentsArray,
-			save_path_temp,
-			save_path
-		);
+			// Process the attachments data
+			const processedAttachments = ContentRepeaterUploadFile.save(
+				attachmentsArray,
+				save_path_temp,
+				save_path
+			);
 
-		// Update the `attachments` field in the database
-		await dr
-			.update(lossesTable)
-			.set({
-				attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
-			})
-			.where(eq(lossesTable.id, id));
-	},
-});
+			// Update the `attachments` field in the database
+			await dr
+				.update(lossesTable)
+				.set({
+					attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+				})
+				.where(eq(lossesTable.id, id));
+		},
+		countryAccountsId,
+	})(args);
+};
 
 export default function Screen() {
 	const ld = useLoaderData<typeof loader>();

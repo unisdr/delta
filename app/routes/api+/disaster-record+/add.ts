@@ -1,47 +1,45 @@
-import {
-	authLoaderApi,
-	authActionApi,
-	authActionGetAuth
-} from "~/util/auth";
+import { authLoaderApi } from "~/util/auth";
 
-import { getTenantContext } from "~/util/tenant";
+import { jsonCreate } from "~/backend.server/handlers/form/form_api";
 
-import {
-	jsonCreate,
-} from "~/backend.server/handlers/form/form_api";
-
-import {
-	fieldsDefApi
-} from "~/frontend/disaster-record/form";
+import { fieldsDefApi } from "~/frontend/disaster-record/form";
 
 import { disasterRecordsCreate } from "~/backend.server/models/disaster_record";
+import { ActionFunction, ActionFunctionArgs } from "@remix-run/server-runtime";
+import { apiAuth } from "~/backend.server/models/api_key";
+import { SelectDisasterRecords } from "~/drizzle/schema";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
 });
 
-export const action = authActionApi(async (args) => {
-	const data = await args.request.json();
-
-	// Extract tenant context from user session
-	const userSession = authActionGetAuth(args);
-	if (!userSession) {
-		return Response.json({ ok: false, error: "Authentication required" }, { status: 401 });
+export const action: ActionFunction = async (args: ActionFunctionArgs) => {
+	const { request } = args;
+	if (request.method !== "POST") {
+		throw new Response("Method Not Allowed: Only POST requests are supported", {
+			status: 405,
+		});
 	}
 
-	const tenantContext = await getTenantContext(userSession);
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
 
-	// Create a wrapper function that includes tenant context
-	const createWithTenant = async (tx: any, fields: any) => {
-		return disasterRecordsCreate(tx, fields, tenantContext);
-	};
+	let data: SelectDisasterRecords[] = await request.json();
+	data = data.map((item) => ({
+		...item,
+		countryAccountsId: countryAccountsId,
+	}));
 
 	const saveRes = await jsonCreate({
 		data,
 		fieldsDef: fieldsDefApi,
-		create: createWithTenant
+		create: async (tx: any, fields: any) => {
+			return disasterRecordsCreate(tx, fields);
+		},
 	});
 
-	return Response.json(saveRes)
-});
-
+	return Response.json(saveRes);
+};

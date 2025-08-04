@@ -1,24 +1,36 @@
 import { dr, Tx } from "~/db.server";
-import { disasterRecordsTable, disasterRecords, humanCategoryPresenceTable, disasterEventTable } from "~/drizzle/schema";
+import {
+	disasterRecordsTable,
+	SelectDisasterRecords,
+	humanCategoryPresenceTable,
+	disasterEventTable,
+} from "~/drizzle/schema";
 import { eq, sql, and } from "drizzle-orm";
-import type { TenantContext } from "~/util/tenant";
 
-import { CreateResult, DeleteResult, UpdateResult } from "~/backend.server/handlers/form/form";
+import {
+	CreateResult,
+	DeleteResult,
+	UpdateResult,
+} from "~/backend.server/handlers/form/form";
 import { Errors, hasErrors } from "~/frontend/form";
 import { updateTotalsUsingDisasterRecordId } from "./analytics/disaster-events-cost-calculator";
 
-export interface DisasterRecordsFields extends Omit<disasterRecords, "id"> { }
+export interface DisasterRecordsFields extends Omit<SelectDisasterRecords, "id"> {}
 
 // do not change
-export function validate(_fields: DisasterRecordsFields): Errors<DisasterRecordsFields> {
+export function validate(
+	_fields: DisasterRecordsFields
+): Errors<DisasterRecordsFields> {
 	let errors: Errors<DisasterRecordsFields> = {};
 	errors.fields = {};
 
-	return errors
+	return errors;
 }
 
-
-export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsFields, tenantContext: TenantContext): Promise<CreateResult<DisasterRecordsFields>> {
+export async function disasterRecordsCreate(
+	tx: Tx,
+	fields: DisasterRecordsFields
+): Promise<CreateResult<DisasterRecordsFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
 		return { ok: false, errors };
@@ -28,10 +40,7 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 	if (fields.disasterEventId) {
 		// Check if the referenced disaster event belongs to the same tenant
 		const disasterEventCheck = await tx.query.disasterEventTable.findFirst({
-			where: and(
-				eq(disasterEventTable.id, fields.disasterEventId),
-				eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
-			)
+			where: eq(disasterEventTable.id, fields.disasterEventId),
 		});
 
 		if (!disasterEventCheck) {
@@ -39,16 +48,18 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 				ok: false,
 				errors: {
 					fields: {},
-					form: ["Cannot create disaster record with disaster event from another tenant"]
-				}
+					form: [
+						"Cannot create disaster record with disaster event from another tenant",
+					],
+				},
 			};
 		}
 	}
 
-	const res = await tx.insert(disasterRecordsTable)
+	const res = await tx
+		.insert(disasterRecordsTable)
 		.values({
 			...fields,
-			countryAccountsId: tenantContext.countryAccountId, // Set tenant context
 			updatedAt: sql`NOW()`,
 		})
 		.returning({ id: disasterRecordsTable.id });
@@ -56,21 +67,29 @@ export async function disasterRecordsCreate(tx: Tx, fields: DisasterRecordsField
 	return { ok: true, id: res[0].id };
 }
 
-export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Partial<DisasterRecordsFields>, tenantContext: TenantContext): Promise<UpdateResult<DisasterRecordsFields>> {
+export async function disasterRecordsUpdate(
+	tx: Tx,
+	idStr: string,
+	fields: Partial<DisasterRecordsFields>,
+	countryAccountsId: string
+): Promise<UpdateResult<DisasterRecordsFields>> {
 	let errors: Errors<DisasterRecordsFields> = {};
 	errors.fields = {};
 	errors.form = [];
 	if (hasErrors(errors)) {
-		return { ok: false, errors: errors }
+		return { ok: false, errors: errors };
 	}
 
 	// First check if the record exists and belongs to the tenant
-	const existingRecord = await tx.select()
+	const existingRecord = await tx
+		.select()
 		.from(disasterRecordsTable)
-		.where(and(
-			eq(disasterRecordsTable.id, idStr),
-			eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId)
-		))
+		.where(
+			and(
+				eq(disasterRecordsTable.id, idStr),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		)
 		.limit(1);
 
 	if (existingRecord.length === 0) {
@@ -78,8 +97,8 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Parti
 			ok: false,
 			errors: {
 				fields: {},
-				form: ["Record not found or you don't have permission to update it"]
-			}
+				form: ["Record not found or you don't have permission to update it"],
+			},
 		};
 	}
 
@@ -89,8 +108,8 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Parti
 		const disasterEventCheck = await tx.query.disasterEventTable.findFirst({
 			where: and(
 				eq(disasterEventTable.id, fields.disasterEventId),
-				eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId)
-			)
+				eq(disasterEventTable.countryAccountsId, countryAccountsId)
+			),
 		});
 
 		if (!disasterEventCheck) {
@@ -98,8 +117,10 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Parti
 				ok: false,
 				errors: {
 					fields: {},
-					form: ["Cannot update disaster record with disaster event from another tenant"]
-				}
+					form: [
+						"Cannot update disaster record with disaster event from another tenant",
+					],
+				},
 			};
 		}
 	}
@@ -109,36 +130,40 @@ export async function disasterRecordsUpdate(tx: Tx, idStr: string, fields: Parti
 	}
 
 	let id = idStr;
-	await tx.update(disasterRecordsTable)
+	await tx
+		.update(disasterRecordsTable)
 		.set({
 			...fields,
-			updatedAt: sql`NOW()`
+			updatedAt: sql`NOW()`,
 		})
-		.where(and(
-			eq(disasterRecordsTable.id, id),
-			eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId) // Tenant isolation
-		));
+		.where(
+			and(
+				eq(disasterRecordsTable.id, id),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		);
 
-	await updateTotalsUsingDisasterRecordId(tx, idStr)
+	await updateTotalsUsingDisasterRecordId(tx, idStr);
 
 	return { ok: true };
 }
 
-export type DisasterRecordsViewModel = Exclude<Awaited<ReturnType<typeof disasterRecordsById>>,
+export type DisasterRecordsViewModel = Exclude<
+	Awaited<ReturnType<typeof disasterRecordsById>>,
 	undefined
 >;
 
-export async function disasterRecordsIdByImportId(tx: Tx, importId: string, tenantContext: TenantContext) {
-	const res = await tx.select({
-		id: disasterRecordsTable.id
-	}).from(disasterRecordsTable).where(and(
-		eq(disasterRecordsTable.apiImportId, importId),
-		eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId) // Tenant isolation
-	))
+export async function disasterRecordsIdByImportId(tx: Tx, importId: string) {
+	const res = await tx
+		.select({
+			id: disasterRecordsTable.id,
+		})
+		.from(disasterRecordsTable)
+		.where(eq(disasterRecordsTable.apiImportId, importId));
 	if (res.length == 0) {
-		return null
+		return null;
 	}
-	return res[0].id
+	return res[0].id;
 }
 
 export async function disasterRecordsBasicInfoById(idStr: string) {
@@ -146,12 +171,15 @@ export async function disasterRecordsBasicInfoById(idStr: string) {
 	let id = idStr;
 
 	// Query just the disaster record with approval status check
-	let record = await dr.select()
+	let record = await dr
+		.select()
 		.from(disasterRecordsTable)
-		.where(and(
-			eq(disasterRecordsTable.id, id),
-			eq(disasterRecordsTable.approvalStatus, "published") // Only published records are accessible
-		))
+		.where(
+			and(
+				eq(disasterRecordsTable.id, id),
+				eq(disasterRecordsTable.approvalStatus, "published") // Only published records are accessible
+			)
+		)
 		.limit(1);
 
 	if (record.length === 0) {
@@ -161,21 +189,21 @@ export async function disasterRecordsBasicInfoById(idStr: string) {
 	return record[0];
 }
 
-export async function disasterRecordsById(idStr: string, tenantContext: TenantContext) {
-	return disasterRecordsByIdTx(dr, idStr, tenantContext);
+export async function disasterRecordsById(idStr: string) {
+	return disasterRecordsByIdTx(dr, idStr);
 }
 
-export async function disasterRecordsByIdTx(tx: Tx, idStr: string, tenantContext: TenantContext) {
+export async function disasterRecordsByIdTx(
+	tx: Tx,
+	idStr: string
+	// countryAccountsId: string
+) {
 	let id = idStr;
 
-	// First query just the disaster record with tenant isolation
-	let record = await tx.select()
+	let record = await tx
+		.select()
 		.from(disasterRecordsTable)
-		.where(and(
-			eq(disasterRecordsTable.id, id),
-			eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId) // Tenant isolation
-		))
-		.limit(1);
+		.where(eq(disasterRecordsTable.id, id));
 
 	if (record.length === 0) {
 		return null; // Return null instead of throwing error for better test handling
@@ -190,32 +218,53 @@ export async function disasterRecordsByIdTx(tx: Tx, idStr: string, tenantContext
 	return disasterRecord;
 }
 
-
-export async function disasterRecordsDeleteById(idStr: string, tenantContext: TenantContext): Promise<DeleteResult> {
+export async function disasterRecordsDeleteById(
+	idStr: string,
+	countryAccountsId: string
+): Promise<DeleteResult> {
 	// First verify the record belongs to the tenant
-	const record = await disasterRecordsById(idStr, tenantContext);
-	if (!record) {
-		return { ok: false, error: "Record not found or you don't have permission to delete it" };
+	const record = await disasterRecordsById(idStr);
+	if (!record || record.countryAccountsId !== countryAccountsId) {
+		return {
+			ok: false,
+			error: "Record not found or you don't have permission to delete it",
+		};
 	}
 
 	// Delete with tenant isolation
-	await dr.delete(disasterRecordsTable)
-		.where(and(
-			eq(disasterRecordsTable.id, idStr),
-			eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId) // Tenant isolation
-		))
-	return { ok: true }
+	await dr
+		.delete(disasterRecordsTable)
+		.where(
+			and(
+				eq(disasterRecordsTable.id, idStr),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		);
+	return { ok: true };
 }
 
-export async function getHumanEffectRecordsById(disasterRecordidStr: string, tenantContext: TenantContext) {
-	return _getHumanEffectRecordsByIdTx(dr, disasterRecordidStr, tenantContext);
+export async function getHumanEffectRecordsById(
+	disasterRecordidStr: string,
+	countryAccountsId: string
+) {
+	return _getHumanEffectRecordsByIdTx(
+		dr,
+		disasterRecordidStr,
+		countryAccountsId
+	);
 }
 
-async function _getHumanEffectRecordsByIdTx(tx: Tx, disasterRecordidStr: string, tenantContext: TenantContext) {
+async function _getHumanEffectRecordsByIdTx(
+	tx: Tx,
+	disasterRecordidStr: string,
+	countryAccountsId: string
+) {
 	// First verify the disaster record belongs to the tenant
-	const record = await disasterRecordsByIdTx(tx, disasterRecordidStr, tenantContext);
-	if (!record) {
-		throw new Error("Record not found or you don't have permission to access it");
+	const record = await disasterRecordsByIdTx(tx, disasterRecordidStr);
+	if (!record || record.countryAccountsId !== countryAccountsId) {
+		throw new Error(
+			"Record not found or you don't have permission to access it"
+		);
 	}
 	let id = disasterRecordidStr;
 	let res = await tx.query.humanCategoryPresenceTable.findFirst({

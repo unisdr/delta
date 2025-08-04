@@ -1,7 +1,6 @@
 import { getMostDamagingEvents, type MostDamagingEventsParams, type SortColumn, type SortDirection } from "~/backend.server/models/analytics/mostDamagingEvents";
 import { sanitizeInput } from "~/utils/security";
 import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
-import { TenantContext } from "~/util/tenant";
 
 interface MostDamagingEventsRequestParams {
   sectorId: string | null;
@@ -19,15 +18,10 @@ interface MostDamagingEventsRequestParams {
 
 const VALID_SORT_COLUMNS: readonly SortColumn[] = ['damages', 'losses', 'eventName', 'createdAt'] as const;
 
-export async function handleMostDamagingEventsRequest(tenantContext: TenantContext, params: MostDamagingEventsRequestParams) {
+export async function handleMostDamagingEventsRequest(countryAccountsId: string, params: MostDamagingEventsRequestParams) {
   try {
     // Create assessment metadata for logging
     const metadata = await createAssessmentMetadata('rapid', 'medium');
-    console.log('Starting most damaging events request:', {
-      metadata,
-      tenantId: tenantContext.countryAccountId,
-      requestParams: { ...params, sectorId: params.sectorId ? '[REDACTED]' : null }
-    });
 
     // Validate and sanitize all input parameters
     const sanitizedParams = {
@@ -66,12 +60,7 @@ export async function handleMostDamagingEventsRequest(tenantContext: TenantConte
     };
 
     // Get the data from the model with tenant context
-    const result = await getMostDamagingEvents(tenantContext, modelParams);
-
-    console.log('Successfully processed most damaging events request', {
-      metadata,
-      resultCount: result.events.length
-    });
+    const result = await getMostDamagingEvents(countryAccountsId, modelParams);
 
     return {
       success: true,

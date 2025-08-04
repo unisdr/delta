@@ -74,10 +74,10 @@ interface interfaceSector {
 // Loader with public access or specific permission check for "ViewData"
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
 
-  const req = loaderArgs.request;
+  const request = loaderArgs.request;
 
   // Parse the request URL
-  const parsedUrl = new URL(req.url);
+  const parsedUrl = new URL(request.url);
 
   // Extract query string parameters
   const queryParams = parsedUrl.searchParams;
@@ -104,25 +104,26 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let sectorParentArray: interfaceSector[] = [];
   let x: any = {};
 
-  const settings = await getCountrySettingsFromSession(loaderArgs.request);
+  const settings = await getCountrySettingsFromSession(request);
   let currency = "USD";
   if (settings) {
     currency = settings.currencyCode;
   }
 
   // Use the shared public tenant context for analytics
+  const countryAccountsId = getCountrySettingsFromSession(request);
 
   if (qsDisEventId) {
     // Pass public tenant context for analytics access
-    record = await disasterEventById(qsDisEventId, settings.countryAccountsId).catch(console.error);
+    record = await disasterEventById(qsDisEventId).catch(console.error);
     if (record) {
       try {
+        if(record.countryAccountsId!== countryAccountsId){
+          throw new Response("Unauthorized access", {status:401});
+        }
         cpDisplayName = await contentPickerConfig.selectedDisplay(dr, qsDisEventId);
+        
 
-        // console.log( qsDisEventId );
-        // console.log( typeof qsDisEventId );
-        // console.log( record );
-        // getSectorFullPathById()
 
         // get all related sectors
         recordsRelatedSectors = await disasterEventSectorsById(qsDisEventId, true);
@@ -420,11 +421,8 @@ function DisasterEventsAnalysisContent() {
     mapChartRef.current?.setLegendTitle(`Total damages in ${ld.currency}`);
   }, []);
 
-  // console.log(ld.datamageGeoData);
-
   // TODO: apply mapping of data, ask to revise key
   if (ld.record && ld.totalAffectedPeople2.disaggregations.age) {
-    // console.log( ld.totalAffectedPeople2.disaggregations );
     const ageData = ld.totalAffectedPeople2.disaggregations.age;
     disaggregationsAge2 = {
       children: ageData["0-14"],

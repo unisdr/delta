@@ -157,53 +157,36 @@ export const sessionsRelations = relations(sessionTable, ({ one }) => ({
 	}),
 }));
 
-export const userTable = pgTable(
-	"user",
-	{
-		id: ourSerial("id").primaryKey(),
-		role: zeroText("role"),
-		firstName: zeroText("first_name"),
-		lastName: zeroText("last_name"),
-		email: text("email").notNull(),
-		password: zeroText("password"),
-		emailVerified: zeroBool("email_verified"),
-		emailVerificationCode: zeroText("email_verification_code"),
-		emailVerificationSentAt: timestamp("email_verification_sent_at"),
-		emailVerificationExpiresAt: zeroTimestamp("email_verification_expires_at"),
-		inviteCode: zeroText("invite_code"),
-		inviteSentAt: timestamp("invite_sent_at"),
-		inviteExpiresAt: zeroTimestamp("invite_expires_at"),
-		resetPasswordToken: zeroText("reset_password_token"),
-		resetPasswordExpiresAt: zeroTimestamp("reset_password_expires_at"),
-		totpEnabled: zeroBool("totp_enabled"),
-		totpSecret: zeroText("totp_secret"),
-		totpSecretUrl: zeroText("totp_secret_url"),
-		organization: zeroText("organization"),
-		hydrometCheUser: zeroBool("hydromet_che_user"),
-		authType: text("auth_type").notNull().default("form"),
-		...createdUpdatedTimestamps,
-		countryAccountsId: uuid("country_accounts_id").references(
-			() => countryAccounts.id,
-			{ onDelete: "cascade" }
-		),
-		isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
-	},
-	(table) => [
-		unique("email_country_accounts_unique").on(
-			table.email,
-			table.countryAccountsId
-		),
-	]
-);
+export const userTable = pgTable("user", {
+	id: ourSerial("id").primaryKey(),
+	// role: zeroText("role"),
+	firstName: zeroText("first_name"),
+	lastName: zeroText("last_name"),
+	email: text("email").notNull().unique(),
+	password: zeroText("password"),
+	emailVerified: zeroBool("email_verified"),
+	emailVerificationCode: zeroText("email_verification_code"),
+	emailVerificationSentAt: timestamp("email_verification_sent_at"),
+	emailVerificationExpiresAt: zeroTimestamp("email_verification_expires_at"),
+	inviteCode: zeroText("invite_code"),
+	inviteSentAt: timestamp("invite_sent_at"),
+	inviteExpiresAt: zeroTimestamp("invite_expires_at"),
+	resetPasswordToken: zeroText("reset_password_token"),
+	resetPasswordExpiresAt: zeroTimestamp("reset_password_expires_at"),
+	totpEnabled: zeroBool("totp_enabled"),
+	totpSecret: zeroText("totp_secret"),
+	totpSecretUrl: zeroText("totp_secret_url"),
+	organization: zeroText("organization"),
+	hydrometCheUser: zeroBool("hydromet_che_user"),
+	authType: text("auth_type").notNull().default("form"),
+	...createdUpdatedTimestamps,
+});
 
-export type User = typeof userTable.$inferSelect;
-export type UserInsert = typeof userTable.$inferInsert;
+export type SelectUser = typeof userTable.$inferSelect;
+export type InsertUser = typeof userTable.$inferInsert;
 
-export const userRelations = relations(userTable, ({ one }) => ({
-	countryAccount: one(countryAccounts, {
-		fields: [userTable.countryAccountsId],
-		references: [countryAccounts.id],
-	}),
+export const userRelations = relations(userTable, ({ many }) => ({
+	userCountryAccounts: many(userCountryAccounts),
 }));
 
 export const apiKeyTable = pgTable("api_key", {
@@ -214,16 +197,19 @@ export const apiKeyTable = pgTable("api_key", {
 	managedByUserId: ourBigint("user_id")
 		.notNull()
 		.references(() => userTable.id, { onDelete: "cascade" }),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
 });
 
-export type ApiKey = typeof apiKeyTable.$inferSelect;
-export type ApiKeyInsert = typeof apiKeyTable.$inferInsert;
-export type ApiKeyWithUser = ApiKey & {
-  managedByUser: {
-    id: number;
-    email: string;
-    countryAccountsId: string;
-  };
+export type SelectApiKey = typeof apiKeyTable.$inferSelect;
+export type InsertApiKey = typeof apiKeyTable.$inferInsert;
+export type ApiKeyWithUser = SelectApiKey & {
+	managedByUser: {
+		id: number;
+		email: string;
+	};
 };
 
 export const apiKeyRelations = relations(apiKeyTable, ({ one }) => ({
@@ -256,10 +242,14 @@ export const devExample1Table = pgTable("dev_example1", {
 	repeatableNum3: integer("repeatable_num3"),
 	repeatableText3: text("repeatable_text3"),
 	jsonData: jsonb("json_data"),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
 });
 
-export type DevExample1 = typeof devExample1Table.$inferSelect;
-export type DevExample1Insert = typeof devExample1Table.$inferInsert;
+export type SelectDevExample1 = typeof devExample1Table.$inferSelect;
+export type InsertDevExample1 = typeof devExample1Table.$inferInsert;
 
 export const divisionTable = pgTable(
 	"division",
@@ -393,18 +383,10 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 		() => countryAccounts.id
 	),
 	status: text("status").notNull().default("pending"),
-	// otherId1: zeroText("otherId1"),
-	//duration: zeroText("duration"),
 	nationalSpecification: zeroText("national_specification"),
-	// yyyy or yyyy-mm or yyyy-mm-dd
 	startDate: zeroText("start_date"),
 	endDate: zeroText("end_date"),
 	description: zeroText("description"),
-	//warningIssuedSummary: zeroText("warning_issued_summary"),
-	//warningIssuedBy: zeroText("warning_issued_by"),
-	//warningIssuedDate: timestamp("warning_issued_date"),
-	//warningIssuedCoverage: zeroText("warning_issued_coverage"),
-	//warningIssuedContent: zeroText("warning_issued_content"),
 	chainsExplanation: zeroText("chains_explanation"),
 	magnitude: zeroText("magniture"),
 	spatialFootprint: jsonb("spatial_footprint"),
@@ -421,8 +403,8 @@ export const hazardousEventTableConstraits = {
 	hipHazardId: "hazardous_event_hip_hazard_id_hip_hazard_id_fk",
 };
 
-export type HazardousEvent = typeof hazardousEventTable.$inferSelect;
-export type HazardousEventInsert = typeof hazardousEventTable.$inferInsert;
+export type SelectHazardousEvent = typeof hazardousEventTable.$inferSelect;
+export type InsertHazardousEvent = typeof hazardousEventTable.$inferInsert;
 
 export const hazardousEventRel = relations(hazardousEventTable, ({ one }) => ({
 	event: one(eventTable, {
@@ -642,8 +624,8 @@ export const disasterEventTable = pgTable("disaster_event", {
 	legacyData: jsonb("legacy_data"),
 });
 
-export type DisasterEvent = typeof disasterEventTable.$inferSelect;
-export type DisasterEventInsert = typeof disasterEventTable.$inferInsert;
+export type SelectDisasterEvent = typeof disasterEventTable.$inferSelect;
+export type InsertDisasterEvent = typeof disasterEventTable.$inferInsert;
 
 export const disasterEventTableConstrains = {
 	hazardousEventId: "disaster_event_hazardous_event_id_hazardous_event_id_fk",
@@ -924,42 +906,25 @@ export const damagesRel = relations(damagesTable, ({ one }) => ({
 export type Damages = typeof damagesTable.$inferSelect;
 export type DamagesInsert = typeof damagesTable.$inferInsert;
 
+///////////////////////////////////////////////
 export const assetTable = pgTable("asset", {
 	...apiImportIdField(),
 	id: ourRandomUUID(),
-	//sectorId: ourBigint("sector_id")
-	//	.references((): AnyPgColumn => sectorTable.id)
-	//	.notNull(),
 	sectorIds: text("sector_ids").notNull(),
-	//	sectorIds: ourBigint("sector_ids")
-	//	.array()
-	//	.notNull()
-	//  .$type<number[]>(),
-	// measureId: uuid("measure_id")
-	// 	.references((): AnyPgColumn => measureTable.id)
-	// 	.notNull(),
 	isBuiltIn: boolean("is_built_in").notNull(),
 	name: text("name").notNull(),
 	category: text("category"),
 	nationalId: text("national_id"),
 	notes: text("notes"),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
 });
 
-/*
-export const assetRel = relations(assetTable, ({one}) => ({
-	// measure: one(measureTable, {
-	// 	fields: [assetTable.measureId],
-	// 	references: [measureTable.id],
-	// }),
-//	sector: one(sectorTable, {
-	//	fields: [assetTable.sectorId],
-		//references: [sectorTable.id],
-	//}),
-}));
-*/
-
-export type Asset = typeof assetTable.$inferSelect;
-export type AssetInsert = typeof assetTable.$inferInsert;
+export type SelectAsset = typeof assetTable.$inferSelect;
+export type InsertAsset = typeof assetTable.$inferInsert;
+/////////////////////////////////////////////////////
 
 export const lossesTable = pgTable("losses", {
 	...apiImportIdField(),
@@ -982,14 +947,12 @@ export const lossesTable = pgTable("losses", {
 	publicCostUnitCurrency: text("public_cost_unit_currency"),
 	publicCostTotal: ourMoney("public_cost_total"),
 	publicCostTotalOverride: zeroBool("public_cost_total_override"),
-	//publicTotalCostCurrency: text("public_total_cost_currency"),
 	privateUnit: unitsEnum("private_value_unit"),
 	privateUnits: ourBigint("private_units"),
 	privateCostUnit: ourMoney("private_cost_unit"),
 	privateCostUnitCurrency: text("private_cost_unit_currency"),
 	privateCostTotal: ourMoney("private_cost_total"),
 	privateCostTotalOverride: zeroBool("private_cost_total_override"),
-	//privateTotalCostCurrency: text("private_total_cost_currency")
 	spatialFootprint: jsonb("spatial_footprint"),
 	attachments: jsonb("attachments"),
 });
@@ -1001,8 +964,8 @@ export const lossesRel = relations(lossesTable, ({ one }) => ({
 	}),
 }));
 
-export type Losses = typeof lossesTable.$inferSelect;
-export type LossesInsert = typeof lossesTable.$inferInsert;
+export type SelectLosses = typeof lossesTable.$inferSelect;
+export type InsertLosses = typeof lossesTable.$inferInsert;
 
 // Hazard Information Profiles (HIPs)
 // https://www.preventionweb.net/publication/hazard-information-profiles-hips
@@ -1073,8 +1036,8 @@ export const hipHazardRel = relations(hipHazardTable, ({ one }) => ({
  * Pending final design confirmation from @sindicatoesp, this table's structure, especially its sector linkage,
  * may be revised to align with new requirements and ensure data integrity.
  */
-export type disasterRecords = typeof disasterRecordsTable.$inferSelect;
-export type disasterRecordsInsert = typeof disasterRecordsTable.$inferInsert;
+export type SelectDisasterRecords = typeof disasterRecordsTable.$inferSelect;
+export type InsertDisasterRecords = typeof disasterRecordsTable.$inferInsert;
 
 export const disasterRecordsTable = pgTable("disaster_records", {
 	...apiImportIdField(),
@@ -1146,7 +1109,7 @@ export const disasterRecordsRel = relations(
 		}),
 	})
 );
-
+////////////////////////////////////////////////////////
 // Table to log all audit actions across the system
 export const auditLogsTable = pgTable("audit_logs", {
 	id: ourRandomUUID(),
@@ -1161,8 +1124,16 @@ export const auditLogsTable = pgTable("audit_logs", {
 	timestamp: timestamp("timestamp", { withTimezone: true })
 		.defaultNow()
 		.notNull(),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
 });
+export type SelectAuditLogsTable = typeof auditLogsTable.$inferSelect;
+export type InsertAuditLogsTable = typeof auditLogsTable.$inferInsert;
 
+export type AuditLogsTableAction = "INSERT" | "UPDATE" | "DELETE";
+/////////////////////////////////////////////////////////
 export type categoriesType = typeof categoriesTable.$inferSelect;
 
 // Table for generic classification categories
@@ -1244,19 +1215,9 @@ export const sectorTable = pgTable(
 		), // Reference to parent sector
 		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
 		description: text("description"), // Optional description for the sector | Additional details about the sector
-		// pdnaGrouping: text("pdna_grouping"), // PDNA grouping: Social, Infrastructure, Productive, or Cross-cutting
 		level: ourBigint("level").notNull().default(1), // value is parent level + 1 otherwise 1
 		...createdUpdatedTimestamps,
 	}
-	// (table) => [
-	// 	// // Constraint: subsector cannot be empty
-	// 	// check("subsector_not_empty", sql`${table.subsector} <> ''`),
-	// 	// // Ensure the PDNA grouping is one of the specified categories
-	// 	// check(
-	// 	// 	"pdna_grouping_valid",
-	// 	// 	sql`${table.pdnaGrouping} IN ('Cross-cutting Sectors ', 'Infrastructure Sectors', 'Productive Sectors', 'Social Sectors')`
-	// 	// ),
-	// ]
 );
 
 export const sectoryParent_Rel = relations(sectorTable, ({ one }) => ({
@@ -1392,7 +1353,7 @@ export const instanceSystemSettings = pgTable("instance_system_settings", {
 	currencyCode: varchar("currency_code").notNull().default("USD"),
 	countryName: varchar("country_name")
 		.notNull()
-		.default("United State of America"),//this column has to be removed
+		.default("United State of America"), //this column has to be removed
 	countryAccountsId: uuid("country_accounts_id").references(
 		() => countryAccounts.id,
 		{ onDelete: "cascade" }
@@ -1403,19 +1364,21 @@ export type InstanceSystemSettings = typeof instanceSystemSettings.$inferSelect;
 export type NewInstanceSystemSettings =
 	typeof instanceSystemSettings.$inferInsert;
 
+////////////////////////////////////////////////////////////////
 export const countries = pgTable("countries", {
 	id: ourRandomUUID(),
 	name: varchar("name", { length: 100 }).notNull().unique(),
 	iso3: varchar("iso3", { length: 3 }).unique(),
 });
 
-export type Country = typeof countries.$inferSelect;
-export type NewCountry = typeof countries.$inferInsert;
+export type SelectCountries = typeof countries.$inferSelect;
+export type InsertCountries = typeof countries.$inferInsert;
 
-export const countryRelations = relations(countries, ({ one }) => ({
-	countryAccount: one(countryAccounts),
+export const countriesRelations = relations(countries, ({ many }) => ({
+	countryAccounts: many(countryAccounts),
 }));
 
+////////////////////////////////////////////////////////////////
 export type CountryAccountType = "Official" | "Training";
 export const countryAccountTypes = {
 	OFFICIAL: "Official" as CountryAccountType,
@@ -1430,6 +1393,7 @@ export const countryAccountStatuses = {
 
 export const countryAccounts = pgTable("country_accounts", {
 	id: ourRandomUUID(),
+	shortDescription: varchar("short_description", { length: 20 }).notNull(),
 	countryId: uuid("country_id")
 		.notNull()
 		.references(() => countries.id),
@@ -1443,8 +1407,8 @@ export const countryAccounts = pgTable("country_accounts", {
 	updatedAt: timestamp("updated_at", { mode: "date", withTimezone: false }),
 });
 
-export type CountryAccount = typeof countryAccounts.$inferSelect;
-export type NewCountryAccount = typeof countryAccounts.$inferInsert;
+export type SelectCountryAccounts = typeof countryAccounts.$inferSelect;
+export type InsertCountryAccounts = typeof countryAccounts.$inferInsert;
 
 export const countryAccountsRelations = relations(
 	countryAccounts,
@@ -1453,6 +1417,67 @@ export const countryAccountsRelations = relations(
 			fields: [countryAccounts.countryId],
 			references: [countries.id],
 		}),
-		users: many(userTable),
+		userCountryAccounts: many(userCountryAccounts),
 	})
 );
+
+////////////////////////////////////////////////////////////////
+export const userCountryAccounts = pgTable("user_country_accounts", {
+	id: ourRandomUUID(),
+	userId: bigserial("user_id", { mode: "number" }).references(
+		() => userTable.id,
+		{
+			onDelete: "cascade",
+		}
+	),
+	countryAccountsId: uuid("country_accounts_id").references(
+		() => countryAccounts.id,
+		{ onDelete: "cascade" }
+	),
+	role: varchar("role", { length: 100 }).notNull(),
+	isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
+	addedAt: timestamp("added_at", {
+		mode: "date",
+		withTimezone: false,
+	})
+		.notNull()
+		.defaultNow(),
+});
+
+export type SelectUserCountryAccounts = typeof userCountryAccounts.$inferSelect;
+export type InsertUserCountryAccounts = typeof userCountryAccounts.$inferInsert;
+export type SelectUserCountryAccountsWithUser = SelectUserCountryAccounts & {
+	user: SelectUser;
+};
+export type SelectUserCountryAccountsWithUserAndCountryAccounts =
+	SelectUserCountryAccounts & {
+		user: SelectUser;
+		countryAccount: SelectCountryAccounts;
+	};
+
+export const userCountryAccountsRelations = relations(
+	userCountryAccounts,
+	({ one }) => ({
+		countryAccount: one(countryAccounts, {
+			fields: [userCountryAccounts.countryAccountsId],
+			references: [countryAccounts.id],
+		}),
+		user: one(userTable, {
+			fields: [userCountryAccounts.userId],
+			references: [userTable.id],
+		}),
+	})
+);
+
+////////////////////////////////////////////////////////////////
+export const superAdminUsers = pgTable("super_admin_users", {
+	id: ourRandomUUID(),
+	firstName: varchar("first_name", { length: 150 }),
+	lastName: varchar("last_name", { length: 150 }),
+	email: varchar("email", { length: 254 }).notNull().unique(),
+	password: varchar("password", { length: 100 }).notNull(),
+});
+
+export type SelectSuperAdmins = typeof superAdminUsers.$inferSelect;
+export type InsertSuperAdmins = typeof superAdminUsers.$inferInsert;
+////////////////////////////////////////////////////////////////

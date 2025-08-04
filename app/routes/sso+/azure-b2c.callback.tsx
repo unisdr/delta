@@ -1,4 +1,4 @@
-import {
+/*import {
 	redirect,
 	LoaderFunction
 } from "@remix-run/node";
@@ -261,3 +261,4 @@ export default function SsoAzureB2cCallback() {
 	  </div>
 	);
 }
+*/

@@ -12,7 +12,7 @@ import { DisruptionForm, route } from "~/frontend/disruption";
 
 import { FormInputDef, formScreen } from "~/frontend/form";
 
-import { createAction } from "~/backend.server/handlers/form/form";
+import { createActionWithoutCountryAccountsId } from "~/backend.server/handlers/form/form";
 import { getTableName, eq } from "drizzle-orm";
 import { disruptionTable } from "~/drizzle/schema";
 import { authLoaderWithPerm } from "~/util/auth";
@@ -98,7 +98,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	return res;
 });
 
-export const action = createAction({
+export const action = createActionWithoutCountryAccountsId({
 	fieldsDef: await getFieldsDef(),
 	create: disruptionCreate,
 	update: disruptionUpdate,
@@ -106,9 +106,6 @@ export const action = createAction({
 	redirectTo: (id) => `${route}/${id}`,
 	tableName: getTableName(disruptionTable),
 	postProcess: async (id, data) => {
-		//console.log(`Post-processing record: ${id}`);
-		//console.log(`data: `, data);
-
 		const save_path = `/uploads/disaster-record/disruptions/${id}`;
 		const save_path_temp = `/uploads/temp`;
 

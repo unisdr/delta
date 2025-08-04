@@ -1,6 +1,5 @@
 import { and, desc, eq, exists, inArray, sql, SQL } from "drizzle-orm";
 import { dr } from "~/db.server";
-import { TenantContext } from "~/util/tenant";
 import {
     damagesTable,
     lossesTable,
@@ -96,7 +95,7 @@ export interface HazardImpactResult {
     };
 }
 
-export async function fetchHazardImpactData(tenantContext: TenantContext, filters: HazardImpactFilters): Promise<HazardImpactResult> {
+export async function fetchHazardImpactData(countryAccountsId: string, filters: HazardImpactFilters): Promise<HazardImpactResult> {
     const {
         sectorId,
         hazardTypeId,
@@ -112,7 +111,7 @@ export async function fetchHazardImpactData(tenantContext: TenantContext, filter
     } = filters;
 
     logger.info("Fetching hazard impact data", {
-        tenantId: tenantContext.countryAccountId,
+        tenantId: countryAccountsId,
         filters: {
             sectorId,
             hazardTypeId,
@@ -139,7 +138,7 @@ export async function fetchHazardImpactData(tenantContext: TenantContext, filter
     let baseConditions: SQL[] = [
         sql`${disasterRecordsTable.approvalStatus} = 'published'`,
         // Add tenant isolation filter
-        sql`${disasterRecordsTable.countryAccountsId} = ${tenantContext.countryAccountId}`
+        sql`${disasterRecordsTable.countryAccountsId} = ${countryAccountsId}`
     ];
 
     // Get all sector IDs (including subsectors)
@@ -273,8 +272,6 @@ export async function fetchHazardImpactData(tenantContext: TenantContext, filter
 
     // Calculate total events for percentage
     const total = eventsCount.reduce((sum, item) => sum + Number(item.value), 0);
-    console.log("Events Count retrieved:", eventsCount.length);
-    console.log("Total events:", total);
 
     // Add percentage to each item and ensure types match HazardDataPoint
     const eventsCountWithPercentage = eventsCount.map(item => ({
@@ -440,12 +437,7 @@ export async function fetchHazardImpactData(tenantContext: TenantContext, filter
 
     // Calculate total damages and losses for percentage
     const totalDamages = damages.reduce((sum, item) => sum + Number(item.value), 0);
-    console.log("Damages result count:", damages.length);
-    console.log("Total damages sum:", totalDamages);
-
     const totalLosses = losses.reduce((sum, item) => sum + Number(item.value), 0);
-    console.log("Losses result count:", losses.length);
-    console.log("Total losses sum:", totalLosses);
 
     // Add percentage to damages and losses
     const damagesWithPercentage = damages.map(item => ({

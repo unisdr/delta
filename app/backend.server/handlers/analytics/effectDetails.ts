@@ -1,5 +1,4 @@
 import { getEffectDetails } from "~/backend.server/models/analytics/effectDetails";
-import { TenantContext } from "~/util/tenant";
 
 /**
  * Custom error class for effect details related errors
@@ -23,7 +22,7 @@ export class EffectDetailsError extends Error {
  * - DB_ERROR: Database operation failed
  * - DATE_RANGE_ERROR: Invalid date range specified
  */
-export async function getEffectDetailsHandler(tenantContext: TenantContext, params: {
+export async function getEffectDetailsHandler(countryAccountsId: string, params: {
   sectorId: string | null;
   subSectorId: string | null;
   hazardTypeId: string | null;
@@ -57,23 +56,7 @@ export async function getEffectDetailsHandler(tenantContext: TenantContext, para
       throw new EffectDetailsError('Invalid geographic level ID format', 'INVALID_PARAMS');
     }
 
-    // Log request parameters for monitoring
-    console.info('Processing effect details request', {
-      timestamp: new Date().toISOString(),
-      params,
-      tenantId: tenantContext.countryAccountId,
-      requestId: crypto.randomUUID()
-    });
-
-    const data = await getEffectDetails(tenantContext, params);
-
-    // Log successful response metrics
-    console.info('Effect details request completed', {
-      timestamp: new Date().toISOString(),
-      damagesCount: data.damages.length,
-      lossesCount: data.losses.length,
-      disruptionsCount: data.disruptions.length
-    });
+    const data = await getEffectDetails(countryAccountsId, params);
 
     return {
       success: true,

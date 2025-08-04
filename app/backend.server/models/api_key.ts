@@ -1,12 +1,12 @@
 import {dr, Tx} from "~/db.server";
-import {apiKeyTable, ApiKey, ApiKeyWithUser} from "~/drizzle/schema";
+import {apiKeyTable, SelectApiKey} from "~/drizzle/schema";
 import {eq} from "drizzle-orm";
 import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
 import {deleteByIdForStringId} from "./common";
 import {randomBytes} from 'crypto';
-import { getApiKeyBySecrectWithUser } from "~/db/queries/apiKey";
+import { getApiKeyBySecrect } from "~/db/queries/apiKey";
 
-export interface ApiKeyFields extends Omit<ApiKey, "id"> {}
+export interface ApiKeyFields extends Omit<SelectApiKey, "id"> {}
 
 function generateSecret(): string {
 	return randomBytes(32).toString("hex");
@@ -19,6 +19,7 @@ export async function apiKeyCreate(tx: Tx, fields: ApiKeyFields): Promise<Create
 			name: fields.name,
 			managedByUserId: fields.managedByUserId,
 			secret: generateSecret(),
+			countryAccountsId: fields.countryAccountsId
 		})
 		.returning({id: apiKeyTable.id});
 
@@ -61,35 +62,16 @@ export async function apiKeyDelete(idStr: string): Promise<DeleteResult> {
 	return {ok: true};
 }
 
-export async function apiAuth(request: Request): Promise<ApiKey> {
+export async function apiAuth(request: Request): Promise<SelectApiKey> {
 	const authToken = request.headers.get("X-Auth");
 
 	if (!authToken) {
 		throw new Response("Unauthorized", {status: 401});
 	}
-
-	const key = await dr.query.apiKeyTable.findFirst({
-		where: eq(apiKeyTable.secret, authToken),
-	});
+	const key = await getApiKeyBySecrect(authToken);
 
 	if (!key) {
 		throw new Response("Unauthorized", {status: 401});
-	}
-
-	return key;
-}
-
-export async function apiAuth2(request: Request): Promise<ApiKeyWithUser> {
-	const authToken = request.headers.get("X-Auth");
-
-	if (!authToken) {
-		throw new Response("X-auth is missing in header", {status: 401});
-	}
-
-	const key = await getApiKeyBySecrectWithUser(authToken);
-
-	if (!key) {
-		throw new Response("Unauthorized access", {status: 401});
 	}
 
 	return key;

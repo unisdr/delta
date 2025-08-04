@@ -1,12 +1,16 @@
 import { dr } from "~/db.server";
 import { eq, and } from "drizzle-orm";
 
-import { userTable } from "~/drizzle/schema";
+import { superAdminUsers, userTable } from "~/drizzle/schema";
 import { passwordHashCompare } from "./password";
 import { isValidTotp } from "./totp";
 
 export type LoginResult =
 	| { ok: true; userId: number; countryAccountId?: string | null; role?:string }
+	| { ok: false };
+
+export type SuperAdminLoginResult =
+	| { ok: true; superAdminId: string;}
 	| { ok: false };
 
 export async function login(
@@ -26,8 +30,29 @@ export async function login(
 		return {
 			ok: true,
 			userId: user.id,
-			countryAccountId: user.countryAccountsId,
-			role: user.role
+		};
+	}
+
+	return { ok: false };
+}
+
+export async function superAdminLogin(
+	email: string,
+	password: string
+): Promise<SuperAdminLoginResult> {
+	const res = await dr
+		.select()
+		.from(superAdminUsers)
+		.where(eq(superAdminUsers.email, email));
+	if (res.length == 0) {
+		return { ok: false };
+	}
+	const superadminUser = res[0];
+	const isPasswordValid = await passwordHashCompare(password, superadminUser.password);
+	if (isPasswordValid) {
+		return {
+			ok: true,
+			superAdminId: superadminUser.id,
 		};
 	}
 
@@ -111,7 +136,8 @@ export type LoginTotpResult = { ok: true } | { ok: false; error: string };
 
 export async function loginTotp(
 	userId: number,
-	token: string
+	token: string,
+	totpIssuer: string,
 ): Promise<LoginTotpResult> {
 	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
 	if (res.length == 0) {
@@ -126,7 +152,7 @@ export async function loginTotp(
 		};
 	}
 
-	const isValid = await isValidTotp(user, token);
+	const isValid = await isValidTotp(user, token, totpIssuer);
 
 	if (!isValid) {
 		return { ok: false, error: "TOTP token not correct." };

@@ -58,8 +58,6 @@ export async function getCategory(categoryId: number): Promise<{id: number, name
 		.limit(1)
 		.then(res => res[0]);
 
-		console.log('cat: '+res);
-
 	return res;
 }
 

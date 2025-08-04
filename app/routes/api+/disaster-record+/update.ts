@@ -1,45 +1,39 @@
-import {
-	authLoaderApi,
-	authActionApi,
-	authActionGetAuth
-} from "~/util/auth";
+import { authLoaderApi } from "~/util/auth";
 
-import { getTenantContext } from "~/util/tenant";
+import { jsonUpdate } from "~/backend.server/handlers/form/form_api";
 
-import {
-	jsonUpdate,
-} from "~/backend.server/handlers/form/form_api";
-
-import {
-	fieldsDefApi
-} from "~/frontend/disaster-record/form";
+import { fieldsDefApi } from "~/frontend/disaster-record/form";
 
 import { disasterRecordsUpdate } from "~/backend.server/models/disaster_record";
+import { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { apiAuth } from "~/backend.server/models/api_key";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
 });
 
-export const action = authActionApi(async (args) => {
-	const data = await args.request.json();
-
-	// Extract tenant context from user session
-	const userSession = authActionGetAuth(args);
-	if (!userSession) {
-		return Response.json({ ok: false, error: "Authentication required" }, { status: 401 });
+export const action = async (args: ActionFunctionArgs) => {
+	const { request } = args;
+	if (request.method !== "POST") {
+		throw new Response("Method Not Allowed: Only POST requests are supported", {
+			status: 405,
+		});
 	}
 
-	const tenantContext = await getTenantContext(userSession);
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
 
-	// Create a wrapper function that includes tenant context
-	const updateWithTenant = async (tx: any, id: string, fields: any) => {
-		return disasterRecordsUpdate(tx, id, fields, tenantContext);
-	};
+	const data = await args.request.json();
 
 	const saveRes = await jsonUpdate({
 		data,
 		fieldsDef: fieldsDefApi,
-		update: updateWithTenant
+		update: async (tx: any, id: string, fields: any) => {
+			return disasterRecordsUpdate(tx, id, fields, countryAccountsId);
+		},
 	});
-	return Response.json(saveRes)
-});
+	return Response.json(saveRes);
+};

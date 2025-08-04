@@ -9,7 +9,7 @@ import {
 
 import {
 	devExample1Create,
-	devExample1Update,
+	devExample1UpdateById,
 	devExample1IdByImportId,
 	fieldsDefApi
 } from "~/backend.server/models/dev_example1";
@@ -24,7 +24,7 @@ export const action = authActionApi(async (args) => {
 		data,
 		fieldsDef: await fieldsDefApi(),
 		create: devExample1Create,
-		update: devExample1Update,
+		update: devExample1UpdateById,
 		idByImportId: devExample1IdByImportId,
 	});
 

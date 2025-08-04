@@ -19,12 +19,18 @@ import {
 import {
 	getItem2,
 } from "~/backend.server/handlers/view";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("ViewData", async (args) => {
-	const {params} = args;
+	const {params, request} = args;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request)
+
 	const item = await getItem2(params, apiKeyById);
 	if (!item) {
 		throw new Response("Not Found", {status: 404});
+	}
+	if(item.countryAccountsId!== countryAccountsId){
+		throw new Response("Unauthorized access", {status: 401});
 	}
 	const auth = authLoaderGetAuth(args);
 	if (item.managedByUserId != auth.user.id) {

@@ -4,24 +4,22 @@ import {
 
 import {
 	authLoaderIsPublic,
-	authLoaderGetAuth
 } from "~/util/auth";
-
-import { requireTenantContext } from "~/util/tenant";
 
 import { dr } from "~/db.server";
 
 import { executeQueryForPagination3, OffsetLimit } from "~/frontend/pagination/api.server";
 
-import { hazardBasicInfoJoin } from "~/backend.server/models/event"
+import { hazardBasicInfoJoin } from "~/backend.server/models/event";
 
 
-import { sql, and, eq, desc, ilike, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 
 import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
 import { approvalStatusIds } from '~/frontend/approval';
+import { getCountryAccountsIdFromSession } from '~/util/session';
 
 interface disasterEventLoaderArgs {
 	loaderArgs: LoaderFunctionArgs
@@ -44,21 +42,6 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 
 	const isPublic = authLoaderIsPublic(loaderArgs)
 
-	// Extract tenant context for authenticated users
-	// Extract tenant context for authenticated users
-	let tenantContext = undefined;
-	if (!isPublic) {
-		const auth = await authLoaderGetAuth(loaderArgs);
-		if (auth.user) {
-			const userSession = {
-				user: auth.user,
-				sessionId: auth.session?.id || '',
-				session: auth.session || null
-			};
-			tenantContext = await requireTenantContext(userSession);
-		}
-	}
-
 	if (!isPublic) {
 		filters.approvalStatus = undefined
 	}
@@ -67,9 +50,10 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 
 	let searchIlike = "%" + filters.search + "%"
 
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+
 	let condition = and(
-		// Apply tenant filtering for authenticated users
-		tenantContext ? eq(disasterEventTable.countryAccountsId, tenantContext.countryAccountId) : undefined,
+		countryAccountsId ? eq(disasterEventTable.countryAccountsId, countryAccountsId) : undefined,
 		filters.approvalStatus ? eq(disasterEventTable.approvalStatus, filters.approvalStatus) : undefined,
 		filters.search !== "" ? or(
 

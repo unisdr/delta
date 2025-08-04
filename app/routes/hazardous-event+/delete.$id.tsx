@@ -1,43 +1,40 @@
 import { getTableName } from "drizzle-orm";
-import {
-	createDeleteAction,
-} from "~/backend.server/handlers/form/form";
+import { createDeleteActionWithCountryAccounts } from "~/backend.server/handlers/form/form";
 import { requireUser } from "~/util/auth";
-import { getTenantContext } from "~/util/tenant";
 
 import {
 	hazardousEventById,
-	hazardousEventDelete
+	hazardousEventDelete,
 } from "~/backend.server/models/event";
 import { hazardousEventTable } from "~/drizzle/schema";
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const action = async (args: any) => {
-	// Get user session
-	const userSession = await requireUser(args.request);
+	const { request } = args;
+	const userSession = await requireUser(request);
 	if (!userSession) {
 		throw new Response("Unauthorized", { status: 401 });
 	}
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	if (!countryAccountsId) {
+		throw new Response("No instance selected", { status: 500 });
+	}
 
-	// Get tenant context
-	const tenantContext = await getTenantContext(userSession);
-
-	return createDeleteAction({
+	return createDeleteActionWithCountryAccounts({
 		baseRoute: "/hazardous-event",
 		delete: async (id: string) => {
-			return hazardousEventDelete(id, tenantContext);
+			return hazardousEventDelete(id);
 		},
 		tableName: getTableName(hazardousEventTable),
 		getById: async (id: string) => {
-			return hazardousEventById(id, tenantContext);
+			return hazardousEventById(id);
 		},
 		postProcess: async (_id: string, data: any) => {
 			if (data.attachments) {
 				ContentRepeaterUploadFile.delete(data.attachments);
 			}
-		}
+		},
+		countryAccountsId,
 	})(args);
 };
-
-
-

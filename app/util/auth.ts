@@ -10,6 +10,7 @@ import {
 	cookieSessionDestroy,
 	getCountrySettingsFromSession,
 	getUserFromSession,
+	getUserRoleFromSession,
 	sessionCookie,
 	sessionMarkTotpAuthed,
 	UserSession,
@@ -23,7 +24,6 @@ import {
 } from "~/backend.server/models/user/auth";
 import { apiAuth } from "~/backend.server/models/api_key";
 import { PermissionId, roleHasPermission, RoleId } from "~/frontend/user/roles";
-import { getUserById } from "~/db/queries/user";
 
 export async function login(
 	email: string,
@@ -35,9 +35,10 @@ export async function login(
 export async function loginTotp(
 	userId: number,
 	sessionId: string,
-	code: string
+	code: string,
+	totpIssuer: string
 ): Promise<LoginTotpResult> {
-	const res = await modelLoginTotp(userId, code);
+	const res = await modelLoginTotp(userId, code, totpIssuer);
 	if (!res.ok) {
 		return res;
 	}
@@ -118,7 +119,8 @@ export function authLoaderWithPerm<T extends LoaderFunction>(
 ): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUser(args.request);
-		if (!roleHasPermission(userSession.user.role, permission)) {
+		const userRole = await getUserRoleFromSession(args.request);
+		if (!roleHasPermission(userRole, permission)) {
 			throw new Response("Forbidden", { status: 403 });
 		}
 		return fn({
@@ -168,7 +170,8 @@ export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
 			return await fn(args);
 		}
 
-		if (!roleHasPermission(userSession.user.role, permission)) {
+		const userRole = await getUserRoleFromSession(args.request);
+		if (!roleHasPermission(userRole, permission)) {
 			throw new Response("Forbidden", { status: 403 });
 		}
 
@@ -242,10 +245,13 @@ export interface UserForFrontend {
 	lastName: string;
 }
 
-export function authLoaderGetUserForFrontend(args: any): UserForFrontend {
-	let u = authLoaderGetAuth(args);
+export async function authLoaderGetUserForFrontend(
+	args: LoaderFunctionArgs
+): Promise<UserForFrontend> {
+	const u = authLoaderGetAuth(args);
+	const userRole = await getUserRoleFromSession(args.request);
 	return {
-		role: u.user.role as RoleId,
+		role: userRole as RoleId,
 		firstName: u.user.firstName,
 		lastName: u.user.lastName,
 	};
@@ -274,7 +280,8 @@ export function authActionWithPerm<T extends ActionFunction>(
 ): T {
 	return (async (args: ActionFunctionArgs) => {
 		const userSession = await requireUser(args.request);
-		if (!roleHasPermission(userSession.user.role, permission)) {
+		const userRole = await getUserRoleFromSession(args.request);
+		if (!roleHasPermission(userRole, permission)) {
 			throw new Response("Forbidden", { status: 403 });
 		}
 		return fn({
@@ -328,16 +335,11 @@ export async function requireSuperAdmin(request: Request) {
 	const session = await sessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
-	const userId = session.get("userId") as string | undefined;
+	const superAdminId = session.get("superAdminId") as string | undefined;
 
-	if (!userId) {
-		throw redirect("/login");
+	if (!superAdminId) {
+		console.log("no super admin id");
+		throw redirect("/admin/login");
 	}
-
-	const user = await getUserById(Number(userId));
-	if (!user || user.role !== "super_admin") {
-		throw redirect("/403");
-	}
-
-	return user;
+	return superAdminId;
 }

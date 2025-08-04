@@ -10,15 +10,13 @@ import { sessionTable, userTable } from "~/drizzle/schema";
 import { redirect } from "@remix-run/react";
 
 import { InferSelectModel, eq } from "drizzle-orm";
-import { getUserById } from "~/db/queries/user";
-import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 
 export let _sessionCookie: SessionStorage<SessionData, SessionData> | null =
 	null;
 
 export function initCookieStorage() {
 	// we also store session activity time in the database, so this can be much longer
-	const cookieSessionExpiration = 60 * 60 * 24 * 7 * 1000; // 1 week
+	const cookieSessionExpiration = 60 * 60 * 1 ; // 1 hour
 	if (!process.env.SESSION_SECRET) {
 		throw "no SESSION_SECRET in .env";
 	}
@@ -44,6 +42,32 @@ export function sessionCookie(): SessionStorage<SessionData, SessionData> {
 	return _sessionCookie;
 }
 
+export async function createSuperAdminSession(superAdminId: string) {
+	const session = await sessionCookie().getSession();
+	session.set("superAdminId", superAdminId);
+	const setCookie = await sessionCookie().commitSession(session);
+	return {
+		"Set-Cookie": setCookie,
+	};
+}
+
+export async function getSuperAdminSession(
+	request: Request
+): Promise<SuperAdminSession | undefined> {
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const superAdminId = session.get("superAdminId");
+
+	if (!superAdminId) return;
+
+	if (typeof superAdminId != "string") return;
+
+	return {
+		superAdminId: superAdminId,
+	};
+}
+
 export async function createUserSession(userId: number) {
 	const sessionRow: typeof sessionTable.$inferInsert = {
 		userId,
@@ -55,17 +79,7 @@ export async function createUserSession(userId: number) {
 
 	const session = await sessionCookie().getSession();
 	session.set("sessionId", sessionId);
-	session.set("userId", userId);
-
-	//get instance settings by country account id
-	const user = await getUserById(userId);
-	if (user) {
-		const instanceSystemSetting =
-			await getInstanceSystemSettingsByCountryAccountId(user.countryAccountsId);
-		if (instanceSystemSetting) {
-			session.set("countrySettings", instanceSystemSetting);
-		}
-	}
+	session.set("userId", res[0].userId);
 
 	const setCookie = await sessionCookie().commitSession(session);
 	return {
@@ -99,6 +113,9 @@ export interface UserSession {
 	user: InferSelectModel<typeof userTable>;
 	sessionId: string;
 	session: InferSelectModel<typeof sessionTable>;
+}
+export interface SuperAdminSession {
+	superAdminId: string;
 }
 
 export async function getUserFromSession(
@@ -196,4 +213,20 @@ export async function getCountrySettingsFromSession(request: Request){
 	);
 	const countrySettings = session.get("countrySettings");
 	return countrySettings;
+}
+
+export async function getUserRoleFromSession(request: Request){
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const countrySettings = session.get("userRole");
+	return countrySettings;
+}
+
+export async function getCountryAccountsIdFromSession(request: Request){
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const countryAccountsId = session.get("countryAccountsId");
+	return countryAccountsId;
 }

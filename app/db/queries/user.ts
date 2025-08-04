@@ -1,8 +1,8 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { dr, Tx } from "../../db.server";
-import { User, userTable } from "../../drizzle/schema";
+import { SelectUser, userTable } from "../../drizzle/schema";
 
-export async function getUserById(id: number): Promise<User | null> {
+export async function getUserById(id: number): Promise<SelectUser | null> {
 	const result = await dr
 		.select()
 		.from(userTable)
@@ -11,9 +11,9 @@ export async function getUserById(id: number): Promise<User | null> {
 	return result[0] || null;
 }
 
-export async function getUserByEmail<T extends User = User>(
+export async function getUserByEmail<T extends SelectUser = SelectUser>(
 	email: string
-): Promise<T | null> {
+): Promise<SelectUser | null> {
 	const result = await dr
 		.select()
 		.from(userTable)
@@ -25,9 +25,6 @@ export async function getUserByEmail<T extends User = User>(
 
 export async function createUser(
 	email: string,
-	role: string,
-	isPrimaryAdmin: boolean,
-	countryAccountId: string,
 	tx?: Tx
 ) {
 	const db = tx || dr;
@@ -35,31 +32,28 @@ export async function createUser(
 		.insert(userTable)
 		.values({
 			email: email,
-			role: role,
-			isPrimaryAdmin: isPrimaryAdmin,
-			countryAccountsId: countryAccountId,
 		})
 		.returning()
 		.execute();
 	return result[0];
 }
 
-export async function doesUserExistByEmailAndCountry(
-	email: string,
-	countryAccountsId: string,
-	tx?: Tx
-): Promise<boolean> {
-	const db = tx || dr;
-	const result = await db
-		.select({ id: userTable.id })
-		.from(userTable)
-		.where(
-			and(
-				eq(userTable.email, email),
-				eq(userTable.countryAccountsId, countryAccountsId)
-			)
-		)
-		.limit(1);
+// export async function doesUserExistByEmailAndCountry(
+// 	email: string,
+// 	countryAccountsId: string,
+// 	tx?: Tx
+// ): Promise<boolean> {
+// 	const db = tx || dr;
+// 	const result = await db
+// 		.select({ id: userTable.id })
+// 		.from(userTable)
+// 		.where(
+// 			and(
+// 				eq(userTable.email, email),
+// 				eq(userTable.countryAccountsId, countryAccountsId)
+// 			)
+// 		)
+// 		.limit(1);
 
-	return result.length > 0;
-}
+// 	return result.length > 0;
+// }

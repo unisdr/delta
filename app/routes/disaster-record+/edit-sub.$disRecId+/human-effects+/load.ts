@@ -1,14 +1,23 @@
-import {
-	authLoaderWithPerm
-} from "~/util/auth";
+import { authLoaderWithPerm } from "~/util/auth";
 
-import {loadData} from "~/backend.server/handlers/human_effects"
+import { loadData } from "~/backend.server/handlers/human_effects";
+import { LoaderFunction, LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
-export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
-	const {params, request} = actionArgs
-	let recordId = params.disRecId
-	let url = new URL(request.url)
-	let tblStr = url.searchParams.get("tbl") || ""
-	let res = await loadData(recordId, tblStr)
-	return Response.json(res)
-});
+export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
+	const { request } = args;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	return authLoaderWithPerm("EditData", async (actionArgs) => {
+		const { params, request } = actionArgs;
+		let recordId = params.disRecId;
+		let url = new URL(request.url);
+		let tblStr = url.searchParams.get("tbl") || "";
+		let res = await loadData(recordId, tblStr, countryAccountsId);
+		return Response.json(res);
+	})(args);
+};

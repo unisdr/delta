@@ -12,8 +12,8 @@ import { DamagesForm, route } from "~/frontend/damages";
 
 import { formScreen } from "~/frontend/form";
 
-import { createAction } from "~/backend.server/handlers/form/form";
-import { getTableName, eq } from "drizzle-orm";
+import { createActionWithoutCountryAccountsId } from "~/backend.server/handlers/form/form";
+import { getTableName, eq, sql } from "drizzle-orm";
 import { damagesTable } from "~/drizzle/schema";
 import { authLoaderWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
@@ -25,7 +25,10 @@ import { buildTree } from "~/components/TreeView";
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 async function getResponseData(
 	item: DamagesViewModel | null,
@@ -51,6 +54,7 @@ async function getResponseData(
 		fieldDef: await fieldsDef(currencies),
 		treeData,
 		ctryIso3,
+		currencies,
 		divisionGeoJSON,
 	};
 }
@@ -62,6 +66,10 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	}
 	if (!params.disRecId) {
 		throw new Error("Route does not have disRecId param");
+	}
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized, no selected instance", { status: 401 });
 	}
 
 	const idKey = "id";
@@ -79,16 +87,18 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	let ctryIso3: string = "";
 	let currencies: string[] = [];
 	const settings = await getCountrySettingsFromSession(request);
+
 	if (settings) {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
-		currencies.push(settings.currencyCode);
+		currencies = [settings.currencyCode];
 	}
-
-	const divisionGeoJSON = await dr.execute(`
-		SELECT id, name, geojson
-		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
-    `);
+	const divisionGeoJSON = await dr.execute(sql`
+	SELECT id, name, geojson
+	FROM division
+	WHERE (parent_id = 0 OR parent_id IS NULL)
+	AND geojson IS NOT NULL
+	AND division.country_accounts_id = ${countryAccountsId};
+	`);
 
 	if (params.id === "new") {
 		let url = new URL(request.url);
@@ -122,7 +132,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	);
 });
 
-export const action = createAction({
+export const action = createActionWithoutCountryAccountsId({
 	fieldsDef: fieldsDef,
 	create: damagesCreate,
 	update: damagesUpdate,
@@ -130,9 +140,6 @@ export const action = createAction({
 	redirectTo: (id) => `${route}/${id}`,
 	tableName: getTableName(damagesTable),
 	postProcess: async (id, data) => {
-		//console.log(`Post-processing record: ${id}`);
-		//console.log(`data: `, data);
-
 		const save_path = `/uploads/disaster-record/damages/${id}`;
 		const save_path_temp = `/uploads/temp`;
 
@@ -159,7 +166,7 @@ export const action = createAction({
 });
 
 export default function Screen() {
-	const ld = useLoaderData<typeof loader>(); //console.log(`ld: `, ld.ctryIso3);
+	const ld = useLoaderData<typeof loader>();
 
 	const fieldsInitial: Partial<DamagesFields> = ld.item ? { ...ld.item } : {};
 
@@ -176,6 +183,7 @@ export default function Screen() {
 			assets: ld.assets,
 			ctryIso3: ld.ctryIso3,
 			divisionGeoJSON: ld.divisionGeoJSON,
+			currencies: ld.currencies,
 		},
 		fieldsInitial,
 		form: DamagesForm,

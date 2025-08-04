@@ -230,8 +230,6 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
                   { name: "Categories import", link: "/setup/import-categories" },
                   { name: "API Keys", link: "/settings/api-key" },
                   { name: "Assets", link: "/settings/assets" },
-                  { name: "Measures", link: "/settings/measure" },
-                  { name: "Units", link: "/settings/unit" },
                 ] : [
                   { name: "System settings", link: "/settings/system" },
                   { name: "Sectors", link: "/settings/sectors" },

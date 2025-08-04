@@ -489,7 +489,6 @@ export function DisasterEventView(props: DisasterEventViewProps) {
 	)?.data as { env?: { DTS_INSTANCE_CTRY_ISO3?: string } };
 	const ctryIso3 = rootData?.env?.DTS_INSTANCE_CTRY_ISO3;
 
-	console.log("Disaster even tview got user", props.user)
 	const {item, auditLogs} = props;
 
 	let calculationOverrides: Record<string, ReactElement | undefined | null> = {}

@@ -38,22 +38,3 @@ export const formatNumberWithoutDecimals = (value: number) => {
     maximumFractionDigits: 0, 
   }).format(value);
 };
-
-
-export function getCurrenciesAsListFromCommaSeparated(currencies: string): string[] {
-  let value = currencies || "";
-	let valueArray = [];
-	let returnArray:string[] = [];
-	
-	// remove spaces
-	value = value.replace(/\s+/g, '');
-	valueArray = value.split(",");
-
-	valueArray.forEach(function(item) { 
-		if (checkValidCurrency(item)) {
-			returnArray.push(item.toUpperCase());
-		}
-	});
-
-	return returnArray;
-};

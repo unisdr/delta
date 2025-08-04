@@ -11,7 +11,6 @@
 import { SQL, sql, eq, and, inArray, desc, exists, or } from "drizzle-orm";
 import { dr as db } from "~/db.server";
 import createLogger from "~/utils/logger.server";
-import { TenantContext } from "~/util/tenant";
 
 // Initialize logger for this module
 const logger = createLogger("backend.server/models/analytics/mostDamagingEvents");
@@ -57,16 +56,16 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
   return result.map(r => r.id);
 };
 
-async function buildFilterConditions(tenantContext: TenantContext, params: MostDamagingEventsParams): Promise<{ conditions: SQL<unknown>[]; sectorIds?: string[] }> {
+async function buildFilterConditions(countryAccountsId: string, params: MostDamagingEventsParams): Promise<{ conditions: SQL<unknown>[]; sectorIds?: string[] }> {
   let conditions: SQL[] = [
     // Apply tenant isolation filter
-    eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId),
+    eq(disasterRecordsTable.countryAccountsId, countryAccountsId),
     sql`${disasterRecordsTable.approvalStatus} = 'published'`
   ];
 
   // Log tenant isolation filter application
   logger.debug("Applied tenant isolation filter", {
-    tenantId: tenantContext.countryAccountId,
+    tenantId: countryAccountsId,
     filterType: "countryAccountsId"
   });
 
@@ -208,7 +207,7 @@ async function buildFilterConditions(tenantContext: TenantContext, params: MostD
   return { conditions, sectorIds };
 }
 
-export async function getMostDamagingEvents(tenantContext: TenantContext, params: MostDamagingEventsParams): Promise<PaginatedResult> {
+export async function getMostDamagingEvents(countryAccountsId: string, params: MostDamagingEventsParams): Promise<PaginatedResult> {
   const startTime = Date.now();
 
   try {
@@ -225,11 +224,11 @@ export async function getMostDamagingEvents(tenantContext: TenantContext, params
       sortDirection: sortDirection,
       hasSectorFilter: !!params.sectorId,
       hasDateRange: !!(params.fromDate || params.toDate),
-      tenantId: tenantContext.countryAccountId
+      tenantId: countryAccountsId
     });
 
     // Build filter conditions with improved geographic filtering
-    const { conditions, sectorIds } = await buildFilterConditions(tenantContext, params);
+    const { conditions, sectorIds } = await buildFilterConditions(countryAccountsId, params);
     logger.debug("Applied filter conditions", {
       conditionCount: conditions.length,
       hasGeographicFilter: !!params.geographicLevelId,
@@ -372,14 +371,6 @@ export async function getMostDamagingEvents(tenantContext: TenantContext, params
             : sql`1=1` // No sector filter if no sectorIds
         )
       )
-      // .leftJoin(
-      //   damagesTable,
-      //   eq(damagesTable.recordId, disasterRecordsTable.id)
-      // )
-      // .leftJoin(
-      //   lossesTable,
-      //   eq(lossesTable.recordId, disasterRecordsTable.id)
-      // )
       .where(and(...conditions))
       .groupBy(
         disasterEventTable.id,

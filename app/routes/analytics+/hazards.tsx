@@ -39,8 +39,7 @@ import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
 import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
-import { getCountrySettingsFromSession } from "~/util/session";
+import { getCountrySettingsFromSession, sessionCookie } from "~/util/session";
 
 // Define an interface for the structure of the JSON objects
 interface interfaceMap {
@@ -85,7 +84,9 @@ function getStringValue(value: FormDataEntryValue | null): string | null {
  */
 export const action = async (actionArgs: any) => {
 	const { request } = actionArgs;
-
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
+	
 	const formData = await request.formData();
 	const hazardTypeId = getStringValue(formData.get("hazardTypeId"));
 	const hazardClusterId = getStringValue(formData.get("hazardClusterId"));
@@ -102,12 +103,7 @@ export const action = async (actionArgs: any) => {
 
 	// Create tenant context from user session
 	const filters = {
-		tenantContext: {
-			countryAccountId: settings.countryAccountsId,
-			countryId: settings.countryId || "",
-			countryName: settings.countryName || "",
-			iso3: settings.iso3 || ""
-		},
+		countryAccountsId,
 		hazardTypeId,
 		hazardClusterId,
 		specificHazardId,
@@ -116,7 +112,7 @@ export const action = async (actionArgs: any) => {
 		toDate,
 	};
 
-	const geographicLevel1 = await getDivisionByLevel(1, settings.countryAccountsId);
+	const geographicLevel1 = await getDivisionByLevel(1, countryAccountsId);
 
 	const disasterCount = await getDisasterEventCount(filters);
 	const yearlyDisasterCounts = await getDisasterEventCountByYear(filters);

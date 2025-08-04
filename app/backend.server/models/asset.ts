@@ -1,135 +1,125 @@
-import {dr, Tx} from "~/db.server";
-import {assetTable, AssetInsert} from "~/drizzle/schema";
-import {eq, sql, inArray} from "drizzle-orm";
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
-import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
-import {deleteByIdForStringId} from "./common";
+import { dr, Tx } from "~/db.server";
+import { assetTable, InsertAsset } from "~/drizzle/schema";
+import { eq, sql, inArray, and } from "drizzle-orm";
+import {
+	CreateResult,
+	DeleteResult,
+	UpdateResult,
+} from "~/backend.server/handlers/form/form";
+import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
+import { deleteByIdForStringId } from "./common";
 
-
-export interface AssetFields extends Omit<AssetInsert, "id"> {}
+export interface AssetFields extends Omit<InsertAsset, "id"> {}
 
 export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
-	//let sectors = await allSectors(dr)
-	//let measures = await allMeasures(dr)
 	return [
 		{
 			key: "sectorIds",
 			label: "Sector",
 			type: "other",
 		},
-		/*
-		{
-			key: "sectorId",
-			label: "Sector",
-			type: "enum",
-			enumData: sectors.sort((a, b) => a.sectorname.localeCompare(b.sectorname)).map(s => {
-				return {
-					key: String(s.id),
-					label: s.sectorname
-				}
-			})
-		},*/
-		{key: "name", label: "Name", type: "text", required: true},
-		{key: "category", label: "Category", type: "text"},
-		{key: "nationalId", label: "National ID", type: "text"},
-		{key: "notes", label: "Notes", type: "textarea"},
-	]
+		{ key: "name", label: "Name", type: "text", required: true },
+		{ key: "category", label: "Category", type: "text" },
+		{ key: "nationalId", label: "National ID", type: "text" },
+		{ key: "notes", label: "Notes", type: "textarea" },
+	];
 }
 
 export async function fieldsDefApi(): Promise<FormInputDef<AssetFields>[]> {
 	return [
-		...await fieldsDef(),
-		{key: "apiImportId", label: "", type: "other"},
-	]
+		...(await fieldsDef()),
+		{ key: "apiImportId", label: "", type: "other" },
+	];
 }
 
 export async function fieldsDefView(): Promise<FormInputDef<AssetFields>[]> {
-	return [
-		...await fieldsDef(),
-	]
+	return [...(await fieldsDef())];
 }
 
 export function validate(_fields: Partial<AssetFields>): Errors<AssetFields> {
-	let errors: Errors<AssetFields> = {}
-	errors.fields = {}
-	return errors
+	let errors: Errors<AssetFields> = {};
+	errors.fields = {};
+	return errors;
 }
 
 export async function assetCreate(
 	tx: Tx,
 	fields: AssetFields,
 ): Promise<CreateResult<AssetFields>> {
-	let errors = validate(fields)
+	let errors = validate(fields);
 
 	if (hasErrors(errors)) {
-		return {ok: false, errors}
+		return { ok: false, errors };
 	}
 
-	fields.isBuiltIn = false
+	fields.isBuiltIn = false;
 
-	let res = await tx.insert(assetTable)
+	let res = await tx
+		.insert(assetTable)
 		.values({
 			...fields,
 		})
-		.returning({id: assetTable.id})
+		.returning({ id: assetTable.id });
 
-	return {ok: true, id: res[0].id}
+	return { ok: true, id: res[0].id };
 }
 
 export async function assetUpdate(
 	tx: Tx,
 	idStr: string,
-	fields: Partial<AssetFields>,
+	fields: Partial<AssetFields>
 ): Promise<UpdateResult<AssetFields>> {
-	let errors = validate(fields)
+	let errors = validate(fields);
 
 	if (hasErrors(errors)) {
-		return {ok: false, errors}
+		return { ok: false, errors };
 	}
 
-	let id = idStr
+	let id = idStr;
 
 	let res = await tx.query.assetTable.findFirst({
 		where: eq(assetTable.id, id),
-	})
+	});
 	if (!res) {
-		throw new Error(`Id is invalid: ${id}`)
+		throw new Error(`Id is invalid: ${id}`);
 	}
 
 	if (res.isBuiltIn) {
-		throw new Error("Attempted to modify builtin asset")
+		throw new Error("Attempted to modify builtin asset");
 	}
 
-	await tx.update(assetTable)
+	await tx
+		.update(assetTable)
 		.set({
 			...fields,
 		})
-		.where(eq(assetTable.id, id))
+		.where(eq(assetTable.id, id));
 
-	return {ok: true}
+	return { ok: true };
 }
 
 export type AssetViewModel = Exclude<
 	Awaited<ReturnType<typeof assetById>>,
 	undefined
->
+>;
 
 export async function assetIdByImportId(tx: Tx, importId: string) {
-	let res = await tx.select({
-		id: assetTable.id,
-	}).from(assetTable).where(eq(
-		assetTable.apiImportId, importId
-	))
+	let res = await tx
+		.select({
+			id: assetTable.id,
+		})
+		.from(assetTable)
+		.where(eq(assetTable.apiImportId, importId));
 
 	if (res.length == 0) {
-		return null
+		return null;
 	}
 
-	return String(res[0].id)
+	return String(res[0].id);
 }
 
 export async function assetById(idStr: string) {
-	return assetByIdTx(dr, idStr)
+	return assetByIdTx(dr, idStr);
 }
 
 export async function assetByName(nameStr: string) {
@@ -138,35 +128,40 @@ export async function assetByName(nameStr: string) {
 	});
 
 	return res;
-
 }
 
 export async function assetByIdTx(tx: Tx, idStr: string) {
-	let id = idStr
+	let id = idStr;
 	let res = await tx.query.assetTable.findFirst({
 		where: eq(assetTable.id, id),
-	})
+	});
 
 	if (!res) {
-		throw new Error("Id is invalid")
+		throw new Error("Id is invalid");
 	}
 
-	return res
+	return res;
 }
 
-export async function assetDeleteById(idStr: string): Promise<DeleteResult> {
-	let id = idStr
+export async function assetDeleteById(
+	idStr: string,
+	countryAccountsId: string
+): Promise<DeleteResult> {
+	let id = idStr;
 	let res = await dr.query.assetTable.findFirst({
-		where: eq(assetTable.id, id),
-	})
+		where: and(
+			eq(assetTable.id, id),
+			eq(assetTable.countryAccountsId, countryAccountsId)
+		),
+	});
 	if (!res) {
-		throw new Error("Id is invalid")
+		throw new Error("Id is invalid");
 	}
 	if (res.isBuiltIn) {
-		throw new Error("Attempted to delete builtin asset")
+		throw new Error("Attempted to delete builtin asset");
 	}
-	await deleteByIdForStringId(id, assetTable)
-	return {ok: true}
+	await deleteByIdForStringId(id, assetTable);
+	return { ok: true };
 }
 
 export async function assetsForSector(tx: Tx, sectorId: number) {
@@ -187,22 +182,19 @@ export async function assetsForSector(tx: Tx, sectorId: number) {
       FROM sector_rec s
 			WHERE s.id::text = ANY(string_to_array(a.sector_ids, ','))
     )
-	`)
+	`);
 	// if we switch to using array
 	// WHERE s.id = ANY(a.sector_ids)
-	let assetIds = res1.rows.map(r => r.id as string)
+	let assetIds = res1.rows.map((r) => r.id as string);
 	let res = await tx.query.assetTable.findMany({
 		where: inArray(assetTable.id, assetIds),
-	})
-	return res
+	});
+	return res;
 }
 
-
-
-export async function upsertRecord(record: AssetInsert): Promise<void> {
-
+export async function upsertRecord(record: InsertAsset): Promise<void> {
 	// Perform the upsert operation
-	if (record.id && record.id !== '' && record.id !== 'undefined') {
+	if (record.id && record.id !== "" && record.id !== "undefined") {
 		await dr
 			.insert(assetTable)
 			.values(record)
@@ -218,8 +210,7 @@ export async function upsertRecord(record: AssetInsert): Promise<void> {
 					category: record.category,
 				},
 			});
-	}
-	else {
+	} else {
 		await dr
 			.insert(assetTable)
 			.values(record)
@@ -235,5 +226,4 @@ export async function upsertRecord(record: AssetInsert): Promise<void> {
 				},
 			});
 	}
-
 }

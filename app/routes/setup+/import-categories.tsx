@@ -11,7 +11,7 @@ import {
 	upsertRecord as upsertRecordAsset,
 } from "~/backend.server/models/asset";
 
-import {AssetInsert as AssetType} from "~/drizzle/schema";
+import {InsertAsset as AssetType} from "~/drizzle/schema";
 
 
 import {

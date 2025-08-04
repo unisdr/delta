@@ -6,8 +6,6 @@ import {
 	authLoaderIsPublic
 } from "~/util/auth";
 
-import { TenantContext, requireTenantContext } from "~/util/tenant";
-
 import { dr } from "~/db.server";
 
 import { executeQueryForPagination3, OffsetLimit } from "~/frontend/pagination/api.server";
@@ -20,16 +18,12 @@ import {
 	LoaderFunctionArgs,
 } from "@remix-run/node";
 import { approvalStatusIds } from '~/frontend/approval';
+import { sessionCookie } from '~/util/session';
 
-interface hazardousEventLoaderArgs {
-	loaderArgs: LoaderFunctionArgs;
-	// Add tenant context - will be provided by auth middleware
-	tenantContext?: TenantContext;
-}
-
-export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
-	const { loaderArgs, tenantContext } = args;
-	const { request } = loaderArgs;
+export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
+	const { request } = args;
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
 	const url = new URL(request.url);
 	const extraParams = ["hipHazardId", "hipClusterId", "hipTypeId", "search"]
@@ -48,7 +42,7 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 		search: url.searchParams.get("search") || "",
 	};
 
-	const isPublic = authLoaderIsPublic(loaderArgs)
+	const isPublic = authLoaderIsPublic(args)
 
 	if (!isPublic) {
 		filters.approvalStatus = undefined
@@ -57,12 +51,8 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 	filters.search = filters.search.trim()
 	let searchIlike = "%" + filters.search + "%"
 
-	// Build base condition with tenant filtering
 	let condition = and(
-		// TENANT FILTERING - Only show events from user's country account
-		tenantContext ? eq(hazardousEventTable.countryAccountsId, tenantContext.countryAccountId) : undefined,
-
-		// Existing filters
+		countryAccountsId ? eq(hazardousEventTable.countryAccountsId, countryAccountsId) : undefined,
 		filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
 		filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
 		filters.hipTypeId ? eq(hazardousEventTable.hipTypeId, filters.hipTypeId) : undefined,
@@ -114,18 +104,6 @@ export async function hazardousEventsLoader(args: hazardousEventLoaderArgs) {
 		filters,
 		hip,
 		data: res,
-		tenantContext, // Include for debugging
+		countryAccountsId,
 	}
 }
-
-// Helper function for route handlers to get tenant context
-export async function createTenantAwareLoader(userSession: any) {
-	const tenantContext = userSession ? await requireTenantContext(userSession) : undefined;
-
-	return {
-		tenantContext,
-		hazardousEventsLoader: (loaderArgs: LoaderFunctionArgs) =>
-			hazardousEventsLoader({ loaderArgs, tenantContext })
-	};
-}
-

@@ -7,7 +7,7 @@ import {
 } from "@remix-run/react";
 import {
 	CountryAccountWithCountryAndPrimaryAdminUser,
-	getCountryAccountsWithCountryAndPrimaryAdminUser,
+	getCountryAccountsWithUserCountryAccountsAndUser,
 } from "~/db/queries/countryAccounts";
 import { MainContainer } from "~/frontend/container";
 import { NavSettings } from "../settings/nav";
@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import Dialog from "~/components/Dialog";
 import { getCountries } from "~/db/queries/countries";
 import {
-	Country,
+	SelectCountries,
 	CountryAccountStatus,
 	countryAccountStatuses,
 	CountryAccountType,
@@ -36,7 +36,7 @@ import { Toast, ToastRef } from "~/components/Toast";
 export const loader: LoaderFunction = async ({ request }) => {
 	await requireSuperAdmin(request);
 	const countryAccounts =
-		await getCountryAccountsWithCountryAndPrimaryAdminUser();
+		await getCountryAccountsWithUserCountryAccountsAndUser();
 	const countries = await getCountries();
 
 	return { countryAccounts, countries };
@@ -49,18 +49,20 @@ export const action: ActionFunction = async ({ request }) => {
 	const countryId = formData.get("countryId") as string;
 	const status = formData.get("status");
 	const email = formData.get("email") as string;
+	const shortDescription = formData.get("shortDescription") as string;
 	const countryAccountType = formData.get("countryAccountType") as string;
 	const id = formData.get("id") as string;
 
 	try {
 		if (id) {
 			// Update existing account
-			await updateCountryAccountStatusService(id, Number(status));
+			await updateCountryAccountStatusService(id, Number(status), shortDescription);
 			return { success: true, operation: "update" };
 		} else {
 			// Create new account
 			await createCountryAccountService(
 				countryId,
+				shortDescription,
 				email,
 				Number(status),
 				countryAccountType,
@@ -86,7 +88,7 @@ export const action: ActionFunction = async ({ request }) => {
 export default function CountryAccounts() {
 	const { countryAccounts, countries } = useLoaderData<{
 		countryAccounts: CountryAccountWithCountryAndPrimaryAdminUser[];
-		countries: Country[];
+		countries: SelectCountries[];
 	}>();
 	const actionData = useActionData<{
 		errors?: string[];
@@ -111,6 +113,8 @@ export default function CountryAccounts() {
 	const [status, setStatus] = useState<CountryAccountStatus>(
 		countryAccountStatuses.ACTIVE
 	);
+	const [shortDescription, setShortDescription] = useState("");
+	
 	const [isAddCountryAccountDialogOpen, setIsAddCountryAccountDialogOpen] =
 		useState(false);
 
@@ -134,7 +138,8 @@ export default function CountryAccounts() {
 		setSelectedCountryId(countryAccount.country.id);
 		setStatus(countryAccount.status as CountryAccountStatus);
 		setType(countryAccount.type as CountryAccountType);
-		setEmail(countryAccount.users[0].email);
+		setEmail(countryAccount.userCountryAccounts[0].user.email);
+		setShortDescription(countryAccount.shortDescription);
 		setIsAddCountryAccountDialogOpen(true);
 	}
 
@@ -147,6 +152,7 @@ export default function CountryAccounts() {
 		setStatus(countryAccountStatuses.ACTIVE);
 		setType(countryAccountTypes.OFFICIAL);
 		setEmail("");
+		setShortDescription("")
 		navigate(".", { replace: true });
 	}
 
@@ -209,6 +215,7 @@ export default function CountryAccounts() {
 				<thead>
 					<tr>
 						<th>Country</th>
+						<th>Short Description</th>
 						<th>Status</th>
 						<th>Type</th>
 						<th>Primary Admin's Email</th>
@@ -221,15 +228,20 @@ export default function CountryAccounts() {
 					{countryAccounts.map((countryAccount) => (
 						<tr key={countryAccount.id}>
 							<td>{countryAccount.country.name}</td>
+							<td>{countryAccount.shortDescription}</td>
 							<td>
 								{countryAccount.status === countryAccountStatuses.ACTIVE
 									? "Active"
 									: "Inactive"}
 							</td>
 							<td>
-								<Tag value={countryAccount.type}></Tag>
+								{countryAccount.type === countryAccountTypes.OFFICIAL ? (
+									<Tag value={countryAccount.type}  />
+								) : (
+									<Tag value={countryAccount.type} severity="warning"/>
+								)}
 							</td>
-							<td>{countryAccount.users[0].email}</td>
+							<td>{countryAccount.userCountryAccounts[0].user.email}</td>
 							<td>{new Date(countryAccount.createdAt).toLocaleString()}</td>
 							<td>
 								{countryAccount.updatedAt
@@ -305,6 +317,22 @@ export default function CountryAccounts() {
 										</option>
 									))}
 								</select>
+							</label>
+						</div>
+						<div className="dts-form-component">
+							<label>
+								<div className="dts-form-component__label">
+									<span>Short Description</span>
+								</div>
+								<input
+									type="text"
+									name="shortDescription"
+									aria-label="short description"
+									placeholder="Max 20 characters"
+									maxLength={20}
+									value={shortDescription}
+									onChange={(e) => setShortDescription(e.target.value)}
+								></input>
 							</label>
 						</div>
 						<div className="dts-form-component">

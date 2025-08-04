@@ -13,21 +13,23 @@ import {
 	authLoaderWithPerm,
 	authLoaderGetAuth
 } from "~/util/auth";
-
-import { getTenantContext } from "~/util/tenant";
+import { sessionCookie } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
+	const {request} = loaderArgs;
 	// Extract tenant context from session
 	const userSession = authLoaderGetAuth(loaderArgs);
 	if (!userSession) {
 		throw new Response("Unauthorized", { status: 401 });
 	}
-	const tenantContext = await getTenantContext(userSession);
+
+	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
 	// Create tenant-aware data fetcher
 	const fetchDataWithTenant = async () => {
 		return dr.query.disasterRecordsTable.findMany({
-			where: eq(disasterRecordsTable.countryAccountsId, tenantContext.countryAccountId),
+			where: eq(disasterRecordsTable.countryAccountsId, countryAccountsId),
 			orderBy: [asc(disasterRecordsTable.id)],
 		});
 	};

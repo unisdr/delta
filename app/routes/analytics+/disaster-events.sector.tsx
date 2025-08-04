@@ -13,7 +13,6 @@ import {
 import CustomPieChart from "~/components/PieChart";
 
 import { unitName } from "~/frontend/unit_picker";
-import { getCurrenciesAsListFromCommaSeparated } from "~/util/currency";
 import { getCountrySettingsFromSession } from "~/util/session";
 
 interface interfacePieChart {

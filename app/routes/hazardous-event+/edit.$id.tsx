@@ -1,6 +1,6 @@
 import {
-	hazardousEventUpdate,
 	hazardousEventById,
+	hazardousEventUpdate,
 } from "~/backend.server/models/event";
 
 import {
@@ -13,7 +13,6 @@ import { formScreen } from "~/frontend/form";
 import { formSave } from "~/backend.server/handlers/form/form";
 
 import {
-	authActionGetAuth,
 	authActionWithPerm,
 	authLoaderGetUserForFrontend,
 	authLoaderWithPerm,
@@ -25,49 +24,41 @@ import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
 import { getItem2 } from "~/backend.server/handlers/view";
 
-import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
-import { divisionTable } from "~/drizzle/schema";
 import { sql } from "drizzle-orm";
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server";
+import { divisionTable } from "~/drizzle/schema";
 
-
-import { getTenantContext } from "~/util/tenant";
-
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	const { params } = loaderArgs;
-	const userSession = (loaderArgs as any).userSession; // 🔧 CHANGE: Use same pattern as existing codebase
-	const user = authLoaderGetUserForFrontend(loaderArgs);
-
-	// Extract tenant context for secure data access
-	const tenantContext = await getTenantContext(userSession);
-
-	const getHazardousEvent = async (id: string) => {
-		// Pass tenant context instead of userSession for data isolation
-		return hazardousEventById(id, tenantContext);
-	};
-
-	const item = await getItem2(params, getHazardousEvent);
+	const { params, request } = loaderArgs;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	const item = await getItem2(params, hazardousEventById);
+	if (!item || item.countryAccountsId !== countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+	const user = await authLoaderGetUserForFrontend(loaderArgs);
+	
 	let hip = await dataForHazardPicker();
-
+	
 	if (item!.event.ps.length > 0) {
 		let parent = item!.event.ps[0].p.he;
-		// get parent of parent as well, to match what we use in new form
-		// Use tenant context for parent lookup too
-		let parent2 = await hazardousEventById(parent.id, tenantContext);
+		let parent2 = await hazardousEventById(parent.id);
+		if(parent2?.countryAccountsId!== countryAccountsId){
+			throw new Response("Unauthorized", { status: 401 });
+		}
 		return { hip, item, parent: parent2, treeData: [], user };
 	}
-
 
 	// Define Keys Mapping (Make it Adaptable)
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	// Filter divisions by tenant context for security
 	const rawData = await dr
 		.select()
 		.from(divisionTable)
-		.where(sql`country_accounts_id = ${tenantContext.countryAccountId}`);
+		.where(sql`country_accounts_id = ${countryAccountsId}`);
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
 		"geojson",
 		"importId",
@@ -75,11 +66,9 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		"level",
 		"name",
 	]);
-	console.log(treeData);
 
-	// Use tenant's ISO3 from tenant context
-	const ctryIso3 = tenantContext.iso3;
-
+	const settings = await getCountrySettingsFromSession(request);
+	const ctryIso3 = settings.ctryIso3;
 
 	// Filter top-level divisions by tenant context
 	const divisionGeoJSON = await dr.execute(sql`
@@ -87,9 +76,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		FROM division
 		WHERE (parent_id = 0 OR parent_id IS NULL) 
 		AND geojson IS NOT NULL
-		AND country_accounts_id = ${tenantContext.countryAccountId};
+		AND country_accounts_id = ${countryAccountsId};
     `);
-
 
 	return {
 		hip: hip,
@@ -98,24 +86,24 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		ctryIso3: ctryIso3,
 		divisionGeoJSON: divisionGeoJSON?.rows || [],
 		user,
-		tenantContext,
+		countryAccountsId,
 	};
 });
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
-	const userSession = authActionGetAuth(actionArgs);
+	const { request } = actionArgs;
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
-	// Extract tenant context for secure updates
-	const tenantContext = await getTenantContext(userSession);
-
-	// Keep existing formSave structure and logic
 	return formSave({
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
+			const updatedData = {
+				...data,
+				countryAccountsId,
+			};
 			if (id) {
-				// Pass tenant context instead of userSession for data isolation
-				return hazardousEventUpdate(tx, id, data, tenantContext);
+				return hazardousEventUpdate(tx, id, updatedData);
 			} else {
 				throw "not an create screen";
 			}
@@ -123,7 +111,6 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		redirectTo: (id: string) => `/hazardous-event/${id}`,
 	});
 });
-
 
 export default function Screen() {
 	let ld = useLoaderData<typeof loader>();
@@ -143,7 +130,7 @@ export default function Screen() {
 			ctryIso3: ld.ctryIso3,
 			user: ld.user,
 			divisionGeoJSON: ld.divisionGeoJSON,
-			tenantContext: ld.tenantContext,
+			countryAccountsId: ld.countryAccountsId,
 		},
 		fieldsInitial,
 		form: HazardousEventForm,

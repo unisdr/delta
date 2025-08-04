@@ -1,15 +1,20 @@
-import { useLoaderData, Link, MetaFunction, useNavigate } from "@remix-run/react";
-import { authLoaderWithPerm } from "~/util/auth";
-import { Pagination } from "~/frontend/pagination/view";
-import { executeQueryForPagination } from "~/frontend/pagination/api.server";
-import { userTable } from "~/drizzle/schema";
-import { NavSettings } from "~/routes/settings/nav";
-import { MainContainer } from "~/frontend/container";
-import { useEffect, useState } from "react";
+import {
+	Link,
+	MetaFunction,
+	useLoaderData,
+	useNavigate,
+} from "@remix-run/react";
 import { format } from "date-fns";
-import { requireTenantContext } from "~/util/tenant";
-import { and, eq, ne } from "drizzle-orm";
-import { getUserFromSession } from "~/util/session";
+import { useEffect, useState } from "react";
+import { getUserCountryAccountsWithUserByCountryAccountsId } from "~/db/queries/userCountryAccounts";
+import { MainContainer } from "~/frontend/container";
+import {
+	paginationQueryFromURL,
+} from "~/frontend/pagination/api.server";
+import { Pagination } from "~/frontend/pagination/view";
+import { NavSettings } from "~/routes/settings/nav";
+import { authLoaderWithPerm } from "~/util/auth";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -23,60 +28,21 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	const url = new URL(request.url);
 	const search = url.searchParams.get("search") || "";
 
-	// Get user session and tenant context
-	const userSession = await getUserFromSession(request);
-	if (!userSession) {
-		throw new Response("Unauthorized", { status: 401 });
-	}
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
-	const tenantContext = await requireTenantContext(userSession);
-	if (!tenantContext) {
-		throw new Response("Unauthorized - No tenant context", { status: 401 });
-	}
+	const pagination = paginationQueryFromURL(request, []);
 
-	const select = {
-		id: userTable.id,
-		email: userTable.email,
-		firstName: userTable.firstName,
-		lastName: userTable.lastName,
-		role: userTable.role,
-		organization: userTable.organization,
-		emailVerified: userTable.emailVerified,
-		authType: userTable.authType,
-		modifiedAt: userTable.updatedAt,
-	};
-
-	// Add tenant filtering to only show users from the current tenant
-	const where = and(
-		eq(userTable.countryAccountsId, tenantContext.countryAccountId),
-		ne(userTable.role, 'super_admin') // Don't show super admins in the list
-	);
-
-	const res = await executeQueryForPagination<UserRes>(
-		request,
-		userTable,
-		select,
-		where
+	const items = await getUserCountryAccountsWithUserByCountryAccountsId(
+		pagination.query.skip,
+		pagination.query.take,
+		countryAccountsId
 	);
 
 	return {
-		...res,
+		...items,
 		search,
 	};
 });
-
-interface UserRes {
-	id: number;
-	email: string;
-	firstName: string;
-	lastName: string;
-	role: string;
-	organization: string;
-	emailVerified: string;
-	auth: string;
-	authType: string;
-	modifiedAt: Date;
-}
 
 export default function Settings() {
 	const ld = useLoaderData<typeof loader>();
@@ -92,37 +58,26 @@ export default function Settings() {
 	}, [items]);
 
 	// State for search and filtered users
-	const [filteredItems, setFilteredItems] = useState<UserRes[]>(items);
+	const [filteredItems, setFilteredItems] = useState(items);
 	const [organizationFilter, setOrganizationFilter] = useState("");
 	const [roleFilter, setRoleFilter] = useState("");
 
 	// Dynamically calculate pagination
 	const pagination = Pagination({
-		itemsOnThisPage: filteredItems.length, // Pass the dynamically filtered count
-		totalItems: items.length, // Total items in the dataset
-		page: ld.pagination.page, // Current page
-		pageSize: ld.pagination.pageSize, // Items per page
-		extraParams: ld.pagination.extraParams, // Additional query params
+		itemsOnThisPage: filteredItems.length,
+		totalItems: ld.pagination.total,
+		page: ld.pagination.pageNumber,
+		pageSize: ld.pagination.pageSize,
+		extraParams:ld.pagination.extraParams, 
 	});
-
-	// Filter logic
-	// const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-	// 	const value = e.target.value.toLowerCase();
-	// 	setFilteredItems(
-	// 		items.filter(
-	// 			(item) =>
-	// 				item.email.toLowerCase().includes(value) ||
-	// 				item.firstName.toLowerCase().includes(value) ||
-	// 				item.lastName.toLowerCase().includes(value)
-	// 		)
-	// 	);
-	// };
 
 	const handleOrganizationFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value.toLowerCase();
 		setOrganizationFilter(value);
 		setFilteredItems(
-			items.filter((item) => item.organization.toLowerCase().includes(value))
+			items.filter((item) =>
+				item.user.organization.toLowerCase().includes(value)
+			)
 		);
 	};
 
@@ -143,13 +98,11 @@ export default function Settings() {
 
 	// Handle different formats for `emailVerified`
 	const activatedUsers = filteredItems.filter((item) => {
-		const emailVerified = item.emailVerified?.toString().toLowerCase();
-		return emailVerified === "true";
+		return item.user.emailVerified === true;
 	}).length;
 
-	//const pendingUsers = totalUsers - activatedUsers;
 	const pendingUsers = filteredItems.filter(
-		(item) => !item.emailVerified
+		(item) => !item.user.emailVerified
 	).length;
 	return (
 		<MainContainer title="Access management" headerExtra={<NavSettings />}>
@@ -225,28 +178,7 @@ export default function Settings() {
 				</div>
 			</form>
 
-			{/* Search Form */}
-			{/* <form method="get" className="search-form">
-					<input
-						type="text"
-						name="search"
-						defaultValue={search}
-						placeholder="Search by email, first name, or last name"
-						className="search-input"
-						onChange={handleSearch}
-						style={{
-							width: "460px",
-							padding: "10px",
-							border: "1px solid #ccc",
-							borderRadius: "4px",
-							marginBottom: "20px",
-						}}
-					/>
-				</form>
-
-				{/* User Stats */}
 			<div>
-				{/* Total User Count */}
 				<div>
 					<strong className="dts-body-label">
 						{filteredItems.length} of {totalUsers} Users
@@ -280,6 +212,7 @@ export default function Settings() {
 							<tr>
 								<th>Status</th>
 								<th>Name</th>
+								<th>Email</th>
 								<th>Organisation</th>
 								<th>Role</th>
 								<th>Modified</th>
@@ -291,30 +224,29 @@ export default function Settings() {
 								<tr key={index}>
 									<td>
 										<span
-											className={`dts-access-management__status-dot ${item.emailVerified
-												? "dts-access-management__status-dot--activated"
-												: "dts-access-management__status-dot--pending"
-												}`}
+											className={`dts-access-management__status-dot ${
+												item.user.emailVerified
+													? "dts-access-management__status-dot--activated"
+													: "dts-access-management__status-dot--pending"
+											}`}
 										>
-											{/* Tooltip message */}
 											<span className="dts-access-management__tooltip-text">
-												{/* Tooltip text dynamically changes based on status */}
-												{item.emailVerified ? "Activated" : "Pending"}
+												{item.user.emailVerified ? "Activated" : "Pending"}
 											</span>
-											{/* Tooltip pointer */}
 											<span className="dts-access-management__tooltip-pointer"></span>
 										</span>
 									</td>
 
 									<td>
 										<Link
-											to={`/settings/access-mgmnt/edit/${item.id}`}
+											to={`/settings/access-mgmnt/edit/${item.user.id}`}
 											className="link"
 										>
-											{item.firstName} {item.lastName}
+											{item.user.firstName} {item.user.lastName}
 										</Link>
 									</td>
-									<td>{item.organization}</td>
+									<td>{item.user.email}</td>
+									<td>{item.user.organization}</td>
 									{/* Updated Role Column with Badge */}
 									<td>
 										<span>
@@ -322,12 +254,14 @@ export default function Settings() {
 											{/* Capitalizes the first letter */}
 										</span>
 									</td>
-									<td>{format(item.modifiedAt, "dd-MM-yyyy")}</td>
+									<td>{item.user.updatedAt && format(item.user.updatedAt, "dd-MM-yyyy")}</td>
 									<td>
 										<button
-											aria-label={`Edit item ${item.id}`}
+											aria-label={`Edit item ${item.user.id}`}
 											className="mg-button mg-button-table"
-											onClick={() => navigate(`/settings/access-mgmnt/edit/${item.id}`)}
+											onClick={() =>
+												navigate(`/settings/access-mgmnt/edit/${item.user.id}`)
+											}
 										>
 											<svg
 												aria-hidden="true"

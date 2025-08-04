@@ -5,7 +5,7 @@ import {
 	LoaderFunctionArgs,
 	redirect,
 } from "@remix-run/node";
-import { useLoaderData, useActionData, Link } from "@remix-run/react";
+import { useActionData } from "@remix-run/react";
 import { useEffect } from "react";
 import {
 	Form,
@@ -16,19 +16,11 @@ import {
 	errorToString,
 } from "~/frontend/form";
 import { formStringData } from "~/util/httputil";
-import {
-	getUserFromSession,
-	createUserSession,
-	sessionCookie,
-} from "~/util/session";
-import { login } from "~/backend.server/models/user/auth";
+import { createSuperAdminSession, getSuperAdminSession } from "~/util/session";
+import { superAdminLogin } from "~/backend.server/models/user/auth";
 import { configAuthSupportedAzureSSOB2C } from "~/util/config";
 import PasswordInput from "~/components/PasswordInput";
-import { getCountryAccountById } from "~/db/queries/countryAccounts";
-import { countryAccountStatuses } from "~/drizzle/schema";
 import Messages from "~/components/Messages";
-import { getUserCountryAccountsByUserId } from "~/db/queries/userCountryAccounts";
-import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 
 interface LoginFields {
 	email: string;
@@ -41,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		email: formData.email || "",
 		password: formData.password || "",
 	};
-	const res = await login(data.email, data.password);
+	const res = await superAdminLogin(data.email, data.password);
 	if (!res.ok) {
 		let errors: FormErrors<LoginFields> = {
 			fields: {
@@ -49,78 +41,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				password: ["Email or password do not match"],
 			},
 		};
-		return Response.json({ data, errors }, { status: 400 }); // Return as a valid Remix response
+		return Response.json({ data, errors }, { status: 400 });
 	}
 
-	// --- PATCH: Check if user is pending activation and redirect to verify-email ---
-	const userSession = await getUserFromSession(request);
-	if (
-		userSession &&
-		userSession.user &&
-		userSession.user.emailVerified === false
-	) {
-		return redirect("/user/verify-email");
-	}
+	const headers = await createSuperAdminSession(res.superAdminId);
 
-	// Check if user's country accounts is inactive, then show error message and redirect to login
-	const countryAccountId = res.countryAccountId;
-	if (countryAccountId) {
-		const countryAccount = await getCountryAccountById(countryAccountId);
-		if (
-			countryAccount &&
-			countryAccount.status === countryAccountStatuses.INACTIVE
-		) {
-			return Response.json(
-				{
-					data,
-					errors: { general: ["Your country account is inactive"] },
-				},
-				{ status: 400 }
-			);
-		}
-	}
-
-	//check if he has more than one instance assosiated, redirect to select-instance page,
-	//otherwise take him to first page.
-	const userCountryAccounts = await getUserCountryAccountsByUserId(res.userId);
-	const headerSession = await createUserSession(res.userId);
-
-	const url = new URL(request.url);
-	let redirectTo = url.searchParams.get("redirectTo");
+	let redirectTo = "/admin/country-accounts";
 	redirectTo = getSafeRedirectTo(redirectTo);
-
-	if (userCountryAccounts && userCountryAccounts.length === 1) {
-		const countrySettings = await getInstanceSystemSettingsByCountryAccountId(
-			userCountryAccounts[0].countryAccountsId
-		);
-
-		const session = await sessionCookie().getSession(
-			headerSession["Set-Cookie"]
-		);
-		session.set("countryAccountsId", userCountryAccounts[0].countryAccountsId);
-		session.set("userRole", userCountryAccounts[0].role);
-		session.set("countrySettings", countrySettings);
-		const setCookie = await sessionCookie().commitSession(session);
-
-		return redirect(redirectTo, {
-			headers: { "Set-Cookie": setCookie },
-		});
-	} else if (userCountryAccounts && userCountryAccounts.length > 1) {
-		return redirect("/select-instance", { headers: headerSession });
-	}
-	return redirect(redirectTo, { headers: headerSession });
+	return redirect(redirectTo, { headers });
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserFromSession(request);
-
-	const url = new URL(request.url);
-	let redirectTo = url.searchParams.get("redirectTo");
-	redirectTo = getSafeRedirectTo(redirectTo);
-	
-	if (user) {
-		return redirect(redirectTo);
+	const superAdminSession = await getSuperAdminSession(request);
+	let redirectTo = "/admin/country-accounts";
+    
+	if (superAdminSession) {
+        return redirect(redirectTo);
 	}
+    redirectTo = "/admin/login";
 	return {
 		redirectTo: redirectTo,
 		confAuthSupportedAzureSSOB2C: configAuthSupportedAzureSSOB2C(),
@@ -139,13 +77,13 @@ export function getSafeRedirectTo(
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Sign-in - DTS" },
+		{ title: "Sign-in - Super Admin" },
 		{ name: "description", content: "Login." },
 	];
 };
 
+
 export default function Screen() {
-	const loaderData = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
 
 	const errors = actionData?.errors || {};
@@ -173,11 +111,11 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" value={loaderData.redirectTo} />
+							{/* <input type="hidden" value={loaderData.redirectTo} /> */}
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
-								<h2 className="dts-heading-1">Sign in</h2>
+								<h2 className="dts-heading-1">Sign in - Admin Management</h2>
 								<p>Enter your credentials to access your account.</p>
 								<p style={{ marginBottom: "2px" }}>*Required information</p>
 							</div>
@@ -224,9 +162,6 @@ export default function Screen() {
 									</Field>
 								</div>
 							</div>
-							<u>
-								<Link to="/user/forgot-password">Forgot password?</Link>
-							</u>
 							<div
 								className="dts-dialog__form-actions"
 								style={{
@@ -247,23 +182,6 @@ export default function Screen() {
 										marginBottom: "10px",
 									}}
 								></SubmitButton>
-							</div>
-							<div>
-								{loaderData.confAuthSupportedAzureSSOB2C ? (
-									<Link
-										className="mg-button mg-button-outline"
-										to="/sso/azure-b2c/login"
-										style={{
-											width: "100%",
-											padding: "10px 20px",
-											marginTop: "5px",
-										}}
-									>
-										Login using Azure B2C SSO
-									</Link>
-								) : (
-									""
-								)}
 							</div>
 						</Form>
 					</div>

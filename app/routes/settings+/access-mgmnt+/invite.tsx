@@ -23,12 +23,11 @@ import {
 } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
-import { redirectWithMessage, getUserFromSession, getCountrySettingsFromSession } from "~/util/session";
+import { redirectWithMessage, getUserFromSession, getCountrySettingsFromSession, sessionCookie } from "~/util/session";
 
 import { MainContainer } from "~/frontend/container";
-import { getTenantContext } from "~/util/tenant";
 
-import "react-toastify/dist/ReactToastify.css"; // Toast styles
+import "react-toastify/dist/ReactToastify.css";
 import { adminInviteUser, AdminInviteUserFields, adminInviteUserFieldsFromMap } from "~/backend.server/models/user/invite";
 
 export const meta: MetaFunction = () => {
@@ -43,11 +42,6 @@ export const loader = authLoaderWithPerm("InviteUsers", async ({ request }) => {
 	const userSession = await getUserFromSession(request);
 	if (!userSession) {
 		throw new Response("Unauthorized", { status: 401 });
-	}
-
-	const tenantContext = await getTenantContext(userSession);
-	if (!tenantContext) {
-		throw new Response("Unauthorized - No tenant context", { status: 401 });
 	}
 
 	return {
@@ -70,7 +64,9 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 
 	const settings = await getCountrySettingsFromSession(request);
 	const siteName= settings.websiteName;
-	
+
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
+	const countryAccountsId = session.get("countryAccountsId")
 
 	// Get user session and tenant context
 	const userSession = await getUserFromSession(request);
@@ -78,8 +74,7 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const tenantContext = await getTenantContext(userSession);
-	if (!tenantContext) {
+	if (!countryAccountsId) {
 		throw new Response("Unauthorized - No tenant context", { status: 401 });
 	}
 
@@ -87,7 +82,7 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const data = adminInviteUserFieldsFromMap(formData);
 
 	try {
-		const res = await adminInviteUser(data, tenantContext, baseUrl, siteName);
+		const res = await adminInviteUser(data, countryAccountsId, baseUrl, siteName);
 
 		if (!res.ok) {
 			return json<ActionResponse>({

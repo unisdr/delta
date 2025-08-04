@@ -21,7 +21,7 @@ import {
 	loginGetCode
 } from "~/util/ssoauzeb2c";
 import {loginAzureB2C} from "~/backend.server/models/user/auth";
-import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
+// import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
 
 export const loader:LoaderFunction = async ( { request } ) => {
 	console.log("NODE_ENV", process.env.NODE_ENV)
@@ -101,7 +101,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 				return { errors:retLogin.error };
 			}
 	
-			if (retLogin.userId == 0) {
+			/*if (retLogin.userId == 0) {
 				const data2 = setupAdminAccountFieldsFromMap(data) 
 				const res = await setupAdminAccountSSOAzureB2C(data2);
 				if (!res.ok){
@@ -111,7 +111,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 				const headers = await createUserSession(res.userId);
 				return redirect("/user/verify-email", { headers });
 			}
-			else {
+			else */{
 				const headers = await createUserSession(retLogin.userId);
 				return redirect("/", { headers });
 			}		

@@ -1,14 +1,18 @@
-import { sendInvite } from "~/backend.server/models/user/invite";
+import {
+	sendInviteForExistingUser,
+	sendInviteForNewUser,
+} from "~/backend.server/models/user/invite";
 import { dr } from "~/db.server";
 import { getCountryById } from "~/db/queries/countries";
 import {
 	countryAccountWithTypeExists,
 	createCountryAccount,
 	getCountryAccountById,
-	updateCountryAccountStatus,
+	updateCountryAccount,
 } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
-import { createUser } from "~/db/queries/user";
+import { createUser, getUserByEmail } from "~/db/queries/user";
+import { createUserCountryAccounts } from "~/db/queries/userCountryAccounts";
 import {
 	CountryAccountStatus,
 	countryAccountStatuses,
@@ -25,6 +29,7 @@ export class CountryAccountValidationError extends Error {
 
 export async function createCountryAccountService(
 	countryId: string,
+	shortDescription: string,
 	email: string,
 	status: number = countryAccountStatuses.ACTIVE,
 	countryAccountType: string = countryAccountTypes.OFFICIAL,
@@ -32,8 +37,10 @@ export async function createCountryAccountService(
 ) {
 	const errors: string[] = [];
 	if (!countryId) errors.push("Country is required");
-	if (status=== null || status=== undefined) errors.push("Status is required");
-	if (!email || email.trim()=== "" ) errors.push("Admin email is required");
+	if (status === null || status === undefined)
+		errors.push("Status is required");
+	if (!email || email.trim() === "") errors.push("Admin email is required");
+	if (!shortDescription || shortDescription.trim() === "") errors.push("Short description is required");
 	if (!countryAccountType) errors.push("Choose instance type");
 
 	if (countryId && countryId === "-1") {
@@ -83,13 +90,21 @@ export async function createCountryAccountService(
 			countryId,
 			status,
 			countryAccountType,
+			shortDescription,
 			tx
 		);
-		const adminUser = await createUser(
-			email,
-			"admin",
-			isPrimaryAdmin,
+		let isNewUser = false;
+		let user = await getUserByEmail(email);
+		if (!user) {
+			isNewUser = true;
+			user = await createUser(email, tx);
+		}
+		const role="admin";
+		await createUserCountryAccounts(
+			user.id,
 			countryAccount.id,
+			role,
+			isPrimaryAdmin,
 			tx
 		);
 
@@ -105,25 +120,43 @@ export async function createCountryAccountService(
 			tx
 		);
 		const url = new URL(request.url);
-  		const baseUrl = `${url.protocol}//${url.host}`;
+		const baseUrl = `${url.protocol}//${url.host}`;
 
-		await sendInvite(adminUser, baseUrl, 'Disaster Tracking System', tx);
-		return { countryAccount, adminUser, instanceSystemSetting };
+		if (isNewUser) {
+			await sendInviteForNewUser(user, baseUrl, "Disaster Tracking System",role, tx);
+		} else {
+			await sendInviteForExistingUser(
+				user,
+				baseUrl,
+				"Disaster Tracking System",
+				"Admin"
+			);
+		}
+		return { countryAccount, user, instanceSystemSetting };
 	});
 }
 
 export async function updateCountryAccountStatusService(
 	id: string,
-	status: number
+	status: number,
+	shortDescription: string,
 ) {
 	const countryAccount = await getCountryAccountById(id);
-	if(!countryAccount){
-		throw new CountryAccountValidationError([`Country accounts id:${id} does not exist`])
+	if (!countryAccount) {
+		throw new CountryAccountValidationError([
+			`Country accounts id:${id} does not exist`,
+		]);
 	}
-	if(!Object.values(countryAccountStatuses).includes(status as CountryAccountStatus)){
-		throw new CountryAccountValidationError([`Status: ${status} is not a valid value`])
+	if (
+		!Object.values(countryAccountStatuses).includes(
+			status as CountryAccountStatus
+		)
+	) {
+		throw new CountryAccountValidationError([
+			`Status: ${status} is not a valid value`,
+		]);
 	}
 
-	const updatedCountryAccount = await updateCountryAccountStatus(id, status);
-	return {updatedCountryAccount};
+	const updatedCountryAccount = await updateCountryAccount(id, status, shortDescription);
+	return { updatedCountryAccount };
 }
