@@ -1,4 +1,4 @@
-/*import {
+import {
 	redirect,
 	LoaderFunction
 } from "@remix-run/node";
@@ -20,7 +20,7 @@ import {
 	decodeToken,
 } from "~/util/ssoauzeb2c";
 import {loginAzureB2C, registerAzureB2C} from "~/backend.server/models/user/auth";
-import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
+// import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
 
 
 interface interfaceQueryStringState {
@@ -213,7 +213,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
 			return { errors:error };
 		}
 	}
-    else if (queryStringState == 'azure_sso_b2c-admin-setup' && queryStringCode) {
+    /*else if (queryStringState == 'azure_sso_b2c-admin-setup' && queryStringCode) {
         const data2 = await _code2Token(queryStringCode);
 
         if (data2.okay) {
@@ -237,7 +237,7 @@ export const loader:LoaderFunction = async ( { request } ) => {
                 return { errors:error };
             }
         }
-    }
+    }*/
 
 	return { errors:'' };
 };
@@ -261,4 +261,3 @@ export default function SsoAzureB2cCallback() {
 	  </div>
 	);
 }
-*/
