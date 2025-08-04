@@ -92,7 +92,7 @@ export async function adminInviteUser(
 		dr.transaction(async (tx) => {
 			const newUser =	await createUser(fields.email, tx)
 			await createUserCountryAccounts(newUser.id,countryAccountsId,fields.role,false,tx);
-			await sendInviteForNewUser(newUser, baseUrl,siteName,fields.role);
+			await sendInviteForNewUser(newUser, baseUrl,siteName,fields.role,tx);
 		});
 	}else{
 		//create new user country accounts associate to it

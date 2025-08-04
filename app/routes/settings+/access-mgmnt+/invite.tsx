@@ -23,7 +23,7 @@ import {
 } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
-import { redirectWithMessage, getUserFromSession, getCountrySettingsFromSession, sessionCookie } from "~/util/session";
+import { redirectWithMessage, getUserFromSession, getCountrySettingsFromSession, getCountryAccountsIdFromSession } from "~/util/session";
 
 import { MainContainer } from "~/frontend/container";
 
@@ -42,6 +42,10 @@ export const loader = authLoaderWithPerm("InviteUsers", async ({ request }) => {
 	const userSession = await getUserFromSession(request);
 	if (!userSession) {
 		throw new Response("Unauthorized", { status: 401 });
+	}
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	if(!countryAccountsId){
+		throw new Response("Unauthorized. No instance seleted.", { status: 401 });
 	}
 
 	return {
@@ -65,8 +69,7 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const settings = await getCountrySettingsFromSession(request);
 	const siteName= settings.websiteName;
 
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request)
 
 	// Get user session and tenant context
 	const userSession = await getUserFromSession(request);
