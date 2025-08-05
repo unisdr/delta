@@ -4,6 +4,7 @@ import {
 	useActionData,
 	useLoaderData,
 	useNavigate,
+	MetaFunction
 } from "@remix-run/react";
 import {
 	CountryAccountWithCountryAndPrimaryAdminUser,
@@ -11,7 +12,7 @@ import {
 } from "~/db/queries/countryAccounts";
 import { MainContainer } from "~/frontend/container";
 import { NavSettings } from "../settings/nav";
-import { requireSuperAdmin } from "~/util/auth";
+import { authLoaderWithPerm, authActionWithPerm } from "~/util/auth";
 import { useEffect, useRef, useState } from "react";
 import Dialog from "~/components/Dialog";
 import { getCountries } from "~/db/queries/countries";
@@ -33,57 +34,67 @@ import { Fieldset } from "~/components/FieldSet";
 import Tag from "~/components/Tag";
 import { Toast, ToastRef } from "~/components/Toast";
 
-export const loader: LoaderFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
-	const countryAccounts =
-		await getCountryAccountsWithUserCountryAccountsAndUser();
-	const countries = await getCountries();
-
-	return { countryAccounts, countries };
+export const meta: MetaFunction = () => {
+	return [
+		{ title: "Country Accounts - Super Admin - DTS" },
+		{ name: "description", content: "Super Admin Country Accounts Management." },
+	];
 };
 
-export const action: ActionFunction = async ({ request }) => {
-	await requireSuperAdmin(request);
+export const loader: LoaderFunction = authLoaderWithPerm(
+	"manage_country_accounts",
+	async () => {
+		const countryAccounts =
+			await getCountryAccountsWithUserCountryAccountsAndUser();
+		const countries = await getCountries();
 
-	const formData = await request.formData();
-	const countryId = formData.get("countryId") as string;
-	const status = formData.get("status");
-	const email = formData.get("email") as string;
-	const shortDescription = formData.get("shortDescription") as string;
-	const countryAccountType = formData.get("countryAccountType") as string;
-	const id = formData.get("id") as string;
-
-	try {
-		if (id) {
-			// Update existing account
-			await updateCountryAccountStatusService(id, Number(status), shortDescription);
-			return { success: true, operation: "update" };
-		} else {
-			// Create new account
-			await createCountryAccountService(
-				countryId,
-				shortDescription,
-				email,
-				Number(status),
-				countryAccountType,
-				request
-			);
-			return { success: true, operation: "create" };
-		}
-	} catch (error) {
-		let errors = {};
-		if (error instanceof CountryAccountValidationError) {
-			errors = { errors: error.errors };
-		} else {
-			errors = { errors: ["An unexpected error occured"] };
-			console.log(error);
-		}
-		return {
-			...errors,
-			formValues: { id, countryId, status, email, countryAccountType },
-		};
+		return { countryAccounts, countries };
 	}
-};
+);
+
+export const action: ActionFunction = authActionWithPerm(
+	"manage_country_accounts",
+	async ({ request }) => {
+		const formData = await request.formData();
+		const countryId = formData.get("countryId") as string;
+		const status = formData.get("status");
+		const email = formData.get("email") as string;
+		const shortDescription = formData.get("shortDescription") as string;
+		const countryAccountType = formData.get("countryAccountType") as string;
+		const id = formData.get("id") as string;
+
+		try {
+			if (id) {
+				// Update existing account
+				await updateCountryAccountStatusService(id, Number(status), shortDescription);
+				return { success: true, operation: "update" };
+			} else {
+				// Create new account
+				await createCountryAccountService(
+					countryId,
+					shortDescription,
+					email,
+					Number(status),
+					countryAccountType,
+					request
+				);
+				return { success: true, operation: "create" };
+			}
+		} catch (error) {
+			let errors = {};
+			if (error instanceof CountryAccountValidationError) {
+				errors = { errors: error.errors };
+			} else {
+				errors = { errors: ["An unexpected error occured"] };
+				console.log(error);
+			}
+			return {
+				...errors,
+				formValues: { id, countryId, status, email, countryAccountType },
+			};
+		}
+	}
+);
 
 export default function CountryAccounts() {
 	const { countryAccounts, countries } = useLoaderData<{
@@ -114,7 +125,7 @@ export default function CountryAccounts() {
 		countryAccountStatuses.ACTIVE
 	);
 	const [shortDescription, setShortDescription] = useState("");
-	
+
 	const [isAddCountryAccountDialogOpen, setIsAddCountryAccountDialogOpen] =
 		useState(false);
 
@@ -195,14 +206,14 @@ export default function CountryAccounts() {
 
 	return (
 		<MainContainer
-			title="Manage Country Accounts"
+			title="Manage Country Accounts - Super Admin"
 			headerExtra={<NavSettings />}
 		>
 			<div className="card flex justify-content-center">
 				<Toast ref={toast} />
 			</div>
-			<div className="dts-page-intro">
-				<div className="dts-additional-actions">
+			<div className="dts-page-intro" style={{ paddingRight: 0 }}>
+				<div className="dts-additional-actions" >
 					<button
 						className="mg-button mg-button-secondary"
 						onClick={() => addCountryAccount()}
@@ -236,9 +247,9 @@ export default function CountryAccounts() {
 							</td>
 							<td>
 								{countryAccount.type === countryAccountTypes.OFFICIAL ? (
-									<Tag value={countryAccount.type}  />
+									<Tag value={countryAccount.type} />
 								) : (
-									<Tag value={countryAccount.type} severity="warning"/>
+									<Tag value={countryAccount.type} severity="warning" />
 								)}
 							</td>
 							<td>{countryAccount.userCountryAccounts[0].user.email}</td>
@@ -392,7 +403,7 @@ export default function CountryAccounts() {
 										checked={
 											type === countryAccountTypes.OFFICIAL ||
 											editingCountryAccount?.type ===
-												countryAccountTypes.OFFICIAL
+											countryAccountTypes.OFFICIAL
 										}
 										label="Official"
 									/>
@@ -405,7 +416,7 @@ export default function CountryAccounts() {
 										checked={
 											type === countryAccountTypes.TRAINING ||
 											editingCountryAccount?.type ===
-												countryAccountTypes.TRAINING
+											countryAccountTypes.TRAINING
 										}
 										label="Training"
 									/>
