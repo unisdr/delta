@@ -11,15 +11,17 @@ import { redirect } from "@remix-run/react";
 
 import { InferSelectModel, eq } from "drizzle-orm";
 
-export let _sessionCookie: SessionStorage<SessionData, SessionData> | null =
-	null;
+export let _sessionCookie: SessionStorage<SessionData, SessionData> | null = null;
+export let _superAdminSessionCookie: SessionStorage<SessionData, SessionData> | null = null;
 
 export function initCookieStorage() {
 	// we also store session activity time in the database, so this can be much longer
-	const cookieSessionExpiration = 60 * 60 * 1 ; // 1 hour
+	const cookieSessionExpiration = 60 * 60 * 1; // 1 hour
 	if (!process.env.SESSION_SECRET) {
 		throw "no SESSION_SECRET in .env";
 	}
+
+	// Regular user session cookie
 	_sessionCookie = createCookieSessionStorage({
 		cookie: {
 			// Using __ in front of a name is a common pattern
@@ -27,6 +29,19 @@ export function initCookieStorage() {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production", // Only send cookie over HTTPS in production
 			// lax allows cookie on get request originating from other sites, so users would still be logged in
+			sameSite: "lax",
+			path: "/",
+			secrets: [process.env.SESSION_SECRET],
+			maxAge: cookieSessionExpiration,
+		},
+	});
+
+	// Super admin session cookie - separate from regular user sessions
+	_superAdminSessionCookie = createCookieSessionStorage({
+		cookie: {
+			name: "__super_admin_session",
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
 			sameSite: "lax",
 			path: "/",
 			secrets: [process.env.SESSION_SECRET],
@@ -42,10 +57,17 @@ export function sessionCookie(): SessionStorage<SessionData, SessionData> {
 	return _sessionCookie;
 }
 
+export function superAdminSessionCookie(): SessionStorage<SessionData, SessionData> {
+	if (!_superAdminSessionCookie) {
+		throw "initCookieStorage was not called";
+	}
+	return _superAdminSessionCookie;
+}
+
 export async function createSuperAdminSession(superAdminId: string) {
-	const session = await sessionCookie().getSession();
+	const session = await superAdminSessionCookie().getSession();
 	session.set("superAdminId", superAdminId);
-	const setCookie = await sessionCookie().commitSession(session);
+	const setCookie = await superAdminSessionCookie().commitSession(session);
 	return {
 		"Set-Cookie": setCookie,
 	};
@@ -54,7 +76,7 @@ export async function createSuperAdminSession(superAdminId: string) {
 export async function getSuperAdminSession(
 	request: Request
 ): Promise<SuperAdminSession | undefined> {
-	const session = await sessionCookie().getSession(
+	const session = await superAdminSessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
 	const superAdminId = session.get("superAdminId");
@@ -207,7 +229,7 @@ export async function redirectWithMessage(
 	});
 }
 
-export async function getCountrySettingsFromSession(request: Request){
+export async function getCountrySettingsFromSession(request: Request) {
 	const session = await sessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
@@ -215,7 +237,7 @@ export async function getCountrySettingsFromSession(request: Request){
 	return countrySettings;
 }
 
-export async function getUserRoleFromSession(request: Request){
+export async function getUserRoleFromSession(request: Request) {
 	const session = await sessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
@@ -223,7 +245,7 @@ export async function getUserRoleFromSession(request: Request){
 	return countrySettings;
 }
 
-export async function getCountryAccountsIdFromSession(request: Request){
+export async function getCountryAccountsIdFromSession(request: Request) {
 	const session = await sessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
