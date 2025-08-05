@@ -11,10 +11,10 @@ import {
 	getCountrySettingsFromSession,
 	getUserFromSession,
 	getUserRoleFromSession,
-	sessionCookie,
 	sessionMarkTotpAuthed,
+	superAdminSessionCookie,
+	getSuperAdminSession,
 	UserSession,
-	getSuperAdminSession, // Add this import
 } from "~/util/session";
 
 import {
@@ -56,7 +56,13 @@ export async function requireUser(request: Request) {
 	if (!userSession) {
 		const url = new URL(request.url);
 		const redirectTo = url.pathname + url.search;
-		throw redirect(`/user/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+
+		// Check if this is an admin route and redirect to admin login if so
+		if (url.pathname.startsWith('/admin/')) {
+			throw redirect(`/admin/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+		} else {
+			throw redirect(`/user/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+		}
 	}
 	const { user, session } = userSession;
 	if (!user.emailVerified) {
@@ -144,7 +150,12 @@ export function authLoaderWithPerm<T extends LoaderFunction>(
 		// Check if super admin first
 		const superAdminSession = await getSuperAdminSession(args.request);
 		if (superAdminSession) {
-			if (roleHasPermission("super_admin", permission)) {
+			// Only proceed with super admin path if this is a super admin route
+			// This prevents regular users from being treated as super admins
+			const url = new URL(args.request.url);
+			const isAdminRoute = url.pathname.startsWith('/admin/');
+
+			if (isAdminRoute && roleHasPermission("super_admin", permission)) {
 				// Create a mock userSession for super admin
 				const mockUserSession = {
 					user: { id: "super_admin", emailVerified: true, totpEnabled: false },
@@ -155,12 +166,27 @@ export function authLoaderWithPerm<T extends LoaderFunction>(
 					...(args as any),
 					userSession: mockUserSession,
 				});
-			} else {
-				throw new Response("Forbidden", { status: 403 });
+			} else if (isAdminRoute) {
+				// Redirect to admin login instead of 403 for admin routes
+				const url = new URL(args.request.url);
+				const redirectTo = url.pathname + url.search;
+				throw redirect(`/admin/login?redirectTo=${encodeURIComponent(redirectTo)}`);
 			}
+			// If not an admin route, fall through to regular user flow
 		}
 
 		// Regular user flow
+		// Check if this is an admin route first
+		const urlForCheck = new URL(args.request.url);
+		const isAdminRouteCheck = urlForCheck.pathname.startsWith('/admin/');
+
+		// If it's an admin route, redirect to admin login
+		if (isAdminRouteCheck) {
+			const redirectTo = urlForCheck.pathname + urlForCheck.search;
+			throw redirect(`/admin/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+		}
+
+		// For non-admin routes, continue with regular permission check
 		const userSession = await requireUser(args.request);
 		const userRole = await getUserRoleFromSession(args.request);
 		if (!roleHasPermission(userRole, permission)) {
@@ -405,14 +431,17 @@ export function authActionGetAuth(args: any): UserSession {
 }
 
 export async function requireSuperAdmin(request: Request) {
-	const session = await sessionCookie().getSession(
+	// Use the super admin session cookie instead of the regular session cookie
+	const session = await superAdminSessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
 	const superAdminId = session.get("superAdminId") as string | undefined;
 
 	if (!superAdminId) {
-		console.log("no super admin id");
-		throw redirect("/admin/login");
+		// Get the current URL to include as redirectTo parameter
+		const url = new URL(request.url);
+		const redirectTo = url.pathname + url.search;
+		throw redirect(`/admin/login?redirectTo=${encodeURIComponent(redirectTo)}`);
 	}
 	return superAdminId;
 }
