@@ -20,6 +20,7 @@ import {
 	getFlashMessage,
 	getUserFromSession,
 	getCountrySettingsFromSession,
+	getSuperAdminSession, // Added import for super admin session detection
 } from "~/util/session";
 
 import { useEffect, useState } from "react";
@@ -39,12 +40,17 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserFromSession(request);
+	const superAdminSession = await getSuperAdminSession(request); // Add super admin session detection
 	const session = await sessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
 	const message = getFlashMessage(session);
 	const settings = await getCountrySettingsFromSession(request);
 	const userRole = session.get("userRole");
+
+	// Determine if this is a super admin session
+	const isSuperAdmin = !!superAdminSession;
+	const effectiveUserRole = isSuperAdmin ? "super_admin" : userRole;
 
 	const websiteName = settings
 		? settings.websiteName
@@ -64,8 +70,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return Response.json(
 		{
 			hasPublicSite: true,
-			loggedIn: !!user,
-			userRole: userRole || "",
+			loggedIn: !!user || !!superAdminSession,
+			userRole: effectiveUserRole || "",
+			isSuperAdmin: isSuperAdmin,
 			flashMessage: message,
 			confSiteName: websiteName,
 			confSiteLogo: websiteLogo,
@@ -111,7 +118,7 @@ function InactivityWarning(props: InactivityWarningProps) {
 			if (
 				minutesSinceLastActivity >
 				sessionActivityTimeoutMinutes -
-					sessionActivityWarningBeforeTimeoutMinutes
+				sessionActivityWarningBeforeTimeoutMinutes
 			) {
 				setShowWarning(true);
 				setExpiresInMinutes(
@@ -207,6 +214,7 @@ export default function Screen() {
 		confFooterURLPrivPolicy,
 		confFooterURLTermsConds,
 		userRole,
+		isSuperAdmin,
 	} = loaderData;
 	let boolShowHeaderFooter: boolean = true;
 	const matches = useMatches();
@@ -226,13 +234,14 @@ export default function Screen() {
 		match.pathname.startsWith("/admin")
 	);
 
-	// Do not show header and foother for certain pages [user invitation | admin registration]
+	// Do not show header and footer for certain pages [user invitation | admin registration]
+	// But show header for super admin pages if the user is a super admin
 	if (
 		isUrlPathUserInvite ||
 		isUrlPathAdminRegistration ||
 		isUrlPathUserVerifyEmail ||
 		isUrlPathResetPassword ||
-		isUrlSuperAdmin
+		(isUrlSuperAdmin && !isSuperAdmin) // Only hide for super admin routes if not actually super admin
 	) {
 		boolShowHeaderFooter = false;
 	}
@@ -279,6 +288,7 @@ export default function Screen() {
 										userRole={userRole}
 										siteName={confSiteName}
 										siteLogo={confSiteLogo}
+										isSuperAdmin={isSuperAdmin}
 									/>
 								</div>
 							</header>
