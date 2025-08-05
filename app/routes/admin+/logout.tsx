@@ -1,6 +1,6 @@
 import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { sessionCookie } from "~/util/session";
+import { superAdminSessionCookie } from "~/util/session";
 
 // Handle both GET and POST requests for logout
 export const loader: LoaderFunction = async ({ request }) => {
@@ -12,14 +12,14 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 async function handleLogout(request: Request) {
-	const session = await sessionCookie().getSession(
+	const session = await superAdminSessionCookie().getSession(
 		request.headers.get("Cookie")
 	);
-	
-	// Destroy the session to log out the super admin
+
+	// Destroy ONLY the super admin session cookie, leaving regular user sessions intact
 	return redirect("/admin/login", {
 		headers: {
-			"Set-Cookie": await sessionCookie().destroySession(session),
+			"Set-Cookie": await superAdminSessionCookie().destroySession(session),
 		},
 	});
 }
