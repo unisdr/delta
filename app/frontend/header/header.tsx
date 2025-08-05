@@ -9,6 +9,7 @@ interface HeaderProps {
   siteName: string;
   siteLogo: string;
   userRole: string;
+  isSuperAdmin?: boolean; // Add this prop
 }
 
 interface LogoProps {
@@ -24,7 +25,7 @@ const LogoComponent = ({ src, alt }: LogoProps) => {
   }
 };
 
-export function Header({ loggedIn, siteName, siteLogo, userRole }: HeaderProps) {
+export function Header({ loggedIn, siteName, siteLogo, userRole, isSuperAdmin = false }: HeaderProps) {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -33,7 +34,11 @@ export function Header({ loggedIn, siteName, siteLogo, userRole }: HeaderProps) 
 
   let navItems = navItemsNotLoggedIn(userRole);
   if (loggedIn) {
-    navItems = navItemsLoggedIn(userRole);
+    if (isSuperAdmin) {
+      navItems = navItemsSuperAdmin(); // Super admin gets special nav
+    } else {
+      navItems = navItemsLoggedIn(userRole);
+    }
   }
 
   return (
@@ -50,7 +55,7 @@ export function Header({ loggedIn, siteName, siteLogo, userRole }: HeaderProps) 
   );
 }
 
-function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
+function navItemsNotLoggedIn(_userRole: string): Lvl1Item[] {
   return [
     {
       name: "Data",
@@ -134,7 +139,39 @@ function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
   ];
 }
 
-function navItemsLoggedIn(userRole:string): Lvl1Item[] {
+// Function for super admin navigation - only shows logout and country accounts management
+function navItemsSuperAdmin(): Lvl1Item[] {
+  return [
+    {
+      name: "",
+      title: "",
+      link: "",
+    },
+    {
+      name: "",
+      title: "",
+      link: "",
+    },
+    {
+      name: "",
+      title: "",
+      link: "",
+    },
+    {
+      name: "",
+      title: "",
+      link: "",
+    },
+    {
+      name: "Log out",
+      title: "Super Admin Logout",
+      icon: "other/user-profile",
+      link: "/admin/logout",
+    },
+  ];
+}
+
+function navItemsLoggedIn(userRole: string): Lvl1Item[] {
   return [
     {
       name: "Data",
@@ -220,7 +257,7 @@ function navItemsLoggedIn(userRole:string): Lvl1Item[] {
           lvl3: [
             {
               title: "System",
-              lvl4: userRole === "admin" ? 
+              lvl4: userRole === "admin" ?
                 [
                   { name: "Access Management", link: "/settings/access-mgmnt" },
                   { name: "System settings", link: "/settings/system" },
