@@ -45,12 +45,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		request.headers.get("Cookie")
 	);
 	const message = getFlashMessage(session);
-	const settings = await getCountrySettingsFromSession(request);
 	const userRole = session.get("userRole");
 
-	// Determine if this is a super admin session
-	const isSuperAdmin = !!superAdminSession;
+	// Determine if this is a super admin session and on an admin route
+	const url = new URL(request.url);
+	const isAdminRoute = url.pathname.startsWith('/admin/');
+	const isSuperAdmin = !!superAdminSession && isAdminRoute;
 	const effectiveUserRole = isSuperAdmin ? "super_admin" : userRole;
+
+	// Use different settings for super admin routes
+	let settings;
+	if (isSuperAdmin) {
+		// For super admin routes, use default global settings
+		settings = null; // This will cause defaults to be used below
+	} else {
+		// For regular user routes, use country-specific settings
+		settings = await getCountrySettingsFromSession(request);
+	}
 
 	const websiteName = settings
 		? settings.websiteName
@@ -70,7 +81,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return Response.json(
 		{
 			hasPublicSite: true,
-			loggedIn: !!user || !!superAdminSession,
+			loggedIn: !!user || (!!superAdminSession && isAdminRoute),
 			userRole: effectiveUserRole || "",
 			isSuperAdmin: isSuperAdmin,
 			flashMessage: message,
