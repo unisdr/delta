@@ -77,7 +77,7 @@ export function getSafeRedirectTo(
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Sign-in - Super Admin" },
+		{ title: "Sign-in - Super Admin - DTS" },
 		{ name: "description", content: "Login." },
 	];
 };
