@@ -14,6 +14,7 @@ import {
 	sessionCookie,
 	sessionMarkTotpAuthed,
 	UserSession,
+	getSuperAdminSession, // Add this import
 } from "~/util/session";
 
 import {
@@ -23,7 +24,7 @@ import {
 	loginTotp as modelLoginTotp,
 } from "~/backend.server/models/user/auth";
 import { apiAuth } from "~/backend.server/models/api_key";
-import { PermissionId, roleHasPermission, RoleId } from "~/frontend/user/roles";
+import { PermissionId, roleHasPermission, RoleId, isSuperAdmin } from "~/frontend/user/roles";
 
 export async function login(
 	email: string,
@@ -102,6 +103,28 @@ export async function requireUserAllowNoTotp(request: Request) {
 	return userSession;
 }
 
+// Helper function to get effective user role (including super admin)
+export async function getEffectiveUserRole(request: Request): Promise<RoleId | string | null> {
+	const superAdminSession = await getSuperAdminSession(request);
+	if (superAdminSession) {
+		return "super_admin";
+	}
+	return await getUserRoleFromSession(request);
+}
+
+// Helper function to check permissions (including super admin)
+export async function hasPermission(request: Request, permission: PermissionId): Promise<boolean> {
+	const effectiveRole = await getEffectiveUserRole(request);
+
+	// Use isSuperAdmin helper for direct super admin checks when needed
+	if (isSuperAdmin(effectiveRole)) {
+		// Super admins might have specific permission restrictions
+		return roleHasPermission(effectiveRole, permission);
+	}
+
+	return roleHasPermission(effectiveRole, permission);
+}
+
 export function authLoader<T extends LoaderFunction>(fn: T): T {
 	return (async (args: LoaderFunctionArgs) => {
 		const userSession = await requireUser(args.request);
@@ -118,6 +141,26 @@ export function authLoaderWithPerm<T extends LoaderFunction>(
 	fn: T
 ): T {
 	return (async (args: LoaderFunctionArgs) => {
+		// Check if super admin first
+		const superAdminSession = await getSuperAdminSession(args.request);
+		if (superAdminSession) {
+			if (roleHasPermission("super_admin", permission)) {
+				// Create a mock userSession for super admin
+				const mockUserSession = {
+					user: { id: "super_admin", emailVerified: true, totpEnabled: false },
+					sessionId: superAdminSession.superAdminId,
+					session: { totpAuthed: true }
+				};
+				return fn({
+					...(args as any),
+					userSession: mockUserSession,
+				});
+			} else {
+				throw new Response("Forbidden", { status: 403 });
+			}
+		}
+
+		// Regular user flow
 		const userSession = await requireUser(args.request);
 		const userRole = await getUserRoleFromSession(args.request);
 		if (!roleHasPermission(userRole, permission)) {
@@ -170,7 +213,7 @@ export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
 			return await fn(args);
 		}
 
-		const userRole = await getUserRoleFromSession(args.request);
+		const userRole = await getEffectiveUserRole(args.request);
 		if (!roleHasPermission(userRole, permission)) {
 			throw new Response("Forbidden", { status: 403 });
 		}
@@ -248,6 +291,16 @@ export interface UserForFrontend {
 export async function authLoaderGetUserForFrontend(
 	args: LoaderFunctionArgs
 ): Promise<UserForFrontend> {
+	// Check if super admin first
+	const superAdminSession = await getSuperAdminSession(args.request);
+	if (superAdminSession) {
+		return {
+			role: "super_admin" as RoleId,
+			firstName: "Super",
+			lastName: "Admin",
+		};
+	}
+
 	const u = authLoaderGetAuth(args);
 	const userRole = await getUserRoleFromSession(args.request);
 	return {
@@ -279,6 +332,26 @@ export function authActionWithPerm<T extends ActionFunction>(
 	fn: T
 ): T {
 	return (async (args: ActionFunctionArgs) => {
+		// Check if super admin first
+		const superAdminSession = await getSuperAdminSession(args.request);
+		if (superAdminSession) {
+			if (roleHasPermission("super_admin", permission)) {
+				// Create a mock userSession for super admin
+				const mockUserSession = {
+					user: { id: "super_admin", emailVerified: true, totpEnabled: false },
+					sessionId: superAdminSession.superAdminId,
+					session: { totpAuthed: true }
+				};
+				return fn({
+					...(args as any),
+					userSession: mockUserSession,
+				});
+			} else {
+				throw new Response("Forbidden", { status: 403 });
+			}
+		}
+
+		// Regular user flow
 		const userSession = await requireUser(args.request);
 		const userRole = await getUserRoleFromSession(args.request);
 		if (!roleHasPermission(userRole, permission)) {
