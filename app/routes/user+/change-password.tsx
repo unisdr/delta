@@ -1,4 +1,5 @@
-import { useActionData, Link, MetaFunction } from "@remix-run/react";
+import { useActionData, Link, MetaFunction, redirect } from "@remix-run/react";
+import { configAuthSupportedForm } from "~/util/config";
 import {
   Form,
   Errors as FormErrors,
@@ -16,8 +17,22 @@ import { MainContainer } from "~/frontend/container";
 import PasswordInput from "~/components/PasswordInput";
 import { useState, useEffect, ChangeEvent } from "react";
 
+// Add loader to check if form auth is supported
+export const loader = async () => {
+  // If form authentication is not supported, redirect to login or settings
+  if (!configAuthSupportedForm()) {
+    return redirect("/user/settings"); // or wherever appropriate
+  }
+  return null;
+};
+
 export const action = authAction(
   async (actionArgs): Promise<ActionResponse> => {
+    // Check if form authentication is supported
+    if (!configAuthSupportedForm()) {
+      throw redirect("/user/settings/system");
+    }
+
     const { request } = actionArgs;
     const { user } = authActionGetAuth(actionArgs);
     const formData = formStringData(await request.formData());
@@ -62,6 +77,7 @@ function changePasswordFieldsCreateEmpty(): ChangePasswordFields {
   };
 }
 
+// Rest of your component remains the same
 export default function Screen() {
   const actionData = useActionData<typeof action>();
   const errors = actionData?.errors || {};
@@ -71,7 +87,6 @@ export default function Screen() {
   const [newPassword, setNewPassword] = useState(data?.newPassword || "");
   const [confirmPassword, setConfirmPassword] = useState(data?.confirmPassword || "");
 
-  // Function to check if all form fields are valid
   const isFormValid = () => {
     const hasUppercase = /[A-Z]/.test(newPassword);
     const hasLowercase = /[a-z]/.test(newPassword);
@@ -91,7 +106,6 @@ export default function Screen() {
     );
   };
 
-  // Update button disabled state when form fields change
   useEffect(() => {
     const submitButton = document.querySelector("button[type='submit']") as HTMLButtonElement;
     if (submitButton) {
