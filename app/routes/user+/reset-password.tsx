@@ -2,8 +2,10 @@ import { MainContainer } from "~/frontend/container";
 import {
 	LoaderFunctionArgs,
 	ActionFunctionArgs,
+	redirect,
 } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
+import { configAuthSupportedForm } from "~/util/config";
 import {
 	Form,
 	Field,
@@ -26,6 +28,11 @@ function getData(request: Request) {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+	// Check if form authentication is supported
+	if (!configAuthSupportedForm()) {
+		return redirect("/user/login");
+	}
+
 	const { token, email } = getData(request);
 	if (!token || !email) {
 		return { error: "Invalid password reset link" };
@@ -39,6 +46,11 @@ interface FormData {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+	// Check if form authentication is supported
+	if (!configAuthSupportedForm()) {
+		return redirect("/user/login");
+	}
+
 	const { token, email } = getData(request);
 	const formData = formStringData(await request.formData());
 	const data: FormData = {
@@ -55,11 +67,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	if (!res.ok) {
 		return { ok: false, data, errors: res.errors };
 	}
-  return redirectWithMessage(request, "/user/login", {
-      type: "info",
-      text: "Password changed successfully!"
-    });
-	// return redirect("/user/login");
+	return redirectWithMessage(request, "/user/login", {
+		type: "info",
+		text: "Password changed successfully!"
+	});
 };
 
 export default function Screen() {
