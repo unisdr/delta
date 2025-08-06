@@ -1,5 +1,6 @@
-import { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
+import { configAuthSupportedForm } from "~/util/config";
 import {
 	Form,
 	Field,
@@ -23,7 +24,21 @@ interface FormFields {
 	email: string;
 }
 
+// Add loader to check if form auth is supported
+export const loader = async ({ }: LoaderFunctionArgs) => {
+	// If form authentication is not supported, redirect to login
+	if (!configAuthSupportedForm()) {
+		return redirect("/user/login");
+	}
+	return null;
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
+	// Check if form authentication is supported
+	if (!configAuthSupportedForm()) {
+		return redirect("/user/login");
+	}
+
 	const formData = formStringData(await request.formData());
 	let data: FormFields = {
 		email: formData.email || "",
@@ -40,7 +55,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return { data, errors };
 	}
 
-	
 	// do not show an error message if the email is not found in the database
 	const resetToken = randomBytes(32).toString("hex");
 	await resetPasswordSilentIfNotFound(data.email, resetToken);
@@ -98,10 +112,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	});
 };
 
-export const loader = async () => {
-	return null;
-};
-
 export const meta: MetaFunction = () => {
 	return [
 		{ title: "Forgot Password - DTS" },
@@ -109,21 +119,18 @@ export const meta: MetaFunction = () => {
 	];
 };
 
+
 export default function Screen() {
-	
 	const actionData = useActionData<typeof action>();
 	const errors = actionData?.errors;
-	// const data = actionData?.data;
-	
+
 	useEffect(() => {
 		if (actionData?.status === "error" && actionData.errors?.fields?.email) {
-			// Show toast with the error message
 			toast.error(actionData.errors.fields.email[0]);
 		}
 	}, [actionData]);
 
 	useEffect(() => {
-		// Submit button enabling only when required fields are filled
 		const submitButton = document.querySelector(
 			"[id='reset-password-button']"
 		) as HTMLButtonElement;
@@ -166,11 +173,6 @@ export default function Screen() {
 							</div>
 							<div className="dts-form__body" style={{ marginBottom: "2px" }}>
 								<p style={{ marginBottom: "2px" }}>*Required information</p>
-								{/* {data?.email ? (
-									<FormMessage>
-										<p>Password reminder sent to {data.email}</p>
-									</FormMessage>
-								) : null} */}
 
 								<Field label="">
 									<input
@@ -180,14 +182,14 @@ export default function Screen() {
 										placeholder="*E-mail address"
 										required
 										style={{
-											padding: "10px 20px", // Increased padding for larger height
-											fontSize: "16px", // Larger font size
+											padding: "10px 20px",
+											fontSize: "16px",
 											width: "100%",
 											borderRadius: "4px",
 											border: errors?.fields?.email
 												? "1px solid red"
-												: "1px solid #ccc", // Ensures border consistency
-											boxSizing: "border-box", // Ensures padding does not affect the width
+												: "1px solid #ccc",
+											boxSizing: "border-box",
 										}}
 									></input>
 									{errors?.fields?.email && (
