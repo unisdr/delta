@@ -15,7 +15,7 @@ import {
 	FormResponse,
 	SubmitButton
 } from "~/frontend/form";
-import { ValidRoles } from "~/frontend/user/roles";
+import { getCountryRoles } from "~/frontend/user/roles";
 
 import {
 	authActionWithPerm,
@@ -44,7 +44,7 @@ export const loader = authLoaderWithPerm("InviteUsers", async ({ request }) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	if(!countryAccountsId){
+	if (!countryAccountsId) {
 		throw new Response("Unauthorized. No instance seleted.", { status: 401 });
 	}
 
@@ -64,10 +64,10 @@ type ErrorsType = {
 export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const { request } = actionArgs;
 	const url = new URL(request.url);
-  	const baseUrl = `${url.protocol}//${url.host}`;
+	const baseUrl = `${url.protocol}//${url.host}`;
 
 	const settings = await getCountrySettingsFromSession(request);
-	const siteName= settings.websiteName;
+	const siteName = settings.websiteName;
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request)
 
@@ -133,7 +133,7 @@ export default function Screen() {
 
 	const [selectedRole, setSelectedRole] = useState(fields.role || "");
 
-	const roleDesc = ValidRoles.find((role) => role.id === selectedRole)?.desc || "";
+	const roleDesc = getCountryRoles().find((role) => role.id === selectedRole)?.desc || "";
 
 	return (
 		<MainContainer title="Add User">
@@ -302,7 +302,7 @@ export default function Screen() {
 								aria-describedby={errors.fields.role ? "roleError" : undefined}
 							>
 								<option value="">select role</option>
-								{ValidRoles.map((role) => (
+								{getCountryRoles().map((role) => (
 									<option key={role.id} value={role.id}>
 										{role.label}
 									</option>
