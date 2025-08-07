@@ -13,7 +13,7 @@ import {
 	DisasterRecordsFields,
 } from "~/backend.server/models/disaster_record";
 
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData, Link, redirect } from "@remix-run/react";
 
 import {
 	fieldsDef,
@@ -45,17 +45,13 @@ import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { request, params } = loaderArgs;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-
+	if (!countryAccountsId) {
+		throw redirect("Unauthorized access", { status: 401 });
+	}
 	if (!params.id) {
 		throw "Route does not have $id param";
 	}
-	const item = await disasterRecordsById(params.id);
-	if (!item || item.countryAccountsId !== countryAccountsId) {
-		throw new Response("Not Found", { status: 404 });
-	}
-	if (item.countryAccountsId !== countryAccountsId) {
-		throw new Response("Unauthorized access", { status: 401 });
-	}
+	
 
 	const initializeNewTreeView = async (): Promise<any[]> => {
 		const idKey = "id";
@@ -109,6 +105,11 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		};
 	}
 
+	const item = await disasterRecordsById(params.id);
+	if (!item || item.countryAccountsId !== countryAccountsId) {
+		throw new Response("Not Found", { status: 404 });
+	}
+	
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
 	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
 	const dbDisRecHumanEffects = await getHumanEffectRecordsById(
