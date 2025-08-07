@@ -4,7 +4,7 @@ import {
 	LoaderFunction,
 	redirect,
 } from "@remix-run/server-runtime";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Form, useLoaderData } from "@remix-run/react";
 import { LoaderFunctionArgs } from "@remix-run/server-runtime";
 
@@ -29,6 +29,7 @@ import {
 } from "~/drizzle/schema";
 import Tag from "~/components/Tag";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
+import { Toast, ToastRef } from "~/components/Toast";
 
 type LoaderDataType = SelectUserCountryAccounts & {
 	countryAccount: Partial<SelectCountryAccounts> & {
@@ -120,6 +121,7 @@ export default function SelectInstance() {
 	const { data } = useLoaderData<typeof loader>();
 	const [selectedCountryAccounts, setSelectedCountryAccounts] =
 		useState<LoaderDataType | null>(null);
+	const toast = useRef<ToastRef>(null);
 
 	const countryTemplate = (option: LoaderDataType) => {
 		const iso3 = /*option.countryAccount.country.iso3?.toLowerCase() ??*/ "NLD";
@@ -149,9 +151,7 @@ export default function SelectInstance() {
 						<span style={{ fontWeight: "500" }}>
 							{option.countryAccount.country.name}
 						</span>
-						<small>
-							{option.countryAccount.shortDescription}
-						</small>
+						<small>{option.countryAccount.shortDescription}</small>
 					</div>
 				</div>
 
@@ -182,7 +182,23 @@ export default function SelectInstance() {
 	return (
 		<MainContainer title="Select an instance" headerExtra={<NavSettings />}>
 			<>
-				<Form className="dts-form" method="POST">
+				<div className="card flex justify-content-center">
+					<Toast ref={toast} />
+				</div>
+				<Form
+					method="POST"
+					className="dts-form"
+					onSubmit={(e) => {
+						if (!selectedCountryAccounts) {
+							e.preventDefault();
+							toast.current?.show({
+								severity: "error",
+								summary: "Error",
+								detail: "Select an instance first.",
+							});
+						}
+					}}
+				>
 					<div className="dts-form__intro">
 						<h2 className="dts-heading-2">
 							We found {data.length} instance(s) associated with your email ID.
