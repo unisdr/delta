@@ -125,3 +125,7 @@ export function isSuperAdmin(role: RoleId | string | null): boolean {
 	return role === "super_admin";
 }
 
+// Get roles excluding super_admin for country-specific user management
+export function getCountryRoles() {
+	return ValidRoles.filter(role => role.id !== 'super_admin');
+}

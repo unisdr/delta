@@ -11,7 +11,7 @@ import {
 	SubmitButton,
 	FormResponse,
 } from "~/frontend/form";
-import { ValidRoles } from "~/frontend/user/roles";
+import { getCountryRoles } from "~/frontend/user/roles";
 import { authLoaderWithPerm, authActionWithPerm } from "~/util/auth";
 import { formStringData } from "~/util/httputil";
 import { MainContainer } from "~/frontend/container";
@@ -47,7 +47,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 	const countryAccountsId = session.get("countryAccountsId")
 
 	const item = await getUserCountryAccountsByUserIdAndCountryAccountsId(Number(id), countryAccountsId);
@@ -81,15 +81,15 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 		throw new Response("Missing ID", { status: 400 });
 	}
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
+	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
 	const countryAccountsId = session.get("countryAccountsId")
 
 	if (!countryAccountsId) {
 		throw new Response("Unauthorized - No tenant context", { status: 401 });
 	}
-	
-	const userCountryAccounts = await getUserCountryAccountsByUserIdAndCountryAccountsId(id,countryAccountsId)
-	if(!userCountryAccounts){
+
+	const userCountryAccounts = await getUserCountryAccountsByUserIdAndCountryAccountsId(id, countryAccountsId)
+	if (!userCountryAccounts) {
 		throw new Response("Unauthorized Access", { status: 401 });
 	}
 
@@ -100,8 +100,8 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 	}
 
 	const formData = formStringData(await request.formData());
-	console.log("formData",formData)
-	
+	console.log("formData", formData)
+
 	const updatedData = adminUpdateUserFieldsFromMap(formData);
 	console.log("updatedData", updatedData)
 
@@ -252,9 +252,8 @@ export default function Screen() {
 							}}
 						>
 							<span
-								className={`status-dot ${
-									fields.activated ? "activated" : "pending"
-								}`}
+								className={`status-dot ${fields.activated ? "activated" : "pending"
+									}`}
 								style={{
 									height: "10px",
 									width: "10px",
@@ -445,7 +444,7 @@ export default function Screen() {
 									<option value="" disabled>
 										Select a role
 									</option>
-									{ValidRoles.map((role) => (
+									{getCountryRoles().map((role) => (
 										<option key={role.id} value={role.id}>
 											{role.label}
 										</option>
@@ -513,7 +512,7 @@ export default function Screen() {
 					}
 					confirmButtonFirst={false}
 					confirmMessage="This data cannot be recovered after being deleted."
-          title="Are you sure you want to delete this user?"
+					title="Are you sure you want to delete this user?"
 					onConfirm={handleConfirmDelete}
 					onCancel={handleCancelDelete}
 				/>
