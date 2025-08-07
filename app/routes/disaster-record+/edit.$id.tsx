@@ -109,7 +109,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!item || item.countryAccountsId !== countryAccountsId) {
 		throw new Response("Not Found", { status: 404 });
 	}
-	
+
 	const dbNonecoLosses = await nonecoLossesFilderBydisasterRecordsId(params.id);
 	const dbDisRecSectors = await sectorsFilderBydisasterRecordsId(params.id);
 	const dbDisRecHumanEffects = await getHumanEffectRecordsById(
@@ -153,12 +153,11 @@ export const action = authActionWithPerm(
 	"EditData",
 	async (args: ActionFunctionArgs) => {
 		const { request } = args;
-		const countryAccountsId = await getCountrySettingsFromSession(request);
+		const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 		const updateWithTenant = async (tx: any, id: string, fields: any) => {
 			return disasterRecordsUpdate(tx, id, fields, countryAccountsId);
 		};
-
 		const getByIdWithTenant = async (tx: any, id: string) => {
 			const record = await disasterRecordsByIdTx(tx, id);
 			if (!record) {
@@ -168,7 +167,6 @@ export const action = authActionWithPerm(
 			}
 			return record;
 		};
-
 		// Use the createAction function with our tenant-aware wrappers
 		const actionHandler = createOrUpdateAction<DisasterRecordsFields>({
 			fieldsDef,
@@ -184,35 +182,35 @@ export const action = authActionWithPerm(
 			postProcess: async (id, data) => {
 				// Ensure attachments is an array, even if it's undefined or empty
 				const attachmentsArray = Array.isArray(data?.attachments)
-					? data.attachments
-					: [];
-
+				? data.attachments
+				: [];
+				
 				const save_path = `/uploads/disaster-record/${id}`;
 				const save_path_temp = `/uploads/temp`;
-
+				
 				// Process the attachments data
 				const processedAttachments = ContentRepeaterUploadFile.save(
 					attachmentsArray,
 					save_path_temp,
 					save_path
 				);
-
+				
 				// Update the `attachments` field in the database
 				await dr
-					.update(disasterRecordsTable)
-					.set({
-						attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
-					})
+				.update(disasterRecordsTable)
+				.set({
+					attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+				})
 					.where(eq(disasterRecordsTable.id, id));
-			},
-			countryAccountsId,
-		});
+				},
+				countryAccountsId,
+			});
 
-		return actionHandler(args);
-	}
-);
-
-export default function Screen() {
+			return actionHandler(args);
+		}
+	);
+	
+	export default function Screen() {
 	const ld = useLoaderData<typeof loader>();
 
 	return (
