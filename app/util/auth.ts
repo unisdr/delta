@@ -238,12 +238,11 @@ export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
 		if (!userSession) {
 			return await fn(args);
 		}
-
+		
 		const userRole = await getEffectiveUserRole(args.request);
 		if (!roleHasPermission(userRole, permission)) {
 			throw new Response("Forbidden", { status: 403 });
-		}
-
+		}		
 		// Create extended args with proper typing
 		const extendedArgs: CustomLoaderArgs = {
 			...args,

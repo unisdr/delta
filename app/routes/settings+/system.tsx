@@ -53,7 +53,10 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 		const countryAccount = await getCountryAccountById(
 			countryAccountsId
 		);
-		const country = await getCountryById(countryAccount?.country.id);
+		let country = null;
+		if(countryAccount){
+			country = await getCountryById(countryAccount.countryId);
+		}
 		const dtsSystemInfo = await getSystemInfo();
 
 		let currencies: string[] = [];

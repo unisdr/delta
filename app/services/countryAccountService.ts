@@ -7,7 +7,7 @@ import { getCountryById } from "~/db/queries/countries";
 import {
 	countryAccountWithTypeExists,
 	createCountryAccount,
-	getCountryAccountById,
+	getCountryAccountWithCountryById,
 	updateCountryAccount,
 } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
@@ -141,7 +141,7 @@ export async function updateCountryAccountStatusService(
 	status: number,
 	shortDescription: string,
 ) {
-	const countryAccount = await getCountryAccountById(id);
+	const countryAccount = await getCountryAccountWithCountryById(id);
 	if (!countryAccount) {
 		throw new CountryAccountValidationError([
 			`Country accounts id:${id} does not exist`,

@@ -1065,10 +1065,6 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	validatedBy: text("validated_by").notNull().default(""),
 	checkedBy: text("checked_by"),
 	dataCollector: text("data_collector"),
-	// sectorId: ourBigint("sector_id") // Link to the sector involved
-	// 	.references((): AnyPgColumn => sectorTable.id),
-	// sectorName: text("sector_name"), // Direct name of the sector involved
-	// subSector: text("sub_sector"), // Sub-sector detail
 	legacyData: jsonb("legacy_data"),
 	spatialFootprint: jsonb("spatial_footprint"),
 	attachments: jsonb("attachments"),
@@ -1206,19 +1202,16 @@ export const nonecoLossesCategory_Rel = relations(
 // sectorname": Agriculture,
 // subsector: Crops
 // description: The cultivation and harvesting of plants for food, fiber, and other products.
-export const sectorTable = pgTable(
-	"sector",
-	{
-		id: ourSerial("id").primaryKey(), // Unique sector ID
-		parentId: ourBigint("parent_id").references(
-			(): AnyPgColumn => sectorTable.id
-		), // Reference to parent sector
-		sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
-		description: text("description"), // Optional description for the sector | Additional details about the sector
-		level: ourBigint("level").notNull().default(1), // value is parent level + 1 otherwise 1
-		...createdUpdatedTimestamps,
-	}
-);
+export const sectorTable = pgTable("sector", {
+	id: ourSerial("id").primaryKey(), // Unique sector ID
+	parentId: ourBigint("parent_id").references(
+		(): AnyPgColumn => sectorTable.id
+	), // Reference to parent sector
+	sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
+	description: text("description"), // Optional description for the sector | Additional details about the sector
+	level: ourBigint("level").notNull().default(1), // value is parent level + 1 otherwise 1
+	...createdUpdatedTimestamps,
+});
 
 export const sectoryParent_Rel = relations(sectorTable, ({ one }) => ({
 	sectorParent: one(sectorTable, {
@@ -1449,6 +1442,7 @@ export type InsertUserCountryAccounts = typeof userCountryAccounts.$inferInsert;
 export type SelectUserCountryAccountsWithUser = SelectUserCountryAccounts & {
 	user: SelectUser;
 };
+
 export type SelectUserCountryAccountsWithUserAndCountryAccounts =
 	SelectUserCountryAccounts & {
 		user: SelectUser;

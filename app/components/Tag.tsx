@@ -1,5 +1,5 @@
 interface TagProps {
-	value: string;
+	value: string | undefined;
 	severity?: "info" | "warning";
 }
 
@@ -12,6 +12,7 @@ const Tag = ({ value, severity = "info" }: TagProps) => {
 		fontWeight: 500,
 		fontSize: "1.2rem",
 		textAlign: "center",
+		margin:"2px"
 	};
 	const style: React.CSSProperties = {
 		...baseStyle,

@@ -24,7 +24,7 @@ import {
 import { login } from "~/backend.server/models/user/auth";
 import { configAuthSupportedAzureSSOB2C } from "~/util/config";
 import PasswordInput from "~/components/PasswordInput";
-import { getCountryAccountById } from "~/db/queries/countryAccounts";
+import { getCountryAccountWithCountryById } from "~/db/queries/countryAccounts";
 import { countryAccountStatuses } from "~/drizzle/schema";
 import Messages from "~/components/Messages";
 import { getUserCountryAccountsByUserId } from "~/db/queries/userCountryAccounts";
@@ -65,7 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	// Check if user's country accounts is inactive, then show error message and redirect to login
 	const countryAccountId = res.countryAccountId;
 	if (countryAccountId) {
-		const countryAccount = await getCountryAccountById(countryAccountId);
+		const countryAccount = await getCountryAccountWithCountryById(countryAccountId);
 		if (
 			countryAccount &&
 			countryAccount.status === countryAccountStatuses.INACTIVE
@@ -106,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			headers: { "Set-Cookie": setCookie },
 		});
 	} else if (userCountryAccounts && userCountryAccounts.length > 1) {
-		return redirect("/select-instance", { headers: headerSession });
+		return redirect("/user/select-instance", { headers: headerSession });
 	}
 	return redirect(redirectTo, { headers: headerSession });
 };

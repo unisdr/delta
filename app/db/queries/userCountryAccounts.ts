@@ -9,7 +9,7 @@ import { dr, Tx } from "~/db.server";
 
 export async function getUserCountryAccountsByUserId(
 	userId: number
-): Promise<SelectUserCountryAccounts[] | null> {
+): Promise<SelectUserCountryAccounts[]> {
 	return await dr
 		.select()
 		.from(userCountryAccounts)
@@ -127,10 +127,7 @@ export async function getUserCountryAccountsByUserIdAndCountryAccountsId(
 	const result = await db
 		.select()
 		.from(userCountryAccounts)
-		.innerJoin(
-			userTable,
-			eq(userTable.id, userCountryAccounts.userId)
-		)
+		.innerJoin(userTable, eq(userTable.id, userCountryAccounts.userId))
 		.where(
 			and(
 				eq(userTable.id, userId),

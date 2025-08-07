@@ -2,6 +2,15 @@ import { countryAccounts, userCountryAccounts } from "../../drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { dr, Tx } from "~/db.server";
 
+export async function getCountryAccountById(id: string) {
+	if (!id || typeof id !== "string") return null;
+	const [countryAccount] = await dr
+		.select()
+		.from(countryAccounts)
+		.where(eq(countryAccounts.id, id));
+	return countryAccount || null;
+}
+
 export async function getCountryAccountsWithUserCountryAccountsAndUser() {
 	return await dr.query.countryAccounts.findMany({
 		with: {
@@ -29,7 +38,7 @@ export type CountryAccountWithCountryAndPrimaryAdminUser = Awaited<
 	ReturnType<typeof getCountryAccountsWithUserCountryAccountsAndUser>
 >[number];
 
-export async function getCountryAccountById(id: string) {
+export async function getCountryAccountWithCountryById(id: string) {
 	const result = await dr.query.countryAccounts.findFirst({
 		where: (account, { eq }) => eq(account.id, id),
 		with: {
