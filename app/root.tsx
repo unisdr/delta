@@ -33,6 +33,8 @@ import { Footer } from "~/frontend/footer/footer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { notifyError, notifyInfo } from "./frontend/utils/notifications";
 
+import { configAuthSupportedForm } from "~/util/config";
+
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250530" },
 	{ rel: "stylesheet", href: allStylesHref },
@@ -46,6 +48,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 	const message = getFlashMessage(session);
 	const userRole = session.get("userRole");
+	const isFormAuthSupported = configAuthSupportedForm();
 
 	// Determine if this is a super admin session and on an admin route
 	const url = new URL(request.url);
@@ -84,6 +87,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			loggedIn: !!user || (!!superAdminSession && isAdminRoute),
 			userRole: effectiveUserRole || "",
 			isSuperAdmin: isSuperAdmin,
+			isFormAuthSupported: isFormAuthSupported,
 			flashMessage: message,
 			confSiteName: websiteName,
 			confSiteLogo: websiteLogo,
@@ -226,6 +230,7 @@ export default function Screen() {
 		confFooterURLTermsConds,
 		userRole,
 		isSuperAdmin,
+		isFormAuthSupported,
 	} = loaderData;
 	let boolShowHeaderFooter: boolean = true;
 	const matches = useMatches();
@@ -300,6 +305,7 @@ export default function Screen() {
 										siteName={confSiteName}
 										siteLogo={confSiteLogo}
 										isSuperAdmin={isSuperAdmin}
+										isFormAuthSupported={isFormAuthSupported}
 									/>
 								</div>
 							</header>

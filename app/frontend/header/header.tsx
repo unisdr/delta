@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-
 import { MegaMenu } from "~/frontend/megamenu2/megamenu";
-
 import { Lvl1Item } from "~/frontend/megamenu2/common";
 
 interface HeaderProps {
@@ -9,7 +7,8 @@ interface HeaderProps {
   siteName: string;
   siteLogo: string;
   userRole: string;
-  isSuperAdmin?: boolean; // Add this prop
+  isSuperAdmin?: boolean;
+  isFormAuthSupported?: boolean;
 }
 
 interface LogoProps {
@@ -25,7 +24,14 @@ const LogoComponent = ({ src, alt }: LogoProps) => {
   }
 };
 
-export function Header({ loggedIn, siteName, siteLogo, userRole, isSuperAdmin = false }: HeaderProps) {
+export function Header({
+  loggedIn,
+  siteName,
+  siteLogo,
+  userRole,
+  isSuperAdmin = false,
+  isFormAuthSupported = true // Default to true for backward compatibility
+}: HeaderProps) {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -35,9 +41,9 @@ export function Header({ loggedIn, siteName, siteLogo, userRole, isSuperAdmin = 
   let navItems = navItemsNotLoggedIn(userRole);
   if (loggedIn) {
     if (isSuperAdmin) {
-      navItems = navItemsSuperAdmin(); // Super admin gets special nav
+      navItems = navItemsSuperAdmin();
     } else {
-      navItems = navItemsLoggedIn(userRole);
+      navItems = navItemsLoggedIn(userRole, isFormAuthSupported);
     }
   }
 
@@ -139,7 +145,6 @@ function navItemsNotLoggedIn(_userRole: string): Lvl1Item[] {
   ];
 }
 
-// Function for super admin navigation - only shows logout and country accounts management
 function navItemsSuperAdmin(): Lvl1Item[] {
   return [
     {
@@ -171,7 +176,18 @@ function navItemsSuperAdmin(): Lvl1Item[] {
   ];
 }
 
-function navItemsLoggedIn(userRole: string): Lvl1Item[] {
+function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1Item[] {
+  // Build the "Your profile" lvl4 items conditionally
+  const yourProfileItems = [];
+
+  // Only add "Change password" if form auth is supported
+  if (isFormAuthSupported) {
+    yourProfileItems.push({ name: "Change password", link: "/user/change-password" });
+  }
+
+  // Always add TOTP option
+  yourProfileItems.push({ name: "TOTP (2FA)", link: "/user/totp-enable" });
+
   return [
     {
       name: "Data",
@@ -275,10 +291,7 @@ function navItemsLoggedIn(userRole: string): Lvl1Item[] {
             },
             {
               title: "Your profile",
-              lvl4: [
-                { name: "Change password", link: "/user/change-password" },
-                { name: "TOTP (2FA)", link: "/user/totp-enable" },
-              ],
+              lvl4: yourProfileItems, // Use the conditionally built array
             },
           ],
         },
@@ -288,8 +301,12 @@ function navItemsLoggedIn(userRole: string): Lvl1Item[] {
           lvl3: [
             {
               title: "Account",
-              lvl4: [
-                { name: "Change Password", link: "#" },
+              lvl4: isFormAuthSupported ? [
+                // Only show password-related options if form auth is supported
+                { name: "Change Password", link: "/user/change-password" },
+                { name: "Change Email", link: "#" },
+              ] : [
+                // Only show non-password options when form auth is disabled
                 { name: "Change Email", link: "#" },
               ],
             },
