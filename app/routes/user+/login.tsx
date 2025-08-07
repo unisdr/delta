@@ -19,11 +19,12 @@ import {
 	getUserFromSession,
 	createUserSession,
 	sessionCookie,
+	getCountryAccountsIdFromSession,
 } from "~/util/session";
 import { login } from "~/backend.server/models/user/auth";
 import {
 	configAuthSupportedAzureSSOB2C,
-	configAuthSupportedForm
+	configAuthSupportedForm,
 } from "~/util/config";
 import PasswordInput from "~/components/PasswordInput";
 import { getCountryAccountWithCountryById } from "~/db/queries/countryAccounts";
@@ -44,8 +45,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			{
 				data: {},
 				errors: {
-					general: ["Form-based authentication is not available. Please use SSO."]
-				}
+					general: [
+						"Form-based authentication is not available. Please use SSO.",
+					],
+				},
 			},
 			{ status: 400 }
 		);
@@ -81,7 +84,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	// Check if user's country accounts is inactive, then show error message and redirect to login
 	const countryAccountId = res.countryAccountId;
 	if (countryAccountId) {
-		const countryAccount = await getCountryAccountWithCountryById(countryAccountId);
+		const countryAccount = await getCountryAccountWithCountryById(
+			countryAccountId
+		);
 		if (
 			countryAccount &&
 			countryAccount.status === countryAccountStatuses.INACTIVE
@@ -135,6 +140,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	redirectTo = getSafeRedirectTo(redirectTo);
 
 	if (user) {
+		const userCountryAccounts = await getUserCountryAccountsByUserId(
+			user.user.id
+		);
+		if (userCountryAccounts.length > 1) {
+			const countryAccountsId = await getCountryAccountsIdFromSession(request);
+			if (countryAccountsId) {
+				return redirect(redirectTo);
+			}else{
+				return redirect("/user/select-instance")
+			}
+		}
 		return redirect(redirectTo);
 	}
 
@@ -143,7 +159,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	// If no authentication methods are configured, show error
 	if (!isFormAuthSupported && !isSSOAuthSupported) {
-		throw new Error('No authentication methods configured. Please check AUTHENTICATION_SUPPORTED environment variable.');
+		throw new Error(
+			"No authentication methods configured. Please check AUTHENTICATION_SUPPORTED environment variable."
+		);
 	}
 
 	return {
@@ -203,7 +221,9 @@ export default function Screen() {
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
 								<h2 className="dts-heading-1">Sign in</h2>
-								<p>Use your organization's Single Sign-On to access your account.</p>
+								<p>
+									Use your organization's Single Sign-On to access your account.
+								</p>
 							</div>
 							<div
 								className="dts-dialog__form-actions"
@@ -419,27 +439,33 @@ export default function Screen() {
 								/>
 
 								{/* Divider */}
-								<div style={{
-									width: "100%",
-									textAlign: "center",
-									margin: "10px 0",
-									position: "relative"
-								}}>
-									<hr style={{
-										border: "none",
-										borderTop: "1px solid #ccc",
-										margin: "0"
-									}} />
-									<span style={{
-										position: "absolute",
-										top: "-10px",
-										left: "50%",
-										transform: "translateX(-50%)",
-										backgroundColor: "white",
-										padding: "0 15px",
-										color: "#666",
-										fontSize: "14px"
-									}}>
+								<div
+									style={{
+										width: "100%",
+										textAlign: "center",
+										margin: "10px 0",
+										position: "relative",
+									}}
+								>
+									<hr
+										style={{
+											border: "none",
+											borderTop: "1px solid #ccc",
+											margin: "0",
+										}}
+									/>
+									<span
+										style={{
+											position: "absolute",
+											top: "-10px",
+											left: "50%",
+											transform: "translateX(-50%)",
+											backgroundColor: "white",
+											padding: "0 15px",
+											color: "#666",
+											fontSize: "14px",
+										}}
+									>
 										OR
 									</span>
 								</div>
@@ -472,7 +498,10 @@ export default function Screen() {
 					<div className="dts-form dts-form--vertical">
 						<div className="dts-form__intro">
 							<h2 className="dts-heading-1">Authentication Not Available</h2>
-							<p>No valid authentication methods are configured. Please contact your system administrator.</p>
+							<p>
+								No valid authentication methods are configured. Please contact
+								your system administrator.
+							</p>
 						</div>
 					</div>
 				</div>
