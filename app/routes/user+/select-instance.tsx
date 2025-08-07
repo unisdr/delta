@@ -102,10 +102,12 @@ export const action: ActionFunction = async ({
 		request.headers.get("Cookie")
 	);
 
-	const countrySettings = await getInstanceSystemSettingsByCountryAccountId(countryAccountsId);
+	const countrySettings = await getInstanceSystemSettingsByCountryAccountId(
+		countryAccountsId
+	);
 
 	session.set("countryAccountsId", countryAccountsId);
-	session.set("userRole", userRole );
+	session.set("userRole", userRole);
 	session.set("countrySettings", countrySettings);
 	const setCookie = await sessionCookie().commitSession(session);
 
@@ -123,12 +125,18 @@ export default function SelectInstance() {
 		const iso3 = /*option.countryAccount.country.iso3?.toLowerCase() ??*/ "NLD";
 		const instanceType = option.countryAccount.type;
 		return (
-			<div className="flex align-items-center justify-between w-full">
-				<div className="flex align-items-center">
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					width: "100%",
+				}}
+			>
+				<div style={{ display: "flex", alignItems: "center" }}>
 					<img
 						alt={option.countryAccount.country.name}
 						src={`/assets/icons/${iso3}.svg`}
-						className="mr-2"
 						style={{ width: "18px", marginRight: "12px" }}
 					/>
 					<div
@@ -138,19 +146,33 @@ export default function SelectInstance() {
 							lineHeight: 1.2,
 						}}
 					>
-						<span className="font-medium">
+						<span style={{ fontWeight: "500" }}>
 							{option.countryAccount.country.name}
 						</span>
-						<small>{option.countryAccount.shortDescription}</small>
+						<small>
+							{option.countryAccount.shortDescription}
+						</small>
 					</div>
 				</div>
-				<div>
+
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "8px",
+					}}
+				>
 					<Tag severity="info" value={option.role} />
 					<Tag
 						value={instanceType}
 						severity={
 							instanceType === countryAccountTypes.OFFICIAL ? "info" : "warning"
 						}
+					/>
+					<img
+						alt="arrow"
+						src={`/assets/icons/arrow-right.svg`}
+						style={{ width: "24px" }}
 					/>
 				</div>
 			</div>
