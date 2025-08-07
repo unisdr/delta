@@ -16,14 +16,17 @@ import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
 import {
 	LoaderFunctionArgs,
+	redirect,
 } from "@remix-run/node";
 import { approvalStatusIds } from '~/frontend/approval';
-import { sessionCookie } from '~/util/session';
+import { getCountryAccountsIdFromSession } from '~/util/session';
 
 export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 	const { request } = args;
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	if(!countryAccountsId){
+		throw redirect("/user/select-instance");
+	}
 
 	const url = new URL(request.url);
 	const extraParams = ["hipHazardId", "hipClusterId", "hipTypeId", "search"]

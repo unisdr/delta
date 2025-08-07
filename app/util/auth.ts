@@ -15,6 +15,7 @@ import {
 	superAdminSessionCookie,
 	getSuperAdminSession,
 	UserSession,
+	getCountryAccountsIdFromSession,
 } from "~/util/session";
 
 import {
@@ -207,34 +208,20 @@ export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
 	permission: PermissionId,
 	fn: T
 ): T {
+	console.log("2")
 	const wrappedLoader = async (args: LoaderFunctionArgs) => {
-		let settings = await getCountrySettingsFromSession(args.request);
-
-		if (!settings) {
-			settings = {
-				id: null,
-				footerUrlPrivacyPolicy: null,
-				footerUrlTermsConditions: null,
-				adminSetupComplete: false,
-				websiteLogo: "/assets/country-instance-logo.png",
-				websiteName: "Disaster Tracking System",
-				approvedRecordsArePublic: false,
-				totpIssuer: "example-app",
-				dtsInstanceType: "country",
-				dtsInstanceCtryIso3: "USA",
-				currencyCodes: "USD",
-				countryName: "United State of America",
-				countryAccountsId: null,
-			};
+		const countryAccountsId = await getCountryAccountsIdFromSession(args.request);
+		if(!countryAccountsId){
+			throw redirect("/user/select-instance")
 		}
-
+		let settings = await getCountrySettingsFromSession(args.request);
 		if (!settings.approvedRecordsArePublic) {
 			const authLoader = authLoaderWithPerm(permission, fn);
 			return await authLoader(args);
 		}
-
+		
 		const userSession = await optionalUser(args.request);
-
+		
 		if (!userSession) {
 			return await fn(args);
 		}
