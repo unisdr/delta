@@ -30,7 +30,7 @@ import DTSMap from "~/frontend/dtsmap/dtsmap";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
@@ -39,8 +39,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Response("Missing item ID", { status: 400 });
 	}
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const res = await dr.select().from(divisionTable).where(
 		and(

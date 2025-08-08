@@ -16,7 +16,7 @@ import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
-import { getCountrySettingsFromSession, sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 import { getImpactOnSector } from "~/backend.server/handlers/analytics/ImpactonSectors";
 import { handleGeographicImpactQuery } from "~/backend.server/handlers/analytics/geographicImpact";
 import { getHazardImpact } from "~/backend.server/handlers/analytics/hazardImpact";
@@ -99,8 +99,7 @@ export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
 	async (loaderArgs: any) => {
 		const { request } = loaderArgs;
-		const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-		const countryAccountsId = session.get("countryAccountsId")
+		const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 		// TEMPORARY RESTRICTION: Redirect unauthenticated users to unauthorized page
 		// This is a temporary measure until business rules for public access are defined

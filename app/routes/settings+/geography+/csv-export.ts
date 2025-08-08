@@ -3,14 +3,13 @@ import { dr } from "~/db.server";
 import { asc, eq } from "drizzle-orm";
 import { authLoaderWithPerm } from "~/util/auth";
 import { stringifyCSV } from "~/util/csv";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 // Create a custom loader that enforces tenant isolation
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const { request } = loaderArgs;
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	// Get divisions with tenant filtering
 	let rows = await dr.query.divisionTable.findMany({

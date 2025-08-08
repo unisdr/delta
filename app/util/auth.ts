@@ -208,7 +208,6 @@ export function authLoaderPublicOrWithPerm<T extends LoaderFunction>(
 	permission: PermissionId,
 	fn: T
 ): T {
-	console.log("2")
 	const wrappedLoader = async (args: LoaderFunctionArgs) => {
 		const countryAccountsId = await getCountryAccountsIdFromSession(args.request);
 		if(!countryAccountsId){

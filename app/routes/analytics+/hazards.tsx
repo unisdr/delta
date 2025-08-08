@@ -39,7 +39,7 @@ import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
 import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
-import { getCountrySettingsFromSession, sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 // Define an interface for the structure of the JSON objects
 interface interfaceMap {
@@ -84,8 +84,7 @@ function getStringValue(value: FormDataEntryValue | null): string | null {
  */
 export const action = async (actionArgs: any) => {
 	const { request } = actionArgs;
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	
 	const formData = await request.formData();
 	const hazardTypeId = getStringValue(formData.get("hazardTypeId"));

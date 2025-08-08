@@ -15,7 +15,7 @@ import { getCountryRoles } from "~/frontend/user/roles";
 import { authLoaderWithPerm, authActionWithPerm } from "~/util/auth";
 import { formStringData } from "~/util/httputil";
 import { MainContainer } from "~/frontend/container";
-import { redirectWithMessage, sessionCookie, getUserFromSession } from "~/util/session";
+import { redirectWithMessage, sessionCookie, getUserFromSession, getCountryAccountsIdFromSession } from "~/util/session";
 import {
 	adminUpdateUser,
 	AdminUpdateUserFields,
@@ -47,8 +47,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const item = await getUserCountryAccountsByUserIdAndCountryAccountsId(Number(id), countryAccountsId);
 

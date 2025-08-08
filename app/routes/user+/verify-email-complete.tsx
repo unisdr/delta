@@ -19,7 +19,7 @@ import {processSectorCsv} from "~/backend.server/utils/sector";
 import {processCategoryCsv} from "~/backend.server/utils/category";
 import {processAssetCsv} from "~/backend.server/utils/asset";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
-import { getCountrySettingsFromSession, sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 export const meta: MetaFunction = (request) => {
 	// Extract the query string
@@ -55,8 +55,7 @@ export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
 	const { user } = authActionGetAuth(actionArgs);
 	const url = new URL(request.url);
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	
 	const settings= await getInstanceSystemSettingsByCountryAccountId(countryAccountsId);
 	if(!settings){

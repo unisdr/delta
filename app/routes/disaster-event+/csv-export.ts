@@ -12,13 +12,12 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import {
 	authLoaderWithPerm,
 } from "~/util/auth";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {request} = loaderArgs;
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const fetchDataWithTenant = async () => {
 		return dr.query.disasterEventTable.findMany({

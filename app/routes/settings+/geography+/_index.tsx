@@ -21,7 +21,7 @@ import "./style.css";
 import { DataMainLinks } from "~/frontend/data_screen";
 import { useState } from "react";
 import { buildTree, TreeView } from "~/components/TreeView";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 interface ItemRes {
 	id: number;
@@ -33,8 +33,7 @@ interface ItemRes {
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const { request } = loaderArgs;
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 
 	const url = new URL(request.url);

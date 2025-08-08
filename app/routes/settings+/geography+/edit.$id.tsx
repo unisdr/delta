@@ -29,7 +29,7 @@ import { formStringData } from "~/util/httputil";
 import { NavSettings } from "~/routes/settings/nav";
 
 import { MainContainer } from "~/frontend/container";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
@@ -42,8 +42,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const url = new URL(loaderArgs.request.url);
 	const viewParam = url.searchParams.get("view");
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const res = await dr.select().from(divisionTable).where(
 		and(
@@ -79,8 +78,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		throw new Response("Missing ID", { status: 400 });
 	}
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const formData = formStringData(await request.formData());
 	let recordDivision: any = {};
