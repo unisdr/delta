@@ -190,7 +190,12 @@ export function authLoaderWithPerm<T extends LoaderFunction>(
 		// For non-admin routes, continue with regular permission check
 		const userSession = await requireUser(args.request);
 		const userRole = await getUserRoleFromSession(args.request);
+		const countryAccountsId = await getCountryAccountsIdFromSession(args.request);
+		if(!countryAccountsId){
+			throw redirect("/user/select-instance")
+		}
 		if (!roleHasPermission(userRole, permission)) {
+			console.log("got here")
 			throw new Response("Forbidden", { status: 403 });
 		}
 		return fn({
