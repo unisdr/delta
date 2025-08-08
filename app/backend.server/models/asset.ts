@@ -1,6 +1,6 @@
 import { dr, Tx } from "~/db.server";
 import { assetTable, InsertAsset } from "~/drizzle/schema";
-import { eq, sql, inArray, and } from "drizzle-orm";
+import { eq, sql, inArray, and, or, asc } from "drizzle-orm";
 import {
 	CreateResult,
 	DeleteResult,
@@ -9,7 +9,7 @@ import {
 import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
 import { deleteByIdForStringId } from "./common";
 
-export interface AssetFields extends Omit<InsertAsset, "id"> {}
+export interface AssetFields extends Omit<InsertAsset, "id"> { }
 
 export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 	return [
@@ -164,30 +164,46 @@ export async function assetDeleteById(
 	return { ok: true };
 }
 
-export async function assetsForSector(tx: Tx, sectorId: number) {
-	let res1 = await tx.execute(sql`
+export async function assetsForSector(
+	tx: Tx,
+	sectorId: number,
+	countryAccountsId?: string
+) {
+	// Build sector lineage (selected sector + its ancestors)
+	const res1 = await tx.execute(sql`
 		WITH RECURSIVE sector_rec AS (
-    	SELECT id, parent_id
-      FROM sector
-      WHERE id = ${sectorId}
-      UNION ALL
-      SELECT s.id, s.parent_id
-      FROM sector s
-      JOIN sector_rec rec ON rec.parent_id = s.id
-    )
-    SELECT a.id
-    FROM asset a
-    WHERE EXISTS (
-      SELECT 1
-      FROM sector_rec s
+			SELECT id, parent_id
+			FROM sector
+			WHERE id = ${sectorId}
+			UNION ALL
+			SELECT s.id, s.parent_id
+			FROM sector s
+			JOIN sector_rec rec ON rec.parent_id = s.id
+		)
+		SELECT a.id
+		FROM asset a
+		WHERE EXISTS (
+			SELECT 1
+			FROM sector_rec s
 			WHERE s.id::text = ANY(string_to_array(a.sector_ids, ','))
-    )
+		)
 	`);
+
 	// if we switch to using array
 	// WHERE s.id = ANY(a.sector_ids)
-	let assetIds = res1.rows.map((r) => r.id as string);
-	let res = await tx.query.assetTable.findMany({
-		where: inArray(assetTable.id, assetIds),
+	const assetIds = res1.rows.map((r) => r.id as string);
+
+	// Base predicate: restrict to sector lineage
+	const basePredicate = inArray(assetTable.id, assetIds);
+
+	// Optional tenant filter: instance-owned OR built-in
+	const tenantPredicate = countryAccountsId
+		? or(eq(assetTable.countryAccountsId, countryAccountsId), eq(assetTable.isBuiltIn, true))
+		: undefined;
+
+	const res = await tx.query.assetTable.findMany({
+		where: tenantPredicate ? and(basePredicate, tenantPredicate) : basePredicate,
+		orderBy: [asc(assetTable.name)],
 	});
 	return res;
 }
