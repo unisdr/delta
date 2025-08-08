@@ -1,7 +1,7 @@
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
 import { contentPickerConfig, contentPickerConfigSector, contentPickerConfigCategory } from "./content-picker-config";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
     const { request } = loaderArgs;
@@ -22,12 +22,11 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
     const config = configMap[view] || contentPickerConfig;
 
     try {
-        const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
         let countryAccountsId = undefined;
         
         // Extract tenant context from user session (if available)
         if (loaderArgs.userSession) {
-            countryAccountsId = session.get("countryAccountsId")
+            countryAccountsId = await getCountryAccountsIdFromSession(request);
         }
 
         // Pass tenant context to fetchData and getTotalRecords

@@ -13,7 +13,7 @@ import { getSystemInfo, SystemInfo } from "~/db/queries/dtsSystemInfo";
 
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 import { SelectCountries, InstanceSystemSettings } from "~/drizzle/schema";
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
@@ -44,8 +44,7 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 	"ViewData",
 	async (loaderArgs) => {
 		const {request} = loaderArgs;
-		const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-		const countryAccountsId = session.get("countryAccountsId")
+		const countryAccountsId = await getCountryAccountsIdFromSession(request);
 		
 		const settings = await getInstanceSystemSettingsByCountryAccountId(
 			countryAccountsId

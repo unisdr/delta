@@ -5,7 +5,7 @@ import {
 import {
 	authLoaderWithPerm,
 } from "~/util/auth";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 import { deleteUserCountryAccountsByUserIdAndCountryAccountsId, getUserCountryAccountsByUserIdAndCountryAccountsId } from "~/db/queries/userCountryAccounts";
 
 export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
@@ -16,8 +16,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 		throw new Response("Missing item ID", { status: 400 });
 	}
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const userToDelete = await getUserCountryAccountsByUserIdAndCountryAccountsId(Number(id), countryAccountsId);
 

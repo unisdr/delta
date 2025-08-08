@@ -26,7 +26,7 @@ import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
 import { authActionGetAuth, authActionWithPerm, authLoaderGetUserForFrontend, authLoaderWithPerm } from "~/util/auth";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession, sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 // Helper function to get country ISO3 code
 async function getCountryIso3(request: Request): Promise<string> {
@@ -50,8 +50,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const {request} = actionArgs;
 	authActionGetAuth(actionArgs);
 
-	const sessoin = await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = sessoin.get("countryAccountsId");
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	return formSave({
 		actionArgs,

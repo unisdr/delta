@@ -13,7 +13,7 @@ import {
 	authLoaderWithPerm,
 	authLoaderGetAuth
 } from "~/util/auth";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const {request} = loaderArgs;
@@ -23,8 +23,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	// Create tenant-aware data fetcher
 	const fetchDataWithTenant = async () => {

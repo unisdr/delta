@@ -1,7 +1,7 @@
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { fetchData, getTotalRecords } from "~/components/ContentPicker/DataSource";
 import { contentPickerConfig } from "./content-picker-config";
-import { sessionCookie } from "~/util/session";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 
 
@@ -21,8 +21,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
     const config = configMap[view] || contentPickerConfig;
 
     // Extract tenant context from user session or use public tenant context if no user session
-    const session =  await sessionCookie().getSession(request.headers.get("Cookie"));
-    const countryAccountsId = session.get("countryAccountsId")
+    const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
     try {
         const results = await fetchData(config, searchQuery, page, limit, countryAccountsId);
