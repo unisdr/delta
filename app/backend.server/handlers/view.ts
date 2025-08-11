@@ -30,9 +30,7 @@ export async function getItemNumberId(
 
 export async function getItem2<T>(
 	params: Record<string, any>,
-	// q: (id: any, countryAccountsId: any) => T,
 	q: (id: any) => T,
-	// countryAccountsId: string
 ): Promise<T> {
 	const id = params["id"];
 
@@ -40,7 +38,6 @@ export async function getItem2<T>(
 		throw new Response("Missing item ID", { status: 400 });
 	}
 
-	// const res = await q(id, countryAccountsId);
 	const res = await q(id);
 
 	if (!res) {
