@@ -22,9 +22,6 @@ import {useLoaderData} from "@remix-run/react";
 import {disasterEventTable} from "~/drizzle/schema";
 
 import {authLoaderGetUserForFrontend, authLoaderWithPerm} from "~/util/auth";
-import {buildTree} from "~/components/TreeView";
-import {dr} from "~/db.server"; // Drizzle ORM instance
-import {divisionTable} from "~/drizzle/schema";
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
 // export const loader = createLoader({
@@ -47,29 +44,29 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const baseData = await createLoader({getById: disasterEventById})(loaderArgs);
 
 	// ✅ Fetch division data & build tree
-	const idKey = "id";
-	const parentKey = "parentId";
-	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
+	// const idKey = "id";
+	// const parentKey = "parentId";
+	// const nameKey = "name";
+	// const rawData = await dr.select().from(divisionTable);
+	// const treeData = buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
 
 	let user = authLoaderGetUserForFrontend(loaderArgs)
 	let hip = await dataForHazardPicker()
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
-    const divisionGeoJSON = await dr.execute(`
-		SELECT id, name, geojson
-		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
-    `);
+    // const divisionGeoJSON = await dr.execute(`
+	// 	SELECT id, name, geojson
+	// 	FROM division
+	// 	WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+    // `);
 
 	return {
 		...baseData,
 		hip,
-		treeData,
+		treeData: [],
 		ctryIso3,
-		divisionGeoJSON: divisionGeoJSON?.rows,
+		divisionGeoJSON: [],
 		user
 	};
 });

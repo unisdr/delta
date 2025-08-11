@@ -34,9 +34,7 @@ import {
 import {getTableName, eq} from "drizzle-orm";
 import {disasterRecordsTable} from "~/drizzle/schema";
 
-import {buildTree} from "~/components/TreeView";
 import {dr} from "~/db.server"; // Drizzle ORM instance
-import {divisionTable} from "~/drizzle/schema";
 import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 
 import {contentPickerConfig} from "./content-picker-config";
@@ -51,26 +49,26 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw "Route does not have $id param";
 	}
 
-	const initializeNewTreeView = async (): Promise<any[]> => {
-		const idKey = "id";
-		const parentKey = "parentId";
-		const nameKey = "name";
-		const rawData = await dr.select().from(divisionTable);
-		return buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
-	};
+	// const initializeNewTreeView = async (): Promise<any[]> => {
+	// 	const idKey = "id";
+	// 	const parentKey = "parentId";
+	// 	const nameKey = "name";
+   	//     const rawData = await dr.select().from(divisionTable);
+	// 	return buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
+	// };
 
 	const hip = await dataForHazardPicker();
 
 	let user = authLoaderGetUserForFrontend(loaderArgs)
 
-	const divisionGeoJSON = await dr.execute(`
-		SELECT id, name, geojson
-		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
-    `);
+	// const divisionGeoJSON = await dr.execute(`
+	// 	SELECT id, name, geojson
+	// 	FROM division
+	// 	WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+    // `);
 
 	if (params.id === "new") {
-		const treeData = await initializeNewTreeView();
+		//const treeData = await initializeNewTreeView();
 		const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 		//console.log("ctryIso3", ctryIso3);
 		return {
@@ -79,10 +77,10 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			recordsDisRecSectors: [],
 			recordsHumanEffects: [],
 			hip: hip,
-			treeData: treeData,
+			treeData: [],
 			cpDisplayName: null,
 			ctryIso3: ctryIso3,
-			divisionGeoJSON: divisionGeoJSON?.rows,
+			divisionGeoJSON: [],
 			user,
 			dbDisRecHumanEffectsSummaryTable: null
 		};
@@ -98,14 +96,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const dbDisRecHumanEffects = await getHumanEffectRecordsById(params.id);
 	const dbDisRecHumanEffectsSummaryTable = await getAffectedByDisasterRecord(dr, params.id);
 	
-	// console.log("recordsNonecoLosses", dbNonecoLosses);
-	// console.log("recordsNonecoLosses", dbDisRecSectors);
-	//console.log("Human Effects: ", dbDisRecHumanEffects);
-	// console.log("Sectors: ", await sectorTreeDisplayText(1302020101));
-	// console.log("Sectors: ", dbDisRecSectors);
-
 	// Define Keys Mapping (Make it Adaptable)
-	const treeData = await initializeNewTreeView();
+	// const treeData = await initializeNewTreeView();
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
 	const cpDisplayName = await contentPickerConfig.selectedDisplay(dr, item.disasterEventId);
@@ -116,10 +108,10 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		recordsDisRecSectors: dbDisRecSectors,
 		recordsHumanEffects: dbDisRecHumanEffects,
 		hip: hip,
-		treeData: treeData,
+		treeData: [],
 		cpDisplayName: cpDisplayName,
 		ctryIso3: ctryIso3,
-		divisionGeoJSON: divisionGeoJSON?.rows,
+		divisionGeoJSON: [],
 		user,
 		dbDisRecHumanEffectsSummaryTable: dbDisRecHumanEffectsSummaryTable,
 	};
