@@ -71,7 +71,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const settings = await getCountrySettingsFromSession(request);
 	let ctryIso3 = settings?.crtyIso3 || "";
-	const currencies = [settings?.curriencyCode || "USD"]
+	const currencies = [settings?.currencyCode || "USD"]
 
 	const divisionGeoJSON = await dr.execute(sql`
 		SELECT id, name, geojson
@@ -119,7 +119,7 @@ export const action: ActionFunction = async (args: ActionFunctionArgs) => {
 	const { request } = args;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	const settings = await getCountrySettingsFromSession(request);
-	const currencies = [settings?.curriencyCode || "USD"]
+	const currencies = [settings?.currencyCode || "USD"]
 
 	return createOrUpdateAction({
 		fieldsDef: createFieldsDef(currencies),
