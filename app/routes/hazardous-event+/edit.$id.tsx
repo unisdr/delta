@@ -24,11 +24,6 @@ import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
 import { getItem2 } from "~/backend.server/handlers/view";
 
-import { sql } from "drizzle-orm";
-import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server";
-import { divisionTable } from "~/drizzle/schema";
-
 import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -52,39 +47,39 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
-	const idKey = "id";
-	const parentKey = "parentId";
-	const nameKey = "name";
-	const rawData = await dr
-		.select()
-		.from(divisionTable)
-		.where(sql`country_accounts_id = ${countryAccountsId}`);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
-		"geojson",
-		"importId",
-		"nationalId",
-		"level",
-		"name",
-	]);
+	// const idKey = "id";
+	// const parentKey = "parentId";
+	// const nameKey = "name";
+	// const rawData = await dr
+	// 	.select()
+	// 	.from(divisionTable)
+	// 	.where(sql`country_accounts_id = ${countryAccountsId}`);
+	// const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
+	// 	"geojson",
+	// 	"importId",
+	// 	"nationalId",
+	// 	"level",
+	// 	"name",
+	// ]);
 
 	const settings = await getCountrySettingsFromSession(request);
 	const ctryIso3 = settings.ctryIso3;
 
 	// Filter top-level divisions by tenant context
-	const divisionGeoJSON = await dr.execute(sql`
-		SELECT id, name, geojson, import_id
-		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) 
-		AND geojson IS NOT NULL
-		AND country_accounts_id = ${countryAccountsId};
-    `);
+	// const divisionGeoJSON = await dr.execute(sql`
+	// 	SELECT id, name, geojson, import_id
+	// 	FROM division
+	// 	WHERE (parent_id = 0 OR parent_id IS NULL) 
+	// 	AND geojson IS NOT NULL
+	// 	AND country_accounts_id = ${countryAccountsId};
+    // `);
 
 	return {
 		hip: hip,
 		item: item,
-		treeData: treeData,
+		treeData: [],
 		ctryIso3: ctryIso3,
-		divisionGeoJSON: divisionGeoJSON?.rows || [],
+		divisionGeoJSON: [],
 		user,
 		countryAccountsId,
 	};
