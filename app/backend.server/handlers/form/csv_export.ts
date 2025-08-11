@@ -1,25 +1,25 @@
 import {
 	authLoaderWithPerm
 } from "~/util/auth";
-import {stringifyCSV} from "~/util/csv";
+import { stringifyCSV } from "~/util/csv";
 
 interface csvExportLoaderArgs<T> {
 	table: any
-	fetchData: () => Promise<T[]>
+	fetchData: (request: Request) => Promise<T[]>
 }
 
 export function csvExportLoader<T>(args: csvExportLoaderArgs<T>) {
 	return authLoaderWithPerm("ViewData", async (loaderArgs) => {
-		const {request} = loaderArgs
+		const { request } = loaderArgs
 		const url = new URL(request.url)
 
 		const parts = url.pathname.split('/').filter(s => s !== '');
 		const typeName = parts.length > 1 ? parts[parts.length - 2] : "";
 
-		let data = await args.fetchData()
+		let data = await args.fetchData(request)
 		if (!data.length) {
 			return new Response(`No data for ${typeName}`, {
-				headers: {"Content-Type": "text/plain"},
+				headers: { "Content-Type": "text/plain" },
 			})
 		}
 		let headers: string[] = []
