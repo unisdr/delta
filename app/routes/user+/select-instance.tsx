@@ -124,7 +124,6 @@ export default function SelectInstance() {
 	const toast = useRef<ToastRef>(null);
 
 	const countryTemplate = (option: LoaderDataType) => {
-		const iso3 = /*option.countryAccount.country.iso3?.toLowerCase() ??*/ "NLD";
 		const instanceType = option.countryAccount.type;
 		return (
 			<div
@@ -138,7 +137,7 @@ export default function SelectInstance() {
 				<div style={{ display: "flex", alignItems: "center" }}>
 					<img
 						alt={option.countryAccount.country.name}
-						src={`/assets/icons/${iso3}.svg`}
+						src={option.countryAccount.country.flagUrl}
 						style={{ width: "18px", marginRight: "12px" }}
 					/>
 					<div

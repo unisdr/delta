@@ -1362,6 +1362,7 @@ export const countries = pgTable("countries", {
 	id: ourRandomUUID(),
 	name: varchar("name", { length: 100 }).notNull().unique(),
 	iso3: varchar("iso3", { length: 3 }).unique(),
+	flagUrl: varchar("flag_url", {length: 255}).notNull().default("https://example.com/default-flag.png"),
 });
 
 export type SelectCountries = typeof countries.$inferSelect;

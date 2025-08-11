@@ -46,33 +46,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		return { hip, item, parent: parent2, treeData: [], user };
 	}
 
-	// Define Keys Mapping (Make it Adaptable)
-	// const idKey = "id";
-	// const parentKey = "parentId";
-	// const nameKey = "name";
-	// const rawData = await dr
-	// 	.select()
-	// 	.from(divisionTable)
-	// 	.where(sql`country_accounts_id = ${countryAccountsId}`);
-	// const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
-	// 	"geojson",
-	// 	"importId",
-	// 	"nationalId",
-	// 	"level",
-	// 	"name",
-	// ]);
-
 	const settings = await getCountrySettingsFromSession(request);
 	const ctryIso3 = settings.ctryIso3;
-
-	// Filter top-level divisions by tenant context
-	// const divisionGeoJSON = await dr.execute(sql`
-	// 	SELECT id, name, geojson, import_id
-	// 	FROM division
-	// 	WHERE (parent_id = 0 OR parent_id IS NULL) 
-	// 	AND geojson IS NOT NULL
-	// 	AND country_accounts_id = ${countryAccountsId};
-    // `);
 
 	return {
 		hip: hip,
