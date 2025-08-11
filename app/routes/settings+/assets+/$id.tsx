@@ -30,10 +30,13 @@ export const loader = async (args: ActionFunctionArgs) => {
 			return { def: await fieldsDefView(), extraData: { selectedDisplay } };
 		},
 	})(args);
-	if ((await result).item.countryAccountsId !== countryAccountsId) {
+	const resolved = await result;
+	const item = resolved?.item as any;
+	// Allow built-in assets globally; enforce tenant on instance-owned assets
+	if (item && item.isBuiltIn !== true && item.countryAccountsId !== countryAccountsId) {
 		throw new Response("Unauthorized access", { status: 401 });
 	}
-	return result;
+	return resolved;
 };
 
 export default function Screen() {

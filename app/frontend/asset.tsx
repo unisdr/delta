@@ -71,6 +71,7 @@ export function AssetView(props: AssetViewProps) {
 	
 	return (
 		<ViewComponent
+			isPublic={props.item.isBuiltIn === true}
 			path={route}
 			id={props.item.id}
 			plural="Assets"
@@ -83,6 +84,11 @@ export function AssetView(props: AssetViewProps) {
 					)
 				}} 
 			/>
+			{props.item.isBuiltIn === true && (
+				<p className="mg-u-color--muted mg-u-margin-top--sm">
+					This is a built-in asset and cannot be edited or deleted.
+				</p>
+			)}
 		</ViewComponent>
 	);
 }

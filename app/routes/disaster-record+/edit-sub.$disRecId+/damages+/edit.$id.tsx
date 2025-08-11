@@ -34,13 +34,14 @@ async function getResponseData(
 	item: DamagesViewModel | null,
 	recordId: string,
 	sectorId: number,
+	countryAccountsId: string,
 	treeData?: any[],
 	ctryIso3?: string,
 	currencies?: string[],
 	divisionGeoJSON?: any[],
 	_p0?: any[]
 ) {
-	let assets = (await assetsForSector(dr, sectorId)).map((a: any) => {
+	let assets = (await assetsForSector(dr, sectorId, countryAccountsId)).map((a: any) => {
 		return {
 			id: a.id,
 			label: a.name,
@@ -110,6 +111,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			null,
 			params.disRecId,
 			sectorId,
+			countryAccountsId,
 			treeData,
 			ctryIso3,
 			currencies,
@@ -125,6 +127,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		item,
 		item.recordId,
 		item.sectorId,
+		countryAccountsId,
 		treeData,
 		ctryIso3,
 		currencies,
