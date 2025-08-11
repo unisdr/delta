@@ -316,46 +316,109 @@ After the initial installation, you need to create the super admin user to manag
 
 1. **Access the application** at your configured URL (e.g., `http://localhost:3000` or your domain)
 
-2. **Navigate to the login page** (`/login`)
+2. **Navigate to the admin login page** (`/admin/login`)
+   > **Important**: Super admins must use the dedicated admin login page at `/admin/login`, not the regular user login page.
 
 3. **Enter the super admin credentials:**
    - **Email**: `superadmin@your-domain.com`
    - **Password**: The password you set in the previous step
 
-4. **Upon successful login**, you will be redirected to the super admin dashboard where you can:
-   - **Configure system settings** (website name, logo, TOTP issuer, etc.)
-   - Create and manage country accounts
-   - Configure system settings
-   - Monitor system status
-   - Manage user permissions
+4. **Upon successful login**, you will be redirected to the country accounts management page (`/admin/country-accounts`).
 
-5. **Important: Configure System Settings First**
+   > **Important**: The super admin role is strictly limited to country account management functions only. Super admins cannot access other system settings or features.
    
-   Before creating country accounts, configure the shared instance settings:
-   
-   a. **Navigate to System Settings** (`/settings/system`)
-   
-   b. **Configure the following required settings:**
-   ```
-   Website Name: "DTS Shared Instance" (or your preferred name)
-   Website Logo: "/assets/shared-instance-logo.png" 
-   Instance Type: "shared"
-   TOTP Issuer: "DTS Shared System"
-   Approved Records Public: false (recommended for shared instances)
-   ```
-   
-   c. **Save the configuration**
-   
-   These settings will serve as defaults for new country accounts.
+   As a super admin, you can:
+   - View a list of all countries in the system
+   - Create new country accounts
+   - Modify only the short description and status (active/inactive) of existing country accounts
+   - Assign primary administrators when creating country accounts
+
+5. **After completing country account management tasks**, use the logout option to exit the system.
 
 ### 4.4 Change Super Admin Password (Post-Installation)
 
 For security, change the super admin password after the initial setup:
 
-1. **Log in as super admin**
-2. **Navigate to Profile Settings** (`/settings/profile`)
-3. **Update password** using the change password form
-4. **Save changes** and log out/in to verify
+#### Method 1: Using the Database Script (Recommended)
+
+1. **Create a password update script** named `update-super-admin-password.js`:
+   ```javascript
+   const bcrypt = require('bcryptjs');
+   const { Client } = require('pg');
+   
+   async function updateSuperAdminPassword() {
+       const client = new Client({
+           connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/dts_shared'
+       });
+       
+       await client.connect();
+       
+       const email = 'superadmin@your-domain.com'; // Use your super admin email
+       const newPassword = 'YourNewSecurePassword123!'; // Change this to your desired new password
+       
+       // Hash the password
+       const saltRounds = 10;
+       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+       
+       // Update the user's password
+       const result = await client.query(
+           'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2 AND is_super_admin = true',
+           [hashedPassword, email]
+       );
+       
+       if (result.rowCount > 0) {
+           console.log('Super admin password updated successfully!');
+           console.log(`Email: ${email}`);
+           console.log(`New Password: ${newPassword}`);
+       } else {
+           console.log('Super admin user not found.');
+       }
+       
+       await client.end();
+   }
+   
+   updateSuperAdminPassword().catch(console.error);
+   ```
+
+2. **Run the password update script:**
+   ```bash
+   # For Docker deployment
+   docker-compose exec app node update-super-admin-password.js
+   
+   # For manual installation
+   node update-super-admin-password.js
+   ```
+
+3. **Log out and log back in** with the new password to verify it works
+
+#### Method 2: Direct Database Update
+
+1. **Connect to the PostgreSQL database:**
+   ```bash
+   # For Docker deployment
+   docker-compose exec db psql -U postgres -d dts_shared
+   
+   # For manual installation
+   sudo -u postgres psql -d dts_shared
+   ```
+
+2. **Update the password directly:**
+   ```sql
+   -- Generate a new password hash (replace 'your_new_password' with your desired password)
+   SELECT crypt('your_new_password', gen_salt('bf', 10));
+   
+   -- Copy the generated hash and use it in the update statement
+   UPDATE users 
+   SET password_hash = 'paste_generated_hash_here', updated_at = NOW() 
+   WHERE email = 'superadmin@your-domain.com' AND is_super_admin = true;
+   ```
+
+3. **Verify the update:**
+   ```sql
+   SELECT email, updated_at FROM users WHERE is_super_admin = true;
+   ```
+
+4. **Log out and log back in** with the new password to verify it works
 
 ---
 
@@ -365,13 +428,14 @@ Once logged in as super admin, you can manage country accounts:
 
 ### 5.1 Creating Country Accounts
 
-1. **Navigate to Country Accounts** (`/settings/country-accounts`)
+1. **Navigate to Country Accounts** (`/admin/country-accounts`)
 2. **Click "Add Country Account"**
 3. **Fill in the required information:**
    - **Country**: Select from the dropdown
    - **Status**: Active/Inactive
    - **Type**: Official/Training
    - **Admin Email**: Email for the country's primary administrator
+   - **Short Description**: Optional description for the country account
 4. **Save** the account
 
 The system will automatically:
@@ -633,4 +697,5 @@ For additional support:
 
 | Version | Date (YYYY-MM-DD) | Author | Description |
 | ------- | ----------------- | ------ | ----------- |
+| 1.1.0   | 2025-08-11        | Dieka Jr. | Updated documentation with enhanced super admin password management methods, corrected login paths, and accurate descriptions of super admin capabilities. Improved clarity for system administrators setting up the shared instance. Addresses GitHub issue #212. |
 | 1.0.0   | 2025-07-14        | Dieka Jr. | Initial draft of DTS Shared Instance installation documentation. Includes super admin setup procedures, multi-tenant configuration, and comprehensive troubleshooting guide. Addresses GitHub issue #212. |
