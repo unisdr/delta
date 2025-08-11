@@ -4,8 +4,9 @@
 
 | Version | Date (YYYY-MM-DD) | Author        | Description                                                                  |
 | ------- | ----------------- | ------------- | ---------------------------------------------------------------------------- |
-| 1.0     | 2025-01-08        | Haroon Nasher | Initial draft of the DTS technical documentation.                           |
+| 2.1     | 2025-08-11        | Dieka Jr.     | Updated repository URLs and project structure. Fixed incorrect GitHub repository reference and added proper checkout instructions. |
 | 2.0     | 2025-05-26        | Dieka Jr.     | Comprehensive update with detailed installation guide and troubleshooting.  |
+| 1.0     | 2025-01-08        | Haroon Nasher | Initial draft of the DTS technical documentation.                           |
 
 ---
 
@@ -181,8 +182,9 @@ The DTS system supports multiple deployment methods to accommodate different inf
 1. **Download DTS Project**
    ```bash
    # Method A: Git clone
-   git clone [repository-url] DTS-Project
+   git clone https://github.com/unisdr/dts.git DTS-Project
    cd DTS-Project
+   git checkout dev
    
    # Method B: Download ZIP and extract to DTS-Project folder
    ```
@@ -228,8 +230,9 @@ The DTS system supports multiple deployment methods to accommodate different inf
 
 1. **Clone Repository**
    ```bash
-   git clone git@github.com:unisdr/dts-deployment-unog.git
-   cd dts-deployment-unog
+   git clone https://github.com/unisdr/dts.git
+   cd dts
+   git checkout dev
    ```
 
 2. **Build Container Images**
@@ -587,15 +590,24 @@ pg_dump -U postgres dts_project > backup.sql  # Backup database
 ### Appendix C: File Structure Reference
 
 ```
-DTS-Project/
-├── app/                 # Source code
-├── public/              # Static assets
-├── docs/                # Documentation
-├── package.json         # Project configuration
-├── .env                 # Environment variables
-├── example.env          # Environment template
-├── docker-compose.yml   # Docker configuration
-└── README.md           # Basic project information
+dts/
+├── app/                      # Source code
+│   ├── backend.server/       # Server-side code
+│   │   ├── handlers/        # Request handlers
+│   │   └── models/          # Database models
+│   ├── drizzle/             # Database schema
+│   ├── frontend/            # React components
+│   ├── routes/              # Remix routes
+│   └── types/               # TypeScript types
+├── public/                   # Static assets
+├── _docs/                    # Documentation
+│   └── installation/         # Installation guides
+├── information-pages-override/ # Content override files
+├── package.json              # Project configuration
+├── .env                      # Environment variables
+├── example.env               # Environment template
+├── docker-compose.yml        # Docker configuration
+└── README.md                # Basic project information
 ```
 
 ---
