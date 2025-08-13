@@ -22,9 +22,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 	// console.log("NODE_ENV", process.env.SSO_AZURE_B2C_CLIENT_SECRET)
 
 	const jsonAzureB2C: interfaceSSOAzureB2C = configSsoAzureB2C();
-	const urlSSOCode2Token = `${baseURL()}/token?p=${
-		jsonAzureB2C.login_userflow
-	}`;
+	const urlSSOCode2Token = `${baseURL()}/token?p=${jsonAzureB2C.login_userflow
+		}`;
 	const url = new URL(request.url);
 	const queryStringCode = url.searchParams.get("code") || "";
 	const queryStringDesc = url.searchParams.get("error_description") || "";
@@ -57,12 +56,12 @@ export const loader: LoaderFunction = async ({ request }) => {
 			});
 
 			const result = await response.json();
-			console.log(result);
+			// console.log(result);
 			if ("id_token" in result) {
 				token = decodeToken(result.id_token);
-				console.log(token);
+				// console.log(token);
 				if ("idp_access_token" in token) {
-					console.log(token.idp_access_token);
+					// console.log(token.idp_access_token);
 					token_idp = decodeToken(String(token.idp_access_token));
 					console.log(token_idp);
 					if ("family_name" in token_idp) {
@@ -146,7 +145,38 @@ export const loader: LoaderFunction = async ({ request }) => {
 			return { errors: error };
 		}
 	} else {
-		return loginGetCode("azure_sso_b2c-login");
+		// Check if this is an admin login request (via query first, then cookie fallback)
+		const url = new URL(request.url);
+		const origin = url.searchParams.get("origin") || "";
+		const redirectTo = url.searchParams.get("redirectTo") || "";
+		const isAdmin = url.searchParams.get("isAdmin") === "true";
+		const adminLogin = url.searchParams.get("adminLogin") === "1";
+
+		// Fallback to session cookie if query params are missing
+		const cookieHeader = request.headers.get("Cookie") || "";
+		const session = await sessionCookie().getSession(cookieHeader);
+		const loginOrigin = session.get("loginOrigin");
+
+		const adminIntent = origin === "admin" || isAdmin || adminLogin || loginOrigin === "admin";
+
+		// console.log("DEBUG SSO Login: request.url=", request.url);
+		// console.log("DEBUG SSO Login: cookies=", cookieHeader);
+		// console.log("DEBUG SSO Login: origin=", origin, "redirectTo=", redirectTo, "isAdmin=", isAdmin, "adminLogin=", adminLogin, "loginOrigin=", loginOrigin, "adminIntent=", adminIntent);
+
+		// Create a state parameter that includes origin and redirectTo when admin
+		let state = "azure_sso_b2c-login";
+		if (adminIntent) {
+			const stateObj = {
+				origin: "admin",
+				isAdmin: true,
+				adminLogin: 1,
+				redirectTo: redirectTo || "/admin/country-accounts",
+			} as const;
+			state = JSON.stringify(stateObj);
+			// console.log("DEBUG SSO Login: Using admin state:", state);
+		}
+
+		return loginGetCode(state);
 	}
 
 	return { errors: "" };

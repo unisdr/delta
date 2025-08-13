@@ -172,6 +172,10 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
 Before creating the super admin user, ensure the database has the required default settings:
 
 #### Database Seeding
+
+> **Important**: Database seeding is primarily intended for development environments to populate the database with initial configuration data and dummy test data. In production, you should manually configure settings after installation to ensure proper security and data integrity.
+
+#### Database Seeding for Development
 ```bash
 # For Docker deployment
 docker-compose exec app yarn run db:seed
@@ -184,6 +188,13 @@ This command will:
 - Create default `instance_system_settings` record
 - Set up initial system configuration
 - Prepare the database for multi-tenant operation
+- Add test/dummy data for development purposes
+
+#### Production Environment Setup
+For production environments, **do not run the seeding command**. Instead:
+1. The database schema will be created by the `drizzle-kit push` command
+2. Configure system settings manually through the super admin interface after login
+3. Create country accounts as needed through the admin panel
 
 #### Verify Database Setup
 ```sql
@@ -206,9 +217,36 @@ FROM instance_system_settings;
 
 After the initial installation, you need to create the super admin user to manage country accounts.
 
-#### Method 1: Database Script (Recommended)
+#### Method 1: Direct Database Insertion (Recommended)
 
-1. **Connect to the PostgreSQL database:**
+This method uses an online tool to generate the password hash, making it simpler and more reliable.
+
+1. **Generate a bcrypt hash for your password:**
+
+   **Option A: Using an Online Tool**
+   - Visit a secure bcrypt generator website like https://bcrypt-generator.com/
+   - Enter your desired password and generate the hash
+   - Set rounds to 10** (recommended for security)
+   - Copy the generated hash (it will look like `$2a$10$...` or `$2b$10$...`)
+
+   **Option B: Using Node.js**
+   ```javascript
+   // Save as generate-hash.js
+   const bcrypt = require('bcryptjs');
+   const password = 'YourSecurePassword123!';
+   bcrypt.hash(password, 10).then(hash => console.log(hash));
+   ```
+   
+   Run it with:
+   ```bash
+   # For Docker deployment
+   docker-compose exec app node generate-hash.js
+   
+   # For manual installation
+   node generate-hash.js
+   ```
+
+2. **Connect to the PostgreSQL database:**
    ```bash
    # For Docker deployment
    docker-compose exec db psql -U postgres -d dts_shared
@@ -217,89 +255,36 @@ After the initial installation, you need to create the super admin user to manag
    sudo -u postgres psql -d dts_shared
    ```
 
-2. **Create the super admin user:**
+3. **Create the super admin user:**
    ```sql
    -- Insert a super admin user
-   INSERT INTO users (
+   INSERT INTO super_admin_users (
        id,
        email,
-       password_hash,
-       role,
-       is_primary_admin,
-       is_super_admin,
-       email_verified,
-       created_at,
-       updated_at
+       password,
+       first_name,
+       last_name
    ) VALUES (
        gen_random_uuid(),
        'superadmin@your-domain.com',
-       '$2a$10$placeholder_hash_will_be_updated',
-       'super_admin',
-       true,
-       true,
-       true,
-       NOW(),
-       NOW()
+       'YOUR_BCRYPT_HASH_HERE', -- Replace with the hash you generated
+       'Super',
+       'Admin'
    );
    ```
 
-3. **Update the super admin password using the application:**
-   
-   Create a temporary script file `set-super-admin-password.js`:
-   ```javascript
-   const bcrypt = require('bcryptjs');
-   const { Client } = require('pg');
-   
-   async function setSuperAdminPassword() {
-       const client = new Client({
-           connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/dts_shared'
-       });
-       
-       await client.connect();
-       
-       const email = 'superadmin@your-domain.com';
-       const newPassword = 'YourSecurePassword123!'; // Change this to your desired password
-       
-       // Hash the password
-       const saltRounds = 10;
-       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-       
-       // Update the user's password
-       const result = await client.query(
-           'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2',
-           [hashedPassword, email]
-       );
-       
-       if (result.rowCount > 0) {
-           console.log('Super admin password updated successfully!');
-           console.log(`Email: ${email}`);
-           console.log(`Password: ${newPassword}`);
-           console.log('Please change this password after first login.');
-       } else {
-           console.log('Super admin user not found.');
-       }
-       
-       await client.end();
-   }
-   
-   setSuperAdminPassword().catch(console.error);
-   ```
 
-4. **Run the password update script:**
-   ```bash
-   # For Docker deployment
-   docker-compose exec app node set-super-admin-password.js
-   
-   # For manual installation
-   node set-super-admin-password.js
-   ```
 
 #### Method 2: Environment Variable Method
+
+> **Note**: This method may not be supported in all versions of the application. If it doesn't work, use Method 1 instead.
 
 1. **Add to your `.env` file:**
    ```ini
    SUPER_ADMIN_EMAIL="superadmin@your-domain.com"
    SUPER_ADMIN_PASSWORD="YourSecurePassword123!"
+   SUPER_ADMIN_FIRST_NAME="Super"
+   SUPER_ADMIN_LAST_NAME="Admin"
    SUPER_ADMIN_SETUP="true"
    ```
 
@@ -310,6 +295,15 @@ After the initial installation, you need to create the super admin user to manag
    
    # For manual installation
    yarn run start
+   ```
+
+3. **Verify the super admin was created:**
+   ```bash
+   # For Docker deployment
+   docker-compose exec db psql -U postgres -d dts_shared -c "SELECT email FROM super_admin_users;"
+   
+   # For manual installation
+   sudo -u postgres psql -d dts_shared -c "SELECT email FROM super_admin_users;"
    ```
 
 ### 4.3 Super Admin Login
@@ -339,7 +333,52 @@ After the initial installation, you need to create the super admin user to manag
 
 For security, change the super admin password after the initial setup:
 
-#### Method 1: Using the Database Script (Recommended)
+#### Method 1: Using a bcrypt Hash Generator
+
+1. **Generate a new bcrypt hash for your password:**
+
+   **Option A: Using an Online Tool**
+   - Visit a secure bcrypt generator website like https://bcrypt-generator.com/
+   - Enter your desired new password and generate the hash
+   - Copy the generated hash (starts with $2a$, $2b$, or $2y$)
+
+   **Option B: Using Node.js**
+   ```javascript
+   // Save as generate-hash.js
+   const bcrypt = require('bcryptjs');
+   const password = 'YourNewSecurePassword123!';
+   bcrypt.hash(password, 10).then(hash => console.log(hash));
+   ```
+   
+   Run it with:
+   ```bash
+   # For Docker deployment
+   docker-compose exec app node generate-hash.js
+   
+   # For manual installation
+   node generate-hash.js
+   ```
+
+2. **Connect to the PostgreSQL database:**
+   ```bash
+   # For Docker deployment
+   docker-compose exec db psql -U postgres -d dts_shared
+   
+   # For manual installation
+   sudo -u postgres psql -d dts_shared
+   ```
+
+3. **Update the super admin password:**
+   ```sql
+   -- Update the super admin password
+   UPDATE super_admin_users 
+   SET password = 'YOUR_NEW_BCRYPT_HASH_HERE' 
+   WHERE email = 'superadmin@your-domain.com';
+   ```
+
+4. **Log out and log back in** with the new password to verify it works
+
+#### Method 2: Using a Node.js Script
 
 1. **Create a password update script** named `update-super-admin-password.js`:
    ```javascript
@@ -360,9 +399,9 @@ For security, change the super admin password after the initial setup:
        const saltRounds = 10;
        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
        
-       // Update the user's password
+       // Update the super admin's password
        const result = await client.query(
-           'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2 AND is_super_admin = true',
+           'UPDATE super_admin_users SET password = $1 WHERE email = $2',
            [hashedPassword, email]
        );
        
@@ -389,33 +428,20 @@ For security, change the super admin password after the initial setup:
    node update-super-admin-password.js
    ```
 
-3. **Log out and log back in** with the new password to verify it works
-
-#### Method 2: Direct Database Update
-
-1. **Connect to the PostgreSQL database:**
-   ```bash
-   # For Docker deployment
-   docker-compose exec db psql -U postgres -d dts_shared
-   
-   # For manual installation
-   sudo -u postgres psql -d dts_shared
-   ```
-
 2. **Update the password directly:**
    ```sql
    -- Generate a new password hash (replace 'your_new_password' with your desired password)
-   SELECT crypt('your_new_password', gen_salt('bf', 10));
+   SELECT crypt('your_new_password', gen_salt('bf'));
    
    -- Copy the generated hash and use it in the update statement
-   UPDATE users 
-   SET password_hash = 'paste_generated_hash_here', updated_at = NOW() 
-   WHERE email = 'superadmin@your-domain.com' AND is_super_admin = true;
+   UPDATE super_admin_users 
+   SET password = 'paste_generated_hash_here' 
+   WHERE email = 'superadmin@your-domain.com';
    ```
 
 3. **Verify the update:**
    ```sql
-   SELECT email, updated_at FROM users WHERE is_super_admin = true;
+   SELECT email FROM super_admin_users WHERE email = 'superadmin@your-domain.com';
    ```
 
 4. **Log out and log back in** with the new password to verify it works

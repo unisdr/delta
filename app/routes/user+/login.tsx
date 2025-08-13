@@ -139,6 +139,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	let redirectTo = url.searchParams.get("redirectTo");
 	redirectTo = getSafeRedirectTo(redirectTo);
 
+	// Ensure SSO origin is explicitly set for user login
+	const cookieHeader = request.headers.get("Cookie") || "";
+	const session = await sessionCookie().getSession(cookieHeader);
+	session.set("loginOrigin", "user");
+	const setCookie = await sessionCookie().commitSession(session);
+
 	if (user) {
 		const userCountryAccounts = await getUserCountryAccountsByUserId(
 			user.user.id
@@ -146,12 +152,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		if (userCountryAccounts.length > 1) {
 			const countryAccountsId = await getCountryAccountsIdFromSession(request);
 			if (countryAccountsId) {
-				return redirect(redirectTo);
-			}else{
-				return redirect("/user/select-instance")
+				return redirect(redirectTo, { headers: { "Set-Cookie": setCookie } });
+			} else {
+				return redirect("/user/select-instance", { headers: { "Set-Cookie": setCookie } });
 			}
 		}
-		return redirect(redirectTo);
+		return redirect(redirectTo, { headers: { "Set-Cookie": setCookie } });
 	}
 
 	const isFormAuthSupported = configAuthSupportedForm();
@@ -164,11 +170,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		);
 	}
 
-	return {
-		redirectTo: redirectTo,
-		isFormAuthSupported: isFormAuthSupported,
-		isSSOAuthSupported: isSSOAuthSupported,
-	};
+	return Response.json(
+		{
+			redirectTo: redirectTo,
+			isFormAuthSupported: isFormAuthSupported,
+			isSSOAuthSupported: isSSOAuthSupported,
+		},
+		{ headers: { "Set-Cookie": setCookie } }
+	);
 };
 
 export function getSafeRedirectTo(
@@ -266,7 +275,7 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" value={loaderData.redirectTo} />
+							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
@@ -361,7 +370,7 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" value={loaderData.redirectTo} />
+							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}

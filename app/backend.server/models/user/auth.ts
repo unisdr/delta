@@ -10,7 +10,7 @@ export type LoginResult =
 	| { ok: false };
 
 export type SuperAdminLoginResult =
-	| { ok: true; superAdminId: string;}
+	| { ok: true; superAdminId: string; }
 	| { ok: false };
 
 export async function login(
@@ -133,6 +133,68 @@ export async function loginAzureB2C(
 }
 
 export type LoginTotpResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Check if an email belongs to a super admin
+ * @param email Email address to check
+ * @returns Result with superAdminId if found
+ */
+export async function checkSuperAdminByEmail(
+	email: string
+): Promise<SuperAdminLoginResult> {
+	const res = await dr
+		.select()
+		.from(superAdminUsers)
+		.where(eq(superAdminUsers.email, email));
+
+	if (res.length === 0) {
+		return { ok: false };
+	}
+
+	return {
+		ok: true,
+		superAdminId: res[0].id,
+	};
+}
+
+/**
+ * Login a super admin using Azure B2C SSO
+ * @param email Email address from SSO
+ * @param firstName First name from SSO
+ * @param lastName Last name from SSO
+ * @returns Result with superAdminId if successful
+ */
+export async function loginSuperAdminAzureB2C(
+	email: string,
+	firstName: string,
+	lastName: string
+): Promise<SuperAdminLoginResult> {
+	const res = await dr
+		.select()
+		.from(superAdminUsers)
+		.where(eq(superAdminUsers.email, email));
+
+	if (res.length === 0) {
+		return { ok: false };
+	}
+
+	// Update first and last name if provided
+	if (firstName || lastName) {
+		const updateData: any = {};
+		if (firstName) updateData.firstName = firstName;
+		if (lastName) updateData.lastName = lastName;
+
+		await dr
+			.update(superAdminUsers)
+			.set(updateData)
+			.where(eq(superAdminUsers.email, email));
+	}
+
+	return {
+		ok: true,
+		superAdminId: res[0].id,
+	};
+}
 
 export async function loginTotp(
 	userId: string,
