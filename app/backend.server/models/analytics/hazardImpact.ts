@@ -48,18 +48,12 @@ const getAgriSubsector = (sectorId: string | undefined): FaoAgriSubsector | null
  * @param sectorId - The ID of the sector to get subsectors for
  * @returns Array of sector IDs including the input sector and all its subsectors at all levels
  */
-const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
-    const numericSectorId = parseInt(sectorId, 10);
-    if (isNaN(numericSectorId)) {
-        logger.warn(`Invalid sector ID format: ${sectorId}`, { sectorId });
-        return [];
-    }
-
+const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
     // Get immediate subsectors
-    const subsectors = await getSectorsByParentId(numericSectorId);
+    const subsectors = await getSectorsByParentId(sectorId);
 
     // Initialize result with the current sector ID
-    const result: number[] = [numericSectorId];
+    const result: string[] = [sectorId];
 
     // Recursively get all subsectors at all levels
     if (subsectors.length > 0) {

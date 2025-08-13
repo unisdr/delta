@@ -1,5 +1,5 @@
 -- Custom SQL migration file, put your code below! --
-CREATE OR REPLACE FUNCTION dts_get_sector_decendants(SECTOR_ID BIGINT) 
+CREATE OR REPLACE FUNCTION dts_get_sector_decendants(SECTOR_ID uuid) 
 RETURNS JSON AS $$
 WITH RECURSIVE ChildCTE AS (
     -- Find all descendants (children)

@@ -10,7 +10,7 @@ import { errorIsNotUnique } from "~/util/db";
 import { logAudit } from "./../auditLogs";
 
 type AdminUpdateUserResult =
-	| { ok: true; userId: number }
+	| { ok: true; userId: string }
 	| { ok: false; errors: Errors<AdminUpdateUserFields> };
 
 export interface AdminUpdateUserFields {
@@ -42,9 +42,9 @@ export function adminUpdateUserFieldsFromMap(data: {
 }
 
 export async function adminUpdateUser(
-	id: number,
+	id: string,
 	fields: AdminUpdateUserFields,
-	userId: number,
+	userId: string,
 	countryAccountsId: string
 ): Promise<AdminUpdateUserResult> {
 	let errors: Errors<AdminUpdateUserFields> = {};

@@ -101,7 +101,7 @@ export async function nonecoLossesIdByImportId(tx: Tx, importId: string) {
 
 export type PropRecord = {
 	id?: string;
-	categoryId: number;
+	categoryId: string;
 	disasterRecordId: string;
 	description: string;
 	updatedAt?: Date;

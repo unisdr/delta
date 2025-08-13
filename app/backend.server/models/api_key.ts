@@ -27,7 +27,7 @@ export async function apiKeyCreate(tx: Tx, fields: ApiKeyFields): Promise<Create
 }
 
 export async function apiKeyUpdate(tx: Tx, idStr: string, fields: ApiKeyFields): Promise<UpdateResult<ApiKeyFields>> {
-	const id = Number(idStr);
+	const id = idStr;
 	await tx.update(apiKeyTable)
 		.set({
 			updatedAt: new Date(),
@@ -47,7 +47,7 @@ export async function apiKeyById(idStr: string) {
 }
 
 export async function apiKeyByIdTx(tx: Tx, idStr: string) {
-	const id = Number(idStr);
+	const id = idStr;
 	return await tx.query.apiKeyTable.findFirst({
 		where: eq(apiKeyTable.id, id),
 		with: {
@@ -86,7 +86,7 @@ class UserStatusValidator {
 	 * @param userId - User ID to validate
 	 * @returns Promise<boolean> - true if user is active for API access
 	 */
-	static async isUserActiveForApi(userId: number): Promise<boolean> {
+	static async isUserActiveForApi(userId: string): Promise<boolean> {
 		try {
 			const user = await dr.query.userTable.findFirst({
 				where: eq(userTable.id, userId)
@@ -283,7 +283,7 @@ export class ApiSecurityAudit {
 	/**
 	 * Get API keys managed by specific user with status
 	 */
-	static async getUserManagedApiKeys(userId: number): Promise<Array<SelectApiKey & {
+	static async getUserManagedApiKeys(userId: string): Promise<Array<SelectApiKey & {
 		userIsActive: boolean;
 		issues: string[];
 	}>> {
@@ -331,7 +331,7 @@ export class UserAccessManager {
 	 * @param userId - User ID to revoke access for  
 	 * @param reason - Reason for revocation (for audit trail)
 	 */
-	static async revokeUserApiAccess(tx: Tx, userId: number, reason: string = "Manual revocation"): Promise<void> {
+	static async revokeUserApiAccess(tx: Tx, userId: string, reason: string = "Manual revocation"): Promise<void> {
 		try {
 			await tx.update(userTable)
 				.set({
@@ -353,7 +353,7 @@ export class UserAccessManager {
 	 * Check if user can access API - Interface Segregation Principle
 	 * Simple interface for external callers
 	 */
-	static async canUserAccessApi(userId: number): Promise<boolean> {
+	static async canUserAccessApi(userId: string): Promise<boolean> {
 		return UserStatusValidator.isUserActiveForApi(userId);
 	}
 }

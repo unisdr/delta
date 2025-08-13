@@ -16,10 +16,10 @@ import { eq, and } from "drizzle-orm";
  * Based on your Drizzle schema types
  */
 export interface GeographicLevel {
-    id: number;
+    id: string;
     name: Record<string, string>; // Based on your schema, this appears to be a JSON object
     level: number;
-    parentId: number | null;
+    parentId: string | null;
 }
 
 /**
@@ -118,7 +118,7 @@ export async function getGeographicLevelById(
             .from(divisionTable)
             .where(
                 and(
-                    eq(divisionTable.id, levelId),
+                    eq(divisionTable.level, levelId),
                     eq(divisionTable.countryAccountsId, countryAccountId)
                 )
             )

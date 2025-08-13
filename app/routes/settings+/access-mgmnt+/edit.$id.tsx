@@ -49,7 +49,7 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
-	const item = await getUserCountryAccountsByUserIdAndCountryAccountsId(Number(id), countryAccountsId);
+	const item = await getUserCountryAccountsByUserIdAndCountryAccountsId(id, countryAccountsId);
 
 	if (!item) {
 		throw new Response("User not found or you don't have permission to edit this user", { status: 404 });
@@ -74,7 +74,7 @@ type ActionResponse = FormResponse<AdminUpdateUserFields>;
 
 export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 	const { request, params } = actionArgs;
-	const id = Number(params.id);
+	const id = params.id;
 
 	if (!id) {
 		throw new Response("Missing ID", { status: 400 });

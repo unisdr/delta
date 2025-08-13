@@ -3,7 +3,6 @@ import {
 	text,
 	timestamp,
 	bigint,
-	bigserial,
 	serial,
 	check,
 	unique,
@@ -43,9 +42,6 @@ function zeroStrMap(name: string) {
 }
 function ourBigint(name: string) {
 	return bigint(name, { mode: "number" });
-}
-function ourSerial(name: string) {
-	return bigserial(name, { mode: "number" });
 }
 function ourMoney(name: string) {
 	return numeric(name);
@@ -140,7 +136,7 @@ function unitsEnum(name: string) {
 
 export const sessionTable = pgTable("session", {
 	id: ourRandomUUID(),
-	userId: ourBigint("user_id")
+	userId: uuid("user_id")
 		.notNull()
 		.references(() => userTable.id, { onDelete: "cascade" }),
 	lastActiveAt: zeroTimestamp("last_active_at"),
@@ -158,8 +154,7 @@ export const sessionsRelations = relations(sessionTable, ({ one }) => ({
 }));
 
 export const userTable = pgTable("user", {
-	id: ourSerial("id").primaryKey(),
-	// role: zeroText("role"),
+	id: ourRandomUUID(),
 	firstName: zeroText("first_name"),
 	lastName: zeroText("last_name"),
 	email: text("email").notNull().unique(),
@@ -191,10 +186,10 @@ export const userRelations = relations(userTable, ({ many }) => ({
 
 export const apiKeyTable = pgTable("api_key", {
 	...createdUpdatedTimestamps,
-	id: ourSerial("id").primaryKey(),
+	id: ourRandomUUID(),
 	secret: text("secret").notNull().unique(),
 	name: zeroText("name"),
-	managedByUserId: ourBigint("user_id")
+	managedByUserId: uuid("user_id")
 		.notNull()
 		.references(() => userTable.id, { onDelete: "cascade" }),
 	countryAccountsId: uuid("country_accounts_id").references(
@@ -207,7 +202,7 @@ export type SelectApiKey = typeof apiKeyTable.$inferSelect;
 export type InsertApiKey = typeof apiKeyTable.$inferInsert;
 export type ApiKeyWithUser = SelectApiKey & {
 	managedByUser: {
-		id: number;
+		id: string;
 		email: string;
 	};
 };
@@ -221,7 +216,7 @@ export const apiKeyRelations = relations(apiKeyTable, ({ one }) => ({
 
 export const devExample1Table = pgTable("dev_example1", {
 	...apiImportIdField(),
-	id: ourSerial("id").primaryKey(),
+	id: ourRandomUUID(),
 	// for both required and optional text fields setting it to "" makes sense, it's different for numbers where 0 could be a valid entry
 	field1: text("field1").notNull(),
 	field2: text("field2").notNull(),
@@ -254,13 +249,12 @@ export type InsertDevExample1 = typeof devExample1Table.$inferInsert;
 export const divisionTable = pgTable(
 	"division",
 	{
-		id: ourSerial("id").primaryKey(),
+		id: ourRandomUUID(),
 		importId: text("import_id"),
-		nationalId: text("national_id"),
-		parentId: ourBigint("parent_id").references(
+		nationalId: text("national_id").unique(),
+		parentId: uuid("parent_id").references(
 			(): AnyPgColumn => divisionTable.id
 		),
-		// Add country account reference for tenant isolation
 		countryAccountsId: uuid("country_accounts_id").references(
 			() => countryAccounts.id
 		),
@@ -320,7 +314,6 @@ export const eventTable = pgTable("event", {
 	id: ourRandomUUID(),
 	name: zeroText("name").notNull(),
 	description: zeroText("description").notNull(),
-	// parent
 });
 
 export type Event = typeof eventTable.$inferSelect;
@@ -807,7 +800,7 @@ export const disruptionTable = pgTable("disruption", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sectorId: ourBigint("sector_id")
+	sectorId: uuid("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	durationDays: ourBigint("duration_days"),
@@ -838,7 +831,7 @@ export const damagesTable = pgTable("damages", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sectorId: ourBigint("sector_id")
+	sectorId: uuid("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	assetId: uuid("asset_id")
@@ -932,7 +925,7 @@ export const lossesTable = pgTable("losses", {
 	recordId: uuid("record_id")
 		.references((): AnyPgColumn => disasterRecordsTable.id)
 		.notNull(),
-	sectorId: ourBigint("sector_id")
+	sectorId: uuid("sector_id")
 		.references((): AnyPgColumn => sectorTable.id)
 		.notNull(),
 	sectorIsAgriculture: boolean("sector_is_agriculture").notNull(),
@@ -1111,7 +1104,7 @@ export const auditLogsTable = pgTable("audit_logs", {
 	id: ourRandomUUID(),
 	tableName: text("table_name").notNull(),
 	recordId: text("record_id").notNull(),
-	userId: ourBigint("user_id")
+	userId: uuid("user_id")
 		.notNull()
 		.references(() => userTable.id, { onDelete: "cascade" }),
 	action: text("action").notNull(), // INSERT, UPDATE, DELETE
@@ -1130,18 +1123,18 @@ export type InsertAuditLogsTable = typeof auditLogsTable.$inferInsert;
 
 export type AuditLogsTableAction = "INSERT" | "UPDATE" | "DELETE";
 /////////////////////////////////////////////////////////
-export type categoriesType = typeof categoriesTable.$inferSelect;
 
 // Table for generic classification categories
 export const categoriesTable = pgTable("categories", {
-	id: ourSerial("id").primaryKey(), // Unique identifier for each category
-	name: text("name").notNull(), // Title or description of the category
-	parentId: ourBigint("parent_id").references(
+	id: ourRandomUUID(),
+	name: text("name").notNull(), 
+	parentId: uuid("parent_id").references(
 		(): AnyPgColumn => categoriesTable.id
-	), // Foreign key referencing another category's ID; null if it's a root category
+	), 
 	level: ourBigint("level").notNull().default(1),
 	...createdUpdatedTimestamps,
 });
+export type SelectCategories = typeof categoriesTable.$inferSelect;
 
 export const categoryCategoryParent_Rel = relations(
 	categoriesTable,
@@ -1165,7 +1158,7 @@ export const nonecoLossesTable = pgTable(
 		disasterRecordId: uuid("disaster_record_id")
 			.references((): AnyPgColumn => disasterRecordsTable.id)
 			.notNull(),
-		categoryId: ourBigint("category_id")
+		categoryId: uuid("category_id")
 			.references((): AnyPgColumn => categoriesTable.id)
 			.notNull(),
 		description: text("description").notNull(),
@@ -1203,10 +1196,10 @@ export const nonecoLossesCategory_Rel = relations(
 // subsector: Crops
 // description: The cultivation and harvesting of plants for food, fiber, and other products.
 export const sectorTable = pgTable("sector", {
-	id: ourSerial("id").primaryKey(), // Unique sector ID
-	parentId: ourBigint("parent_id").references(
+	id: ourRandomUUID(),
+	parentId: uuid("parent_id").references(
 		(): AnyPgColumn => sectorTable.id
-	), // Reference to parent sector
+	),
 	sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
 	description: text("description"), // Optional description for the sector | Additional details about the sector
 	level: ourBigint("level").notNull().default(1), // value is parent level + 1 otherwise 1
@@ -1226,7 +1219,7 @@ export const sectorDisasterRecordsRelationTable = pgTable(
 	{
 		...apiImportIdField(),
 		id: ourRandomUUID(),
-		sectorId: ourBigint("sector_id")
+		sectorId: uuid("sector_id")
 			.notNull()
 			.references((): AnyPgColumn => sectorTable.id),
 		disasterRecordId: uuid("disaster_record_id")
@@ -1418,13 +1411,13 @@ export const countryAccountsRelations = relations(
 ////////////////////////////////////////////////////////////////
 export const userCountryAccounts = pgTable("user_country_accounts", {
 	id: ourRandomUUID(),
-	userId: bigserial("user_id", { mode: "number" }).references(
+	userId: uuid("user_id").notNull().references(
 		() => userTable.id,
 		{
 			onDelete: "cascade",
 		}
 	),
-	countryAccountsId: uuid("country_accounts_id").references(
+	countryAccountsId: uuid("country_accounts_id").notNull().references(
 		() => countryAccounts.id,
 		{ onDelete: "cascade" }
 	),

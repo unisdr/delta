@@ -44,7 +44,7 @@ export async function processSectorCsv(): Promise<void> {
 
         // Initialize a sector record object
         let formRecord: SectorType = {
-            id: parseInt(item[0]),
+            id: item[0],
             sectorname: sectorName,
             description: item[3]
         };
@@ -55,9 +55,9 @@ export async function processSectorCsv(): Promise<void> {
         } else {
             // Fetch parent sector details for level calculation
             try {
-                sectorRecord = await sectorById(parseInt(item[1]));
+                sectorRecord = await sectorById(item[1]);
                 if (sectorRecord) {
-                    formRecord.parentId = parseInt(item[1]);
+                    formRecord.parentId = item[1];
                     formRecord.level = sectorRecord.level + 1;
                 } else {
                     console.warn(`Parent sector ID ${item[1]} not found`);

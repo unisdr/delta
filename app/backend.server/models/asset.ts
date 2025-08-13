@@ -166,7 +166,7 @@ export async function assetDeleteById(
 
 export async function assetsForSector(
 	tx: Tx,
-	sectorId: number,
+	sectorId: string,
 	countryAccountsId?: string
 ) {
 	// Build sector lineage (selected sector + its ancestors)

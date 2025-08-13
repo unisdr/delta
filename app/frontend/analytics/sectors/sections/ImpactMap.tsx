@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ImpactMapOl from "./Map/ImpactMapOl";
 
 interface Sector {
-  id: number;
+  id: string;
   sectorname: string;
   subsectors?: Sector[];
 }

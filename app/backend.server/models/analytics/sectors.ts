@@ -3,8 +3,8 @@ import { dr } from "~/db.server";
 import { sectorTable } from "~/drizzle/schema";
 
 export interface Sector {
-  id: number;
-  parentId: number | null;
+  id: string;
+  parentId: string | null;
   sectorname: string;
   description: string | null;
   updatedAt: Date | null;
@@ -12,7 +12,7 @@ export interface Sector {
 }
 
 export type SectorType = Omit<Sector, 'id'> & {
-  id?: number;
+  id?: string;
 };
 
 export const fetchAllSectors = async (): Promise<Sector[]> => {
@@ -22,7 +22,7 @@ export const fetchAllSectors = async (): Promise<Sector[]> => {
     .orderBy(asc(sectorTable.sectorname));
 };
 
-export const getSectorsByParentId = async (parentId: number | null): Promise<Sector[]> => {
+export const getSectorsByParentId = async (parentId: string | null): Promise<Sector[]> => {
   const select = {
     id: sectorTable.id,
     sectorname: sectorTable.sectorname,
@@ -70,7 +70,7 @@ export const getMidLevelSectors = async (): Promise<Sector[]> => {
   return midLevelSectors.flat();
 };
 
-export const getSubsectorsByParentId = async (parentId: number): Promise<Sector[]> => {
+export const getSubsectorsByParentId = async (parentId: string): Promise<Sector[]> => {
   return await dr
     .select()
     .from(sectorTable)

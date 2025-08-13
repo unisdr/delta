@@ -20,7 +20,7 @@ interface SpecificHazard {
 }
 
 interface GeographicLevel {
-  id: number;
+  id: string;
   name: Record<string, string>;
   level: number | null;
 }

@@ -43,7 +43,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const res = await dr.select().from(divisionTable).where(
 		and(
-			eq(divisionTable.id, Number(id)),
+			eq(divisionTable.id, id),
 			eq(divisionTable.countryAccountsId, countryAccountsId)
 		)
 	);

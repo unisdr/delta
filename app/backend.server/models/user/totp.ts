@@ -13,7 +13,7 @@ type GenerateTotpResult =
 const totpSecretSize = 16;
 
 export async function generateTotpIfNotSet(
-  userId: number,
+  userId: string,
   totpIssuer: string,
 ): Promise<GenerateTotpResult> {
   const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
@@ -94,7 +94,7 @@ export async function isValidTotp(user: SelectUser, token: string, totpIssuer: s
 type SetTotpEnabledResult = { ok: true } | { ok: false; error: string };
 
 export async function setTotpEnabled(
-  userId: number,
+  userId: string,
   token: string,
   enabled: boolean,
   totpIssuer: string,

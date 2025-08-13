@@ -45,7 +45,7 @@ export class UserError extends Error {
   }
 }
 
-export async function divisionsAllLanguages(parentId: number | null, _langs: string[], countryAccountsId: string): Promise<Record<string, number>> {
+export async function divisionsAllLanguages(parentId: string | null, _langs: string[], countryAccountsId: string): Promise<Record<string, number>> {
   // Note: Parameter is prefixed with underscore to indicate it's intentionally unused but kept for API consistency
   try {
     return await dr.transaction(async (tx: Tx) => {
@@ -86,15 +86,15 @@ export async function divisionsAllLanguages(parentId: number | null, _langs: str
 }
 
 export type DivisionBreadcrumbRow = {
-  id: number;
+  id: string;
   name: string;
   nameLang: string;
-  parentId: number | null;
+  parentId: string | null;
 };
 
 export async function divisionBreadcrumb(
   langs: string[],
-  divisionId: number,
+  divisionId: string,
   countryAccountsId: string,
 ): Promise<DivisionBreadcrumbRow[]> {
   try {
@@ -102,7 +102,7 @@ export async function divisionBreadcrumb(
       try {
         const tr = selectTranslated(divisionTable.name, "name", langs);
         const breadcrumbs: DivisionBreadcrumbRow[] = [];
-        let currentId: number | null = divisionId;
+        let currentId: string | null = divisionId;
 
         while (currentId !== null) {
           const select: {
@@ -304,7 +304,7 @@ export async function importZip(zipBytes: Uint8Array, countryAccountsId: string)
     // Separate root and child divisions
     const rootDivisions: string[] = [];
     const childDivisions: string[] = [];
-    const idMap = new Map<string, number>();
+    const idMap = new Map<string, string>();
 
     Object.entries(divisions).forEach(([id, division]) => {
       if (!division.parent) {
@@ -478,7 +478,7 @@ export async function importZip(zipBytes: Uint8Array, countryAccountsId: string)
   }
 }
 
-async function processGeoJSON(tx: Tx, divisionId: number, geoJsonContent: string): Promise<void> {
+async function processGeoJSON(tx: Tx, divisionId: string, geoJsonContent: string): Promise<void> {
   try {
     // Parse and validate GeoJSON
     let parsedGeoJson: any;
@@ -577,7 +577,7 @@ async function importDivision(
     }
   },
   importId: string,
-  idMap: Map<string, number>,
+  idMap: Map<string, string>,
   countryAccountsId: string,
   geoJsonContent?: string
 ): Promise<BatchResult | null> {
@@ -596,7 +596,7 @@ async function importDivision(
     }
 
     // For root divisions (no parent), set level to 1
-    let parentDbId: number | null = null;
+    let parentDbId: string | null = null;
 
     if (division.parent) {
       // Import parent first if exists and not already imported
@@ -639,7 +639,7 @@ async function importDivision(
       .limit(1)
       .then(res => res[0]);
 
-    let dbId: number;
+    let dbId: string;
 
     // Use shared validation logic
     const validation = await validateDivisionData(
@@ -718,7 +718,7 @@ export function fromForm(formData: Record<string, string>): DivisionInsert {
     }, {} as { [key: string]: string });
 
   return {
-    parentId: parentId ? Number(parentId) : null,
+    parentId: parentId ? parentId : null,
     name: names,
   };
 }
@@ -732,7 +732,7 @@ async function validateDivisionData(
   tx: Tx,
   data: DivisionInsert,
   countryAccountsId: string,
-  existingId?: number
+  existingId?: string
 ): Promise<{ valid: boolean; errors: string[]; level?: number }> {
   const errors: string[] = [];
   let level = 1; // Default level for root divisions
@@ -857,8 +857,8 @@ async function validateDivisionData(
  */
 async function checkCircularReference(
   tx: Tx,
-  divisionId: number,
-  parentId: number,
+  divisionId: string,
+  parentId: string,
   countryAccountId: string
 ): Promise<boolean> {
   // Simple case: division can't be its own parent
@@ -868,7 +868,7 @@ async function checkCircularReference(
 
   // Check if any ancestor of the new parent is the division itself
   let currentId = parentId;
-  const visited = new Set<number>();
+  const visited = new Set<string>();
 
   while (currentId) {
     // Prevent infinite loops
@@ -937,7 +937,7 @@ export async function createDivision(data: DivisionInsert, countryAccountsId: st
   }
 }
 
-export async function update(id: number, data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
+export async function update(id: string, data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
@@ -986,7 +986,7 @@ export async function update(id: number, data: DivisionInsert, countryAccountsId
   }
 }
 
-export async function divisionById(id: number, countryAccountsId: string) {
+export async function divisionById(id: string, countryAccountsId: string) {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
@@ -1051,7 +1051,7 @@ export async function getAllChildren(divisionId: number, countryAccountsId: stri
 }
 
 export type DivisionIdAndNameResult = {
-  id: number;
+  id: string;
   name: Record<string, string>;
   level: number | null;
 }[];

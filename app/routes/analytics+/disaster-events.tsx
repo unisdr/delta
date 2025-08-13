@@ -62,7 +62,7 @@ interface interfaceBarChart {
 }
 
 interface interfaceSector {
-  id: number;
+  id: string;
   sectorname: string;
   level?: number;
   ids?: [];
@@ -95,7 +95,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   let humanEffectsGeoData: interfaceMap[] = [];
   // let totalAffectedPeople:any = {};
   let totalAffectedPeople2: any = {};
-  const sectortData: Record<number, { id: number; sectorname: string; subSector?: interfaceSector[]; }> = {};
+  const sectortData: Record<string, { id: string; sectorname: string; subSector?: interfaceSector[]; }> = {};
 
   const sectorPieChartData: Record<number, { damages: interfacePieChart; losses: interfacePieChart; recovery: interfacePieChart }> = {};
   let sectorBarChartData: Record<number, interfaceBarChart> = {};
@@ -182,14 +182,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
               sectorBarChartData[x.id].damage += x.effects.damages.total;
               sectorBarChartData[x.id].losses += x.effects.losses.total;
             }
-
-            // console.log('x:', x);
           }
         }
-
-        // const sorted = sectorParentArray.sort((a, b) => {
-        //   return a.sectorname.localeCompare(b.sectorname);
-        // });
 
         // Convert object to array and sort sectorname in ascending order
         sectorParentArray = Object.values(sectortData).sort((a, b) =>
@@ -204,25 +198,12 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
         // Remove the associate ID of the array to align to the format required by the chart.
         sectorBarChartData = Object.values(sectorBarChartData);
 
-        // console.log('sectortData Array:', sectortData);
-        // console.log('sectorParentArray Array:', sectorParentArray);
-        // console.log('Sector Array:', sectorBarChartData);
-        // console.log('Sector Parent Array:', sectorParentArray);
-        // console.log('sectorDamagePieChartData Array:', sectorDamagePieChartData);
-
-        //console.log( recordsRelatedSectors[0].sectorParent[0].id );
-        // console.log( mapSectorArray );
-        // console.log( sectorBarChart );
-        // get the count of Disaster Records linked to the disaster event
         countRelatedDisasterRecords = await disasterEvent_DisasterRecordsCount__ById(qsDisEventId);
 
         totalSectorEffects = await disasterEventSectorTotal__ById(qsDisEventId, [], currency);
 
         //retired, system is now using version 2
-        // totalAffectedPeople = await getAffectedByDisasterEvent(dr, qsDisEventId); 
         totalAffectedPeople2 = await getAffected(dr, qsDisEventId);
-        // console.log( totalAffectedPeople );
-        // console.log( totalAffectedPeople, totalAffectedPeople2 );
 
         const divisionLevel1 = await getDivisionByLevel(1, settings.countryAccountsId);
         for (const item of divisionLevel1) {
@@ -255,11 +236,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
             colorPercentage: 1,
             geojson: item.geojson,
           });
-          // console.log( item );
         }
-        // console.log( datamageGeoData );
-        // console.log( lossesGeoData );
-        // console.log( humanEffectsGeoData );
       } catch (e) {
         console.log(e);
         throw e;
@@ -305,7 +282,7 @@ function DisasterEventsAnalysisContent() {
   const mapChartRef = useRef<MapChartRef>(null); //  Reference to MapChart
   const [selectedSector, setSelectedSector] = useState("");
   const [selectedSubSector, setSelectedSubSector] = useState("");
-  const [subSectors, setSubSectors] = useState<{ id: number; sectorname: string }[]>([]);
+  const [subSectors, setSubSectors] = useState<{ id: string; sectorname: string }[]>([]);
 
   const ld = useLoaderData<{
     qsDisEventId: string,
@@ -331,16 +308,6 @@ function DisasterEventsAnalysisContent() {
 
   let [activeData, setActiveData] = useState(ld.datamageGeoData); //  Default MapChart geoData
 
-  // // State declarations
-  // const [filters, setFilters] = useState<{
-  //   disasterEventId: string | null;
-  // } | null>(null);
-
-  // // Event handlers for Filters component
-  // const handleApplyFilters = (newFilters: typeof filters) => {
-  //   setFilters(newFilters);
-  // };
-
   // Define the handleClearFilters function
   const handleClearFilters = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault(); // Prevent the default form submission
@@ -352,7 +319,7 @@ function DisasterEventsAnalysisContent() {
     setSelectedSector(sectorId);
 
     // Filter sub-sectors based on selected sector ID
-    const filteredSubSectors = ld.sectorParentArray.filter(item => item.id === Number(sectorId));
+    const filteredSubSectors = ld.sectorParentArray.filter(item => item.id === sectorId);
     const element = document.getElementById("sector-apply-filter");
 
     if (filteredSubSectors.length === 0) {
@@ -1030,7 +997,7 @@ function DisasterEventsAnalysisContent() {
                               </div>
                               <select id="sub-sector-select" className="filter-select" name="sub-sector" onChange={handleSubSectorChange}>
                                 <option value="">Select Sector First</option>
-                                {subSectors.map((sub: { id: number; sectorname: string }) => (
+                                {subSectors.map((sub: { id: string; sectorname: string }) => (
                                   <option key={sub.id} value={sub.id}>
                                     {sub.sectorname}
                                   </option>

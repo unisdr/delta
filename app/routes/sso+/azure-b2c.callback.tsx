@@ -232,7 +232,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 					return { errors: retLogin.error };
 				}
 
-				if (retLogin.userId == 0) {
+				if (retLogin.userId == "0") {
 					console.error("Error:", "System error.");
 					return { errors: "System error." };
 				} else {

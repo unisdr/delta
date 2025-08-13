@@ -10,7 +10,7 @@ import {affectedTablesAndCols} from "./affected-people-tables";
 
 
 interface Conditions {
-	divisionId?: number
+	divisionId?: string
 }
 
 export async function getAffected(tx: Tx, disasterEventId: string, conditions?: Conditions) {

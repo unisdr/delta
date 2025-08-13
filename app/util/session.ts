@@ -90,7 +90,7 @@ export async function getSuperAdminSession(
 	};
 }
 
-export async function createUserSession(userId: number) {
+export async function createUserSession(userId: string) {
 	const sessionRow: typeof sessionTable.$inferInsert = {
 		userId,
 		lastActiveAt: new Date(),

@@ -73,7 +73,6 @@ export function validate(
 export async function hazardousEventCreate(
 	tx: Tx,
 	fields: HazardousEventFields
-	// userId?: number
 ): Promise<CreateResult<HazardousEventFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
@@ -200,7 +199,6 @@ export async function hazardousEventUpdate(
 	tx: Tx,
 	id: string,
 	fields: Partial<HazardousEventFields>
-	// userId?: number
 ): Promise<UpdateResult<HazardousEventFields>> {
 	const validationErrors = validate(fields);
 	const errors: Errors<HazardousEventFields> = {

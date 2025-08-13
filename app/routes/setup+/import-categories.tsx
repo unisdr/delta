@@ -82,8 +82,8 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
     let item = all[1];
     let formRecord:SectorType = { 
-      id: parseInt(item[0]),
-      parentId: parseInt(item[1]),
+      id: item[0],
+      parentId: item[1],
       sectorname: item[2],
       description: item[3],
     };
@@ -93,7 +93,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
         if (key !== 0) {
           if (String(item[1]).length === 0) {
             formRecord = {
-              id: parseInt(item[0]),
+              id: item[0],
               sectorname: item[2],
               description: item[3],
               level: 1,
@@ -107,12 +107,12 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
             }
             // console.log(formRecord);
           } else {
-            sectorRecord = await sectorById(parseInt(item[1]));
+            sectorRecord = await sectorById(item[1]);
             if (sectorRecord) {
               
               formRecord = {
-                id: parseInt(item[0]),
-                parentId: parseInt(item[1]),
+                id: item[0],
+                parentId: item[1],
                 sectorname: item[2],
                 description: item[3],
                 level: sectorRecord.level + 1,
@@ -145,36 +145,27 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
     }
 
     let all = await parseCSV(fileString);
-    // console.log( all );
     console.log( all[1] );
     let item = all[1];
     let formRecord:CategoryType = { 
-      id: parseInt(item[0]),
+      id: item[0],
       name: item[1],
     };
-    // console.log(formRecord)
-    // try {
-    //     upsertRecord(formRecord).catch(console.error);
-    //   } catch (e) {
-    //     console.log(e);
-    //     throw e;
-    //   }
-  
     all.forEach((item, key) => {
       if (key !== 0) {
       
         if (item[2] === '') {
           formRecord = { 
-            id: parseInt(item[0]),
+            id: item[0],
             name: item[1],
             level: parseInt(item[3]),
           };
         }
         else {
           formRecord = { 
-            id: parseInt(item[0]),
+            id: item[0],
             name: item[1],
-            parentId: parseInt(item[2]),
+            parentId: item[2],
             level: parseInt(item[3]),
           };
         }

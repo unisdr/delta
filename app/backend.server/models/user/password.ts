@@ -168,7 +168,7 @@ type ChangePasswordResult =
   | { ok: false; errors: Errors<ChangePasswordFields> };
 
 export async function changePassword(
-  userId: number,
+  userId: string,
   fields: ChangePasswordFields
 ): Promise<ChangePasswordResult> {
   let errors: Errors<ChangePasswordFields> = {};

@@ -124,7 +124,7 @@ export async function disasterEvent_DisasterRecordsCount__ById(id: any) {
 	return record[0].count;
 }
 
-export async function disasterEventTotalLosses_RecordsAssets__ById(disasterEventId: string, sectorId: number) {
+export async function disasterEventTotalLosses_RecordsAssets__ById(disasterEventId: string, sectorId: string) {
 	const queryLossesTable = dr.selectDistinctOn(
 		[lossesTable.id],
 		{
@@ -166,7 +166,7 @@ export async function disasterEventTotalLosses_RecordsAssets__ById(disasterEvent
 	return queryLossesTable.execute();
 }
 
-export async function disasterEventTotalRecovery_RecordsAssets__ById(disasterEventId: string, disasterRecordId: string, sectorId: number) {
+export async function disasterEventTotalRecovery_RecordsAssets__ById(disasterEventId: string, disasterRecordId: string, sectorId: string) {
 	const queryDamageTable = dr.selectDistinctOn(
 		[damagesTable.id],
 		{
@@ -199,7 +199,7 @@ export async function disasterEventTotalRecovery_RecordsAssets__ById(disasterEve
 	return queryDamageTable.execute();
 }
 
-export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEventId: string, sectorId: number) {
+export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEventId: string, sectorId: string) {
 	const queryDamageTable = dr.selectDistinctOn(
 		[damagesTable.id],
 		{
@@ -242,7 +242,7 @@ export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEven
 	return queryDamageTable.execute();
 }
 
-export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: string, divisionId: number[], currency: string) {
+export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: string, divisionId: string[], currency: string) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -398,7 +398,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 
 }
 
-export async function disasterEventSectorTotal__ById(disasterEventId: string, isInSectorIds: number[] = [], currency:string) {
+export async function disasterEventSectorTotal__ById(disasterEventId: string, isInSectorIds: string[] = [], currency:string) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -539,7 +539,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 
 
 
-export async function disasterEventSectorDamageDetails__ById(disasterEventId: string, isInSectorIds: number[] = []) {
+export async function disasterEventSectorDamageDetails__ById(disasterEventId: string, isInSectorIds: string[] = []) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -587,7 +587,7 @@ export async function disasterEventSectorDamageDetails__ById(disasterEventId: st
 }
 
 
-export async function disasterEventSectorLossesDetails__ById(disasterEventId: string, isInSectorIds: number[] = []) {
+export async function disasterEventSectorLossesDetails__ById(disasterEventId: string, isInSectorIds: string[] = []) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
@@ -640,7 +640,7 @@ export async function disasterEventSectorLossesDetails__ById(disasterEventId: st
 }
 
 
-export async function disasterEventSectorDisruptionDetails__ById(disasterEventId: string, isInSectorIds: number[] = []) {
+export async function disasterEventSectorDisruptionDetails__ById(disasterEventId: string, isInSectorIds: string[] = []) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}

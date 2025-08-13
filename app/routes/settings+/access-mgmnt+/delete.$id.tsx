@@ -18,13 +18,13 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
-	const userToDelete = await getUserCountryAccountsByUserIdAndCountryAccountsId(Number(id), countryAccountsId);
+	const userToDelete = await getUserCountryAccountsByUserIdAndCountryAccountsId(id, countryAccountsId);
 
 	if (!userToDelete) {
 		throw new Response("User not found", { status: 404 });
 	}
 
-	await deleteUserCountryAccountsByUserIdAndCountryAccountsId(Number(id), countryAccountsId);
+	await deleteUserCountryAccountsByUserIdAndCountryAccountsId(id, countryAccountsId);
 
 	return redirect(`/settings/access-mgmnt/`);
 })

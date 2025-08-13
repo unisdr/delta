@@ -28,12 +28,11 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		throw new Error("Route does not have disRecId param")
 	}
 	let url = new URL(request.url)
-	let sectorIdStr = url.searchParams.get("sectorId") || ""
-	if (!sectorIdStr) {
+	let sectorId = url.searchParams.get("sectorId") || ""
+	if (!sectorId) {
 		console.log("sectorId was not provided in the url")
 		throw new Response("Not Found", {status: 404});
 	}
-	let sectorId = Number(sectorIdStr)
 
 	let table = damagesTable
 	let dataFetcher = async (offsetLimit: OffsetLimit) => {
