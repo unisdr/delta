@@ -50,6 +50,13 @@
       "when": 1755071955643,
       "tag": "20250813075915_populate_category_asset_and_sector_data",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1755163273005,
+      "tag": "20250814092113_populate_hips_data_into_db",
+      "breakpoints": true
     }
   ]
 }
