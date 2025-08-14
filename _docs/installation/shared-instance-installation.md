@@ -67,7 +67,6 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    
    # Application Settings (Required in .env)
    NODE_ENV="production"
-   APP_VERSION="0.0.7"
    PORT=3000
    
    # Security (Required in .env)
@@ -118,9 +117,6 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    
    # Initialize the database schema
    docker-compose exec app yarn run drizzle-kit push
-   
-   # Seed default system settings
-   docker-compose exec app yarn run db:seed
    ```
 
 ### Option B: Manual Installation
@@ -152,9 +148,6 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    cp example.env .env
    # Edit .env file with infrastructure variables only (see Docker section above)
    yarn run drizzle-kit push
-   
-   # Initialize default system settings in database
-   yarn run db:seed
    ```
 
 4. **Start the Application**
@@ -171,30 +164,13 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
 
 Before creating the super admin user, ensure the database has the required default settings:
 
-#### Database Seeding
-
-> **Important**: Database seeding is primarily intended for development environments to populate the database with initial configuration data and dummy test data. In production, you should manually configure settings after installation to ensure proper security and data integrity.
-
-#### Database Seeding for Development
-```bash
-# For Docker deployment
-docker-compose exec app yarn run db:seed
-
-# For manual installation  
-yarn run db:seed
-```
-
-This command will:
-- Create default `instance_system_settings` record
-- Set up initial system configuration
-- Prepare the database for multi-tenant operation
-- Add test/dummy data for development purposes
-
 #### Production Environment Setup
-For production environments, **do not run the seeding command**. Instead:
+For production environments:
 1. The database schema will be created by the `drizzle-kit push` command
 2. Configure system settings manually through the super admin interface after login
 3. Create country accounts as needed through the admin panel
+
+
 
 #### Verify Database Setup
 ```sql
@@ -231,7 +207,7 @@ This method uses an online tool to generate the password hash, making it simpler
 
    **Option B: Using Node.js**
    ```javascript
-   // Save as generate-hash.js
+   // Save as generate-hash.js (or generate-hash.cjs on Linux environments)
    const bcrypt = require('bcryptjs');
    const password = 'YourSecurePassword123!';
    bcrypt.hash(password, 10).then(hash => console.log(hash));
@@ -243,8 +219,10 @@ This method uses an online tool to generate the password hash, making it simpler
    docker-compose exec app node generate-hash.js
    
    # For manual installation
-   node generate-hash.js
+   node generate-hash.js  # On Linux, you may need to use .cjs extension instead
    ```
+   
+   > **Note for Linux users**: If you encounter issues executing .js files directly, rename the file to use the .cjs extension (e.g., generate-hash.cjs) and adjust the command accordingly.
 
 2. **Connect to the PostgreSQL database:**
    ```bash
@@ -275,36 +253,7 @@ This method uses an online tool to generate the password hash, making it simpler
 
 
 
-#### Method 2: Environment Variable Method
 
-> **Note**: This method may not be supported in all versions of the application. If it doesn't work, use Method 1 instead.
-
-1. **Add to your `.env` file:**
-   ```ini
-   SUPER_ADMIN_EMAIL="superadmin@your-domain.com"
-   SUPER_ADMIN_PASSWORD="YourSecurePassword123!"
-   SUPER_ADMIN_FIRST_NAME="Super"
-   SUPER_ADMIN_LAST_NAME="Admin"
-   SUPER_ADMIN_SETUP="true"
-   ```
-
-2. **Restart the application:**
-   ```bash
-   # For Docker
-   docker-compose restart app
-   
-   # For manual installation
-   yarn run start
-   ```
-
-3. **Verify the super admin was created:**
-   ```bash
-   # For Docker deployment
-   docker-compose exec db psql -U postgres -d dts_shared -c "SELECT email FROM super_admin_users;"
-   
-   # For manual installation
-   sudo -u postgres psql -d dts_shared -c "SELECT email FROM super_admin_users;"
-   ```
 
 ### 4.3 Super Admin Login
 
@@ -378,15 +327,6 @@ For security, change the super admin password after the initial setup:
 
 4. **Log out and log back in** with the new password to verify it works
 
-#### Method 2: Using a Node.js Script
-
-1. **Create a password update script** named `update-super-admin-password.js`:
-   ```javascript
-   const bcrypt = require('bcryptjs');
-   const { Client } = require('pg');
-   
-   async function updateSuperAdminPassword() {
-       const client = new Client({
            connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/dts_shared'
        });
        
@@ -425,7 +365,7 @@ For security, change the super admin password after the initial setup:
    docker-compose exec app node update-super-admin-password.js
    
    # For manual installation
-   node update-super-admin-password.js
+   node update-super-admin-password.js  # On Linux, you may need to use .cjs extension instead
    ```
 
 2. **Update the password directly:**
@@ -529,7 +469,6 @@ Only infrastructure and security variables remain in `.env`:
 DATABASE_URL="postgresql://user:pass@host:port/db"
 SESSION_SECRET="secure-random-string"
 NODE_ENV="production"
-APP_VERSION="0.0.7"
 PORT=3000
 
 # Required Email Configuration
@@ -615,9 +554,15 @@ These are automatically created when a country account is established and can be
 **Problem**: Invitation emails not being sent
 
 **Solutions**:
-1. **Test SMTP settings:**
+1. **Test SMTP settings using common tools:**
    ```bash
-   # Use a tool like swaks to test SMTP
+   # Using telnet (commonly pre-installed)
+   telnet your-smtp-server.com 587
+   
+   # Using nc (netcat - commonly pre-installed)
+   nc -zv your-smtp-server.com 587
+   
+   # Using swaks (if available)
    swaks --to test@example.com --server your-smtp-server.com --port 587
    ```
 
@@ -691,10 +636,13 @@ tar -czf dts_app_backup_$(date +%Y%m%d).tar.gz \
 
 ### 10.1 Health Checks
 
-- **Application health**: `GET /health`
-- **Database connectivity**: Monitor connection pool
-- **Disk space**: Ensure adequate free space
-- **Memory usage**: Monitor application memory consumption
+> **Note**: The `/health` endpoint is currently under review. We are researching best practices for health check implementation in Node.js applications and will adopt these to DTS. Findings will be presented to the PMO for final decision.
+
+Planned health check monitoring includes:
+- **Application health**: Status of core services
+- **Database connectivity**: Connection pool monitoring
+- **Disk space**: Storage capacity monitoring
+- **Memory usage**: Application memory consumption tracking
 
 ### 10.2 Regular Maintenance
 
