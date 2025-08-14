@@ -85,3 +85,15 @@ _docs/country-instance-onboarding/
 
 # Shared instance project documentation (local development use only)
 _docs/Project_Documentation/
+
+
+# API security-related files (ignored for local/dev testing only)
+app/routes/admin.api-security.tsx
+app/routes/api.test.comprehensive.tsx
+app/routes/api.test.token-info.tsx
+app/routes/api.test.current-auth.tsx
+app/routes/api.test.secure-auth.tsx
+app/routes/api.test.user-centric-auth.tsx
+app/routes/api.test.monitoring-auth.tsx
+app/routes/api.test.token-info.tsx
+test-api-security.sh
