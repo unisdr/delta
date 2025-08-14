@@ -43,6 +43,13 @@
       "when": 1754906209290,
       "tag": "20250811095649_update_countries_table_add_flag_url_data",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1755071955643,
+      "tag": "20250813075915_populate_category_asset_and_sector_data",
+      "breakpoints": true
     }
   ]
 }
