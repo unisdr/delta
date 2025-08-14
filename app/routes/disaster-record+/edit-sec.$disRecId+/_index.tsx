@@ -167,6 +167,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			lossesCostCurrency: frmWithLosses === 'on' && frmLossesCost !== '' && frmLossesCostCurrency !== '' ? frmLossesCostCurrency : null,
 		};
 	
+		console.log("rec id= ", params.disRecId)
 		try {
 			await disRecSectorsUpsertRecord(formRecord).catch(console.error);
 			return redirect("/disaster-record/edit/" + params.disRecId);
