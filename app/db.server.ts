@@ -33,3 +33,19 @@ export function initDB() {
 export function endDB() {
   pool.end();
 }
+
+export async function testDbConnection() {
+  pool = dr.$client;
+
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT NOW()');
+    // const res = await client.query('SELECT NOW()');
+    // console.log('Database connected:', res.rows[0]);
+    await client.end();
+    return true;
+  } catch (err) {
+    // console.error('Database connection failed:', err);
+    return false;
+  }
+}

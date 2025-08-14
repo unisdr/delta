@@ -24,6 +24,7 @@ import {
 } from "~/util/config";
 import PasswordInput from "~/components/PasswordInput";
 import Messages from "~/components/Messages";
+import { testDbConnection } from "~/db.server";
 
 interface LoginFields {
 	email: string;
@@ -70,7 +71,143 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return redirect(redirectTo, { headers });
 };
 
+// Function to validate required environment variables
+function validateRequiredEnvVars() {
+	const errors: { variable: string; message: string }[] = [];
+
+	// Check DATABASE_URL
+	if (!process.env.DATABASE_URL) {
+		errors.push({
+			variable: 'DATABASE_URL',
+			message: 'Database connection string is missing'
+		});
+	} else if (!process.env.DATABASE_URL.startsWith('postgresql://')) {
+		errors.push({
+			variable: 'DATABASE_URL',
+			message: 'Database connection string is invalid (must be PostgreSQL)'
+		});
+	}
+
+	// Check if the database URL contains invalid characters or paths
+	if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('?host=/var/run/postgresql/')) {
+		errors.push({
+			variable: 'DATABASE_URL',
+			message: 'Database connection string contains invalid Unix socket path. Please use a standard PostgreSQL connection string format.'
+		});
+	}
+
+	// Check SESSION_SECRET
+	if (!process.env.SESSION_SECRET) {
+		errors.push({
+			variable: 'SESSION_SECRET',
+			message: 'Session secret is missing'
+		});
+	} else if (process.env.NODE_ENV === 'production' && process.env.SESSION_SECRET === 'not-random-dev-secret') {
+		errors.push({
+			variable: 'SESSION_SECRET',
+			message: 'Session secret is using default value in production'
+		});
+	}
+
+	// Check EMAIL_TRANSPORT and related settings
+	if (!process.env.EMAIL_TRANSPORT) {
+		errors.push({
+			variable: 'EMAIL_TRANSPORT',
+			message: 'Email transport configuration is missing'
+		});
+	} else if (process.env.EMAIL_TRANSPORT === 'smtp') {
+		// Check required SMTP settings when SMTP transport is selected
+		if (!process.env.SMTP_HOST) {
+			errors.push({
+				variable: 'SMTP_HOST',
+				message: 'SMTP host is required when using SMTP transport'
+			});
+		}
+		if (!process.env.SMTP_PORT) {
+			errors.push({
+				variable: 'SMTP_PORT',
+				message: 'SMTP port is required when using SMTP transport'
+			});
+		}
+		if (!process.env.SMTP_USER) {
+			errors.push({
+				variable: 'SMTP_USER',
+				message: 'SMTP username is required when using SMTP transport'
+			});
+		}
+		if (!process.env.SMTP_PASS) {
+			errors.push({
+				variable: 'SMTP_PASS',
+				message: 'SMTP password is required when using SMTP transport'
+			});
+		}
+	}
+
+	// Check EMAIL_FROM
+	if (!process.env.EMAIL_FROM) {
+		errors.push({
+			variable: 'EMAIL_FROM',
+			message: 'Email sender address is missing'
+		});
+	} else if (!process.env.EMAIL_FROM.includes('@') || !process.env.EMAIL_FROM.includes('.')) {
+		errors.push({
+			variable: 'EMAIL_FROM',
+			message: 'Email sender address appears to be invalid'
+		});
+	}
+
+	// Check AUTHENTICATION_SUPPORTED
+	if (!process.env.AUTHENTICATION_SUPPORTED) {
+		errors.push({
+			variable: 'AUTHENTICATION_SUPPORTED',
+			message: 'Authentication methods configuration is missing'
+		});
+	}
+
+	// Check SSO configuration if enabled
+	if (configAuthSupportedAzureSSOB2C()) {
+		if (!process.env.SSO_AZURE_B2C_TENANT) {
+			errors.push({
+				variable: 'SSO_AZURE_B2C_TENANT',
+				message: 'Azure B2C tenant is required when SSO is enabled'
+			});
+		}
+		if (!process.env.SSO_AZURE_B2C_CLIENT_ID) {
+			errors.push({
+				variable: 'SSO_AZURE_B2C_CLIENT_ID',
+				message: 'Azure B2C client ID is required when SSO is enabled'
+			});
+		}
+		if (!process.env.SSO_AZURE_B2C_CLIENT_SECRET) {
+			errors.push({
+				variable: 'SSO_AZURE_B2C_CLIENT_SECRET',
+				message: 'Azure B2C client secret is required when SSO is enabled'
+			});
+		}
+	}
+
+	return errors;
+}
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+	// Validate required environment variables
+	const configErrors = validateRequiredEnvVars();
+	const boolDbConnectionTest = await testDbConnection();
+
+	// Test database connection before proceeding
+	if (boolDbConnectionTest === false) {
+		console.error('Database connection error');
+		configErrors.push({
+			variable: 'DATABASE_URL',
+			message: 'Could not connect to the database. Please check your connection string.'
+		});
+	}
+
+	// Add a message about the number of configuration errors
+	if (configErrors.length > 0) {
+		console.warn(`Found ${configErrors.length} configuration errors that need to be fixed before proceeding with setup.`);
+	}
+
 	const superAdminSession = await getSuperAdminSession(request);
 
 	const url = new URL(request.url);
