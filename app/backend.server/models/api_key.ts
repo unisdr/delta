@@ -10,7 +10,7 @@ export interface ApiKeyFields extends Omit<SelectApiKey, "id"> { }
 
 // NEW: Extended interface for user-centric token creation
 export interface UserCentricApiKeyFields extends Omit<SelectApiKey, "id" | "secret" | "createdAt" | "updatedAt"> {
-	assignedToUserId?: number; // The actual user who will use this token
+	assignedToUserId?: string; // The actual user who will use this token
 }
 
 function generateSecret(): string {
@@ -97,11 +97,11 @@ class TokenAssignmentParser {
 	 * @param tokenName - Token name that may contain user assignment
 	 * @returns number | null - Assigned user ID or null if not assigned
 	 */
-	static parseAssignedUserId(tokenName: string): number | null {
+	static parseAssignedUserId(tokenName: string): string | null {
 		if (!tokenName) return null;
 
-		const match = tokenName.match(/__ASSIGNED_USER_(\d+)$/);
-		return match ? parseInt(match[1], 10) : null;
+		const match = tokenName.match(/__ASSIGNED_USER_(.+)$/);
+		return match ? match[1] : null;
 	}
 
 	/**
@@ -121,10 +121,10 @@ class TokenAssignmentParser {
 	 * @returns Object with assignment info
 	 */
 	static getTokenAssignment(key: SelectApiKey): {
-		assignedUserId: number | null;
+		assignedUserId: string | null;
 		isUserAssigned: boolean;
 		cleanName: string;
-		managedByUserId: number;
+		managedByUserId: string;
 	} {
 		const assignedUserId = this.parseAssignedUserId(key.name);
 
@@ -305,7 +305,7 @@ export async function apiAuthSecure(request: Request): Promise<SelectApiKey> {
  * Implements the new requirement: token linked to actual user making use of it
  */
 export async function apiAuthUserCentric(request: Request): Promise<SelectApiKey & {
-	assignedUserId?: number;
+	assignedUserId?: string;
 	validatedUser: 'admin' | 'assigned_user';
 }> {
 	try {
@@ -368,11 +368,11 @@ export class ApiSecurityAudit {
 		active: number;
 		withInactiveUsers: number;
 		details: Array<{
-			keyId: number;
+			keyId: string;
 			keyName: string;
 			cleanName: string;
 			managingUserEmail: string;
-			assignedUserId?: number;
+			assignedUserId?: string;
 			assignedUserEmail?: string;
 			tokenType: 'admin_managed' | 'user_assigned';
 			issues: string[];
@@ -392,11 +392,11 @@ export class ApiSecurityAudit {
 				active: 0,
 				withInactiveUsers: 0,
 				details: [] as Array<{
-					keyId: number;
+					keyId: string;
 					keyName: string;
 					cleanName: string;
 					managingUserEmail: string;
-					assignedUserId?: number;
+					assignedUserId?: string;
 					assignedUserEmail?: string;
 					tokenType: 'admin_managed' | 'user_assigned';
 					issues: string[];
@@ -418,7 +418,16 @@ export class ApiSecurityAudit {
 					results.withInactiveUsers++;
 				}
 
-				results.details.push(auditResult);
+				results.details.push({
+					keyId: auditResult.keyId,
+					keyName: auditResult.keyName,
+					cleanName: auditResult.cleanName,
+					managingUserEmail: auditResult.managingUserEmail,
+					assignedUserId: auditResult.assignedUserId,
+					assignedUserEmail: auditResult.assignedUserEmail,
+					tokenType: auditResult.tokenType,
+					issues: auditResult.issues
+				});
 			}
 
 			return results;
@@ -433,11 +442,11 @@ export class ApiSecurityAudit {
 	 * NEW: Enhanced single key audit with assignment details
 	 */
 	static async auditSingleKeyEnhanced(key: any): Promise<{
-		keyId: number;
+		keyId: string;
 		keyName: string;
 		cleanName: string;
 		managingUserEmail: string;
-		assignedUserId?: number;
+		assignedUserId?: string;
 		assignedUserEmail?: string;
 		tokenType: 'admin_managed' | 'user_assigned';
 		issues: string[];
@@ -494,7 +503,7 @@ export class ApiSecurityAudit {
 	 * ORIGINAL: Audits a single API key - backward compatibility
 	 */
 	static async auditSingleKey(key: any): Promise<{
-		keyId: number;
+		keyId: string;
 		keyName: string;
 		userEmail: string;
 		issues: string[];
@@ -525,7 +534,7 @@ export class ApiSecurityAudit {
 	static async getUserManagedApiKeys(userId: string): Promise<Array<SelectApiKey & {
 		userIsActive: boolean;
 		issues: string[];
-		assignedUserId?: number;
+		assignedUserId?: string;
 		tokenType: 'admin_managed' | 'user_assigned';
 		cleanName: string;
 	}>> {
@@ -568,11 +577,11 @@ export class ApiSecurityAudit {
 	/**
 	 * NEW: Get tokens assigned to a specific user (not managed by them)
 	 */
-	static async getTokensAssignedToUser(userId: number): Promise<Array<{
-		keyId: number;
+	static async getTokensAssignedToUser(userId: string): Promise<Array<{
+		keyId: string;
 		keyName: string;
 		cleanName: string;
-		managingUserId: number;
+		managingUserId: string;
 		managingUserEmail?: string;
 		isActive: boolean;
 		issues: string[];
@@ -652,8 +661,8 @@ export class UserAccessManager {
 	 */
 	static async createUserAssignedToken(
 		tx: Tx,
-		adminUserId: number,
-		assignedUserId: number,
+		adminUserId: string,
+		assignedUserId: string,
 		tokenName: string,
 		countryAccountsId?: string | null
 	): Promise<CreateResult<ApiKeyFields>> {
@@ -668,7 +677,7 @@ export class UserAccessManager {
 	/**
 	 * NEW: Get comprehensive user access summary
 	 */
-	static async getUserAccessSummary(userId: number): Promise<{
+	static async getUserAccessSummary(userId: string): Promise<{
 		userIsActive: boolean;
 		userIssues: string[];
 		managedTokens: number;
@@ -706,7 +715,7 @@ export class UserAccessManager {
  */
 export async function apiAuthWithMonitoring(request: Request): Promise<SelectApiKey> {
 	try {
-		
+
 		const key = await apiAuth(request);
 
 		// Add non-blocking security monitoring
