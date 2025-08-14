@@ -279,8 +279,6 @@ function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1I
                   { name: "System settings", link: "/settings/system" },
                   { name: "Geographic levels", link: "/settings/geography" },
                   { name: "Sectors", link: "/settings/sectors" },
-                  { name: "HIPs import", link: "/setup/import-hip" },
-                  { name: "Categories import", link: "/setup/import-categories" },
                   { name: "API Keys", link: "/settings/api-key" },
                   { name: "Assets", link: "/settings/assets" },
                 ] : [
