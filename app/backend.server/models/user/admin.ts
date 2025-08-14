@@ -8,7 +8,7 @@ import { Errors, hasErrors } from "~/frontend/form";
 import { errorIsNotUnique } from "~/util/db";
 
 type SetupAdminAccountResult =
-  | { ok: true; userId: number; pendingActivation?: boolean }
+  | { ok: true; userId: string; pendingActivation?: boolean }
   | { ok: false; errors: Errors<SetupAdminAccountFields> };
 
 export interface SetupAdminAccountFields {
@@ -147,7 +147,7 @@ export async function setupAccountSSOAzureB2C(
   }
 
   try {
-    const updatedUserId: { updatedId: number }[] = await dr
+    await dr
       .update(userTable)
       .set({
         password: "",
@@ -157,7 +157,6 @@ export async function setupAccountSSOAzureB2C(
       .where(eq(userTable.email, fields.email))
       .returning({ updatedId: userTable.id });
 
-    console.log(updatedUserId);
   } catch (e: any) {
     if (errorIsNotUnique(e, "user", "email")) {
       errors.fields.email = ["A user with this email already exists"];
@@ -167,5 +166,5 @@ export async function setupAccountSSOAzureB2C(
   }
 
   // TODO: remove hardcoded userId
-  return { ok: true, userId: 7 };
+  return { ok: true, userId: "7" };
 }

@@ -31,7 +31,7 @@ interface LoaderRes {
 	item: LossesViewModel | null;
 	fieldDef: FormInputDef<LossesFields>[];
 	recordId: string;
-	sectorId: number;
+	sectorId: string;
 	sectorIsAgriculture?: boolean;
 	treeData?: any[];
 	ctryIso3?: string;
@@ -82,7 +82,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	if (params.id === "new") {
 		let url = new URL(request.url);
-		let sectorId = Number(url.searchParams.get("sectorId")) || 0;
+		let sectorId = url.searchParams.get("sectorId") || "0";
 		if (!sectorId) {
 			throw new Response("Not Found", { status: 404 });
 		}

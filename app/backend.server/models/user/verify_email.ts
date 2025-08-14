@@ -58,7 +58,7 @@ interface VerifyEmailFields {
 }
 
 export async function verifyEmail(
-  userId: number,
+  userId: string,
   code: string
 ): Promise<VerifyEmailResult> {
   let errors: Errors<VerifyEmailFields> = {};

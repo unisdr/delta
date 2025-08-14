@@ -16,7 +16,7 @@ export const loader = async ({request}:LoaderFunctionArgs) => {
     const res = await validateInviteCode(inviteCode);
     let queryStringB2CInvite = encodeURIComponent('{ "inviteCode": "' + inviteCode + '", "action": "sso_azure_b2c-register" }');
 
-    if (res.ok && res.userId > 0) {
+    if (res.ok && res.userId !== "0") {
         return loginGetCode( queryStringB2CInvite );
     }
 

@@ -75,7 +75,7 @@ export const loader = authLoaderPublicOrWithPerm(
 		// Parse the request URL
 		const parsedUrl = new URL(req.url);
 		const sectorPieChartData: Record<
-			number,
+			string,
 			{
 				damages: interfacePieChart;
 				losses: interfacePieChart;
@@ -91,7 +91,7 @@ export const loader = authLoaderPublicOrWithPerm(
 		const qs_subsectorid = queryParams.get("subsectorid") || "";
 
 		let sectorData: any = {};
-		let sectorId: number = 0;
+		let sectorId: string = "0";
 
 		const settings = await getCountrySettingsFromSession(req);
 		let confCurrency;
@@ -114,9 +114,9 @@ export const loader = authLoaderPublicOrWithPerm(
 		}
 
 		if (qs_sectorid.length > 0 && qs_subsectorid.length > 0) {
-			sectorId = Number(qs_subsectorid);
+			sectorId = qs_subsectorid;
 		} else if (qs_sectorid.length > 0) {
-			sectorId = Number(qs_sectorid);
+			sectorId = qs_sectorid;
 		} else {
 			throw new Response("Missing required parameters", { status: 400 });
 		}
@@ -125,13 +125,13 @@ export const loader = authLoaderPublicOrWithPerm(
 
 		const sectorChildren = (await sectorChildrenById(sectorId)) as {
 			sectorname: string;
-			id: number;
-			relatedDecendants: { id: number; sectorname: string; level: number }[];
+			id: string;
+			relatedDecendants: { id: string; sectorname: string; level: number }[];
 		}[];
-		let sectorAllChildrenIdsArray: number[] = [];
+		let sectorAllChildrenIdsArray: string[] = [];
 
 		for (const item of sectorChildren) {
-			const sectorChildrenIdsArray: number[] = item.relatedDecendants.map(
+			const sectorChildrenIdsArray: string[] = item.relatedDecendants.map(
 				(item2) => item2.id
 			);
 
@@ -171,8 +171,6 @@ export const loader = authLoaderPublicOrWithPerm(
 				sectorPieChartData[item.id].recovery.value += effects.recovery.total;
 			}
 		}
-		// console.log('sectorPieChartData:', sectorPieChartData);
-
 		// Extract values only for damage, losses, and recovery
 		sectorDamagePieChartData = Object.values(sectorPieChartData).map(
 			(entry) => entry.damages

@@ -24,7 +24,7 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	}
 	const userCountryAccounts =
 		await getUserCountryAccountsByUserIdAndCountryAccountsId(
-			Number(id),
+			id,
 			countryAccountsId
 		);
 	if (!userCountryAccounts) {

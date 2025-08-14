@@ -37,7 +37,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 
 	const url = new URL(request.url);
-	const parentId = Number(url.searchParams.get("parent")) || null;
+	const parentId = url.searchParams.get("parent") || null;
 	const langs = await divisionsAllLanguages(parentId, [], countryAccountsId);
 
 	const selectedLangs = Object.entries(langs)

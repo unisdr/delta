@@ -91,11 +91,11 @@ export async function getRecordId(tx: Tx, id: string) {
 	return rows[0].recordId
 }
 
-export async function filterByDisasterRecordId_SectorId(idDisterRecordStr: string, idSector: number) {
+export async function filterByDisasterRecordId_SectorId(idDisterRecordStr: string, idSector: string) {
 	return filterByDisasterRecordId_SectorIdTx(dr, idDisterRecordStr, idSector);
 }
 
-export async function filterByDisasterRecordId_SectorIdTx(tx: Tx, idDisterRecordStr: string, idSector: number) {
+export async function filterByDisasterRecordId_SectorIdTx(tx: Tx, idDisterRecordStr: string, idSector: string) {
 	let idDisterRecord = idDisterRecordStr;
 	let res = await tx.query.sectorDisasterRecordsRelationTable.findMany({
 		where: and(

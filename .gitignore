@@ -26,8 +26,8 @@ public/build/
 
 
 # Database
-app/drizzle/meta/
-app/drizzle/migrations/
+app/drizzle/migrations/meta/*
+!app/drizzle/migrations/meta/_journal.json
 *.db
 *.sqlite
 *.sqlite3

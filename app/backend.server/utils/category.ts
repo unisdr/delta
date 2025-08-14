@@ -39,14 +39,14 @@ export async function processCategoryCsv(): Promise<void> {
 
         // Initialize a category record object
         let formRecord: CategoryType = {
-            id: parseInt(item[0]),
+            id: item[0],
             name: item[1],
             level: parseInt(item[3])
         };
 
         // Determine if this category has a parent
         if (item[2] && item[2].trim().length > 0) {
-            formRecord.parentId = parseInt(item[2]);
+            formRecord.parentId = item[2];
         }
 
         // Attempt to upsert category data

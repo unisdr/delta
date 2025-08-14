@@ -143,7 +143,7 @@ export async function disruptionDeleteById(id: string): Promise<DeleteResult> {
 }
 
 
-export async function disruptionDeleteBySectorId(id: number): Promise<DeleteResult> {
+export async function disruptionDeleteBySectorId(id: string): Promise<DeleteResult> {
 	await dr.delete(disruptionTable).where(eq(disruptionTable.sectorId, id));
 
 	return {ok: true}

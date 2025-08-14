@@ -94,7 +94,7 @@ export async function assetLoader(args: assetLoaderArgs) {
 		(
 			SELECT string_agg(s.sectorname, ', ')
 			FROM ${sectorTable} s
-			WHERE s.id = ANY(string_to_array(${assetTable.sectorIds}, ',')::int[])
+			WHERE s.id = ANY(string_to_array(${assetTable.sectorIds}, ',')::uuid[])
 		)
 	`.as('sector_names'),
 			},

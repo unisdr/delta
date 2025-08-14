@@ -178,7 +178,7 @@ export async function sendInviteForExistingUser(
 }
 
 type ValidateInviteCodeResult =
-	| { ok: true; userId: number; email: string }
+	| { ok: true; userId: string; email: string }
 	| { ok: false; error: string };
 
 export async function validateInviteCode(
@@ -212,7 +212,7 @@ export async function validateInviteCode(
 }
 
 type AcceptInviteResult =
-	| { ok: true; userId: number }
+	| { ok: true; userId: string }
 	| { ok: false; errors: Errors<AcceptInviteFields> };
 
 interface AcceptInviteFields {

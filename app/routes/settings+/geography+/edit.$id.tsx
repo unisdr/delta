@@ -46,7 +46,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const res = await dr.select().from(divisionTable).where(
 		and(
-			eq(divisionTable.id, Number(id)),
+			eq(divisionTable.id, id),
 			eq(divisionTable.countryAccountsId, countryAccountsId)
 		)
 	);
@@ -73,7 +73,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const { request, params } = actionArgs;
 
-	const id = Number(params.id);
+	const id = params.id;
 	if (!id) {
 		throw new Response("Missing ID", { status: 400 });
 	}
@@ -88,7 +88,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	data.countryAccountsId = countryAccountsId;
 
 	if (data.parentId) {
-		recordDivision = await divisionById(Number(data.parentId), countryAccountsId);
+		recordDivision = await divisionById(data.parentId, countryAccountsId);
 		data.level = recordDivision && recordDivision.level ? recordDivision.level + 1 : 1;
 	}
 	else {

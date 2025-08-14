@@ -35,7 +35,7 @@ export async function login(
 }
 
 export async function loginTotp(
-	userId: number,
+	userId: string,
 	sessionId: string,
 	code: string,
 	totpIssuer: string

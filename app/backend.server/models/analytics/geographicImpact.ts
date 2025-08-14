@@ -152,7 +152,7 @@ function safeMoneyToNumber(value: string | number | null): number {
 // 
 // @param sectorId - The ID of the sector to get subsectors for
 // @returns Array of sector IDs including the input sector and all its subsectors
-const getAllSubsectorIds = async (sectorId: string | number): Promise<number[]> => {
+const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
     // First get the level of the input sector
     const sectorInfo = await dr
         .select({
@@ -160,7 +160,7 @@ const getAllSubsectorIds = async (sectorId: string | number): Promise<number[]> 
             level: sectorTable.level
         })
         .from(sectorTable)
-        .where(eq(sectorTable.id, Number(sectorId)))
+        .where(eq(sectorTable.id, sectorId))
         .limit(1);
 
     if (sectorInfo.length === 0) {
@@ -171,7 +171,7 @@ const getAllSubsectorIds = async (sectorId: string | number): Promise<number[]> 
 
     // If it's already a level 4 sector (most detailed), just return itself
     if (level === 4) {
-        return [Number(sectorId)];
+        return [sectorId];
     }
 
     // For other levels, get all subsectors
@@ -183,7 +183,7 @@ const getAllSubsectorIds = async (sectorId: string | number): Promise<number[]> 
         .from(sectorTable)
         .where(
             or(
-                eq(sectorTable.id, Number(sectorId)),
+                eq(sectorTable.id, sectorId),
                 and(
                     sql`${sectorTable.id}::text LIKE ${sectorId}::text || '%'`,
                     sql`LENGTH(${sectorTable.id}::text) > LENGTH(${sectorId}::text)`
@@ -236,10 +236,10 @@ function isValidGeoJSON(value: any): boolean {
 export async function getGeographicImpact(countryAccountsId: string, filters: GeographicImpactFilters): Promise<GeographicImpactResult> {
     try {
         // Get sector IDs based on selection
-        let sectorIds: number[] = [];
+        let sectorIds: string[] = [];
         if (filters.subSectorId) {
             // If subsector is selected, only use that ID
-            const parsedSubSectorId = parseInt(filters.subSectorId, 10);
+            const parsedSubSectorId = filters.subSectorId;
             sectorIds = await getAllSubsectorIds(parsedSubSectorId);
             logger.debug("Expanded sector IDs from subSector", { sectorIds });
             logger.debug("Using specific subsector ID", { parsedSubSectorId });
@@ -409,7 +409,7 @@ export async function getGeographicImpact(countryAccountsId: string, filters: Ge
                     eq(divisionTable.level, 1),
                     eq(divisionTable.countryAccountsId, countryAccountsId),
                     filters.geographicLevelId
-                        ? eq(divisionTable.id, parseInt(filters.geographicLevelId))
+                        ? eq(divisionTable.id, filters.geographicLevelId)
                         : undefined
                 )
             );
@@ -459,7 +459,6 @@ export async function getGeographicImpact(countryAccountsId: string, filters: Ge
                         baseQuery: queryBuilder.where(and(...baseConditions)),
                     },
                     sectorIds,
-                    // division.geom as GeoJSON.Geometry
                 );
 
                 if (!disasterRecords || disasterRecords.length === 0) {
@@ -518,7 +517,7 @@ export async function getGeographicImpact(countryAccountsId: string, filters: Ge
     }
 }
 
-export async function getDescendantDivisionIds(divisionId: number): Promise<number[]> {
+export async function getDescendantDivisionIds(divisionId: string): Promise<string[]> {
     const allDivisions = await dr
         .select({
             id: divisionTable.id,
@@ -526,14 +525,14 @@ export async function getDescendantDivisionIds(divisionId: number): Promise<numb
         })
         .from(divisionTable);
 
-    const childrenMap = new Map<number, number[]>();
+    const childrenMap = new Map<string, string[]>();
     for (const { id, parentId } of allDivisions) {
         if (parentId === null) continue;
         if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
         childrenMap.get(parentId)!.push(id);
     }
 
-    const result = new Set<number>();
+    const result = new Set<string>();
     const queue = [divisionId];
     while (queue.length) {
         const current = queue.pop()!;
@@ -565,7 +564,7 @@ async function getDisasterRecordsForDivision(
     countryAccountsId: string,
     divisionId: string,
     filters?: GeographicFilters,
-    sectorIds: number[] = [],
+    sectorIds: string[] = [],
 ): Promise<string[]> {
     try {
         console.log(`[Start] Fetching disaster records for Division ID: ${divisionId}`);
@@ -577,7 +576,7 @@ async function getDisasterRecordsForDivision(
                 geom: divisionTable.geom
             })
             .from(divisionTable)
-            .where(eq(divisionTable.id, parseInt(divisionId)))
+            .where(eq(divisionTable.id, divisionId))
             .limit(1);
 
 
@@ -707,7 +706,7 @@ async function getDisasterRecordsForDivision(
                 eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
             );
 
-        const descendantIds = await getDescendantDivisionIds(parseInt(divisionId));
+        const descendantIds = await getDescendantDivisionIds(divisionId);
 
         const quoted = descendantIds.map((id) => `@ == "${id}"`).join(" || ");
 
@@ -954,7 +953,7 @@ AND ST_Intersects(
                         name: divisionTable.name
                     })
                     .from(divisionTable)
-                    .where(eq(divisionTable.id, parseInt(divisionId)))
+                    .where(eq(divisionTable.id, divisionId))
                     .limit(1);
 
                 if (divisionDetails.length > 0 && divisionDetails[0].name) {
@@ -1091,7 +1090,7 @@ export async function fetchGeographicImpactData(
  * @param recordIds - Disaster record IDs to aggregate
  * @returns Total damage and yearly breakdown
  */
-async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): Promise<{ total: number, byYear: Map<number, number> }> {
+async function aggregateDamagesData(recordIds: string[], sectorIds?: string[]): Promise<{ total: number, byYear: Map<number, number> }> {
     try {
         if (recordIds.length === 0) {
             return { total: 0, byYear: new Map() };
@@ -1209,7 +1208,7 @@ async function aggregateDamagesData(recordIds: string[], sectorIds?: number[]): 
  * @param recordIds - Disaster record IDs to aggregate
  * @returns Total losses and yearly breakdown
  */
-async function aggregateLossesData(recordIds: string[], sectorIds?: number[]): Promise<{ total: number, byYear: Map<number, number> }> {
+async function aggregateLossesData(recordIds: string[], sectorIds?: string[]): Promise<{ total: number, byYear: Map<number, number> }> {
     try {
         if (recordIds.length === 0) {
             return { total: 0, byYear: new Map() };

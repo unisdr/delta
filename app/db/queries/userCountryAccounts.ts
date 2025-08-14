@@ -8,7 +8,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { dr, Tx } from "~/db.server";
 
 export async function getUserCountryAccountsByUserId(
-	userId: number
+	userId: string
 ): Promise<SelectUserCountryAccounts[]> {
 	return await dr
 		.select()
@@ -18,7 +18,7 @@ export async function getUserCountryAccountsByUserId(
 }
 
 export async function createUserCountryAccounts(
-	userId: number,
+	userId: string,
 	countryAccountsId: string,
 	role: string,
 	isPrimaryAdmin: boolean,
@@ -95,7 +95,7 @@ export async function doesUserCountryAccountExistByEmailAndCountryAccountsId(
 }
 
 export async function doesUserCountryAccountExistByUserIdAndCountryAccountsId(
-	userId: number,
+	userId: string,
 	countryAccountsId: string,
 	tx?: Tx
 ): Promise<boolean> {
@@ -119,7 +119,7 @@ export async function doesUserCountryAccountExistByUserIdAndCountryAccountsId(
 }
 
 export async function getUserCountryAccountsByUserIdAndCountryAccountsId(
-	userId: number,
+	userId: string,
 	countryAccountsId: string,
 	tx?: Tx
 ) {
@@ -139,7 +139,7 @@ export async function getUserCountryAccountsByUserIdAndCountryAccountsId(
 }
 
 export async function deleteUserCountryAccountsByUserIdAndCountryAccountsId(
-	userId: number,
+	userId: string,
 	countryAccountsId: string,
 	tx?: Tx
 ) {

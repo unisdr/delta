@@ -98,28 +98,18 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const req = actionArgs.request;
 	const formData = await req.formData();
 	let frmId = formData.get("id") || "";
-	let frmCategoryId = formData.get("categoryId") || "";
+	let frmCategoryId = formData.get("categoryId")?.toString() || "";
 	let frmDescription = formData.get("description") || "";
 	let this_showForm: boolean = false;
-	let intCatetoryIDforDB: number = 0;
 
-	if (
-		frmCategoryId &&
-		typeof frmCategoryId == "string" &&
-		parseInt(frmCategoryId) > 0
-	) {
+	if (frmCategoryId && frmCategoryId !== "") {
 		this_showForm = true;
-		intCatetoryIDforDB = parseInt(frmCategoryId);
 	}
 
-	if (
-		this_showForm &&
-		frmDescription.toString() !== "" &&
-		intCatetoryIDforDB > 0
-	) {
+	if (this_showForm && frmDescription.toString() !== "") {
 		const formRecord: PropRecord = {
 			id: frmId && typeof frmId == "string" ? frmId : undefined,
-			categoryId: intCatetoryIDforDB,
+			categoryId: frmCategoryId,
 			disasterRecordId: String(params.id),
 			description: String(frmDescription),
 		};

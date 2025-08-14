@@ -146,7 +146,7 @@ export async function devExample1UpdateById(
 	if (hasErrors(errors)) {
 		return { ok: false, errors };
 	}
-	let id = Number(idStr);
+	let id = idStr;
 	const result = await tx
 		.update(devExample1Table)
 		.set({
@@ -189,7 +189,7 @@ export async function devExample1ById(idStr: string) {
 }
 
 export async function devExample1ByIdTx(tx: Tx, idStr: string) {
-	let id = Number(idStr);
+	let id = idStr;
 	let res = await tx.query.devExample1Table.findFirst({
 		where: eq(devExample1Table.id, id),
 	});
@@ -241,7 +241,7 @@ export async function devExample1DeleteByIdAndCountryAccounts(
 			.from(devExample1Table)
 			.where(
 				and(
-					eq(devExample1Table.id, Number(id)),
+					eq(devExample1Table.id, id),
 					eq(devExample1Table.countryAccountsId, countryAccountsId)
 				)
 			);
@@ -250,7 +250,7 @@ export async function devExample1DeleteByIdAndCountryAccounts(
 		}
 		await tx
 			.delete(devExample1Table)
-			.where(eq(devExample1Table.id, Number(id)));
+			.where(eq(devExample1Table.id, id));
 	});
 	return { ok: true };
 }

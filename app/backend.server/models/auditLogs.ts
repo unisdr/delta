@@ -15,7 +15,7 @@ export async function logAudit({
 }: {
   tableName: string;
   recordId: string;
-  userId: number;
+  userId: string;
   action: string;
   oldValues?: any;
   newValues?: any;

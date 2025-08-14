@@ -36,7 +36,7 @@ import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/d
  * @param sectorId - The ID of the sector to get subsectors for
  * @returns Array of sector IDs including the input sector and all its subsectors
  */
-const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
+const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
   const result = await db
     .select({
       id: sectorTable.id,
@@ -45,7 +45,7 @@ const getAllSubsectorIds = async (sectorId: string): Promise<number[]> => {
     .from(sectorTable)
     .where(
       or(
-        eq(sectorTable.id, Number(sectorId)),
+        eq(sectorTable.id, sectorId),
         and(
           sql`${sectorTable.id}::text LIKE ${sectorId}::text || '%'`,
           sql`LENGTH(${sectorTable.id}::text) > LENGTH(${sectorId}::text)`
@@ -85,8 +85,7 @@ async function buildFilterConditions(countryAccountsId: string, params: MostDama
         sectorIdsSample: sectorIds.slice(0, 5) // Log first 5 IDs to avoid huge logs
       });
 
-      // Convert string IDs back to numbers for the SQL query
-      const numericSectorIds = allSectorIds.map(id => Number(id));
+      const numericSectorIds = allSectorIds.map(id => id);
 
       conditions.push(
         exists(
@@ -367,7 +366,7 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
         and(
           eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordsTable.id),
           sectorIds && sectorIds.length > 0
-            ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds.map(id => Number(id)))
+            ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
             : sql`1=1` // No sector filter if no sectorIds
         )
       )

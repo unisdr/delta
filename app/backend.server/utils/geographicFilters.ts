@@ -10,7 +10,7 @@ import createLogger from "~/utils/logger.server";
 const logger = createLogger("backend.server/utils/geographicFilters");
 
 export interface GeographicFilter {
-  id: number;
+  id: string;
   names: Record<string, string>;
   geometry: any;
 }
@@ -59,7 +59,7 @@ export async function getDivisionInfo(geographicLevelId: string): Promise<Geogra
         geom: divisionTable.geom
       })
       .from(divisionTable)
-      .where(eq(divisionTable.id, parseInt(geographicLevelId)))
+      .where(eq(divisionTable.id, geographicLevelId))
       .limit(1);
 
     if (!division || division.length === 0) {
@@ -97,7 +97,7 @@ export async function getDivisionInfo(geographicLevelId: string): Promise<Geogra
   }
 }
 
-export function debugMatchedGeoFormat(spatialFootprint: any, divisionId: number): string[] {
+export function debugMatchedGeoFormat(spatialFootprint: any, divisionId: string): string[] {
   logger.debug("Starting geographic format matching debug", {
     divisionId,
     spatialFootprintLength: Array.isArray(spatialFootprint) ? spatialFootprint.length : 0

@@ -8,16 +8,16 @@ import {
 import {dr, Tx} from '~/db.server';
 
 export type SectorType = {
-	id?: number;
+	id?: string;
 	sectorname: string;
-	parentId?: number;
+	parentId?: string;
 	description?: string;
 	updatedAt?: Date;
 	createdAt?: Date;
 	level?: number;
 };
 
-export async function getSectors(sectorParent_id: number | null): Promise<{id: number, sectorname: string, parent_id: number | null}[]> {
+export async function getSectors(sectorParent_id: string | null): Promise<{id: string, sectorname: string, parent_id: string | null}[]> {
 	let select: {
 		id: typeof sectorTable.id,
 		sectorname: typeof sectorTable.sectorname,
@@ -88,9 +88,9 @@ export async function getSectorsByLevel(level: number): Promise<{id: number | ne
 	.execute();
 }
 
-let agricultureSectorId = 11;
+let agricultureSectorId = "11";
 
-export async function sectorIsAgriculture(tx: Tx, id: number, depth: number = 0): Promise<boolean> {
+export async function sectorIsAgriculture(tx: Tx, id: string, depth: number = 0): Promise<boolean> {
 	let maxDepth = 100
   if (depth > maxDepth){
 		throw new Error("sector parent loop detected")
@@ -110,7 +110,7 @@ export async function sectorIsAgriculture(tx: Tx, id: number, depth: number = 0)
   return await sectorIsAgriculture(tx, row.parentId, depth + 1)
 }
 
-export async function sectorById(id: number, includeParentObject:boolean = false) {
+export async function sectorById(id: string, includeParentObject:boolean = false) {
 	if (includeParentObject) {
 		const res = await dr.query.sectorTable.findFirst({
 			where: eq(sectorTable.id, id),
@@ -128,7 +128,7 @@ export async function sectorById(id: number, includeParentObject:boolean = false
 	}
 }
 
-export async function sectorChildrenById(parentId: number) {
+export async function sectorChildrenById(parentId: string) {
 	const res = await dr.selectDistinctOn(
 		[sectorTable.sectorname],
 		{
@@ -152,7 +152,7 @@ export async function sectorChildrenById(parentId: number) {
 	return res;
 }
 
-export async function getSectorFullPathById(sectorId: number) {
+export async function getSectorFullPathById(sectorId: string) {
 	const { rows } = await dr.execute(sql`
 		WITH RECURSIVE ParentCTE AS (
 			SELECT id, sectorname, parent_id, sectorname AS full_path

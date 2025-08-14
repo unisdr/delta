@@ -7,15 +7,15 @@ import {
 import {dr} from '~/db.server';
 
 export type CategoryType = {
-	id?: number;
+	id?: string;
 	name: string;
-	parentId?: number;
+	parentId?: string;
 	updatedAt?: Date;
 	createdAt?: Date;
 	level?: number;
 };
 
-export async function getCategories(categoryParent_id: number | null): Promise<{id: number, name: string, parent_id: number | null}[]> {
+export async function getCategories(categoryParent_id: string | null): Promise<{id: string, name: string, parent_id: string | null}[]> {
 	let select: {
 		id: typeof categoriesTable.id,
 		name: typeof categoriesTable.name,
@@ -46,7 +46,7 @@ export async function getCategories(categoryParent_id: number | null): Promise<{
 	}
 }
 
-export async function getCategory(categoryId: number): Promise<{id: number, name: string, parent_id?: number | undefined}> {
+export async function getCategory(categoryId: string): Promise<{id: string, name: string, parent_id?: string | undefined}> {
 	let res = await dr
 		.select({
 			id: categoriesTable.id,

@@ -332,17 +332,15 @@ const getDisasterRecordsForSector = async (
  * @param sectorId - The ID of the sector to get subsectors for
  * @returns Array of sector IDs including the input sector and all its subsectors
  */
-const getAllSubsectorIds = async (sectorId: string | number | undefined): Promise<number[]> => {
+const getAllSubsectorIds = async (sectorId: string | undefined): Promise<string[]> => {
   if (sectorId === undefined || sectorId === null) return [];
 
-  const rootId = Number(sectorId);
-  if (isNaN(rootId)) return [];
-
+  const rootId = sectorId;
   logger.debug("Starting sector hierarchy traversal", { rootId });
 
-  const result: number[] = [];
-  const seen = new Set<number>();
-  const queue: number[] = [rootId];
+  const result: string[] = [];
+  const seen = new Set<string>();
+  const queue: string[] = [rootId];
 
   while (queue.length > 0) {
     const currentId = queue.shift()!;
@@ -384,7 +382,6 @@ const aggregateDamagesData = async (
   });
 
   const sectorIds = sectorId ? await getAllSubsectorIds(sectorId) : [];
-  const numericSectorIds = sectorIds;
 
   // First check sectorDisasterRecordsRelation for overrides
   const sectorOverrides = await dr
@@ -398,8 +395,8 @@ const aggregateDamagesData = async (
     .where(
       and(
         inArray(sectorDisasterRecordsRelationTable.disasterRecordId, recordIds),
-        numericSectorIds.length > 0
-          ? inArray(sectorDisasterRecordsRelationTable.sectorId, numericSectorIds)
+        sectorIds.length > 0
+          ? inArray(sectorDisasterRecordsRelationTable.sectorId, sectorIds)
           : undefined
       )
     );
@@ -424,8 +421,8 @@ const aggregateDamagesData = async (
     .where(
       and(
         inArray(damagesTable.recordId, recordIds),
-        numericSectorIds.length > 0
-          ? inArray(damagesTable.sectorId, numericSectorIds)
+        sectorIds.length > 0
+          ? inArray(damagesTable.sectorId, sectorIds)
           : undefined
       )
     );
@@ -443,7 +440,7 @@ const aggregateDamagesData = async (
 
     // Check sector overrides for all matching subsectors
     const matchingOverrides = sectorOverrides.filter(
-      so => so.recordId === recordId && numericSectorIds.includes(so.sectorId)
+      so => so.recordId === recordId && sectorIds.includes(so.sectorId)
     );
 
     // Sum up all sector override damages
@@ -463,7 +460,7 @@ const aggregateDamagesData = async (
     // If no overrides with damage found, check detailed damages for all matching subsectors
     if (recordDamageAmount === 0) {
       const matchingDamages = detailedDamages.filter(
-        d => d.recordId === recordId && numericSectorIds.includes(d.sectorId)
+        d => d.recordId === recordId && sectorIds.includes(d.sectorId)
       );
 
       // Sum up all detailed damages

@@ -7,7 +7,7 @@ import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 
 // Types
 interface Sector {
-    id: number;
+    id: string;
     sectorname: string;
     subsectors?: Sector[];
 }
@@ -64,7 +64,7 @@ interface HazardImpactResponse {
 }
 
 interface Sector {
-    id: number;
+    id: string;
     sectorname: string;
     subsectors?: Sector[];
 }

@@ -23,7 +23,7 @@ interface Props {
 }
 
 interface Sector {
-  id: number;
+  id: string;
   sectorname: string;
   subsectors?: Sector[];
 }

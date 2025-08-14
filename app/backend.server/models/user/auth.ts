@@ -6,7 +6,7 @@ import { passwordHashCompare } from "./password";
 import { isValidTotp } from "./totp";
 
 export type LoginResult =
-	| { ok: true; userId: number; countryAccountId?: string | null; role?: string }
+	| { ok: true; userId: string; countryAccountId?: string | null; role?:string }
 	| { ok: false };
 
 export type SuperAdminLoginResult =
@@ -60,7 +60,7 @@ export async function superAdminLogin(
 }
 
 export type LoginAzureB2CResult =
-	| { ok: true; userId: number }
+	| { ok: true; userId: string }
 	| { ok: false; error: string };
 
 export async function registerAzureB2C(
@@ -108,7 +108,7 @@ export async function loginAzureB2C(
 		);
 
 	if (!res || res.length === 0) {
-		return { ok: true, userId: 0 };
+		return { ok: true, userId: "0" };
 	}
 	if (!pFirstName || pFirstName.length === 0) {
 		return { ok: false, error: "User first name is required" };
@@ -197,7 +197,7 @@ export async function loginSuperAdminAzureB2C(
 }
 
 export async function loginTotp(
-	userId: number,
+	userId: string,
 	token: string,
 	totpIssuer: string,
 ): Promise<LoginTotpResult> {
