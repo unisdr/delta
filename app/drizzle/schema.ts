@@ -252,9 +252,7 @@ export const divisionTable = pgTable(
 		id: ourRandomUUID(),
 		importId: text("import_id"),
 		nationalId: text("national_id").unique(),
-		parentId: uuid("parent_id").references(
-			(): AnyPgColumn => divisionTable.id
-		),
+		parentId: uuid("parent_id").references((): AnyPgColumn => divisionTable.id),
 		countryAccountsId: uuid("country_accounts_id").references(
 			() => countryAccounts.id
 		),
@@ -262,18 +260,15 @@ export const divisionTable = pgTable(
 		geojson: jsonb("geojson"),
 		level: ourBigint("level"), // value is parent level + 1 otherwise 1
 
-		// Store geometry as a regular column that will be updated via trigger
-		geom: customType({
+		geom: customType<{ data: unknown }>({
 			dataType: () => "geometry(Geometry,4326)",
-		})(),
+		})().$type<null>(),
 
-		// Store bbox as a regular column that will be updated via trigger
-		bbox: customType({
+		bbox: customType<{ data: unknown }>({
 			dataType: () => "geometry(Geometry,4326)",
-		})(),
+		})().$type<null>(),
 
-		// Spatial index will be updated via trigger
-		spatial_index: text("spatial_index"),
+		spatial_index: text("spatial_index").$type<null>(),
 	},
 	(table) => {
 		return [
@@ -1127,10 +1122,8 @@ export type AuditLogsTableAction = "INSERT" | "UPDATE" | "DELETE";
 // Table for generic classification categories
 export const categoriesTable = pgTable("categories", {
 	id: ourRandomUUID(),
-	name: text("name").notNull(), 
-	parentId: uuid("parent_id").references(
-		(): AnyPgColumn => categoriesTable.id
-	), 
+	name: text("name").notNull(),
+	parentId: uuid("parent_id").references((): AnyPgColumn => categoriesTable.id),
 	level: ourBigint("level").notNull().default(1),
 	...createdUpdatedTimestamps,
 });
@@ -1197,9 +1190,7 @@ export const nonecoLossesCategory_Rel = relations(
 // description: The cultivation and harvesting of plants for food, fiber, and other products.
 export const sectorTable = pgTable("sector", {
 	id: ourRandomUUID(),
-	parentId: uuid("parent_id").references(
-		(): AnyPgColumn => sectorTable.id
-	),
+	parentId: uuid("parent_id").references((): AnyPgColumn => sectorTable.id),
 	sectorname: text("sectorname").notNull(), // High-level category | Descriptive name of the sector
 	description: text("description"), // Optional description for the sector | Additional details about the sector
 	level: ourBigint("level").notNull().default(1), // value is parent level + 1 otherwise 1
@@ -1355,7 +1346,9 @@ export const countries = pgTable("countries", {
 	id: ourRandomUUID(),
 	name: varchar("name", { length: 100 }).notNull().unique(),
 	iso3: varchar("iso3", { length: 3 }).unique(),
-	flagUrl: varchar("flag_url", {length: 255}).notNull().default("https://example.com/default-flag.png"),
+	flagUrl: varchar("flag_url", { length: 255 })
+		.notNull()
+		.default("https://example.com/default-flag.png"),
 });
 
 export type SelectCountries = typeof countries.$inferSelect;
@@ -1411,16 +1404,14 @@ export const countryAccountsRelations = relations(
 ////////////////////////////////////////////////////////////////
 export const userCountryAccounts = pgTable("user_country_accounts", {
 	id: ourRandomUUID(),
-	userId: uuid("user_id").notNull().references(
-		() => userTable.id,
-		{
+	userId: uuid("user_id")
+		.notNull()
+		.references(() => userTable.id, {
 			onDelete: "cascade",
-		}
-	),
-	countryAccountsId: uuid("country_accounts_id").notNull().references(
-		() => countryAccounts.id,
-		{ onDelete: "cascade" }
-	),
+		}),
+	countryAccountsId: uuid("country_accounts_id")
+		.notNull()
+		.references(() => countryAccounts.id, { onDelete: "cascade" }),
 	role: varchar("role", { length: 100 }).notNull(),
 	isPrimaryAdmin: boolean("is_primary_admin").notNull().default(false),
 	addedAt: timestamp("added_at", {

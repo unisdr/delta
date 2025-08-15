@@ -333,6 +333,8 @@ export async function importZip(zipBytes: Uint8Array, countryAccountsId: string)
 
             const geoJsonContent = await zip.files[geoJsonPath].async('text');
 
+            console.log("divisionId",divisionId)
+            console.log("idMap",idMap)
             // Process within transaction
             const result = await dr.transaction(async (tx) => {
               const result = await importDivision(tx, divisions, divisionId, idMap, countryAccountsId, geoJsonContent);
@@ -664,13 +666,16 @@ async function importDivision(
         .set({
           ...divisionData,
           level: validation.level,
-          countryAccountsId: countryAccountsId
+          // countryAccountsId: countryAccountsId
         })
-        .where(eq(divisionTable.id, existingDivision.id));
+        .where(and(eq(divisionTable.id, existingDivision.id), eq(divisionTable.countryAccountsId,countryAccountsId)));
 
       dbId = existingDivision.id;
     } else {
       // Insert new division
+      console.log("divisionData = ",divisionData)
+      console.log("countryAccountsId = ",countryAccountsId)
+      
       const [result] = await tx
         .insert(divisionTable)
         .values({

@@ -48,14 +48,6 @@ export async function getEffectDetailsHandler(countryAccountsId: string, params:
       }
     }
 
-    // Validate numeric parameters
-    if (params.sectorId && isNaN(Number(params.sectorId))) {
-      throw new EffectDetailsError('Invalid sector ID format', 'INVALID_PARAMS');
-    }
-    if (params.geographicLevelId && isNaN(Number(params.geographicLevelId))) {
-      throw new EffectDetailsError('Invalid geographic level ID format', 'INVALID_PARAMS');
-    }
-
     const data = await getEffectDetails(countryAccountsId, params);
 
     return {
