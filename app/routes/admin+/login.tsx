@@ -25,6 +25,7 @@ import {
 import PasswordInput from "~/components/PasswordInput";
 import Messages from "~/components/Messages";
 import { testDbConnection } from "~/db.server";
+import { FaExclamationTriangle } from "react-icons/fa";
 
 interface LoginFields {
 	email: string;
@@ -46,6 +47,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			{ status: 400 }
 		);
 	}
+
 
 	const formData = formStringData(await request.formData());
 	const data: LoginFields = {
@@ -238,6 +240,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			redirectTo: redirectTo,
 			isFormAuthSupported: isFormAuthSupported,
 			isSSOAuthSupported: isSSOAuthSupported,
+			configErrors: configErrors,
 		},
 		{ headers: { "Set-Cookie": setCookie } }
 	);
@@ -267,7 +270,7 @@ export default function Screen() {
 	const errors = actionData?.errors || {};
 	const data = actionData?.data;
 
-	const { isFormAuthSupported, isSSOAuthSupported } = loaderData;
+	const { isFormAuthSupported, isSSOAuthSupported, configErrors } = loaderData;
 
 	useEffect(() => {
 		// Submit button enabling only when required fields are filled (only if form is supported)
@@ -281,6 +284,58 @@ export default function Screen() {
 			}
 		}
 	}, [isFormAuthSupported]);
+
+if (configErrors && configErrors.length > 0) {
+	return (
+		<div className="dts-page-container">
+				<main className="dts-main-container">
+					<div className="mg-container">
+						<div className="dts-form dts-form--vertical">
+								<div className="dts-form__header"></div>
+								<div className="dts-form__body">
+									<div style={{
+										background: '#fff0f0',
+										border: '1px solid #ffcccc',
+										borderRadius: '4px',
+										padding: '16px',
+										marginBottom: '20px'
+									}}>
+										<div style={{
+											display: 'flex',
+											alignItems: 'center',
+											marginBottom: '10px',
+											color: '#cc0000',
+											fontWeight: 'bold'
+										}}>
+											<FaExclamationTriangle style={{ marginRight: '8px' }} />
+											System Configuration Errors
+										</div>
+										<p style={{ marginBottom: '10px' }}>
+											The following required configuration variables are missing or have invalid values in your <code>.env</code> file:
+										</p>
+										<ul style={{
+											listStyleType: 'disc',
+											paddingLeft: '20px',
+											margin: '0'
+										}}>
+											{configErrors.map((error:any, index:number) => (
+												<li key={index} style={{ marginBottom: '5px' }}>
+													<strong>{error.variable}</strong>: {error.message}
+												</li>
+											))}
+										</ul>
+										<p style={{ marginTop: '10px', marginBottom: '0' }}>
+											Please update your <code>.env</code> file with the correct values before proceeding.
+										</p>
+									</div>
+								</div>
+						</div>
+					</div>
+				</main>
+			</div>
+	);
+}
+
 
 	// If only SSO is supported, show SSO-only interface
 	if (!isFormAuthSupported && isSSOAuthSupported) {
@@ -346,6 +401,7 @@ export default function Screen() {
 								<p>Enter your admin credentials to access the management panel.</p>
 								<p style={{ marginBottom: "2px" }}>*Required information</p>
 							</div>
+
 							<div className="dts-form__body" style={{ marginBottom: "5px" }}>
 								<div
 									className="dts-form-component"
