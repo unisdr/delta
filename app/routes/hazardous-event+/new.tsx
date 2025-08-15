@@ -77,7 +77,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
   const divisionGeoJSON = await dr.execute(sql`
     SELECT id, name, geojson
     FROM division
-    WHERE (parent_id = 0 OR parent_id IS NULL) 
+    WHERE parent_id IS NULL
     AND geojson IS NOT NULL
     AND country_accounts_id = ${countryAccountsId};
   `);

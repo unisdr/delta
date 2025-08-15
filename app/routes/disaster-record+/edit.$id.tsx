@@ -28,8 +28,8 @@ import { getAffectedByDisasterRecord } from "~/backend.server/models/analytics/a
 import { FormScreen } from "~/frontend/form";
 
 import { createOrUpdateAction } from "~/backend.server/handlers/form/form";
-import { getTableName, eq } from "drizzle-orm";
-import { disasterRecordsTable } from "~/drizzle/schema";
+import { getTableName, eq, sql } from "drizzle-orm";
+import { disasterRecordsTable, divisionTable } from "~/drizzle/schema";
 
 import { dr } from "~/db.server";
 import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
@@ -39,6 +39,7 @@ import { contentPickerConfig } from "./content-picker-config";
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { DeleteButton } from "~/frontend/components/delete-dialog";
 import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import { buildTree } from "~/components/TreeView";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { request, params } = loaderArgs;
@@ -50,11 +51,38 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw "Route does not have $id param";
 	}
 	
+	const initializeNewTreeView = async (): Promise<any[]> => {
+		const idKey = "id";
+		const parentKey = "parentId";
+		const nameKey = "name";
+		// Filter divisions by tenant context for security
+		const rawData = await dr
+			.select()
+			.from(divisionTable)
+			.where(sql`country_accounts_id = ${countryAccountsId}`);
+		return buildTree(rawData, idKey, parentKey, nameKey, "en", [
+			"geojson",
+			"importId",
+			"nationalId",
+			"level",
+			"name",
+		]);
+	};
+
 	const hip = await dataForHazardPicker();
 
 	let user = authLoaderGetUserForFrontend(loaderArgs);
 
+	const divisionGeoJSON = await dr.execute(sql`
+		SELECT id, name, geojson
+		FROM division
+		WHERE parent_id IS NULL
+		AND geojson IS NOT NULL
+		AND country_accounts_id = ${countryAccountsId};
+    `);
+
 	if (params.id === "new") {
+		const treeData = await initializeNewTreeView();
 		let ctryIso3: string = "";
 		const settings = await getCountrySettingsFromSession(request);
 		if (settings) {
@@ -66,10 +94,10 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			recordsDisRecSectors: [],
 			recordsHumanEffects: [],
 			hip: hip,
-			treeData: [],
+			treeData: treeData,
 			cpDisplayName: null,
 			ctryIso3: ctryIso3,
-			divisionGeoJSON: [],
+			divisionGeoJSON: divisionGeoJSON?.rows,
 			user,
 			dbDisRecHumanEffectsSummaryTable: null,
 		};
@@ -92,6 +120,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	);
 
 	// Define Keys Mapping (Make it Adaptable)
+	const treeData = await initializeNewTreeView();
 	let ctryIso3: string = "";
 	const settings = await getCountrySettingsFromSession(loaderArgs.request);
 	if (settings) {
@@ -109,10 +138,10 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		recordsDisRecSectors: dbDisRecSectors,
 		recordsHumanEffects: dbDisRecHumanEffects,
 		hip: hip,
-		treeData: [],
+		treeData: treeData,
 		cpDisplayName: cpDisplayName,
 		ctryIso3: ctryIso3,
-		divisionGeoJSON: [],
+		divisionGeoJSON: divisionGeoJSON?.rows,
 		user,
 		dbDisRecHumanEffectsSummaryTable: dbDisRecHumanEffectsSummaryTable,
 	};

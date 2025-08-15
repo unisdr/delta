@@ -25,6 +25,10 @@ import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 import { getItem2 } from "~/backend.server/handlers/view";
 
 import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import { divisionTable } from "~/drizzle/schema";
+import { buildTree } from "~/components/TreeView";
+import { dr } from "~/db.server";
+import { eq } from "drizzle-orm";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params, request } = loaderArgs;
@@ -46,15 +50,29 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		return { hip, item, parent: parent2, treeData: [], user };
 	}
 
+	// Define Keys Mapping (Make it Adaptable)
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "name";
+	const rawData = await dr.select().from(divisionTable).where(eq(divisionTable.countryAccountsId, countryAccountsId));
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]); 
+
+	const divisionGeoJSON = await dr.execute(`
+		SELECT id, name, geojson, import_id
+		FROM division
+		WHERE parent_id IS NULL AND geojson IS NOT NULL and country_accounts_id = '${countryAccountsId}';
+    `);
+
+
 	const settings = await getCountrySettingsFromSession(request);
 	const ctryIso3 = settings.ctryIso3;
 
 	return {
 		hip: hip,
 		item: item,
-		treeData: [],
+		treeData: treeData,
 		ctryIso3: ctryIso3,
-		divisionGeoJSON: [],
+		divisionGeoJSON: divisionGeoJSON?.rows || [],
 		user,
 		countryAccountsId,
 	};

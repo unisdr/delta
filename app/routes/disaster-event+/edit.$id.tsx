@@ -23,11 +23,27 @@ import { getItem2 } from "~/backend.server/handlers/view";
 import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 import { authActionGetAuth, authActionWithPerm, authLoaderGetUserForFrontend, authLoaderWithPerm } from "~/util/auth";
 import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import { sql } from "drizzle-orm";
+import { dr } from "~/db.server";
+import { divisionTable } from "~/drizzle/schema";
+import { buildTree } from "~/components/TreeView";
 
 // Helper function to get country ISO3 code
 async function getCountryIso3(request: Request): Promise<string> {
 	const settings = await getCountrySettingsFromSession(request);
 	return settings?.dtsInstanceCtryIso3 || "";
+}
+
+// Helper function to get division GeoJSON data filtered by tenant context
+async function getDivisionGeoJSON(countryAccountsId: string) {
+	// Filter top-level divisions by tenant context
+	return dr.execute(sql`
+		SELECT id, name, geojson, import_id
+		FROM division
+		WHERE parent_id IS NULL
+		AND geojson IS NOT NULL
+		AND country_accounts_id = ${countryAccountsId};
+    `);
 }
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -60,12 +76,34 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	// Handle 'new' case without DB query
 	if (params.id === "new") {
+		// Define Keys Mapping
+		const idKey = "id";
+		const parentKey = "parentId";
+		const nameKey = "name";
+
+		// Filter divisions by tenant context for security
+		const rawData = await dr
+			.select()
+			.from(divisionTable)
+			.where(sql`country_accounts_id = ${countryAccountsId}`);
+
+		const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
+			"geojson",
+			"importId",
+			"nationalId",
+			"level",
+			"name",
+		]);
+
+		// Get division GeoJSON filtered by tenant context
+		const divisionGeoJSON = await getDivisionGeoJSON(countryAccountsId);
+
 		return {
 			item: null, // No existing item for new disaster event
 			hip: await dataForHazardPicker(),
-			treeData: [],
+			treeData: treeData,
 			ctryIso3: ctryIso3,
-			divisionGeoJSON: [],
+			divisionGeoJSON:  divisionGeoJSON?.rows || [],
 			user: authLoaderGetUserForFrontend(loaderArgs),
 		};
 	}
@@ -90,16 +128,36 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw error;
 	}
 
+	// Fetch division data & build tree
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "name";
+	const rawData = await dr
+		.select()
+		.from(divisionTable)
+		.where(sql`country_accounts_id = ${countryAccountsId}`);
+
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
+		"geojson",
+		"importId",
+		"nationalId",
+		"level",
+		"name",
+	]);
+
+
 	// Get hazard picker data
 	const hip = await dataForHazardPicker();
 
+	// Get division GeoJSON data
+	const divisionGeoJSON = await getDivisionGeoJSON(countryAccountsId);
 
 	return {
 		item,
 		hip,
-		treeData: [],
+		treeData,
 		ctryIso3,
-		divisionGeoJSON: [],
+		divisionGeoJSON: divisionGeoJSON?.rows || [],
 		user: authLoaderGetUserForFrontend(loaderArgs),
 	};
 });
