@@ -32,6 +32,9 @@ import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
 import {
 	getItem2
 } from "~/backend.server/handlers/view"
+import { divisionTable } from "~/drizzle/schema";
+import { dr } from "~/db.server";
+import { buildTree } from "~/components/TreeView";
 
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -49,21 +52,21 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	}
 
 	// Define Keys Mapping (Make it Adaptable)
-	// const idKey = "id";
-	// const parentKey = "parentId";
-	// const nameKey = "name";
-	// const rawData = await dr.select().from(divisionTable);
-	// const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]); console.log(treeData);
+	const idKey = "id";
+	const parentKey = "parentId";
+	const nameKey = "name";
+	const rawData = await dr.select().from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]);
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
-    // const divisionGeoJSON = await dr.execute(`
-	// 	SELECT id, name, geojson, import_id
-	// 	FROM division
-	// 	WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
-    // `);
+    const divisionGeoJSON = await dr.execute(`
+		SELECT id, name, geojson, import_id
+		FROM division
+		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
+    `);
 
-	return {hip: hip, item: item, treeData: [], ctryIso3: ctryIso3, divisionGeoJSON: [], user};
+	return {hip: hip, item: item, treeData: treeData, ctryIso3: ctryIso3, divisionGeoJSON: divisionGeoJSON?.rows || [], user};
 })
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
