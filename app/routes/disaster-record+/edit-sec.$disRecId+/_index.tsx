@@ -112,7 +112,6 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	}
 	if ( record ) {
 		sectorDisplayName = await contentPickerConfigSector.selectedDisplay(dr, record.sectorId);
-		// console.log( record );
 	}
 
 	return { 
@@ -143,14 +142,14 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 
 
 	let this_showForm:boolean = false;
-	let intSectorIDforDB:number = 0;
-
-	if (frmSectorId && typeof frmSectorId == 'string' && parseInt(frmSectorId) > 0) {
+	let intSectorIDforDB:string = "";
+	
+	if (frmSectorId && typeof frmSectorId == 'string' && frmSectorId !== "") {
 		this_showForm = true;
-		intSectorIDforDB = parseInt(frmSectorId);
+		intSectorIDforDB = frmSectorId;
 	}
-
-	if (this_showForm && intSectorIDforDB > 0 && (frmWithDamage || frmWithDisruption || frmWithLosses)) {
+	
+	if (this_showForm && intSectorIDforDB !== "" && (frmWithDamage || frmWithDisruption || frmWithLosses)) {
 		
 		const formRecord:any = { 
 			id: frmId && typeof frmId == 'string' ? frmId : undefined,
@@ -166,8 +165,6 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			lossesCost: frmWithLosses === 'on' && frmLossesCost !== '' ? frmLossesCost : null,
 			lossesCostCurrency: frmWithLosses === 'on' && frmLossesCost !== '' && frmLossesCostCurrency !== '' ? frmLossesCostCurrency : null,
 		};
-	
-		console.log("rec id= ", params.disRecId)
 		try {
 			await disRecSectorsUpsertRecord(formRecord).catch(console.error);
 			return redirect("/disaster-record/edit/" + params.disRecId);
@@ -176,10 +173,6 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			throw e;
 		}
 	}
-
-	console.log( 'formData: ', formData );
-	console.log( 'params: ', params );
-
 	return {
 		ok: 'action', 
 		showForm: this_showForm,
