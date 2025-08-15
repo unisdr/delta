@@ -14,10 +14,6 @@ import { redirect } from "@remix-run/node";
 import { sendEmail } from "~/util/email";
 
 
-import {processHipsPage} from "~/backend.server/utils/hip";
-import {processSectorCsv} from "~/backend.server/utils/sector";
-import {processCategoryCsv} from "~/backend.server/utils/category";
-import {processAssetCsv} from "~/backend.server/utils/asset";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
@@ -109,36 +105,6 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	const url = new URL(loaderArgs.request.url);
 	let qsStep = url.searchParams.get("step") || "";
 
-	if (qsStep == '1') {
-		try {
-			await processAssetCsv();
-		} catch (err) {
-			console.error(String(err));
-		}
-	}
-	else if (qsStep == '2') {
-		
-		try {
-			await processCategoryCsv();
-		} catch (err) {
-			console.error(String(err));
-		}
-	}
-	else if (qsStep == '3') {
-		try {
-			await processHipsPage(1);
-		} catch (err) {
-			console.error(String(err));
-		}
-	}
-	else if (qsStep == '4') {
-		try {
-			await processSectorCsv();
-		} catch (err) {
-			console.error(String(err));
-		}
-	}
-	
 	var siteName="Disaster Losses Tracking System";
 	const settings = await getCountrySettingsFromSession(loaderArgs.request)
 	if(settings){
