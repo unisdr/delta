@@ -102,22 +102,9 @@ const getDisasterRecordsForSector = async (
   filters?: Filters
 ): Promise<string[]> => {
   try {
-    logger.info("Getting disaster records for sector", {
-      sectorId,
-      tenantId: countryAccountsId,
-      hasFilters: !!filters,
-      filterCount: filters ? Object.keys(filters).length : 0
-    });
-
     // Get all relevant sector IDs (including subsectors if parent sector)
     const sectorIds = await getAllSubsectorIds(sectorId);
     const numericSectorIds = sectorIds;
-
-    logger.debug("Found sector hierarchy", {
-      rootSectorId: sectorId,
-      totalSectorIds: numericSectorIds.length,
-      sectorIds: numericSectorIds
-    });
 
     // Initialize conditions array with tenant isolation
     let conditions: SQL[] = [
@@ -299,12 +286,6 @@ const getDisasterRecordsForSector = async (
       // Execute the query and map results
       const results = await query;
 
-      logger.info("Successfully retrieved disaster records", {
-        sectorId,
-        totalRecords: results.length,
-        conditionsApplied: conditions.length
-      });
-
       return results.map(r => r.id.toString());
     } catch (error) {
       logger.error('Error executing getDisasterRecordsForSector query', {
@@ -361,12 +342,6 @@ const getAllSubsectorIds = async (sectorId: string | undefined): Promise<string[
       if (!seen.has(child.id)) queue.push(child.id);
     }
   }
-
-  logger.info("Completed sector hierarchy traversal", {
-    rootId,
-    totalSectors: result.length,
-    sectorIds: result
-  });
 
   return result;
 };
@@ -721,33 +696,10 @@ export async function fetchSectorImpactData(
   currency?: string,
 ): Promise<SectorImpactData> {
   try {
-    logger.info("Starting sector impact data fetch", {
-      sectorId,
-      tenantId: countryAccountsId,
-      hasFilters: !!filters,
-      filterDetails: filters ? {
-        startDate: filters.startDate,
-        endDate: filters.endDate,
-        hazardType: filters.hazardType,
-        geographicLevel: filters.geographicLevel,
-        disasterEvent: filters.disasterEvent || filters._disasterEventId
-      } : null
-    });
-
     const recordIds = await getDisasterRecordsForSector(countryAccountsId, sectorId, filters);
-
-    logger.info("Retrieved disaster records for sector", {
-      sectorId,
-      recordCount: recordIds.length
-    });
 
     // If no records found, return null values
     if (recordIds.length === 0) {
-      logger.info("No records found for sector", {
-        sectorId,
-        filters
-      });
-
       return {
         eventCount: 0,
         totalDamage: null,

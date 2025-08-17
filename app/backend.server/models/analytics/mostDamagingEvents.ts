@@ -113,26 +113,6 @@ async function buildFilterConditions(countryAccountsId: string, params: MostDama
     .select()
     .from(disasterRecordsTable);
 
-  logger.info("Processing most damaging events request", {
-    filters: {
-      sectorId: params.sectorId,
-      subSectorId: params.subSectorId,
-      hazardTypeId: params.hazardTypeId,
-      hazardClusterId: params.hazardClusterId,
-      specificHazardId: params.specificHazardId,
-      geographicLevelId: params.geographicLevelId,
-      fromDate: params.fromDate,
-      toDate: params.toDate,
-      disasterEventId: params.disasterEventId,
-      page: params.page,
-      pageSize: params.pageSize,
-      sortBy: params.sortBy,
-      sortDirection: params.sortDirection,
-      assessmentType: params.assessmentType,
-      confidenceLevel: params.confidenceLevel
-    }
-  });
-
   // Apply hazard filters using the utility function
   await applyHazardFilters(
     {
@@ -216,23 +196,8 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
     const sortBy = params.sortBy || 'damages';
     const sortDirection = params.sortDirection || 'desc';
 
-    logger.info("Starting most damaging events analysis", {
-      page: page,
-      pageSize: pageSize,
-      sortBy: sortBy,
-      sortDirection: sortDirection,
-      hasSectorFilter: !!params.sectorId,
-      hasDateRange: !!(params.fromDate || params.toDate),
-      tenantId: countryAccountsId
-    });
-
     // Build filter conditions with improved geographic filtering
     const { conditions, sectorIds } = await buildFilterConditions(countryAccountsId, params);
-    logger.debug("Applied filter conditions", {
-      conditionCount: conditions.length,
-      hasGeographicFilter: !!params.geographicLevelId,
-      hasHazardFilter: !!(params.hazardTypeId || params.hazardClusterId || params.specificHazardId)
-    });
 
     // Optimize the count query by separating it from the main query
     // This prevents unnecessary computations when counting total records
@@ -255,23 +220,9 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
     const countResult = await countQuery;
     const total = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(total / pageSize);
-    logger.info("Query result count", {
-      totalEvents: total,
-      totalPages: totalPages,
-      pageSize: pageSize,
-      currentPage: page
-    });
 
     // If no results, return empty response with proper metadata
     if (total === 0) {
-      logger.warn("No results found for filter combination", {
-        filters: {
-          sectorId: params.sectorId,
-          hazardTypeId: params.hazardTypeId,
-          dateRange: `${params.fromDate} to ${params.toDate}`,
-          geographicLevelId: params.geographicLevelId
-        }
-      });
       const metadata = await createAssessmentMetadata(
         params.assessmentType || 'rapid',
         params.confidenceLevel || 'medium'

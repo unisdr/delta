@@ -104,7 +104,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			treeData: treeData,
 			ctryIso3: ctryIso3,
 			divisionGeoJSON:  divisionGeoJSON?.rows || [],
-			user: authLoaderGetUserForFrontend(loaderArgs),
+			user: await authLoaderGetUserForFrontend(loaderArgs),
 		};
 	}
 
@@ -158,7 +158,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		treeData,
 		ctryIso3,
 		divisionGeoJSON: divisionGeoJSON?.rows || [],
-		user: authLoaderGetUserForFrontend(loaderArgs),
+		user: await authLoaderGetUserForFrontend(loaderArgs),
 	};
 });
 

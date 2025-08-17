@@ -71,7 +71,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const hip = await dataForHazardPicker();
 
-	let user = authLoaderGetUserForFrontend(loaderArgs);
+	let user = await authLoaderGetUserForFrontend(loaderArgs);
 
 	const divisionGeoJSON = await dr.execute(sql`
 		SELECT id, name, geojson

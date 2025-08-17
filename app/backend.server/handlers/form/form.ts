@@ -678,7 +678,7 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 					)
 				)
 				.orderBy(desc(auditLogsTable.timestamp));
-			let user = authLoaderGetUserForFrontend(loaderArgs);
+			let user = await authLoaderGetUserForFrontend(loaderArgs);
 
 			return { item, isPublic, auditLogs, user };
 		})(loaderArgs);

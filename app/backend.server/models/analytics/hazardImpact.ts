@@ -104,22 +104,6 @@ export async function fetchHazardImpactData(countryAccountsId: string, filters: 
         confidenceLevel = 'medium'
     } = filters;
 
-    logger.info("Fetching hazard impact data", {
-        tenantId: countryAccountsId,
-        filters: {
-            sectorId,
-            hazardTypeId,
-            hazardClusterId,
-            specificHazardId,
-            geographicLevelId,
-            fromDate,
-            toDate,
-            disasterEventId,
-            assessmentType,
-            confidenceLevel
-        }
-    });
-
     // Create assessment metadata
     const metadata = await createAssessmentMetadata(
         assessmentType,

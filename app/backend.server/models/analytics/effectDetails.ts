@@ -98,17 +98,6 @@ export async function getEffectDetails(
 	countryAccountsId: string,
 	filters: FilterParams
 ) {
-	const startTime = Date.now();
-	logger.info("Processing effect details request", {
-		filters: {
-			sectorId: filters.sectorId,
-			hazardTypeId: filters.hazardTypeId,
-			geographicLevelId: filters.geographicLevelId,
-			fromDate: filters.fromDate,
-			toDate: filters.toDate,
-			disasterEventId: filters.disasterEventId,
-		},
-	});
 	let targetSectorIds: string[] = [];
 	if (filters.sectorId) {
 		try {
@@ -415,22 +404,6 @@ export async function getEffectDetails(
 			)
 		)
 		.groupBy(disruptionTable.id);
-
-	// Log successful query completion with result counts and performance metrics
-	const executionTime = Date.now() - startTime;
-	logger.info("Successfully retrieved effect details", {
-		damagesCount: damagesData.length,
-		lossesCount: lossesData.length,
-		disruptionsCount: disruptionsData.length,
-		executionTimeMs: executionTime,
-		executionTime: `${executionTime}ms`,
-		filters: {
-			sectorId: filters.sectorId,
-			hazardTypeId: filters.hazardTypeId,
-			dateRange: `${filters.fromDate} to ${filters.toDate}`,
-			geographicLevelId: filters.geographicLevelId,
-		},
-	});
 
 	return {
 		damages: damagesData,

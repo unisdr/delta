@@ -24,13 +24,6 @@ export async function applyHazardFilters(
     const hazardClusterId = filters.hazardClusterId != null ? String(filters.hazardClusterId).trim() : null;
     const specificHazardId = filters.specificHazardId != null ? String(filters.specificHazardId).trim() : null;
 
-    logger.info("Starting hazard filter application", {
-        hazardTypeId: hazardTypeId || "(none)",
-        hazardClusterId: hazardClusterId || "(none)",
-        specificHazardId: specificHazardId || "(none)",
-        hasFilters: !!(hazardTypeId || hazardClusterId || specificHazardId)
-    });
-
     const hazardFiltersExist = hazardTypeId || hazardClusterId || specificHazardId;
 
     // Always add the joins regardless of filters
@@ -44,7 +37,6 @@ export async function applyHazardFilters(
 
     // If no filters exist, return the query with joins
     if (!hazardFiltersExist) {
-        logger.info("No hazard filters provided, returning query with joins only");
         return query;
     }
 
