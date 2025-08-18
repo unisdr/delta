@@ -45,23 +45,23 @@ export const action = async (args: ActionFunctionArgs) => {
 
 export const loader = authLoaderWithPerm("EditData", async (args) => {
 	const { request, params } = args;
+	if (!params.id) throw new Error("Missing id param");
 	const countryAccountsId = await getCountryAccountsIdFromSession(request)
 	if(!countryAccountsId){
 		throw new Response ("Unauthorized access", {status:401});
 	}
-	if (!params.id) throw new Error("Missing id param");
-	let url = new URL(args.request.url);
-	let sectorId = url.searchParams.get("sectorId") || "";
+	let url = new URL(request.url);
+	let sectorId = url.searchParams.get("sectorId") || null;
 	let extra = {
 		fieldsDef: await fieldsDef(),
 		sectorId,
 	};
 	if (params.id === "new") return { item: null, ...extra };
 	let item = await assetById(params.id);
+	if (!item) throw new Response("Not Found", { status: 404 });
 	if(item.countryAccountsId!== countryAccountsId){
 		throw new Response ("Unauthorized access", {status:401});
 	}
-	if (!item) throw new Response("Not Found", { status: 404 });
 
 	const selectedDisplay = await contentPickerConfigSector.selectedDisplay(
 		dr,
@@ -69,7 +69,7 @@ export const loader = authLoaderWithPerm("EditData", async (args) => {
 	);
 
 	extra = { ...extra, selectedDisplay } as any;
-	return { item: item, ...extra };
+	return { item, ...extra };
 });
 
 export default function Screen() {

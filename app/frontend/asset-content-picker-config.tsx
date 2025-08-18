@@ -29,18 +29,17 @@ export const contentPickerConfigSector = {
         }
     },
     selectedDisplay: async (dr: any, ids: string) => {
-        const sectorIds = ids.split(",").map((id) => Number(id)).filter(Number.isInteger); // Convert to numbers
+        const sectorIds = ids.split(",").map((id) => id);
     
         if (sectorIds.length === 0) return [];
     
         const { rows } = await dr.execute(sql`
             SELECT id, sectorname 
             FROM sector
-            WHERE id IN (${sql.join(sectorIds, sql`, `)})
+            WHERE id IN (${sql.join(sectorIds,sql`, `)})
         `);
     
-        // Convert row IDs to numbers for correct Map lookup
-        const idToNameMap = new Map(rows.map((row: any) => [Number(row.id), row.sectorname]));
+        const idToNameMap = new Map(rows.map((row: any) => [row.id, row.sectorname]));
     
         // Return objects with { id, name }, preserving order of sectorIds
         return sectorIds.map(id => ({
