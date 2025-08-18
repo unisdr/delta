@@ -91,7 +91,7 @@ export async function apiAuth(request: Request): Promise<SelectApiKey> {
  * NEW: Token Assignment Parser - extracts user assignment from token name
  * Backward compatible approach without schema changes
  */
-class TokenAssignmentParser {
+export class TokenAssignmentParser {
 	/**
 	 * Extracts assigned user ID from token name using embedded pattern
 	 * @param tokenName - Token name that may contain user assignment
@@ -140,7 +140,7 @@ class TokenAssignmentParser {
 /**
  * ENHANCED: User status validation service - supports both admin and assigned user validation
  */
-class UserStatusValidator {
+export class UserStatusValidator {
 	/**
 	 * Validates if user should have API access based on existing schema fields
 	 * @param userId - User ID to validate
