@@ -13,7 +13,7 @@ import { DamagesForm, route } from "~/frontend/damages";
 import { formScreen } from "~/frontend/form";
 
 import { createActionWithoutCountryAccountsId } from "~/backend.server/handlers/form/form";
-import { getTableName, eq, sql } from "drizzle-orm";
+import { getTableName, eq, isNull, and, isNotNull } from "drizzle-orm";
 import { damagesTable } from "~/drizzle/schema";
 import { authLoaderWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
@@ -93,13 +93,13 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		ctryIso3 = settings.dtsInstanceCtryIso3;
 		currencies = [settings.currencyCode];
 	}
-	const divisionGeoJSON = await dr.execute(sql`
-	SELECT id, name, geojson
-	FROM division
-	WHERE (parent_id = 0 OR parent_id IS NULL)
-	AND geojson IS NOT NULL
-	AND division.country_accounts_id = ${countryAccountsId};
-	`);
+	const divisionGeoJSON = await dr.select({id: divisionTable.id,name:divisionTable.name,geojson: divisionTable.geojson})
+	.from(divisionTable)
+	.where(and(
+		isNull(divisionTable.parentId), 
+		isNotNull(divisionTable.geojson),
+		eq(divisionTable.countryAccountsId,countryAccountsId)
+	));
 
 	if (params.id === "new") {
 		let url = new URL(request.url);
@@ -115,7 +115,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			treeData,
 			ctryIso3,
 			currencies,
-			divisionGeoJSON?.rows
+			divisionGeoJSON
 		);
 	}
 	const item = await damagesById(params.id);
@@ -131,7 +131,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		treeData,
 		ctryIso3,
 		currencies,
-		divisionGeoJSON?.rows
+		divisionGeoJSON
 	);
 });
 

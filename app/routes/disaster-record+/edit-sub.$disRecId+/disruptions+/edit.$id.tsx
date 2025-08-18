@@ -13,7 +13,7 @@ import { DisruptionForm, route } from "~/frontend/disruption";
 import { FormInputDef, formScreen } from "~/frontend/form";
 
 import { createActionWithoutCountryAccountsId } from "~/backend.server/handlers/form/form";
-import { getTableName, eq } from "drizzle-orm";
+import { getTableName, eq, and, isNull, isNotNull } from "drizzle-orm";
 import { disruptionTable } from "~/drizzle/schema";
 import { authLoaderWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
@@ -23,7 +23,10 @@ import { dr } from "~/db.server"; // Drizzle ORM instance
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
-import { getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 interface LoaderRes {
 	item: DisruptionViewModel | null;
@@ -37,6 +40,12 @@ interface LoaderRes {
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params, request } = loaderArgs;
+
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized, no selected instance", { status: 401 });
+	}
+
 	if (!params.id) {
 		throw new Error("Route does not have id param");
 	}
@@ -67,11 +76,20 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		currencies.push("USD");
 	}
 
-	const divisionGeoJSON = await dr.execute(`
-		SELECT id, name, geojson
-		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
-    `);
+	const divisionGeoJSON = await dr
+		.select({
+			id: divisionTable.id,
+			name: divisionTable.name,
+			geojson: divisionTable.geojson,
+		})
+		.from(divisionTable)
+		.where(
+			and(
+				isNull(divisionTable.parentId),
+				isNotNull(divisionTable.geojson),
+				eq(divisionTable.countryAccountsId, countryAccountsId)
+			)
+		);
 
 	if (params.id === "new") {
 		let url = new URL(request.url);
@@ -86,7 +104,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			sectorId: sectorId,
 			treeData: treeData || [],
 			ctryIso3: ctryIso3 || "",
-			divisionGeoJSON: divisionGeoJSON?.rows || [],
+			divisionGeoJSON: divisionGeoJSON,
 		};
 		return res;
 	}
@@ -102,7 +120,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		sectorId: item.sectorId,
 		treeData: treeData || [],
 		ctryIso3: ctryIso3 || "",
-		divisionGeoJSON: divisionGeoJSON?.rows || [],
+		divisionGeoJSON: divisionGeoJSON,
 	};
 	return res;
 });

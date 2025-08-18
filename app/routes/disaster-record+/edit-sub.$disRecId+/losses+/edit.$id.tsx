@@ -14,7 +14,7 @@ import { LossesForm, route } from "~/frontend/losses";
 import { FormInputDef, formScreen } from "~/frontend/form";
 
 import { createOrUpdateAction } from "~/backend.server/handlers/form/form";
-import { getTableName, eq, sql } from "drizzle-orm";
+import { getTableName, eq, and, isNull, isNotNull } from "drizzle-orm";
 import { lossesTable } from "~/drizzle/schema";
 import { authLoaderWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
@@ -25,7 +25,10 @@ import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { ActionFunction, ActionFunctionArgs } from "@remix-run/server-runtime";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 interface LoaderRes {
 	item: LossesViewModel | null;
@@ -71,14 +74,22 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	const settings = await getCountrySettingsFromSession(request);
 	let ctryIso3 = settings?.crtyIso3 || "";
-	const currencies = [settings?.currencyCode || "USD"]
+	const currencies = [settings?.currencyCode || "USD"];
 
-	const divisionGeoJSON = await dr.execute(sql`
-		SELECT id, name, geojson
-		FROM division
-		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL
-		AND division.country_accounts_id = ${countryAccountsId} ;
-    `);
+	const divisionGeoJSON = await dr
+		.select({
+			id: divisionTable.id,
+			name: divisionTable.name,
+			geojson: divisionTable.geojson,
+		})
+		.from(divisionTable)
+		.where(
+			and(
+				isNull(divisionTable.parentId),
+				isNotNull(divisionTable.geojson),
+				eq(divisionTable.countryAccountsId, countryAccountsId)
+			)
+		);
 
 	if (params.id === "new") {
 		let url = new URL(request.url);
@@ -94,7 +105,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId),
 			treeData: treeData || [],
 			ctryIso3: ctryIso3 || "",
-			divisionGeoJSON: divisionGeoJSON?.rows || [],
+			divisionGeoJSON: divisionGeoJSON,
 		};
 		return res;
 	}
@@ -110,7 +121,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		sectorId: item.sectorId,
 		treeData: treeData || [],
 		ctryIso3: ctryIso3 || "",
-		divisionGeoJSON: divisionGeoJSON?.rows || [],
+		divisionGeoJSON: divisionGeoJSON,
 	};
 	return res;
 });
@@ -119,7 +130,7 @@ export const action: ActionFunction = async (args: ActionFunctionArgs) => {
 	const { request } = args;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	const settings = await getCountrySettingsFromSession(request);
-	const currencies = [settings?.currencyCode || "USD"]
+	const currencies = [settings?.currencyCode || "USD"];
 
 	return createOrUpdateAction({
 		fieldsDef: createFieldsDef(currencies),
