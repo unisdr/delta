@@ -1,6 +1,6 @@
 {
   "name": "undrr-dts",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "description": "desc",
   "type": "module",
   "main": "vite.config.js",
