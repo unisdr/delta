@@ -2,7 +2,7 @@ import { assetTable } from "~/drizzle/schema";
 
 import { dr } from "~/db.server";
 
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, or } from "drizzle-orm";
 
 import { createApiListLoader } from "~/backend.server/handlers/view";
 import { LoaderFunction, LoaderFunctionArgs } from "@remix-run/server-runtime";
@@ -20,13 +20,16 @@ export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
 		async () => {
 			return dr.$count(
 				assetTable,
-				eq(assetTable.countryAccountsId, assetTable)
+				or(
+					eq(assetTable.isBuiltIn, true),
+					eq(assetTable.countryAccountsId, countryAccountsId)
+				)
 			);
 		},
 		async (offsetLimit) => {
 			return dr.query.assetTable.findMany({
 				...offsetLimit,
-				where: eq(assetTable.countryAccountsId, countryAccountsId),
+				where: or(eq(assetTable.isBuiltIn,true), eq(assetTable.countryAccountsId, countryAccountsId)),
 				columns: { id: true, name: true, nationalId: true, notes: true },
 				orderBy: [desc(assetTable.name)],
 			});
