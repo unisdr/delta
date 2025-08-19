@@ -198,7 +198,7 @@ interface TreeViewProps {
 	search?: boolean;
 	expanded?: boolean;
 	onItemClick?: ((e: any, dialogRefCurrent: any) => void) | undefined;
-	defaultSelectedIds?: number[];
+	defaultSelectedIds?: string[];
 	itemLink?: string;
 	expandByDefault?: boolean;
 	showActionFooter?: boolean;
@@ -228,18 +228,16 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 		},
 		ref: any
 	) => {
-		const expandedNodesRef = useRef<{ [key: number]: boolean }>({});
+		const expandedNodesRef = useRef<{ [key: string]: boolean }>({});
 		const [expandedNodes, setExpandedNodes] = useState<{
-			[key: number]: boolean;
+			[key: string]: boolean;
 		}>({});
 		const [searchTerm, setSearchTerm] = useState("");
 		const [isExpandDisabled, setIsExpandDisabled] = useState(false);
-		const [isCollapseDisabled, setIsCollapseDisabled] = useState(true); // Default to true
-
-		//console.log('defaultSelectedIds:', defaultSelectedIds);
+		const [isCollapseDisabled, setIsCollapseDisabled] = useState(true);
 
 		const [checkedItems, setCheckedItems] = useState<{
-			[key: number]: boolean;
+			[key: string]: boolean;
 		}>(Object.fromEntries(defaultSelectedIds.map((id) => [id, true])));
 		useEffect(() => {
 			setCheckedItems((prev) => {
@@ -254,10 +252,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 				return prev; // Prevent unnecessary updates
 			});
 		}, [defaultSelectedIds]); // ✅ This avoids infinite re-renders
-
-		// const [selectedItems, setSelectedItems] = useState<{
-		// 	[key: number]: boolean;
-		// }>({});
 
 		const dialogRef = useRef<any>(null);
 
@@ -285,7 +279,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 				setIsExpandDisabled(false);
 				setIsCollapseDisabled(false);
 
-				const expandedState: { [key: number]: boolean } = {};
+				const expandedState: { [key: string]: boolean } = {};
 				filterTree(treeData, searchTerm, expandedState);
 
 				setExpandedNodes((prev) => {
@@ -318,13 +312,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 		};
 
 		// Recursive expand function
-		const expandRecursive = (node: any, state: { [key: number]: boolean }) => {
+		const expandRecursive = (node: any, state: { [key: string]: boolean }) => {
 			state[node.id] = true;
 			node.children?.forEach((child: any) => expandRecursive(child, state));
 		};
 
 		// Toggle individual node expand/collapse
-		const toggleExpand = (e: any, id: number) => {
+		const toggleExpand = (e: any, id: string) => {
 			e.preventDefault();
 			expandedNodesRef.current[id] = !expandedNodesRef.current[id]; // ✅ Update ref directly
 			setExpandedNodes({ ...expandedNodesRef.current }); // ✅ Triggers re-render only when needed
@@ -353,7 +347,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 		const filterTree = (
 			nodes: any[],
 			query: string,
-			expandedState: { [key: number]: boolean }
+			expandedState: { [key: string]: boolean }
 		): any[] => {
 			if (!query) return nodes;
 
@@ -749,16 +743,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			if (typeof onItemClick === "function")
 				onItemClick(e, dialogRef?.current || null);
 
-			// if (e.target.tagName === "BUTTON") {
-			//     toggleExpand(e, parseInt(e.currentTarget.getAttribute("data-id")));
-			// }
 		};
 
 		const findNamesByIds = (
 			nodes: any[],
 			checkedIds: any[]
-		): { id: number; name: string }[] => {
-			let selectedItems: { id: number; name: string }[] = [];
+		): { id: string; name: string }[] => {
+			let selectedItems: { id: string; name: string }[] = [];
 
 			const traverse = (node: any) => {
 				if (checkedIds.includes(node.id)) {
@@ -779,12 +770,10 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			treeViewClear: treeViewClear,
 			getCheckedItemIds: () =>
 				Object.keys(checkedItems)
-					.filter((key) => checkedItems[Number(key)]) // Get only checked IDs
-					.map(Number), // Convert keys back to numbers
+					.filter((key) => checkedItems[key]), // Get only checked IDs
 			getCheckedItemNames: () => {
 				const checkedIds = Object.keys(checkedItems)
-					.filter((key) => checkedItems[Number(key)]) // Filter only checked items
-					.map(Number);
+					.filter((key) => checkedItems[key]); // Filter only checked items
 
 				return findNamesByIds(treeData, checkedIds); // Now returns [{ id, name }, ...]
 			},
@@ -869,7 +858,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			);
 		};
 
-		const findNodeById = (nodes: any[], id: number): any | null => {
+		const findNodeById = (nodes: any[], id: string): any | null => {
 			for (const node of nodes) {
 				if (node.id === id) return node;
 				if (node.children?.length) {
@@ -883,8 +872,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 		// Prevent expandedNodes from resetting every checkbox update
 		useEffect(() => {
 			Object.keys(checkedItems).forEach((id) => {
-				if (checkedItems[Number(id)]) {
-					let node = findNodeById(treeData, Number(id));
+				if (checkedItems[id]) {
+					let node = findNodeById(treeData, id);
 					while (node?.parentId) {
 						expandedNodesRef.current[node.parentId] = true;
 						node = findNodeById(treeData, node.parentId);
@@ -897,7 +886,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 
 		useEffect(() => {
 			if (expandByDefault) {
-				const allExpandedNodes: { [key: number]: boolean } = {};
+				const allExpandedNodes: { [key: string]: boolean } = {};
 				treeData.forEach((node) => expandRecursive(node, allExpandedNodes));
 				expandedNodesRef.current = allExpandedNodes;
 				setExpandedNodes({ ...allExpandedNodes }); // ✅ Ensures a single re-render
@@ -951,10 +940,8 @@ export const buildTree = (
 	idKey: string,
 	parentKey: string,
 	nameKey: string,
-	// nameObj: string[] = ["en"], // Default priority order
-	priorityKey?: string | null, // Explicitly optional
+	priorityKey?: string | null,
 	additionalFields?: string[], // Array of field keys for hidden data
-	// pickerConfig?: any | null
 ) => {
 	const map = new Map();
 

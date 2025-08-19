@@ -408,10 +408,8 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                                         disableButtonSelect={true}
                                         noSelect={true}
                                         multiSelect={multiSelect}
-                                        defaultSelectedIds={Array.isArray(selectedId)
-                                            ? selectedId.map(Number)
-                                            : typeof selectedId === "string" && selectedId !== ""
-                                                ? selectedId.split(",").map(Number)
+                                        defaultSelectedIds={typeof selectedId === "string" && selectedId !== ""
+                                                ? selectedId.split(",")
                                                 : []} // Ensure it's always an array                                                                         
                                         appendCss={
                                             (!multiSelect) ?

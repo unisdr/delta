@@ -1302,13 +1302,20 @@ const url = customType<{
 });
 
 export const dtsSystemInfo = pgTable("dts_system_info", {
-	id: ourRandomUUID(),
+	id: uuid("id")
+		.primaryKey()
+		.notNull()
+		.default('73f0defb-4eba-4398-84b3-5e6737fec2b7'),
 	dbVersionNo: varchar("db_version_no", { length: 50 }).notNull(),
 	appVersionNo: varchar("app_version_no", { length: 50 }).notNull(),
 	installedAt: timestamp("installed_at")
 		.notNull()
 		.default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: timestamp("updated_at"),
 });
+
+export type SelectDtsSystemInfo = typeof dtsSystemInfo.$inferSelect;
+export type InsertDtsSystemInfo = typeof dtsSystemInfo.$inferInsert;
 
 export const instanceSystemSettings = pgTable("instance_system_settings", {
 	id: ourRandomUUID(),
