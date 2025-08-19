@@ -24,7 +24,6 @@ import {
 import Messages from "~/components/Messages";
 import { Toast, ToastRef } from "~/components/Toast";
 import { getCurrencyList } from "~/util/currency";
-import { configApplicationVersion } from "~/util/config";
 
 // Define the loader data type
 interface LoaderData {
@@ -39,7 +38,6 @@ interface LoaderData {
 	instanceSystemSettings: InstanceSystemSettings | null;
 	dtsSystemInfo: SystemInfo | null;
 	country: SelectCountries;
-	applicationVersion: string;
 }
 
 export const loader: LoaderFunction = authLoaderWithPerm(
@@ -74,8 +72,7 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 			confEmailObj,
 			instanceSystemSettings: settings,
 			dtsSystemInfo,
-			country,
-			applicationVersion: await configApplicationVersion(),
+			country
 		});
 	}
 );
@@ -272,7 +269,7 @@ export default function Settings() {
 					</li>
 					<li>
 						<strong>DTS software application version:</strong>{" "}
-						{loaderData.applicationVersion ?? ""}
+						{loaderData.dtsSystemInfo?.appVersionNo ?? ""}
 					</li>
 					<li>
 						<strong>System email routing configuration:</strong>
