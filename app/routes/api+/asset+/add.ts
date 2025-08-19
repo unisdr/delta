@@ -1,10 +1,15 @@
 import { authLoaderApi } from "~/util/auth";
 
 import { jsonCreate } from "~/backend.server/handlers/form/form_api";
-import { assetCreate, fieldsDefApi } from "~/backend.server/models/asset";
+import {
+	assetCreate,
+	AssetFields,
+	fieldsDefApi,
+} from "~/backend.server/models/asset";
 import { apiAuth } from "~/backend.server/models/api_key";
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { SelectAsset } from "~/drizzle/schema";
+import { FormInputDef } from "~/frontend/form";
 
 export let loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -28,10 +33,14 @@ export const action = async (args: ActionFunctionArgs) => {
 		...item,
 		countryAccountsId: countryAccountsId,
 	}));
+	let fieldsDef: FormInputDef<AssetFields>[] = [
+		...(await fieldsDefApi()),
+		{ key: "countryAccountsId", label: "", type: "other" },
+	];
 
 	let saveRes = await jsonCreate({
 		data,
-		fieldsDef: await fieldsDefApi(),
+		fieldsDef: fieldsDef,
 		create: assetCreate,
 	});
 
