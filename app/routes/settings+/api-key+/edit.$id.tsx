@@ -24,8 +24,8 @@ export const loader = authLoaderWithPerm("EditAPIKeys", async (args) => {
 	const isAdmin = roleHasPermission(userRole, "EditAPIKeys");
 
 	// Debug info
-	console.log("DEBUG - User role:", userRole);
-	console.log("DEBUG - Is admin with EditAPIKeys permission:", isAdmin);
+	// console.log("DEBUG - User role:", userRole);
+	// console.log("DEBUG - Is admin with EditAPIKeys permission:", isAdmin);
 
 	// Get the API key if editing
 	let item = null;
@@ -38,11 +38,11 @@ export const loader = authLoaderWithPerm("EditAPIKeys", async (args) => {
 
 	// Get the current country account ID from the session
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	console.log("DEBUG - Current country account ID:", countryAccountsId);
+	// console.log("DEBUG - Current country account ID:", countryAccountsId);
 
 	// Get the current user ID from the userSession
 	const currentUserId = (args as any).userSession?.user?.id;
-	console.log("DEBUG - Current user ID:", currentUserId);
+	// console.log("DEBUG - Current user ID:", currentUserId);
 
 	if (isAdmin) {
 		// Get users that belong to the same country account (tenant isolation)
@@ -53,13 +53,13 @@ export const loader = authLoaderWithPerm("EditAPIKeys", async (args) => {
 			}
 		});
 
-		console.log("DEBUG - Users in same account count:", usersInSameAccount.length);
+		// console.log("DEBUG - Users in same account count:", usersInSameAccount.length);
 
 		// Filter to only include verified users and exclude the current admin user
 		const verifiedUsers = usersInSameAccount.filter(ua =>
 			ua.user.emailVerified && ua.user.id !== currentUserId
 		);
-		console.log("DEBUG - Verified users (excluding current admin) count:", verifiedUsers.length);
+		// console.log("DEBUG - Verified users (excluding current admin) count:", verifiedUsers.length);
 
 		// Create options for the dropdown
 		verifiedUsers.forEach(ua => {
@@ -73,7 +73,7 @@ export const loader = authLoaderWithPerm("EditAPIKeys", async (args) => {
 		});
 	}
 
-	console.log("DEBUG - User options for dropdown:", userOptions);
+	// console.log("DEBUG - User options for dropdown:", userOptions);
 
 	return {
 		item,
@@ -128,11 +128,11 @@ export default function Screen() {
 	const loaderData = useLoaderData<{ item: UserCentricApiKeyFields | null, userOptions: Array<{ value: string, label: string }>, isAdmin: boolean }>();
 
 	// Debug the loader data
-	console.log("DEBUG - Screen component - loaderData:", {
-		userOptions: loaderData.userOptions,
-		isAdmin: loaderData.isAdmin,
-		userOptionsLength: loaderData.userOptions?.length || 0
-	});
+	// console.log("DEBUG - Screen component - loaderData:", {
+	// 	userOptions: loaderData.userOptions,
+	// 	isAdmin: loaderData.isAdmin,
+	// 	userOptionsLength: loaderData.userOptions?.length || 0
+	// });
 
 	// Create extraData with explicit console logging
 	const extraData = {
@@ -140,7 +140,7 @@ export default function Screen() {
 		isAdmin: loaderData.isAdmin || false
 	};
 
-	console.log("DEBUG - Screen component - extraData being passed to ApiKeyForm:", extraData);
+	// console.log("DEBUG - Screen component - extraData being passed to ApiKeyForm:", extraData);
 
 	return (
 		<FormScreen<UserCentricApiKeyFields>
