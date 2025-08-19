@@ -22,22 +22,36 @@ export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
 		},
 		async (offsetLimit) => {
 			return await dr.query.hazardousEventTable.findMany({
-				...offsetLimit,
-				columns: {
-					id: true,
-					hipHazardId: true,
-					startDate: true,
-					endDate: true,
-					description: true,
-				},
-				orderBy: [desc(hazardousEventTable.startDate)],
-				with: {
-					hipHazard: {
-						columns: {
-							nameEn: true,
-						},
+			...offsetLimit,
+			orderBy: [desc(hazardousEventTable.startDate)],
+			with: {
+				hipHazard: {
+					columns: {
+						id: true,
+						nameEn: true,
+						code: true
 					},
 				},
+				hipCluster: {
+					columns: {
+						id: true,
+						nameEn: true,
+					},
+				},
+				hipType: {
+					columns: {
+						id: true,
+						nameEn: true,
+					},
+				},
+				event: {
+					columns: {},
+					with: {
+						ps: true,
+						cs: true
+					}
+				}
+			},
 			});
 		}
 	)(args);
