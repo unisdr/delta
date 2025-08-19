@@ -1,54 +1,53 @@
 -- Populate categories data
-INSERT INTO public.categories(name, parent_id, level) VALUES
-('Human Life - health and livelihoods', null, 1),
-('Meaningful Places', null, 1),
-('Cultural heritage', null, 1),
-('Social and Intrinsic values', null, 1),
-('Biodiversity', null, 1),
-('Ecosystem services', null, 1),
-('Lives', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2),
-('Health', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2),
-('Wellbeing', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2),
-('Livelihoods', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2),
-('Food security', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2),
-('Territory', (SELECT id FROM categories WHERE name='Meaningful Places'), 2),
-('Homes - sense of place', (SELECT id FROM categories WHERE name='Meaningful Places'), 2),
-('Places', (SELECT id FROM categories WHERE name='Meaningful Places'), 2),
-('Sacred sites', (SELECT id FROM categories WHERE name='Meaningful Places'), 2),
-('Heritage', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Historical monuments', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Artefacts', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Rituals', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Traditions - ways of life', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Customs', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Culture', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Language', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Indigenous knowledge', (SELECT id FROM categories WHERE name='Cultural heritage'), 2),
-('Dignity', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Agency', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Identity', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Security', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Social cohesion', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Social capital', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Social fabric', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Community ( sense of)', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Sovereignty', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Education', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('(Human) Mobility', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2),
-('Genetic diversity', (SELECT id FROM categories WHERE name='Biodiversity'), 2),
-('Species diversity', (SELECT id FROM categories WHERE name='Biodiversity'), 2),
-('Ecosystems diversity', (SELECT id FROM categories WHERE name='Biodiversity'), 2),
-('Habitats', (SELECT id FROM categories WHERE name='Biodiversity'), 2),
-('Landscapes', (SELECT id FROM categories WHERE name='Biodiversity'), 2),
-('Regulation and maintenance services', (SELECT id FROM categories WHERE name='Ecosystem services'), 2),
-('Provisioning services', (SELECT id FROM categories WHERE name='Ecosystem services'), 2),
-('Cultural services', (SELECT id FROM categories WHERE name='Ecosystem services'), 2),
-('Biotic (living components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3),
-('Abiotic (non-living physical and chemical components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3),
-('Biotic (living components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3),
-('Abiotic (non-living physical and chemical components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3),
-('Biotic (living components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3),
-('Abiotic (non-living physical and chemical components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Human Life - health and livelihoods', null, 1);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Meaningful Places', null, 1);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Cultural heritage', null, 1);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Social and Intrinsic values', null, 1);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Biodiversity', null, 1);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Ecosystem services', null, 1);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Lives', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Health', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Wellbeing', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Livelihoods', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Food security', (SELECT id FROM categories WHERE name='Human Life - health and livelihoods'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Territory', (SELECT id FROM categories WHERE name='Meaningful Places'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Homes - sense of place', (SELECT id FROM categories WHERE name='Meaningful Places'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Places', (SELECT id FROM categories WHERE name='Meaningful Places'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Sacred sites', (SELECT id FROM categories WHERE name='Meaningful Places'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Heritage', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Historical monuments', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Artefacts', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Rituals', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Traditions - ways of life', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Customs', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Culture', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Language', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Indigenous knowledge', (SELECT id FROM categories WHERE name='Cultural heritage'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Dignity', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Agency', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Identity', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Security', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Social cohesion', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Social capital', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Social fabric', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Community ( sense of)', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Sovereignty', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Education', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('(Human) Mobility', (SELECT id FROM categories WHERE name='Social and Intrinsic values'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Genetic diversity', (SELECT id FROM categories WHERE name='Biodiversity'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Species diversity', (SELECT id FROM categories WHERE name='Biodiversity'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Ecosystems diversity', (SELECT id FROM categories WHERE name='Biodiversity'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Habitats', (SELECT id FROM categories WHERE name='Biodiversity'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Landscapes', (SELECT id FROM categories WHERE name='Biodiversity'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Regulation and maintenance services', (SELECT id FROM categories WHERE name='Ecosystem services'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Provisioning services', (SELECT id FROM categories WHERE name='Ecosystem services'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Cultural services', (SELECT id FROM categories WHERE name='Ecosystem services'), 2);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Biotic (living components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Abiotic (non-living physical and chemical components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Biotic (living components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Abiotic (non-living physical and chemical components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Biotic (living components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3);
+INSERT INTO public.categories(name, parent_id, level) VALUES ('Abiotic (non-living physical and chemical components of an ecosystem)', (SELECT id FROM categories WHERE name='Regulation and maintenance services'), 3);
 
 -- Populate Sector table data
 INSERT INTO public.sector(id, parent_id, sectorname, level)VALUES 
