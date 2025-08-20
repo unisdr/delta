@@ -1,4 +1,4 @@
-import {EnumEntry} from "~/frontend/editabletable/defs"
+import { EnumEntry } from "~/frontend/editabletable/defs"
 
 export type HumanEffectsTable = "Deaths" | "Injured" | "Missing" | "Affected" | "Displaced"
 
@@ -20,11 +20,11 @@ export interface HumanEffectTableDef {
 }
 
 export const HumanEffectTablesDefs: HumanEffectTableDef[] = [
-	{id: "Deaths", label: "Deaths"},
-	{id: "Injured", label: "Injured"},
-	{id: "Missing", label: "Missing"},
-	{id: "Affected", label: "Affected"},
-	{id: "Displaced", label: "Displaced"},
+	{ id: "Deaths", label: "Deaths" },
+	{ id: "Injured", label: "Injured" },
+	{ id: "Missing", label: "Missing" },
+	{ id: "Affected", label: "Affected" },
+	{ id: "Displaced", label: "Displaced" },
 ]
 
 export interface HumanEffectsCustomDef {

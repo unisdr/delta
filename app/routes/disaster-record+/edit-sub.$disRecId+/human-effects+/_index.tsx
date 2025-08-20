@@ -9,6 +9,8 @@ import {
 	categoryPresenceSet,
 	defsForTable
 } from '~/backend.server/models/human_effects'
+import {dr} from "~/db.server";
+
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params, request} = actionArgs
@@ -39,8 +41,8 @@ export const action = authLoaderWithPerm("EditData", async (actionArgs) => {
 			data[k] = false
 		}
 	}
-	let defs = await defsForTable(tblId)
-	await categoryPresenceSet(recordId, tblId, defs, data)
+	let defs = await defsForTable(dr, tblId)
+	await categoryPresenceSet(dr, recordId, tblId, defs, data)
 	return null
 })
 
@@ -71,6 +73,7 @@ export default function Screen() {
 				table={data.tblId}
 				initialIds={data.ids}
 				initialData={data.data}
+				initialTotalGroup={data.totalGroup}
 				defs={data.defs}
 				categoryPresence={data.categoryPresence}
 			/>

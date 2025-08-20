@@ -1,16 +1,17 @@
-import { dr } from "~/db.server";
 import { HumanEffectsTableFromString, HumanEffectTablesDefs } from "~/frontend/human_effects/defs";
 import {
 	get,
-	GetRes,
 	categoryPresenceGet,
 	categoryPresenceDeleteAll,
-	categoryPresenceSet
+	categoryPresenceSet,
+	totalGroupGet,
+	totalGroupSet
 } from '~/backend.server/models/human_effects'
 import { PreviousUpdatesFromJson } from "~/frontend/editabletable/data";
 import { HumanEffectsTable } from "~/frontend/human_effects/defs";
 import { create, update, deleteRows, HEError, validate, defsForTable, clearData } from "~/backend.server/models/human_effects"
 import { eqArr } from "~/util/array";
+import { dr } from "~/db.server";
 
 
 export async function loadData(recordId: string | undefined, tblStr: string) {
@@ -23,16 +24,17 @@ export async function loadData(recordId: string | undefined, tblStr: string) {
 	} else {
 		tblId = HumanEffectsTableFromString(tblStr)
 	}
-	const defs = await defsForTable(tblId)
-	let res: GetRes | null = null
-	await dr.transaction(async (tx) => {
-		res = await get(tx, tblId, recordId, defs)
-	})
+	const defs = await defsForTable(dr, tblId)
+	//let res: GetRes | null = null
+	//await dr.transaction(async (tx) => {
+	let res = await get(dr, tblId, recordId, defs)
+	//})
 	res = res!
 	if (!res.ok) {
 		throw res.error
 	}
-	let categoryPresence = await categoryPresenceGet(recordId, tblId, defs)
+	let categoryPresence = await categoryPresenceGet(dr, recordId, tblId, defs)
+	let totalGroup = await totalGroupGet(dr, recordId, tblId)
 	return {
 		tblId: tblId,
 		tbl: HumanEffectTablesDefs.find(t => t.id == tblId)!,
@@ -40,7 +42,8 @@ export async function loadData(recordId: string | undefined, tblStr: string) {
 		defs: defs,
 		ids: res.ids,
 		data: res.data,
-		categoryPresence
+		categoryPresence,
+		totalGroup
 	}
 }
 
@@ -79,7 +82,7 @@ export async function saveData(req: Request, recordId: string) {
 	if (!recordId) {
 		throw new Error("no record id")
 	}
-	let defs = await defsForTable(d.table)
+	let defs = await defsForTable(dr, d.table)
 	let expectedCols = defs.map(d => d.jsName)
 
 	if (!eqArr(d.columns, expectedCols)) {
@@ -89,6 +92,16 @@ export async function saveData(req: Request, recordId: string) {
 	try {
 		let dataModified = false;
 		await dr.transaction(async (tx) => {
+			if (d.data.totalGroup !== undefined) {
+				/*
+				console.log('Updating totalGroup:', {
+					recordId,
+					table: d.table,
+					totalGroup: d.data.totalGroup
+				});*/
+				await totalGroupSet(dr, recordId, d.table, d.data.totalGroup)
+			}
+
 			if (d.data.deletes) {
 				let res = await deleteRows(tx, d.table, d.data.deletes)
 				if (!res.ok) {
@@ -171,16 +184,17 @@ export async function saveData(req: Request, recordId: string) {
 							}
 						}
 
+						/*
 						// Debug log the presence data being sent
 						console.log('Updating category presence:', {
 							recordId,
 							table: d.table,
 							presence: categoryPresence,
 							data: currentData.data
-						});
+						});*/
 
 						// Update category presence
-						await categoryPresenceSet(recordId, d.table, defs, categoryPresence);
+						await categoryPresenceSet(dr, recordId, d.table, defs, categoryPresence);
 					}
 				} catch (error) {
 					// Log error but don't fail the operation
@@ -237,6 +251,6 @@ export async function deleteAllData(recordId: string) {
 			return r
 		}
 	}
-	await categoryPresenceDeleteAll(recordId)
+	await categoryPresenceDeleteAll(dr, recordId)
 	return Response.json({ ok: true })
 }

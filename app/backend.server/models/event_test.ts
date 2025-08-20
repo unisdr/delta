@@ -1,14 +1,14 @@
-import {describe, it} from 'node:test'
+import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import {dr} from '~/db.server'
-import {sql} from 'drizzle-orm'
-import {hazardousEventCreate, hazardousEventById, HazardousEventFields, RelationCycleError, hazardousEventUpdate} from './event'
+import { dr } from '~/db.server'
+import { sql } from 'drizzle-orm'
+import { hazardousEventCreate, hazardousEventById, HazardousEventFields, RelationCycleError, hazardousEventUpdate } from './event'
 import {
 	eventTable,
 	hazardousEventTable,
 } from '~/drizzle/schema'
-import {createTestData} from '~/backend.server/models/hip_test'
-import {FormError} from '~/frontend/form'
+import { createTestData } from '~/backend.server/models/hip_test'
+import { FormError } from '~/frontend/form'
 
 function testHazardFields(id: number) {
 	let data: HazardousEventFields = {
@@ -99,6 +99,7 @@ describe("hazardous_event", async () => {
 	})
 
 	// Check that update that creates a relation cycle is not allowed.
+	// TODO: failing test
 	it("update link cycle", async () => {
 		await hazardousEventTestData()
 
