@@ -1,13 +1,14 @@
-import { dr } from "~/db.server";
 import {
 	HumanEffectsTableFromString,
 	HumanEffectTablesDefs,
 } from "~/frontend/human_effects/defs";
 import {
 	get,
-	GetRes,
+	categoryPresenceSet,
 	categoryPresenceGet,
 	categoryPresenceDeleteAll,
+	totalGroupGet,
+	totalGroupSet
 } from "~/backend.server/models/human_effects";
 import { PreviousUpdatesFromJson } from "~/frontend/editabletable/data";
 import { HumanEffectsTable } from "~/frontend/human_effects/defs";
@@ -21,6 +22,7 @@ import {
 	clearData,
 } from "~/backend.server/models/human_effects";
 import { eqArr } from "~/util/array";
+import { dr } from "~/db.server";
 
 export async function loadData(
 	recordId: string | undefined,
@@ -36,17 +38,14 @@ export async function loadData(
 	} else {
 		tblId = HumanEffectsTableFromString(tblStr);
 	}
-	const defs = await defsForTable(tblId);
-	let res: GetRes | null = null;
-	await dr.transaction(async (tx) => {
-		res = await get(tx, tblId, recordId, countryAccountsId, defs);
-	});
+	const defs = await defsForTable(dr, tblId);
+	let res = await get(dr, tblId, recordId, countryAccountsId, defs);
 	res = res!;
 	if (!res.ok) {
 		throw res.error;
 	}
-	let categoryPresence = await categoryPresenceGet(recordId, tblId, countryAccountsId, defs);
-
+	let categoryPresence = await categoryPresenceGet(dr, recordId, countryAccountsId, tblId, defs);
+	let totalGroup = await totalGroupGet(dr, recordId, tblId)
 	return {
 		tblId: tblId,
 		tbl: HumanEffectTablesDefs.find((t) => t.id == tblId)!,
@@ -55,6 +54,7 @@ export async function loadData(
 		ids: res.ids,
 		data: res.data,
 		categoryPresence,
+		totalGroup
 	};
 }
 
@@ -93,8 +93,8 @@ export async function saveHumanEffectsData(req: Request, recordId: string, count
 	if (!recordId) {
 		throw new Error("no record id");
 	}
-	let defs = await defsForTable(d.table);
-	let expectedCols = defs.map((d) => d.jsName);
+	let defs = await defsForTable(dr, d.table)
+	let expectedCols = defs.map(d => d.jsName)
 
 	if (!eqArr(d.columns, expectedCols)) {
 		return Response.json(
@@ -107,58 +107,119 @@ export async function saveHumanEffectsData(req: Request, recordId: string, count
 	}
 
 	try {
+		let dataModified = false;
+
+
 		await dr.transaction(async (tx) => {
+			if (d.data.totalGroup !== undefined) {
+				/*
+				console.log('Updating totalGroup:', {
+					recordId,
+					table: d.table,
+					totalGroup: d.data.totalGroup
+				});*/
+				await totalGroupSet(dr, recordId, d.table, d.data.totalGroup)
+			}
 			if (d.data.deletes) {
-				let res = await deleteRows(tx, d.table, d.data.deletes);
+				let res = await deleteRows(tx, d.table, d.data.deletes)
 				if (!res.ok) {
-					throw res.error;
+					throw res.error
 				}
+				dataModified = true;
 			}
 			if (d.data.updates) {
-				let data2 = convertUpdatesToIdsAndData(d.data.updates, defs.length);
-				let res = await update(tx, d.table, defs, data2.ids, data2.data, false);
+				let data2 = convertUpdatesToIdsAndData(d.data.updates, defs.length)
+				let res = await update(tx, d.table, defs, data2.ids, data2.data, false)
 				if (!res.ok) {
-					throw res.error;
+					throw res.error
 				}
+				dataModified = true;
 			}
-			let idMap = new Map<string, string>();
+			let idMap = new Map<string, string>()
 			if (d.data.newRows) {
-				let ids: string[] = [];
-				let data: any[][] = [];
+				let ids: string[] = []
+				let data: any[][] = []
 				for (let [id, row] of Object.entries(d.data.newRows)) {
-					ids.push(id);
-					data.push(row);
+					ids.push(id)
+					data.push(row)
 				}
-				let res = await create(tx, d.table, recordId, defs, data, false);
+				let res = await create(tx, d.table, recordId, defs, data, false)
 				if (!res.ok) {
 					if (res.error) {
-						throw res.error;
+						throw res.error
 					} else {
-						throw new Error("unknown create error");
+						throw new Error("unknown create error")
 					}
 				} else {
 					for (let [i, id] of res.ids.entries()) {
-						idMap.set(id, ids[i]);
+						idMap.set(id, ids[i])
 					}
+					dataModified = true;
 				}
 			}
-			let res = await validate(tx, d.table, recordId, countryAccountsId, defs);
+			let res = await validate(tx, d.table, recordId, countryAccountsId, defs)
 			if (!res.ok) {
 				if (res.error) {
-					throw res.error;
+					throw res.error
 				} else if (res.errors) {
 					for (let e of res.errors) {
-						let idTemp = idMap.get(e.rowId);
+						let idTemp = idMap.get(e.rowId)
 						if (idTemp) {
-							e.rowId = idTemp;
+							e.rowId = idTemp
 						}
 					}
-					throw res.errors;
+					throw res.errors
 				} else {
-					throw new Error("unknown validate error");
+					throw new Error("unknown validate error")
 				}
 			}
-		});
+
+			// Update category presence if data was modified
+			if (dataModified) {
+				try {
+					// Get current data to determine category presence
+					const currentData = await get(tx, d.table, recordId, countryAccountsId, defs);
+					if (currentData.ok) {
+						// Calculate category presence based on current data
+						const categoryPresence: Record<string, boolean> = {};
+
+						// First, initialize all metric fields to true
+						for (const def of defs) {
+							if (def.role === 'metric' && def.jsName) {
+								// Use the JavaScript name for the presence flag (categoryPresenceSet will map to DB column)
+								categoryPresence[def.jsName] = true;
+							}
+						}
+
+						// Check each row for each metric field
+						for (const row of currentData.data) {
+							const rowData = row as unknown as Record<string, any>;
+							for (const def of defs) {
+								if (def.role === 'metric' && def.jsName && rowData[def.jsName] != null) {
+									// If we find any non-null value, set presence to true
+									categoryPresence[def.jsName] = false;
+								}
+							}
+						}
+
+						/*
+						// Debug log the presence data being sent
+						console.log('Updating category presence:', {
+							recordId,
+							table: d.table,
+							presence: categoryPresence,
+							data: currentData.data
+						});*/
+
+						// Update category presence
+						await categoryPresenceSet(dr, recordId, d.table, defs, categoryPresence);
+					}
+				} catch (error) {
+					// Log error but don't fail the operation
+					console.error('Failed to update category presence:', error);
+				}
+			}
+		})
 	} catch (e) {
 		if (Array.isArray(e)) {
 			return Response.json({ ok: false, errors: e });
@@ -208,6 +269,6 @@ export async function deleteAllData(recordId: string) {
 			return r;
 		}
 	}
-	await categoryPresenceDeleteAll(recordId);
+	await categoryPresenceDeleteAll(dr, recordId);
 	return Response.json({ ok: true });
 }

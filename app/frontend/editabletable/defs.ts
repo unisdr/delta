@@ -31,3 +31,11 @@ export interface EnumEntry {
 	key: string
 	label: string
 }
+
+export function defDataFormats(defs: Def[]): DataFormat[] {
+	let r: DataFormat[] = []
+	for (let d of defs) {
+		r.push(d.format)
+	}
+	return r
+}
