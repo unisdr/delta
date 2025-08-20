@@ -92,8 +92,10 @@ export default function Screen() {
 		throw "invalid"
 	}
 	let fieldsInitial = {
-		...ld.item,
+		// both ld.item.event and ld.item have description fields, the one on even is not used in db, so set those first
+		// TODO: remove that fields from db
 		...ld.item.event,
+		...ld.item,
 		parent: ""
 	}
 	return formScreen({
