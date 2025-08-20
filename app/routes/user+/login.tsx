@@ -32,6 +32,7 @@ import { countryAccountStatuses } from "~/drizzle/schema";
 import Messages from "~/components/Messages";
 import { getUserCountryAccountsByUserId } from "~/db/queries/userCountryAccounts";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
+import { createCSRFToken } from "~/backend.server/utils/csrf";
 
 interface LoginFields {
 	email: string;
@@ -59,6 +60,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		email: formData.email || "",
 		password: formData.password || "",
 	};
+
+	const cookieHeader = request.headers.get("Cookie") || "";
+	const sessionCurrent = await sessionCookie().getSession(cookieHeader);
+
+	if (formData.csrfToken !== sessionCurrent.get("csrfToken")) {
+		return Response.json(
+			{
+				data,
+				errors: {
+					general: ["CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again."],
+				},
+			},
+			{ status: 400 }
+		);
+	}
 
 	const res = await login(data.email, data.password);
 	if (!res.ok) {
@@ -139,10 +155,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	let redirectTo = url.searchParams.get("redirectTo");
 	redirectTo = getSafeRedirectTo(redirectTo);
 
+	const csrfToken = createCSRFToken();
+
 	// Ensure SSO origin is explicitly set for user login
 	const cookieHeader = request.headers.get("Cookie") || "";
 	const session = await sessionCookie().getSession(cookieHeader);
 	session.set("loginOrigin", "user");
+	session.set("csrfToken", csrfToken);
 	const setCookie = await sessionCookie().commitSession(session);
 
 	if (user) {
@@ -175,6 +194,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			redirectTo: redirectTo,
 			isFormAuthSupported: isFormAuthSupported,
 			isSSOAuthSupported: isSSOAuthSupported,
+			csrfToken: csrfToken,
 		},
 		{ headers: { "Set-Cookie": setCookie } }
 	);
@@ -276,6 +296,7 @@ export default function Screen() {
 							errors={errors}
 						>
 							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
+							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}

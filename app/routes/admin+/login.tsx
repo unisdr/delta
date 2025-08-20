@@ -28,7 +28,7 @@ import { testDbConnection } from "~/db.server";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { dtsSystemInfoSelect, dtsSystemInfoUpsertRecord } from "~/backend.server/models/dts_system_info";
 import { configApplicationVersion } from "~/util/config";
-
+import { createCSRFToken } from "~/backend.server/utils/csrf";
 
 interface LoginFields {
 	email: string;
@@ -51,12 +51,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		);
 	}
 
-
 	const formData = formStringData(await request.formData());
 	const data: LoginFields = {
 		email: formData.email || "",
 		password: formData.password || "",
 	};
+
+	const cookieHeader = request.headers.get("Cookie") || "";
+	const sessionCurrent = await sessionCookie().getSession(cookieHeader);
+
+	if (formData.csrfToken !== sessionCurrent.get("csrfToken")) {
+		return Response.json(
+			{
+				data,
+				errors: {
+					general: ["CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again."],
+				},
+			},
+			{ status: 400 }
+		);
+	}
+
 	const res = await superAdminLogin(data.email, data.password);
 	if (!res.ok) {
 		let errors: FormErrors<LoginFields> = {
@@ -228,13 +243,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	let redirectTo = url.searchParams.get("redirectTo");
 	redirectTo = getSafeRedirectTo(redirectTo, "/admin/country-accounts");
 
+	const csrfToken = createCSRFToken();
+
 	// Set a session cookie to mark this as an admin login origin
 	const session = await sessionCookie().getSession();
 	session.set("loginOrigin", "admin");
+	session.set("csrfToken", csrfToken);
 	const setCookie = await sessionCookie().commitSession(session);
 
 	if (superAdminSession) {
-		return Response.json({ redirectTo, isFormAuthSupported: true, isSSOAuthSupported: true }, { headers: { "Set-Cookie": setCookie } });
+		return Response.json({ redirectTo, isFormAuthSupported: true, isSSOAuthSupported: true, configErrors: configErrors, csrfToken: csrfToken }, { headers: { "Set-Cookie": setCookie } });
 	}
 
 	const isFormAuthSupported = configAuthSupportedForm();
@@ -253,6 +271,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			isFormAuthSupported: isFormAuthSupported,
 			isSSOAuthSupported: isSSOAuthSupported,
 			configErrors: configErrors,
+			csrfToken: csrfToken,
 		},
 		{ headers: { "Set-Cookie": setCookie } }
 	);
@@ -406,6 +425,7 @@ if (configErrors && configErrors.length > 0) {
 							errors={errors}
 						>
 							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
+							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
