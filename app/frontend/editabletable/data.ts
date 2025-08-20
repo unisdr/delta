@@ -74,7 +74,7 @@ export class DataManager {
 	private totalsId: string
 
 
-	public totalGroup: TotalGroup = null
+	private totalGroup: TotalGroup = null
 
 	private defFormat: DataFormat[]
 
@@ -309,9 +309,29 @@ export class DataManager {
 		} else {
 			throw new Error("Row with ID not found: " + rowId)
 		}
+		if (rowId != this.totalsId) {
+			this.syncTotalsFromGroup()
+		}
 	}
+
 	updateTotals(fieldIndex: number, newValue: any) {
 		this.updateField(this.totalsId, fieldIndex + this.cols.dimensions, newValue)
+	}
+
+	syncTotalsFromGroup(){
+		let totals = this.getTotals().data
+		for (let i = 0; i < totals.length; i++) {
+			this.updateTotals(i, totals[i])
+		}
+	}
+
+	getTotalGroup(): TotalGroup {
+		return this.totalGroup
+	}
+
+	setTotalGroup(v: TotalGroup) {
+		this.totalGroup = v
+		this.syncTotalsFromGroup()
 	}
 
 	deleteRow(rowId: string) {

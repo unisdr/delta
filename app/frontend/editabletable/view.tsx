@@ -164,7 +164,7 @@ function TableClient(props: TableProps) {
 			notifyError('Group does not have disaggregations set.  Click "Sort into groups" after selecting values for disaggregation columns.')
 			return
 		}
-		data.totalGroup = totalGroup
+		data.setTotalGroup(totalGroup)
 		setData(cloneInstance(data))
 	}
 
@@ -309,7 +309,7 @@ function TableClient(props: TableProps) {
 						deleteRow={deleteRow}
 						toggleColumnSort={toggleColumnSort}
 						addRowEnd={addRowEnd}
-						totalGroup={childProps.data.totalGroup}
+						totalGroup={childProps.data.getTotalGroup()}
 						reSort={reSort}
 					/>
 					<TableLegend />

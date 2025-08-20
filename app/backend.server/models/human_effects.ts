@@ -13,6 +13,7 @@ import { Def, DefEnum } from "~/frontend/editabletable/defs"
 import { HumanEffectsTable } from "~/frontend/human_effects/defs"
 import { toStandardDate } from "~/util/date"
 import { capitalizeFirstLetter, lowercaseFirstLetter } from "~/util/string";
+import { dataToGroupKey, groupKeyOnlyZeroes } from "~/frontend/editabletable/data"
 
 export class HEError extends Error {
 	code: string
@@ -267,6 +268,17 @@ export async function validate(
 		return cur
 	}
 	let errors = new Map<string, HEError>()
+
+	for (let [i, row] of cur.data.entries()) {
+		let gk = dataToGroupKey(row)
+		let id1 = cur.ids[i]
+		if (groupKeyOnlyZeroes(gk)) {
+			let e = new HEError("no_dimention_data", "Row has no disaggregation values.")
+			e.rowId = id1
+			errors.set(id1, e)
+		}
+	}
+
 	let checked = new Map<string, any[]>()
 	let dupErr = function (rowId: string) {
 		let e = new HEError("duplicate_dimension", "Two or more rows have the same disaggregation values.")
@@ -274,8 +286,16 @@ export async function validate(
 		errors.set(rowId, e)
 	}
 	for (let [i, row1] of cur.data.entries()) {
+		let gk = dataToGroupKey(row1)
+		if (groupKeyOnlyZeroes(gk)) {
+			continue
+		}
 		let id1 = cur.ids[i]
 		for (let [id2, row2] of checked.entries()) {
+			let gk = dataToGroupKey(row2)
+			if (groupKeyOnlyZeroes(gk)) {
+				continue
+			}
 			if (sameDimentions(defs, row1, row2)) {
 				dupErr(id1)
 				dupErr(id2)
