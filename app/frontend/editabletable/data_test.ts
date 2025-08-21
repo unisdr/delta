@@ -323,7 +323,7 @@ describe('DataManager', () => {
 			['a', 5],
 			['b', 6],
 		], ['id1', 'id2', 'id3'])
-		manager.totalGroup = "1"
+		manager.setTotalGroup("1")
 		let res = manager.getTotals()
 		let want = {
 			data: [11],
