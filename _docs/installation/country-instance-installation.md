@@ -166,9 +166,18 @@ The DTS system supports multiple deployment methods to accommodate different inf
    ```
 
 2. **Install PostgreSQL 16 with PostGIS**
+   - Download and install PostgreSQL 16 from [official website](https://www.postgresql.org/download/)
+   - During installation, select the PostGIS extension when prompted
    ```bash
-   # Verify installation
+   # Verify PostgreSQL installation
    psql --version  # Should show PostgreSQL 16.x
+   
+   # Verify or install PostGIS extension
+   # Connect to your database and run:
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   
+   # Verify PostGIS installation
+   SELECT PostGIS_Version();
    ```
 
 3. **Install Git**
@@ -193,17 +202,41 @@ The DTS system supports multiple deployment methods to accommodate different inf
    ```bash
    # Copy environment template
    cp example.env .env
+   ```
    
-   # Edit .env file with your database credentials
+   Edit the `.env` file with appropriate values. Below is a comprehensive list of environment variables:
+   
+   | Variable | Required | Default | Description |
+   |----------|----------|---------|-------------|
+   | DATABASE_URL | Yes | - | PostgreSQL connection string |
+   | PORT | No | 3000 | Port for the application server |
+   | NODE_ENV | No | development | Environment (development, production, test) |
+   | ADMIN_EMAIL | No | - | Initial admin account email |
+   | ADMIN_PASSWORD | No | - | Initial admin account password |
+   | SMTP_HOST | No | - | SMTP server for email notifications |
+   | SMTP_PORT | No | 587 | SMTP port |
+   | SMTP_USER | No | - | SMTP username |
+   | SMTP_PASSWORD | No | - | SMTP password |
+   | SESSION_SECRET | Yes | - | Secret for session encryption |
+   
+   Example configuration:
+   ```
    DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/dts_project"
    PORT=3000
    NODE_ENV=development
+   SESSION_SECRET="your-secure-session-secret"
    ```
 
-3. **Create Database**
+3. **Create Database and Enable PostGIS**
    ```sql
    -- Using psql or pgAdmin
    CREATE DATABASE dts_project;
+   
+   -- Connect to the new database
+   \c dts_project
+   
+   -- Enable PostGIS extension
+   CREATE EXTENSION IF NOT EXISTS postgis;
    ```
 
 4. **Install Dependencies**
@@ -222,6 +255,15 @@ The DTS system supports multiple deployment methods to accommodate different inf
    ```bash
    yarn run dev
    # Access at http://localhost:3000
+   ```
+
+6. **Initial Admin Account Setup**
+   - Navigate to http://localhost:3000/setup/admin-account-welcome
+   - Follow the on-screen instructions to create your first admin account
+   - If the setup page is not available, you can set admin credentials via environment variables:
+   ```
+   ADMIN_EMAIL="admin@example.com"
+   ADMIN_PASSWORD="securepassword"
    ```
 
 ### 6.2 Docker Container Deployment
@@ -323,28 +365,29 @@ Ctrl + C  # In terminal where yarn run dev is running
 docker-compose down
 ```
 
-### Regular Maintenance Tasks
+### Recommended Maintenance Tasks
 
-#### Weekly Tasks
-- [ ] Check for system updates
-- [ ] Backup important data
-- [ ] Clear browser cache if performance issues occur
-- [ ] Monitor disk space usage
+Below are recommended maintenance tasks that should be performed according to your organization's operational procedures and requirements.
 
-#### Monthly Tasks
-- [ ] Update Node.js for security patches
-- [ ] Backup PostgreSQL database:
+#### System Updates
+- Check for system updates
+- Update Node.js for security patches
+- Check for DTS Project updates
+
+#### Data Management
+- Backup important data
+- Backup PostgreSQL database:
   ```bash
   pg_dump -U postgres dts_project > backup_$(date +%Y%m%d).sql
   ```
-- [ ] Check for DTS Project updates
-- [ ] Review and clean up log files
+- Review and clean up log files
 
-#### Quarterly Tasks
-- [ ] Full system backup and recovery testing
-- [ ] Security settings review
-- [ ] Performance optimization review
-- [ ] Documentation updates
+#### Performance Maintenance
+- Monitor disk space usage
+- Clear browser cache if performance issues occur
+- Full system backup and recovery testing
+- Security settings review
+- Performance optimization review
 
 ### Database Backup and Recovery
 
@@ -368,68 +411,9 @@ gunzip -c dts_backup.sql.gz | psql -U postgres -h localhost -d dts_project
 
 ---
 
-## 10. Troubleshooting Guide
+## 10. Troubleshooting
 
-### Common Installation Issues
-
-#### Node.js Installation Problems
-- **Symptom**: `'node' is not recognized as an internal or external command`
-- **Solution**: 
-  1. Reinstall Node.js with "Add to PATH" option
-  2. Manually add Node.js to system PATH
-  3. Restart terminal/command prompt
-
-#### PostgreSQL Connection Issues
-- **Symptom**: `connection to server at "localhost" failed`
-- **Solutions**:
-  1. Verify PostgreSQL service is running
-  2. Check port 5432 availability
-  3. Verify password and database name in .env file
-  4. Reset PostgreSQL password if necessary
-
-#### Port Conflicts
-- **Symptom**: `Error: listen EADDRINUSE: address already in use :::3000`
-- **Solutions**:
-  1. Find and kill process using port 3000:
-     ```bash
-     # Windows
-     netstat -ano | findstr :3000
-     taskkill /PID [PID] /F
-     
-     # Mac/Linux
-     lsof -i :3000
-     kill -9 [PID]
-     ```
-  2. Use alternative port:
-     ```bash
-     PORT=3001 yarn run dev
-     ```
-
-### Performance Issues
-
-#### Slow Application Response
-- **Potential Causes**: Insufficient RAM, database performance, network issues
-- **Solutions**:
-  1. Check system resource usage
-  2. Optimize database queries
-  3. Clear browser cache
-  4. Restart application
-
-#### Database Performance
-- **Symptoms**: Slow queries, connection timeouts
-- **Solutions**:
-  1. Monitor database connections
-  2. Optimize database indexes
-  3. Regular database maintenance (VACUUM, ANALYZE)
-  4. Check for slow queries in PostgreSQL logs
-
-### Emergency Recovery Procedures
-
-#### Complete System Reset
-1. **Backup Data**: Export critical data before reset
-2. **Uninstall Components**: Remove Node.js, PostgreSQL, Git
-3. **Clean Installation**: Follow installation guide from beginning
-4. **Restore Data**: Import backed up data
+For troubleshooting assistance, please refer to the FAQ section below. The FAQ includes solutions to common installation and operational issues.
 
 ---
 
@@ -447,7 +431,7 @@ gunzip -c dts_backup.sql.gz | psql -U postgres -h localhost -d dts_project
 #### Technical Documentation
 - **Installation guides** (this document)
 - **API documentation** for developers
-- **Database schema** documentation
+- **Database schema** documentation *(in development - will be available in future updates)*
 - **Configuration reference** guides
 
 #### User Documentation
@@ -548,10 +532,37 @@ A: Yes, DTS provides RESTful APIs and supports various integration methods.
 A: Check that all services (PostgreSQL, Node.js) are running and ports are available.
 
 **Q: Database connection errors?**
-A: Verify PostgreSQL service is running and credentials in .env file are correct.
+A: Verify PostgreSQL service is running and credentials in .env file are correct. Check that the PostgreSQL service is running and that port 5432 is available.
 
 **Q: How do I backup my data?**
 A: Use pg_dump for database backups and backup configuration files regularly.
+
+**Q: I get 'node' is not recognized as an internal or external command**
+A: Reinstall Node.js with "Add to PATH" option, manually add Node.js to system PATH, or restart your terminal/command prompt.
+
+**Q: I get 'Error: listen EADDRINUSE: address already in use :::3000'**
+A: Another process is using port 3000. Find and kill the process or use an alternative port:
+```bash
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID [PID] /F
+
+# Mac/Linux
+lsof -i :3000
+kill -9 [PID]
+
+# Or use alternative port
+PORT=3001 yarn run dev
+```
+
+**Q: The application is running slowly**
+A: Check system resource usage, optimize database queries, clear browser cache, or restart the application.
+
+**Q: Database queries are slow or timing out**
+A: Monitor database connections, optimize database indexes, perform regular maintenance (VACUUM, ANALYZE), and check PostgreSQL logs for slow queries.
+
+**Q: How do I perform a complete system reset?**
+A: 1) Backup your data, 2) Uninstall components (Node.js, PostgreSQL, Git), 3) Follow the installation guide from the beginning, and 4) Restore your data.
 
 ---
 
@@ -602,13 +613,15 @@ dts/
 ├── public/                   # Static assets
 ├── _docs/                    # Documentation
 │   └── installation/         # Installation guides
-├── information-pages-override/ # Content override files
+├── information-pages-override/ # Custom content files for overriding default content
 ├── package.json              # Project configuration
 ├── .env                      # Environment variables
 ├── example.env               # Environment template
 ├── docker-compose.yml        # Docker configuration
 └── README.md                # Basic project information
 ```
+
+> Note: The "information-pages-override" directory contains custom markdown files that can be used to override default content in the application. This allows for country-specific customization without modifying the core codebase.
 
 ---
 
