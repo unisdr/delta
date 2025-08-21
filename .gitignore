@@ -97,3 +97,7 @@ app/routes/api.test.user-centric-auth.tsx
 app/routes/api.test.monitoring-auth.tsx
 app/routes/api.test.token-info.tsx
 test-api-security.sh
+
+
+# Human Effects API test script (ignored for local/dev testing only)
+test-human-effects-api.ps1
