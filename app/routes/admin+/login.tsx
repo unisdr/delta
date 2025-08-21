@@ -28,7 +28,7 @@ import { testDbConnection } from "~/db.server";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { dtsSystemInfoSelect, dtsSystemInfoUpsertRecord } from "~/backend.server/models/dts_system_info";
 import { configApplicationVersion } from "~/util/config";
-
+import { createCSRFToken } from "~/backend.server/utils/csrf";
 
 interface LoginFields {
 	email: string;
@@ -51,12 +51,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		);
 	}
 
-
 	const formData = formStringData(await request.formData());
 	const data: LoginFields = {
 		email: formData.email || "",
 		password: formData.password || "",
 	};
+
+	const cookieHeader = request.headers.get("Cookie") || "";
+	const sessionCurrent = await sessionCookie().getSession(cookieHeader);
+
+	if (formData.csrfToken !== sessionCurrent.get("csrfToken")) {
+		return Response.json(
+			{
+				data,
+				errors: {
+					general: ["CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again."],
+				},
+			},
+			{ status: 400 }
+		);
+	}
+
 	const res = await superAdminLogin(data.email, data.password);
 	if (!res.ok) {
 		let errors: FormErrors<LoginFields> = {
@@ -228,13 +243,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	let redirectTo = url.searchParams.get("redirectTo");
 	redirectTo = getSafeRedirectTo(redirectTo, "/admin/country-accounts");
 
+	const csrfToken = createCSRFToken();
+
 	// Set a session cookie to mark this as an admin login origin
 	const session = await sessionCookie().getSession();
 	session.set("loginOrigin", "admin");
+	session.set("csrfToken", csrfToken);
 	const setCookie = await sessionCookie().commitSession(session);
 
 	if (superAdminSession) {
-		return Response.json({ redirectTo, isFormAuthSupported: true, isSSOAuthSupported: true }, { headers: { "Set-Cookie": setCookie } });
+		return Response.json({ redirectTo, isFormAuthSupported: true, isSSOAuthSupported: true, configErrors: configErrors, csrfToken: csrfToken }, { headers: { "Set-Cookie": setCookie } });
 	}
 
 	const isFormAuthSupported = configAuthSupportedForm();
@@ -253,6 +271,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			isFormAuthSupported: isFormAuthSupported,
 			isSSOAuthSupported: isSSOAuthSupported,
 			configErrors: configErrors,
+			csrfToken: csrfToken,
 		},
 		{ headers: { "Set-Cookie": setCookie } }
 	);
@@ -297,56 +316,56 @@ export default function Screen() {
 		}
 	}, [isFormAuthSupported]);
 
-if (configErrors && configErrors.length > 0) {
-	return (
-		<div className="dts-page-container">
-				<main className="dts-main-container">
-					<div className="mg-container">
-						<div className="dts-form dts-form--vertical">
-								<div className="dts-form__header"></div>
-								<div className="dts-form__body">
-									<div style={{
-										background: '#fff0f0',
-										border: '1px solid #ffcccc',
-										borderRadius: '4px',
-										padding: '16px',
-										marginBottom: '20px'
-									}}>
+	if (configErrors && configErrors.length > 0) {
+		return (
+			<div className="dts-page-container">
+					<main className="dts-main-container">
+						<div className="mg-container">
+							<div className="dts-form dts-form--vertical">
+									<div className="dts-form__header"></div>
+									<div className="dts-form__body">
 										<div style={{
-											display: 'flex',
-											alignItems: 'center',
-											marginBottom: '10px',
-											color: '#cc0000',
-											fontWeight: 'bold'
+											background: '#fff0f0',
+											border: '1px solid #ffcccc',
+											borderRadius: '4px',
+											padding: '16px',
+											marginBottom: '20px'
 										}}>
-											<FaExclamationTriangle style={{ marginRight: '8px' }} />
-											System Configuration Errors
+											<div style={{
+												display: 'flex',
+												alignItems: 'center',
+												marginBottom: '10px',
+												color: '#cc0000',
+												fontWeight: 'bold'
+											}}>
+												<FaExclamationTriangle style={{ marginRight: '8px' }} />
+												System Configuration Errors
+											</div>
+											<p style={{ marginBottom: '10px' }}>
+												The following required configuration variables are missing or have invalid values in your <code>.env</code> file:
+											</p>
+											<ul style={{
+												listStyleType: 'disc',
+												paddingLeft: '20px',
+												margin: '0'
+											}}>
+												{configErrors.map((error:any, index:number) => (
+													<li key={index} style={{ marginBottom: '5px' }}>
+														<strong>{error.variable}</strong>: {error.message}
+													</li>
+												))}
+											</ul>
+											<p style={{ marginTop: '10px', marginBottom: '0' }}>
+												Please update your <code>.env</code> file with the correct values before proceeding.
+											</p>
 										</div>
-										<p style={{ marginBottom: '10px' }}>
-											The following required configuration variables are missing or have invalid values in your <code>.env</code> file:
-										</p>
-										<ul style={{
-											listStyleType: 'disc',
-											paddingLeft: '20px',
-											margin: '0'
-										}}>
-											{configErrors.map((error:any, index:number) => (
-												<li key={index} style={{ marginBottom: '5px' }}>
-													<strong>{error.variable}</strong>: {error.message}
-												</li>
-											))}
-										</ul>
-										<p style={{ marginTop: '10px', marginBottom: '0' }}>
-											Please update your <code>.env</code> file with the correct values before proceeding.
-										</p>
 									</div>
-								</div>
+							</div>
 						</div>
-					</div>
-				</main>
-			</div>
-	);
-}
+					</main>
+				</div>
+		);
+	}
 
 
 	// If only SSO is supported, show SSO-only interface
@@ -406,6 +425,7 @@ if (configErrors && configErrors.length > 0) {
 							errors={errors}
 						>
 							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
+							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
@@ -497,6 +517,7 @@ if (configErrors && configErrors.length > 0) {
 							errors={errors}
 						>
 							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
+							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}

@@ -13,7 +13,6 @@ import {
 import { createTestData } from '~/backend.server/models/hip_test'
 import { FormError } from '~/frontend/form'
 
-
 // Error codes for hazardous event validation
 const SelfReferenceError = {
 	code: "ErrSelfReference",

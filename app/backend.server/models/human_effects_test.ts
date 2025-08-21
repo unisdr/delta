@@ -1,6 +1,3 @@
-// Load environment variables for tests
-import 'dotenv/config'
-
 import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { dr } from '~/db.server'
@@ -11,7 +8,9 @@ import {
 	get,
 	validate,
 	categoryPresenceGet,
-	categoryPresenceSet
+	categoryPresenceSet,
+	totalGroupGet,
+	totalGroupSet
 } from './human_effects'
 import { injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable } from '~/drizzle/schema'
 
@@ -20,10 +19,12 @@ import { Def } from "~/frontend/editabletable/defs"
 import {
 	sql
 } from "drizzle-orm"
-import { createTestDisasterRecord1 } from './disaster_record_test'
 
-// Use a fixed UUID for testing
-let rid1 = "00000000-0000-0000-0000-000000000001"
+import { createTestDisasterRecord1, testDisasterRecord1Id } from './disaster_record_test'
+
+let rid1 = testDisasterRecord1Id
+let countryAccountsId ="ffb27d75-189d-43a4-900b-77b7dd31c905"
+
 
 let defs1: Def[] = [
 	{
@@ -94,11 +95,11 @@ describe("human_effects - number data", async () => {
 		await resetTestData()
 	})
 
-	const countryAccountsId ="ffb27d75-189d-43a4-900b-77b7dd31c905"
 	it("create basic", async () => {
 		let defs = defs1
 		{
 			let res = await create(dr, "Injured", rid1, defs, [["m", 1], ["f", 2]], false)
+			console.log(res)
 			assert(res.ok)
 		}
 		{
@@ -116,7 +117,7 @@ describe("human_effects - number data", async () => {
 			["m", 2]
 		], false)
 		assert(res1.ok)
-		let res = await validate(dr, "Injured", rid1,countryAccountsId, defs)
+		let res = await validate(dr, "Injured", rid1, countryAccountsId, defs)
 		assert(!res.ok)
 		assert.equal(res.errors?.length, 2)
 		let e0 = res.errors[0]
@@ -168,7 +169,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", rid1, countryAccountsId, defs)
+			let res = await get(dr, "Injured", rid1, countryAccountsId,  defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["above", 1], ["below", 2]])
@@ -191,7 +192,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", rid1,countryAccountsId, defs)
+			let res = await get(dr, "Injured", rid1, countryAccountsId,  defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -205,7 +206,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", rid1, countryAccountsId, defs)
+			let res = await get(dr, "Injured", rid1, countryAccountsId,  defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 2], ["m", 1]])
@@ -283,7 +284,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", rid1,countryAccountsId,  defs)
+			let res = await get(dr, "Injured", rid1, countryAccountsId, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [["f", 4], ["m", 3]])
@@ -405,7 +406,7 @@ describe("human_effects - number data", async () => {
 			assert(res.ok)
 		}
 		{
-			let res = await get(dr, "Injured", rid1, countryAccountsId,  defs)
+			let res = await get(dr, "Injured", rid1, countryAccountsId, defs)
 			console.log(res)
 			assert(res.ok)
 			assert.deepEqual(res.data, [])
@@ -424,7 +425,6 @@ describe("human_effects - category presence data", async () => {
 		await resetCategoryPresenceData()
 	})
 
-	const countryAccountsId = "ffb27d75-189d-43a4-900b-77b7dd31c905"
 	let defs: Def[] = [
 		{
 			uiName: "Injured",
@@ -436,36 +436,36 @@ describe("human_effects - category presence data", async () => {
 	]
 
 	it("no data", async () => {
-		let res = await categoryPresenceGet(rid1, "Injured", countryAccountsId, defs)
+		let res = await categoryPresenceGet(dr, rid1, countryAccountsId,  "Injured", defs)
 		assert.deepEqual(res, {})
 	})
 
 	it("insert", async () => {
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": true
 		})
-		let res = await categoryPresenceGet(rid1, "Injured", countryAccountsId, defs)
+		let res = await categoryPresenceGet(dr, rid1, countryAccountsId, "Injured", defs)
 		assert.deepEqual(res, { "injured": true })
 	})
 
 	it("update - false", async () => {
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": true
 		})
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": false,
 		})
-		let res = await categoryPresenceGet(rid1, "Injured", countryAccountsId, defs)
+		let res = await categoryPresenceGet(dr, rid1, countryAccountsId, "Injured", defs)
 		assert.deepEqual(res, { "injured": false })
 	})
 
 	it("update - unset", async () => {
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": true
 		})
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 		})
-		let res = await categoryPresenceGet(rid1, "Injured", countryAccountsId, defs)
+		let res = await categoryPresenceGet(dr, rid1, countryAccountsId, "Injured", defs)
 		assert.deepEqual(res, {})
 	})
 
@@ -481,22 +481,61 @@ describe("human_effects - category presence data", async () => {
 
 	it("insert - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet(rid1, "Affected", defs, {
+		await categoryPresenceSet(dr, rid1, "Affected", defs, {
 			"direct": true
 		})
-		let res = await categoryPresenceGet(rid1, "Affected", countryAccountsId, defs)
+		let res = await categoryPresenceGet(dr, rid1, countryAccountsId, "Affected", defs)
 		assert.deepEqual(res, { "direct": true })
 	})
 
 	it("update - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet(rid1, "Affected", defs, {
+		await categoryPresenceSet(dr, rid1, "Affected", defs, {
 			"direct": true
 		})
-		await categoryPresenceSet(rid1, "Affected", defs, {
+		await categoryPresenceSet(dr, rid1, "Affected", defs, {
 		})
-		let res = await categoryPresenceGet(rid1, "Affected", countryAccountsId,  defs)
+		let res = await categoryPresenceGet(dr, rid1, countryAccountsId, "Affected", defs)
 		assert.deepEqual(res, {})
 	})
 
 })
+
+describe("human_effects - total group", async () => {
+	beforeEach(async () => {
+		await resetCategoryPresenceData()
+	})
+
+	it("get no data", async () => {
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, null)
+	})
+
+	it("set and get", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", "10")
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, "10")
+	})
+
+	it("update", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", "10")
+		await totalGroupSet(dr, rid1, "Deaths", "11")
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, "11")
+	})
+
+	it("set null", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", null)
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, null)
+	})
+
+	it("set invalid", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", "invalid")
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, "invalid")
+	})
+})
+
+
+

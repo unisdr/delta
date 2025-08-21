@@ -14,6 +14,8 @@ import {
 } from "~/backend.server/models/human_effects";
 import { LoaderFunction, LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { getCountryAccountsIdFromSession } from "~/util/session";
+import {dr} from "~/db.server";
+
 
 export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
 	const { request } = args;
@@ -53,10 +55,10 @@ export const action = authLoaderWithPerm("EditData", async (actionArgs) => {
 			data[k] = false;
 		}
 	}
-	let defs = await defsForTable(tblId);
-	await categoryPresenceSet(recordId, tblId, defs, data);
-	return null;
-});
+	let defs = await defsForTable(dr, tblId)
+	await categoryPresenceSet(dr, recordId, tblId, defs, data)
+	return null
+})
 
 export default function Screen() {
 	const ld = useLoaderData<typeof loader>();
@@ -87,6 +89,7 @@ export default function Screen() {
 				table={data.tblId}
 				initialIds={data.ids}
 				initialData={data.data}
+				initialTotalGroup={data.totalGroup}
 				defs={data.defs}
 				categoryPresence={data.categoryPresence}
 			/>

@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
-import { useActionData } from "@remix-run/react";
+import { useLoaderData, useActionData } from "@remix-run/react";
 import { configAuthSupportedForm } from "~/util/config";
 import {
 	Form,
@@ -19,18 +19,39 @@ import { useEffect } from "react";
 import { randomBytes } from "crypto";
 import { sendEmail } from "~/util/email";
 import { toast } from "react-toastify/unstyled";
+import Messages from "~/components/Messages";
+import {
+	sessionCookie,
+} from "~/util/session";
+import { createCSRFToken } from "~/backend.server/utils/csrf";
 
 interface FormFields {
 	email: string;
 }
 
 // Add loader to check if form auth is supported
-export const loader = async ({ }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	
+
 	// If form authentication is not supported, redirect to login
 	if (!configAuthSupportedForm()) {
 		return redirect("/user/login");
 	}
-	return null;
+
+	const csrfToken = createCSRFToken();
+	
+	// Set the CSRF token in the session variable
+	const cookieHeader = request.headers.get("Cookie") || "";
+	const session = await sessionCookie().getSession(cookieHeader);
+	session.set("csrfToken", csrfToken);
+	const setCookie = await sessionCookie().commitSession(session);
+
+	return Response.json(
+		{
+			csrfToken: csrfToken,
+		},
+		{ headers: { "Set-Cookie": setCookie } }
+	);
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -43,6 +64,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	let data: FormFields = {
 		email: formData.email || "",
 	};
+
+	const cookieHeader = request.headers.get("Cookie") || "";
+	const sessionCurrent = await sessionCookie().getSession(cookieHeader);
+
+	if (formData.csrfToken !== sessionCurrent.get("csrfToken")) {
+		return Response.json(
+			{
+				data,
+				errors: {
+					general: ["CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again."],
+				},
+			},
+			{ status: 400 }
+		);
+	}
+
 
 	let errors: FormErrors<FormFields> = {};
 
@@ -121,8 +158,9 @@ export const meta: MetaFunction = () => {
 
 
 export default function Screen() {
+	const loaderData = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
-	const errors = actionData?.errors;
+	const errors = actionData?.errors || {};
 
 	useEffect(() => {
 		if (actionData?.status === "error" && actionData.errors?.fields?.email) {
@@ -153,6 +191,7 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
+							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
 							<div className="dts-form__header">
 								<a
 									href="/user/login"
@@ -162,6 +201,8 @@ export default function Screen() {
 								</a>
 							</div>
 							<div className="dts-form__intro">
+								{errors.general && <Messages messages={errors.general} />}
+
 								<h2 className="dts-heading-1" style={{ marginBottom: "5px" }}>
 									Forgot your password?
 								</h2>
