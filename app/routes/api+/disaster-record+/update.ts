@@ -1,4 +1,4 @@
-import { authLoaderApi } from "~/util/auth";
+import { authActionApi, authLoaderApi } from "~/util/auth";
 
 import { jsonUpdate } from "~/backend.server/handlers/form/form_api";
 
@@ -26,14 +26,17 @@ export const action = async (args: ActionFunctionArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const data = await args.request.json();
+	return authActionApi(async (args) => {
+		const data = await args.request.json();
 
-	const saveRes = await jsonUpdate({
-		data,
-		fieldsDef: fieldsDefApi,
-		update: async (tx: any, id: string, fields: any) => {
-			return disasterRecordsUpdate(tx, id, fields, countryAccountsId);
-		},
-	});
-	return Response.json(saveRes);
+		const saveRes = await jsonUpdate({
+			data,
+			fieldsDef: fieldsDefApi,
+			update: async (tx: any, id: string, countryAccountsId:string, fields: any) => {
+				return disasterRecordsUpdate(tx, id, fields, countryAccountsId);
+			},
+			countryAccountsId
+		});
+		return Response.json(saveRes);
+	})(args);
 };

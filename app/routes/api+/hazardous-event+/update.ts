@@ -1,9 +1,9 @@
-import { authLoaderApi } from "~/util/auth";
+import { authActionApi, authLoaderApi } from "~/util/auth";
 
 import { fieldsDefApi } from "~/frontend/events/hazardeventform";
 
 import { jsonUpdate } from "~/backend.server/handlers/form/form_api";
-import { hazardousEventUpdate } from "~/backend.server/models/event";
+import { hazardousEventUpdateByIdAndCountryAccountsId } from "~/backend.server/models/event";
 import { apiAuth } from "~/backend.server/models/api_key";
 import { ActionFunction, ActionFunctionArgs } from "@remix-run/server-runtime";
 
@@ -25,13 +25,16 @@ export const action: ActionFunction = async (args: ActionFunctionArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const data = await args.request.json();
+	return authActionApi(async (args) => {
+		const data = await args.request.json();
 
-	const saveRes = await jsonUpdate({
-		data,
-		fieldsDef: fieldsDefApi,
-		update: hazardousEventUpdate,
-	});
+		const saveRes = await jsonUpdate({
+			data,
+			fieldsDef: fieldsDefApi,
+			update: hazardousEventUpdateByIdAndCountryAccountsId,
+			countryAccountsId
+		});
 
-	return Response.json(saveRes);
+		return Response.json(saveRes);
+	})(args);
 };

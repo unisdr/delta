@@ -1,9 +1,8 @@
-import { authLoaderApi } from "~/util/auth";
+import { authActionApi, authLoaderApi } from "~/util/auth";
 
-import { createFieldsDef } from "~/backend.server/models/losses";
+import { createFieldsDef, lossesUpdateByIdAndCountryAccountsId } from "~/backend.server/models/losses";
 
 import { jsonUpdate } from "~/backend.server/handlers/form/form_api";
-import { lossesUpdate } from "~/backend.server/models/losses";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import { apiAuth } from "~/backend.server/models/api_key";
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
@@ -30,13 +29,16 @@ export const action = async (args: ActionFunctionArgs) => {
 	);
 	const currencies = [settings?.currencyCode || "USD"];
 
-	let data = await request.json();
+	return authActionApi(async (args) => {
+		let data = await args.request.json();
 
-	const saveRes = await jsonUpdate({
-		data,
-		fieldsDef: createFieldsDef(currencies),
-		update: lossesUpdate,
-	});
+		const saveRes = await jsonUpdate({
+			data,
+			fieldsDef: createFieldsDef(currencies),
+			update: lossesUpdateByIdAndCountryAccountsId,
+			countryAccountsId
+		});
 
-	return Response.json(saveRes);
+		return Response.json(saveRes);
+	})(args);
 };

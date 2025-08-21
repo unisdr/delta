@@ -1,57 +1,81 @@
-import {dr, Tx} from "~/db.server";
-import {nonecoLossesTable, nonecoLosses, categoriesTable} from "~/drizzle/schema";
-import {eq,sql,aliasedTable} from "drizzle-orm";
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form";
-import {Errors, FormInputDef, hasErrors} from "~/frontend/form";
-import {deleteByIdForStringId} from "./common";
+import { dr, Tx } from "~/db.server";
+import {
+	nonecoLossesTable,
+	nonecoLosses,
+	categoriesTable,
+} from "~/drizzle/schema";
+import { eq, sql, aliasedTable } from "drizzle-orm";
+import {
+	CreateResult,
+	DeleteResult,
+	UpdateResult,
+} from "~/backend.server/handlers/form/form";
+import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
+import { deleteByIdForStringId } from "./common";
+import { getDisasterRecordsByIdAndCountryAccountsId } from "~/db/queries/disasterRecords";
 
 export interface NonecoLossesFields extends Omit<nonecoLosses, "id"> {}
 
 export const fieldsDefCommon = [
-	{key: "disasterRecordId", label: "Disaster Record", type: "uuid", required: true},
-	{key: "categoryId", label: "Category", type: "text", required: true},
-	{key: "description", label: "Description", type: "text", required: true},
+	{
+		key: "disasterRecordId",
+		label: "Disaster Record",
+		type: "uuid",
+		required: true,
+	},
+	{ key: "categoryId", label: "Category", type: "text", required: true },
+	{ key: "description", label: "Description", type: "text", required: true },
 ] as const;
 
 export const fieldsDefApi: FormInputDef<NonecoLossesFields>[] = [
 	...fieldsDefCommon,
-	{key: "apiImportId", label: "", type: "other"},
+	{ key: "apiImportId", label: "", type: "other" },
 ];
 
 // do not change
-export function validate(_fields: Partial<NonecoLossesFields>): Errors<NonecoLossesFields> {
+export function validate(
+	_fields: Partial<NonecoLossesFields>
+): Errors<NonecoLossesFields> {
 	let errors: Errors<NonecoLossesFields> = {};
 	errors.fields = {};
 
-	return errors
+	return errors;
 }
 
-
-export async function nonecoLossesCreate(tx: Tx, fields: NonecoLossesFields): Promise<CreateResult<NonecoLossesFields>> {
+export async function nonecoLossesCreate(
+	tx: Tx,
+	fields: NonecoLossesFields
+): Promise<CreateResult<NonecoLossesFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
-		return {ok: false, errors};
+		return { ok: false, errors };
 	}
 
-	const res = await tx.insert(nonecoLossesTable)
+	const res = await tx
+		.insert(nonecoLossesTable)
 		.values({
 			disasterRecordId: fields.disasterRecordId,
 			categoryId: fields.categoryId,
 			description: fields.description,
 			updatedAt: sql`NOW()`,
 		})
-		.returning({id: nonecoLossesTable.id});
+		.returning({ id: nonecoLossesTable.id });
 
-	return {ok: true, id: res[0].id};
+	return { ok: true, id: res[0].id };
 }
 
-export async function nonecoLossesUpdate(tx: Tx, idStr: string, fields: Partial<NonecoLossesFields>): Promise<UpdateResult<NonecoLossesFields>> {
+export async function nonecoLossesUpdate(
+	tx: Tx,
+	idStr: string,
+	fields: Partial<NonecoLossesFields>
+): Promise<UpdateResult<NonecoLossesFields>> {
 	let errors = validate(fields);
 	if (hasErrors(errors)) {
-		return {ok: false, errors};
+		return { ok: false, errors };
 	}
 	let id = idStr;
-	await tx.update(nonecoLossesTable)
+	await tx
+		.update(nonecoLossesTable)
 		.set({
 			disasterRecordId: fields.disasterRecordId,
 			categoryId: fields.categoryId,
@@ -60,10 +84,61 @@ export async function nonecoLossesUpdate(tx: Tx, idStr: string, fields: Partial<
 		})
 		.where(eq(nonecoLossesTable.id, id));
 
-	return {ok: true};
+	return { ok: true };
 }
 
-export type NonecoLossesViewModel = Exclude<Awaited<ReturnType<typeof nonecoLossesById>>,
+export async function nonecoLossesUpdateByIdAndCountryAccountsId(
+	tx: Tx,
+	id: string,
+	countryAccountsId: string,
+	fields: Partial<NonecoLossesFields>
+): Promise<UpdateResult<NonecoLossesFields>> {
+	let errors = validate(fields);
+	if (hasErrors(errors)) {
+		return { ok: false, errors };
+	}
+	let recordId = await getRecordId(tx, id);
+
+	const disasterRecords = getDisasterRecordsByIdAndCountryAccountsId(
+		recordId,
+		countryAccountsId
+	);
+	if (!disasterRecords) {
+		return {
+			ok: false,
+			errors: {
+				general: ["No matching disaster record found or you don't have access"],
+			},
+		};
+	}
+
+	await tx
+		.update(nonecoLossesTable)
+		.set({
+			disasterRecordId: fields.disasterRecordId,
+			categoryId: fields.categoryId,
+			description: fields.description,
+			updatedAt: sql`NOW()`,
+		})
+		.where(eq(nonecoLossesTable.id, id));
+
+	return { ok: true };
+}
+
+async function getRecordId(tx: Tx, id: string) {
+	let rows = await tx
+		.select({
+			disasterRecordId: nonecoLossesTable.disasterRecordId,
+		})
+		.from(nonecoLossesTable)
+		.where(eq(nonecoLossesTable.id, id))
+		.execute();
+	if (!rows.length) throw new Error("not found by id");
+	return rows[0].disasterRecordId;
+}
+
+export type NonecoLossesViewModel = Exclude<
+	Awaited<ReturnType<typeof nonecoLossesById>>,
 	undefined
 >;
 
@@ -76,27 +151,30 @@ export async function nonecoLossesById(idStr: string) {
 		},
 	});
 
-	if(!res){
+	if (!res) {
 		throw new Error("Id is invalid");
 	}
 	return res;
 }
 
-export async function nonecoLossesDeleteById(idStr: string): Promise<DeleteResult> {
-	await deleteByIdForStringId(idStr, nonecoLossesTable)
-	return {ok: true}
+export async function nonecoLossesDeleteById(
+	idStr: string
+): Promise<DeleteResult> {
+	await deleteByIdForStringId(idStr, nonecoLossesTable);
+	return { ok: true };
 }
 
 export async function nonecoLossesIdByImportId(tx: Tx, importId: string) {
-	const res = await tx.select({
-		id: nonecoLossesTable.id
-	}).from(nonecoLossesTable).where(eq(
-		nonecoLossesTable.apiImportId, importId
-	))
+	const res = await tx
+		.select({
+			id: nonecoLossesTable.id,
+		})
+		.from(nonecoLossesTable)
+		.where(eq(nonecoLossesTable.apiImportId, importId));
 	if (res.length == 0) {
-		return null
+		return null;
 	}
-	return String(res[0].id)
+	return String(res[0].id);
 }
 
 export type PropRecord = {
@@ -108,13 +186,13 @@ export type PropRecord = {
 	category?: any;
 };
 
-
 export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {
 	let id = idStr;
 
 	const catTable = aliasedTable(categoriesTable, "catTable");
 
-	return await dr.select({
+	return await dr
+		.select({
 			noneccoId: nonecoLossesTable.id,
 			noneccoDesc: nonecoLossesTable.description,
 			noneccoCatId: nonecoLossesTable.categoryId,
@@ -134,11 +212,13 @@ export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {
 				SELECT full_path
 				FROM CategoryCTE
 				WHERE parent_id IS NULL
-			)`.as('categoryTreeDisplay'),
-		}).from(nonecoLossesTable)
+			)`.as("categoryTreeDisplay"),
+		})
+		.from(nonecoLossesTable)
 		.leftJoin(catTable, eq(catTable.id, nonecoLossesTable.categoryId))
 		.where(eq(nonecoLossesTable.disasterRecordId, id))
-		.orderBy(sql`(
+		.orderBy(
+			sql`(
 			WITH RECURSIVE CategoryCTE AS (
 				SELECT id, name, parent_id, name AS full_path
 				FROM categories
@@ -153,12 +233,10 @@ export async function nonecoLossesFilderBydisasterRecordsId(idStr: string) {
 			SELECT full_path
 			FROM CategoryCTE
 			WHERE parent_id IS NULL
-		)`)
-	.execute();
+		)`
+		)
+		.execute();
 }
-
-
-		
 
 export async function upsertRecord(record: PropRecord): Promise<void> {
 	// Perform the upsert operation
@@ -167,7 +245,7 @@ export async function upsertRecord(record: PropRecord): Promise<void> {
 		.values(record)
 		.onConflictDoUpdate({
 			target: nonecoLossesTable.id,
-			set: { 
+			set: {
 				categoryId: record.categoryId,
 				disasterRecordId: record.disasterRecordId,
 				description: record.description,

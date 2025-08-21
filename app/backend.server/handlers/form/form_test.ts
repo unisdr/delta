@@ -99,14 +99,15 @@ describe('jsonCreate', () => {
 
 describe('jsonUpdate', () => {
 	it('handles validation errors', async () => {
-		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields>) => {
+		const updateMock = async (_tx: Tx, _id: string, _country_accounts_id: string,_data: Partial<TestFields>) => {
 			throw new Error('Should not reach this point')
 		}
 
 		const args: JsonUpdateArgs<TestFields> = {
 			data: [{id: "1", field1: 1}],
 			fieldsDef,
-			update: updateMock
+			update: updateMock,
+			countryAccountsId
 		}
 
 		const res = await jsonUpdate(args)
@@ -120,14 +121,15 @@ describe('jsonUpdate', () => {
 	})
 
 	it('handles missing id', async () => {
-		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields>) => {
+		const updateMock = async (_tx: Tx, _id: string, _country_accounts_id: string, _data: Partial<TestFields>) => {
 			throw new Error('Should not reach this point')
 		}
 
 		const args: JsonUpdateArgs<TestFields> = {
 			data: [{}],
 			fieldsDef,
-			update: updateMock
+			update: updateMock,
+			countryAccountsId
 		}
 
 		const res = await jsonUpdate(args)
@@ -141,7 +143,7 @@ describe('jsonUpdate', () => {
 	})
 
 	it('multiple updates, allow partials', async () => {
-		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields>): Promise<SaveResult<TestFields>> => {
+		const updateMock = async (_tx: Tx, _id: string,  _country_accounts_id: string, _data: Partial<TestFields>): Promise<SaveResult<TestFields>> => {
 			return {ok: true}
 		}
 
@@ -151,7 +153,8 @@ describe('jsonUpdate', () => {
 				{id: "2", field2: "b"}
 			],
 			fieldsDef,
-			update: updateMock
+			update: updateMock,
+			countryAccountsId
 		}
 
 		const res = await jsonUpdate(args)
