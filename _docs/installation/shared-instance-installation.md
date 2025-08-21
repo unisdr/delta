@@ -61,17 +61,19 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    
    > **Note**: Many configuration variables have been moved to the database (`instance_system_settings` table) and are no longer needed in `.env`. Only infrastructure and security-related variables remain in `.env`.
 
-   ```ini
+   ### 2.2 Environment Variables
+
+   Create a `.env` file in the project root with **only infrastructure-related variables**. Many configuration settings that were previously in `.env` have been moved to the database and are now managed through the super admin interface.
+
+   #### Required Environment Variables (.env file)
+
+   ```bash
    # Database Configuration (Required in .env)
-   DATABASE_URL="postgresql://postgres:your_secure_password@localhost:5432/dts_shared"
-   
-   # Application Settings (Required in .env)
-   NODE_ENV="production"
-   PORT=3000
-   
-   # Security (Required in .env)
-   SESSION_SECRET="your-very-secure-session-secret-key-here"
-   
+   DATABASE_URL="postgresql://username:password@localhost:5432/dts_shared"
+
+   # Authentication & Security (Required in .env)
+   SESSION_SECRET="your-secure-random-string"
+
    # Email Configuration (Required in .env)
    EMAIL_TRANSPORT="smtp"
    EMAIL_FROM="noreply@your-domain.com"
@@ -80,11 +82,11 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    SMTP_SECURE="false"
    SMTP_USER="your-smtp-username"
    SMTP_PASS="your-smtp-password"
-   
+
    # Authentication (Required in .env)
-   AUTHENTICATION_SUPPORTED="form"
+   AUTHENTICATION_SUPPORTED="form,sso_azure_b2c"
    
-   # Azure B2C SSO (Optional - only if using SSO)
+   # SSO Configuration (if using Azure B2C)
    # SSO_AZURE_B2C_TENANT=""
    # SSO_AZURE_B2C_CLIENT_ID=""
    # SSO_AZURE_B2C_CLIENT_SECRET=""
@@ -95,17 +97,28 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    # SSO_AZURE_B2C_USERFLOW_EDIT_REDIRECT_URL=""
    # SSO_AZURE_B2C_USERFLOW_RESET=""
    # SSO_AZURE_B2C_USERFLOW_RESET_REDIRECT_URL=""
+   
+   # Application Environment
+   NODE_ENV="production"  # Use "development" for development environments
+   
+ 
    ```
 
-   **Variables moved to database** (configured via super admin interface):
+   #### Configuration Moved to Database
+   
+   The following settings are now managed through the database (`instance_system_settings` table) and can be configured via the super admin interface after installation:
+   
    - `WEBSITE_LOGO` → `instance_system_settings.website_logo`
    - `WEBSITE_NAME` → `instance_system_settings.website_name`
-   - `WEBSITE_URL` → `instance_system_settings.website_url`
    - `APPROVED_RECORDS_ARE_PUBLIC` → `instance_system_settings.approved_records_are_public`
    - `TOTP_ISSUER` → `instance_system_settings.totp_issuer`
    - `DTS_INSTANCE_TYPE` → `instance_system_settings.dts_instance_type`
    - `DTS_INSTANCE_CTRY_ISO3` → `instance_system_settings.dts_instance_ctry_iso3`
-   - `CURRENCY_CODES` → `instance_system_settings.currency_codes`
+   - `CURRENCY_CODE` → `instance_system_settings.currency_code`
+   - Footer URLs (privacy policy, terms & conditions)
+   - Admin setup status
+   
+   > **Important**: These settings should NOT be included in the `.env` file as they are now managed through the database.
 
 4. **Build and Start the Application**
    ```bash
@@ -115,9 +128,10 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    # Start the services
    docker-compose up -d
    
-   # Initialize the database schema
-   docker-compose exec app yarn run drizzle-kit push
+   # Initialize the Database Schema and Run Migrations
+   docker-compose exec app yarn dbsync
    ```
+   > Note: This command runs both `drizzle-kit push` to load the schema and `drizzle-kit migrate` to execute migration scripts. Using only `drizzle-kit push` is insufficient as it only loads the schema without running migrations.
 
 ### Option B: Manual Installation
 
@@ -147,14 +161,23 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    yarn install
    cp example.env .env
    # Edit .env file with infrastructure variables only (see Docker section above)
-   yarn run drizzle-kit push
+   yarn dbsync
    ```
 
 4. **Start the Application**
+
+   **For Production:**
    ```bash
-   yarn run build
-   yarn run start
+   yarn run build  # Builds the application using Remix and Vite for production
+   yarn run start  # Starts the application server
    ```
+   
+   **For Development:**
+   ```bash
+   yarn dev  # Starts the application in development mode with hot reloading
+   ```
+   
+   > Note: The `yarn run build` step is only necessary when deploying for production as it compiles and optimizes the application. For development environments, use `yarn dev` which provides hot reloading and better debugging capabilities.
 
 ---
 
@@ -166,7 +189,7 @@ Before creating the super admin user, ensure the database has the required defau
 
 #### Production Environment Setup
 For production environments:
-1. The database schema will be created by the `drizzle-kit push` command
+1. The database schema will be created and migrations will be run by the `yarn dbsync` command
 2. Configure system settings manually through the super admin interface after login
 3. Create country accounts as needed through the admin panel
 
@@ -557,7 +580,21 @@ These are automatically created when a country account is established and can be
 1. **Test SMTP settings using common tools:**
    ```bash
    # Using telnet (commonly pre-installed)
-   telnet your-smtp-server.com 587
+   telnet your-smtp-server.com 25
+   
+   # Example telnet SMTP session for testing:
+   HELO yourdomain.com
+   MAIL FROM:sender@example.com
+   RCPT TO:recipient@example.com
+   DATA
+   Subject: Test Email from Telnet
+   From: sender@example.com
+   To: recipient@example.com
+   
+   Hello,
+   This is a test email sent via telnet and SMTP commands.
+   .
+   QUIT
    
    # Using nc (netcat - commonly pre-installed)
    nc -zv your-smtp-server.com 587
