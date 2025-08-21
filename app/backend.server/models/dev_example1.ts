@@ -228,31 +228,6 @@ export async function devExample1ByIdTx(tx: Tx, idStr: string) {
 	return res;
 }
 
-// export async function devExample1ByIdAndCountryAccountsId(
-// 	idStr: string,
-// 	// countryAccountsId: string
-// ) {
-// 	return devExample1ById(dr, idStr/*, countryAccountsId*/);
-// }
-
-// export async function devExample1ByIdTx(
-// 	tx: Tx,
-// 	idStr: string,
-// 	// countryAccountsId: string
-// ) {
-// 	let id = Number(idStr);
-// 	let res = await tx.query.devExample1Table.findFirst({
-// 		where: and(
-// 			eq(devExample1Table.id, id),
-// 			// eq(devExample1Table.countryAccountsId, countryAccountsId)
-// 		),
-// 	});
-// 	if (!res) {
-// 		throw new Error("Id is invalid or you don't have access");
-// 	}
-// 	return res;
-// }
-
 export async function devExample1DeleteById(
 	idStr: string
 ): Promise<DeleteResult> {
