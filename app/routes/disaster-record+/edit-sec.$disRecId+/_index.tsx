@@ -182,15 +182,12 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 export default function Screen() {
 	const loaderData = useLoaderData<PropsLoader>();
 	const actionData = useActionData<PropsAction>();
-	// const navigate = useNavigate();
 
 	const submit = useSubmit();
 	const navigation = useNavigation();
 	const formRef = useRef<HTMLFormElement>(null);
 	const formRefHidden: RefObject<HTMLInputElement> = useRef(null);
 	const formRefSubmit: RefObject<HTMLButtonElement> = useRef(null);
-
-	// const locationUrlPath = useLocation();
 
 	const formAction = loaderData?.formAction || 'new';
 
@@ -201,17 +198,7 @@ export default function Screen() {
 		  setShowForm(actionData.showForm);
 		}
 	}, [actionData]);
-	//#Sector: End
-
-	// console.log( loaderData );
-	// console.log( actionData );
-	// console.log( actionData?.sectors );
-
-	useEffect(() => {
-		// if (formRefSubmit.current) {
-		// 	formRefSubmit.current.style.display = 'none';
-		// }
-	}, []);
+	
 
   return (
 	<MainContainer title="Disaster Records: Sectors">
