@@ -98,7 +98,7 @@ export const action: ActionFunction = async (args: ActionFunctionArgs) => {
 				return Response.json({ ok: false, error: String(e) });
 			}
 			let table = tableOpt!;
-			let defs = await defsForTable(table);
+			let defs = await defsForTable(dr, table);
 
 			let expectedHeaders = defs.map((d) => d.jsName);
 			if (!eqArr(all[0], expectedHeaders)) {
