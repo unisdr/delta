@@ -80,7 +80,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	if (record) {
 		categoryDisplayName = await contentPickerConfigCategory.selectedDisplay(
 			dr,
-			record.categortyId
+			record.categoryId
 		);
 	}
 

@@ -27,7 +27,10 @@ export const action = async (args: ActionFunctionArgs) => {
 	const settings = await getInstanceSystemSettingsByCountryAccountId(
 		countryAccountsId
 	);
-	const currencies = [settings?.currencyCode || "USD"];
+	if(!settings){
+		throw new Response("No settings found for country account", { status: 501 });
+	}
+	const currencies = [settings.currencyCode];
 
 	return authActionApi(async (args) => {
 		let data = await args.request.json();

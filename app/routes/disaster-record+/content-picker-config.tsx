@@ -167,15 +167,13 @@ export const contentPickerConfigSector = {
             { alias: "parentId", column: sectorTable.parentId },
             { alias: "sectorname", column: sectorTable.sectorname },
         ],
-        //orderBy: [{ column: sectorTable.sectorname, direction: "asc" }] // Sorting
         orderByOptions: {
             default: [{ column: sectorTable.sectorname, direction: "asc" }],
             custom: sql`CASE WHEN ${sectorTable.sectorname} = 'Cross-cutting' THEN 1 ELSE 0 END, ${sectorTable.sectorname} ASC`
         }
     },
-    selectedDisplay: async (dr: any, id: any) => {
-        const sectorId = Number(id);
-        if (!Number.isInteger(sectorId)) return "";
+    selectedDisplay: async (dr: any, sectorId: any) => {
+        if (!sectorId) return "";
 
         try {
             const { rows } = await dr.execute(sql`SELECT get_sector_full_path(${sectorId}) AS full_path`);
@@ -220,9 +218,8 @@ export const contentPickerConfigCategory = {
         ],
         orderBy: [{ column: categoriesTable.name, direction: "asc" }] // Sorting
     },
-    selectedDisplay: async (dr: any, id: any) => {
-        const categoryId = Number(id);
-        if (!Number.isInteger(categoryId)) return "";
+    selectedDisplay: async (dr: any, categoryId: string) => {
+        if (!categoryId) return "";
 
         try {
             const { rows } = await dr.execute(sql`SELECT get_category_full_path(${categoryId}) AS full_path`);
