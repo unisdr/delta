@@ -16,7 +16,6 @@ export const loader = authLoaderApi(async (args) => {
 	if (!countryAccountsId) {
 		throw new Response("Unauthorized", { status: 401 });
 	}
-
 	return createApiListLoader(
 		async () => {
 			return dr.$count(
@@ -27,13 +26,29 @@ export const loader = authLoaderApi(async (args) => {
 		async (offsetLimit) => {
 			return dr.query.disasterEventTable.findMany({
 				...offsetLimit,
-				columns: {
-					id: true,
-					startDate: true,
-					endDate: true,
-				},
 				where: eq(disasterEventTable.countryAccountsId, countryAccountsId),
 				orderBy: [desc(disasterEventTable.startDate)],
+				with: {
+					hipHazard: {
+						columns: {
+							id: true,
+							nameEn: true,
+							code: true
+						},
+					},
+					hipCluster: {
+						columns: {
+							id: true,
+							nameEn: true,
+						},
+					},
+					hipType: {
+						columns: {
+							id: true,
+							nameEn: true,
+						},
+					},
+				}
 			});
 		}
 	)(args);

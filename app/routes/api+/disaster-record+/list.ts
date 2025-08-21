@@ -1,7 +1,6 @@
 import { disasterRecordsTable } from "~/drizzle/schema";
 
 import { dr } from "~/db.server";
-
 import { desc, eq } from "drizzle-orm";
 
 import { LoaderFunction, LoaderFunctionArgs } from "@remix-run/server-runtime";
@@ -26,12 +25,26 @@ export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
 		async (offsetLimit) => {
 			return dr.query.disasterRecordsTable.findMany({
 				...offsetLimit,
-				columns: {
-					id: true,
-					approvalStatus: true,
-					disasterEventId: true,
-					startDate: true,
-					endDate: true,
+				with: {
+					hipHazard: {
+						columns: {
+							id: true,
+							nameEn: true,
+							code: true
+						},
+					},
+					hipCluster: {
+						columns: {
+							id: true,
+							nameEn: true,
+						},
+					},
+					hipType: {
+						columns: {
+							id: true,
+							nameEn: true,
+						},
+					},
 				},
 				where: eq(disasterRecordsTable.countryAccountsId, countryAccountsId),
 				orderBy: [desc(disasterRecordsTable.id)],
