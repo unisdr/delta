@@ -392,6 +392,7 @@ export default function Screen() {
 							errors={errors}
 						>
 							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
+							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}

@@ -1,150 +1,235 @@
-import {dr, Tx} from "~/db.server"
-import {disruptionTable, DisruptionInsert} from "~/drizzle/schema"
-import {eq} from "drizzle-orm"
+import { dr, Tx } from "~/db.server";
+import {
+	disruptionTable,
+	DisruptionInsert,
+} from "~/drizzle/schema";
+import { and, eq } from "drizzle-orm";
 
-import {CreateResult, DeleteResult, UpdateResult} from "~/backend.server/handlers/form/form"
-import {Errors, FormInputDef, hasErrors} from "~/frontend/form"
-import {deleteByIdForStringId} from "./common"
-import {updateTotalsUsingDisasterRecordId} from "./analytics/disaster-events-cost-calculator"
+import {
+	CreateResult,
+	DeleteResult,
+	UpdateResult,
+} from "~/backend.server/handlers/form/form";
+import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
+import { deleteByIdForStringId } from "./common";
+import { updateTotalsUsingDisasterRecordId } from "./analytics/disaster-events-cost-calculator";
+import {
+	getDisasterRecordsByIdAndCountryAccountsId,
+} from "~/db/queries/disasterRecords";
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 
-export async function getFieldsDef(currencies?: string[]): Promise<FormInputDef<DisruptionFields>[]> {
-
-	if(!currencies){
+export async function getFieldsDef(
+	currencies?: string[]
+): Promise<FormInputDef<DisruptionFields>[]> {
+	if (!currencies) {
 		currencies = [];
 	}
 	return [
-		{key: "recordId", label: "", type: "uuid"},
-		{key: "sectorId", label: "", type: "other"},
-		{key: "durationDays", label: "Duration (days)", type: "number", uiRow: {}},
-		{key: "durationHours", label: "Duration (hours)", type: "number"},
-		{key: "usersAffected", label: "Number of users affected", type: "number"},
-		{key: "peopleAffected", label: "Number of people affected", type: "number"},
-		{key: "comment", label: "Add comments", type: "textarea", uiRowNew: true},
-		{key: "responseOperation", label: "Response operation", type: "textarea"},
-		{key: "responseCost", label: "Response cost", type: "money", uiRow: {}},
+		{ key: "recordId", label: "", type: "uuid" },
+		{ key: "sectorId", label: "", type: "other" },
+		{
+			key: "durationDays",
+			label: "Duration (days)",
+			type: "number",
+			uiRow: {},
+		},
+		{ key: "durationHours", label: "Duration (hours)", type: "number" },
+		{ key: "usersAffected", label: "Number of users affected", type: "number" },
+		{
+			key: "peopleAffected",
+			label: "Number of people affected",
+			type: "number",
+		},
+		{ key: "comment", label: "Add comments", type: "textarea", uiRowNew: true },
+		{ key: "responseOperation", label: "Response operation", type: "textarea" },
+		{ key: "responseCost", label: "Response cost", type: "money", uiRow: {} },
 		{
 			key: "responseCurrency",
 			label: "Currency",
 			type: "enum-flex",
-			enumData: currencies.map(c => {return {key: c, label: c}})
+			enumData: currencies.map((c) => {
+				return { key: c, label: c };
+			}),
 		},
-		{key: "spatialFootprint", label: "Spatial Footprint", type: "other", psqlType: "jsonb", uiRowNew: true},
-		{key: "attachments", label: "Attachments", type: "other", psqlType: "jsonb"},
-	]
+		{
+			key: "spatialFootprint",
+			label: "Spatial Footprint",
+			type: "other",
+			psqlType: "jsonb",
+			uiRowNew: true,
+		},
+		{
+			key: "attachments",
+			label: "Attachments",
+			type: "other",
+			psqlType: "jsonb",
+		},
+	];
 }
 
-export async function getFieldsDefApi(): Promise<FormInputDef<DisruptionFields>[]> {
-  const baseFields = await getFieldsDef();
-  return [...baseFields, {key: "apiImportId", label: "", type: "other"}];
+export async function getFieldsDefApi(): Promise<
+	FormInputDef<DisruptionFields>[]
+> {
+	const baseFields = await getFieldsDef();
+	return [...baseFields, { key: "apiImportId", label: "", type: "other" }];
 }
 
-export async function getFieldsDefView(): Promise<FormInputDef<DisruptionFields>[]> {
-  const baseFields = await getFieldsDef();
-  return [...baseFields];
+export async function getFieldsDefView(): Promise<
+	FormInputDef<DisruptionFields>[]
+> {
+	const baseFields = await getFieldsDef();
+	return [...baseFields];
 }
 
-
-export function validate(fields: Partial<DisruptionFields>): Errors<DisruptionFields> {
+export function validate(
+	fields: Partial<DisruptionFields>
+): Errors<DisruptionFields> {
 	let errors: Errors<DisruptionFields> = {};
 	errors.fields = {};
 
 	let check = (k: keyof DisruptionFields, msg: string) => {
 		if (fields[k] != null && (fields[k] as number) < 0) {
-			errors.fields![k] = [msg]
+			errors.fields![k] = [msg];
 		}
-	}
+	};
 
-	check("durationDays", "Duration (days) must be >= 0")
-	check("durationHours", "Duration (hours) must be >= 0")
-	check("usersAffected", "Users affected must be >= 0")
-	check("responseCost", "Response cost must be >= 0")
+	check("durationDays", "Duration (days) must be >= 0");
+	check("durationHours", "Duration (hours) must be >= 0");
+	check("usersAffected", "Users affected must be >= 0");
+	check("responseCost", "Response cost must be >= 0");
 
-	return errors
+	return errors;
 }
 
-export async function disruptionCreate(tx: Tx, fields: DisruptionFields): Promise<CreateResult<DisruptionFields>> {
-	let errors = validate(fields)
+export async function disruptionCreate(
+	tx: Tx,
+	fields: DisruptionFields
+): Promise<CreateResult<DisruptionFields>> {
+	let errors = validate(fields);
 	if (hasErrors(errors)) {
-		return {ok: false, errors}
+		return { ok: false, errors };
 	}
 
-	const res = await tx.insert(disruptionTable)
+	const res = await tx
+		.insert(disruptionTable)
 		.values({
-			...fields
+			...fields,
 		})
-		.returning({id: disruptionTable.id})
+		.returning({ id: disruptionTable.id });
 
-	await updateTotalsUsingDisasterRecordId(tx, fields.recordId)
+	await updateTotalsUsingDisasterRecordId(tx, fields.recordId);
 
-	return {ok: true, id: res[0].id}
+	return { ok: true, id: res[0].id };
 }
 
-export async function disruptionUpdate(tx: Tx, id: string, fields: Partial<DisruptionFields>): Promise<UpdateResult<DisruptionFields>> {
-	let errors = validate(fields)
+export async function disruptionUpdate(
+	tx: Tx,
+	id: string,
+	fields: Partial<DisruptionFields>
+): Promise<UpdateResult<DisruptionFields>> {
+	let errors = validate(fields);
 	if (hasErrors(errors)) {
-		return {ok: false, errors}
+		return { ok: false, errors };
 	}
-	await tx.update(disruptionTable)
+	await tx
+		.update(disruptionTable)
 		.set({
-			...fields
+			...fields,
 		})
-		.where(eq(disruptionTable.id, id))
+		.where(eq(disruptionTable.id, id));
 
-	let recordId = await getRecordId(tx, id)
-	await updateTotalsUsingDisasterRecordId(tx, recordId)
+	let recordId = await getRecordId(tx, id);
+	await updateTotalsUsingDisasterRecordId(tx, recordId);
 
-	return {ok: true}
+	return { ok: true };
+}
+
+export async function disruptionUpdateByIdAndCountryAccountsId(
+	tx: Tx,
+	id: string,
+	countryAccountsId: string,
+	fields: Partial<DisruptionFields>
+): Promise<UpdateResult<DisruptionFields>> {
+	let errors = validate(fields);
+	if (hasErrors(errors)) {
+		return { ok: false, errors };
+	}
+
+	let recordId = await getRecordId(tx, id);
+
+	const disasterRecords = getDisasterRecordsByIdAndCountryAccountsId(
+		recordId,
+		countryAccountsId
+	);
+	if (!disasterRecords) {
+		return { ok: false, errors: { general: ["No matching disaster record found or you don't have access"] } };
+	}
+
+	await tx
+		.update(disruptionTable)
+		.set({
+			...fields,
+		})
+		.where(and(eq(disruptionTable.id, id)));
+
+	await updateTotalsUsingDisasterRecordId(tx, recordId);
+
+	return { ok: true };
 }
 
 export async function getRecordId(tx: Tx, id: string) {
-	let rows = await tx.select({
-		recordId: disruptionTable.recordId
-	})
+	let rows = await tx
+		.select({
+			recordId: disruptionTable.recordId,
+		})
 		.from(disruptionTable)
-		.where(eq(disruptionTable.id, id)).execute()
-	if (!rows.length) throw new Error("not found by id")
-	return rows[0].recordId
+		.where(eq(disruptionTable.id, id))
+		.execute();
+	if (!rows.length) throw new Error("not found by id");
+	return rows[0].recordId;
 }
 
-
-
-export type DisruptionViewModel = Exclude<Awaited<ReturnType<typeof disruptionById>>, undefined>
+export type DisruptionViewModel = Exclude<
+	Awaited<ReturnType<typeof disruptionById>>,
+	undefined
+>;
 
 export async function disruptionIdByImportId(tx: Tx, importId: string) {
-	const res = await tx.select({
-		id: disruptionTable.id
-	}).from(disruptionTable).where(eq(
-		disruptionTable.apiImportId, importId
-	))
+	const res = await tx
+		.select({
+			id: disruptionTable.id,
+		})
+		.from(disruptionTable)
+		.where(eq(disruptionTable.apiImportId, importId));
 	if (res.length == 0) {
-		return null
+		return null;
 	}
-	return String(res[0].id)
+	return String(res[0].id);
 }
 
 export async function disruptionById(idStr: string) {
-	return disruptionByIdTx(dr, idStr)
+	return disruptionByIdTx(dr, idStr);
 }
 
 export async function disruptionByIdTx(tx: Tx, id: string) {
 	let res = await tx.query.disruptionTable.findFirst({
 		where: eq(disruptionTable.id, id),
-	})
+	});
 	if (!res) {
-		throw new Error("Id is invalid")
+		throw new Error("Id is invalid");
 	}
-	return res
+	return res;
 }
 
 export async function disruptionDeleteById(id: string): Promise<DeleteResult> {
-	await deleteByIdForStringId(id, disruptionTable)
-	return {ok: true}
+	await deleteByIdForStringId(id, disruptionTable);
+	return { ok: true };
 }
 
-
-export async function disruptionDeleteBySectorId(id: string): Promise<DeleteResult> {
+export async function disruptionDeleteBySectorId(
+	id: string
+): Promise<DeleteResult> {
 	await dr.delete(disruptionTable).where(eq(disruptionTable.sectorId, id));
 
-	return {ok: true}
+	return { ok: true };
 }

@@ -171,8 +171,10 @@ export interface JsonUpdateArgs<T> {
 	update: (
 		tx: Tx,
 		id: string,
+		countryAccountsId: string,
 		data: Partial<T>
 	) => Promise<SaveResult<T>>;
+	countryAccountsId: string;
 }
 
 export interface JsonUpdateRes<T> {
@@ -227,7 +229,7 @@ export async function jsonUpdate<T>(
 					return fail();
 				}
 
-				const one = await args.update(tx, id, validateRes.resOk!);
+				const one = await args.update(tx, id, args.countryAccountsId, validateRes.resOk!);
 
 				if (!one.ok) {
 					res.push({ ok: false, errors: one.errors });
@@ -340,7 +342,7 @@ export async function jsonApiDocs<T>(
 			let payload = jsonPayloadExample(args.fieldsDef);
 			if (urlPart == "update") {
 				payload = {
-					id: "123",
+					id: "01308f4d-a94e-41c9-8410-0321f7032d7c",
 					...payload,
 				};
 			}

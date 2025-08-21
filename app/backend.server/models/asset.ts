@@ -9,7 +9,7 @@ import {
 import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
 import { deleteByIdForStringId } from "./common";
 
-export interface AssetFields extends Omit<InsertAsset, "id"> { }
+export interface AssetFields extends Omit<InsertAsset, "id"> {}
 
 export async function fieldsDef(): Promise<FormInputDef<AssetFields>[]> {
 	return [
@@ -44,7 +44,7 @@ export function validate(_fields: Partial<AssetFields>): Errors<AssetFields> {
 
 export async function assetCreate(
 	tx: Tx,
-	fields: AssetFields,
+	fields: AssetFields
 ): Promise<CreateResult<AssetFields>> {
 	let errors = validate(fields);
 
@@ -79,6 +79,41 @@ export async function assetUpdate(
 
 	let res = await tx.query.assetTable.findFirst({
 		where: eq(assetTable.id, id),
+	});
+	if (!res) {
+		throw new Error(`Id is invalid: ${id}`);
+	}
+
+	if (res.isBuiltIn) {
+		throw new Error("Attempted to modify builtin asset");
+	}
+
+	await tx
+		.update(assetTable)
+		.set({
+			...fields,
+		})
+		.where(eq(assetTable.id, id));
+
+	return { ok: true };
+}
+export async function assetUpdateByIdAndCountryAccountsId(
+	tx: Tx,
+	id: string,
+	countryAccountsId: string,
+	fields: Partial<AssetFields>
+): Promise<UpdateResult<AssetFields>> {
+	let errors = validate(fields);
+
+	if (hasErrors(errors)) {
+		return { ok: false, errors };
+	}
+
+	let res = await tx.query.assetTable.findFirst({
+		where: and(
+			eq(assetTable.id, id),
+			eq(assetTable.countryAccountsId, countryAccountsId)
+		),
 	});
 	if (!res) {
 		throw new Error(`Id is invalid: ${id}`);
@@ -198,11 +233,16 @@ export async function assetsForSector(
 
 	// Optional tenant filter: instance-owned OR built-in
 	const tenantPredicate = countryAccountsId
-		? or(eq(assetTable.countryAccountsId, countryAccountsId), eq(assetTable.isBuiltIn, true))
+		? or(
+				eq(assetTable.countryAccountsId, countryAccountsId),
+				eq(assetTable.isBuiltIn, true)
+		  )
 		: undefined;
 
 	const res = await tx.query.assetTable.findMany({
-		where: tenantPredicate ? and(basePredicate, tenantPredicate) : basePredicate,
+		where: tenantPredicate
+			? and(basePredicate, tenantPredicate)
+			: basePredicate,
 		orderBy: [asc(assetTable.name)],
 	});
 	return res;

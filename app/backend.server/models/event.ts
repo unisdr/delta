@@ -344,6 +344,150 @@ export async function hazardousEventUpdate(
 	});
 }
 
+export async function hazardousEventUpdateByIdAndCountryAccountsId(
+	tx: Tx,
+	id: string,
+	countryAccountsId: string,
+	fields: Partial<HazardousEventFields>
+): Promise<UpdateResult<HazardousEventFields>> {
+	const validationErrors = validate(fields);
+	const errors: Errors<HazardousEventFields> = {
+		...validationErrors,
+		form: [...(validationErrors.form || [])],
+	};
+
+	// 1. Get old record for validation and audit logging
+	const [oldRecord] = await tx
+		.select()
+		.from(hazardousEventTable)
+		.where(
+			and(
+				eq(hazardousEventTable.id, id),
+				eq(hazardousEventTable.countryAccountsId, countryAccountsId)
+			)
+		);
+
+	if (!oldRecord) {
+		if (!errors.form) errors.form = [];
+		errors.form.push(`Record with id ${id} does not exist or you don't have access.`);
+		return { ok: false, errors };
+	}
+
+	// 2. Pre-transaction validation
+	if (fields.parent !== undefined) {
+		// 2.1 Self-reference check
+		if (fields.parent === id) {
+			errors.fields = errors.fields || {};
+			errors.fields.parent = [
+				{
+					code: "ErrSelfReference",
+					message: "Cannot set an event as its own parent",
+				},
+			];
+			return { ok: false, errors };
+		}
+
+		// 2.2 Cycle detection check
+		if (fields.parent) {
+			const cycleCheck = await checkForCycle(tx, id, fields.parent);
+			if (cycleCheck.has_cycle) {
+				errors.fields = errors.fields || {};
+				errors.fields.parent = [
+					{
+						code: "ErrRelationCycle",
+						message: createCycleErrorMessage(
+							id,
+							fields.parent,
+							cycleCheck.child_description,
+							cycleCheck.parent_description,
+							cycleCheck.has_existing_chain
+						),
+					},
+				];
+				return { ok: false, errors };
+			}
+
+			// 2.3 Temporal validation - ensure parent starts before or at same time as child
+			const temporalCheck = await validateTemporalCausality(
+				tx,
+				id,
+				fields.parent
+			);
+			if (!temporalCheck.isValid) {
+				errors.fields = errors.fields || {};
+				errors.fields.parent = [
+					{
+						code: "ErrTemporalCausality",
+						message:
+							temporalCheck.errorMessage ||
+							"Invalid temporal relationship between events",
+					},
+				];
+				return { ok: false, errors };
+			}
+		}
+	}
+
+	// All validations passed, proceed with transaction
+	return await tx.transaction(async (tx) => {
+		try {
+			// 3. Handle parent relationship updates if needed
+			if (fields.parent !== undefined) {
+				// Delete existing parent relationship if any
+				await tx
+					.delete(eventRelationshipTable)
+					.where(
+						and(
+							eq(eventRelationshipTable.childId, id),
+							eq(eventRelationshipTable.type, "caused_by")
+						)
+					);
+
+				// Only insert if parent is not null
+				if (fields.parent) {
+					await tx.insert(eventRelationshipTable).values({
+						parentId: fields.parent,
+						childId: id,
+						type: "caused_by",
+					});
+				}
+			}
+
+			// 3. Update the hazardous event
+			await tx
+				.update(hazardousEventTable)
+				.set({
+					...fields,
+					updatedAt: new Date(),
+				})
+				.where(eq(hazardousEventTable.id, id))
+				.returning();
+
+			// 5. Process attachments
+			if (Array.isArray(fields?.attachments)) {
+				await processAndSaveAttachments(
+					hazardousEventTable,
+					tx,
+					id,
+					fields.attachments,
+					"hazardous-event"
+				);
+			}
+
+			return { ok: true };
+		} catch (error: any) {
+			const constraintError = checkConstraintError(
+				error,
+				hazardousEventTableConstraits
+			);
+			if (constraintError) {
+				return constraintError;
+			}
+			throw error;
+		}
+	});
+}
+
 interface CycleCheckResult {
 	has_cycle: boolean;
 	cycle_path?: string[];
@@ -867,6 +1011,70 @@ export async function disasterEventUpdate(
 				and(
 					eq(disasterEventTable.id, id),
 					eq(disasterEventTable.countryAccountsId, fields.countryAccountsId)
+				)
+			);
+
+		await processAndSaveAttachments(
+			disasterEventTable,
+			tx,
+			id,
+			Array.isArray(fields?.attachments) ? fields.attachments : [],
+			"disaster-event"
+		);
+	} catch (error: any) {
+		let res = checkConstraintError(error, disasterEventTableConstrains);
+		if (res) {
+			return res;
+		}
+		throw error;
+	}
+
+	return { ok: true };
+}
+
+export async function disasterEventUpdateByIdAndCountryAccountsId(
+	tx: Tx,
+	id: string,
+	countryAccountsId: string,
+	fields: Partial<DisasterEventFields>
+): Promise<UpdateResult<DisasterEventFields>> {
+	let errors: Errors<DisasterEventFields> = {};
+	errors.fields = {};
+	errors.form = [];
+	if (hasErrors(errors)) {
+		return { ok: false, errors: errors };
+	}
+
+	const event = await tx
+		.select({ id: disasterEventTable.id })
+		.from(disasterEventTable)
+		.where(
+			and(
+				eq(disasterEventTable.id, id),
+				eq(disasterEventTable.countryAccountsId, countryAccountsId)
+			)
+		);
+
+	if (event.length === 0) {
+		return {
+			ok: false,
+			errors: {
+				fields: {},
+				form: ["You don't have permission to update this disaster event"],
+			},
+		};
+	}
+
+	try {
+		await tx
+			.update(disasterEventTable)
+			.set({
+				...fields,
+			})
+			.where(
+				and(
+					eq(disasterEventTable.id, id),
+					eq(disasterEventTable.countryAccountsId, countryAccountsId)
 				)
 			);
 

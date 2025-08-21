@@ -165,6 +165,35 @@ export async function devExample1UpdateById(
 	return {ok: false, errors: {general: ["DevExample1 not updated"]}};
 }
 
+export async function devExample1UpdateByIdAndCountryAccountsId(
+	tx: Tx,
+	id: string,
+	countryAccountsId: string,
+	fields: Partial<DevExample1Fields>
+): Promise<UpdateResult<DevExample1Fields>> {
+	let errors = validate(fields);
+	if (hasErrors(errors)) {
+		return { ok: false, errors };
+	}
+	const result = await tx
+		.update(devExample1Table)
+		.set({
+			...fields,
+		})
+		.where(
+			and(
+				eq(devExample1Table.id, id),
+				eq(devExample1Table.countryAccountsId, countryAccountsId),
+			)
+		)
+		.returning();
+
+	if (result.length >= 0) {
+		return { ok: true };
+	}
+	return {ok: false, errors: {general: ["DevExample1 not updated"]}};
+}
+
 export type DevExample1ViewModel = Exclude<
 	// Awaited<ReturnType<typeof devExample1ByIdAndCountryAccountsId>>,
 	Awaited<ReturnType<typeof devExample1ById>>,

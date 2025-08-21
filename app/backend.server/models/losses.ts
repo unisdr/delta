@@ -14,6 +14,7 @@ import {
 	typeEnumAgriculture,
 	typeEnumNotAgriculture,
 } from "~/frontend/losses_enums";
+import { getDisasterRecordsByIdAndCountryAccountsId } from "~/db/queries/disasterRecords";
 
 export interface LossesFields extends Omit<InsertLosses, "id"> {}
 
@@ -253,6 +254,57 @@ export async function lossesUpdate(
 		.set({ ...fields })
 		.where(eq(lossesTable.id, id));
 	return { ok: true };
+}
+
+export async function lossesUpdateByIdAndCountryAccountsId(
+	tx: Tx,
+	id: string,
+	countryAccountsId: string,
+	fields: Partial<LossesFields>
+): Promise<UpdateResult<LossesFields>> {
+	let errors = validate(fields);
+	if (hasErrors(errors)) return { ok: false, errors };
+
+	let recordId = await getRecordId(tx, id);
+
+	const disasterRecords = getDisasterRecordsByIdAndCountryAccountsId(
+		recordId,
+		countryAccountsId
+	);
+	if (!disasterRecords) {
+		return {
+			ok: false,
+			errors: {
+				general: ["No matching disaster record found or you don't have access"],
+			},
+		};
+	}
+
+	if (typeof fields.sectorIsAgriculture == "boolean") {
+		if (fields.sectorIsAgriculture) {
+			fields.relatedToNotAgriculture = null;
+		} else {
+			fields.relatedToAgriculture = null;
+		}
+	}
+
+	await tx
+		.update(lossesTable)
+		.set({ ...fields })
+		.where(eq(lossesTable.id, id));
+	return { ok: true };
+}
+
+async function getRecordId(tx: Tx, id: string) {
+	let rows = await tx
+		.select({
+			recordId: lossesTable.recordId,
+		})
+		.from(lossesTable)
+		.where(eq(lossesTable.id, id))
+		.execute();
+	if (!rows.length) throw new Error("not found by id");
+	return rows[0].recordId;
 }
 
 export type LossesViewModel = Exclude<

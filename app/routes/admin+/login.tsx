@@ -316,56 +316,56 @@ export default function Screen() {
 		}
 	}, [isFormAuthSupported]);
 
-if (configErrors && configErrors.length > 0) {
-	return (
-		<div className="dts-page-container">
-				<main className="dts-main-container">
-					<div className="mg-container">
-						<div className="dts-form dts-form--vertical">
-								<div className="dts-form__header"></div>
-								<div className="dts-form__body">
-									<div style={{
-										background: '#fff0f0',
-										border: '1px solid #ffcccc',
-										borderRadius: '4px',
-										padding: '16px',
-										marginBottom: '20px'
-									}}>
+	if (configErrors && configErrors.length > 0) {
+		return (
+			<div className="dts-page-container">
+					<main className="dts-main-container">
+						<div className="mg-container">
+							<div className="dts-form dts-form--vertical">
+									<div className="dts-form__header"></div>
+									<div className="dts-form__body">
 										<div style={{
-											display: 'flex',
-											alignItems: 'center',
-											marginBottom: '10px',
-											color: '#cc0000',
-											fontWeight: 'bold'
+											background: '#fff0f0',
+											border: '1px solid #ffcccc',
+											borderRadius: '4px',
+											padding: '16px',
+											marginBottom: '20px'
 										}}>
-											<FaExclamationTriangle style={{ marginRight: '8px' }} />
-											System Configuration Errors
+											<div style={{
+												display: 'flex',
+												alignItems: 'center',
+												marginBottom: '10px',
+												color: '#cc0000',
+												fontWeight: 'bold'
+											}}>
+												<FaExclamationTriangle style={{ marginRight: '8px' }} />
+												System Configuration Errors
+											</div>
+											<p style={{ marginBottom: '10px' }}>
+												The following required configuration variables are missing or have invalid values in your <code>.env</code> file:
+											</p>
+											<ul style={{
+												listStyleType: 'disc',
+												paddingLeft: '20px',
+												margin: '0'
+											}}>
+												{configErrors.map((error:any, index:number) => (
+													<li key={index} style={{ marginBottom: '5px' }}>
+														<strong>{error.variable}</strong>: {error.message}
+													</li>
+												))}
+											</ul>
+											<p style={{ marginTop: '10px', marginBottom: '0' }}>
+												Please update your <code>.env</code> file with the correct values before proceeding.
+											</p>
 										</div>
-										<p style={{ marginBottom: '10px' }}>
-											The following required configuration variables are missing or have invalid values in your <code>.env</code> file:
-										</p>
-										<ul style={{
-											listStyleType: 'disc',
-											paddingLeft: '20px',
-											margin: '0'
-										}}>
-											{configErrors.map((error:any, index:number) => (
-												<li key={index} style={{ marginBottom: '5px' }}>
-													<strong>{error.variable}</strong>: {error.message}
-												</li>
-											))}
-										</ul>
-										<p style={{ marginTop: '10px', marginBottom: '0' }}>
-											Please update your <code>.env</code> file with the correct values before proceeding.
-										</p>
 									</div>
-								</div>
+							</div>
 						</div>
-					</div>
-				</main>
-			</div>
-	);
-}
+					</main>
+				</div>
+		);
+	}
 
 
 	// If only SSO is supported, show SSO-only interface
@@ -517,6 +517,7 @@ if (configErrors && configErrors.length > 0) {
 							errors={errors}
 						>
 							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
+							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}

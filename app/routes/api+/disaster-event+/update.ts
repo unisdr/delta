@@ -1,9 +1,11 @@
-import { authLoaderApi } from "~/util/auth";
+import { authActionApi, authLoaderApi } from "~/util/auth";
 
 import { fieldsDefApi } from "~/frontend/events/disastereventform";
 
 import { jsonUpdate } from "~/backend.server/handlers/form/form_api";
-import { disasterEventUpdate } from "~/backend.server/models/event";
+import {
+	disasterEventUpdateByIdAndCountryAccountsId,
+} from "~/backend.server/models/event";
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { apiAuth } from "~/backend.server/models/api_key";
 
@@ -25,15 +27,16 @@ export const action = async (args: ActionFunctionArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const data = await args.request.json();
+	return authActionApi(async (args) => {
+		const data = await args.request.json();
 
-	const saveRes = await jsonUpdate({
-		data,
-		fieldsDef: fieldsDefApi,
-		update: (tx: any, id: string, data: any) => {
-			return disasterEventUpdate(tx, id, data);
-		},
-	});
+		const saveRes = await jsonUpdate({
+			data,
+			fieldsDef: fieldsDefApi,
+			update: disasterEventUpdateByIdAndCountryAccountsId,
+			countryAccountsId,
+		});
 
-	return Response.json(saveRes);
+		return Response.json(saveRes);
+	})(args);
 };
