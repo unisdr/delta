@@ -101,3 +101,24 @@ test-api-security.sh
 
 # Human Effects API test script (ignored for local/dev testing only)
 test-human-effects-api.ps1
+
+# Docker HA Test files (ignored for local/dev testing only)
+docker-compose.ha-test.yml
+Dockerfile.app
+nginx-ha-test.conf
+dump.dmp
+dts_shared_instance.dmp
+ha-test.txt
+_docs/High Availability (HA)/02-Architecture-Requirements.md
+_docs/High Availability (HA)/03-Implementation-Guide.md
+_docs/High Availability (HA)/04-Database-Coordination.md  
+_docs/High Availability (HA)/05-Testing-Validation.md
+_docs/High Availability (HA)/06-Deployment-Strategy.md
+_docs/High Availability (HA)/07-Monitoring-Health-Checks.md
+_docs/High Availability (HA)/07-Conclusion.md
+_docs/High Availability (HA)/assets/
+_docs/High Availability (HA)/README.md
+_docs/High Availability (HA)/06-Monitoring-Health-Checks.md
+_docs/High Availability (HA)/08-Troubleshooting-Guide.md
+_docs/High Availability (HA)/09-Deployment-Configuration.md
+_docs/High Availability (HA)/07-Deployment-Configuration.md
