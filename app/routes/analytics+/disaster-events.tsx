@@ -37,7 +37,7 @@ import { getAffected } from "~/backend.server/models/analytics/affected-people-b
 import CustomPieChart from '~/components/PieChart';
 import CustomStackedBarChart from '~/components/StackedBarChart';
 import HorizontalBarChart from '~/components/HorizontalBarChart';
-import { getCountrySettingsFromSession } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 import { createFloatingTooltip } from "~/util/tooltip";
 
 
@@ -111,7 +111,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
   }
 
   // Use the shared public tenant context for analytics
-  const countryAccountsId = getCountrySettingsFromSession(request);
+  const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
   if (qsDisEventId) {
     // Pass public tenant context for analytics access
