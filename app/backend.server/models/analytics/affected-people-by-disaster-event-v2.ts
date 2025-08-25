@@ -122,7 +122,7 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 					SELECT 1
 					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
 					WHERE elem->'geojson'->'properties'->>'division_id' = ${conditions.divisionId}
-					OR elem->'geojson'->'properties'->'division_ids' @> ${conditions.divisionId}::jsonb
+					OR elem->'geojson'->'properties'->'division_ids' @> to_jsonb(ARRAY[${conditions.divisionId}])
 					OR jsonb_path_exists(disaster_records.spatial_footprint, ${`$[*].geojson.properties.division_ids  ? (@ == "${conditions.divisionId}")`})
 				)` : undefined
 			)
@@ -399,7 +399,8 @@ async function countsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 					SELECT 1
 					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
 					WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = ${conditions.divisionId}
-					OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> ${conditions.divisionId}::jsonb
+					OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> to_jsonb(ARRAY[${conditions.divisionId}])
+					
 				)` : undefined
 			)
 		)

@@ -207,7 +207,7 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: 
 
         const divisionLevel1 = await getDivisionByLevel(1, settings.countryAccountsId);
         for (const item of divisionLevel1) {
-          const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, [item.id], currency);
+          const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(qsDisEventId, item.id, currency);
           const humanEffectsPerDivision = await getAffected(dr, qsDisEventId, { divisionId: item.id });
 
           // Populate the geoData for the map for the human effects

@@ -242,20 +242,11 @@ export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEven
 	return queryDamageTable.execute();
 }
 
-export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: string, divisionId: string[], currency: string) {
+export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: string, divisionId: string, currency: string) {
 	if (typeof disasterEventId !== "string") {
 		throw new Error("Invalid ID: must be a string");
 	}
 
-	let division_ids: string = '';
-	divisionId.forEach((item, index) => {
-		if (index === 0) {
-			division_ids = `@ == "${String(item)}"`;
-		}
-		else {
-			division_ids += ` || @ == "${item}"`;
-		}
-	});
 
 	const queryRecordSectorTable = dr.selectDistinctOn(
 		[disasterRecordsTable.id, sectorDisasterRecordsRelationTable.id],
@@ -281,7 +272,8 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 		.where(
 			and(
 				sql`(
-					jsonb_path_exists(disaster_records.spatial_footprint, ${`$[*].geojson.properties.division_ids  ? (${division_ids})`})
+					disaster_records.spatial_footprint->'geojson'->'properties'->'division_ids' @> to_jsonb(ARRAY[${divisionId}])
+					OR jsonb_path_exists(disaster_records.spatial_footprint, ${`$[*].geojson.properties.division_ids  ? (@ == "${divisionId}")`})
 				)`,
 				eq(disasterRecordsTable.approvalStatus, "published"),
 				eq(disasterEventTable.approvalStatus, "published"),
@@ -475,7 +467,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 		}
 	});
 
-	// Get recpvery from Asset level records
+	// Get recovery from Asset level records
 	for (const item of recordsAssetRecoveryIdArray) {
 		try {
 			const recordsAssetRecovery = await disasterEventTotalRecovery_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
