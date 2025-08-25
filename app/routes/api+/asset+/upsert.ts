@@ -1,31 +1,52 @@
-import {
-  authLoaderApi,
-  authActionApi
-} from "~/util/auth";
+import { authLoaderApi } from "~/util/auth";
+
+import { jsonUpsert } from "~/backend.server/handlers/form/form_api";
 
 import {
-  jsonUpsert,
-} from "~/backend.server/handlers/form/form_api";
-
-import {
-  assetCreate,
-  assetUpdate,
-  assetIdByImportId,
-  fieldsDefApi
+	assetCreate,
+	assetUpdate,
+	assetIdByImportId,
+	fieldsDefApi,
+  AssetFields,
 } from "~/backend.server/models/asset";
+import { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { apiAuth } from "~/backend.server/models/api_key";
+import { SelectAsset } from "~/drizzle/schema";
+import { FormInputDef } from "~/frontend/form";
 
 export let loader = authLoaderApi(async () => {
-  return Response.json("Use POST")
-})
+	return Response.json("Use POST");
+});
 
-export let action = authActionApi(async (args) => {
-  let data = await args.request.json()
-  let saveRes = await jsonUpsert({
-    data,
-    fieldsDef: await fieldsDefApi(),
-    create: assetCreate,
-    update: assetUpdate,
-    idByImportId: assetIdByImportId,
-  })
-  return Response.json(saveRes)
-})
+export const action = async (args: ActionFunctionArgs) => {
+	const { request } = args;
+	if (request.method !== "POST") {
+		throw new Response("Method Not Allowed: Only POST requests are supported", {
+			status: 405,
+		});
+	}
+
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	let data: SelectAsset[] = await args.request.json();
+  data = data.map((item) => ({
+		...item,
+		countryAccountsId: countryAccountsId,
+	}));
+  let fieldsDef: FormInputDef<AssetFields>[] = [
+      ...(await fieldsDefApi()),
+      { key: "countryAccountsId", label: "", type: "text" },
+    ];
+	let saveRes = await jsonUpsert({
+		data,
+		fieldsDef: fieldsDef,
+		create: assetCreate,
+		update: assetUpdate,
+		idByImportId: assetIdByImportId,
+	});
+	return Response.json(saveRes);
+};
