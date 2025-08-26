@@ -50,13 +50,27 @@ export async function handleMostDamagingEventsRequest(countryAccountsId: string,
       sortDirection = 'asc';
     }
 
-    // Prepare sanitized parameters for model
+    // Prepare sanitized parameters for model, converting null to undefined for optional fields
     const modelParams: MostDamagingEventsParams = {
-      ...sanitizedParams,
+      // Only include defined values, exclude null/undefined
+      ...(sanitizedParams.sectorId && { sectorId: sanitizedParams.sectorId }),
+      ...(sanitizedParams.hazardTypeId && { hazardTypeId: sanitizedParams.hazardTypeId }),
+      ...(sanitizedParams.hazardClusterId && { hazardClusterId: sanitizedParams.hazardClusterId }),
+      ...(sanitizedParams.specificHazardId && { specificHazardId: sanitizedParams.specificHazardId }),
+      ...(sanitizedParams.geographicLevelId && { geographicLevelId: sanitizedParams.geographicLevelId }),
+      ...(sanitizedParams.fromDate && { fromDate: sanitizedParams.fromDate }),
+      ...(sanitizedParams.toDate && { toDate: sanitizedParams.toDate }),
+      ...(sanitizedParams.disasterEventId && { disasterEventId: sanitizedParams.disasterEventId }),
+
+      // Required params with defaults
       page: 1,
       pageSize: 20,
       sortBy,
       sortDirection,
+
+      // Add metadata
+      assessmentType: 'rapid',
+      confidenceLevel: 'medium'
     };
 
     // Get the data from the model with tenant context
