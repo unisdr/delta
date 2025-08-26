@@ -1,14 +1,4 @@
-
-/**
- * Most Damaging Events Analysis Module
- * 
- * This module implements analysis of high-impact disaster events following:
- * 1. Sendai Framework Priority 1: Understanding disaster risk
- * 2. UNDRR Technical Guidance on loss database requirements
- * 3. World Bank DaLA methodology for impact ranking
- */
-
-import { SQL, sql, eq, and, inArray, desc, exists, or } from "drizzle-orm";
+import { SQL, sql, eq, and, inArray, desc, exists } from "drizzle-orm";
 import { dr as db } from "~/db.server";
 import createLogger from "~/utils/logger.server";
 
@@ -23,8 +13,7 @@ import {
   lossesTable,
   hipTypeTable,
   hipClusterTable,
-  hipHazardTable,
-  sectorTable
+  hipHazardTable
 } from "~/drizzle/schema";
 import { createAssessmentMetadata } from "~/backend.server/utils/disasterCalculations";
 import { applyHazardFilters } from "~/backend.server/utils/hazardFilters";
@@ -32,58 +21,67 @@ import { applyGeographicFilters, getDivisionInfo } from "~/backend.server/utils/
 import { parseFlexibleDate, createDateCondition } from "~/backend.server/utils/dateFilters";
 
 /**
- * Gets all subsector IDs for a given sector
+ * Gets all subsector IDs for a given sector using a recursive CTE
  * @param sectorId - The ID of the sector to get subsectors for
  * @returns Array of sector IDs including the input sector and all its subsectors
  */
 const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
-  const result = await db
-    .select({
-      id: sectorTable.id,
-      level: sectorTable.level
-    })
-    .from(sectorTable)
-    .where(
-      or(
-        eq(sectorTable.id, sectorId),
-        and(
-          sql`${sectorTable.id}::text LIKE ${sectorId}::text || '%'`,
-          sql`LENGTH(${sectorTable.id}::text) > LENGTH(${sectorId}::text)`
-        )
-      )
-    );
 
-  return result.map(r => r.id);
+  try {
+    // Use a recursive CTE to find all subsectors
+    const result = await db.execute<{ id: string }>(sql`
+      WITH RECURSIVE subsectors AS (
+        -- Base case: the sector itself
+        SELECT id, parent_id, level
+        FROM sector
+        WHERE id = ${sectorId}
+        
+        UNION ALL
+        
+        -- Recursive case: all children
+        SELECT s.id, s.parent_id, s.level
+        FROM sector s
+        JOIN subsectors p ON s.parent_id = p.id
+      )
+      SELECT id FROM subsectors;
+    `);
+
+    const sectorIds = result.rows.map(row => row.id);
+
+    return sectorIds;
+  } catch (error) {
+    console.error("[SUBSECTOR_EXPANSION] Error during expansion:", {
+      sectorId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    logger.error("Error expanding subsector IDs", {
+      sectorId,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return [];
+  }
 };
 
 async function buildFilterConditions(countryAccountsId: string, params: MostDamagingEventsParams): Promise<{ conditions: SQL<unknown>[]; sectorIds?: string[] }> {
+
   let conditions: SQL[] = [
     // Apply tenant isolation filter
     eq(disasterRecordsTable.countryAccountsId, countryAccountsId),
     sql`${disasterRecordsTable.approvalStatus} = 'published'`
   ];
 
-  // Log tenant isolation filter application
-  logger.debug("Applied tenant isolation filter", {
-    tenantId: countryAccountsId,
-    filterType: "countryAccountsId"
-  });
 
   let sectorIds: string[] | undefined;
 
   if (params.sectorId) {
+
     try {
       // Get the sector IDs based on the level
       const allSectorIds = await getAllSubsectorIds(params.sectorId);
 
       // Convert numeric IDs to strings for return value
       sectorIds = allSectorIds.map(id => id.toString());
-
-      logger.debug("Processing sector IDs for filtering", {
-        sectorId: params.sectorId,
-        sectorIdsCount: sectorIds.length,
-        sectorIdsSample: sectorIds.slice(0, 5) // Log first 5 IDs to avoid huge logs
-      });
 
       const numericSectorIds = allSectorIds.map(id => id);
 
@@ -99,7 +97,14 @@ async function buildFilterConditions(countryAccountsId: string, params: MostDama
             )
         )
       );
+
     } catch (error) {
+      console.error("[FILTER_CONDITIONS] Error in sector handling:", {
+        sectorId: params.sectorId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       logger.error("Error in sector handling", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -114,6 +119,7 @@ async function buildFilterConditions(countryAccountsId: string, params: MostDama
     .from(disasterRecordsTable);
 
   // Apply hazard filters using the utility function
+
   await applyHazardFilters(
     {
       hazardTypeId: params.hazardTypeId,
@@ -134,17 +140,23 @@ async function buildFilterConditions(countryAccountsId: string, params: MostDama
 
   // Apply geographic level filter
   if (params.geographicLevelId) {
+
     try {
       const divisionInfo = await getDivisionInfo(params.geographicLevelId);
       if (divisionInfo) {
+
         // Apply geographic filters from utility
         conditions = await applyGeographicFilters(divisionInfo, disasterRecordsTable, conditions);
       } else {
-        logger.warn("Division not found, skipping geographic filtering", {
-          divisionId: params.geographicLevelId
-        });
+
       }
     } catch (error) {
+      console.error("[FILTER_CONDITIONS] Error in geographic filtering:", {
+        divisionId: params.geographicLevelId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       logger.error("Error in geographic filtering", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -159,10 +171,6 @@ async function buildFilterConditions(countryAccountsId: string, params: MostDama
     if (parsedFromDate) {
       conditions.push(createDateCondition(disasterRecordsTable.startDate, parsedFromDate, 'gte'));
     } else {
-      logger.warn("Invalid fromDate format", {
-        fromDate: params.fromDate,
-        error: "Could not parse date"
-      });
     }
   }
 
@@ -170,14 +178,10 @@ async function buildFilterConditions(countryAccountsId: string, params: MostDama
     const parsedToDate = parseFlexibleDate(params.toDate.split('T')[0]);
     if (parsedToDate) {
       conditions.push(createDateCondition(disasterRecordsTable.endDate, parsedToDate, 'lte'));
+
     } else {
-      logger.warn("Invalid toDate format", {
-        toDate: params.toDate,
-        error: "Could not parse date"
-      });
     }
   }
-
 
   if (params.disasterEventId) {
     conditions.push(eq(disasterEventTable.id, params.disasterEventId));
@@ -193,6 +197,7 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
     // Default values for pagination
     const page = params.page || 1;
     const pageSize = params.pageSize || 20;
+
     const sortBy = params.sortBy || 'damages';
     const sortDirection = params.sortDirection || 'desc';
 
@@ -206,19 +211,34 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
         count: sql<number>`COUNT(DISTINCT ${disasterEventTable.id})`
       })
       .from(disasterRecordsTable)
-      .innerJoin(
+      .leftJoin(
         disasterEventTable,
         eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
       )
-      .innerJoin(
+      .leftJoin(
         hazardousEventTable,
         eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
       )
+      .leftJoin(
+        hipHazardTable,
+        eq(hazardousEventTable.hipHazardId, hipHazardTable.id)
+      )
+      .leftJoin(
+        hipClusterTable,
+        eq(hipHazardTable.clusterId, hipClusterTable.id)
+      )
+      .leftJoin(
+        hipTypeTable,
+        eq(hipClusterTable.typeId, hipTypeTable.id)
+      )
       .where(and(...conditions));
 
-    // Execute count query to get total records
-    const countResult = await countQuery;
-    const total = Number(countResult[0]?.count || 0);
+    const [{ count }] = await countQuery;
+
+
+
+
+    const total = Number(count);
     const totalPages = Math.ceil(total / pageSize);
 
     // If no results, return empty response with proper metadata
@@ -328,33 +348,46 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
         disasterEventTable.createdAt
       );
 
-    // Apply sorting with proper index usage
     let sortedQuery;
-    if (sortBy === 'damages') {
-      sortedQuery = query.orderBy(
-        sortDirection === 'desc'
-          ? desc(sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)), 0)`)
-          : sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)), 0)`
-      );
-    } else if (sortBy === 'losses') {
-      sortedQuery = query.orderBy(
-        sortDirection === 'desc'
-          ? desc(sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`)
-          : sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`
-      );
-    } else if (sortBy === 'eventName') {
-      sortedQuery = query.orderBy(
-        sortDirection === 'desc'
-          ? desc(disasterEventTable.nameNational)
-          : disasterEventTable.nameNational
-      );
-    } else {
-      // Default to createdAt
-      sortedQuery = query.orderBy(
-        sortDirection === 'desc'
-          ? desc(disasterEventTable.createdAt)
-          : disasterEventTable.createdAt
-      );
+    const sortStartTime = Date.now();
+
+    try {
+      if (sortBy === 'damages') {
+        sortedQuery = query.orderBy(
+          sortDirection === 'desc'
+            ? desc(sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)), 0)`)
+            : sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.damageCost}, 0)), 0)`
+        );
+      } else if (sortBy === 'losses') {
+        sortedQuery = query.orderBy(
+          sortDirection === 'desc'
+            ? desc(sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`)
+            : sql`COALESCE(SUM(COALESCE(${sectorDisasterRecordsRelationTable.lossesCost}, 0)), 0)`
+        );
+      } else if (sortBy === 'eventName') {
+        sortedQuery = query.orderBy(
+          sortDirection === 'desc'
+            ? desc(disasterEventTable.nameNational)
+            : disasterEventTable.nameNational
+        );
+      } else {
+        // Default to createdAt
+        sortedQuery = query.orderBy(
+          sortDirection === 'desc'
+            ? desc(disasterEventTable.createdAt)
+            : disasterEventTable.createdAt
+        );
+      }
+
+    } catch (error) {
+      console.error('[SORTING] Error applying sorting:', {
+        error: error instanceof Error ? error.message : String(error),
+        sortBy,
+        sortDirection,
+        executionTimeMs: Date.now() - sortStartTime
+      });
+      // Fallback to default sorting on error
+      sortedQuery = query.orderBy(desc(disasterEventTable.createdAt));
     }
 
     // Apply pagination
@@ -366,11 +399,6 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
     let results: any[] = [];
     try {
       results = await paginatedQuery;
-      logger.debug("Successfully fetched results", {
-        resultCount: results.length,
-        page: page,
-        pageSize: pageSize
-      });
     } catch (error) {
       logger.error("Error in main query, falling back to basic query", {
         error: error instanceof Error ? error.message : String(error),
@@ -421,16 +449,6 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
       totalDamages: Number(row.totalDamages || 0),
       totalLosses: Number(row.totalLosses || 0)
     }));
-
-    logger.debug("Processed events data", {
-      eventCount: events.length,
-      sampleEvents: events.slice(0, 3).map(e => ({
-        eventId: e.eventId,
-        name: e.eventName,
-        damages: e.totalDamages,
-        losses: e.totalLosses
-      }))
-    });
 
 
     const metadata = await createAssessmentMetadata(
@@ -513,19 +531,20 @@ export type SortColumn = 'damages' | 'losses' | 'eventName' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
 
 export interface MostDamagingEventsParams {
-  sectorId: string | null;
-  subSectorId: string | null;
-  hazardTypeId: string | null;
-  hazardClusterId: string | null;
-  specificHazardId: string | null;
-  geographicLevelId: string | null;
-  fromDate: string | null;
-  toDate: string | null;
-  disasterEventId: string | null;
-  page: number;
-  pageSize: number;
-  sortBy: SortColumn;
-  sortDirection: SortDirection;
+  sectorId?: string;
+  hazardTypeId?: string;
+  hazardClusterId?: string;
+  specificHazardId?: string;
+  geographicLevelId?: string;
+  fromDate?: string;
+  toDate?: string;
+  disasterEventId?: string;
+  page?: number;
+  pageSize?: number;
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
   assessmentType?: 'rapid' | 'detailed';
   confidenceLevel?: 'low' | 'medium' | 'high';
 }
