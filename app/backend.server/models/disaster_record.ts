@@ -15,7 +15,8 @@ import {
 import { Errors, hasErrors } from "~/frontend/form";
 import { updateTotalsUsingDisasterRecordId } from "./analytics/disaster-events-cost-calculator";
 
-export interface DisasterRecordsFields extends Omit<SelectDisasterRecords, "id"> {}
+export interface DisasterRecordsFields
+	extends Omit<SelectDisasterRecords, "id"> {}
 
 // do not change
 export function validate(
@@ -160,6 +161,27 @@ export async function disasterRecordsIdByImportId(tx: Tx, importId: string) {
 		})
 		.from(disasterRecordsTable)
 		.where(eq(disasterRecordsTable.apiImportId, importId));
+	if (res.length == 0) {
+		return null;
+	}
+	return res[0].id;
+}
+export async function disasterRecordsIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({
+			id: disasterRecordsTable.id,
+		})
+		.from(disasterRecordsTable)
+		.where(
+			and(
+				eq(disasterRecordsTable.apiImportId, importId),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		);
 	if (res.length == 0) {
 		return null;
 	}

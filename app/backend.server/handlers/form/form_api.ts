@@ -88,7 +88,8 @@ export interface JsonUpsertArgs<T extends ObjectWithImportId> {
 	fieldsDef: FormInputDef<T>[];
 	create: (tx: Tx, data: T) => Promise<CreateResult<T>>;
 	update: (tx: Tx, id: string, data: Partial<T>) => Promise<UpdateResult<T>>;
-	idByImportId: (tx: Tx, importId: string) => Promise<string | null>;
+	idByImportIdAndCountryAccountsId: (tx: Tx, importId: string, countryAccountsId: string) => Promise<string | null>;
+	countryAccountsId: string;
 }
 
 export interface JsonUpsertRes<T> {
@@ -128,7 +129,7 @@ export async function jsonUpsert<T extends ObjectWithImportId>(
 					return fail();
 				}
 
-				const existingId = await args.idByImportId(tx, item.apiImportId);
+				const existingId = await args.idByImportIdAndCountryAccountsId(tx, item.apiImportId, args.countryAccountsId);
 
 				if (existingId) {
 					const updateRes = await args.update(

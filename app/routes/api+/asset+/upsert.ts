@@ -5,9 +5,9 @@ import { jsonUpsert } from "~/backend.server/handlers/form/form_api";
 import {
 	assetCreate,
 	assetUpdate,
-	assetIdByImportId,
 	fieldsDefApi,
   AssetFields,
+  assetIdByImportIdAndCountryAccountsId,
 } from "~/backend.server/models/asset";
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { apiAuth } from "~/backend.server/models/api_key";
@@ -46,7 +46,8 @@ export const action = async (args: ActionFunctionArgs) => {
 		fieldsDef: fieldsDef,
 		create: assetCreate,
 		update: assetUpdate,
-		idByImportId: assetIdByImportId,
+		idByImportIdAndCountryAccountsId: assetIdByImportIdAndCountryAccountsId,
+    countryAccountsId: countryAccountsId,
 	});
 	return Response.json(saveRes);
 };

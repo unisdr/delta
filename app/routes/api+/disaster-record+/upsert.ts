@@ -6,11 +6,14 @@ import {
 	disasterRecordsCreate,
 	disasterRecordsUpdate,
 	disasterRecordsIdByImportId,
+	DisasterRecordsFields,
 } from "~/backend.server/models/disaster_record";
 
 import { fieldsDefApi } from "~/frontend/disaster-record/form";
 import { apiAuth } from "~/backend.server/models/api_key";
 import { ActionFunction, ActionFunctionArgs } from "@remix-run/server-runtime";
+import { SelectDisasterRecords } from "~/drizzle/schema";
+import { FormInputDef } from "~/frontend/form";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -30,15 +33,24 @@ export const action: ActionFunction = async (args: ActionFunctionArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
-	const data = await args.request.json();
+	let data: SelectDisasterRecords[] = await args.request.json();
+	data = data.map((item) => ({
+		...item,
+		countryAccountsId: countryAccountsId,
+	}));
+	let fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
+		...fieldsDefApi,
+		{ key: "countryAccountsId", label: "", type: "text" },
+	];
 	const saveRes = await jsonUpsert({
 		data,
-		fieldsDef: fieldsDefApi,
+		fieldsDef: fieldsDef,
 		create: disasterRecordsCreate,
 		update: async (tx: any, id: string, fields: any) => {
 			return disasterRecordsUpdate(tx, id, fields, countryAccountsId);
 		},
-		idByImportId: disasterRecordsIdByImportId,
+		idByImportIdAndCountryAccountsId: disasterRecordsIdByImportId,
+		countryAccountsId,
 	});
 
 	return Response.json(saveRes);

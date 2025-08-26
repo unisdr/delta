@@ -1,13 +1,12 @@
 import { authLoaderApi } from "~/util/auth";
 
-import { createFieldsDefApi } from "~/backend.server/models/losses";
+import { createFieldsDefApi, lossesIdByImportIdAndCountryAccountsId } from "~/backend.server/models/losses";
 
 import { jsonUpsert } from "~/backend.server/handlers/form/form_api";
 
 import {
 	lossesCreate,
 	lossesUpdate,
-	lossesIdByImportId,
 } from "~/backend.server/models/losses";
 import { apiAuth } from "~/backend.server/models/api_key";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
@@ -41,7 +40,8 @@ export const action = async (args: ActionFunctionArgs) => {
 		fieldsDef: createFieldsDefApi(currencies),
 		create: lossesCreate,
 		update: lossesUpdate,
-		idByImportId: lossesIdByImportId,
+		idByImportIdAndCountryAccountsId: lossesIdByImportIdAndCountryAccountsId,
+		countryAccountsId
 	});
 
 	return Response.json(saveRes);

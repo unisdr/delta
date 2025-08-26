@@ -1,7 +1,5 @@
 import {
 	authLoaderApi,
-	authActionApi,
-	authActionGetAuth
 } from "~/util/auth";
 
 import {
@@ -14,48 +12,51 @@ import {
 import {
 	disasterEventCreate,
 	disasterEventUpdate,
-	disasterEventIdByImportId
+	DisasterEventFields,
+	disasterEventIdByImportIdAndCountryAccountsId
 } from "~/backend.server/models/event";
+import { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { apiAuth } from "~/backend.server/models/api_key";
+import { SelectDisasterEvent } from "~/drizzle/schema";
+import { FormInputDef } from "~/frontend/form";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
 });
 
-export const action = authActionApi(async (args) => {
-	const data = await args.request.json();
-
-	// Extract tenant context from session
-	const userSession = authActionGetAuth(args);
-	if (!userSession) {
-		return Response.json({
-			ok: false,
-			errors: {
-				form: ["Unauthorized: Missing or invalid session"]
-			}
-		}, { status: 401 });
+export const action = async (args: ActionFunctionArgs) => {
+	const { request } = args;
+	if (request.method !== "POST") {
+		throw new Response("Method Not Allowed: Only POST requests are supported", {
+			status: 405,
+		});
 	}
 
-	// Create wrapper functions that include tenant context
-	const createWithTenant = (tx: any, data: any) => {
-		return disasterEventCreate(tx, data);
-	};
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
 
-	const updateWithTenant = (tx: any, id: string, data: any) => {
-		return disasterEventUpdate(tx, id, data);
-	};
-
-	const idByImportIdWithTenant = (tx: any, importId: string) => {
-		return disasterEventIdByImportId(tx, importId);
-	};
+	let data: SelectDisasterEvent[] = await args.request.json();
+	data = data.map((item) => ({
+		...item,
+		countryAccountsId: countryAccountsId,
+	}));
+	let fieldsDef: FormInputDef<DisasterEventFields>[] = [
+		...(fieldsDefApi),
+		{ key: "countryAccountsId", label: "", type: "text" },
+	];
 
 	const saveRes = await jsonUpsert({
 		data,
-		fieldsDef: fieldsDefApi,
-		create: createWithTenant,
-		update: updateWithTenant,
-		idByImportId: idByImportIdWithTenant,
+		fieldsDef: fieldsDef,
+		create: disasterEventCreate,
+		update: disasterEventUpdate,
+		idByImportIdAndCountryAccountsId: disasterEventIdByImportIdAndCountryAccountsId,
+		countryAccountsId
 	});
 
 	return Response.json(saveRes)
-});
+};
 

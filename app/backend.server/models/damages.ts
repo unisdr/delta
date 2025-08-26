@@ -1,6 +1,10 @@
 import { dr, Tx } from "~/db.server";
-import { damagesTable, DamagesInsert } from "~/drizzle/schema";
-import { eq } from "drizzle-orm";
+import {
+	damagesTable,
+	DamagesInsert,
+	disasterRecordsTable,
+} from "~/drizzle/schema";
+import { and, eq } from "drizzle-orm";
 
 import {
 	CreateResult,
@@ -306,6 +310,26 @@ export async function damagesIdByImportId(tx: Tx, importId: string) {
 		.select({ id: damagesTable.id })
 		.from(damagesTable)
 		.where(eq(damagesTable.apiImportId, importId));
+	return res.length == 0 ? null : String(res[0].id);
+}
+export async function damagesIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({ id: damagesTable.id })
+		.from(damagesTable)
+		.innerJoin(
+			disasterRecordsTable,
+			eq(damagesTable.sectorId, disasterRecordsTable.id)
+		)
+		.where(
+			and(
+				eq(damagesTable.apiImportId, importId),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		);
 	return res.length == 0 ? null : String(res[0].id);
 }
 

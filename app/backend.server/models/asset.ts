@@ -152,6 +152,29 @@ export async function assetIdByImportId(tx: Tx, importId: string) {
 
 	return String(res[0].id);
 }
+export async function assetIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	let res = await tx
+		.select({
+			id: assetTable.id,
+		})
+		.from(assetTable)
+		.where(
+			and(
+				eq(assetTable.apiImportId, importId),
+				eq(assetTable.countryAccountsId, countryAccountsId)
+			)
+		);
+
+	if (res.length == 0) {
+		return null;
+	}
+
+	return String(res[0].id);
+}
 
 export async function assetById(idStr: string) {
 	return assetByIdTx(dr, idStr);

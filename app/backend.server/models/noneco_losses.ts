@@ -1,10 +1,11 @@
 import { dr, Tx } from "~/db.server";
 import {
 	nonecoLossesTable,
-	nonecoLosses,
+	SelectNonecoLosses,
 	categoriesTable,
+	disasterRecordsTable,
 } from "~/drizzle/schema";
-import { eq, sql, aliasedTable } from "drizzle-orm";
+import { eq, sql, aliasedTable, and } from "drizzle-orm";
 import {
 	CreateResult,
 	DeleteResult,
@@ -14,7 +15,7 @@ import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
 import { deleteByIdForStringId } from "./common";
 import { getDisasterRecordsByIdAndCountryAccountsId } from "~/db/queries/disasterRecords";
 
-export interface NonecoLossesFields extends Omit<nonecoLosses, "id"> {}
+export interface NonecoLossesFields extends Omit<SelectNonecoLosses, "id"> {}
 
 export const fieldsDefCommon = [
 	{
@@ -171,6 +172,31 @@ export async function nonecoLossesIdByImportId(tx: Tx, importId: string) {
 		})
 		.from(nonecoLossesTable)
 		.where(eq(nonecoLossesTable.apiImportId, importId));
+	if (res.length == 0) {
+		return null;
+	}
+	return String(res[0].id);
+}
+export async function nonecoLossesIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({
+			id: nonecoLossesTable.id,
+		})
+		.from(nonecoLossesTable)
+		.innerJoin(
+			disasterRecordsTable,
+			eq(nonecoLossesTable.disasterRecordId, disasterRecordsTable.id)
+		)
+		.where(
+			and(
+				eq(nonecoLossesTable.apiImportId, importId),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		);
 	if (res.length == 0) {
 		return null;
 	}

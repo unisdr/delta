@@ -185,13 +185,14 @@ describe('jsonUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields2>) => {
 			throw new Error('Should not reach this point')
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => null
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => null
 		const args = {
 			data: [{}],
 			fieldsDef: fieldsDef2,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId,
+			countryAccountsId: countryAccountsId
 		}
 		const res = await jsonUpsert(args)
 		assert(!res.ok)
@@ -211,13 +212,14 @@ describe('jsonUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields2>) => {
 			throw new Error('Should not reach this point')
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => null
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => null
 		const args = {
 			data: [{apiImportId: "123"}],
 			fieldsDef: fieldsDef2,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId,
+			countryAccountsId
 		}
 		const res = await jsonUpsert(args)
 		assert(!res.ok)
@@ -241,14 +243,15 @@ describe('jsonUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields2>) => {
 			throw new Error('Should not reach this point')
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => null
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => null
 
 		const args = {
 			data: [{apiImportId: "123", field1: "new-value"}],
 			fieldsDef: fieldsDef2,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId,
+			countryAccountsId
 		}
 
 		const res = await jsonUpsert(args)
@@ -265,14 +268,15 @@ describe('jsonUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields2>): Promise<UpdateResult<TestFields2>> => {
 			return {ok: true}
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => "existing-id"
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => "existing-id"
 
 		const args = {
 			data: [{apiImportId: "123", field1: "updated-value"}],
 			fieldsDef: fieldsDef2,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId,
+			countryAccountsId
 		}
 
 		const res = await jsonUpsert(args)

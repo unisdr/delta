@@ -152,17 +152,13 @@ export async function devExample1UpdateById(
 		.set({
 			...fields,
 		})
-		.where(
-			and(
-				eq(devExample1Table.id, id),
-			)
-		)
+		.where(and(eq(devExample1Table.id, id)))
 		.returning();
 
 	if (result.length >= 0) {
 		return { ok: true };
 	}
-	return {ok: false, errors: {general: ["DevExample1 not updated"]}};
+	return { ok: false, errors: { general: ["DevExample1 not updated"] } };
 }
 
 export async function devExample1UpdateByIdAndCountryAccountsId(
@@ -183,7 +179,7 @@ export async function devExample1UpdateByIdAndCountryAccountsId(
 		.where(
 			and(
 				eq(devExample1Table.id, id),
-				eq(devExample1Table.countryAccountsId, countryAccountsId),
+				eq(devExample1Table.countryAccountsId, countryAccountsId)
 			)
 		)
 		.returning();
@@ -191,7 +187,7 @@ export async function devExample1UpdateByIdAndCountryAccountsId(
 	if (result.length >= 0) {
 		return { ok: true };
 	}
-	return {ok: false, errors: {general: ["DevExample1 not updated"]}};
+	return { ok: false, errors: { general: ["DevExample1 not updated"] } };
 }
 
 export type DevExample1ViewModel = Exclude<
@@ -207,6 +203,27 @@ export async function devExample1IdByImportId(tx: Tx, importId: string) {
 		})
 		.from(devExample1Table)
 		.where(eq(devExample1Table.apiImportId, importId));
+	if (res.length == 0) {
+		return null;
+	}
+	return String(res[0].id);
+}
+export async function devExample1IdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({
+			id: devExample1Table.id,
+		})
+		.from(devExample1Table)
+		.where(
+			and(
+				eq(devExample1Table.apiImportId, importId),
+				eq(devExample1Table.countryAccountsId, countryAccountsId)
+			)
+		);
 	if (res.length == 0) {
 		return null;
 	}
@@ -252,9 +269,7 @@ export async function devExample1DeleteByIdAndCountryAccounts(
 		if (!existingRecord) {
 			throw new Error(`Record with ID ${id} not found`);
 		}
-		await tx
-			.delete(devExample1Table)
-			.where(eq(devExample1Table.id, id));
+		await tx.delete(devExample1Table).where(eq(devExample1Table.id, id));
 	});
 	return { ok: true };
 }

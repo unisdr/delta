@@ -1,37 +1,49 @@
-import {
-	authLoaderApi,
-	authActionApi
-} from "~/util/auth"
+import { authLoaderApi } from "~/util/auth";
 
 import {
-	getFieldsDefApi
-} from "~/backend.server/models/disruption"
+	disruptionIdByImportIdAndCountryAccountsId,
+	getFieldsDefApi,
+} from "~/backend.server/models/disruption";
 
-
-import {
-	jsonUpsert,
-} from "~/backend.server/handlers/form/form_api"
+import { jsonUpsert } from "~/backend.server/handlers/form/form_api";
 
 import {
 	disruptionCreate,
 	disruptionUpdate,
-	disruptionIdByImportId
-} from "~/backend.server/models/disruption"
+} from "~/backend.server/models/disruption";
+import { apiAuth } from "~/backend.server/models/api_key";
+import { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { Disruption } from "~/drizzle/schema";
 
 export const loader = authLoaderApi(async () => {
-	return Response.json("Use POST")
-})
+	return Response.json("Use POST");
+});
 
-export const action = authActionApi(async (args) => {
-	const data = await args.request.json()
+export const action = async (args: ActionFunctionArgs) => {
+	const { request } = args;
+	if (request.method !== "POST") {
+		throw new Response("Method Not Allowed: Only POST requests are supported", {
+			status: 405,
+		});
+	}
+
+	const apiKey = await apiAuth(request);
+	const countryAccountsId = apiKey.countryAccountsId;
+	if (!countryAccountsId) {
+		throw new Response("Unauthorized", { status: 401 });
+	}
+
+	const data: Disruption[] = await args.request.json();
+
 	const saveRes = await jsonUpsert({
 		data,
 		fieldsDef: await getFieldsDefApi(),
 		create: disruptionCreate,
 		update: disruptionUpdate,
-		idByImportId: disruptionIdByImportId,
-	})
+		idByImportIdAndCountryAccountsId:
+			disruptionIdByImportIdAndCountryAccountsId,
+		countryAccountsId: countryAccountsId,
+	});
 
-	return Response.json(saveRes)
-})
-
+	return Response.json(saveRes);
+};

@@ -1,8 +1,9 @@
 import { dr, Tx } from "~/db.server";
 import {
 	sectorDisasterRecordsRelationTable,
-	SectorDisasterRecordsRelation as disRecSectorsType,
+	SelectSectorDisasterRecordsRelation as disRecSectorsType,
 	sectorTable,
+	disasterRecordsTable,
 } from "~/drizzle/schema";
 import { eq, sql, and, aliasedTable } from "drizzle-orm";
 
@@ -195,6 +196,34 @@ export async function disRecSectorsIdByImportId(tx: Tx, importId: string) {
 		})
 		.from(sectorDisasterRecordsRelationTable)
 		.where(eq(sectorDisasterRecordsRelationTable.apiImportId, importId));
+	if (res.length == 0) {
+		return null;
+	}
+	return String(res[0].id);
+}
+export async function disRecSectorsIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({
+			id: sectorDisasterRecordsRelationTable.id,
+		})
+		.from(sectorDisasterRecordsRelationTable)
+		.innerJoin(
+			disasterRecordsTable,
+			eq(
+				sectorDisasterRecordsRelationTable.disasterRecordId,
+				disasterRecordsTable.id
+			)
+		)
+		.where(
+			and(
+				eq(sectorDisasterRecordsRelationTable.apiImportId, importId),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		)
 	if (res.length == 0) {
 		return null;
 	}

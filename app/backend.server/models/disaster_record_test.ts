@@ -27,7 +27,7 @@ import {
 initDB()
 
 // Test UUIDs for disaster records
-const testDisasterRecord1Id = "00000000-0000-0000-0000-000000000001"
+export const testDisasterRecord1Id = "00000000-0000-0000-0000-000000000001"
 export const testDisasterRecord2Id = "d85f02a4-5f39-45d8-9669-5089cfd49555"
 export const testDisasterRecord3Id = "d85f02a4-5f39-45d8-9669-5089cfd49556"
 

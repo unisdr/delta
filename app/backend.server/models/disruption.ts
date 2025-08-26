@@ -2,6 +2,7 @@ import { dr, Tx } from "~/db.server";
 import {
 	disruptionTable,
 	DisruptionInsert,
+	disasterRecordsTable,
 } from "~/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 
@@ -13,9 +14,7 @@ import {
 import { Errors, FormInputDef, hasErrors } from "~/frontend/form";
 import { deleteByIdForStringId } from "./common";
 import { updateTotalsUsingDisasterRecordId } from "./analytics/disaster-events-cost-calculator";
-import {
-	getDisasterRecordsByIdAndCountryAccountsId,
-} from "~/db/queries/disasterRecords";
+import { getDisasterRecordsByIdAndCountryAccountsId } from "~/db/queries/disasterRecords";
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 
 export async function getFieldsDef(
@@ -162,7 +161,12 @@ export async function disruptionUpdateByIdAndCountryAccountsId(
 		countryAccountsId
 	);
 	if (!disasterRecords) {
-		return { ok: false, errors: { general: ["No matching disaster record found or you don't have access"] } };
+		return {
+			ok: false,
+			errors: {
+				general: ["No matching disaster record found or you don't have access"],
+			},
+		};
 	}
 
 	await tx
@@ -201,6 +205,31 @@ export async function disruptionIdByImportId(tx: Tx, importId: string) {
 		})
 		.from(disruptionTable)
 		.where(eq(disruptionTable.apiImportId, importId));
+	if (res.length == 0) {
+		return null;
+	}
+	return String(res[0].id);
+}
+export async function disruptionIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({
+			id: disruptionTable.id,
+		})
+		.from(disruptionTable)
+		.innerJoin(
+			disasterRecordsTable,
+			eq(disruptionTable.sectorId, disasterRecordsTable.id)
+		)
+		.where(
+			and(
+				eq(disruptionTable.apiImportId, importId),
+				eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
+			)
+		);
 	if (res.length == 0) {
 		return null;
 	}

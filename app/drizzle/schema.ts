@@ -1145,8 +1145,8 @@ export const categoryCategoryParent_Rel = relations(
 	})
 );
 
-export type nonecoLosses = typeof nonecoLossesTable.$inferSelect;
-export type nonecoLossesInsert = typeof nonecoLossesTable.$inferInsert;
+export type SelectNonecoLosses = typeof nonecoLossesTable.$inferSelect;
+export type InsertNonecoLosses = typeof nonecoLossesTable.$inferInsert;
 
 // Table for Non-economic losses
 export const nonecoLossesTable = pgTable(
@@ -1276,9 +1276,9 @@ export const sectorDisasterRecordsRel = relations(
 export type Sector = typeof sectorTable.$inferSelect;
 export type SectorInsert = typeof sectorTable.$inferInsert;
 
-export type SectorDisasterRecordsRelation =
+export type SelectSectorDisasterRecordsRelation =
 	typeof sectorDisasterRecordsRelationTable.$inferSelect;
-export type SectorDisasterRecordsRelationInsert =
+export type InsertSectorDisasterRecordsRelation =
 	typeof sectorDisasterRecordsRelationTable.$inferInsert;
 
 // Declared the migrations table to avoid removal after drizzle db syncronization.

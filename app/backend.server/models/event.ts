@@ -369,7 +369,9 @@ export async function hazardousEventUpdateByIdAndCountryAccountsId(
 
 	if (!oldRecord) {
 		if (!errors.form) errors.form = [];
-		errors.form.push(`Record with id ${id} does not exist or you don't have access.`);
+		errors.form.push(
+			`Record with id ${id} does not exist or you don't have access.`
+		);
 		return { ok: false, errors };
 	}
 
@@ -745,6 +747,27 @@ export async function hazardousEventIdByImportId(tx: Tx, importId: string) {
 	}
 	return res[0].id;
 }
+export async function hazardousEventIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({
+			id: hazardousEventTable.id,
+		})
+		.from(hazardousEventTable)
+		.where(
+			and(
+				eq(hazardousEventTable.apiImportId, importId),
+				eq(hazardousEventTable.countryAccountsId, countryAccountsId)
+			)
+		);
+	if (res.length == 0) {
+		return null;
+	}
+	return res[0].id;
+}
 
 export type HazardousEventViewModel = Exclude<
 	Awaited<ReturnType<typeof hazardousEventById>>,
@@ -1108,6 +1131,27 @@ export async function disasterEventIdByImportId(tx: Tx, importId: string) {
 		})
 		.from(disasterEventTable)
 		.where(and(eq(disasterEventTable.apiImportId, importId)));
+	if (res.length == 0) {
+		return null;
+	}
+	return res[0].id;
+}
+export async function disasterEventIdByImportIdAndCountryAccountsId(
+	tx: Tx,
+	importId: string,
+	countryAccountsId: string
+) {
+	const res = await tx
+		.select({
+			id: disasterEventTable.id,
+		})
+		.from(disasterEventTable)
+		.where(
+			and(
+				eq(disasterEventTable.apiImportId, importId),
+				eq(disasterEventTable.countryAccountsId, countryAccountsId)
+			)
+		);
 	if (res.length == 0) {
 		return null;
 	}
