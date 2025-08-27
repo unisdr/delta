@@ -1,9 +1,10 @@
 export type DataFormat = "enum" | "number" | "date"
 export type DataRole = "dimension" | "metric"
+export type ColWidth = "thin"|"medium"|"wide"
 
 export interface DefBase {
-	uiName: string
-	uiColWidth?: number
+	uiName: ETLocalizedString | string
+	uiColWidth?: ColWidth
 	jsName: string
 	dbName: string
 	shared?: boolean
@@ -27,9 +28,20 @@ export interface DefEnum extends DefBase {
 
 export type Def = DefNumber | DefDate | DefEnum
 
+export interface ETLocalizedString {
+	[lang: string]: string
+}
+
+export function etLocalizedStringForLang(str: ETLocalizedString | string, lang: string): string {
+	if (typeof str == 'string') {
+		return str
+	}
+	return str[lang] ?? ''
+}
+
 export interface EnumEntry {
 	key: string
-	label: string
+	label: ETLocalizedString | string
 }
 
 export function defDataFormats(defs: Def[]): DataFormat[] {

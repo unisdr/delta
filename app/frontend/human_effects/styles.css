@@ -1,0 +1,20 @@
+.dts-human-effects-custom-editor {
+	margin-bottom: 22px;
+}
+.dts-human-effects-custom-editor > .disaggregation {
+	margin-bottom: 22px;
+}
+.dts-localized-string-input > label {
+	display: block;
+	margin: 0 0 17px 0;
+}
+
+.dts-human-effects-custom-value-editor {
+	margin: 20px 0;
+}
+
+.dts-human-effects-custom-editor-delete {
+	
+	display: inline-block;
+	margin-left: 20px;
+}
