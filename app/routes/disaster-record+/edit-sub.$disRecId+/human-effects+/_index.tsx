@@ -69,6 +69,7 @@ export default function Screen() {
 				</select>
 			</fetcher.Form>
 			<Table
+				lang="en"
 				recordId={data.recordId}
 				table={data.tblId}
 				initialIds={data.ids}
@@ -80,6 +81,4 @@ export default function Screen() {
 		</MainContainer>
 	);
 }
-
-
 

@@ -478,7 +478,7 @@ export function sharedDefsAll(): Def[] {
 			uiName: "Sex",
 			jsName: "sex",
 			dbName: "sex",
-			uiColWidth: 100,
+			uiColWidth: "medium", // 90
 			format: "enum",
 			role: "dimension",
 			data: [
@@ -491,7 +491,7 @@ export function sharedDefsAll(): Def[] {
 			uiName: "Age",
 			jsName: "age",
 			dbName: "age",
-			uiColWidth: 80,
+			uiColWidth: "medium", // 90
 			format: "enum",
 			role: "dimension",
 			data: [
@@ -504,7 +504,7 @@ export function sharedDefsAll(): Def[] {
 			uiName: "Disability",
 			jsName: "disability",
 			dbName: "disability",
-			uiColWidth: 120,
+			uiColWidth: "wide", // 120
 			format: "enum",
 			role: "dimension",
 			data: [
@@ -530,7 +530,7 @@ export function sharedDefsAll(): Def[] {
 			uiName: "Global poverty line",
 			jsName: "globalPovertyLine",
 			dbName: "global_poverty_line",
-			uiColWidth: 60,
+			uiColWidth: "thin", // 60
 			format: "enum",
 			role: "dimension",
 			data: [
@@ -542,7 +542,7 @@ export function sharedDefsAll(): Def[] {
 			uiName: "National poverty line",
 			jsName: "nationalPovertyLine",
 			dbName: "national_poverty_line",
-			uiColWidth: 60,
+			uiColWidth: "thin", // 60
 			format: "enum",
 			role: "dimension",
 			data: [
@@ -600,6 +600,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				dbName: "deaths",
 				format: "number",
 				role: "metric",
+				uiColWidth: "thin"
 			})
 			break
 		case "Injured":
@@ -609,6 +610,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				dbName: "injured",
 				format: "number",
 				role: "metric",
+				uiColWidth: "thin"
 			})
 			break
 		case "Missing":
@@ -618,6 +620,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				dbName: "as_of",
 				format: "date",
 				role: "dimension",
+				uiColWidth: "thin"
 			})
 			res.push({
 				uiName: "Missing",
@@ -625,6 +628,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				dbName: "missing",
 				format: "number",
 				role: "metric",
+				uiColWidth: "thin"
 			})
 			break
 		case "Affected":
@@ -635,6 +639,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 					dbName: "direct",
 					format: "number",
 					role: "metric",
+					uiColWidth: "thin"
 				})
 			res.push(
 				{
@@ -643,6 +648,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 					dbName: "indirect",
 					format: "number",
 					role: "metric",
+					uiColWidth: "thin"
 				}
 			)
 			break
@@ -651,31 +657,30 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				uiName: "Assisted",
 				jsName: "assisted",
 				dbName: "assisted",
-				uiColWidth: 90,
 				format: "enum",
 				role: "dimension",
 				data: [
 					{ key: "assisted", label: "Assisted" },
 					{ key: "not_assisted", label: "Not Assisted" },
-				]
+				],
+				uiColWidth: "medium"
 			})
 			res.push({
 				uiName: "Timing",
 				jsName: "timing",
 				dbName: "timing",
-				uiColWidth: 90,
 				format: "enum",
 				role: "dimension",
 				data: [
 					{ key: "pre-emptive", label: "Pre-emptive" },
 					{ key: "reactive", label: "Reactive" },
-				]
+				],
+				uiColWidth: "medium"
 			})
 			res.push({
 				uiName: "Duration",
 				jsName: "duration",
 				dbName: "duration",
-				uiColWidth: 110,
 				format: "enum",
 				role: "dimension",
 				data: [
@@ -684,7 +689,8 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 					{ key: "medium_long", label: "Medium Long Term" },
 					{ key: "long", label: "Long Term" },
 					{ key: "permanent", label: "Permanent" },
-				]
+				],
+				uiColWidth: "wide"
 			})
 			res.push({
 				uiName: "As of",
@@ -692,6 +698,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				dbName: "as_of",
 				format: "date",
 				role: "dimension",
+				uiColWidth: "thin"
 			})
 			res.push({
 				uiName: "Displaced",
@@ -699,6 +706,7 @@ export function defsForTableGlobal(tbl: HumanEffectsTable): Def[] {
 				dbName: "displaced",
 				format: "number",
 				role: "metric",
+				uiColWidth: "thin"
 			})
 			break
 		default:

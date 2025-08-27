@@ -33,14 +33,15 @@ let defs1: Def[] = [
 		role: "dimension",
 		data: [
 			{ key: "m", label: "Male" },
-			{ key: "f", label: "Female" }]
+			{ key: "f", label: "Female" }
+		],
 	},
 	{
 		uiName: "Injured",
 		jsName: "injured",
 		dbName: "injured",
 		format: "number",
-		role: "metric"
+		role: "metric",
 	}
 ]
 
@@ -71,14 +72,15 @@ let defsCustom: Def[] = [
 		role: "dimension",
 		data: [
 			{ key: "g1", label: "G1" },
-			{ key: "g2", label: "G2" }]
+			{ key: "g2", label: "G2" }
+		],
 	},
 	{
 		uiName: "Injured",
 		jsName: "injured",
 		dbName: "injured",
 		format: "number",
-		role: "metric"
+		role: "metric",
 	}
 ]
 
