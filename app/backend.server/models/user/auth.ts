@@ -6,7 +6,7 @@ import { passwordHashCompare } from "./password";
 import { isValidTotp } from "./totp";
 
 export type LoginResult =
-	| { ok: true; userId: string; countryAccountId?: string | null; role?:string }
+	| { ok: true; userId: string; countryAccountId?: string | null; role?: string }
 	| { ok: false };
 
 export type SuperAdminLoginResult =
@@ -103,19 +103,17 @@ export async function loginAzureB2C(
 	const res = await dr
 		.select()
 		.from(userTable)
-		.where(
-			and(eq(userTable.email, pEmail), eq(userTable.authType, "sso_azure_b2c"))
-		);
+		.where(eq(userTable.email, pEmail));
 
 	if (!res || res.length === 0) {
-		return { ok: true, userId: "0" };
+		return { ok: false, error: "User not found" };
 	}
 	if (!pFirstName || pFirstName.length === 0) {
 		return { ok: false, error: "User first name is required" };
 	}
 	const user = res[0];
 
-	console.log(user);
+	// console.log(user);
 
 	if (user.emailVerified == false) {
 		return { ok: false, error: "Email address is not yet verified." };
@@ -222,3 +220,5 @@ export async function loginTotp(
 
 	return { ok: true };
 }
+
+
