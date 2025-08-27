@@ -22,6 +22,7 @@ import {
 } from "~/backend.server/models/user/auth";
 import { getUserCountryAccountsByUserId } from "~/db/queries/userCountryAccounts";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
+import Messages from "~/components/Messages";
 // import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
 
 interface interfaceQueryStringState {
@@ -139,7 +140,7 @@ async function _code2Token(paramCode: string): Promise<typeAzureB2CData> {
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
-	console.log("NODE_ENV", process.env.NODE_ENV);
+	// console.log("NODE_ENV", process.env.NODE_ENV);
 	// console.log("NODE_ENV", process.env.SSO_AZURE_B2C_CLIENT_SECRET)
 
 	// const jsonAzureB2C:interfaceSSOAzureB2C = configSsoAzureB2C();
@@ -172,7 +173,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 			console.error("An error occurred:", error);
 		}
 
-		console.log("jsonQueryStringState.action", jsonQueryStringState.action);
+		// console.log("jsonQueryStringState.action", jsonQueryStringState.action);
 		// User opted to use Azure B2C SSO.
 		if (jsonQueryStringState.action == "sso_azure_b2c-register") {
 			const data2 = await _code2Token(queryStringCode);
@@ -390,12 +391,28 @@ export default function SsoAzureB2cCallback() {
 
 	if (loaderData.errors) {
 		return (
-			<>
-				<div>
-					<h1>Error: received server error response</h1>
-					<p>{loaderData.errors}</p>
-				</div>
-			</>
+			<div className="dts-page-container">
+				<main className="dts-main-container">
+					<div className="mg-container">
+						<div className="dts-form dts-form--vertical">
+							<div className="dts-form__header"></div>
+							<div className="dts-form__intro">
+								<Messages
+									header="Authentication Error"
+									messages={loaderData.errors ? [loaderData.errors] : ["An error occurred during authentication."]}
+								/>
+								<h2 className="dts-heading-1">Sign in failed</h2>
+								<p>There was a problem with your authentication attempt.</p>
+							</div>
+							<div className="dts-form__footer">
+								<a href="/user/login" className="mg-button mg-button--primary">
+									Return to Login
+								</a>
+							</div>
+						</div>
+					</div>
+				</main>
+			</div>
 		);
 	}
 

@@ -18,7 +18,7 @@ import { getUserCountryAccountsByUserId } from "~/db/queries/userCountryAccounts
 // import {setupAdminAccountFieldsFromMap, setupAdminAccountSSOAzureB2C} from "~/backend.server/models/user/admin";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	console.log("NODE_ENV", process.env.NODE_ENV);
+	// console.log("NODE_ENV", process.env.NODE_ENV);
 	// console.log("NODE_ENV", process.env.SSO_AZURE_B2C_CLIENT_SECRET)
 
 	const jsonAzureB2C: interfaceSSOAzureB2C = configSsoAzureB2C();
@@ -63,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 				if ("idp_access_token" in token) {
 					// console.log(token.idp_access_token);
 					token_idp = decodeToken(String(token.idp_access_token));
-					console.log(token_idp);
+					// console.log(token_idp);
 					if ("family_name" in token_idp) {
 						data["lastName"] = String(token_idp.family_name);
 					}

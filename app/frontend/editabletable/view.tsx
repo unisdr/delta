@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Def, defDataFormats, DefEnum } from "~/frontend/editabletable/defs"
+import { ColWidth, Def, defDataFormats, DefEnum, etLocalizedStringForLang } from "~/frontend/editabletable/defs"
 import {
 	DataWithId,
 	DataManager,
@@ -17,6 +17,7 @@ import { Link, useFetcher } from "@remix-run/react"
 import { notifyError, notifyInfo } from "../utils/notifications"
 
 interface TableProps {
+	lang: string
 	recordId: string
 	table: HumanEffectsTable
 	initialIds: string[]
@@ -276,6 +277,7 @@ function TableClient(props: TableProps) {
 	return (
 		<div className="table-container">
 			<TableCategoryPresence
+				lang={props.lang}
 				tblId={props.table}
 				defs={childProps.defs}
 				data={categoryPresence}
@@ -296,6 +298,7 @@ function TableClient(props: TableProps) {
 						<p>You have unsaved changes</p>
 					}
 					<TableContent
+						lang={props.lang}
 						tableErrors={tableErrors}
 						sort={sort}
 						totals={childProps.data.getTotals().data}
@@ -332,6 +335,7 @@ function TableLegend() {
 }
 
 interface TableContentProps {
+	lang: string
 	totals: any[]
 	groupTotals: null | Map<string, number[]>
 	data: Group<DataWithId>[]
@@ -349,6 +353,22 @@ interface TableContentProps {
 	reSort: () => void
 }
 
+function colWidth(colWidth: ColWidth|undefined): number {
+	if (!colWidth){
+		colWidth = "wide"
+	}
+	switch (colWidth) {
+		case "thin":
+			return 60
+		case "medium":
+			return 90
+		case "wide":
+			return 120
+		default:
+			throw new Error("Invalid colWidth")
+	}
+}
+
 function TableContent(props: TableContentProps) {
 
 	const renderHeader = () => (
@@ -357,7 +377,7 @@ function TableContent(props: TableContentProps) {
 				{props.defs.map((def, index) => (
 					<React.Fragment key={index}>
 						<th
-							style={{ width: (def.uiColWidth || 70) + "px" }}
+							style={{ width: colWidth(def.uiColWidth) + "px" }}
 							className={
 								props.sort.column === index
 									? props.sort.order === "asc"
@@ -373,7 +393,7 @@ function TableContent(props: TableContentProps) {
 									props.toggleColumnSort(index)
 								}}
 							>
-								{def.uiName}
+								{etLocalizedStringForLang(def.uiName, props.lang)}
 							</a>
 						</th>
 						{/*def.role === "metric" && <th style={{width: "30px"}}>%</th>*/}
@@ -487,7 +507,7 @@ function TableContent(props: TableContentProps) {
 				let c = group.key[i]
 				if (c == "1") {
 					let def = props.defs[i]
-					disaggr.push(def.uiName)
+					disaggr.push(etLocalizedStringForLang(def.uiName, props.lang))
 				}
 			}
 			let disaggrLabels = disaggr.join(", ")
@@ -706,7 +726,7 @@ function TableContent(props: TableContentProps) {
 		return (
 			<React.Fragment key={colIndex}>
 				<td className={className}>
-					{renderInput(def, row.id, v, colIndex, props.updateCell, props.reSort/*, groupKey*/)}
+					{renderInput(def, props.lang, row.id, v, colIndex, props.updateCell, props.reSort/*, groupKey*/)}
 				</td>
 				{/*def.role === "metric" && <td className={className}>{totalPercV(v, colIndex)}</td>*/}
 			</React.Fragment>
@@ -776,6 +796,7 @@ function TableContent(props: TableContentProps) {
 
 function renderInput(
 	def: Def,
+	lang: string,
 	rowId: string,
 	value: any,
 	colIndex: number,
@@ -805,7 +826,7 @@ function renderInput(
 					<option key="null" value="">-</option>
 					{enumDef.data && enumDef.data.map((option) => (
 						<option key={option.key} value={option.key}>
-							{option.label}
+							{etLocalizedStringForLang(option.label, lang)}
 						</option>
 					))}
 				</select>
@@ -866,6 +887,7 @@ function TableActions(props: TableActionsProps) {
 }
 
 interface TableCategoryPresenceProps {
+	lang: string
 	tblId: HumanEffectsTable
 	defs: Def[]
 	data: Record<string, any>
@@ -894,7 +916,7 @@ function TableCategoryPresence(props: TableCategoryPresenceProps) {
 				let vStr = v === true ? "1" : v === false ? "0" : ""
 				return (
 					<p key={d.jsName}>
-						<label>{d.uiName}&nbsp;
+						<label>{etLocalizedStringForLang(d.uiName, props.lang)}&nbsp;
 							<select
 								name={d.jsName}
 								value={vStr}

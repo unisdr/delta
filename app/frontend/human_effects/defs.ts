@@ -1,4 +1,4 @@
-import { EnumEntry } from "~/frontend/editabletable/defs"
+import { EnumEntry, ETLocalizedString, ColWidth } from "~/frontend/editabletable/defs"
 
 export type HumanEffectsTable = "Deaths" | "Injured" | "Missing" | "Affected" | "Displaced"
 
@@ -28,8 +28,8 @@ export const HumanEffectTablesDefs: HumanEffectTableDef[] = [
 ]
 
 export interface HumanEffectsCustomDef {
-	uiName: string
-	uiColWidth?: number
+	uiName: ETLocalizedString | string
+	uiColWidth: ColWidth
 	dbName: string
 	enum: EnumEntry[]
 }
