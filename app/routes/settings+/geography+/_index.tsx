@@ -35,7 +35,6 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
-
 	const url = new URL(request.url);
 	const parentId = url.searchParams.get("parent") || null;
 	const langs = await divisionsAllLanguages(parentId, [], countryAccountsId);
@@ -78,7 +77,11 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 	let breadcrumbs: DivisionBreadcrumbRow[] | null = null;
 	if (parentId) {
-		breadcrumbs = await divisionBreadcrumb(selectedLangs, parentId, countryAccountsId);
+		breadcrumbs = await divisionBreadcrumb(
+			selectedLangs,
+			parentId,
+			countryAccountsId
+		);
 	}
 
 	const res = await executeQueryForPagination2<ItemRes>(request, q1, q2, [
@@ -88,7 +91,13 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select()
+	const rawData = await dr
+		.select({
+			id: divisionTable.id,
+			nationalId: divisionTable.nationalId,
+			name: divisionTable.name,
+			parentId: divisionTable.parentId,
+		})
 		.from(divisionTable)
 		.where(eq(divisionTable.countryAccountsId, countryAccountsId));
 	const treeData = buildTree(
@@ -97,7 +106,6 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		parentKey,
 		nameKey,
 		"en",
-		["geojson"]
 	);
 
 	return { langs, breadcrumbs, selectedLangs, treeData, ...res };
