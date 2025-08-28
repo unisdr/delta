@@ -45,7 +45,8 @@ export async function loadData(
 		throw res.error;
 	}
 	let categoryPresence = await categoryPresenceGet(dr, recordId, countryAccountsId, tblId, defs);
-	let totalGroup = await totalGroupGet(dr, recordId, tblId)
+	let totalGroupFlags = await totalGroupGet(dr, recordId, tblId)
+
 	return {
 		tblId: tblId,
 		tbl: HumanEffectTablesDefs.find((t) => t.id == tblId)!,
@@ -54,7 +55,7 @@ export async function loadData(
 		ids: res.ids,
 		data: res.data,
 		categoryPresence,
-		totalGroup
+		totalGroupFlags,
 	};
 }
 
@@ -106,19 +107,23 @@ export async function saveHumanEffectsData(req: Request, recordId: string, count
 		);
 	}
 
+
 	try {
 		let dataModified = false;
 
 
 		await dr.transaction(async (tx) => {
-			if (d.data.totalGroup !== undefined) {
+			if (d.data.totalGroupFlags !== undefined) {
+				if (d.data.totalGroupFlags === "invalid") {
+					throw "Server error, invalid totalGroup (should be checked in frontend)"
+				}
 				/*
 				console.log('Updating totalGroup:', {
 					recordId,
 					table: d.table,
 					totalGroup: d.data.totalGroup
 				});*/
-				await totalGroupSet(dr, recordId, d.table, d.data.totalGroup)
+				await totalGroupSet(dr, recordId, d.table, d.data.totalGroupFlags)
 			}
 			if (d.data.deletes) {
 				let res = await deleteRows(tx, d.table, d.data.deletes)

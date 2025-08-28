@@ -2,6 +2,11 @@ export type DataFormat = "enum" | "number" | "date"
 export type DataRole = "dimension" | "metric"
 export type ColWidth = "thin"|"medium"|"wide"
 
+export interface DefData {
+	dbName: string
+	format: DataFormat
+}
+
 export interface DefBase {
 	uiName: ETLocalizedString | string
 	uiColWidth?: ColWidth
@@ -44,10 +49,13 @@ export interface EnumEntry {
 	label: ETLocalizedString | string
 }
 
-export function defDataFormats(defs: Def[]): DataFormat[] {
-	let r: DataFormat[] = []
+export function defData(defs: Def[]): DefData[] {
+	let r: DefData[] = []
 	for (let d of defs) {
-		r.push(d.format)
+		r.push({
+			dbName: d.dbName,
+			format: d.format,
+		})
 	}
 	return r
 }

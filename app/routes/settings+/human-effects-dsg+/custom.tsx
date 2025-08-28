@@ -26,7 +26,7 @@ async function getConfig() {
 	return { config: row?.custom || null }
 }
 
-let langs = ["en", "ar", "zh", "fr", "ru", "es"]
+let langs = ["default"]
 
 export const loader = authLoaderWithPerm("EditHumanEffectsCustomDsg", async () => {
 	return await getConfig()
