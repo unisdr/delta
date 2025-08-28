@@ -44,7 +44,7 @@ export function Lvl1({items}: Lvl1Props){
 			{items.map((item, i) => (
 				<li key={i} className={`${item.lvl2 && i === index ? "selected" : ""}`}>
 					{item.link ? (
-						<a onClick={() => handleClick(i)} href="#">
+						<a href={item.link}>
 							{item.icon && (
 								<Icon icon={item.icon} />
 							)}

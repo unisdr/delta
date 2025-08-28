@@ -1,6 +1,6 @@
-import {beforeEach, describe, it} from 'node:test'
+import { beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import {dr} from '~/db.server'
+import { dr } from '~/db.server'
 import {
 	create,
 	update,
@@ -8,16 +8,18 @@ import {
 	get,
 	validate,
 	categoryPresenceGet,
-	categoryPresenceSet
+	categoryPresenceSet,
+	totalGroupGet,
+	totalGroupSet
 } from './human_effects'
-import {injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable} from '~/drizzle/schema'
+import { injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable } from '~/drizzle/schema'
 
-import {Def} from "~/frontend/editabletable/defs"
+import { Def } from "~/frontend/editabletable/defs"
 
 import {
 	sql
 } from "drizzle-orm"
-import {createTestDisasterRecord1, testDisasterRecord1Id} from './disaster_record_test'
+import { createTestDisasterRecord1, testDisasterRecord1Id } from './disaster_record_test'
 
 let rid1 = testDisasterRecord1Id
 
@@ -30,15 +32,16 @@ let defs1: Def[] = [
 		format: "enum",
 		role: "dimension",
 		data: [
-			{key: "m", label: "Male"},
-			{key: "f", label: "Female"}]
+			{ key: "m", label: "Male" },
+			{ key: "f", label: "Female" }
+		],
 	},
 	{
 		uiName: "Injured",
 		jsName: "injured",
 		dbName: "injured",
 		format: "number",
-		role: "metric"
+		role: "metric",
 	}
 ]
 
@@ -68,15 +71,16 @@ let defsCustom: Def[] = [
 		format: "enum",
 		role: "dimension",
 		data: [
-			{key: "g1", label: "G1"},
-			{key: "g2", label: "G2"}]
+			{ key: "g1", label: "G1" },
+			{ key: "g2", label: "G2" }
+		],
 	},
 	{
 		uiName: "Injured",
 		jsName: "injured",
 		dbName: "injured",
 		format: "number",
-		role: "metric"
+		role: "metric",
 	}
 ]
 
@@ -147,8 +151,8 @@ describe("human_effects - number data", async () => {
 				format: "enum",
 				role: "dimension",
 				data: [
-					{key: "above", label: "Above"},
-					{key: "below", label: "Below"}]
+					{ key: "above", label: "Above" },
+					{ key: "below", label: "Below" }]
 			},
 			{
 				uiName: "Injured",
@@ -340,8 +344,8 @@ describe("human_effects - number data", async () => {
 			format: "enum",
 			role: "dimension",
 			data: [
-				{key: "g1", label: "G1"},
-				{key: "g2", label: "G2"}]
+				{ key: "g1", label: "G1" },
+				{ key: "g2", label: "G2" }]
 		},
 		{
 			uiName: "custom2",
@@ -351,8 +355,8 @@ describe("human_effects - number data", async () => {
 			format: "enum",
 			role: "dimension",
 			data: [
-				{key: "g1", label: "G1"},
-				{key: "g2", label: "G2"}]
+				{ key: "g1", label: "G1" },
+				{ key: "g2", label: "G2" }]
 		},
 		{
 			uiName: "Injured",
@@ -431,36 +435,36 @@ describe("human_effects - category presence data", async () => {
 	]
 
 	it("no data", async () => {
-		let res = await categoryPresenceGet(rid1, "Injured", defs)
+		let res = await categoryPresenceGet(dr, rid1, "Injured", defs)
 		assert.deepEqual(res, {})
 	})
 
 	it("insert", async () => {
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": true
 		})
-		let res = await categoryPresenceGet(rid1, "Injured", defs)
-		assert.deepEqual(res, {"injured": true})
+		let res = await categoryPresenceGet(dr, rid1, "Injured", defs)
+		assert.deepEqual(res, { "injured": true })
 	})
 
 	it("update - false", async () => {
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": true
 		})
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": false,
 		})
-		let res = await categoryPresenceGet(rid1, "Injured", defs)
-		assert.deepEqual(res, {"injured": false})
+		let res = await categoryPresenceGet(dr, rid1, "Injured", defs)
+		assert.deepEqual(res, { "injured": false })
 	})
 
 	it("update - unset", async () => {
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 			"injured": true
 		})
-		await categoryPresenceSet(rid1, "Injured", defs, {
+		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 		})
-		let res = await categoryPresenceGet(rid1, "Injured", defs)
+		let res = await categoryPresenceGet(dr, rid1, "Injured", defs)
 		assert.deepEqual(res, {})
 	})
 
@@ -476,22 +480,60 @@ describe("human_effects - category presence data", async () => {
 
 	it("insert - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet(rid1, "Affected", defs, {
+		await categoryPresenceSet(dr, rid1, "Affected", defs, {
 			"direct": true
 		})
-		let res = await categoryPresenceGet(rid1, "Affected", defs)
-		assert.deepEqual(res, {"direct": true})
+		let res = await categoryPresenceGet(dr, rid1, "Affected", defs)
+		assert.deepEqual(res, { "direct": true })
 	})
 
 	it("update - table prefix", async () => {
 		let defs = defs2
-		await categoryPresenceSet(rid1, "Affected", defs, {
+		await categoryPresenceSet(dr, rid1, "Affected", defs, {
 			"direct": true
 		})
-		await categoryPresenceSet(rid1, "Affected", defs, {
+		await categoryPresenceSet(dr, rid1, "Affected", defs, {
 		})
-		let res = await categoryPresenceGet(rid1, "Affected", defs)
+		let res = await categoryPresenceGet(dr, rid1, "Affected", defs)
 		assert.deepEqual(res, {})
 	})
 
 })
+
+describe("human_effects - total group", async () => {
+	beforeEach(async () => {
+		await resetCategoryPresenceData()
+	})
+
+	it("get no data", async () => {
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, null)
+	})
+
+	it("set and get", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", "10")
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, "10")
+	})
+
+	it("update", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", "10")
+		await totalGroupSet(dr, rid1, "Deaths", "11")
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, "11")
+	})
+
+	it("set null", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", null)
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, null)
+	})
+
+	it("set invalid", async () => {
+		await totalGroupSet(dr, rid1, "Deaths", "invalid")
+		let res = await totalGroupGet(dr, rid1, "Deaths")
+		assert.equal(res, "invalid")
+	})
+})
+
+

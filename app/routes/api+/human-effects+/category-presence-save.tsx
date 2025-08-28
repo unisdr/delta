@@ -1,10 +1,13 @@
-import {authLoaderApi} from "~/util/auth";
-import {HumanEffectsTableFromString, HumanEffectsTable} from "~/frontend/human_effects/defs";
+import { authLoaderApi } from "~/util/auth";
+import { HumanEffectsTableFromString, HumanEffectsTable } from "~/frontend/human_effects/defs";
+import { dr } from "~/db.server"
 
 import {
 	authActionApi
 } from "~/util/auth";
-import {defsForTable, categoryPresenceSet} from "~/backend.server/models/human_effects";
+import { defsForTable, categoryPresenceSet } from "~/backend.server/models/human_effects";
+
+
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -16,7 +19,7 @@ interface Req {
 }
 
 export const action = authActionApi(async (actionArgs) => {
-	const {request} = actionArgs
+	const { request } = actionArgs
 	let url = new URL(request.url)
 	let recordId = url.searchParams.get("recordId") || ""
 
@@ -24,7 +27,7 @@ export const action = authActionApi(async (actionArgs) => {
 	try {
 		d = await request.json() as Req
 	} catch {
-		return Response.json({ok: false, error: "Invalid JSON"}, {
+		return Response.json({ ok: false, error: "Invalid JSON" }, {
 			status: 400
 		})
 	}
@@ -32,10 +35,10 @@ export const action = authActionApi(async (actionArgs) => {
 	try {
 		tblId = HumanEffectsTableFromString(d.table)
 	} catch (e) {
-		return Response.json({ok: false, error: String(e)})
+		return Response.json({ ok: false, error: String(e) })
 	}
-	let defs = await defsForTable(tblId)
-	await categoryPresenceSet(recordId, tblId, defs, d.data)
-	return {ok: true}
+	let defs = await defsForTable(dr, tblId)
+	await categoryPresenceSet(dr, recordId, tblId, defs, d.data)
+	return { ok: true }
 })
 

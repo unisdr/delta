@@ -3,30 +3,36 @@ import {
 	authLoaderWithPerm
 } from "~/util/auth";
 
-import {dr} from '~/db.server';
+import { dr } from '~/db.server';
 
-import {MainContainer} from "~/frontend/container";
+import { MainContainer } from "~/frontend/container";
 
-import {humanDsgConfigTable} from "~/drizzle/schema";
+import { humanDsgConfigTable } from "~/drizzle/schema";
 
 import {
 	SubmitButton,
 } from "~/frontend/form";
-import {useActionData, useLoaderData} from "@remix-run/react";
+import { useActionData, useLoaderData } from "@remix-run/react";
 
-import {Form} from "@remix-run/react";
-import {HumanEffectsCustomConfig} from "~/frontend/human_effects/defs";
+import { Form } from "@remix-run/react";
+import { HumanEffectsCustomConfig } from "~/frontend/human_effects/defs";
+import { Editor } from "~/frontend/human_effects/custom_editor";
+
+import { useEffect, useState } from 'react'
+import { notifyError, notifyInfo } from "~/frontend/utils/notifications";
 
 async function getConfig() {
 	const row = await dr.query.humanDsgConfigTable.findFirst()
-	return {config: row?.custom || null}
+	return { config: row?.custom || null }
 }
+
+let langs = ["en", "ar", "zh", "fr", "ru", "es"]
 
 export const loader = authLoaderWithPerm("EditHumanEffectsCustomDsg", async () => {
 	return await getConfig()
 });
 
-export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({request}) => {
+export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({ request }) => {
 	let formData = await request.formData()
 	let config = formData.get("config") || ""
 	if (typeof config !== "string") {
@@ -37,7 +43,18 @@ export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({re
 		try {
 			configData = JSON.parse(config)
 		} catch (e) {
-			return {ok: false, error: String(e)}
+			return { ok: false, error: String(e) }
+		}
+	}
+
+	if (configData && Array.isArray(configData.config)) {
+		for (const def of configData.config) {
+			if (!Array.isArray(def.enum) || def.enum.length < 2) {
+				return {
+					ok: false,
+					error: `Disaggregation "${def.dbName}" must have at least 2 options.`
+				}
+			}
 		}
 	}
 
@@ -45,63 +62,63 @@ export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({re
 		const row = await tx.query.humanDsgConfigTable.findFirst()
 		if (!row) {
 			await tx.insert(humanDsgConfigTable)
-				.values({custom: configData})
+				.values({ custom: configData })
 		} else {
 			await tx.update(humanDsgConfigTable)
-				.set({custom: configData})
+				.set({ custom: configData })
 		}
-
 	})
 
-	return {ok: true}
+	return { ok: true }
 })
 
 export default function Screen() {
+
 	const ld = useLoaderData<typeof loader>();
-	let configObj = ld.config
-
-	let error = ""
 	const ad = useActionData<typeof action>();
-	if (ad) {
-		if (!ad.ok) {
-			error = ad.error || "Server error"
-		}
-	}
 
-	let configText = ""
-	if (configObj) {
-		configText = JSON.stringify(configObj, null, 2)
-	}
+	const [config, setConfig] = useState<HumanEffectsCustomConfig>(() =>
+		ld.config
+			? ld.config
+			: { version: 1, config: [] }
+	);
+
+	useEffect(() => {
+		if (ad)
+			if (!ad.ok) {
+				notifyError(ad.error || "Server error")
+			} else {
+				notifyInfo("Your changes have been saved")
+			}
+	}, [ad]);
+
 	return (
-		<MainContainer
-			title="Human Effects Custom Disaggregations"
-		>
+		<MainContainer title="Human Effects Custom Disaggregations">
 			<Form method="post">
-				<h3>Your configuration</h3>
-				{error}
-				<textarea name="config" style={{height: "300px", width: "500px"}} defaultValue={configText}></textarea>
-				<SubmitButton className="mg-button mg-button-primary" label="Update config" />
+
+				<h2>Your configuration</h2>
+
+				<input
+					type="hidden"
+					name="config"
+					value={JSON.stringify(config)}
+				/>
+
+				<Editor
+					langs={langs}
+					value={config.config}
+					onChange={(config) =>
+						setConfig((prev) => ({ ...prev, config }))
+					}
+				/>
+
+				<SubmitButton
+					className="mg-button mg-button-primary"
+					label="Update config"
+				/>
+
 			</Form>
-			<br />
-			<h3>Example configuration (JSON):</h3>
-			<pre>
-				{`
-{
-"version": "1",
-"config": [
-{
-	"uiName": "Custom indicator",
-	"dbName": "custom_indicator",
-	"uiColWidth": 60,
-	"enum": [
-		{"key": "group1", "label": "Group 1"},
-		{"key": "group2", "label": "Group 2"}
-	]
-}
-]
-}
-`}
-			</pre>
+
 		</MainContainer>
-	)
+	);
 }

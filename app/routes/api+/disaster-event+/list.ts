@@ -1,9 +1,9 @@
 
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
-import {desc} from "drizzle-orm";
+import { desc } from "drizzle-orm";
 
-import {createApiListLoader} from "~/backend.server/handlers/view";
+import { createApiListLoader } from "~/backend.server/handlers/view";
 
 import {
 	disasterEventTable,
@@ -14,12 +14,28 @@ export const loader = createApiListLoader(
 	async (offsetLimit) => {
 		return dr.query.disasterEventTable.findMany({
 			...offsetLimit,
-			columns: {
-				id: true,
-				startDate: true,
-				endDate: true,
-			},
 			orderBy: [desc(disasterEventTable.startDate)],
+			with: {
+				hipHazard: {
+					columns: {
+						id: true,
+						nameEn: true,
+						code: true
+					},
+				},
+				hipCluster: {
+					columns: {
+						id: true,
+						nameEn: true,
+					},
+				},
+				hipType: {
+					columns: {
+						id: true,
+						nameEn: true,
+					},
+				},
+			}
 		});
 	},
 );

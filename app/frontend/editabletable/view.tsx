@@ -1,24 +1,28 @@
-import {useEffect, useState} from "react"
-import {Def, DefEnum} from "~/frontend/editabletable/defs"
+import { useEffect, useState } from "react"
+import { ColWidth, Def, defDataFormats, DefEnum, etLocalizedStringForLang } from "~/frontend/editabletable/defs"
 import {
 	DataWithId,
 	DataManager,
 	Sort,
 	Group,
+	TotalGroup,
+	groupKeyOnlyZeroes,
 } from "./data"
-import {cloneInstance} from "~/util/object"
-import {HumanEffectsTable} from "~/frontend/human_effects/defs"
+import { cloneInstance } from "~/util/object"
+import { HumanEffectsTable } from "~/frontend/human_effects/defs"
 import React from 'react'
-import {toStandardDate} from "~/util/date"
-import {eqArr} from "~/util/array"
-import {Link, useFetcher} from "@remix-run/react"
-import {notifyError, notifyInfo} from "../utils/notifications"
+import { toStandardDate } from "~/util/date"
+import { eqArr } from "~/util/array"
+import { Link, useFetcher } from "@remix-run/react"
+import { notifyError, notifyInfo } from "../utils/notifications"
 
 interface TableProps {
+	lang: string
 	recordId: string
 	table: HumanEffectsTable
 	initialIds: string[]
 	initialData: any[][]
+	initialTotalGroup: TotalGroup
 	categoryPresence: Record<string, boolean>
 	defs: Def[]
 }
@@ -85,14 +89,14 @@ function TableClient(props: TableProps) {
 			}
 		}
 		let d = new DataManager()
-		d.init(colsFromDefs(props.defs), props.initialData, props.initialIds, previousUpdates)
+		d.init(defDataFormats(props.defs), colsFromDefs(props.defs), props.initialData, props.initialIds, props.initialTotalGroup, previousUpdates)
 		console.log("inited table", props.table, props.defs.length)
 		return d
 	}
 
 	let [data, setData] = useState(() => initDataManager(localStorageKey))
 
-	let [sort, setSort] = useState<Sort>({column: 0, order: "asc"})
+	let [sort, setSort] = useState<Sort>({ column: 0, order: "asc" })
 
 	let [childProps, setChildProps] = useState<tableChildProps | null>(null)
 
@@ -117,7 +121,7 @@ function TableClient(props: TableProps) {
 		localStorage.setItem(localStorageKey, json)
 		console.log("saving to", localStorageKey)
 
-		setChildProps({defs: props.defs, data: data})
+		setChildProps({ defs: props.defs, data: data })
 	}, [data])
 
 	const updateCell = (rowId: string, colIndex: number, value: any) => {
@@ -156,8 +160,23 @@ function TableClient(props: TableProps) {
 		setData(cloneInstance(data))
 	}
 
+	const setTotalGroup = (totalGroup: TotalGroup) => {
+		if (totalGroup && groupKeyOnlyZeroes(totalGroup)) {
+			notifyError('Group does not have disaggregations set.  Click "Sort into groups" after selecting values for disaggregation columns.')
+			return
+		}
+		data.setTotalGroup(totalGroup)
+		setData(cloneInstance(data))
+	}
+
 	const handleSave = async () => {
 		reSort()
+		let e = data.validate()
+		if (e) {
+			notifyError(e)
+			return
+		}
+
 		console.log("Saving data to server")
 		let dataUpdates = data.getUpdatesForSaving()
 		let json = JSON.stringify({
@@ -196,7 +215,7 @@ function TableClient(props: TableProps) {
 			'./human-effects/load?tbl=' + props.table
 		).then(res => res.json())
 		let d = new DataManager()
-		d.init(colsFromDefs(u.defs), u.data, u.ids)
+		d.init(defDataFormats(props.defs), colsFromDefs(u.defs), u.data, u.ids, u.totalGroup)
 		d.sortByColumn(sort.column, sort.order)
 		setData(d)
 		setTableErrors([])
@@ -204,7 +223,7 @@ function TableClient(props: TableProps) {
 
 	const handleRevert = () => {
 		let d = new DataManager()
-		d.init(colsFromDefs(props.defs), props.initialData, props.initialIds)
+		d.init(defDataFormats(props.defs), colsFromDefs(props.defs), props.initialData, props.initialIds, props.initialTotalGroup)
 		setData(d)
 		setTableErrors([])
 	}
@@ -252,13 +271,13 @@ function TableClient(props: TableProps) {
 		return <p>Loading</p>
 	}
 
-	let hasDate = props.defs.some(d => d.format == "date")
 
 	let categoryPresenceAtLeastOneYes = Object.values(categoryPresence).some(v => v)
 
 	return (
 		<div className="table-container">
 			<TableCategoryPresence
+				lang={props.lang}
 				tblId={props.table}
 				defs={childProps.defs}
 				data={categoryPresence}
@@ -279,18 +298,22 @@ function TableClient(props: TableProps) {
 						<p>You have unsaved changes</p>
 					}
 					<TableContent
+						lang={props.lang}
 						tableErrors={tableErrors}
 						sort={sort}
 						totals={childProps.data.getTotals().data}
-						totalsMatch={hasDate ? null : childProps.data.groupTotalsMatch()}
+						groupTotals={childProps.data.groupTotals()}
 						data={childProps.data.applyUpdatesWithGroupKey()}
 						defs={childProps.defs}
+						setTotalGroup={setTotalGroup}
 						updateTotals={updateTotals}
 						updateCell={updateCell}
 						copyRow={copyRow}
 						deleteRow={deleteRow}
 						toggleColumnSort={toggleColumnSort}
 						addRowEnd={addRowEnd}
+						totalGroup={childProps.data.getTotalGroup()}
+						reSort={reSort}
 					/>
 					<TableLegend />
 					<Link to="/settings/human-effects-dsg">Configure Disaggregations</Link>
@@ -312,18 +335,38 @@ function TableLegend() {
 }
 
 interface TableContentProps {
+	lang: string
 	totals: any[]
-	totalsMatch: null | Map<string, boolean[]>
+	groupTotals: null | Map<string, number[]>
 	data: Group<DataWithId>[]
 	defs: Def[]
 	updateCell: (rowId: string, colIndex: number, value: any) => void
 	updateTotals: (colIndex: number, value: any) => void
 	copyRow: (rowId: string) => void
 	deleteRow: (rowId: string) => void
+	setTotalGroup: (groupKey: TotalGroup) => void
 	toggleColumnSort: (colIndex: number) => void
 	sort: Sort
 	addRowEnd: () => void
 	tableErrors: tableError[]
+	totalGroup: string | null
+	reSort: () => void
+}
+
+function colWidth(colWidth: ColWidth|undefined): number {
+	if (!colWidth){
+		colWidth = "wide"
+	}
+	switch (colWidth) {
+		case "thin":
+			return 60
+		case "medium":
+			return 90
+		case "wide":
+			return 120
+		default:
+			throw new Error("Invalid colWidth")
+	}
 }
 
 function TableContent(props: TableContentProps) {
@@ -334,7 +377,7 @@ function TableContent(props: TableContentProps) {
 				{props.defs.map((def, index) => (
 					<React.Fragment key={index}>
 						<th
-							style={{width: (def.uiColWidth || 70) + "px"}}
+							style={{ width: colWidth(def.uiColWidth) + "px" }}
 							className={
 								props.sort.column === index
 									? props.sort.order === "asc"
@@ -350,13 +393,13 @@ function TableContent(props: TableContentProps) {
 									props.toggleColumnSort(index)
 								}}
 							>
-								{def.uiName}
+								{etLocalizedStringForLang(def.uiName, props.lang)}
 							</a>
 						</th>
-						{def.role === "metric" && <th style={{width: "30px"}}>%</th>}
+						{/*def.role === "metric" && <th style={{width: "30px"}}>%</th>*/}
 					</React.Fragment>
 				))}
-				<th style={{width: "100px"}}>Actions</th>
+				<th style={{ width: "100px" }}>Actions</th>
 			</tr>
 		</thead>
 	)
@@ -364,22 +407,55 @@ function TableContent(props: TableContentProps) {
 	const renderTotalRow = () => (
 		<tbody key="totals">
 			<tr>
-				<td colSpan={colsFromDefs(props.defs).dimensions}>Totals</td>
+				<td className="totals">
+					Totals
+				</td>
+
+				<td className="dts-editable-table-calc-type" colSpan={dimCount() - 1}>
+					<label>
+						<input
+							type="radio"
+							name="dts-editable-table-calc-type"
+							value="manual"
+							checked={props.totalGroup === null}
+							onChange={() => props.setTotalGroup(null)}
+						/>
+						Manually calculate total
+					</label>
+					<label>
+						<input
+							type="radio"
+							name="dts-editable-table-calc-type"
+							value="auto"
+							checked={props.totalGroup !== null}
+							onChange={() => props.setTotalGroup("invalid")}
+						/>
+						Automatically calculate total
+					</label>
+				</td>
+
 				{props.defs.filter(d => d.role == "metric").map((_, colIndex) => {
 					let v = props.totals[colIndex]
 					return (<React.Fragment key={colIndex}>
 						<td>
-							<input
-								type="text"
-								value={v ?? ""}
-								onChange={(e) => {
-									let v = parseInt(e.target.value, 10)
-									props.updateTotals(colIndex, isNaN(v) ? null : v)
-								}}
-							>
-							</input>
+							{props.totalGroup ? (
+								<input
+									type="text"
+									value={v ?? ""}
+									disabled
+								/>
+							) : (
+								<input
+									type="text"
+									value={v ?? ""}
+									onChange={(e) => {
+										let v = parseInt(e.target.value, 10);
+										props.updateTotals(colIndex, isNaN(v) ? null : v);
+									}}
+								/>
+							)}
 						</td>
-						{<td>100%</td>}
+						{/*<td>100%</td>*/}
 					</React.Fragment>)
 				})}
 			</tr>
@@ -392,7 +468,7 @@ function TableContent(props: TableContentProps) {
 			if (def.role == "dimension") {
 				colCount++
 			} else if (def.role == "metric") {
-				colCount += 2
+				colCount++
 			} else {
 				console.log("unknown def type", def)
 			}
@@ -400,6 +476,7 @@ function TableContent(props: TableContentProps) {
 		colCount += 1
 		return colCount
 	}
+
 	const dimCount = () => {
 		let r = 0
 		for (let def of props.defs) {
@@ -414,17 +491,23 @@ function TableContent(props: TableContentProps) {
 
 	const renderGroupRows = () => {
 		return props.data.map((group, groupI) => {
-			let groupMatch: null | boolean[] = null
-			if (props.totalsMatch) {
-				groupMatch = props.totalsMatch.get(group.key)!
+			/*
+			let groupTotalsMatch: null | boolean[] = null
+			if (props.groupTotalsMatch) {
+				groupTotalsMatch = props.groupTotalsMatch.get(group.key)!
+			}*/
+			let groupTotals: null | number[] = null
+			if (props.groupTotals) {
+				groupTotals = props.groupTotals.get(group.key)!
 			}
+
 			let colCount = columnCount()
 			let disaggr: string[] = []
 			for (let i = 0; i < group.key.length; i++) {
 				let c = group.key[i]
 				if (c == "1") {
 					let def = props.defs[i]
-					disaggr.push(def.uiName)
+					disaggr.push(etLocalizedStringForLang(def.uiName, props.lang))
 				}
 			}
 			let disaggrLabels = disaggr.join(", ")
@@ -433,9 +516,30 @@ function TableContent(props: TableContentProps) {
 			for (let e of props.tableErrors) {
 				errors.set(e.rowId, e)
 			}
+
+			let hasDateValue = false
+			for (let row of group.data) {
+				let data = row.data
+				if (data.length !== props.defs.length) {
+					throw new Error(
+						`Row length does not match defs length: data ${data.length}, defs ${props.defs.length}`
+					)
+				}
+				for (let i = 0; i < props.defs.length; i++) {
+					let def = props.defs[i]
+					if (def.format !== "date") continue
+					let v = data[i]
+					if (v) {
+						hasDateValue = true
+						break
+					}
+				}
+				if (hasDateValue) break
+			}
+
 			return <tbody key={groupI} className="group">
 				<tr className="spacing-row">
-					<td colSpan={colCount - 1}>
+					<td colSpan={colCount}>
 						Disaggregations: {disaggrLabels || "None"}
 					</td>
 				</tr>
@@ -453,11 +557,12 @@ function TableContent(props: TableContentProps) {
 						rowClassName = "dts-error"
 					}
 
+
 					return (
 						<React.Fragment key={id}>
 							{error &&
 								<tr>
-									<td colSpan={colCount}>
+									<td className="total" colSpan={colCount}>
 										{error.message}
 									</td>
 								</tr>
@@ -468,31 +573,141 @@ function TableContent(props: TableContentProps) {
 									if (error) {
 										cellClassName = ""
 									} else {
-										if (def.role == "metric") {
-											let metricIndex = colIndex - dimCount()
-											if (groupMatch) {
-												let m = groupMatch[metricIndex]
-												if (!m) {
-													cellClassName = "dts-warning"
+										if (!hasDateValue) {
+											if (def.role == "metric") {
+												let metricIndex = colIndex - dimCount()
+												if (groupTotals) {
+													let v = groupTotals[metricIndex]
+													let t = props.totals[metricIndex]
+													if (v < t) {
+														cellClassName = "dts-warning"
+													} else if (v > t) {
+														cellClassName = "dts-error"
+													}
 												}
 											}
 										}
 									}
-									return renderCell(def, row, colIndex, cellClassName)
+									return renderCell(def, row, colIndex, cellClassName/*, group.key*/)
 								})}
 								<td className="dts-table-actions">{renderRowActions(id)}</td>
 							</tr>
 						</React.Fragment>
 					)
 				})}
-				<tr className="spacing-row">
-					<td colSpan={colCount}></td>
+				<tr className="spacing-row dts-editable-table-group-total">
+					{hasDateValue && (
+						<td colSpan={colCount}>
+							<span className="total-label">Group total:</span>
+							{/*
+						<a href="#" onClick={(e) => {
+							e.preventDefault()
+							props.reSort()
+						}}>
+							Sort
+						</a>
+						*/}
+							<span className="dts-notice">
+								Group total cannot be calculated, because a value in "As of" date is set.
+							</span>
+						</td>
+					)}
+
+					{!hasDateValue && props.defs.map((def, colIndex) => {
+						const colsForLabel = dimCount()
+
+						if (colIndex == 0) {
+							let hasError = false
+							let hasWarning = false
+
+							if (groupTotals) {
+								groupTotals.forEach((v, i) => {
+									const t = props.totals[i]
+									if (v > t) hasError = true
+									else if (v < t) hasWarning = true
+								})
+							}
+
+							let messageWarning = null
+							if (hasWarning) {
+								messageWarning = (
+									<span className="dts-warning">
+										Subtotal is lower than the total, please check if this is intentional.
+									</span>
+								)
+							}
+
+							let messageError = null
+							if (hasError) {
+								messageError = (
+									<span className="dts-error">
+										Subtotal is higher than the total, please adjust to match.
+									</span>
+								)
+							}
+
+							const isUsedAsTotal = group.key == props.totalGroup
+
+							return (
+								<td key={colIndex} colSpan={colsForLabel}>
+									<span className="total-label">Group total:</span>
+									{/*
+									<a href="#" onClick={(e) => {
+										e.preventDefault()
+										props.reSort()
+									}}>
+										Sort
+									</a>
+									*/}
+									<label>
+										<input
+											type="checkbox"
+											checked={isUsedAsTotal}
+											onChange={(e) => {
+												const checked = e.target.checked;
+												props.setTotalGroup(checked ? group.key : "invalid");
+											}}
+										/>
+										Use as total
+									</label>
+									{messageWarning}
+									{messageError}
+								</td>
+							)
+						}
+						if (colIndex < colsForLabel) {
+							return null
+						}
+
+						if (def.role == "metric") {
+							let metricIndex = colIndex - dimCount()
+							if (groupTotals) {
+								let v = groupTotals[metricIndex]
+								let t = props.totals[metricIndex]
+								let className = ""
+								if (v < t) {
+									className = "dts-warning"
+								} else if (v > t) {
+									className = "dts-error"
+								}
+								return <td key={colIndex} className="group-total">
+									<span className={className}>{v}</span>
+								</td>
+							} else {
+								console.log("missing group total", props.groupTotals, group.key)
+								return <td key={colIndex} className="group-total">Missing group total</td>
+							}
+
+						}
+						return <td key={colIndex}></td>
+					})}
+					<td></td>
 				</tr>
 			</tbody>
 		})
 	}
 
-	const renderCell = (def: Def, row: DataWithId, colIndex: number, className: string | null) => {
+	const renderCell = (def: Def, row: DataWithId, colIndex: number, className: string | null/*, groupKey: string*/) => {
 		let t = row.from[colIndex]
 		let v = row.data[colIndex]
 		if (className === null) {
@@ -511,13 +726,14 @@ function TableContent(props: TableContentProps) {
 		return (
 			<React.Fragment key={colIndex}>
 				<td className={className}>
-					{renderInput(def, row.id, v, colIndex, props.updateCell)}
+					{renderInput(def, props.lang, row.id, v, colIndex, props.updateCell, props.reSort/*, groupKey*/)}
 				</td>
-				{def.role === "metric" && <td className={className}>{totalPercV(v, colIndex)}</td>}
+				{/*def.role === "metric" && <td className={className}>{totalPercV(v, colIndex)}</td>*/}
 			</React.Fragment>
 		)
 	}
 
+	/*
 	const totalPercV = (v: number, colIndex: number) => {
 		let n = Math.round((v / totalPerc(colIndex)) * 100)
 		if (!isFinite(n)) {
@@ -543,6 +759,7 @@ function TableContent(props: TableContentProps) {
 		}
 		throw new Error("invalid colIndex")
 	}
+ */
 
 	const renderRowActions = (id: string) => (
 		<>
@@ -579,10 +796,13 @@ function TableContent(props: TableContentProps) {
 
 function renderInput(
 	def: Def,
+	lang: string,
 	rowId: string,
 	value: any,
 	colIndex: number,
-	updateCell: (rowId: string, colIndex: number, value: any) => void
+	updateCell: (rowId: string, colIndex: number, value: any) => void,
+	reSort: () => void,
+	//groupKey: string
 ) {
 
 
@@ -592,12 +812,21 @@ function renderInput(
 			return (
 				<select
 					value={value ?? ""}
-					onChange={(e) => updateCell(rowId, colIndex, e.target.value || null)}
+					onChange={
+						(e) => {
+							let v = e.target.value || null
+							updateCell(rowId, colIndex, v)
+							//if (v !== null && groupKeyOnlyZeroes(groupKey)){
+							//	reSort()
+							//}
+							reSort()
+						}
+					}
 				>
 					<option key="null" value="">-</option>
 					{enumDef.data && enumDef.data.map((option) => (
 						<option key={option.key} value={option.key}>
-							{option.label}
+							{etLocalizedStringForLang(option.label, lang)}
 						</option>
 					))}
 				</select>
@@ -645,7 +874,9 @@ function TableActions(props: TableActionsProps) {
 	return (
 		<div className="dts-table-actions dts-table-actions-main">
 			<button onClick={props.addRowStart}>Add row</button>
-			<button onClick={props.reSort}>Resort</button>
+			{/*
+			<button onClick={props.reSort}>Sort into groups</button>
+		 */}
 			<button onClick={props.onSave}>Save</button>
 			<button onClick={props.onClear}>Clear</button>
 			<button onClick={props.onRevert}>Revert</button>
@@ -656,6 +887,7 @@ function TableActions(props: TableActionsProps) {
 }
 
 interface TableCategoryPresenceProps {
+	lang: string
 	tblId: HumanEffectsTable
 	defs: Def[]
 	data: Record<string, any>
@@ -671,7 +903,7 @@ function TableCategoryPresence(props: TableCategoryPresenceProps) {
 
 	const handleChange = (e: React.ChangeEvent<HTMLSelectElement>, key: string) => {
 		let newValue = e.target.value === "1" ? true : e.target.value === "0" ? false : null
-		setLocalData(prev => ({...prev, [key]: newValue}))
+		setLocalData(prev => ({ ...prev, [key]: newValue }))
 		fetcher.submit(e.target.form)
 	}
 
@@ -684,7 +916,7 @@ function TableCategoryPresence(props: TableCategoryPresenceProps) {
 				let vStr = v === true ? "1" : v === false ? "0" : ""
 				return (
 					<p key={d.jsName}>
-						<label>{d.uiName}&nbsp;
+						<label>{etLocalizedStringForLang(d.uiName, props.lang)}&nbsp;
 							<select
 								name={d.jsName}
 								value={vStr}

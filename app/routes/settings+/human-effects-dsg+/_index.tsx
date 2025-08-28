@@ -3,21 +3,22 @@ import {
 	authLoaderWithPerm
 } from "~/util/auth";
 
-import {Link, useLoaderData} from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 
-import {dr} from '~/db.server';
+import { dr } from '~/db.server';
 
-import {MainContainer} from "~/frontend/container";
+import { MainContainer } from "~/frontend/container";
 
-import {humanDsgConfigTable} from "~/drizzle/schema";
+import { humanDsgConfigTable } from "~/drizzle/schema";
 
 import {
 	SubmitButton,
 } from "~/frontend/form";
 
-import {Form} from "@remix-run/react";
-import {HumanEffectsHidden} from "~/frontend/human_effects/defs";
-import {sharedDefsAll} from "~/backend.server/models/human_effects";
+import { Form } from "@remix-run/react";
+import { HumanEffectsHidden } from "~/frontend/human_effects/defs";
+import { sharedDefsAll } from "~/backend.server/models/human_effects";
+import { etLocalizedStringForLang } from "~/frontend/editabletable/defs";
 
 async function getConfig() {
 	let row = await dr.query.humanDsgConfigTable.findFirst()
@@ -26,13 +27,13 @@ async function getConfig() {
 
 export const loader = authLoaderWithPerm("EditHumanEffectsCustomDsg", async () => {
 	let config = await getConfig()
-	return {defs: sharedDefsAll(), config}
+	return { defs: sharedDefsAll(), config }
 });
 
-export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({request}) => {
+export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({ request }) => {
 	let formData = await request.formData()
 	let defs = sharedDefsAll()
-	let res: HumanEffectsHidden = {cols: []}
+	let res: HumanEffectsHidden = { cols: [] }
 	for (let d of defs) {
 		let v = formData.get(d.dbName) || ""
 		if (typeof v !== "string") {
@@ -46,17 +47,18 @@ export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({re
 		const row = await tx.query.humanDsgConfigTable.findFirst()
 		if (!row) {
 			await tx.insert(humanDsgConfigTable)
-				.values({hidden: res})
+				.values({ hidden: res })
 		} else {
 			await tx.update(humanDsgConfigTable)
-				.set({hidden: res})
+				.set({ hidden: res })
 		}
 	});
-	return {ok: true}
+	return { ok: true }
 })
 
 export default function Screen() {
-	const ld = useLoaderData<typeof loader>();
+	const ld = useLoaderData<typeof loader>()
+	const lang = "en"
 
 	return (
 		<MainContainer
@@ -68,8 +70,8 @@ export default function Screen() {
 				<h3>Disaggregation columns</h3>
 				{ld.defs.map((d, i) => {
 					return <label key={i}>
-						<input type="checkbox" name={d.dbName} defaultChecked={!ld.config.has(d.dbName)} />&nbsp;
-						{d.uiName}
+						<input type="checkbox" name={d.dbName} defaultChecked={!((ld.config instanceof Set) && ld.config.has(d.dbName))} />&nbsp;
+						{etLocalizedStringForLang(d.uiName, lang)}
 					</label>
 				})}
 				<SubmitButton className="mg-button mg-button-primary" label="Update config" />
