@@ -18,8 +18,7 @@ import { disruptionTable } from "~/drizzle/schema";
 import { authLoaderWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
 
-import { buildTree } from "~/components/TreeView";
-import { dr } from "~/db.server"; // Drizzle ORM instance
+import { dr } from "~/db.server"; 
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
@@ -52,14 +51,6 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!params.disRecId) {
 		throw new Error("Route does not have disRecId param");
 	}
-
-	const idKey = "id";
-	const parentKey = "parentId";
-	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
-		"geojson",
-	]);
 
 	let ctryIso3: string = "";
 	let currencies: string[] = [];
@@ -102,7 +93,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			fieldDef: await getFieldsDef(currencies),
 			recordId: params.disRecId,
 			sectorId: sectorId,
-			treeData: treeData || [],
+			treeData: [],
 			ctryIso3: ctryIso3 || "",
 			divisionGeoJSON: divisionGeoJSON,
 		};
@@ -118,7 +109,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		fieldDef: await getFieldsDef(currencies),
 		recordId: item.recordId,
 		sectorId: item.sectorId,
-		treeData: treeData || [],
+		treeData: [],
 		ctryIso3: ctryIso3 || "",
 		divisionGeoJSON: divisionGeoJSON,
 	};
