@@ -126,8 +126,9 @@ Conclusion: ✅ Database provides adequate coordination mechanisms
 Email/Notification Duplication
 Status: ⚠️ Potential Issue Identified
 Live database shows 4 recent invite emails sent
-Current code could send duplicate emails from both containers
-Database coordination available: Email queue table can prevent duplicates
+Current code in app/util/email.ts and app/backend.server/models/user/invite.ts implements direct email sending without deduplication mechanisms
+In HA environment, identical requests to both containers could trigger duplicate emails
+Implementation of appropriate coordination mechanism required (pending PMO direction)
 File Upload Coordination
 Status: ✅ Manageable
 Only 3 files with attachments observed in testing
