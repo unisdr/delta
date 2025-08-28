@@ -21,7 +21,6 @@ import { assetsForSector } from "~/backend.server/models/asset";
 
 import { dr } from "~/db.server";
 
-import { buildTree } from "~/components/TreeView";
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
@@ -73,17 +72,6 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Response("Unauthorized, no selected instance", { status: 401 });
 	}
 
-	const idKey = "id";
-	const parentKey = "parentId";
-	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
-		"geojson",
-		"importId",
-		"nationalId",
-		"level",
-		"name",
-	]);
 
 	let ctryIso3: string = "";
 	let currencies: string[] = [];
@@ -112,7 +100,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			params.disRecId,
 			sectorId,
 			countryAccountsId,
-			treeData,
+			[],
 			ctryIso3,
 			currencies,
 			divisionGeoJSON
@@ -128,7 +116,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		item.recordId,
 		item.sectorId,
 		countryAccountsId,
-		treeData,
+		[],
 		ctryIso3,
 		currencies,
 		divisionGeoJSON

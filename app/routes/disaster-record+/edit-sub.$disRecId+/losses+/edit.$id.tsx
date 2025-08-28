@@ -20,7 +20,6 @@ import { authLoaderWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
 import { sectorIsAgriculture } from "~/backend.server/models/sector";
 
-import { buildTree } from "~/components/TreeView";
 import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
@@ -54,24 +53,6 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Response("Unauthorized access", { status: 401 });
 	}
 
-	const idKey = "id";
-	const parentKey = "parentId";
-	const nameKey = "name";
-	const rawData = await dr
-		.select()
-		.from(divisionTable)
-		.where(eq(divisionTable.countryAccountsId, countryAccountsId));
-
-	const treeData = buildTree(
-		rawData,
-		idKey,
-		parentKey,
-		nameKey,
-		// ["fr", "de", "en"],
-		"en",
-		["geojson"]
-	);
-
 	const settings = await getCountrySettingsFromSession(request);
 	let ctryIso3 = settings?.crtyIso3 || "";
 	const currencies = [settings?.currencyCode || "USD"];
@@ -103,7 +84,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			recordId: params.disRecId,
 			sectorId: sectorId,
 			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId),
-			treeData: treeData || [],
+			treeData: [],
 			ctryIso3: ctryIso3 || "",
 			divisionGeoJSON: divisionGeoJSON,
 		};
@@ -119,7 +100,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		fieldDef: createFieldsDef(currencies),
 		recordId: item.recordId,
 		sectorId: item.sectorId,
-		treeData: treeData || [],
+		treeData: [],
 		ctryIso3: ctryIso3 || "",
 		divisionGeoJSON: divisionGeoJSON,
 	};
