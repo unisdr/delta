@@ -823,19 +823,15 @@ export async function categoryPresenceDeleteAll(tx: Tx, recordId: string) {
 }
 
 
-export interface TotalGroupKV {
-	dbName: string
-	isSet: boolean
-}
-export type TotalGroup = TotalGroupKV[] | null
+export type TotalGroup = string[] | null
 
 
 function totalGroupJsName(tbl: HumanEffectsTable) {
-	return tableJsName(tbl) + "TotalGroupFlags"
+	return tableJsName(tbl) + "TotalGroupColumnNames"
 }
 
 function totalGroupDBName(tbl: HumanEffectsTable) {
-	return tableDBName(tbl) + "_total_group_flags"
+	return tableDBName(tbl) + "_total_group_column_names"
 }
 
 export async function totalGroupGet(tx: Tx, recordId: string, tbl: HumanEffectsTable): Promise<TotalGroup> {
