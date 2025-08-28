@@ -514,43 +514,27 @@ describe("human_effects - total group", async () => {
 	})
 
 	it("set and get", async () => {
-		let data = [
-			{ dbName: "sex", isSet: true },
-			{ dbName: "age", isSet: false },
-		]
+		let data = ["sex"]
 		await totalGroupSet(dr, rid1, "Deaths", data)
 		let res = await totalGroupGet(dr, rid1, "Deaths")
 		assert.deepEqual(res, data)
 	})
 
 	it("update", async () => {
-		await totalGroupSet(dr, rid1, "Deaths", [
-			{ dbName: "sex", isSet: true },
-			{ dbName: "age", isSet: false },
-		])
-		await totalGroupSet(dr, rid1, "Deaths", [
-			{ dbName: "sex", isSet: true },
-			{ dbName: "age", isSet: true },
-		])
+		await totalGroupSet(dr, rid1, "Deaths", ["sex"])
+		await totalGroupSet(dr, rid1, "Deaths", ["sex","age"])
 		let res = await totalGroupGet(dr, rid1, "Deaths")
-		assert.deepEqual(res, [
-			{ dbName: "sex", isSet: true },
-			{ dbName: "age", isSet: true },
-		])
+		assert.deepEqual(res, ["sex","age"])
 	})
 
 	it("set null", async () => {
-		let data = [
-			{ dbName: "sex", isSet: true },
-			{ dbName: "age", isSet: false },
-		]
+		let data = ["sex"]
 		await totalGroupSet(dr, rid1, "Deaths", data)
 
 		await totalGroupSet(dr, rid1, "Deaths", null)
 		let res = await totalGroupGet(dr, rid1, "Deaths")
 		assert.equal(res, null)
 	})
-
 })
 
 

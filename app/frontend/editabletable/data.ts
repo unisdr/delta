@@ -1,5 +1,4 @@
 import { DefData } from "~/frontend/editabletable/defs"
-import { notifyError } from "../utils/notifications"
 
 
 export interface PreviousUpdatesFromJson {
@@ -55,12 +54,7 @@ export interface sortOrderGroup {
 	ids: string[]
 }
 
-export interface TotalGroupKV {
-	dbName: string
-	isSet: boolean
-}
-
-export type TotalGroupFlags = TotalGroupKV[] | 'invalid' | null
+export type TotalGroupFlags = string[] | 'invalid' | null
 
 export type TotalGroupString = GroupKey | 'invalid' | null
 
@@ -77,10 +71,10 @@ export function totalGroupToString(defs: DefData[], tg: TotalGroupFlags): TotalG
 		if (def.format == 'number') {
 			break
 		}
-		const item = tg.find(entry => entry.dbName === def.dbName)
-		res.push(item?.isSet === true ? '1' : '0')
+		res.push(tg.includes(def.dbName) ? '1' : '0')
 	}
 
+	console.log("tgToString", tg, res.join(""))
 	return res.join('')
 }
 
@@ -88,16 +82,16 @@ export function totalGroupFromString(defs: DefData[], s: TotalGroupString): Tota
 	if (s === null) return null
 	if (s === 'invalid') return 'invalid'
 
-	const res: TotalGroupKV[] = []
+	const res: string[] = []
 	for (let i = 0; i < defs.length; i++) {
 		let def = defs[i]
 		if (def.format == "number") {
 			break
 		}
-		res.push({
-			dbName: def.dbName,
-			isSet: s[i] === '1'
-		})
+		let v = s[i]
+		if (v === "1") {
+			res.push(def.dbName)
+		}
 	}
 	return res
 }
@@ -108,16 +102,20 @@ export function validateTotalGroup(itg: TotalGroupFlags, defs: DefData[]): { res
 		return { res: 'invalid', error }
 	}
 	if (Array.isArray(itg)) {
+		if (!itg.every(a => typeof a == 'string')) {
+			let error = new Error('Expected total group data to be an array of strings')
+			return { res: 'invalid', error }
+		}
+
 		let defKeys = []
 		for (let i = 0; i < defs.length; i++) {
 			if (defs[i].format === 'number') break
 			defKeys.push(defs[i].dbName)
 		}
-		let itgKeys = itg.filter(a => a.isSet).map(a => a.dbName)
 		let defSet = new Set(defKeys)
-		let match = itgKeys.every(k => defSet.has(k))
+		let match = itg.every(k => defSet.has(k))
 		if (!match) {
-			let error = new Error(`Definitions in previous group selected for total no longer exist in columns defined, please select other group for total. Selected group total keys: ${itgKeys}. Available keys: ${defKeys}`)
+			let error = new Error(`Definitions in previous group selected for total no longer exist in columns defined, please select other group for total. Selected group total keys: ${itg}. Available keys: ${defKeys}`)
 			return { res: 'invalid', error }
 		}
 	}
@@ -227,13 +225,13 @@ export class DataManager {
 		this.sortDefault()
 
 
-		let vgt =	validateTotalGroup(initialTotalGroup, defs)
+		let vgt = validateTotalGroup(initialTotalGroup, defs)
 
 		this.totalGroupFlags = vgt.res
-		if (vgt.error != null){
+		if (vgt.error != null) {
 			console.error(vgt.error)
 		}
-	 
+
 
 		this.defs = defs
 	}

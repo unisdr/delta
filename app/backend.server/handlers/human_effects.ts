@@ -61,7 +61,7 @@ export async function loadData(
 
 interface Req {
 	table: HumanEffectsTable;
-	columns: string[];
+	columns?: string[];
 	data: PreviousUpdatesFromJson;
 }
 
@@ -97,16 +97,18 @@ export async function saveHumanEffectsData(req: Request, recordId: string, count
 	let defs = await defsForTable(dr, d.table)
 	let expectedCols = defs.map(d => d.jsName)
 
-	if (!eqArr(d.columns, expectedCols)) {
-		return Response.json(
-			{
-				ok: false,
-				error: `columns passed do not match expected: ${expectedCols} got ${d.columns}`,
-			},
-			{ status: 400 }
-		);
+	if (!d.data) {
+		return Response.json({ ok: false, error: `no data passed` }, { status: 400 })
 	}
 
+	if (d.data.deletes || d.data.updates || d.data.newRows) {
+		if (!d.columns) {
+			return Response.json({ ok: false, error: `when passing data, columns are also required: ${expectedCols}` }, { status: 400 })
+		}
+		if (!eqArr(d.columns, expectedCols)) {
+			return Response.json({ ok: false, error: `columns passed do not match expected: ${expectedCols} got ${d.columns}` }, { status: 400 })
+		}
+	}
 
 	try {
 		let dataModified = false;
@@ -162,25 +164,25 @@ export async function saveHumanEffectsData(req: Request, recordId: string, count
 					dataModified = true;
 				}
 			}
-			let res = await validate(tx, d.table, recordId, countryAccountsId, defs)
-			if (!res.ok) {
-				if (res.error) {
-					throw res.error
-				} else if (res.errors) {
-					for (let e of res.errors) {
-						let idTemp = idMap.get(e.rowId)
-						if (idTemp) {
-							e.rowId = idTemp
-						}
-					}
-					throw res.errors
-				} else {
-					throw new Error("unknown validate error")
-				}
-			}
-
-			// Update category presence if data was modified
 			if (dataModified) {
+
+				let res = await validate(tx, d.table, recordId, countryAccountsId, defs)
+				if (!res.ok) {
+					if (res.error) {
+						throw res.error
+					} else if (res.errors) {
+						for (let e of res.errors) {
+							let idTemp = idMap.get(e.rowId)
+							if (idTemp) {
+								e.rowId = idTemp
+							}
+						}
+						throw res.errors
+					} else {
+						throw new Error("unknown validate error")
+					}
+				}
+
 				try {
 					// Get current data to determine category presence
 					const currentData = await get(tx, d.table, recordId, countryAccountsId, defs);
