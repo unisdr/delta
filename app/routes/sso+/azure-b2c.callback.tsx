@@ -219,7 +219,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 						headers: { "Set-Cookie": setCookie },
 					});
 				} else if (userCountryAccounts && userCountryAccounts.length > 1) {
-					return redirect("/select-instance", { headers: headers });
+					return redirect("/user/select-instance", { headers: headers });
 				}
 			}
 		}
@@ -346,7 +346,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 							headers: { "Set-Cookie": setCookie },
 						});
 					} else if (userCountryAccounts && userCountryAccounts.length > 1) {
-						return redirect("/select-instance", { headers: headers });
+						return redirect("/user/select-instance", { headers: headers });
 					}
 				}
 			}
