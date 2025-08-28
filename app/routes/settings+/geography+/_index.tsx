@@ -81,15 +81,15 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(
-		rawData,
-		idKey,
-		parentKey,
-		nameKey,
-		"en",
-		["geojson"]
-	);
+	const rawData = await dr
+		.select({
+			id: divisionTable.id,
+			nationalId: divisionTable.nationalId,
+			name: divisionTable.name,
+			parentId: divisionTable.parentId,
+		})
+		.from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en");
 
 	return { langs, breadcrumbs, selectedLangs, treeData, ...res };
 });
