@@ -31,23 +31,40 @@ export function LocalizedStringEditor(props: LocalizedStringEditorProps) {
 
 	return (
 		<div className="dts-localized-string-input">
-			<label>{props.label}</label>
-			<div className="mg-grid mg-grid__col-3">
-				{props.langs.map(lang => (
+			{props.langs.length == 1 ? (
+				<div className="mg-grid mg-grid__col-3">
 					<div className="dts-form-component">
 						<label>
-							{lang}
+							{props.label}
 							<input
 								required={true}
-								key={lang}
-								value={labels[lang] || ''}
-								onChange={e => setLabels(prev => ({ ...prev, [lang]: e.target.value }))}
+								value={labels[props.langs[0]] || ''}
+								onChange={e => setLabels(prev => ({ ...prev, [props.langs[0]]: e.target.value }))}
 								onBlur={update}
 							/>
 						</label>
 					</div>
-				))}
-			</div>
+				</div>
+			) : (
+				<>
+					<label>{props.label}</label>
+					<div className="mg-grid mg-grid__col-3">
+						{props.langs.map(lang => (
+							<div className="dts-form-component" key={lang}>
+								<label>
+									{lang}
+									<input
+										required={true}
+										value={labels[lang] || ''}
+										onChange={e => setLabels(prev => ({ ...prev, [lang]: e.target.value }))}
+										onBlur={update}
+									/>
+								</label>
+							</div>
+						))}
+					</div>
+				</>
+			)}
 		</div>
 	)
 }

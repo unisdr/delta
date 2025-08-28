@@ -1,10 +1,12 @@
-import { DataFormat } from "~/frontend/editabletable/defs"
+import { DefData } from "~/frontend/editabletable/defs"
+import { notifyError } from "../utils/notifications"
+
 
 export interface PreviousUpdatesFromJson {
 	updates?: Record<string, Record<number, any>>
 	deletes?: string[]
 	newRows?: Record<string, any[]>
-	totalGroup?: TotalGroup
+	totalGroupFlags?: TotalGroupFlags
 }
 
 // i - initial
@@ -53,7 +55,76 @@ export interface sortOrderGroup {
 	ids: string[]
 }
 
-export type TotalGroup = GroupKey | "invalid" | null
+export interface TotalGroupKV {
+	dbName: string
+	isSet: boolean
+}
+
+export type TotalGroupFlags = TotalGroupKV[] | 'invalid' | null
+
+export type TotalGroupString = GroupKey | 'invalid' | null
+
+export function totalGroupToString(defs: DefData[], tg: TotalGroupFlags): TotalGroupString {
+	if (tg === null) return null
+	if (tg === 'invalid') return 'invalid'
+	if (!Array.isArray(tg)) {
+		console.error('Expected total group data to be an array', tg)
+		throw new Error('Expected total group data to be an array')
+	}
+	const res: string[] = []
+	for (let i = 0; i < defs.length; i++) {
+		let def = defs[i]
+		if (def.format == 'number') {
+			break
+		}
+		const item = tg.find(entry => entry.dbName === def.dbName)
+		res.push(item?.isSet === true ? '1' : '0')
+	}
+
+	return res.join('')
+}
+
+export function totalGroupFromString(defs: DefData[], s: TotalGroupString): TotalGroupFlags {
+	if (s === null) return null
+	if (s === 'invalid') return 'invalid'
+
+	const res: TotalGroupKV[] = []
+	for (let i = 0; i < defs.length; i++) {
+		let def = defs[i]
+		if (def.format == "number") {
+			break
+		}
+		res.push({
+			dbName: def.dbName,
+			isSet: s[i] === '1'
+		})
+	}
+	return res
+}
+
+export function validateTotalGroup(itg: TotalGroupFlags, defs: DefData[]): { res: TotalGroupFlags, error: Error | null } {
+	if (itg !== null && itg !== "invalid" && !Array.isArray(itg)) {
+		let error = new Error('Expected total group data to be an array')
+		return { res: 'invalid', error }
+	}
+	if (Array.isArray(itg)) {
+		let defKeys = []
+		for (let i = 0; i < defs.length; i++) {
+			if (defs[i].format === 'number') break
+			defKeys.push(defs[i].dbName)
+		}
+		let itgKeys = itg.filter(a => a.isSet).map(a => a.dbName)
+		let defSet = new Set(defKeys)
+		let match = itgKeys.every(k => defSet.has(k))
+		if (!match) {
+			let error = new Error(`Definitions in previous group selected for total no longer exist in columns defined, please select other group for total. Selected group total keys: ${itgKeys}. Available keys: ${defKeys}`)
+			return { res: 'invalid', error }
+		}
+	}
+	return { res: itg, error: null }
+}
+
+
 
 export class DataManager {
 
@@ -74,9 +145,9 @@ export class DataManager {
 	private totalsId: string
 
 
-	private totalGroup: TotalGroup = null
+	private totalGroupFlags: TotalGroupFlags = null
 
-	private defFormat: DataFormat[]
+	private defs: DefData[]
 
 	constructor() {
 		this.cols = { dimensions: 0, metrics: 0 }
@@ -87,11 +158,11 @@ export class DataManager {
 		this.deletes = new Set()
 		this.newRows = new Map()
 		this.sortOrder = []
-		this.defFormat = []
+		this.defs = []
 		this.sort = { column: 0, order: "asc" }
 	}
 
-	init(defFormats: DataFormat[], cols: DataManagerCols, initialData: any[][], ids: string[], initialTotalGroup: TotalGroup = null, previousUpdatesFromJson: PreviousUpdatesFromJson = {}) {
+	init(defs: DefData[], cols: DataManagerCols, initialData: any[][], ids: string[], initialTotalGroup: TotalGroupFlags = null, previousUpdatesFromJson: PreviousUpdatesFromJson = {}) {
 		console.log("prev data", previousUpdatesFromJson)
 		this.cols = cols
 		if (cols.dimensions == 0) {
@@ -155,9 +226,24 @@ export class DataManager {
 
 		this.sortDefault()
 
-		this.totalGroup = initialTotalGroup
 
-		this.defFormat = defFormats
+		let vgt =	validateTotalGroup(initialTotalGroup, defs)
+
+		this.totalGroupFlags = vgt.res
+		if (vgt.error != null){
+			console.error(vgt.error)
+		}
+	 
+
+		this.defs = defs
+	}
+
+	getTotalGroupString(): TotalGroupString {
+		return totalGroupToString(this.defs, this.totalGroupFlags)
+	}
+	setTotalGroupString(v: TotalGroupString) {
+		this.totalGroupFlags = totalGroupFromString(this.defs, v)
+		this.syncTotalsFromGroup()
 	}
 
 	hasUnsavedChanges(): boolean {
@@ -169,9 +255,12 @@ export class DataManager {
 	}
 
 	getTotals() {
-		if (this.totalGroup) {
+		let totalGroup = this.getTotalGroupString()
+		if (totalGroup) {
 			let allGroupTotals = this.groupTotals()
-			let groupTotal = allGroupTotals.get(this.totalGroup)
+
+			let groupTotal = allGroupTotals.get(totalGroup)
+
 			if (!groupTotal) {
 				return {
 					data: Array(this.cols.metrics).fill(0),
@@ -198,7 +287,7 @@ export class DataManager {
 			let hasDate = false
 			for (let row of g.data) {
 				for (let i = 0; i < this.cols.dimensions; i++) {
-					if (this.defFormat[i] === "date") {
+					if (this.defs[i].format === "date") {
 						let v = row.data[i]
 						if (v) hasDate = true
 						break
@@ -230,16 +319,17 @@ export class DataManager {
 		let totals = this.getTotals().data
 		let hasZero = totals.some(v => !v)
 		//console.log("totals", totals, "hasZero", hasZero, "this.tg", this.totalGroup)
-		if (!this.totalGroup) {
+		let totalGroup = this.getTotalGroupString()
+		if (!totalGroup) {
 			if (hasZero) {
 				return "One of the columns has 0 for total value."
 			}
 		} else {
-			if (this.totalGroup == "invalid") {
+			if (totalGroup == "invalid") {
 				return "Please select a group to use as total."
 			}
 			let data = this.applyUpdatesWithGroupKey()
-			const group = data.find(g => g.key === this.totalGroup);
+			const group = data.find(g => g.key === totalGroup);
 			if (!group || !group.data.length) {
 				return "Please select a group to use as total."
 			}
@@ -251,10 +341,9 @@ export class DataManager {
 	}
 
 	groupTotalsAreNotOver(): boolean {
-		if (this.totalGroup) {
+		if (this.totalGroupFlags !== null) {
 			return true
 		}
-
 		let groupTotals = this.groupTotals()
 		let totalValues = this.getTotals().data
 
@@ -318,21 +407,14 @@ export class DataManager {
 		this.updateField(this.totalsId, fieldIndex + this.cols.dimensions, newValue)
 	}
 
-	syncTotalsFromGroup(){
+	syncTotalsFromGroup() {
 		let totals = this.getTotals().data
 		for (let i = 0; i < totals.length; i++) {
 			this.updateTotals(i, totals[i])
 		}
 	}
 
-	getTotalGroup(): TotalGroup {
-		return this.totalGroup
-	}
 
-	setTotalGroup(v: TotalGroup) {
-		this.totalGroup = v
-		this.syncTotalsFromGroup()
-	}
 
 	deleteRow(rowId: string) {
 		if (this.rowIdIsNew(rowId)) {
@@ -445,7 +527,7 @@ export class DataManager {
 			),
 			deletes: Array.from(this.deletes),
 			newRows: Object.fromEntries(this.newRows.entries()),
-			totalGroup: this.totalGroup,
+			totalGroupFlags: this.totalGroupFlags,
 		}
 		return res
 	}
