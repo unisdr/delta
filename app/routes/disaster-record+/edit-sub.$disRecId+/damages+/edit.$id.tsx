@@ -28,8 +28,6 @@ import {assetsForSector} from "~/backend.server/models/asset"
 
 import {dr} from "~/db.server";
 
-import { buildTree } from "~/components/TreeView";
-import { divisionTable } from "~/drizzle/schema";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
@@ -69,12 +67,6 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Error("Route does not have disRecId param")
 	}
 
-	const idKey = "id";
-    const parentKey = "parentId";
-    const nameKey = "name";
-    const rawData = await dr.select().from(divisionTable);
-    const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]);
-
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
     const divisionGeoJSON = await dr.execute(`
@@ -90,14 +82,14 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			throw new Response("Not Found", {status: 404})
 		}
 		const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
-		return await getResponseData(null, params.disRecId, sectorId, treeData, ctryIso3, divisionGeoJSON?.rows)
+		return await getResponseData(null, params.disRecId, sectorId, [], ctryIso3, divisionGeoJSON?.rows)
 	}
 	const item = await damagesById(params.id)
 	if (!item) {
 		throw new Response("Not Found", {status: 404})
 	}
 
-	return await getResponseData(item, item.recordId, item.sectorId, treeData, ctryIso3, divisionGeoJSON?.rows);
+	return await getResponseData(item, item.recordId, item.sectorId, [], ctryIso3, divisionGeoJSON?.rows);
 });
 
 export const action = createAction({

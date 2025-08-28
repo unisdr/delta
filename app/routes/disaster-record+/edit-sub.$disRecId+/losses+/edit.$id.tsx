@@ -29,9 +29,6 @@ import {authLoaderWithPerm} from "~/util/auth"
 import {useLoaderData} from "@remix-run/react"
 import {sectorIsAgriculture} from "~/backend.server/models/sector"
 
-import { buildTree } from "~/components/TreeView";
-import { divisionTable } from "~/drizzle/schema";
-
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 
 interface LoaderRes {
@@ -54,12 +51,6 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Error("Route does not have disRecId param")
 	}
 
-	const idKey = "id";
-    const parentKey = "parentId";
-    const nameKey = "name";
-    const rawData = await dr.select().from(divisionTable);
-    const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson"]);
-
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
     const divisionGeoJSON = await dr.execute(`
@@ -80,7 +71,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			recordId: params.disRecId,
 			sectorId: sectorId,
 			sectorIsAgriculture: await sectorIsAgriculture(dr, sectorId),
-			treeData: treeData || [],
+			treeData: [],
 			ctryIso3: ctryIso3 || "",
 			divisionGeoJSON: divisionGeoJSON?.rows || [],
 		}
@@ -96,7 +87,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		fieldDef: fieldsDef,
 		recordId: item.recordId,
 		sectorId: item.sectorId,
-		treeData: treeData || [],
+		treeData: [],
 		ctryIso3: ctryIso3 || "",
 		divisionGeoJSON: divisionGeoJSON?.rows || [],
 	}
