@@ -16,17 +16,26 @@ services:
     restart: always
 
   db:
-    image: postgres:17
+    image: postgis/postgis:17-3.5
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=2024
       - POSTGRES_DB=dts_development
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data2
 
     ports:
       - "5432:5432"
     restart: always
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: pgsql
+      ADMINER_DEFAULT_DB_HOST: db:5432
+      ADMINER_DEFAULT_DB_NAME: dts_development 
 
 volumes:
   db-data:
