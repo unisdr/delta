@@ -1,3 +1,4 @@
+/* Extended styles for multi-metric CustomMap component */
 .impact-map-container {
   position: relative;
   width: 100%;
@@ -23,8 +24,21 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   font-size: 12px;
   min-width: 180px;
-  max-width: 250px;
+  max-width: 280px;
   border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Specialized legend styles for different metric types */
+.legend-mortality {
+  border-left: 4px solid #f44336;
+}
+
+.legend-population {
+  border-left: 4px solid #ff9800;
+}
+
+.legend-events {
+  border-left: 4px solid #9c27b0;
 }
 
 .legend h4 {
@@ -34,6 +48,7 @@
   color: #333;
   padding-bottom: 4px;
   border-bottom: 1px solid #eee;
+  line-height: 1.3;
 }
 
 .legend-items {
@@ -64,52 +79,21 @@
   font-size: 12px;
   color: #666;
   flex: 1;
+  word-break: break-word;
 }
 
-.map-tooltip {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px 12px;
+.map-header {
+  padding: 10px;
+  background: white;
   border-radius: 4px;
-  font-size: 14px;
-  pointer-events: none;
-  z-index: 1002;
-  min-width: 200px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  display: none;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.tooltip {
-  display: none;
-  position: absolute;
-  padding: 8px;
-  border-radius: 4px;
-}
-
-.tooltip.light-text {
-  color: #FFFFFF;
-}
-
-.tooltip.dark-text {
-  color: #333333;
-}
-
-.tooltip-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.region-name {
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 2px;
-  color: #ffffff;
-}
-
-.metric-value {
-  color: #e0e0e0;
+.map-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2em;
+  color: #333;
 }
 
 .map-controls {
@@ -136,51 +120,168 @@
 }
 
 .back-button:disabled {
-  opacity: 0.5;
+  opacity: .5;
   cursor: not-allowed;
 }
 
-.loading-indicator {
-  font-size: 14px;
-  color: #666;
-}
 
-.loading-overlay {
+.map-tooltip {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 1002;
+  min-width: 200px;
+  max-width: 300px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: none;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.tooltip.light-text {
+  color: #FFFFFF;
+}
+
+.tooltip.dark-text {
+  color: #333333;
+}
+
+.tooltip-content {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltip-container {
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 200px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-title {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.tooltip-metric {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tooltip-metric-label {
+  color: inherit;
+  font-weight: 500;
+}
+
+.tooltip-metric-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Multi-metric selector styles */
+.metric-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.metric-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.metric-button {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  z-index: 1001;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  background: #ffffff;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-height: 70px;
+  justify-content: center;
 }
 
-.loading-spinner {
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3498db;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
+.metric-button:hover {
+  border-color: #2196f3;
+  background-color: #f5f5f5;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+.metric-button.active {
+  background: #2196f3;
+  color: white;
+  border-color: #1976d2;
+  font-weight: 600;
 }
 
+.metric-button .metric-label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+.metric-button .metric-unit {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Specialized metric button styles */
+.metric-button[data-metric-type="mortality"] {
+  border-color: #f44336;
+}
+
+.metric-button[data-metric-type="mortality"].active {
+  background: #f44336;
+  border-color: #d32f2f;
+}
+
+.metric-button[data-metric-type="population"] {
+  border-color: #ff9800;
+}
+
+.metric-button[data-metric-type="population"].active {
+  background: #ff9800;
+  border-color: #f57c00;
+}
+
+.metric-button[data-metric-type="events"] {
+  border-color: #9c27b0;
+}
+
+.metric-button[data-metric-type="events"].active {
+  background: #9c27b0;
+  border-color: #7b1fa2;
+}
+
+/* Legacy metric toggle for backward compatibility */
 .metric-toggle {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
+  flex-wrap: wrap;
 }
 
 .metric-btn {
@@ -200,46 +301,138 @@
   font-weight: bold;
 }
 
-.map-header {
-  padding: 10px;
-  background: white;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Real-time data indicator */
+.live-data-indicator {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.map-header h3 {
-  margin: 0 0 10px 0;
-  font-size: 1.2em;
-  color: #333;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #4caf50;
+  border-radius: 50%;
 }
 
-.tooltip-container {
-  padding: 8px 12px;
-  font-size: 14px;
-  min-width: 200px;
-  border: 1px solid rgba(0,0,0,0.1);
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.status-dot.blinking {
+  animation: blink 2s infinite;
 }
 
-.tooltip-title {
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 4px;
+@keyframes blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0.3;
+  }
 }
 
-.tooltip-metric {
+/* Analysis controls */
+.analysis-controls {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
-.tooltip-metric-label {
-  color: inherit;
+.comparison-mode {
+  display: flex;
+  gap: 8px;
 }
 
-.tooltip-metric-value {
-  font-weight: 600;
+.comparison-mode button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.comparison-mode button.active {
+  background: #2196f3;
+  color: white;
+  border-color: #1976d2;
+}
+
+.time-range-selector {
+  display: flex;
+  gap: 4px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.time-range-selector button {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.time-range-selector button.active {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading and error states */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .map-error {
@@ -267,7 +460,7 @@
   flex: 1;
 }
 
-/* Only move legend below on small screens */
+/* Responsive design */
 @media screen and (max-width: 768px) {
   .legend {
     top: 100%;
@@ -276,6 +469,53 @@
     left: 0;
     margin: 10px;
     max-width: none;
+    min-width: auto;
+  }
+
+  .metric-selector-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .metric-button {
+    min-height: 60px;
+    padding: 10px 12px;
+  }
+
+  .metric-button .metric-label {
+    font-size: 13px;
+  }
+
+  .analysis-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tooltip-metric {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tooltip-metric-value {
+    text-align: left;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .impact-map-container {
+    height: 350px;
+  }
+
+  .legend h4 {
+    font-size: 13px;
+  }
+
+  .legend-label {
+    font-size: 11px;
+  }
+
+  .metric-selector-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -290,4 +530,29 @@
   bottom: 0 !important;
   right: 0 !important;
   background: rgba(255, 255, 255, 0.9) !important;
+  font-size: 11px !important;
+}
+
+/* Accessibility improvements */
+.metric-button:focus,
+.metric-btn:focus,
+.comparison-mode button:focus,
+.time-range-selector button:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .legend {
+    border: 2px solid #000;
+  }
+
+  .metric-button {
+    border-width: 2px;
+  }
+
+  .legend-color {
+    border: 1px solid #000;
+  }
 }
