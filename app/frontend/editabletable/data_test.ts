@@ -7,13 +7,22 @@ import {
 	DataWithIdBasic,
 	dataToGroupKey,
 	dataKeySet,
-	DataManagerCols
+	DataManagerCols,
 } from './data'
-import { DataFormat } from "~/frontend/editabletable/defs"
+import { DefData } from "~/frontend/editabletable/defs"
 
 describe('DataManager', () => {
 	let cols: DataManagerCols = { dimensions: 1, metrics: 1 }
-	let defFormats: DataFormat[] = ["enum", "number"]
+	let defs: DefData[] = [
+		{
+			dbName: "col1",
+			format:"enum",
+		},
+		{
+			dbName: "col2",
+			format:"number"
+		},
+	]
 
 	it('initializes with no updates', () => {
 		const initialData = [
@@ -23,7 +32,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2", "3"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 		let res = manager.applyUpdates()
 		console.log("res", res)
 		assert.deepEqual(res, [
@@ -48,7 +57,7 @@ describe('DataManager', () => {
 		}
 
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids, null, previousUpdates)
+		manager.init(defs, cols, initialData, ids, null, previousUpdates)
 		let res = manager.applyUpdates()
 		assert.deepEqual(res, [
 			[
@@ -65,7 +74,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 
 		manager.updateField("1", 0, "Johnny")
 		manager.updateField("2", 1, 35)
@@ -85,7 +94,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 
 		manager.updateField("1", 0, "Johnny")
 		manager.deleteRow("1")
@@ -101,7 +110,7 @@ describe('DataManager', () => {
 		const initialData = [["John", 25]]
 		const ids = ["1"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 		const id = manager.addRow("start")
 		manager.updateField(id, 0, "Jane")
 
@@ -122,7 +131,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 
 		manager.updateField("1", 1, 26)
 		manager.deleteRow("2")
@@ -136,7 +145,7 @@ describe('DataManager', () => {
 				"_temp1": [null, null],
 				"_temp2": ["Bob", null]
 			},
-			totalGroup: null,
+			totalGroupFlags: null,
 		})
 	})
 
@@ -147,7 +156,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 		manager.updateField("1", 1, 27)
 		manager.deleteRow("2")
 		let id = manager.addRow("start")
@@ -174,7 +183,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2", "3", "4", "5"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 		manager.sortByColumn(1, "desc")
 		let res = manager.applyUpdates()
 		assert.deepEqual(res, [
@@ -194,7 +203,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 		manager.copyRow("2")
 		let res = manager.applyUpdates()
 		assert.deepEqual(res, [
@@ -212,7 +221,7 @@ describe('DataManager', () => {
 		]
 		const ids = ["1", "2"]
 		const manager = new DataManager()
-		manager.init(defFormats, cols, initialData, ids)
+		manager.init(defs, cols, initialData, ids)
 		manager.copyRow("2")
 		manager.deleteRow("_temp2")
 		let res = manager.applyUpdates()
@@ -282,21 +291,21 @@ describe('DataManager', () => {
 
 	it('handle totals', () => {
 		const manager = new DataManager()
-		manager.init(defFormats, cols, [[null, 22]], ["id1"])
+		manager.init(defs, cols, [[null, 22]], ["id1"])
 		assert.deepEqual(manager.getTotals(), { data: [22], id: "id1" })
 		assert.deepEqual(manager.applyUpdates(), [])
 	})
 
 	it('handle totals - new', () => {
 		const manager = new DataManager()
-		manager.init(defFormats, cols, [], [])
+		manager.init(defs, cols, [], [])
 		assert.deepEqual(manager.getTotals(), { data: [null], id: "_temp1" })
 		assert.deepEqual(manager.applyUpdates(), [])
 	})
 
 	it('handle totals - update', () => {
 		const manager = new DataManager()
-		manager.init(defFormats, cols, [[null, 22]], ["id1"])
+		manager.init(defs, cols, [[null, 22]], ["id1"])
 		manager.updateTotals(0, 23)
 		assert.deepEqual(manager.getTotals(), { data: [23], id: "id1" })
 		assert.deepEqual(manager.applyUpdates(), [])
@@ -304,7 +313,7 @@ describe('DataManager', () => {
 
 	it('get group totals - basic', () => {
 		let manager = new DataManager()
-		manager.init(defFormats, cols, [
+		manager.init(defs, cols, [
 			[null, 22],
 			['a', 5],
 			['b', 6],
@@ -318,12 +327,12 @@ describe('DataManager', () => {
 
 	it('use group totals for overall totals', () => {
 		let manager = new DataManager()
-		manager.init(defFormats, cols, [
+		manager.init(defs, cols, [
 			[null, null],
 			['a', 5],
 			['b', 6],
 		], ['id1', 'id2', 'id3'])
-		manager.setTotalGroup("1")
+		manager.setTotalGroupString("1")
 		let res = manager.getTotals()
 		let want = {
 			data: [11],
@@ -333,7 +342,7 @@ describe('DataManager', () => {
 
 	it('get group totals - basic', () => {
 		let manager = new DataManager()
-		manager.init(defFormats, cols, [
+		manager.init(defs, cols, [
 			[null, 22],
 			['a', 5],
 			['b', 6],
@@ -347,7 +356,7 @@ describe('DataManager', () => {
 
 	it('groupTotalsAreNotOver - true', () => {
 		let manager = new DataManager()
-		manager.init(defFormats, cols, [
+		manager.init(defs, cols, [
 			[null, 11],
 			['a', 5],
 			['b', 6],
@@ -358,7 +367,7 @@ describe('DataManager', () => {
 
 	it('groupTotalsAreNotOver - false', () => {
 		let manager = new DataManager()
-		manager.init(defFormats, cols, [
+		manager.init(defs, cols, [
 			[null, 10],
 			['a', 5],
 			['b', 6],

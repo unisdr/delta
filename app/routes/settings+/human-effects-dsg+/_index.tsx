@@ -58,7 +58,7 @@ export const action = authActionWithPerm("EditHumanEffectsCustomDsg", async ({ r
 
 export default function Screen() {
 	const ld = useLoaderData<typeof loader>()
-	const lang = "en"
+	const lang = "default"
 
 	return (
 		<MainContainer

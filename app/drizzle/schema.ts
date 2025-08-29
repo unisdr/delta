@@ -688,11 +688,11 @@ export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	affectedIndirect: boolean("affected_indirect"),
 	displaced: boolean("displaced"),
 
-	deathsTotalGroup: text("deaths_total_group"),
-	injuredTotalGroup: text("injured_total_group"),
-	missingTotalGroup: text("missing_total_group"),
-	affectedTotalGroup: text("affected_total_group"),
-	displacedTotalGroup: text("displaced_total_group"),
+	deathsTotalGroupColumnNames: jsonb("deaths_total_group_column_names"),
+	injuredTotalGroupColumnNames:jsonb("injured_total_group_column_names"),
+	missingTotalGroupColumnNames: jsonb("missing_total_group_column_names"),
+	affectedTotalGroupColumnNames: jsonb("affected_total_group_column_names"),
+	displacedTotalGroupColumnNames: jsonb("displaced_total_group_column_names"),
 });
 
 export type HumanCategoryPresence = typeof humanDsgConfigTable.$inferSelect;

@@ -1,19 +1,21 @@
-import {authLoaderWithPerm} from "~/util/auth";
-import {MainContainer} from "~/frontend/container";
-import {Table} from "~/frontend/editabletable/view";
-import {useLoaderData, Link} from "@remix-run/react";
-import {HumanEffectsTableFromString, HumanEffectTablesDefs} from "~/frontend/human_effects/defs";
-import {useFetcher} from "@remix-run/react"
-import {loadData} from "~/backend.server/handlers/human_effects"
+import { authLoaderWithPerm } from "~/util/auth";
+import { MainContainer } from "~/frontend/container";
+import { Table } from "~/frontend/editabletable/view";
+import { validateTotalGroup } from "~/frontend/editabletable/data";
+import { useLoaderData, Link } from "@remix-run/react";
+import { HumanEffectsTableFromString, HumanEffectTablesDefs } from "~/frontend/human_effects/defs";
+import { useFetcher } from "@remix-run/react"
+import { loadData } from "~/backend.server/handlers/human_effects"
 import {
 	categoryPresenceSet,
 	defsForTable
 } from '~/backend.server/models/human_effects'
-import {dr} from "~/db.server";
-
+import { dr } from "~/db.server";
+import { notifyError } from "~/frontend/utils/notifications";
+import { useEffect } from "react"
 
 export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
-	const {params, request} = actionArgs
+	const { params, request } = actionArgs
 	let recordId = params.disRecId
 	let url = new URL(request.url)
 	let tblStr = url.searchParams.get("tbl") || ""
@@ -21,7 +23,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 });
 
 export const action = authLoaderWithPerm("EditData", async (actionArgs) => {
-	let {params, request} = actionArgs
+	let { params, request } = actionArgs
 	let recordId = params.disRecId
 	if (!recordId) {
 		throw new Error("no record id")
@@ -51,6 +53,15 @@ export default function Screen() {
 	const fetcher = useFetcher<typeof loader>()
 	const data = fetcher.data || ld
 
+	useEffect(() => {
+		const vtg = validateTotalGroup(data.totalGroupFlags, data.defs)
+		if (vtg.error) {
+			notifyError(vtg.error.message)
+		}
+	}, [data.totalGroupFlags, data.defs])
+
+
+
 	return (
 		<MainContainer title="Human Effects">
 			<Link to={"/disaster-record/edit/" + ld.recordId}>Back to disaster record</Link>
@@ -69,12 +80,12 @@ export default function Screen() {
 				</select>
 			</fetcher.Form>
 			<Table
-				lang="en"
+				lang="default"
 				recordId={data.recordId}
 				table={data.tblId}
 				initialIds={data.ids}
 				initialData={data.data}
-				initialTotalGroup={data.totalGroup}
+				initialTotalGroup={data.totalGroupFlags}
 				defs={data.defs}
 				categoryPresence={data.categoryPresence}
 			/>

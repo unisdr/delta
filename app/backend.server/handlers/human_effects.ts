@@ -1,4 +1,7 @@
-import { HumanEffectsTableFromString, HumanEffectTablesDefs } from "~/frontend/human_effects/defs";
+import {
+	HumanEffectsTableFromString,
+	HumanEffectTablesDefs,
+} from "~/frontend/human_effects/defs";
 import {
 	get,
 	categoryPresenceGet,
@@ -34,7 +37,8 @@ export async function loadData(recordId: string | undefined, tblStr: string) {
 		throw res.error
 	}
 	let categoryPresence = await categoryPresenceGet(dr, recordId, tblId, defs)
-	let totalGroup = await totalGroupGet(dr, recordId, tblId)
+	let totalGroupFlags = await totalGroupGet(dr, recordId, tblId)
+
 	return {
 		tblId: tblId,
 		tbl: HumanEffectTablesDefs.find(t => t.id == tblId)!,
@@ -43,13 +47,13 @@ export async function loadData(recordId: string | undefined, tblStr: string) {
 		ids: res.ids,
 		data: res.data,
 		categoryPresence,
-		totalGroup
+		totalGroupFlags,
 	}
 }
 
 interface Req {
 	table: HumanEffectsTable
-	columns: string[]
+	columns?: string[]
 	data: PreviousUpdatesFromJson
 }
 
@@ -85,23 +89,34 @@ export async function saveData(req: Request, recordId: string) {
 	let defs = await defsForTable(dr, d.table)
 	let expectedCols = defs.map(d => d.jsName)
 
-	if (!eqArr(d.columns, expectedCols)) {
-		return Response.json({ ok: false, error: `columns passed do not match expected: ${expectedCols} got ${d.columns}` }, { status: 400 })
+	if (!d.data) {
+		return Response.json({ ok: false, error: `no data passed` }, { status: 400 })
+	}
+
+	if (d.data.deletes || d.data.updates || d.data.newRows) {
+		if (!d.columns) {
+			return Response.json({ ok: false, error: `when passing data, columns are also required: ${expectedCols}` }, { status: 400 })
+		}
+		if (!eqArr(d.columns, expectedCols)) {
+			return Response.json({ ok: false, error: `columns passed do not match expected: ${expectedCols} got ${d.columns}` }, { status: 400 })
+		}
 	}
 
 	try {
 		let dataModified = false;
 		await dr.transaction(async (tx) => {
-			if (d.data.totalGroup !== undefined) {
+			if (d.data.totalGroupFlags !== undefined) {
+				if (d.data.totalGroupFlags === "invalid") {
+					throw "Server error, invalid totalGroup (should be checked in frontend)"
+				}
 				/*
 				console.log('Updating totalGroup:', {
 					recordId,
 					table: d.table,
 					totalGroup: d.data.totalGroup
 				});*/
-				await totalGroupSet(dr, recordId, d.table, d.data.totalGroup)
+				await totalGroupSet(dr, recordId, d.table, d.data.totalGroupFlags)
 			}
-
 			if (d.data.deletes) {
 				let res = await deleteRows(tx, d.table, d.data.deletes)
 				if (!res.ok) {
@@ -139,25 +154,24 @@ export async function saveData(req: Request, recordId: string) {
 					dataModified = true;
 				}
 			}
-			let res = await validate(tx, d.table, recordId, defs)
-			if (!res.ok) {
-				if (res.error) {
-					throw res.error
-				} else if (res.errors) {
-					for (let e of res.errors) {
-						let idTemp = idMap.get(e.rowId)
-						if (idTemp) {
-							e.rowId = idTemp
-						}
-					}
-					throw res.errors
-				} else {
-					throw new Error("unknown validate error")
-				}
-			}
-
-			// Update category presence if data was modified
 			if (dataModified) {
+				let res = await validate(tx, d.table, recordId, defs)
+				if (!res.ok) {
+					if (res.error) {
+						throw res.error
+					} else if (res.errors) {
+						for (let e of res.errors) {
+							let idTemp = idMap.get(e.rowId)
+							if (idTemp) {
+								e.rowId = idTemp
+							}
+						}
+						throw res.errors
+					} else {
+						throw new Error("unknown validate error")
+					}
+				}
+				// Update category presence if data was modified
 				try {
 					// Get current data to determine category presence
 					const currentData = await get(tx, d.table, recordId, defs);
