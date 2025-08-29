@@ -16,7 +16,7 @@ export const loader = authLoaderApiDocs(async ({request}) => {
 
 	let docs = await jsonApiDocs({
 		baseUrl: "disruption",
-		fieldsDef: await getFieldsDefApi(),
+		fieldsDef: getFieldsDefApi(),
 		siteUrl: baseUrl,
 	})
 

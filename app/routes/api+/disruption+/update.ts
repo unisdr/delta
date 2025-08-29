@@ -32,7 +32,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
 		const saveRes = await jsonUpdate({
 			data,
-			fieldsDef: await getFieldsDefApi(),
+			fieldsDef: getFieldsDefApi(),
 			update: disruptionUpdateByIdAndCountryAccountsId,
 			countryAccountsId,
 		});
