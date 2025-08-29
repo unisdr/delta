@@ -17,9 +17,9 @@ import { updateTotalsUsingDisasterRecordId } from "./analytics/disaster-events-c
 import { getDisasterRecordsByIdAndCountryAccountsId } from "~/db/queries/disasterRecords";
 export interface DisruptionFields extends Omit<DisruptionInsert, "id"> {}
 
-export async function getFieldsDef(
+export function getFieldsDef(
 	currencies?: string[]
-): Promise<FormInputDef<DisruptionFields>[]> {
+): FormInputDef<DisruptionFields>[] {
 	if (!currencies) {
 		currencies = [];
 	}
@@ -66,17 +66,16 @@ export async function getFieldsDef(
 	];
 }
 
-export async function getFieldsDefApi(): Promise<
-	FormInputDef<DisruptionFields>[]
-> {
-	const baseFields = await getFieldsDef();
+export function getFieldsDefApi(): 
+	FormInputDef<DisruptionFields>[] {
+	const baseFields = getFieldsDef();
 	return [...baseFields, { key: "apiImportId", label: "", type: "other" }];
 }
 
 export async function getFieldsDefView(): Promise<
 	FormInputDef<DisruptionFields>[]
 > {
-	const baseFields = await getFieldsDef();
+	const baseFields = getFieldsDef();
 	return [...baseFields];
 }
 

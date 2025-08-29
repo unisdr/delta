@@ -90,7 +90,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		}
 		let res: LoaderRes = {
 			item: null,
-			fieldDef: await getFieldsDef(currencies),
+			fieldDef: getFieldsDef(currencies),
 			recordId: params.disRecId,
 			sectorId: sectorId,
 			treeData: [],
@@ -106,7 +106,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let res: LoaderRes = {
 		item: item,
-		fieldDef: await getFieldsDef(currencies),
+		fieldDef: getFieldsDef(currencies),
 		recordId: item.recordId,
 		sectorId: item.sectorId,
 		treeData: [],
@@ -117,7 +117,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 });
 
 export const action = createActionWithoutCountryAccountsId({
-	fieldsDef: await getFieldsDef(),
+	fieldsDef: getFieldsDef(),
 	create: disruptionCreate,
 	update: disruptionUpdate,
 	getById: disruptionByIdTx,
