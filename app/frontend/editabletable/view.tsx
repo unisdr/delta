@@ -366,7 +366,8 @@ function colWidth(colWidth: ColWidth|undefined): number {
 		case "wide":
 			return 120
 		default:
-			throw new Error("Invalid colWidth")
+			return 120
+			//throw new Error("Invalid colWidth")
 	}
 }
 
