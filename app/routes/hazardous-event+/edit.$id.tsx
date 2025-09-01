@@ -54,8 +54,15 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable).where(eq(divisionTable.countryAccountsId, countryAccountsId));
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["geojson", "importId", "nationalId", "level", "name"]); 
+	const rawData = await dr.select({
+			id: divisionTable.id,
+			parentId: divisionTable.parentId,
+			name: divisionTable.name,
+			importId: divisionTable.importId,
+			nationalId: divisionTable.nationalId,
+			level: divisionTable.level,
+		}).from(divisionTable).where(eq(divisionTable.countryAccountsId, countryAccountsId));
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["importId", "nationalId", "level", "name"]); 
 
 	const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson, import_id

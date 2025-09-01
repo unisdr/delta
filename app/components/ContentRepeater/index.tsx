@@ -1188,6 +1188,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
     const errorDiv = dialogRef.current?.querySelector(".dts-alert.dts-alert--error") as HTMLElement;
 
     if (missingFields.length > 0) {
+      console.log("missingFields = ", missingFields)
       // Construct the error message
       const errorMessage = `Please fill out the following required fields: ${missingFields
         .map((field) => field.caption)

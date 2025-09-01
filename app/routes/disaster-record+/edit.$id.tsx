@@ -57,11 +57,17 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		const nameKey = "name";
 		// Filter divisions by tenant context for security
 		const rawData = await dr
-			.select()
+			.select({
+				id: divisionTable.id,
+				parentId: divisionTable.parentId,
+				name: divisionTable.name,
+				importId: divisionTable.importId,
+				nationalId: divisionTable.nationalId,
+				level: divisionTable.level,
+			})
 			.from(divisionTable)
 			.where(sql`country_accounts_id = ${countryAccountsId}`);
 		return buildTree(rawData, idKey, parentKey, nameKey, "en", [
-			"geojson",
 			"importId",
 			"nationalId",
 			"level",

@@ -21,8 +21,16 @@ import { useLoaderData } from "@remix-run/react";
 
 import { getItem2 } from "~/backend.server/handlers/view";
 import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
-import { authActionGetAuth, authActionWithPerm, authLoaderGetUserForFrontend, authLoaderWithPerm } from "~/util/auth";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	authActionGetAuth,
+	authActionWithPerm,
+	authLoaderGetUserForFrontend,
+	authLoaderWithPerm,
+} from "~/util/auth";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 import { sql } from "drizzle-orm";
 import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
@@ -47,7 +55,7 @@ async function getDivisionGeoJSON(countryAccountsId: string) {
 }
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
-	const {request} = actionArgs;
+	const { request } = actionArgs;
 	authActionGetAuth(actionArgs);
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
@@ -56,7 +64,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
-			const updatedData = {...data, countryAccountsId}
+			const updatedData = { ...data, countryAccountsId };
 			if (id) {
 				return disasterEventUpdate(tx, id, updatedData);
 			} else {
@@ -67,12 +75,10 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	});
 });
 
-
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params, request } = loaderArgs;
 	const ctryIso3 = await getCountryIso3(request);
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	
 
 	// Handle 'new' case without DB query
 	if (params.id === "new") {
@@ -83,12 +89,18 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 		// Filter divisions by tenant context for security
 		const rawData = await dr
-			.select()
+			.select({
+				id: divisionTable.id,
+				parentId: divisionTable.parentId,
+				name: divisionTable.name,
+				importId: divisionTable.importId,
+				nationalId: divisionTable.nationalId,
+				level: divisionTable.level,
+			})
 			.from(divisionTable)
 			.where(sql`country_accounts_id = ${countryAccountsId}`);
 
 		const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
-			"geojson",
 			"importId",
 			"nationalId",
 			"level",
@@ -103,7 +115,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			hip: await dataForHazardPicker(),
 			treeData: treeData,
 			ctryIso3: ctryIso3,
-			divisionGeoJSON:  divisionGeoJSON?.rows || [],
+			divisionGeoJSON: divisionGeoJSON?.rows || [],
 			user: await authLoaderGetUserForFrontend(loaderArgs),
 		};
 	}
@@ -116,7 +128,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	let item = null;
 	try {
 		item = await getItem2(params, getDisasterEvent);
-		if(item.countryAccountsId !== countryAccountsId){
+		if (item.countryAccountsId !== countryAccountsId) {
 			throw new Response("Unauthorized access", { status: 401 });
 		}
 	} catch (error) {
@@ -133,18 +145,23 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const parentKey = "parentId";
 	const nameKey = "name";
 	const rawData = await dr
-		.select()
+		.select({
+				id: divisionTable.id,
+				parentId: divisionTable.parentId,
+				name: divisionTable.name,
+				importId: divisionTable.importId,
+				nationalId: divisionTable.nationalId,
+				level: divisionTable.level,
+			})
 		.from(divisionTable)
 		.where(sql`country_accounts_id = ${countryAccountsId}`);
 
 	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
-		"geojson",
 		"importId",
 		"nationalId",
 		"level",
 		"name",
 	]);
-
 
 	// Get hazard picker data
 	const hip = await dataForHazardPicker();
