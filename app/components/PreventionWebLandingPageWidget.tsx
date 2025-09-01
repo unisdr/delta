@@ -17,7 +17,7 @@ import { useEffect } from "react";
 
 interface Props {
   pageId: string;
-  activeDomain: "www.undrr.org" | "www.preventionweb.net";
+  activeDomain: "www.undrr.org" | "www.preventionweb.net" | "syndication.preventionweb.net";
   includeMetaTags?: boolean;
   includeCss?: boolean;
   langCode?: "en" | "es";
@@ -36,8 +36,8 @@ export default function PreventionWebLandingPageWidget({
     script.id = pageId;
     script.src = `https://publish.preventionweb.net/widget.js?rand='${pageId}'`;
     script.type = "text/javascript";
-    script.integrity =
-      "sha512-b6PolUa59uPjYAU+abyKpXNBPC7xOFXsyYG9T8uhnof3hsxc0GDbDPwx5d54Fu+TOxrSt55/tdS9DXWWB/jMcg==";
+    // script.integrity =
+    //   "sha512-b6PolUa59uPjYAU+abyKpXNBPC7xOFXsyYG9T8uhnof3hsxc0GDbDPwx5d54Fu+TOxrSt55/tdS9DXWWB/jMcg==";
     script.crossOrigin = "anonymous";
     script.onload = () => {
       // Initialize the widget after the script is loaded

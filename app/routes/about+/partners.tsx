@@ -48,7 +48,7 @@ export default function Partners() {
             <>
               <PreventionWebLandingPageWidget
                 pageId="92280"
-                activeDomain="www.preventionweb.net"
+                activeDomain="syndication.preventionweb.net"
               />
               {appendContent && (
                 <div

@@ -49,7 +49,7 @@ export default function Methodologies() {
             <>
               <PreventionWebLandingPageWidget
                 pageId="92282"
-                activeDomain="www.preventionweb.net"
+                activeDomain="syndication.preventionweb.net"
               />
               {appendContent && (
                 <div
