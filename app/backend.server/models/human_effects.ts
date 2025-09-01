@@ -346,9 +346,12 @@ export async function update(
 		}
 
 		let dsgIdRes = await tx.execute(sql`SELECT dsg_id FROM ${tbl} WHERE id = ${id}`)
-		let dsgId = dsgIdRes.rows[0]?.dsg_id
+		if (!dsgIdRes.rows.length) {
+			return { ok: false, error: new HEError("other", `Update: record not found for id: ${id}`) }
+		}
+		let dsgId = dsgIdRes.rows[0].dsgId
 		if (!dsgId) {
-			return { ok: false, error: new HEError("other", `Record not found for id: ${id}`) }
+			return { ok: false, error: new HEError("other", `Update: dsg_id missing`) }
 		}
 		{
 			let cols = spl.defs.shared.map((c) => c.dbName)
@@ -924,12 +927,12 @@ async function deleteTotal(
 		return
 	}
 	if (r.length > 1) {
-		for (let row of r){
+		for (let row of r) {
 			console.log("row", row)
 		}
 		throw new Error("got more than 1 row for delete")
 	}
-	let d = r[0]. id
+	let d = r[0].id
 	await tx.delete(tbl).where(eq(tbl.dsgId, d)).execute()
 	await tx.delete(hd).where(eq(hd.id, d)).execute()
 }
