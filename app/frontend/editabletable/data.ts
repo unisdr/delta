@@ -527,6 +527,10 @@ export class DataManager {
 			newRows: Object.fromEntries(this.newRows.entries()),
 			totalGroupFlags: this.totalGroupFlags,
 		}
+		if (this.totalGroupFlags){
+			this.updates.delete(this.totalsId)
+			this.deletes.delete(this.totalsId)
+		}
 		return res
 	}
 

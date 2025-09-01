@@ -8,8 +8,10 @@ import {
 	categoryPresenceGet,
 	categoryPresenceDeleteAll,
 	totalGroupGet,
-	totalGroupSet
-} from "~/backend.server/models/human_effects";
+	totalGroupSet,
+	calcTotalForGroup,
+	setTotal
+} from '~/backend.server/models/human_effects'
 import { PreviousUpdatesFromJson } from "~/frontend/editabletable/data";
 import { HumanEffectsTable } from "~/frontend/human_effects/defs";
 import {
@@ -164,6 +166,16 @@ export async function saveHumanEffectsData(req: Request, recordId: string, count
 					dataModified = true;
 				}
 			}
+
+			if (d.data.totalGroupFlags) {
+				let res = await calcTotalForGroup(tx, d.table, recordId, defs, d.data.totalGroupFlags)
+				//console.log("calcTotalForGroup", d.table, recordId, "defs", defs, "res", res)
+				if (!res.ok) {
+					throw res.error
+				}
+				await setTotal(tx, d.table, recordId, defs, res.totals)
+			}
+
 			if (dataModified) {
 
 				let res = await validate(tx, d.table, recordId, countryAccountsId, defs)
