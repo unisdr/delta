@@ -122,3 +122,11 @@ _docs/High Availability (HA)/06-Monitoring-Health-Checks.md
 _docs/High Availability (HA)/08-Troubleshooting-Guide.md
 _docs/High Availability (HA)/09-Deployment-Configuration.md
 _docs/High Availability (HA)/07-Deployment-Configuration.md
+
+
+
+# Specific Country Logo (ignored for local/dev testing only)
+public/assets/Coat_of_Arms_of_Burundi.png
+public/assets/Coat_of_arms_of_Rwanda.png
+public/assets/Coat_of_arms_of_the_Democratic_Republic_of_the_Congo_(grey_spear).png
+public/assets/Coat_of_arms_of_the_Republic_of_the_Congo.png
