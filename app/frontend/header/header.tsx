@@ -20,7 +20,7 @@ const LogoComponent = ({ src, alt }: LogoProps) => {
   if (src.length === 0) {
     return "";
   } else {
-    return <img className="dts-header__logo-flag" src={src} alt={alt} />;
+    return <img src={src} alt={alt} />;
   }
 };
 
@@ -49,10 +49,10 @@ export function Header({
 
   return (
     <>
-      <header className={`dts-header dts-main-header ${isClient ? "js-enabled" : ""}`}>
-        <div className="dts-header__logo">
+      <header className={`dts-main-header ${isClient ? "js-enabled" : ""}`}>
+        <div className="logo">
           <LogoComponent src={siteLogo} alt="" />
-          <span className="dts-header__logo-text" dir="auto">{siteName}</span>
+          <span className="title">{siteName}</span>
           <span className="empty"></span>
         </div>
         <MegaMenu items={navItems} />
