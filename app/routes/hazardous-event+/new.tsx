@@ -57,8 +57,15 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const idKey = "id"; 
 	const parentKey = "parentId"; 
 	const nameKey = "name"; 
-	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
+	const rawData = await dr.select({
+				id: divisionTable.id,
+				parentId: divisionTable.parentId,
+				name: divisionTable.name,
+				importId: divisionTable.importId,
+				nationalId: divisionTable.nationalId,
+				level: divisionTable.level,
+			}).from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey,  "en", ["importId", "nationalId", "level", "name"]);
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 

@@ -1,4 +1,4 @@
-import {getTableName} from "drizzle-orm";
+import { getTableName } from "drizzle-orm";
 import {
 	disasterEventById,
 	disasterEventByIdTx,
@@ -12,17 +12,20 @@ import {
 	DisasterEventForm,
 } from "~/frontend/events/disastereventform";
 
-import {createLoader, createAction} from "~/backend.server/handlers/form/form";
+import {
+	createLoader,
+	createAction,
+} from "~/backend.server/handlers/form/form";
 
-import {formScreen} from "~/frontend/form";
+import { formScreen } from "~/frontend/form";
 
-import {route} from "~/frontend/events/disastereventform";
+import { route } from "~/frontend/events/disastereventform";
 
-import {useLoaderData} from "@remix-run/react";
-import {disasterEventTable, divisionTable} from "~/drizzle/schema";
+import { useLoaderData } from "@remix-run/react";
+import { disasterEventTable, divisionTable } from "~/drizzle/schema";
 
-import {authLoaderGetUserForFrontend, authLoaderWithPerm} from "~/util/auth";
-import {dataForHazardPicker} from "~/backend.server/models/hip_hazard_picker";
+import { authLoaderGetUserForFrontend, authLoaderWithPerm } from "~/util/auth";
+import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server";
 
@@ -43,21 +46,37 @@ export const action = createAction({
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	// ✅ Fetch existing disaster event data
-	const baseData = await createLoader({getById: disasterEventById})(loaderArgs);
+	const baseData = await createLoader({ getById: disasterEventById })(
+		loaderArgs
+	);
 
 	// ✅ Fetch division data & build tree
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select().from(divisionTable);
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey,  "en", ["geojson", "importId", "nationalId", "level", "name"]);
+	const rawData = await dr
+		.select({
+			id: divisionTable.id,
+			parentId: divisionTable.parentId,
+			name: divisionTable.name,
+			importId: divisionTable.importId,
+			nationalId: divisionTable.nationalId,
+			level: divisionTable.level,
+		})
+		.from(divisionTable);
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
+		"importId",
+		"nationalId",
+		"level",
+		"name",
+	]);
 
-	let user = authLoaderGetUserForFrontend(loaderArgs)
-	let hip = await dataForHazardPicker()
+	let user = authLoaderGetUserForFrontend(loaderArgs);
+	let hip = await dataForHazardPicker();
 
 	const ctryIso3 = process.env.DTS_INSTANCE_CTRY_ISO3 as string;
 
-    const divisionGeoJSON = await dr.execute(`
+	const divisionGeoJSON = await dr.execute(`
 		SELECT id, name, geojson
 		FROM division
 		WHERE (parent_id = 0 OR parent_id IS NULL) AND geojson IS NOT NULL;
@@ -69,7 +88,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		treeData,
 		ctryIso3,
 		divisionGeoJSON: divisionGeoJSON?.rows,
-		user
+		user,
 	};
 });
 
@@ -77,8 +96,8 @@ export default function Screen() {
 	let ld = useLoaderData<typeof loader>();
 	let fieldsInitial: Partial<DisasterEventFields> = ld.item
 		? {
-			...ld.item,
-		}
+				...ld.item,
+		  }
 		: {};
 	return formScreen({
 		extraData: {
@@ -88,7 +107,7 @@ export default function Screen() {
 			treeData: ld.treeData,
 			ctryIso3: ld.ctryIso3,
 			divisionGeoJSON: ld.divisionGeoJSON,
-			user: ld.user
+			user: ld.user,
 		},
 		fieldsInitial: fieldsInitial,
 		form: DisasterEventForm,

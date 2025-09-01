@@ -194,11 +194,11 @@ export function SpatialFootprintFormView({
                             treeViewDiscard();
                         }
                     }
-                    onRenderItemName={
-                        (item: any) => {
-                            return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
-                        }
-                    }
+                    // onRenderItemName={
+                    //     (item: any) => {
+                    //         return (typeof (item.hiddenData.geojson) == "object") ? {disable: "false"} : {disable: "true"};
+                    //     }
+                    // }
                     appendCss={
                         `
                             ul.tree li div[disable="true"] {
