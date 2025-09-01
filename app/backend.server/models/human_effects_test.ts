@@ -10,8 +10,12 @@ import {
 	categoryPresenceGet,
 	categoryPresenceSet,
 	totalGroupGet,
-	totalGroupSet
+	totalGroupSet,
+	setTotal,
+	getTotal,
+	calcTotalForGroup
 } from './human_effects'
+import { HumanEffectsTable } from "~/frontend/human_effects/defs"
 import { injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable } from '~/drizzle/schema'
 
 import { Def } from "~/frontend/editabletable/defs"
@@ -522,9 +526,9 @@ describe("human_effects - total group", async () => {
 
 	it("update", async () => {
 		await totalGroupSet(dr, rid1, "Deaths", ["sex"])
-		await totalGroupSet(dr, rid1, "Deaths", ["sex","age"])
+		await totalGroupSet(dr, rid1, "Deaths", ["sex", "age"])
 		let res = await totalGroupGet(dr, rid1, "Deaths")
-		assert.deepEqual(res, ["sex","age"])
+		assert.deepEqual(res, ["sex", "age"])
 	})
 
 	it("set null", async () => {
@@ -537,5 +541,167 @@ describe("human_effects - total group", async () => {
 	})
 })
 
+const testNonExistingRecordID = "00000000-0000-0000-0000-000000000000"
+
+describe("human_effects - total data", async () => {
+	beforeEach(async () => {
+		await resetTestData()
+	})
+
+	it("set and get total", async () => {
+		const tblId: HumanEffectsTable = "Injured"
+		const recordId = testDisasterRecord1Id
+		const data = { injured: 2 }
+		await setTotal(dr, tblId, recordId, defs1, data)
+		let res = await getTotal(dr, tblId, recordId, defs1)
+		assert.deepEqual(res, { injured: 2 })
+	})
+
+	it("get returns empty when no matching total", async () => {
+		let res = await getTotal(dr, "Injured", testNonExistingRecordID, defs1)
+		assert.deepEqual(res, { injured: 0 })
+	})
+})
 
 
+describe("human_effects - calc total for group", async () => {
+	beforeEach(async () => {
+		await resetTestData()
+	})
+
+	it("calcs total for group - no custom", async () => {
+		let defs: Def[] = [
+			{
+				shared: true,
+				uiName: "Sex",
+				jsName: "sex",
+				dbName: "sex",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "m", label: "Male" },
+					{ key: "f", label: "Female" }
+				],
+			},
+			{
+				shared: true,
+				uiName: "Age",
+				jsName: "age",
+				dbName: "age",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "<50", label: "<50" },
+					{ key: ">=50", label: ">=50" }
+				],
+			},
+			{
+				uiName: "Injured",
+				jsName: "injured",
+				dbName: "injured",
+				format: "number",
+				role: "metric",
+			}
+		]
+		{
+			let data = [
+				["m", null, 1],
+				["f", null, 2],
+				["m", "<50", 1],
+				["m", ">=50", 2],
+				["f", "<50", 3],
+				["f", ">=50", 4],
+			]
+			let res = await create(dr, "Injured", rid1, defs, data, false)
+			console.log(res)
+			assert(res.ok)
+		}
+		{
+			let res = await calcTotalForGroup(dr, "Injured", rid1, defs, ["sex"])
+			assert(res.ok)
+			assert.equal(res.totals.injured, 3)
+		}
+		{
+			let res = await calcTotalForGroup(dr, "Injured", rid1, defs, ["sex", "age"])
+			assert(res.ok)
+			assert.equal(res.totals.injured, 10)
+		}
+	})
+
+	it("calcs total for group - custom cols", async () => {
+		let defs: Def[] = [
+			{
+				shared: true,
+				uiName: "Sex",
+				jsName: "sex",
+				dbName: "sex",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "m", label: "Male" },
+					{ key: "f", label: "Female" }
+				],
+			},
+			{
+				shared: true,
+				uiName: "Age",
+				jsName: "age",
+				dbName: "age",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "<50", label: "<50" },
+					{ key: ">=50", label: ">=50" }
+				],
+			},
+			{
+				custom: true,
+				uiName: "My Custom",
+				jsName: "custom",
+				dbName: "custom",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "v1", label: "l1" },
+					{ key: "v2", label: "l2" }
+				],
+			},
+			{
+				uiName: "Injured",
+				jsName: "injured",
+				dbName: "injured",
+				format: "number",
+				role: "metric",
+			}
+		]
+		{
+			let data = [
+				[null, null, "v1", 5],
+				[null, null, "v2", 6],
+				["m", null, null, 1],
+				["f", null, null, 1],
+				["m", null, "v1", 1],
+				["f", null, "v2", 2],
+				["m", "<50", "v1", 1],
+				["m", ">=50", "v2", 2],
+				["f", "<50", "v1", 3],
+				["f", ">=50", "v2", 4],
+			]
+			let res = await create(dr, "Injured", rid1, defs, data, false)
+			console.log(res)
+			assert(res.ok)
+		}
+		{
+			let res = await calcTotalForGroup(dr, "Injured", rid1, defs, ["custom"])
+			assert(res.ok)
+			assert.equal(res.totals.injured, 11)
+		}
+		{
+			let res = await calcTotalForGroup(dr, "Injured", rid1, defs, ["sex"])
+			assert(res.ok)
+			assert.equal(res.totals.injured, 2)
+		}
+	})
+
+
+})
