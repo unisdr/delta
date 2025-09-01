@@ -348,7 +348,7 @@ export async function update(
 		if (!dsgIdRes.rows.length) {
 			return { ok: false, error: new HEError("other", `Update: record not found for id: ${id}`) }
 		}
-		let dsgId = dsgIdRes.rows[0].dsgId
+		let dsgId = dsgIdRes.rows[0].dsg_id
 		if (!dsgId) {
 			return { ok: false, error: new HEError("other", `Update: dsg_id missing`) }
 		}
