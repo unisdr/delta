@@ -12,42 +12,44 @@ interface HeaderProps {
 }
 
 interface LogoProps {
-  src: string;
-  alt: string;
+	src: string;
+	alt: string;
 }
 
 const LogoComponent = ({ src, alt }: LogoProps) => {
-  if (src.length === 0) {
-    return "";
-  } else {
-    return <img src={src} alt={alt} />;
-  }
+	if (src.length === 0) {
+		return "";
+	} else {
+		return <div className="dts-logo-img-container">
+			<img src={src} alt={alt} />
+		</div>
+	}
 };
 
 export function Header({ loggedIn, siteName, siteLogo, userRole }: HeaderProps) {
   const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
 
   let navItems = navItemsNotLoggedIn(userRole);
   if (loggedIn) {
     navItems = navItemsLoggedIn(userRole);
   }
 
-  return (
-    <>
-      <header className={`dts-main-header ${isClient ? "js-enabled" : ""}`}>
-        <div className="logo">
-          <LogoComponent src={siteLogo} alt="" />
-          <span className="title">{siteName}</span>
-          <span className="empty"></span>
-        </div>
-        <MegaMenu items={navItems} />
-      </header>
-    </>
-  );
+	return (
+		<>
+			<header className={`dts-main-header ${isClient ? "js-enabled" : ""}`}>
+				<div className="dts-logo-with-name">
+					<LogoComponent src={siteLogo} alt="" />
+					<span className="dts-title">{siteName}</span>
+					<span className="dts-empty"></span>
+				</div>
+				<MegaMenu items={navItems} />
+			</header>
+		</>
+	);
 }
 
 function navItemsNotLoggedIn(_userRole:string): Lvl1Item[] {
