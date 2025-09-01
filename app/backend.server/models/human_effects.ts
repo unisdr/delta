@@ -39,7 +39,7 @@ export type Res =
 function tableFromType(t: HumanEffectsTable): any {
 	switch (t) {
 		default:
-			throw "invalid type"
+			throw new Error("invalid table type: " + t)
 		case "Deaths":
 			return deathsTable
 		case "Injured":
@@ -56,7 +56,7 @@ function tableFromType(t: HumanEffectsTable): any {
 function tableDBName(t: HumanEffectsTable): any {
 	switch (t) {
 		default:
-			throw "invalid type"
+			throw new Error("invalid table type: " + t)
 		case "Deaths":
 		case "Injured":
 		case "Missing":
@@ -397,6 +397,8 @@ export async function clearData(
 	recordId: string
 ): Promise<Res> {
 	let tbl = tableFromType(tblId)
+	await totalGroupSet(tx, recordId, tblId, null)
+
 	let res = await tx.execute(sql`
 SELECT data.id FROM ${tbl} data
 INNER JOIN human_dsg ON human_dsg.id = data.dsg_id
@@ -821,21 +823,20 @@ export async function categoryPresenceDeleteAll(tx: Tx, recordId: string) {
 }
 
 
-export type TotalGroup = string | "invalid" | null
+export type TotalGroup = string[] | null
 
 
 function totalGroupJsName(tbl: HumanEffectsTable) {
-	return tableJsName(tbl) + "TotalGroup"
+	return tableJsName(tbl) + "TotalGroupColumnNames"
 }
 
 function totalGroupDBName(tbl: HumanEffectsTable) {
-	return tableDBName(tbl) + "_total_group"
+	return tableDBName(tbl) + "_total_group_column_names"
 }
 
 export async function totalGroupGet(tx: Tx, recordId: string, tbl: HumanEffectsTable): Promise<TotalGroup> {
 	// validate that it's not some other string
 	tableFromType(tbl)
-
 	let rows = await tx
 		.select()
 		.from(humanCategoryPresenceTable)
@@ -845,16 +846,19 @@ export async function totalGroupGet(tx: Tx, recordId: string, tbl: HumanEffectsT
 	}
 	let row = rows[0]
 	let field = totalGroupJsName(tbl)
-	return (row as unknown as Record<string, TotalGroup>)[field] ?? null
+	let v = (row as unknown as Record<string, string>)[field] ?? null
+	if (v !== null && !Array.isArray(v)) {
+		console.error("Expected totalGroup to be an array", v)
+		return null
+	}
+	return v
 }
 
 export async function totalGroupSet(tx: Tx, recordId: string, tbl: HumanEffectsTable, groupKey: TotalGroup) {
 	// validate that it's not some other string
 	tableFromType(tbl)
-
 	let field = totalGroupDBName(tbl)
-
-	let val = groupKey
+	let val = JSON.stringify(groupKey)
 	await tx.transaction(async (tx) => {
 		let rows = await tx
 			.select({

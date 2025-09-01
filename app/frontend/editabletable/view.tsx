@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
-import { ColWidth, Def, defDataFormats, DefEnum, etLocalizedStringForLang } from "~/frontend/editabletable/defs"
+import { ColWidth, Def, defData, DefEnum, etLocalizedStringForLang } from "~/frontend/editabletable/defs"
 import {
 	DataWithId,
 	DataManager,
 	Sort,
 	Group,
-	TotalGroup,
 	groupKeyOnlyZeroes,
+	TotalGroupFlags,
+	TotalGroupString,
 } from "./data"
 import { cloneInstance } from "~/util/object"
 import { HumanEffectsTable } from "~/frontend/human_effects/defs"
@@ -22,7 +23,7 @@ interface TableProps {
 	table: HumanEffectsTable
 	initialIds: string[]
 	initialData: any[][]
-	initialTotalGroup: TotalGroup
+	initialTotalGroup: TotalGroupFlags
 	categoryPresence: Record<string, boolean>
 	defs: Def[]
 }
@@ -89,7 +90,7 @@ function TableClient(props: TableProps) {
 			}
 		}
 		let d = new DataManager()
-		d.init(defDataFormats(props.defs), colsFromDefs(props.defs), props.initialData, props.initialIds, props.initialTotalGroup, previousUpdates)
+		d.init(defData(props.defs), colsFromDefs(props.defs), props.initialData, props.initialIds, props.initialTotalGroup, previousUpdates)
 		console.log("inited table", props.table, props.defs.length)
 		return d
 	}
@@ -160,12 +161,12 @@ function TableClient(props: TableProps) {
 		setData(cloneInstance(data))
 	}
 
-	const setTotalGroup = (totalGroup: TotalGroup) => {
+	const setTotalGroup = (totalGroup: TotalGroupString) => {
 		if (totalGroup && groupKeyOnlyZeroes(totalGroup)) {
 			notifyError('Group does not have disaggregations set.  Click "Sort into groups" after selecting values for disaggregation columns.')
 			return
 		}
-		data.setTotalGroup(totalGroup)
+		data.setTotalGroupString(totalGroup)
 		setData(cloneInstance(data))
 	}
 
@@ -215,7 +216,7 @@ function TableClient(props: TableProps) {
 			'./human-effects/load?tbl=' + props.table
 		).then(res => res.json())
 		let d = new DataManager()
-		d.init(defDataFormats(props.defs), colsFromDefs(u.defs), u.data, u.ids, u.totalGroup)
+		d.init(defData(props.defs), colsFromDefs(u.defs), u.data, u.ids, u.totalGroupFlags)
 		d.sortByColumn(sort.column, sort.order)
 		setData(d)
 		setTableErrors([])
@@ -223,7 +224,7 @@ function TableClient(props: TableProps) {
 
 	const handleRevert = () => {
 		let d = new DataManager()
-		d.init(defDataFormats(props.defs), colsFromDefs(props.defs), props.initialData, props.initialIds, props.initialTotalGroup)
+		d.init(defData(props.defs), colsFromDefs(props.defs), props.initialData, props.initialIds, props.initialTotalGroup)
 		setData(d)
 		setTableErrors([])
 	}
@@ -312,7 +313,7 @@ function TableClient(props: TableProps) {
 						deleteRow={deleteRow}
 						toggleColumnSort={toggleColumnSort}
 						addRowEnd={addRowEnd}
-						totalGroup={childProps.data.getTotalGroup()}
+						totalGroup={childProps.data.getTotalGroupString()}
 						reSort={reSort}
 					/>
 					<TableLegend />
@@ -344,7 +345,7 @@ interface TableContentProps {
 	updateTotals: (colIndex: number, value: any) => void
 	copyRow: (rowId: string) => void
 	deleteRow: (rowId: string) => void
-	setTotalGroup: (groupKey: TotalGroup) => void
+	setTotalGroup: (groupKey: TotalGroupString) => void
 	toggleColumnSort: (colIndex: number) => void
 	sort: Sort
 	addRowEnd: () => void
@@ -365,7 +366,8 @@ function colWidth(colWidth: ColWidth|undefined): number {
 		case "wide":
 			return 120
 		default:
-			throw new Error("Invalid colWidth")
+			return 120
+			//throw new Error("Invalid colWidth")
 	}
 }
 

@@ -511,28 +511,26 @@ describe("human_effects - total group", async () => {
 	})
 
 	it("set and get", async () => {
-		await totalGroupSet(dr, rid1, "Deaths", "10")
+		let data = ["sex"]
+		await totalGroupSet(dr, rid1, "Deaths", data)
 		let res = await totalGroupGet(dr, rid1, "Deaths")
-		assert.equal(res, "10")
+		assert.deepEqual(res, data)
 	})
 
 	it("update", async () => {
-		await totalGroupSet(dr, rid1, "Deaths", "10")
-		await totalGroupSet(dr, rid1, "Deaths", "11")
+		await totalGroupSet(dr, rid1, "Deaths", ["sex"])
+		await totalGroupSet(dr, rid1, "Deaths", ["sex","age"])
 		let res = await totalGroupGet(dr, rid1, "Deaths")
-		assert.equal(res, "11")
+		assert.deepEqual(res, ["sex","age"])
 	})
 
 	it("set null", async () => {
+		let data = ["sex"]
+		await totalGroupSet(dr, rid1, "Deaths", data)
+
 		await totalGroupSet(dr, rid1, "Deaths", null)
 		let res = await totalGroupGet(dr, rid1, "Deaths")
 		assert.equal(res, null)
-	})
-
-	it("set invalid", async () => {
-		await totalGroupSet(dr, rid1, "Deaths", "invalid")
-		let res = await totalGroupGet(dr, rid1, "Deaths")
-		assert.equal(res, "invalid")
 	})
 })
 
