@@ -339,9 +339,6 @@ export class DataManager {
 	}
 
 	groupTotalsAreNotOver(): boolean {
-		if (this.totalGroupFlags !== null) {
-			return true
-		}
 		let groupTotals = this.groupTotals()
 		let totalValues = this.getTotals().data
 
@@ -526,6 +523,10 @@ export class DataManager {
 			deletes: Array.from(this.deletes),
 			newRows: Object.fromEntries(this.newRows.entries()),
 			totalGroupFlags: this.totalGroupFlags,
+		}
+		if (this.totalGroupFlags){
+			this.updates.delete(this.totalsId)
+			this.deletes.delete(this.totalsId)
 		}
 		return res
 	}
