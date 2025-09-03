@@ -31,7 +31,7 @@ import {
 	getCountryAccountsIdFromSession,
 	getCountrySettingsFromSession,
 } from "~/util/session";
-import { sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { dr } from "~/db.server";
 import { divisionTable } from "~/drizzle/schema";
 import { buildTree } from "~/components/TreeView";
@@ -45,13 +45,20 @@ async function getCountryIso3(request: Request): Promise<string> {
 // Helper function to get division GeoJSON data filtered by tenant context
 async function getDivisionGeoJSON(countryAccountsId: string) {
 	// Filter top-level divisions by tenant context
-	return dr.execute(sql`
-		SELECT id, name, geojson, import_id
-		FROM division
-		WHERE parent_id IS NULL
-		AND geojson IS NOT NULL
-		AND country_accounts_id = ${countryAccountsId};
-    `);
+	return await dr
+		.select({
+			id: divisionTable.id,
+			name: divisionTable.name,
+			geojson: divisionTable.geojson,
+		})
+		.from(divisionTable)
+		.where(
+			and(
+				isNull(divisionTable.parentId),
+				isNotNull(divisionTable.geojson),
+				eq(divisionTable.countryAccountsId, countryAccountsId)
+			)
+		);
 }
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
@@ -115,7 +122,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			hip: await dataForHazardPicker(),
 			treeData: treeData,
 			ctryIso3: ctryIso3,
-			divisionGeoJSON: divisionGeoJSON?.rows || [],
+			divisionGeoJSON: divisionGeoJSON || [],
 			user: await authLoaderGetUserForFrontend(loaderArgs),
 		};
 	}
@@ -146,13 +153,13 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const nameKey = "name";
 	const rawData = await dr
 		.select({
-				id: divisionTable.id,
-				parentId: divisionTable.parentId,
-				name: divisionTable.name,
-				importId: divisionTable.importId,
-				nationalId: divisionTable.nationalId,
-				level: divisionTable.level,
-			})
+			id: divisionTable.id,
+			parentId: divisionTable.parentId,
+			name: divisionTable.name,
+			importId: divisionTable.importId,
+			nationalId: divisionTable.nationalId,
+			level: divisionTable.level,
+		})
 		.from(divisionTable)
 		.where(sql`country_accounts_id = ${countryAccountsId}`);
 
@@ -174,7 +181,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		hip,
 		treeData,
 		ctryIso3,
-		divisionGeoJSON: divisionGeoJSON?.rows || [],
+		divisionGeoJSON: divisionGeoJSON || [],
 		user: await authLoaderGetUserForFrontend(loaderArgs),
 	};
 });

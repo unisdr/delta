@@ -28,7 +28,7 @@ import { getAffectedByDisasterRecord } from "~/backend.server/models/analytics/a
 import { FormScreen } from "~/frontend/form";
 
 import { createOrUpdateAction } from "~/backend.server/handlers/form/form";
-import { getTableName, eq, sql } from "drizzle-orm";
+import { getTableName, eq, sql, and, isNotNull, isNull } from "drizzle-orm";
 import { disasterRecordsTable, divisionTable } from "~/drizzle/schema";
 
 import { dr } from "~/db.server";
@@ -38,7 +38,10 @@ import { contentPickerConfig } from "./content-picker-config";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { DeleteButton } from "~/frontend/components/delete-dialog";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 import { buildTree } from "~/components/TreeView";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
@@ -50,7 +53,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	if (!params.id) {
 		throw "Route does not have $id param";
 	}
-	
+
 	const initializeNewTreeView = async (): Promise<any[]> => {
 		const idKey = "id";
 		const parentKey = "parentId";
@@ -79,13 +82,20 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 
 	let user = await authLoaderGetUserForFrontend(loaderArgs);
 
-	const divisionGeoJSON = await dr.execute(sql`
-		SELECT id, name, geojson
-		FROM division
-		WHERE parent_id IS NULL
-		AND geojson IS NOT NULL
-		AND country_accounts_id = ${countryAccountsId};
-    `);
+	const divisionGeoJSON = await dr
+		.select({
+			id: divisionTable.id,
+			name: divisionTable.name,
+			geojson: divisionTable.geojson,
+		})
+		.from(divisionTable)
+		.where(
+			and(
+				isNull(divisionTable.parentId),
+				isNotNull(divisionTable.geojson),
+				eq(divisionTable.countryAccountsId, countryAccountsId)
+			)
+		);
 
 	if (params.id === "new") {
 		const treeData = await initializeNewTreeView();
@@ -103,7 +113,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 			treeData: treeData,
 			cpDisplayName: null,
 			ctryIso3: ctryIso3,
-			divisionGeoJSON: divisionGeoJSON?.rows,
+			divisionGeoJSON: divisionGeoJSON,
 			user,
 			dbDisRecHumanEffectsSummaryTable: null,
 		};
@@ -147,7 +157,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		treeData: treeData,
 		cpDisplayName: cpDisplayName,
 		ctryIso3: ctryIso3,
-		divisionGeoJSON: divisionGeoJSON?.rows,
+		divisionGeoJSON: divisionGeoJSON,
 		user,
 		dbDisRecHumanEffectsSummaryTable: dbDisRecHumanEffectsSummaryTable,
 	};
@@ -186,35 +196,35 @@ export const action = authActionWithPerm(
 			postProcess: async (id, data) => {
 				// Ensure attachments is an array, even if it's undefined or empty
 				const attachmentsArray = Array.isArray(data?.attachments)
-				? data.attachments
-				: [];
-				
+					? data.attachments
+					: [];
+
 				const save_path = `/uploads/disaster-record/${id}`;
 				const save_path_temp = `/uploads/temp`;
-				
+
 				// Process the attachments data
 				const processedAttachments = ContentRepeaterUploadFile.save(
 					attachmentsArray,
 					save_path_temp,
 					save_path
 				);
-				
+
 				// Update the `attachments` field in the database
 				await dr
-				.update(disasterRecordsTable)
-				.set({
-					attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
-				})
+					.update(disasterRecordsTable)
+					.set({
+						attachments: processedAttachments || [], // Ensure it defaults to an empty array if undefined
+					})
 					.where(eq(disasterRecordsTable.id, id));
-				},
-				countryAccountsId,
-			});
+			},
+			countryAccountsId,
+		});
 
-			return actionHandler(args);
-		}
-	);
-	
-	export default function Screen() {
+		return actionHandler(args);
+	}
+);
+
+export default function Screen() {
 	const ld = useLoaderData<typeof loader>();
 
 	return (

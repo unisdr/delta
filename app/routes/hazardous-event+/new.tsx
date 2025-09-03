@@ -1,5 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
-import { sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { formSave } from "~/backend.server/handlers/form/form";
 import {
 	hazardousEventById,
@@ -86,19 +86,26 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const ctryIso3 = settings.crtyIso3;
 
 	// Load top-level divisions with geojson, filtered by tenant context
-	const divisionGeoJSON = await dr.execute(sql`
-    SELECT id, name, geojson
-    FROM division
-    WHERE parent_id IS NULL
-    AND geojson IS NOT NULL
-    AND country_accounts_id = ${countryAccountsId};
-  `);
+	const divisionGeoJSON = await dr
+		.select({
+			id: divisionTable.id,
+			name: divisionTable.name,
+			geojson: divisionTable.geojson,
+		})
+		.from(divisionTable)
+		.where(
+			and(
+				isNull(divisionTable.parentId),
+				isNotNull(divisionTable.geojson),
+				eq(divisionTable.countryAccountsId, countryAccountsId)
+			)
+		);
 
 	return {
 		hip,
 		treeData,
 		ctryIso3,
-		divisionGeoJSON: divisionGeoJSON?.rows || [],
+		divisionGeoJSON: divisionGeoJSON || [],
 		user,
 		countryAccountsId,
 	};

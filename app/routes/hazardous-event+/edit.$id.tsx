@@ -24,11 +24,14 @@ import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
 
 import { getItem2 } from "~/backend.server/handlers/view";
 
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 import { divisionTable } from "~/drizzle/schema";
 import { buildTree } from "~/components/TreeView";
 import { dr } from "~/db.server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { params, request } = loaderArgs;
@@ -38,13 +41,13 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 	const user = await authLoaderGetUserForFrontend(loaderArgs);
-	
+
 	let hip = await dataForHazardPicker();
-	
+
 	if (item!.event.ps.length > 0) {
 		let parent = item!.event.ps[0].p.he;
 		let parent2 = await hazardousEventById(parent.id);
-		if(parent2?.countryAccountsId!== countryAccountsId){
+		if (parent2?.countryAccountsId !== countryAccountsId) {
 			throw new Response("Unauthorized", { status: 401 });
 		}
 		return { hip, item, parent: parent2, treeData: [], user };
@@ -54,22 +57,38 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const idKey = "id";
 	const parentKey = "parentId";
 	const nameKey = "name";
-	const rawData = await dr.select({
+	const rawData = await dr
+		.select({
 			id: divisionTable.id,
 			parentId: divisionTable.parentId,
 			name: divisionTable.name,
 			importId: divisionTable.importId,
 			nationalId: divisionTable.nationalId,
 			level: divisionTable.level,
-		}).from(divisionTable).where(eq(divisionTable.countryAccountsId, countryAccountsId));
-	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", ["importId", "nationalId", "level", "name"]); 
+		})
+		.from(divisionTable)
+		.where(eq(divisionTable.countryAccountsId, countryAccountsId));
+	const treeData = buildTree(rawData, idKey, parentKey, nameKey, "en", [
+		"importId",
+		"nationalId",
+		"level",
+		"name",
+	]);
 
-	const divisionGeoJSON = await dr.execute(`
-		SELECT id, name, geojson, import_id
-		FROM division
-		WHERE parent_id IS NULL AND geojson IS NOT NULL and country_accounts_id = '${countryAccountsId}';
-    `);
-
+	const divisionGeoJSON = await dr
+		.select({
+			id: divisionTable.id,
+			name: divisionTable.name,
+			geojson: divisionTable.geojson,
+		})
+		.from(divisionTable)
+		.where(
+			and(
+				isNull(divisionTable.parentId),
+				isNotNull(divisionTable.geojson),
+				eq(divisionTable.countryAccountsId, countryAccountsId)
+			)
+		);
 
 	const settings = await getCountrySettingsFromSession(request);
 	const ctryIso3 = settings.ctryIso3;
@@ -79,7 +98,7 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 		item: item,
 		treeData: treeData,
 		ctryIso3: ctryIso3,
-		divisionGeoJSON: divisionGeoJSON?.rows || [],
+		divisionGeoJSON: divisionGeoJSON || [],
 		user,
 		countryAccountsId,
 	};
@@ -117,8 +136,8 @@ export default function Screen() {
 		// TODO: remove that fields from db
 		...ld.item.event,
 		...ld.item,
-		parent: ""
-	}
+		parent: "",
+	};
 	return formScreen({
 		extraData: {
 			hip: ld.hip,
