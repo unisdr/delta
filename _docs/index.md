@@ -26,8 +26,8 @@
 
 ## Geographic divisions
 
-- [division_import_guide](division_import_guide)
-- [division_technical_implementation](division_technical_implementation)
+- [Division Import Guide](division/import_guide.md)
+- [Division Technical Implementation](division/technical_implementation.md)
 
 ## Analytics
 

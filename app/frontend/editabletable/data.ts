@@ -339,9 +339,6 @@ export class DataManager {
 	}
 
 	groupTotalsAreNotOver(): boolean {
-		if (this.totalGroupFlags !== null) {
-			return true
-		}
 		let groupTotals = this.groupTotals()
 		let totalValues = this.getTotals().data
 
