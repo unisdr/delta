@@ -8,17 +8,17 @@ The `division` table is designed to store hierarchical geographic divisions with
 
 ```sql
 Table: division
-- id: Serial Primary Key
-- importId: Text (Unique) - External identifier from import
+- id: UUID Primary Key
+- importId: Text (Unique within tenant) - External identifier from import
 - nationalId: Text - National identifier (optional)
-- parentId: Bigint (Foreign Key) - Self-referencing parent relationship
+- parentId: UUID (Foreign Key) - Self-referencing parent relationship
 - name: JSONB - Localized names in multiple languages
 - geojson: JSONB - Original GeoJSON data
-- level: Bigint - Hierarchy level (parent level + 1, or 1 for roots)
+- level: Integer - Hierarchy level (parent level + 1, or 1 for roots)
 - geom: PostGIS Geometry - Spatial geometry (SRID: 4326)
 - bbox: PostGIS Geometry - Bounding box
 - spatial_index: Text - Spatial indexing field
-- countryAccountsId: Text (Foreign Key) - Reference to country_accounts table for tenant isolation
+- countryAccountsId: UUID (Foreign Key) - Reference to country_accounts table for tenant isolation
 ```
 
 Key Features:
@@ -36,12 +36,13 @@ The import system is implemented in `division.ts` and consists of several key co
 
 1. **ZIP File Processing** (`importZip` function):
 ```typescript
-async function importZip(zipBytes: Uint8Array, tenantContext: TenantContext): Promise<ImportRes>
+async function importZip(zipBytes: Uint8Array, countryAccountsId: string): Promise<ImportRes>
 ```
-- Accepts ZIP file as byte array and tenant context
+- Accepts ZIP file as byte array and country accounts ID for tenant isolation
 - Extracts and validates CSV and GeoJSON files
 - Enforces tenant isolation during import
 - Returns detailed import results with counts of imported and failed records
+- Provides specific error messages for each failed record
 
 2. **Two-Phase Import**:
 - Phase 1: Process root divisions (no parent)
@@ -50,22 +51,26 @@ async function importZip(zipBytes: Uint8Array, tenantContext: TenantContext): Pr
 
 3. **GeoJSON Handling**:
 ```typescript
-async function processGeoJSON(tx: Tx, divisionId: number, geoJsonContent: string)
+async function processGeoJSON(tx: Tx, divisionId: string, geoJsonContent: string): Promise<void>
 ```
 - Validates GeoJSON format and structure
 - Converts GeoJSON to PostGIS geometry
 - Updates spatial indexes and bounding boxes
 - Case-insensitive filename matching with flexible directory structure
+- Supports both individual geometries and FeatureCollections
+- Extracts properties from GeoJSON when available
 
 4. **Validation Logic**:
 ```typescript
-async function validateDivisionData(tx: Tx, data: DivisionInsert, tenantContext: TenantContext, existingId?: number)
+async function validateDivisionData(tx: Tx, data: DivisionInsert, countryAccountsId: string, existingId?: string)
 ```
 - Validates parent-child relationships
 - Prevents duplicate divisions within the same tenant
 - Detects and prevents circular references
 - Ensures proper level calculation based on parent's level
-- Returns detailed validation errors
+- Validates importId and nationalId uniqueness within tenant context
+- Returns detailed validation errors with specific messages
+- Supports both creation and update validation scenarios
 
 5. **Transaction Management**:
 ```typescript
@@ -80,25 +85,27 @@ await dr.transaction(async (tx) => {
 
 ### Key Functions
 
-1. `importZip(zipBytes, tenantContext)`: Main entry point for ZIP file imports
-2. `fromCSV(csvContent)`: Parses and validates CSV content
-3. `importDivision(tx, division, tenantContext)`: Processes individual division records
+1. `importZip(zipBytes, countryAccountsId)`: Main entry point for ZIP file imports
+2. `parseCSV(csvContent)`: Parses and validates CSV content
+3. `importDivision(tx, division, countryAccountsId)`: Processes individual division records
 4. `processGeoJSON(tx, divisionId, geoJsonContent)`: Handles GeoJSON validation and storage
 5. `updateSpatialIndexes(tx)`: Updates PostGIS spatial indexes
-6. `validateDivisionData(tx, data, tenantContext, existingId)`: Validates division data
-7. `checkCircularReference(tx, divisionId, parentId, countryAccountId)`: Prevents circular references
-8. `divisionById(id, tenantContext)`, `divisionByImportId(importId, tenantContext)`: Retrieval functions
-9. `divisionChildren(languages, parentId, tenantContext)`: Gets direct children of a division
-10. `divisionBreadcrumb(languages, id, tenantContext)`: Generates hierarchical breadcrumb path
+6. `validateDivisionData(tx, data, countryAccountsId, existingId)`: Validates division data
+7. `checkCircularReference(tx, divisionId, parentId, countryAccountsId)`: Prevents circular references
+8. `divisionById(id, countryAccountsId)`, `divisionByImportId(importId, countryAccountsId)`: Retrieval functions
+9. `divisionChildren(languages, parentId, countryAccountsId)`: Gets direct children of a division
+10. `divisionBreadcrumb(languages, id, countryAccountsId)`: Generates hierarchical breadcrumb path
+11. `divisionsIntersectingGeoJSON(geoJSON, countryAccountsId)`: Finds divisions intersecting with a GeoJSON
+12. `divisionsInBBox(bbox, countryAccountsId)`: Finds divisions within a bounding box
 
 ### Error Handling
 
 The system includes comprehensive error handling with custom error classes:
 
-- `UserError`: Base class for user-facing errors
-- `ImportError`: Specific import-related errors
-- `ValidationError`: Data validation failures
-- `DatabaseError`: Database operation failures
+- `UserError`: Base class for user-facing errors with clear messages
+- `ImportError`: Specific import-related errors with record context
+- `ValidationError`: Data validation failures with field-specific details
+- `SystemError`: Internal system errors with technical details
 - `HierarchyError`: Parent-child relationship errors
 - `TenantError`: Tenant isolation related errors
 
@@ -126,15 +133,27 @@ Your ZIP file should contain:
    ```
    - Must include columns: `id`, `parent`, `geodata`, and at least one language column
    - `id`: Unique identifier for each division (used as `importId` in database)
+     - Must be unique within your tenant/country account
+     - Used to establish parent-child relationships
    - `parent`: ID of parent division (empty for top-level divisions)
+     - Must reference another division's `id` in the same file
+     - Leave empty for root/top-level divisions
    - `nationalId`: Optional national identifier (can be empty)
+     - Should be unique if provided
+     - Used for integration with external systems
    - `geodata`: Name of the corresponding GeoJSON file
+     - Case-insensitive matching is supported
+     - Can include subdirectory paths
    - Language columns (e.g., `en`, `fr`, `es`): Names in different languages
+     - At least one language column is required
+     - Column names should match ISO language codes
 
 2. **GeoJSON Files** (required):
    - Must be valid GeoJSON format with proper geometry
    - File names must match the `geodata` column values in the CSV
    - Can be in any subdirectory within the ZIP (system will find them)
+   - Supports both individual geometry objects and FeatureCollections
+   - Must use WGS84 coordinate system (EPSG:4326)
    - Example structure:
      ```
      divisions.zip
@@ -143,13 +162,21 @@ Your ZIP file should contain:
          ├── Region1.geojson
          └── SubRegion1.geojson
      ```
+   - Alternative structure with bundled GeoJSON is also supported:
+     ```
+     divisions.zip
+     ├── divisions.csv
+     └── level1.geojson  # FeatureCollection with multiple features
+     ```
 
 ### Import Process
 
 1. Navigate to: Settings > Geography > Upload (`/settings/geography/upload`)
 2. Click "Choose File" and select your ZIP file
-3. Click "Submit" to start the import process
+3. Click "Upload and Import" to start the import process
 4. The system will process the file and display results
+5. Review any error messages for failed imports
+6. Navigate back to the Geography list to view imported divisions
 
 ### Import Results
 
@@ -170,7 +197,11 @@ After upload, you'll see one of these messages:
    - "GeoJSON file not found: [filename]"
    - "Invalid GeoJSON format"
    - "Parent division not found: [id]"
-   - "Duplicate import ID: [id]"
+   - "Duplicate import ID: [id] within tenant"
+   - "Circular reference detected"
+   - "Invalid level: child level must be greater than parent level"
+   - "Invalid geometry: [specific error]"
+   - "Division with this nationalId already exists"
 
 ### Managing Divisions
 
@@ -211,6 +242,9 @@ After import, you can:
    - Keep file names consistent with CSV geodata column
    - Use WGS84 coordinates (EPSG:4326)
    - Simplify complex geometries if possible for better performance
+   - Consider using bundled FeatureCollections for efficiency
+   - Ensure proper topology (no self-intersections or invalid geometries)
+   - Include properties in GeoJSON that match CSV data when possible
 
 3. **General**:
    - Test with small datasets first
