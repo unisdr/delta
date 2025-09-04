@@ -32,7 +32,7 @@ import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { getCountryAccountsIdFromSession } from "~/util/session";
 
-export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ManageCountrySettings", async (loaderArgs) => {
 	const { id } = loaderArgs.params;
 	const { request } = loaderArgs;
 	if (!id) {

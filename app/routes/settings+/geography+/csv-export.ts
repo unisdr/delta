@@ -6,7 +6,7 @@ import { stringifyCSV } from "~/util/csv";
 import { getCountryAccountsIdFromSession } from "~/util/session";
 
 // Create a custom loader that enforces tenant isolation
-export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ManageCountrySettings", async (loaderArgs) => {
 	const { request } = loaderArgs;
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);

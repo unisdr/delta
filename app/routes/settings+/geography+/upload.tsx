@@ -23,11 +23,11 @@ import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { getCountryAccountsIdFromSession } from "~/util/session";
 
-export const loader = authLoaderWithPerm("EditData", async () => {
+export const loader = authLoaderWithPerm("ManageCountrySettings", async () => {
 	return null;
 });
 
-export const action = authActionWithPerm("EditData", async (actionArgs) => {
+export const action = authActionWithPerm("ManageCountrySettings", async (actionArgs) => {
 	const { request } = actionArgs;
 	let fileBytes: Uint8Array | null = null;
 

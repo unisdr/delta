@@ -181,6 +181,8 @@ function navItemsSuperAdmin(): Lvl1Item[] {
 function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1Item[] {
 	// Build the "Your profile" lvl4 items conditionally
 	const yourProfileItems = [];
+	
+	const isLoggedInUserAdmin = userRole === "admin";
 
 	// Only add "Change password" if form auth is supported
 	if (isFormAuthSupported) {
@@ -275,7 +277,7 @@ function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1I
 					lvl3: [
 						{
 							title: "System",
-							lvl4: userRole === "admin" ?
+							lvl4: isLoggedInUserAdmin ?
 								[
 									{ name: "Access Management", link: "/settings/access-mgmnt" },
 									{ name: "System settings", link: "/settings/system" },
@@ -284,7 +286,6 @@ function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1I
 									{ name: "API Keys", link: "/settings/api-key" },
 									{ name: "Assets", link: "/settings/assets" },
 								] : [
-									{ name: "System settings", link: "/settings/system" },
 									{ name: "Sectors", link: "/settings/sectors" },
 									{ name: "Assets", link: "/settings/assets" },
 								],

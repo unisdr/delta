@@ -41,7 +41,7 @@ interface LoaderData {
 }
 
 export const loader: LoaderFunction = authLoaderWithPerm(
-	"ViewData",
+	"ManageCountrySettings",
 	async (loaderArgs) => {
 		const {request} = loaderArgs;
 		const countryAccountsId = await getCountryAccountsIdFromSession(request);
