@@ -628,6 +628,115 @@ describe("human_effects - calc total for group", async () => {
 		}
 	})
 
+	it.only("calcs total for group - global poverty line", async () => {
+		let defs: Def[] = [
+			{
+				shared: true,
+				uiName: "Sex",
+				jsName: "sex",
+				dbName: "sex",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "m", label: "Male" },
+					{ key: "f", label: "Female" }
+				],
+			},
+			{
+				shared: true,
+				uiName: "Global poverty line",
+				jsName: "globalPovertyLine",
+				dbName: "global_poverty_line",
+				uiColWidth: "thin", // 60
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "below", label: "Below" },
+					{ key: "above", label: "Above" },
+				]
+			},
+			{
+				uiName: "Missing",
+				jsName: "missing",
+				dbName: "missing",
+				format: "number",
+				role: "metric",
+			}
+		]
+		{
+			let data = [
+				["m", null, 1],
+				["f", null, 2],
+				["f", "above", 3],
+				["m", "above", 4],
+			]
+			let res = await create(dr, "Missing", rid1, defs, data, false)
+			console.log(res)
+			assert(res.ok)
+		}
+		{
+			let res = await calcTotalForGroup(dr, "Missing", rid1, defs, ["sex", "global_poverty_line"])
+			console.log(res)
+			assert(res.ok)
+			assert.equal(res.totals.missing, 7)
+		}
+	})
+
+	it("calcs total for group - as of date", async () => {
+		let defs: Def[] = [
+			{
+				shared: true,
+				uiName: "Sex",
+				jsName: "sex",
+				dbName: "sex",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "m", label: "Male" },
+					{ key: "f", label: "Female" }
+				],
+			},
+			{
+				uiName: "As of",
+				jsName: "asOf",
+				dbName: "as_of",
+				format: "date",
+				role: "dimension",
+				uiColWidth: "thin"
+			},
+			{
+				uiName: "Missing",
+				jsName: "missing",
+				dbName: "missing",
+				format: "number",
+				role: "metric",
+			}
+		]
+		{
+			let data = [
+				["m", null, 1],
+				["f", null, 2],
+				["f", "2025-09-04", 3],
+				["m", "2025-09-04", 4],
+				[null, "2025-09-04", 5],
+				[null, "2025-09-04", 6],
+			]
+			let res = await create(dr, "Missing", rid1, defs, data, false)
+			console.log(res)
+			assert(res.ok)
+		}
+		{
+			let res = await calcTotalForGroup(dr, "Missing", rid1, defs, ["sex"])
+			assert(res.ok)
+			assert.equal(res.totals.missing, 3)
+		}
+		{
+			let res = await calcTotalForGroup(dr, "Missing", rid1, defs, ["asOf"])
+			console.log("res", res)
+			assert.equal(res.ok, false)
+		}
+	})
+
 	it("calcs total for group - custom cols", async () => {
 		let defs: Def[] = [
 			{
