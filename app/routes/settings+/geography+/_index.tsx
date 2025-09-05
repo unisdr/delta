@@ -30,7 +30,7 @@ interface ItemRes {
 	name: Record<string, string>;
 }
 
-export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
+export const loader = authLoaderWithPerm("ManageCountrySettings", async (loaderArgs) => {
 	const { request } = loaderArgs;
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);

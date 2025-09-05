@@ -900,27 +900,40 @@ async function deleteTotal(
 	tx: Tx,
 	tblId: HumanEffectsTable,
 	recordId: string,
+	defs: Def[],
+
 ) {
-	let tbl = tableFromType(tblId)
+	let t = tableFromType(tblId)
+
+	let dimDefs = defs.filter(d => d.role == 'dimension')
+
 	let hd = humanDsgTable
+
+	let where = [
+		eq(hd.recordId, recordId),
+		isNull(hd.sex),
+		isNull(hd.age),
+		isNull(hd.disability),
+		isNull(hd.globalPovertyLine),
+		isNull(hd.nationalPovertyLine),
+		sql`${hd.custom} = '{}'::jsonb`
+	]
+
+	for (let dim of dimDefs) {
+		if (!dim.custom && !dim.shared) {
+			let col = (t as any)[dim.jsName]
+			where.push(isNull(col))
+		}
+	}
+
 	let r = await tx
 		.select({
 			id: hd.id,
 		})
 		//.select()
 		.from(hd)
-		.innerJoin(tbl, eq(hd.id, tbl.dsgId))
-		.where(
-			and(
-				eq(hd.recordId, recordId),
-				isNull(hd.sex),
-				isNull(hd.age),
-				isNull(hd.disability),
-				isNull(hd.globalPovertyLine),
-				isNull(hd.nationalPovertyLine),
-				sql`${hd.custom} = '{}'::jsonb`
-			)
-		)
+		.innerJoin(t, eq(hd.id, t.dsgId))
+		.where(and(...where))
 		.execute()
 
 	if (!r.length) {
@@ -933,7 +946,7 @@ async function deleteTotal(
 		throw new Error("got more than 1 row for delete")
 	}
 	let d = r[0].id
-	await tx.delete(tbl).where(eq(tbl.dsgId, d)).execute()
+	await tx.delete(t).where(eq(t.dsgId, d)).execute()
 	await tx.delete(hd).where(eq(hd.id, d)).execute()
 }
 
@@ -946,7 +959,7 @@ export async function setTotal(
 ) {
 	let t = tableFromType(tblId)
 
-	await deleteTotal(tx, tblId, recordId)
+	await deleteTotal(tx, tblId, recordId, defs)
 
 	if (data.length == 0) {
 		return
@@ -1052,9 +1065,12 @@ export async function calcTotalForGroup(
 	}
 
 	for (let g of group) {
-		let dim = dimDefs.find(d => d.jsName === g)
+		let dim = dimDefs.find(d => d.dbName === g)
 		if (!dim) {
 			return { ok: false, error: new Error(`Unknown dimension: ${g}`) }
+		}
+		if (dim.format == "date") {
+			return { ok: false, error: new Error(`Can't calc group total when one the the cols is date: ${g}`) }
 		}
 	}
 
@@ -1063,9 +1079,14 @@ export async function calcTotalForGroup(
 	]
 
 	for (let dim of dimDefs) {
-		let col = (hd as any)[dim.jsName]
 		if (!dim.custom) {
-			if (group.includes(dim.jsName)) {
+			let col: any = null
+			if (dim.shared) {
+				col = (hd as any)[dim.jsName]
+			} else {
+				col = (t as any)[dim.jsName]
+			}
+			if (group.includes(dim.dbName)) {
 				where.push(isNotNull(col))
 			} else {
 				where.push(isNull(col))
