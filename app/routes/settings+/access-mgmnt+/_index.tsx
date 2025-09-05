@@ -15,6 +15,9 @@ import { Pagination } from "~/frontend/pagination/view";
 import { NavSettings } from "~/routes/settings/nav";
 import { authLoaderWithPerm } from "~/util/auth";
 import { getCountryAccountsIdFromSession } from "~/util/session";
+import {
+	sessionCookie,
+} from "~/util/session";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -38,9 +41,16 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 		countryAccountsId
 	);
 
+	const session = await sessionCookie().getSession(
+			request.headers.get("Cookie")
+		);
+	
+	const userRole = session.get("userRole");
+
 	return {
 		...items,
 		search,
+		userRole: userRole
 	};
 });
 
@@ -104,8 +114,11 @@ export default function Settings() {
 	const pendingUsers = filteredItems.filter(
 		(item) => !item.user.emailVerified
 	).length;
+
+	const navSettings = <NavSettings userRole={ ld.userRole } />;
+
 	return (
-		<MainContainer title="Access management" headerExtra={<NavSettings />}>
+		<MainContainer title="Access management" headerExtra={ navSettings }>
 			<div className="dts-page-intro">
 				<div className="dts-additional-actions">
 					<a

@@ -24,6 +24,9 @@ import {
 import Messages from "~/components/Messages";
 import { Toast, ToastRef } from "~/components/Toast";
 import { getCurrencyList } from "~/util/currency";
+import {
+	sessionCookie,
+} from "~/util/session";
 
 // Define the loader data type
 interface LoaderData {
@@ -38,6 +41,7 @@ interface LoaderData {
 	instanceSystemSettings: InstanceSystemSettings | null;
 	dtsSystemInfo: SystemInfo | null;
 	country: SelectCountries;
+	userRole: string;
 }
 
 export const loader: LoaderFunction = authLoaderWithPerm(
@@ -66,13 +70,20 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 		const systemLanguage: string[] = ["English"];
 		const confEmailObj = configApplicationEmail();
 
+		const session = await sessionCookie().getSession(
+			request.headers.get("Cookie")
+		);
+			
+		const userRole = session.get("userRole");
+
 		return Response.json({
 			currencyArray: currencies,
 			systemLanguage,
 			confEmailObj,
 			instanceSystemSettings: settings,
 			dtsSystemInfo,
-			country
+			country,
+			userRole: userRole
 		});
 	}
 );
@@ -196,8 +207,10 @@ export default function Settings() {
 		}
 	}, [actionData]);
 
+	const navSettings = <NavSettings userRole={ loaderData.userRole } />;
+
 	return (
-		<MainContainer title="System Settings" headerExtra={<NavSettings />}>
+		<MainContainer title="System Settings" headerExtra={ navSettings }>
 			<Toast ref={toast} />
 			<div className="mg-container">
 				<div className="dts-page-intro">
