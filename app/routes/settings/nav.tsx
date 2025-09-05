@@ -2,7 +2,12 @@ import { NavLink } from "@remix-run/react";
 import { useLocation } from "@remix-run/react";
 import { useMemo } from "react";
 
-export function NavSettings() {
+
+interface NavSettingsProps {
+	userRole?: string | undefined;
+}
+
+export function NavSettings({ userRole = "" }: NavSettingsProps) {
   const location = useLocation();
 
   // Memoize menu to prevent unnecessary recalculations
@@ -16,6 +21,12 @@ export function NavSettings() {
     }
 
     if (location.pathname.includes("/settings")) {
+      if (userRole !== 'admin') {
+        return [
+          { link: "analytics/sectors", text: "Sectors" },
+        ];
+      }
+      
       return [
         { link: "settings/system", text: "System settings" },
         { link: "settings/geography", text: "Geographic levels" },
