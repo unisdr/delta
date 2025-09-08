@@ -202,7 +202,7 @@ export async function sendInviteForNewCountryAccountAdminUser(
                 <p><a href="${inviteURL}">${inviteURL}</a></p>`;
 
 	const text = `You have been invited to join the DTS ${siteName} system as 
-                a ${role} user. 
+                a ${role} user for the country ${countryName} ${countryAccountType} instance.
                 Copy and paste the following link into your browser url to create your account:
                 ${inviteURL}`;
 	await sendEmail(user.email, subject, text, html);
@@ -232,7 +232,7 @@ export async function sendInviteForExistingCountryAccountAdminUser(
                 <p><a href="${siteUrl}">${siteUrl}</a></p>`;
 
 	const text = `You have been invited to join the DTS ${siteName} system as 
-                a ${role} user. 
+                a ${role} user for the country ${countryName} ${countryAccountType} instance
                 Copy and paste the following link into your browser url to login to your account:
                 ${siteUrl}`;
 	await sendEmail(user.email, subject, text, html);
