@@ -1,6 +1,8 @@
+import { randomBytes } from "crypto";
+import { addHours } from "date-fns";
 import {
-	sendInviteForExistingUser,
-	sendInviteForNewUser,
+	sendInviteForExistingCountryAccountAdminUser,
+	sendInviteForNewCountryAccountAdminUser,
 } from "~/backend.server/models/user/invite";
 import { dr } from "~/db.server";
 import { getCountryById } from "~/db/queries/countries";
@@ -11,7 +13,7 @@ import {
 	updateCountryAccount,
 } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
-import { createUser, getUserByEmail } from "~/db/queries/user";
+import { createUser, getUserByEmail, updateUserInviteCodeAndInviteExpirationByUserId } from "~/db/queries/user";
 import { createUserCountryAccounts } from "~/db/queries/userCountryAccounts";
 import {
 	CountryAccountStatus,
@@ -40,7 +42,8 @@ export async function createCountryAccountService(
 	if (status === null || status === undefined)
 		errors.push("Status is required");
 	if (!email || email.trim() === "") errors.push("Admin email is required");
-	if (!shortDescription || shortDescription.trim() === "") errors.push("Short description is required");
+	if (!shortDescription || shortDescription.trim() === "")
+		errors.push("Short description is required");
 	if (!countryAccountType) errors.push("Choose instance type");
 
 	if (countryId && countryId === "-1") {
@@ -99,7 +102,7 @@ export async function createCountryAccountService(
 			isNewUser = true;
 			user = await createUser(email, tx);
 		}
-		const role="admin";
+		const role = "admin";
 		await createUserCountryAccounts(
 			user.id,
 			countryAccount.id,
@@ -123,13 +126,27 @@ export async function createCountryAccountService(
 		const baseUrl = `${url.protocol}//${url.host}`;
 
 		if (isNewUser) {
-			await sendInviteForNewUser(user, baseUrl, "Disaster Tracking System",role, tx);
-		} else {
-			await sendInviteForExistingUser(
+			const inviteCode = randomBytes(32).toString("hex");
+			const expirationTime = addHours(new Date(), 7 * 24);
+
+			updateUserInviteCodeAndInviteExpirationByUserId(user.id, inviteCode,expirationTime, tx);
+			await sendInviteForNewCountryAccountAdminUser(
 				user,
 				baseUrl,
 				"Disaster Tracking System",
-				"Admin"
+				role,
+				country.name,
+				countryAccountType,
+				inviteCode
+			);
+		} else {
+			await sendInviteForExistingCountryAccountAdminUser(
+				user,
+				baseUrl,
+				"Disaster Tracking System",
+				"Admin",
+				country.name,
+				countryAccountType
 			);
 		}
 		return { countryAccount, user, instanceSystemSetting };
@@ -139,7 +156,7 @@ export async function createCountryAccountService(
 export async function updateCountryAccountStatusService(
 	id: string,
 	status: number,
-	shortDescription: string,
+	shortDescription: string
 ) {
 	const countryAccount = await getCountryAccountWithCountryById(id);
 	if (!countryAccount) {
@@ -157,6 +174,10 @@ export async function updateCountryAccountStatusService(
 		]);
 	}
 
-	const updatedCountryAccount = await updateCountryAccount(id, status, shortDescription);
+	const updatedCountryAccount = await updateCountryAccount(
+		id,
+		status,
+		shortDescription
+	);
 	return { updatedCountryAccount };
 }

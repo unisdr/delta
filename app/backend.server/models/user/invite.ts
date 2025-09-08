@@ -176,6 +176,67 @@ export async function sendInviteForExistingUser(
                 ${siteUrl}`;
 	await sendEmail(user.email, subject, text, html);
 }
+export async function sendInviteForNewCountryAccountAdminUser(
+	user: SelectUser,
+	siteUrl: string,
+	siteName: string,
+	role: string,
+	countryName: string,
+	countryAccountType: string,
+	inviteCode: string
+) {
+	const inviteURL =
+		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
+	const subject = `Invitation to join DTS ${siteName}`;
+	const html = `<p>You have been invited to join the DTS ${siteName} as 
+                   a(an) ${role} user for the country ${countryName} ${countryAccountType} instance.
+                </p>
+                <p>Click on the link below to create your account.</p>
+                <p>
+                  <a href="${inviteURL}" 
+                    style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+                    background-color: #007BFF; text-decoration: none; border-radius: 5px;">
+                    Set up account
+                  </a>
+                </p>
+                <p><a href="${inviteURL}">${inviteURL}</a></p>`;
+
+	const text = `You have been invited to join the DTS ${siteName} system as 
+                a ${role} user. 
+                Copy and paste the following link into your browser url to create your account:
+                ${inviteURL}`;
+	await sendEmail(user.email, subject, text, html);
+}
+
+export async function sendInviteForExistingCountryAccountAdminUser(
+	user: SelectUser,
+	siteUrl: string,
+	siteName: string,
+	role: string,
+	countryName: string,
+	countryAccountType: string,
+) {
+	
+	const subject = `Invitation to join DTS ${siteName}`;
+	const html = `<p>You have been invited to join the DTS ${siteName} system as 
+                   a ${role} user for the country ${countryName} ${countryAccountType} instance
+                </p>
+                <p>Click on the link below to login to your account.</p>
+                <p>
+                  <a href="${siteUrl}" 
+                    style="display: inline-block; padding: 10px 20px; font-size: 16px; color: #ffffff; 
+                    background-color: #007BFF; text-decoration: none; border-radius: 5px;">
+                    Login in
+                  </a>
+                </p>
+                <p><a href="${siteUrl}">${siteUrl}</a></p>`;
+
+	const text = `You have been invited to join the DTS ${siteName} system as 
+                a ${role} user. 
+                Copy and paste the following link into your browser url to login to your account:
+                ${siteUrl}`;
+	await sendEmail(user.email, subject, text, html);
+}
 
 type ValidateInviteCodeResult =
 	| { ok: true; userId: string; email: string }

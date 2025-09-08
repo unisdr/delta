@@ -23,10 +23,7 @@ export async function getUserByEmail<T extends SelectUser = SelectUser>(
 	return (result[0] as T) ?? null;
 }
 
-export async function createUser(
-	email: string,
-	tx?: Tx
-) {
+export async function createUser(email: string, tx?: Tx) {
 	const db = tx || dr;
 	const result = await db
 		.insert(userTable)
@@ -38,22 +35,19 @@ export async function createUser(
 	return result[0];
 }
 
-// export async function doesUserExistByEmailAndCountry(
-// 	email: string,
-// 	countryAccountsId: string,
-// 	tx?: Tx
-// ): Promise<boolean> {
-// 	const db = tx || dr;
-// 	const result = await db
-// 		.select({ id: userTable.id })
-// 		.from(userTable)
-// 		.where(
-// 			and(
-// 				eq(userTable.email, email),
-// 				eq(userTable.countryAccountsId, countryAccountsId)
-// 			)
-// 		)
-// 		.limit(1);
-
-// 	return result.length > 0;
-// }
+export async function updateUserInviteCodeAndInviteExpirationByUserId(
+	userId: string,
+	inviteCode: string,
+	expirationTime: Date,
+	tx?: Tx
+) {
+	const db = tx || dr;
+	await db
+		.update(userTable)
+		.set({
+			inviteSentAt: new Date(),
+			inviteCode: inviteCode,
+			inviteExpiresAt: expirationTime,
+		})
+		.where(eq(userTable.id, userId));
+}
