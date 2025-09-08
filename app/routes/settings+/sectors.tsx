@@ -1,4 +1,4 @@
-import { authLoader, authLoaderGetAuth } from "~/util/auth";
+import { authLoader, } from "~/util/auth";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
@@ -8,6 +8,10 @@ import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { TreeView, buildTree } from "~/components/TreeView";
 import { aliasedTable, eq } from "drizzle-orm";
+
+import {
+	sessionCookie,
+} from "~/util/session";
 
 const renderContent = (level: number) => {
 	switch (level) {
@@ -62,7 +66,14 @@ const SectorsTable = ({ sectors }: { sectors: any[] }) => (
 );
 
 export const loader = authLoader(async (loaderArgs) => {
-	authLoaderGetAuth(loaderArgs);
+	const { request } = loaderArgs;
+
+
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+
+	const userRole = session.get("userRole");	
 
 	const parent = aliasedTable(sectorTable, "parent");
 	const sectors = await dr
@@ -85,15 +96,16 @@ export const loader = authLoader(async (loaderArgs) => {
 
 	const treeData = buildTree(sectors, idKey, parentKey, nameKey);
 
-	return { sectors: sectors, treeData };
+	return { sectors: sectors, treeData, userRole: userRole };
 });
 
 export default function SectorsPage() {
-	const { sectors, treeData } = useLoaderData<typeof loader>();
+	const { sectors, treeData, userRole } = useLoaderData<typeof loader>();
 	const [viewMode, setViewMode] = useState<"tree" | "table">("tree");
+	const navSettings = <NavSettings userRole={ userRole } />;
 
 	return (
-		<MainContainer title="Sectors" headerExtra={<NavSettings />}>
+		<MainContainer title="Sectors" headerExtra={ navSettings }>
 			<>
 				<section className="dts-page-section">
 					<h2 className="mg-u-sr-only" id="tablist01">

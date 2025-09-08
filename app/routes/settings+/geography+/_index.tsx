@@ -22,6 +22,9 @@ import { DataMainLinks } from "~/frontend/data_screen";
 import { useState } from "react";
 import { buildTree, TreeView } from "~/components/TreeView";
 import { getCountryAccountsIdFromSession } from "~/util/session";
+import {
+	sessionCookie,
+} from "~/util/session";
 
 interface ItemRes {
 	id: number;
@@ -108,7 +111,14 @@ export const loader = authLoaderWithPerm("ManageCountrySettings", async (loaderA
 		"en",
 	);
 
-	return { langs, breadcrumbs, selectedLangs, treeData, ...res };
+
+	const session = await sessionCookie().getSession(
+			request.headers.get("Cookie")
+		);
+	
+	const userRole = session.get("userRole");
+
+	return { langs, breadcrumbs, selectedLangs, treeData, ...res, userRole: userRole };
 });
 
 type LanguageCheckboxesProps = {
@@ -224,8 +234,10 @@ export default function Screen() {
 		</>
 	);
 
+	const navSettings = <NavSettings userRole={ ld.userRole } />;
+
 	return (
-		<MainContainer title="Geographic levels" headerExtra={<NavSettings />}>
+		<MainContainer title="Geographic levels" headerExtra={ navSettings }>
 			<>
 				<section className="dts-page-section">
 					<h2 className="mg-u-sr-only" id="tablist01">
