@@ -1,5 +1,3 @@
--- This file must contain dts database for fresh installation for the current version of the system
-
 --
 -- PostgreSQL database dump
 --
@@ -13,7 +11,6 @@ SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
-SET search_path to public;
 SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
@@ -27,17 +24,17 @@ CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION postgis; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION postgis; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON EXTENSION postgis IS 'PostGIS geometry and geography spatial types and functions';
 
 
 --
--- Name: dts_get_sector_ancestors_decentants(bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: dts_get_sector_ancestors_decentants(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.dts_get_sector_ancestors_decentants(sector_id bigint) RETURNS json
+CREATE FUNCTION public.dts_get_sector_ancestors_decentants(sector_id uuid) RETURNS json
     LANGUAGE sql
     AS $$
 WITH RECURSIVE ParentCTE AS (
@@ -69,13 +66,11 @@ FROM (
 $$;
 
 
-ALTER FUNCTION public.dts_get_sector_ancestors_decentants(sector_id bigint) OWNER TO postgres;
-
 --
--- Name: dts_get_sector_decendants(bigint); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: dts_get_sector_decendants(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.dts_get_sector_decendants(sector_id bigint) RETURNS json
+CREATE FUNCTION public.dts_get_sector_decendants(sector_id uuid) RETURNS json
     LANGUAGE sql
     AS $$
 WITH RECURSIVE ChildCTE AS (
@@ -95,14 +90,28 @@ FROM (
 $$;
 
 
-ALTER FUNCTION public.dts_get_sector_decendants(sector_id bigint) OWNER TO postgres;
+--
+-- Name: dts_system_info_singleton(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.dts_system_info_singleton() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.id != '73f0defb-4eba-4398-84b3-5e6737fec2b7' THEN
+    RAISE EXCEPTION 'Only one row with id = 73f0defb-4eba-4398-84b3-5e6737fec2b7 is allowed';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
 
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: __drizzle_migrations__; Type: TABLE; Schema: public; Owner: postgres
+-- Name: __drizzle_migrations__; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.__drizzle_migrations__ (
@@ -112,10 +121,8 @@ CREATE TABLE public.__drizzle_migrations__ (
 );
 
 
-ALTER TABLE public.__drizzle_migrations__ OWNER TO postgres;
-
 --
--- Name: __drizzle_migrations___id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: __drizzle_migrations___id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.__drizzle_migrations___id_seq
@@ -127,17 +134,15 @@ CREATE SEQUENCE public.__drizzle_migrations___id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.__drizzle_migrations___id_seq OWNER TO postgres;
-
 --
--- Name: __drizzle_migrations___id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: __drizzle_migrations___id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.__drizzle_migrations___id_seq OWNED BY public.__drizzle_migrations__.id;
 
 
 --
--- Name: affected; Type: TABLE; Schema: public; Owner: postgres
+-- Name: affected; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.affected (
@@ -148,47 +153,23 @@ CREATE TABLE public.affected (
 );
 
 
-ALTER TABLE public.affected OWNER TO postgres;
-
 --
--- Name: api_key; Type: TABLE; Schema: public; Owner: postgres
+-- Name: api_key; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.api_key (
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    id bigint NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     secret text NOT NULL,
     name text DEFAULT ''::text NOT NULL,
-    user_id bigint NOT NULL
+    user_id uuid NOT NULL,
+    country_accounts_id uuid
 );
 
 
-ALTER TABLE public.api_key OWNER TO postgres;
-
 --
--- Name: api_key_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.api_key_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.api_key_id_seq OWNER TO postgres;
-
---
--- Name: api_key_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.api_key_id_seq OWNED BY public.api_key.id;
-
-
---
--- Name: asset; Type: TABLE; Schema: public; Owner: postgres
+-- Name: asset; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.asset (
@@ -199,120 +180,78 @@ CREATE TABLE public.asset (
     name text NOT NULL,
     category text,
     national_id text,
-    notes text
+    notes text,
+    country_accounts_id uuid
 );
 
 
-ALTER TABLE public.asset OWNER TO postgres;
-
 --
--- Name: audit_logs; Type: TABLE; Schema: public; Owner: postgres
+-- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.audit_logs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     table_name text NOT NULL,
     record_id text NOT NULL,
-    user_id bigint NOT NULL,
+    user_id uuid NOT NULL,
     action text NOT NULL,
     old_values jsonb,
     new_values jsonb,
-    "timestamp" timestamp with time zone DEFAULT now() NOT NULL
+    "timestamp" timestamp with time zone DEFAULT now() NOT NULL,
+    country_accounts_id uuid
 );
 
 
-ALTER TABLE public.audit_logs OWNER TO postgres;
-
 --
--- Name: categories; Type: TABLE; Schema: public; Owner: postgres
+-- Name: categories; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.categories (
-    id bigint NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
-    parent_id bigint,
+    parent_id uuid,
     level bigint DEFAULT 1 NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
-ALTER TABLE public.categories OWNER TO postgres;
-
 --
--- Name: categories_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: countries; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.categories_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.categories_id_seq OWNER TO postgres;
-
---
--- Name: categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.categories_id_seq OWNED BY public.categories.id;
-
-
---
--- Name: commonPasswords; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public."commonPasswords" (
-    password text NOT NULL
+CREATE TABLE public.countries (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(100) NOT NULL,
+    iso3 character varying(3),
+    flag_url character varying(255) DEFAULT 'https://example.com/default-flag.png'::character varying NOT NULL
 );
 
 
-ALTER TABLE public."commonPasswords" OWNER TO postgres;
-
 --
--- Name: country1; Type: TABLE; Schema: public; Owner: postgres
+-- Name: country_accounts; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.country1 (
-    id bigint NOT NULL,
-    name jsonb DEFAULT '{}'::jsonb NOT NULL
+CREATE TABLE public.country_accounts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    short_description character varying(20) NOT NULL,
+    country_id uuid NOT NULL,
+    status integer DEFAULT 1 NOT NULL,
+    type character varying(20) DEFAULT 'Official'::character varying NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone
 );
 
 
-ALTER TABLE public.country1 OWNER TO postgres;
-
 --
--- Name: country1_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.country1_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.country1_id_seq OWNER TO postgres;
-
---
--- Name: country1_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.country1_id_seq OWNED BY public.country1.id;
-
-
---
--- Name: damages; Type: TABLE; Schema: public; Owner: postgres
+-- Name: damages; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.damages (
     api_import_id text,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     record_id uuid NOT NULL,
-    sector_id bigint NOT NULL,
+    sector_id uuid NOT NULL,
     asset_id uuid NOT NULL,
     unit text,
     total_damage_amount bigint,
@@ -354,10 +293,8 @@ CREATE TABLE public.damages (
 );
 
 
-ALTER TABLE public.damages OWNER TO postgres;
-
 --
--- Name: deaths; Type: TABLE; Schema: public; Owner: postgres
+-- Name: deaths; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.deaths (
@@ -367,64 +304,33 @@ CREATE TABLE public.deaths (
 );
 
 
-ALTER TABLE public.deaths OWNER TO postgres;
-
 --
--- Name: dev_example1; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dev_example1; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.dev_example1 (
     api_import_id text,
-    id bigint NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     field1 text NOT NULL,
     field2 text NOT NULL,
     field3 bigint NOT NULL,
     field4 bigint,
     field6 text DEFAULT 'one'::text NOT NULL,
+    field7 timestamp without time zone,
+    field8 text DEFAULT ''::text NOT NULL,
     repeatable_num1 integer,
     repeatable_text1 text,
     repeatable_num2 integer,
     repeatable_text2 text,
     repeatable_num3 integer,
     repeatable_text3 text,
-    field7 timestamp without time zone,
-    field8 text DEFAULT ''::text NOT NULL,
-    json_data jsonb
+    json_data jsonb,
+    country_accounts_id uuid
 );
 
 
-ALTER TABLE public.dev_example1 OWNER TO postgres;
-
 --
--- Name: TABLE dev_example1; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON TABLE public.dev_example1 IS 'This is comment';
-
-
---
--- Name: dev_example1_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.dev_example1_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.dev_example1_id_seq OWNER TO postgres;
-
---
--- Name: dev_example1_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.dev_example1_id_seq OWNED BY public.dev_example1.id;
-
-
---
--- Name: disaster_event; Type: TABLE; Schema: public; Owner: postgres
+-- Name: disaster_event; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.disaster_event (
@@ -434,8 +340,11 @@ CREATE TABLE public.disaster_event (
     api_import_id text,
     hip_hazard_id text,
     hip_cluster_id text,
+    hip_type_id text,
+    country_accounts_id uuid,
     id uuid NOT NULL,
     hazardous_event_id uuid,
+    disaster_event_id uuid,
     national_disaster_id text DEFAULT ''::text NOT NULL,
     other_id1 text DEFAULT ''::text NOT NULL,
     other_id2 text DEFAULT ''::text NOT NULL,
@@ -449,31 +358,6 @@ CREATE TABLE public.disaster_event (
     end_date_local text,
     duration_days bigint,
     disaster_declaration text DEFAULT 'unknown'::text NOT NULL,
-    had_official_warning_or_weather_advisory boolean DEFAULT false NOT NULL,
-    official_warning_affected_areas text DEFAULT ''::text NOT NULL,
-    response_oprations text DEFAULT ''::text NOT NULL,
-    data_source text DEFAULT ''::text NOT NULL,
-    recording_institution text DEFAULT ''::text NOT NULL,
-    effects_total_usd numeric,
-    non_economic_losses text DEFAULT ''::text NOT NULL,
-    damages_subtotal_local_currency numeric,
-    losses_subtotal_usd numeric,
-    response_operations_description text DEFAULT ''::text NOT NULL,
-    response_operations_costs_local_currency numeric,
-    response_cost_total_local_currency numeric,
-    response_cost_total_usd numeric,
-    humanitarian_needs_description text DEFAULT ''::text NOT NULL,
-    humanitarian_needs_local_currency numeric,
-    humanitarian_needs_usd numeric,
-    attachments jsonb,
-    spatial_footprint jsonb,
-    disaster_event_id uuid,
-    hip_type_id text,
-    early_action_date1 timestamp without time zone,
-    early_action_date2 timestamp without time zone,
-    early_action_date3 timestamp without time zone,
-    early_action_date4 timestamp without time zone,
-    early_action_date5 timestamp without time zone,
     disaster_declaration_type_and_effect1 text DEFAULT ''::text NOT NULL,
     disaster_declaration_date1 timestamp without time zone,
     disaster_declaration_type_and_effect2 text DEFAULT ''::text NOT NULL,
@@ -484,11 +368,18 @@ CREATE TABLE public.disaster_event (
     disaster_declaration_date4 timestamp without time zone,
     disaster_declaration_type_and_effect5 text DEFAULT ''::text NOT NULL,
     disaster_declaration_date5 timestamp without time zone,
+    had_official_warning_or_weather_advisory boolean DEFAULT false NOT NULL,
+    official_warning_affected_areas text DEFAULT ''::text NOT NULL,
     early_action_description1 text DEFAULT ''::text NOT NULL,
+    early_action_date1 timestamp without time zone,
     early_action_description2 text DEFAULT ''::text NOT NULL,
+    early_action_date2 timestamp without time zone,
     early_action_description3 text DEFAULT ''::text NOT NULL,
+    early_action_date3 timestamp without time zone,
     early_action_description4 text DEFAULT ''::text NOT NULL,
+    early_action_date4 timestamp without time zone,
     early_action_description5 text DEFAULT ''::text NOT NULL,
+    early_action_date5 timestamp without time zone,
     rapid_or_preliminary_assesment_description1 text,
     rapid_or_preliminary_assessment_date1 timestamp without time zone,
     rapid_or_preliminary_assesment_description2 text,
@@ -499,6 +390,7 @@ CREATE TABLE public.disaster_event (
     rapid_or_preliminary_assessment_date4 timestamp without time zone,
     rapid_or_preliminary_assesment_description5 text,
     rapid_or_preliminary_assessment_date5 timestamp without time zone,
+    response_oprations text DEFAULT ''::text NOT NULL,
     post_disaster_assessment_description1 text,
     post_disaster_assessment_date1 timestamp without time zone,
     post_disaster_assessment_description2 text,
@@ -519,6 +411,19 @@ CREATE TABLE public.disaster_event (
     other_assessment_date4 timestamp without time zone,
     other_assessment_description5 text,
     other_assessment_date5 timestamp without time zone,
+    data_source text DEFAULT ''::text NOT NULL,
+    recording_institution text DEFAULT ''::text NOT NULL,
+    effects_total_usd numeric,
+    non_economic_losses text DEFAULT ''::text NOT NULL,
+    damages_subtotal_local_currency numeric,
+    losses_subtotal_usd numeric,
+    response_operations_description text DEFAULT ''::text NOT NULL,
+    response_operations_costs_local_currency numeric,
+    response_cost_total_local_currency numeric,
+    response_cost_total_usd numeric,
+    humanitarian_needs_description text DEFAULT ''::text NOT NULL,
+    humanitarian_needs_local_currency numeric,
+    humanitarian_needs_usd numeric,
     rehabilitation_costs_local_currency_calc numeric,
     rehabilitation_costs_local_currency_override numeric,
     repair_costs_local_currency_calc numeric,
@@ -527,19 +432,23 @@ CREATE TABLE public.disaster_event (
     replacement_costs_local_currency_override numeric,
     recovery_needs_local_currency_calc numeric,
     recovery_needs_local_currency_override numeric,
+    attachments jsonb,
+    spatial_footprint jsonb,
     legacy_data jsonb
 );
 
 
-ALTER TABLE public.disaster_event OWNER TO postgres;
-
 --
--- Name: disaster_records; Type: TABLE; Schema: public; Owner: postgres
+-- Name: disaster_records; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.disaster_records (
     api_import_id text,
+    hip_hazard_id text,
+    hip_cluster_id text,
+    hip_type_id text,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    country_accounts_id uuid,
     disaster_event_id uuid,
     location_desc text,
     start_date text,
@@ -553,22 +462,17 @@ CREATE TABLE public.disaster_records (
     validated_by text DEFAULT ''::text NOT NULL,
     checked_by text,
     data_collector text,
+    legacy_data jsonb,
     spatial_footprint jsonb,
+    attachments jsonb,
     "approvalStatus" text DEFAULT 'draft'::text NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    hip_hazard_id text,
-    hip_cluster_id text,
-    hip_type_id text,
-    attachments jsonb,
-    legacy_data jsonb
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
-ALTER TABLE public.disaster_records OWNER TO postgres;
-
 --
--- Name: displaced; Type: TABLE; Schema: public; Owner: postgres
+-- Name: displaced; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.displaced (
@@ -582,17 +486,15 @@ CREATE TABLE public.displaced (
 );
 
 
-ALTER TABLE public.displaced OWNER TO postgres;
-
 --
--- Name: disruption; Type: TABLE; Schema: public; Owner: postgres
+-- Name: disruption; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.disruption (
     api_import_id text,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     record_id uuid NOT NULL,
-    sector_id bigint NOT NULL,
+    sector_id uuid NOT NULL,
     duration_days bigint,
     duration_hours bigint,
     users_affected bigint,
@@ -606,56 +508,41 @@ CREATE TABLE public.disruption (
 );
 
 
-ALTER TABLE public.disruption OWNER TO postgres;
-
 --
--- Name: division; Type: TABLE; Schema: public; Owner: postgres
+-- Name: division; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.division (
-    id bigint NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     import_id text,
-    parent_id bigint,
+    national_id text,
+    parent_id uuid,
+    country_accounts_id uuid,
     name jsonb DEFAULT '{}'::jsonb NOT NULL,
     geojson jsonb,
     level bigint,
-    national_id text,
-    geom public.geometry(Geometry,4326) GENERATED ALWAYS AS (public.st_setsrid(public.st_makevalid(public.st_geomfromgeojson((geojson)::text)), 4326)) STORED,
-    bbox public.geometry(Geometry,4326) GENERATED ALWAYS AS (public.st_setsrid(public.st_envelope(public.st_setsrid(public.st_makevalid(public.st_geomfromgeojson((geojson)::text)), 4326)), 4326)) STORED,
-    spatial_index text GENERATED ALWAYS AS (
-CASE
-    WHEN (parent_id IS NULL) THEN ('L1-'::text || (id)::text)
-    ELSE ((((('L'::text || (level)::text) || '-'::text) || (parent_id)::text) || '-'::text) || (id)::text)
-END) STORED,
+    geom public.geometry(Geometry,4326),
+    bbox public.geometry(Geometry,4326),
+    spatial_index text,
     CONSTRAINT valid_geom_check CHECK (public.st_isvalid(geom))
 );
 
 
-ALTER TABLE public.division OWNER TO postgres;
-
 --
--- Name: division_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: dts_system_info; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.division_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.division_id_seq OWNER TO postgres;
-
---
--- Name: division_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.division_id_seq OWNED BY public.division.id;
+CREATE TABLE public.dts_system_info (
+    id uuid DEFAULT '73f0defb-4eba-4398-84b3-5e6737fec2b7'::uuid NOT NULL,
+    db_version_no character varying(50) NOT NULL,
+    app_version_no character varying(50) NOT NULL,
+    installed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone
+);
 
 
 --
--- Name: event; Type: TABLE; Schema: public; Owner: postgres
+-- Name: event; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.event (
@@ -665,10 +552,8 @@ CREATE TABLE public.event (
 );
 
 
-ALTER TABLE public.event OWNER TO postgres;
-
 --
--- Name: event_relationship; Type: TABLE; Schema: public; Owner: postgres
+-- Name: event_relationship; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.event_relationship (
@@ -678,10 +563,8 @@ CREATE TABLE public.event_relationship (
 );
 
 
-ALTER TABLE public.event_relationship OWNER TO postgres;
-
 --
--- Name: hazardous_event; Type: TABLE; Schema: public; Owner: postgres
+-- Name: hazardous_event; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.hazardous_event (
@@ -691,7 +574,9 @@ CREATE TABLE public.hazardous_event (
     api_import_id text,
     hip_hazard_id text,
     hip_cluster_id text,
+    hip_type_id text NOT NULL,
     id uuid NOT NULL,
+    country_accounts_id uuid,
     status text DEFAULT 'pending'::text NOT NULL,
     national_specification text DEFAULT ''::text NOT NULL,
     start_date text DEFAULT ''::text NOT NULL,
@@ -700,18 +585,15 @@ CREATE TABLE public.hazardous_event (
     chains_explanation text DEFAULT ''::text NOT NULL,
     magniture text DEFAULT ''::text NOT NULL,
     spatial_footprint jsonb,
+    attachments jsonb,
     record_originator text DEFAULT ''::text NOT NULL,
     hazardous_event_status text,
-    data_source text DEFAULT ''::text NOT NULL,
-    hip_type_id text NOT NULL,
-    attachments jsonb
+    data_source text DEFAULT ''::text NOT NULL
 );
 
 
-ALTER TABLE public.hazardous_event OWNER TO postgres;
-
 --
--- Name: hip_class; Type: TABLE; Schema: public; Owner: postgres
+-- Name: hip_class; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.hip_class (
@@ -721,24 +603,20 @@ CREATE TABLE public.hip_class (
 );
 
 
-ALTER TABLE public.hip_class OWNER TO postgres;
-
 --
--- Name: hip_cluster; Type: TABLE; Schema: public; Owner: postgres
+-- Name: hip_cluster; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.hip_cluster (
     id text NOT NULL,
-    name_en text DEFAULT ''::text NOT NULL,
     type_id text NOT NULL,
+    name_en text DEFAULT ''::text NOT NULL,
     CONSTRAINT name_en_not_empty CHECK ((name_en <> ''::text))
 );
 
 
-ALTER TABLE public.hip_cluster OWNER TO postgres;
-
 --
--- Name: hip_hazard; Type: TABLE; Schema: public; Owner: postgres
+-- Name: hip_hazard; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.hip_hazard (
@@ -752,10 +630,8 @@ CREATE TABLE public.hip_hazard (
 );
 
 
-ALTER TABLE public.hip_hazard OWNER TO postgres;
-
 --
--- Name: human_category_presence; Type: TABLE; Schema: public; Owner: postgres
+-- Name: human_category_presence; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.human_category_presence (
@@ -766,14 +642,17 @@ CREATE TABLE public.human_category_presence (
     missing boolean,
     affected_direct boolean,
     affected_indirect boolean,
-    displaced boolean
+    displaced boolean,
+    deaths_total_group_column_names jsonb,
+    injured_total_group_column_names jsonb,
+    missing_total_group_column_names jsonb,
+    affected_total_group_column_names jsonb,
+    displaced_total_group_column_names jsonb
 );
 
 
-ALTER TABLE public.human_category_presence OWNER TO postgres;
-
 --
--- Name: human_dsg; Type: TABLE; Schema: public; Owner: postgres
+-- Name: human_dsg; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.human_dsg (
@@ -788,10 +667,8 @@ CREATE TABLE public.human_dsg (
 );
 
 
-ALTER TABLE public.human_dsg OWNER TO postgres;
-
 --
--- Name: human_dsg_config; Type: TABLE; Schema: public; Owner: postgres
+-- Name: human_dsg_config; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.human_dsg_config (
@@ -800,10 +677,8 @@ CREATE TABLE public.human_dsg_config (
 );
 
 
-ALTER TABLE public.human_dsg_config OWNER TO postgres;
-
 --
--- Name: injured; Type: TABLE; Schema: public; Owner: postgres
+-- Name: injured; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.injured (
@@ -813,18 +688,39 @@ CREATE TABLE public.injured (
 );
 
 
-ALTER TABLE public.injured OWNER TO postgres;
+--
+-- Name: instance_system_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.instance_system_settings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    footer_url_privacy_policy character varying,
+    footer_url_terms_conditions character varying,
+    admin_setup_complete boolean DEFAULT false NOT NULL,
+    website_logo character varying DEFAULT '/assets/country-instance-logo.png'::character varying NOT NULL,
+    website_name character varying(250) DEFAULT 'Disaster Tracking System'::character varying NOT NULL,
+    "approvedRecordsArePublic" boolean DEFAULT false NOT NULL,
+    totp_issuer character varying(250) DEFAULT 'example-app'::character varying NOT NULL,
+    dts_instance_type character varying DEFAULT 'country'::character varying NOT NULL,
+    dts_instance_ctry_iso3 character varying DEFAULT ''::character varying NOT NULL,
+    currency_code character varying DEFAULT 'USD'::character varying NOT NULL,
+    country_name character varying DEFAULT 'United State of America'::character varying NOT NULL,
+    country_accounts_id uuid
+);
+
 
 --
--- Name: losses; Type: TABLE; Schema: public; Owner: postgres
+-- Name: losses; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.losses (
     api_import_id text,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     record_id uuid NOT NULL,
-    sector_id bigint NOT NULL,
+    sector_id uuid NOT NULL,
     sector_is_agriculture boolean NOT NULL,
+    type_not_agriculture text,
+    type_agriculture text,
     related_to_not_agriculture text,
     related_to_agriculture text,
     description text,
@@ -841,30 +737,12 @@ CREATE TABLE public.losses (
     private_cost_total numeric,
     private_cost_total_override boolean DEFAULT false NOT NULL,
     spatial_footprint jsonb,
-    attachments jsonb,
-    type_not_agriculture text,
-    type_agriculture text
+    attachments jsonb
 );
 
 
-ALTER TABLE public.losses OWNER TO postgres;
-
 --
--- Name: measure; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.measure (
-    api_import_id text,
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name text NOT NULL,
-    type text DEFAULT 'area'::text NOT NULL
-);
-
-
-ALTER TABLE public.measure OWNER TO postgres;
-
---
--- Name: missing; Type: TABLE; Schema: public; Owner: postgres
+-- Name: missing; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.missing (
@@ -875,67 +753,28 @@ CREATE TABLE public.missing (
 );
 
 
-ALTER TABLE public.missing OWNER TO postgres;
-
 --
--- Name: noneco_losses; Type: TABLE; Schema: public; Owner: postgres
+-- Name: noneco_losses; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.noneco_losses (
+    api_import_id text,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     disaster_record_id uuid NOT NULL,
-    category_id bigint NOT NULL,
+    category_id uuid NOT NULL,
     description text NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    api_import_id text
-);
-
-
-ALTER TABLE public.noneco_losses OWNER TO postgres;
-
---
--- Name: resource_repo; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.resource_repo (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    title text NOT NULL,
-    summary text NOT NULL,
-    attachments jsonb,
-    "approvalStatus" text DEFAULT 'draft'::text NOT NULL,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
-ALTER TABLE public.resource_repo OWNER TO postgres;
-
 --
--- Name: rr_attachments; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.rr_attachments (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    resource_repo_id uuid NOT NULL,
-    type text DEFAULT 'document'::text NOT NULL,
-    type_other_desc text,
-    filename text,
-    url text,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-
-
-ALTER TABLE public.rr_attachments OWNER TO postgres;
-
---
--- Name: sector; Type: TABLE; Schema: public; Owner: postgres
+-- Name: sector; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.sector (
-    id bigint NOT NULL,
-    parent_id bigint,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    parent_id uuid,
     sectorname text NOT NULL,
     description text,
     level bigint DEFAULT 1 NOT NULL,
@@ -944,15 +783,14 @@ CREATE TABLE public.sector (
 );
 
 
-ALTER TABLE public.sector OWNER TO postgres;
-
 --
--- Name: sector_disaster_records_relation; Type: TABLE; Schema: public; Owner: postgres
+-- Name: sector_disaster_records_relation; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.sector_disaster_records_relation (
+    api_import_id text,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    sector_id bigint NOT NULL,
+    sector_id uuid NOT NULL,
     disaster_record_id uuid NOT NULL,
     with_damage boolean,
     damage_cost numeric,
@@ -962,69 +800,41 @@ CREATE TABLE public.sector_disaster_records_relation (
     with_disruption boolean,
     with_losses boolean,
     losses_cost numeric,
-    losses_cost_currency text,
-    api_import_id text
+    losses_cost_currency text
 );
 
 
-ALTER TABLE public.sector_disaster_records_relation OWNER TO postgres;
-
 --
--- Name: sector_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.sector_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.sector_id_seq OWNER TO postgres;
-
---
--- Name: sector_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.sector_id_seq OWNED BY public.sector.id;
-
-
---
--- Name: session; Type: TABLE; Schema: public; Owner: postgres
+-- Name: session; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.session (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id bigint NOT NULL,
+    user_id uuid NOT NULL,
     last_active_at timestamp without time zone DEFAULT '2000-01-01 00:00:00'::timestamp without time zone NOT NULL,
     totp_authed boolean DEFAULT false NOT NULL
 );
 
 
-ALTER TABLE public.session OWNER TO postgres;
-
 --
--- Name: unit; Type: TABLE; Schema: public; Owner: postgres
+-- Name: super_admin_users; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.unit (
-    api_import_id text,
+CREATE TABLE public.super_admin_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    type text DEFAULT 'area'::text NOT NULL,
-    name text NOT NULL
+    first_name character varying(150),
+    last_name character varying(150),
+    email character varying(254) NOT NULL,
+    password character varying(100) NOT NULL
 );
 
 
-ALTER TABLE public.unit OWNER TO postgres;
-
 --
--- Name: user; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public."user" (
-    id bigint NOT NULL,
-    role text DEFAULT ''::text NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     first_name text DEFAULT ''::text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
     email text NOT NULL,
@@ -1049,87 +859,29 @@ CREATE TABLE public."user" (
 );
 
 
-ALTER TABLE public."user" OWNER TO postgres;
-
 --
--- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: user_country_accounts; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE public.user_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.user_id_seq OWNER TO postgres;
-
---
--- Name: user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.user_id_seq OWNED BY public."user".id;
+CREATE TABLE public.user_country_accounts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    country_accounts_id uuid NOT NULL,
+    role character varying(100) NOT NULL,
+    is_primary_admin boolean DEFAULT false NOT NULL,
+    added_at timestamp without time zone DEFAULT now() NOT NULL
+);
 
 
 --
--- Name: __drizzle_migrations__ id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: __drizzle_migrations__ id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.__drizzle_migrations__ ALTER COLUMN id SET DEFAULT nextval('public.__drizzle_migrations___id_seq'::regclass);
 
 
 --
--- Name: api_key id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.api_key ALTER COLUMN id SET DEFAULT nextval('public.api_key_id_seq'::regclass);
-
-
---
--- Name: categories id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.categories ALTER COLUMN id SET DEFAULT nextval('public.categories_id_seq'::regclass);
-
-
---
--- Name: country1 id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.country1 ALTER COLUMN id SET DEFAULT nextval('public.country1_id_seq'::regclass);
-
-
---
--- Name: dev_example1 id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.dev_example1 ALTER COLUMN id SET DEFAULT nextval('public.dev_example1_id_seq'::regclass);
-
-
---
--- Name: division id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.division ALTER COLUMN id SET DEFAULT nextval('public.division_id_seq'::regclass);
-
-
---
--- Name: sector id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.sector ALTER COLUMN id SET DEFAULT nextval('public.sector_id_seq'::regclass);
-
-
---
--- Name: user id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public."user" ALTER COLUMN id SET DEFAULT nextval('public.user_id_seq'::regclass);
-
-
---
--- Name: __drizzle_migrations__ __drizzle_migrations___pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: __drizzle_migrations__ __drizzle_migrations___pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.__drizzle_migrations__
@@ -1137,7 +889,7 @@ ALTER TABLE ONLY public.__drizzle_migrations__
 
 
 --
--- Name: affected affected_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: affected affected_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.affected
@@ -1145,7 +897,7 @@ ALTER TABLE ONLY public.affected
 
 
 --
--- Name: api_key api_key_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: api_key api_key_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.api_key
@@ -1153,7 +905,7 @@ ALTER TABLE ONLY public.api_key
 
 
 --
--- Name: api_key api_key_secret_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: api_key api_key_secret_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.api_key
@@ -1161,7 +913,7 @@ ALTER TABLE ONLY public.api_key
 
 
 --
--- Name: asset asset_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: asset asset_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.asset
@@ -1169,7 +921,7 @@ ALTER TABLE ONLY public.asset
 
 
 --
--- Name: asset asset_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: asset asset_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.asset
@@ -1177,7 +929,7 @@ ALTER TABLE ONLY public.asset
 
 
 --
--- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audit_logs
@@ -1185,7 +937,7 @@ ALTER TABLE ONLY public.audit_logs
 
 
 --
--- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.categories
@@ -1193,23 +945,39 @@ ALTER TABLE ONLY public.categories
 
 
 --
--- Name: commonPasswords commonPasswords_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: countries countries_iso3_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."commonPasswords"
-    ADD CONSTRAINT "commonPasswords_pkey" PRIMARY KEY (password);
-
-
---
--- Name: country1 country1_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.country1
-    ADD CONSTRAINT country1_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_iso3_unique UNIQUE (iso3);
 
 
 --
--- Name: damages damages_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: countries countries_name_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_name_unique UNIQUE (name);
+
+
+--
+-- Name: countries countries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.countries
+    ADD CONSTRAINT countries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: country_accounts country_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.country_accounts
+    ADD CONSTRAINT country_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: damages damages_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.damages
@@ -1217,7 +985,7 @@ ALTER TABLE ONLY public.damages
 
 
 --
--- Name: damages damages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: damages damages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.damages
@@ -1225,7 +993,7 @@ ALTER TABLE ONLY public.damages
 
 
 --
--- Name: deaths deaths_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: deaths deaths_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.deaths
@@ -1233,7 +1001,7 @@ ALTER TABLE ONLY public.deaths
 
 
 --
--- Name: dev_example1 dev_example1_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dev_example1 dev_example1_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dev_example1
@@ -1241,7 +1009,7 @@ ALTER TABLE ONLY public.dev_example1
 
 
 --
--- Name: dev_example1 dev_example1_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dev_example1 dev_example1_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dev_example1
@@ -1249,15 +1017,7 @@ ALTER TABLE ONLY public.dev_example1
 
 
 --
--- Name: sector_disaster_records_relation disRecSectorsUniqueIdx; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.sector_disaster_records_relation
-    ADD CONSTRAINT "disRecSectorsUniqueIdx" UNIQUE (disaster_record_id, sector_id);
-
-
---
--- Name: disaster_event disaster_event_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_event disaster_event_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1265,7 +1025,7 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_event disaster_event_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_event disaster_event_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1273,7 +1033,7 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_records disaster_records_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_records disaster_records_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_records
@@ -1281,7 +1041,7 @@ ALTER TABLE ONLY public.disaster_records
 
 
 --
--- Name: disaster_records disaster_records_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_records disaster_records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_records
@@ -1289,7 +1049,7 @@ ALTER TABLE ONLY public.disaster_records
 
 
 --
--- Name: displaced displaced_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: displaced displaced_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.displaced
@@ -1297,7 +1057,7 @@ ALTER TABLE ONLY public.displaced
 
 
 --
--- Name: disruption disruption_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disruption disruption_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disruption
@@ -1305,7 +1065,7 @@ ALTER TABLE ONLY public.disruption
 
 
 --
--- Name: disruption disruption_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disruption disruption_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disruption
@@ -1313,15 +1073,7 @@ ALTER TABLE ONLY public.disruption
 
 
 --
--- Name: division division_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.division
-    ADD CONSTRAINT division_import_id_unique UNIQUE (import_id);
-
-
---
--- Name: division division_national_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: division division_national_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.division
@@ -1329,7 +1081,7 @@ ALTER TABLE ONLY public.division
 
 
 --
--- Name: division division_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: division division_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.division
@@ -1337,7 +1089,15 @@ ALTER TABLE ONLY public.division
 
 
 --
--- Name: event event_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dts_system_info dts_system_info_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dts_system_info
+    ADD CONSTRAINT dts_system_info_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: event event_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.event
@@ -1345,7 +1105,7 @@ ALTER TABLE ONLY public.event
 
 
 --
--- Name: hazardous_event hazardous_event_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hazardous_event hazardous_event_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hazardous_event
@@ -1353,7 +1113,7 @@ ALTER TABLE ONLY public.hazardous_event
 
 
 --
--- Name: hazardous_event hazardous_event_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hazardous_event hazardous_event_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hazardous_event
@@ -1361,7 +1121,7 @@ ALTER TABLE ONLY public.hazardous_event
 
 
 --
--- Name: hip_class hip_class_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hip_class hip_class_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hip_class
@@ -1369,7 +1129,7 @@ ALTER TABLE ONLY public.hip_class
 
 
 --
--- Name: hip_cluster hip_cluster_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hip_cluster hip_cluster_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hip_cluster
@@ -1377,7 +1137,7 @@ ALTER TABLE ONLY public.hip_cluster
 
 
 --
--- Name: hip_hazard hip_hazard_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hip_hazard hip_hazard_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hip_hazard
@@ -1385,7 +1145,7 @@ ALTER TABLE ONLY public.hip_hazard
 
 
 --
--- Name: human_category_presence human_category_presence_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: human_category_presence human_category_presence_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.human_category_presence
@@ -1393,7 +1153,7 @@ ALTER TABLE ONLY public.human_category_presence
 
 
 --
--- Name: human_dsg human_dsg_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: human_dsg human_dsg_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.human_dsg
@@ -1401,7 +1161,7 @@ ALTER TABLE ONLY public.human_dsg
 
 
 --
--- Name: injured injured_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: injured injured_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.injured
@@ -1409,7 +1169,15 @@ ALTER TABLE ONLY public.injured
 
 
 --
--- Name: losses losses_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: instance_system_settings instance_system_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.instance_system_settings
+    ADD CONSTRAINT instance_system_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: losses losses_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.losses
@@ -1417,7 +1185,7 @@ ALTER TABLE ONLY public.losses
 
 
 --
--- Name: losses losses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: losses losses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.losses
@@ -1425,23 +1193,7 @@ ALTER TABLE ONLY public.losses
 
 
 --
--- Name: measure measure_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.measure
-    ADD CONSTRAINT measure_api_import_id_unique UNIQUE (api_import_id);
-
-
---
--- Name: measure measure_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.measure
-    ADD CONSTRAINT measure_pkey PRIMARY KEY (id);
-
-
---
--- Name: missing missing_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: missing missing_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.missing
@@ -1449,7 +1201,7 @@ ALTER TABLE ONLY public.missing
 
 
 --
--- Name: noneco_losses noneco_losses_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: noneco_losses noneco_losses_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.noneco_losses
@@ -1457,7 +1209,7 @@ ALTER TABLE ONLY public.noneco_losses
 
 
 --
--- Name: noneco_losses noneco_losses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: noneco_losses noneco_losses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.noneco_losses
@@ -1465,7 +1217,7 @@ ALTER TABLE ONLY public.noneco_losses
 
 
 --
--- Name: noneco_losses nonecolosses_sectorIdx; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: noneco_losses nonecolosses_sectorIdx; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.noneco_losses
@@ -1473,23 +1225,7 @@ ALTER TABLE ONLY public.noneco_losses
 
 
 --
--- Name: resource_repo resource_repo_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.resource_repo
-    ADD CONSTRAINT resource_repo_pkey PRIMARY KEY (id);
-
-
---
--- Name: rr_attachments rr_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.rr_attachments
-    ADD CONSTRAINT rr_attachments_pkey PRIMARY KEY (id);
-
-
---
--- Name: sector_disaster_records_relation sector_disaster_records_relation_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sector_disaster_records_relation sector_disaster_records_relation_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sector_disaster_records_relation
@@ -1497,7 +1233,7 @@ ALTER TABLE ONLY public.sector_disaster_records_relation
 
 
 --
--- Name: sector_disaster_records_relation sector_disaster_records_relation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sector_disaster_records_relation sector_disaster_records_relation_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sector_disaster_records_relation
@@ -1505,7 +1241,15 @@ ALTER TABLE ONLY public.sector_disaster_records_relation
 
 
 --
--- Name: sector sector_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sector_disaster_records_relation sector_disaster_records_relation_sector_id_disaster_record_id; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sector_disaster_records_relation
+    ADD CONSTRAINT sector_disaster_records_relation_sector_id_disaster_record_id UNIQUE (sector_id, disaster_record_id);
+
+
+--
+-- Name: sector sector_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sector
@@ -1513,7 +1257,7 @@ ALTER TABLE ONLY public.sector
 
 
 --
--- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.session
@@ -1521,23 +1265,31 @@ ALTER TABLE ONLY public.session
 
 
 --
--- Name: unit unit_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: super_admin_users super_admin_users_email_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.unit
-    ADD CONSTRAINT unit_api_import_id_unique UNIQUE (api_import_id);
-
-
---
--- Name: unit unit_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.unit
-    ADD CONSTRAINT unit_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.super_admin_users
+    ADD CONSTRAINT super_admin_users_email_unique UNIQUE (email);
 
 
 --
--- Name: user user_email_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: super_admin_users super_admin_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.super_admin_users
+    ADD CONSTRAINT super_admin_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_country_accounts user_country_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_country_accounts
+    ADD CONSTRAINT user_country_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user user_email_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."user"
@@ -1545,7 +1297,7 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."user"
@@ -1553,49 +1305,42 @@ ALTER TABLE ONLY public."user"
 
 
 --
--- Name: division_bbox_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX division_bbox_idx ON public.division USING gist (bbox);
-
-
---
--- Name: division_geom_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX division_geom_idx ON public.division USING gist (geom);
-
-
---
--- Name: division_level_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: division_level_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX division_level_idx ON public.division USING btree (level);
 
 
 --
--- Name: parent_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: parent_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX parent_idx ON public.division USING btree (parent_id);
 
 
 --
--- Name: sector_disaster_records_relation_disaster_record_id_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: tenant_import_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX sector_disaster_records_relation_disaster_record_id_idx ON public.sector_disaster_records_relation USING btree (disaster_record_id);
-
-
---
--- Name: sector_disaster_records_relation_sector_id_idx; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX sector_disaster_records_relation_sector_id_idx ON public.sector_disaster_records_relation USING btree (sector_id);
+CREATE UNIQUE INDEX tenant_import_id_idx ON public.division USING btree (country_accounts_id, import_id);
 
 
 --
--- Name: affected affected_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tenant_national_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX tenant_national_id_idx ON public.division USING btree (country_accounts_id, national_id);
+
+
+--
+-- Name: dts_system_info dts_system_info_singleton_guard; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER dts_system_info_singleton_guard BEFORE INSERT OR UPDATE ON public.dts_system_info FOR EACH ROW EXECUTE FUNCTION public.dts_system_info_singleton();
+
+
+--
+-- Name: affected affected_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.affected
@@ -1603,15 +1348,39 @@ ALTER TABLE ONLY public.affected
 
 
 --
--- Name: api_key api_key_user_id_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: api_key api_key_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.api_key
-    ADD CONSTRAINT api_key_user_id_user_id_fk FOREIGN KEY (user_id) REFERENCES public."user"(id);
+    ADD CONSTRAINT api_key_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
 
 
 --
--- Name: audit_logs audit_logs_user_id_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: api_key api_key_user_id_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.api_key
+    ADD CONSTRAINT api_key_user_id_user_id_fk FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: asset asset_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.asset
+    ADD CONSTRAINT asset_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: audit_logs audit_logs_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_logs
+    ADD CONSTRAINT audit_logs_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: audit_logs audit_logs_user_id_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audit_logs
@@ -1619,7 +1388,7 @@ ALTER TABLE ONLY public.audit_logs
 
 
 --
--- Name: categories categories_parent_id_categories_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: categories categories_parent_id_categories_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.categories
@@ -1627,7 +1396,15 @@ ALTER TABLE ONLY public.categories
 
 
 --
--- Name: damages damages_asset_id_asset_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: country_accounts country_accounts_country_id_countries_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.country_accounts
+    ADD CONSTRAINT country_accounts_country_id_countries_id_fk FOREIGN KEY (country_id) REFERENCES public.countries(id);
+
+
+--
+-- Name: damages damages_asset_id_asset_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.damages
@@ -1635,7 +1412,7 @@ ALTER TABLE ONLY public.damages
 
 
 --
--- Name: damages damages_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: damages damages_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.damages
@@ -1643,7 +1420,7 @@ ALTER TABLE ONLY public.damages
 
 
 --
--- Name: damages damages_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: damages damages_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.damages
@@ -1651,7 +1428,7 @@ ALTER TABLE ONLY public.damages
 
 
 --
--- Name: deaths deaths_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: deaths deaths_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.deaths
@@ -1659,7 +1436,23 @@ ALTER TABLE ONLY public.deaths
 
 
 --
--- Name: disaster_event disaster_event_disaster_event_id_disaster_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dev_example1 dev_example1_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.dev_example1
+    ADD CONSTRAINT dev_example1_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: disaster_event disaster_event_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.disaster_event
+    ADD CONSTRAINT disaster_event_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: disaster_event disaster_event_disaster_event_id_disaster_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1667,7 +1460,7 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_event disaster_event_hazardous_event_id_hazardous_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_event disaster_event_hazardous_event_id_hazardous_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1675,7 +1468,7 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_event disaster_event_hip_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_event disaster_event_hip_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1683,7 +1476,7 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_event disaster_event_hip_hazard_id_hip_hazard_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_event disaster_event_hip_hazard_id_hip_hazard_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1691,7 +1484,7 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_event disaster_event_hip_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_event disaster_event_hip_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1699,7 +1492,7 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_event disaster_event_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_event disaster_event_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
@@ -1707,7 +1500,15 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_records disaster_records_disaster_event_id_disaster_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_records disaster_records_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.disaster_records
+    ADD CONSTRAINT disaster_records_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: disaster_records disaster_records_disaster_event_id_disaster_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_records
@@ -1715,7 +1516,7 @@ ALTER TABLE ONLY public.disaster_records
 
 
 --
--- Name: disaster_records disaster_records_hip_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_records disaster_records_hip_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_records
@@ -1723,7 +1524,7 @@ ALTER TABLE ONLY public.disaster_records
 
 
 --
--- Name: disaster_records disaster_records_hip_hazard_id_hip_hazard_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_records disaster_records_hip_hazard_id_hip_hazard_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_records
@@ -1731,7 +1532,7 @@ ALTER TABLE ONLY public.disaster_records
 
 
 --
--- Name: disaster_records disaster_records_hip_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disaster_records disaster_records_hip_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_records
@@ -1739,7 +1540,7 @@ ALTER TABLE ONLY public.disaster_records
 
 
 --
--- Name: displaced displaced_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: displaced displaced_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.displaced
@@ -1747,7 +1548,7 @@ ALTER TABLE ONLY public.displaced
 
 
 --
--- Name: disruption disruption_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disruption disruption_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disruption
@@ -1755,7 +1556,7 @@ ALTER TABLE ONLY public.disruption
 
 
 --
--- Name: disruption disruption_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: disruption disruption_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disruption
@@ -1763,7 +1564,15 @@ ALTER TABLE ONLY public.disruption
 
 
 --
--- Name: division division_parent_id_division_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: division division_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.division
+    ADD CONSTRAINT division_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id);
+
+
+--
+-- Name: division division_parent_id_division_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.division
@@ -1771,7 +1580,7 @@ ALTER TABLE ONLY public.division
 
 
 --
--- Name: event_relationship event_relationship_child_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: event_relationship event_relationship_child_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.event_relationship
@@ -1779,7 +1588,7 @@ ALTER TABLE ONLY public.event_relationship
 
 
 --
--- Name: event_relationship event_relationship_parent_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: event_relationship event_relationship_parent_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.event_relationship
@@ -1787,7 +1596,15 @@ ALTER TABLE ONLY public.event_relationship
 
 
 --
--- Name: hazardous_event hazardous_event_hip_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hazardous_event hazardous_event_country_accounts_id_country_accounts_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.hazardous_event
+    ADD CONSTRAINT hazardous_event_country_accounts_id_country_accounts_id_fk FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id);
+
+
+--
+-- Name: hazardous_event hazardous_event_hip_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hazardous_event
@@ -1795,7 +1612,7 @@ ALTER TABLE ONLY public.hazardous_event
 
 
 --
--- Name: hazardous_event hazardous_event_hip_hazard_id_hip_hazard_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hazardous_event hazardous_event_hip_hazard_id_hip_hazard_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hazardous_event
@@ -1803,7 +1620,7 @@ ALTER TABLE ONLY public.hazardous_event
 
 
 --
--- Name: hazardous_event hazardous_event_hip_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hazardous_event hazardous_event_hip_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hazardous_event
@@ -1811,7 +1628,7 @@ ALTER TABLE ONLY public.hazardous_event
 
 
 --
--- Name: hazardous_event hazardous_event_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hazardous_event hazardous_event_id_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hazardous_event
@@ -1819,7 +1636,7 @@ ALTER TABLE ONLY public.hazardous_event
 
 
 --
--- Name: hip_cluster hip_cluster_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hip_cluster hip_cluster_type_id_hip_class_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hip_cluster
@@ -1827,7 +1644,7 @@ ALTER TABLE ONLY public.hip_cluster
 
 
 --
--- Name: hip_hazard hip_hazard_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hip_hazard hip_hazard_cluster_id_hip_cluster_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hip_hazard
@@ -1835,7 +1652,7 @@ ALTER TABLE ONLY public.hip_hazard
 
 
 --
--- Name: human_category_presence human_category_presence_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: human_category_presence human_category_presence_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.human_category_presence
@@ -1843,7 +1660,7 @@ ALTER TABLE ONLY public.human_category_presence
 
 
 --
--- Name: human_dsg human_dsg_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: human_dsg human_dsg_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.human_dsg
@@ -1851,7 +1668,7 @@ ALTER TABLE ONLY public.human_dsg
 
 
 --
--- Name: injured injured_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: injured injured_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.injured
@@ -1859,7 +1676,15 @@ ALTER TABLE ONLY public.injured
 
 
 --
--- Name: losses losses_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: instance_system_settings instance_system_settings_country_accounts_id_country_accounts_i; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.instance_system_settings
+    ADD CONSTRAINT instance_system_settings_country_accounts_id_country_accounts_i FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: losses losses_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.losses
@@ -1867,7 +1692,7 @@ ALTER TABLE ONLY public.losses
 
 
 --
--- Name: losses losses_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: losses losses_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.losses
@@ -1875,7 +1700,7 @@ ALTER TABLE ONLY public.losses
 
 
 --
--- Name: missing missing_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: missing missing_dsg_id_human_dsg_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.missing
@@ -1883,7 +1708,7 @@ ALTER TABLE ONLY public.missing
 
 
 --
--- Name: noneco_losses noneco_losses_category_id_categories_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: noneco_losses noneco_losses_category_id_categories_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.noneco_losses
@@ -1891,7 +1716,7 @@ ALTER TABLE ONLY public.noneco_losses
 
 
 --
--- Name: noneco_losses noneco_losses_disaster_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: noneco_losses noneco_losses_disaster_record_id_disaster_records_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.noneco_losses
@@ -1899,15 +1724,7 @@ ALTER TABLE ONLY public.noneco_losses
 
 
 --
--- Name: rr_attachments rr_attachments_resource_repo_id_resource_repo_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.rr_attachments
-    ADD CONSTRAINT rr_attachments_resource_repo_id_resource_repo_id_fk FOREIGN KEY (resource_repo_id) REFERENCES public.resource_repo(id);
-
-
---
--- Name: sector_disaster_records_relation sector_disaster_records_relation_disaster_record_id_disaster_re; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sector_disaster_records_relation sector_disaster_records_relation_disaster_record_id_disaster_re; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sector_disaster_records_relation
@@ -1915,7 +1732,7 @@ ALTER TABLE ONLY public.sector_disaster_records_relation
 
 
 --
--- Name: sector_disaster_records_relation sector_disaster_records_relation_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sector_disaster_records_relation sector_disaster_records_relation_sector_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sector_disaster_records_relation
@@ -1923,7 +1740,7 @@ ALTER TABLE ONLY public.sector_disaster_records_relation
 
 
 --
--- Name: sector sector_parent_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: sector sector_parent_id_sector_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sector
@@ -1931,11 +1748,27 @@ ALTER TABLE ONLY public.sector
 
 
 --
--- Name: session session_user_id_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: session session_user_id_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.session
-    ADD CONSTRAINT session_user_id_user_id_fk FOREIGN KEY (user_id) REFERENCES public."user"(id);
+    ADD CONSTRAINT session_user_id_user_id_fk FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_country_accounts user_country_accounts_country_accounts_id_country_accounts_id_f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_country_accounts
+    ADD CONSTRAINT user_country_accounts_country_accounts_id_country_accounts_id_f FOREIGN KEY (country_accounts_id) REFERENCES public.country_accounts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_country_accounts user_country_accounts_user_id_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_country_accounts
+    ADD CONSTRAINT user_country_accounts_user_id_user_id_fk FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
 
 
 --
