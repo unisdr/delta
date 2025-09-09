@@ -16,6 +16,7 @@ if createdb -U "$PGUSERNAME" "$db_name"; then
      psql -U "$PGUSERNAME" -d "$db_name" -f dts_database/20250813075915_populate_category_asset_and_sector_data.sql &&
      psql -U "$PGUSERNAME" -d "$db_name" -f dts_database/20250814092113_populate_hips_data_into_db.sql &&
      psql -U "$PGUSERNAME" -d "$db_name" -f dts_database/20250908093239_init_dts_system_info.sql
+     psql -U "$PGUSERNAME" -d "$db_name" -f dts_database/20250909065957_populate_initial_super_admin_user.sql
   then
     echo "Schema restored successfully."
   else

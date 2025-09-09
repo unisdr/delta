@@ -53,6 +53,8 @@ copy app\drizzle\migrations\20250811095649_update_countries_table_add_flag_url_d
 copy app\drizzle\migrations\20250813075915_populate_category_asset_and_sector_data.sql dts_shared_binary\dts_database\20250813075915_populate_category_asset_and_sector_data.sql /Y
 copy app\drizzle\migrations\20250814092113_populate_hips_data_into_db.sql dts_shared_binary\dts_database\20250814092113_populate_hips_data_into_db.sql /Y
 copy app\drizzle\migrations\20250908093239_init_dts_system_info.sql dts_shared_binary\dts_database\20250908093239_init_dts_system_info.sql /Y
+copy app\drizzle\migrations\20250909065957_populate_initial_super_admin_user.sql dts_shared_binary\dts_database\20250909065957_populate_initial_super_admin_user.sql /Y
+
 
 set /A STEP+=1
 echo === Step !STEP!/%TOTAL_STEPS%!. Copying shell scripts into dts_shared_binary ===

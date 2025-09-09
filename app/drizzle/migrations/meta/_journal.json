@@ -71,6 +71,13 @@
       "when": 1757323959650,
       "tag": "20250908093239_init_dts_system_info",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1757401197278,
+      "tag": "20250909065957_populate_initial_super_admin_user",
+      "breakpoints": true
     }
   ]
 }
