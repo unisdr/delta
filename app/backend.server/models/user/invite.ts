@@ -12,7 +12,10 @@ import { randomBytes } from "crypto";
 
 import { validateName, validatePassword } from "./user_utils";
 import { passwordHash } from "./password";
-import { createUserCountryAccounts, doesUserCountryAccountExistByEmailAndCountryAccountsId } from "~/db/queries/userCountryAccounts";
+import {
+	createUserCountryAccounts,
+	doesUserCountryAccountExistByEmailAndCountryAccountsId,
+} from "~/db/queries/userCountryAccounts";
 import { createUser, getUserByEmail } from "~/db/queries/user";
 
 type AdminInviteUserResult =
@@ -52,7 +55,9 @@ export async function adminInviteUser(
 	fields: AdminInviteUserFields,
 	countryAccountsId: string,
 	baseUrl: string,
-	siteName: string
+	siteName: string,
+	countryName: string,
+	countryAccountType: string
 ): Promise<AdminInviteUserResult> {
 	let errors: Errors<AdminInviteUserFields> = {};
 	errors.form = [];
@@ -71,10 +76,11 @@ export async function adminInviteUser(
 		errors.fields.organization = ["Organisation is required"];
 	}
 
-	const emailAndCountryIdExist = await doesUserCountryAccountExistByEmailAndCountryAccountsId(
-		fields.email,
-		countryAccountsId
-	);
+	const emailAndCountryIdExist =
+		await doesUserCountryAccountExistByEmailAndCountryAccountsId(
+			fields.email,
+			countryAccountsId
+		);
 
 	if (emailAndCountryIdExist) {
 		errors.fields.email = ["A user with this email already exists"];
@@ -85,21 +91,48 @@ export async function adminInviteUser(
 	}
 
 	const user = await getUserByEmail(fields.email);
-	if(!user){
+	if (!user) {
 		//create new user
 		//create new user country account with it
 		//send invitation for new user
 		dr.transaction(async (tx) => {
-			const newUser =	await createUser(fields.email, tx)
-			await createUserCountryAccounts(newUser.id,countryAccountsId,fields.role,false,tx);
-			await sendInviteForNewUser(newUser, baseUrl,siteName,fields.role,tx);
+			const newUser = await createUser(fields.email, tx);
+			await createUserCountryAccounts(
+				newUser.id,
+				countryAccountsId,
+				fields.role,
+				false,
+				tx
+			);
+			await sendInviteForNewUser(
+				newUser,
+				baseUrl,
+				siteName,
+				fields.role,
+				countryName,
+				countryAccountType,
+				tx
+			);
 		});
-	}else{
+	} else {
 		//create new user country accounts associate to it
 		//send invitation for existing user
 		dr.transaction(async (tx) => {
-			await createUserCountryAccounts(user.id,countryAccountsId,fields.role,false,tx);
-			await sendInviteForExistingUser(user,baseUrl,siteName,fields.role);
+			await createUserCountryAccounts(
+				user.id,
+				countryAccountsId,
+				fields.role,
+				false,
+				tx
+			);
+			await sendInviteForExistingUser(
+				user,
+				baseUrl,
+				siteName,
+				fields.role,
+				countryName,
+				countryAccountType
+			);
 		});
 	}
 
@@ -111,6 +144,8 @@ export async function sendInviteForNewUser(
 	siteUrl: string,
 	siteName: string,
 	role: string,
+	countryName: string,
+	countryAccountType: string,
 	tx?: Tx
 ) {
 	const inviteCode = randomBytes(32).toString("hex");
@@ -130,7 +165,7 @@ export async function sendInviteForNewUser(
 		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
 	const subject = `Invitation to join DTS ${siteName}`;
 	const html = `<p>You have been invited to join the DTS ${siteName} system as 
-                   a ${role} user.
+                   a ${role} user for the country ${countryName} ${countryAccountType} instance.
                 </p>
                 <p>Click on the link below to create your account.</p>
                 <p>
@@ -143,7 +178,7 @@ export async function sendInviteForNewUser(
                 <p><a href="${inviteURL}">${inviteURL}</a></p>`;
 
 	const text = `You have been invited to join the DTS ${siteName} system as 
-                a ${role} user. 
+                a ${role} user for the country ${countryName} ${countryAccountType} instance. 
                 Copy and paste the following link into your browser url to create your account:
                 ${inviteURL}`;
 	await sendEmail(user.email, subject, text, html);
@@ -154,11 +189,12 @@ export async function sendInviteForExistingUser(
 	siteUrl: string,
 	siteName: string,
 	role: string,
+	countryName: string,
+	countryAccountType: string
 ) {
-	
 	const subject = `Invitation to join DTS ${siteName}`;
 	const html = `<p>You have been invited to join the DTS ${siteName} system as 
-                   a ${role} user.
+                   a ${role} user for the country ${countryName} ${countryAccountType} instance.
                 </p>
                 <p>Click on the link below to login to your account.</p>
                 <p>
@@ -171,7 +207,7 @@ export async function sendInviteForExistingUser(
                 <p><a href="${siteUrl}">${siteUrl}</a></p>`;
 
 	const text = `You have been invited to join the DTS ${siteName} system as 
-                a ${role} user. 
+                a ${role} user for the country ${countryName} ${countryAccountType} instance. 
                 Copy and paste the following link into your browser url to login to your account:
                 ${siteUrl}`;
 	await sendEmail(user.email, subject, text, html);
@@ -214,9 +250,8 @@ export async function sendInviteForExistingCountryAccountAdminUser(
 	siteName: string,
 	role: string,
 	countryName: string,
-	countryAccountType: string,
+	countryAccountType: string
 ) {
-	
 	const subject = `Invitation to join DTS ${siteName}`;
 	const html = `<p>You have been invited to join the DTS ${siteName} system as 
                    a ${role} user for the country ${countryName} ${countryAccountType} instance

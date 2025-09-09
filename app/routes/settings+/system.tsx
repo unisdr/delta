@@ -9,12 +9,12 @@ import { authLoaderWithPerm } from "~/util/auth";
 import { configApplicationEmail } from "~/util/config";
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import { getSystemInfo, SystemInfo } from "~/db/queries/dtsSystemInfo";
+import { getSystemInfo } from "~/db/queries/dtsSystemInfo";
 
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountryAccountsIdFromSession } from "~/util/session";
-import { SelectCountries, InstanceSystemSettings } from "~/drizzle/schema";
+import { SelectCountries, InstanceSystemSettings, SelectDtsSystemInfo } from "~/drizzle/schema";
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
 import {
@@ -39,7 +39,7 @@ interface LoaderData {
 		SMTP_SECURE?: string;
 	};
 	instanceSystemSettings: InstanceSystemSettings | null;
-	dtsSystemInfo: SystemInfo | null;
+	dtsSystemInfo: SelectDtsSystemInfo | null;
 	country: SelectCountries;
 	userRole: string;
 }

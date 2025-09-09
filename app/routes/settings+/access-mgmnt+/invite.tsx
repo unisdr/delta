@@ -1,34 +1,31 @@
-import {
-	json,
-	MetaFunction,
-} from "@remix-run/node";
+import { json, MetaFunction } from "@remix-run/node";
 
-import {
-	useLoaderData,
-	useActionData,
-	Link,
-	Form
-} from "@remix-run/react";
+import { useLoaderData, useActionData, Link, Form } from "@remix-run/react";
 import { useState } from "react";
 
-import {
-	FormResponse,
-	SubmitButton
-} from "~/frontend/form";
+import { FormResponse, SubmitButton } from "~/frontend/form";
 import { getCountryRoles } from "~/frontend/user/roles";
 
-import {
-	authActionWithPerm,
-	authLoaderWithPerm,
-} from "~/util/auth";
+import { authActionWithPerm, authLoaderWithPerm } from "~/util/auth";
 
 import { formStringData } from "~/util/httputil";
-import { redirectWithMessage, getUserFromSession, getCountrySettingsFromSession, getCountryAccountsIdFromSession } from "~/util/session";
+import {
+	redirectWithMessage,
+	getUserFromSession,
+	getCountrySettingsFromSession,
+	getCountryAccountsIdFromSession,
+} from "~/util/session";
 
 import { MainContainer } from "~/frontend/container";
 
 import "react-toastify/dist/ReactToastify.css";
-import { adminInviteUser, AdminInviteUserFields, adminInviteUserFieldsFromMap } from "~/backend.server/models/user/invite";
+import {
+	adminInviteUser,
+	AdminInviteUserFields,
+	adminInviteUserFieldsFromMap,
+} from "~/backend.server/models/user/invite";
+import { getCountryAccountById } from "~/db/queries/countryAccounts";
+import { getCountryById } from "~/db/queries/countries";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -49,17 +46,16 @@ export const loader = authLoaderWithPerm("InviteUsers", async ({ request }) => {
 	}
 
 	return {
-		data: adminInviteUserFieldsFromMap({})
-	}
-})
+		data: adminInviteUserFieldsFromMap({}),
+	};
+});
 
-type ActionResponse = FormResponse<AdminInviteUserFields>
+type ActionResponse = FormResponse<AdminInviteUserFields>;
 
 type ErrorsType = {
 	fields: Partial<Record<keyof AdminInviteUserFields, string[]>>;
 	form?: string[];
 };
-
 
 export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const { request } = actionArgs;
@@ -69,7 +65,7 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	const settings = await getCountrySettingsFromSession(request);
 	const siteName = settings.websiteName;
 
-	const countryAccountsId = await getCountryAccountsIdFromSession(request)
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	// Get user session and tenant context
 	const userSession = await getUserFromSession(request);
@@ -80,12 +76,27 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	if (!countryAccountsId) {
 		throw new Response("Unauthorized - No tenant context", { status: 401 });
 	}
+	const countryAccount = await getCountryAccountById(countryAccountsId);
+	if (!countryAccount) {
+		throw new Response("Unauthorized - No tenant context", { status: 500 });
+	}
+	const country = await getCountryById(countryAccount.countryId);
+	if (!country) {
+		throw new Response("Internal server error", { status: 401 });
+	}
 
 	const formData = formStringData(await request.formData());
 	const data = adminInviteUserFieldsFromMap(formData);
 
 	try {
-		const res = await adminInviteUser(data, countryAccountsId, baseUrl, siteName);
+		const res = await adminInviteUser(
+			data,
+			countryAccountsId,
+			baseUrl,
+			siteName,
+			country.name,
+			countryAccount.type
+		);
 
 		if (!res.ok) {
 			return json<ActionResponse>({
@@ -114,7 +125,9 @@ export const action = authActionWithPerm("InviteUsers", async (actionArgs) => {
 	}
 });
 
-function isErrorResponse(actionData: any): actionData is { errors: ErrorsType } {
+function isErrorResponse(
+	actionData: any
+): actionData is { errors: ErrorsType } {
 	return actionData?.errors !== undefined;
 }
 
@@ -129,16 +142,22 @@ export default function Screen() {
 	const actionData = useActionData<typeof action>();
 
 	let fields = loaderData?.data || {};
-	const errors: ErrorsType = isErrorResponse(actionData) ? actionData.errors : { fields: {} };
+	const errors: ErrorsType = isErrorResponse(actionData)
+		? actionData.errors
+		: { fields: {} };
 
 	const [selectedRole, setSelectedRole] = useState(fields.role || "");
 
-	const roleDesc = getCountryRoles().find((role) => role.id === selectedRole)?.desc || "";
+	const roleDesc =
+		getCountryRoles().find((role) => role.id === selectedRole)?.desc || "";
 
 	return (
 		<MainContainer title="Add User">
 			<div className="dts-form__header">
-				<Link to="/settings/access-mgmnt/" className="mg-button mg-button--small mg-button-system">
+				<Link
+					to="/settings/access-mgmnt/"
+					className="mg-button mg-button--small mg-button-system"
+				>
 					Back
 				</Link>
 			</div>
@@ -156,7 +175,7 @@ export default function Screen() {
 				</div>
 			)}
 
-			<Form method="post" >
+			<Form method="post">
 				<div className="mg-grid mg-grid__col-3">
 					{/* First Name */}
 					<div className="dts-form-component">
@@ -164,7 +183,8 @@ export default function Screen() {
 							<div className="dts-form-component__label">
 								<span style={{ color: "red" }}>
 									<abbr title="mandatory">*</abbr>
-								</span>First name
+								</span>
+								First name
 							</div>
 							<input
 								type="text"
@@ -173,7 +193,9 @@ export default function Screen() {
 								defaultValue={fields.firstName}
 								autoComplete="given-name"
 								className={errors.fields.firstName ? "error" : ""}
-								aria-describedby={errors.fields.firstName ? "firstNameError" : undefined}
+								aria-describedby={
+									errors.fields.firstName ? "firstNameError" : undefined
+								}
 							/>
 						</label>
 						<div className="dts-form-component__hint">
@@ -202,7 +224,9 @@ export default function Screen() {
 								defaultValue={fields.lastName}
 								autoComplete="family-name"
 								className={errors.fields.lastName ? "error" : ""}
-								aria-describedby={errors.fields.lastName ? "lastNameError" : undefined}
+								aria-describedby={
+									errors.fields.lastName ? "lastNameError" : undefined
+								}
 							/>
 						</label>
 						<div className="dts-form-component__hint">
@@ -225,7 +249,8 @@ export default function Screen() {
 							<div className="dts-form-component__label">
 								<span style={{ color: "red" }}>
 									<abbr title="mandatory">*</abbr>
-								</span>Email
+								</span>
+								Email
 							</div>
 							<input
 								type="email"
@@ -234,7 +259,9 @@ export default function Screen() {
 								defaultValue={fields.email}
 								autoComplete="email"
 								className={errors.fields.email ? "error" : ""}
-								aria-describedby={errors.fields.email ? "emailError" : undefined}
+								aria-describedby={
+									errors.fields.email ? "emailError" : undefined
+								}
 							/>
 						</label>
 						<div className="dts-form-component__hint">
@@ -257,7 +284,8 @@ export default function Screen() {
 							<div className="dts-form-component__label">
 								<span style={{ color: "red" }}>
 									<abbr title="mandatory">*</abbr>
-								</span>Organisation
+								</span>
+								Organisation
 							</div>
 							<input
 								type="text"
@@ -266,7 +294,9 @@ export default function Screen() {
 								defaultValue={fields.organization}
 								autoComplete="organization"
 								className={errors.fields.organization ? "error" : ""}
-								aria-describedby={errors.fields.organization ? "organizationError" : undefined}
+								aria-describedby={
+									errors.fields.organization ? "organizationError" : undefined
+								}
 							/>
 						</label>
 						<div className="dts-form-component__hint">
@@ -291,7 +321,8 @@ export default function Screen() {
 							<div className="dts-form-component__label">
 								<span style={{ color: "red" }}>
 									<abbr title="mandatory">*</abbr>
-								</span>Role
+								</span>
+								Role
 							</div>
 							<select
 								name="role"
@@ -330,12 +361,11 @@ export default function Screen() {
 					</div>
 					{roleDesc && (
 						<div>
-							A <b>{capitalizeFirstLetter(selectedRole)}</b> is able to <i>{capitalizeFirstLetter(roleDesc)}</i>
+							A <b>{capitalizeFirstLetter(selectedRole)}</b> is able to{" "}
+							<i>{capitalizeFirstLetter(roleDesc)}</i>
 						</div>
 					)}
 				</div>
-
-
 
 				{/* Action Buttons */}
 				<div className="dts-form__actions dts-form__actions--standalone">
@@ -349,9 +379,7 @@ export default function Screen() {
 					>
 						Discard
 					</Link>
-
 				</div>
-
 			</Form>
 		</MainContainer>
 	);
