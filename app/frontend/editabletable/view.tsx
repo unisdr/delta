@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { ColWidth, Def, defData, DefEnum, etLocalizedStringForLang } from "~/frontend/editabletable/defs"
+import { ColWidth, Def, defData, DefEnum, etLocalizedStringForLang } from "~/frontend/editabletable/base"
 import {
 	DataWithId,
 	DataManager,
@@ -8,6 +8,7 @@ import {
 	groupKeyOnlyZeroes,
 	TotalGroupFlags,
 	TotalGroupString,
+	flattenGroups,
 } from "./data"
 import { cloneInstance } from "~/util/object"
 import { HumanEffectsTable } from "~/frontend/human_effects/defs"
@@ -16,6 +17,7 @@ import { toStandardDate } from "~/util/date"
 import { eqArr } from "~/util/array"
 import { Link, useFetcher } from "@remix-run/react"
 import { notifyError, notifyInfo } from "../utils/notifications"
+import { validate } from "./validate"
 
 interface TableProps {
 	lang: string
@@ -24,7 +26,7 @@ interface TableProps {
 	initialIds: string[]
 	initialData: any[][]
 	initialTotalGroup: TotalGroupFlags
-	categoryPresence: Record<string, boolean>
+	categoryPresence: Record<string, boolean | null>
 	defs: Def[]
 }
 export function Table(props: TableProps) {
@@ -59,6 +61,11 @@ interface tableError {
 const storageVersion = "v3"
 
 function TableClient(props: TableProps) {
+
+	let [revertToIds, setRevertToIds] = useState(props.initialIds)
+	let [revertToData, setRevertToData] = useState(props.initialData)
+	let [revertToTotalGroup, setRevertToTotalGroup] = useState(props.initialTotalGroup)
+
 	function makeLocalStorageKey(recordId: string, table: string) {
 		return `table-${recordId}-${table}-${storageVersion}`
 	}
@@ -75,7 +82,7 @@ function TableClient(props: TableProps) {
 
 	let initDataManager = (key: string) => {
 		let previousUpdates: any = {}
-		console.log("loading from", key)
+		//console.log("loading from", key)
 		let storedData = localStorage.getItem(key)
 		if (storedData) {
 			try {
@@ -163,7 +170,7 @@ function TableClient(props: TableProps) {
 
 	const setTotalGroup = (totalGroup: TotalGroupString) => {
 		if (totalGroup && groupKeyOnlyZeroes(totalGroup)) {
-			notifyError('Group does not have disaggregations set.  Click "Sort into groups" after selecting values for disaggregation columns.')
+			notifyError('Group does not have disaggregations set.')
 			return
 		}
 		data.setTotalGroupString(totalGroup)
@@ -171,13 +178,17 @@ function TableClient(props: TableProps) {
 	}
 
 	const handleSave = async () => {
+		console.log("Validating data in the browser")
 		reSort()
+		if (data.getTotalGroupString() == "invalid") {
+			notifyError("Please select a group to use as source for total")
+			return
+		}
 		let e = data.validate()
 		if (e) {
 			notifyError(e)
 			return
 		}
-
 		console.log("Saving data to server")
 		let dataUpdates = data.getUpdatesForSaving()
 		let json = JSON.stringify({
@@ -185,30 +196,27 @@ function TableClient(props: TableProps) {
 			table: props.table,
 			data: dataUpdates
 		})
-		try {
-			let resp = await fetch('./human-effects/save', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: json,
-			})
-			let res = await resp.json()
-			if (!res.ok) {
-				if (res.errors) {
-					setTableErrors(res.errors)
-				} else if (res.error) {
-					throw new Error(`Failed to save data on the server: ${res.error.message}`)
-				} else {
-					throw new Error("Unknown server error")
-				}
-				return
+		let resp = await fetch('./human-effects/save', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: json,
+		})
+		let res = await resp.json()
+		if (!res.ok) {
+			if (res.errors) {
+				setTableErrors(res.errors)
+			} else if (res.error) {
+				notifyError(res.error.message + " (server)")
+			} else {
+				notifyError("Unknown server error")
 			}
-			notifyInfo("Your changes have been saved on the server")
-			await reloadData()
-		} catch (error) {
-			notifyError("Error saving changes: " + error)
+			return
 		}
+		notifyInfo("Your changes have been saved on the server")
+		await reloadData()
+
 	}
 
 	const reloadData = async () => {
@@ -220,11 +228,14 @@ function TableClient(props: TableProps) {
 		d.sortByColumn(sort.column, sort.order)
 		setData(d)
 		setTableErrors([])
+		setRevertToIds(u.ids)
+		setRevertToData(u.data)
+		setRevertToTotalGroup(u.totalGroupFlags)
 	}
 
 	const handleRevert = () => {
 		let d = new DataManager()
-		d.init(defData(props.defs), colsFromDefs(props.defs), props.initialData, props.initialIds, props.initialTotalGroup)
+		d.init(defData(props.defs), colsFromDefs(props.defs), revertToData, revertToIds, revertToTotalGroup)
 		setData(d)
 		setTableErrors([])
 	}
@@ -272,7 +283,6 @@ function TableClient(props: TableProps) {
 		return <p>Loading</p>
 	}
 
-
 	let categoryPresenceAtLeastOneYes = Object.values(categoryPresence).some(v => v)
 
 	return (
@@ -292,7 +302,7 @@ function TableClient(props: TableProps) {
 						onClear={handleClear}
 						addRowStart={addRowStart}
 						reSort={reSort}
-						csvExportUrl="./human-effects/csv-export"
+						csvExportUrl={"./human-effects/csv-export?table=" + props.table}
 						csvImportUrl={"./human-effects/csv-import?table=" + props.table}
 					/>
 					{childProps.data.hasUnsavedChanges() &&
@@ -302,7 +312,7 @@ function TableClient(props: TableProps) {
 						lang={props.lang}
 						tableErrors={tableErrors}
 						sort={sort}
-						totals={childProps.data.getTotals().data}
+						totals={childProps.data.getTotals()?.data ?? null}
 						groupTotals={childProps.data.groupTotals()}
 						data={childProps.data.applyUpdatesWithGroupKey()}
 						defs={childProps.defs}
@@ -337,7 +347,7 @@ function TableLegend() {
 
 interface TableContentProps {
 	lang: string
-	totals: any[]
+	totals: any[] | null
 	groupTotals: null | Map<string, number[]>
 	data: Group<DataWithId>[]
 	defs: Def[]
@@ -354,8 +364,8 @@ interface TableContentProps {
 	reSort: () => void
 }
 
-function colWidth(colWidth: ColWidth|undefined): number {
-	if (!colWidth){
+function colWidth(colWidth: ColWidth | undefined): number {
+	if (!colWidth) {
 		colWidth = "wide"
 	}
 	switch (colWidth) {
@@ -367,7 +377,7 @@ function colWidth(colWidth: ColWidth|undefined): number {
 			return 120
 		default:
 			return 120
-			//throw new Error("Invalid colWidth")
+		//throw new Error("Invalid colWidth")
 	}
 }
 
@@ -437,7 +447,10 @@ function TableContent(props: TableContentProps) {
 				</td>
 
 				{props.defs.filter(d => d.role == "metric").map((_, colIndex) => {
-					let v = props.totals[colIndex]
+					let v = ""
+					if (props.totals) {
+						v = props.totals[colIndex]
+					}
 					return (<React.Fragment key={colIndex}>
 						<td>
 							{props.totalGroup ? (
@@ -492,12 +505,15 @@ function TableContent(props: TableContentProps) {
 	}
 
 	const renderGroupRows = () => {
+		let dataNoGroups = flattenGroups(props.data)
+		let valid = validate(props.defs, dataNoGroups, props.totals)
+
+		if (!valid.ok && valid.tableError) {
+			console.error("table error", valid.tableError)
+		}
+		//console.log("validation results", dataNoGroups, valid)
+
 		return props.data.map((group, groupI) => {
-			/*
-			let groupTotalsMatch: null | boolean[] = null
-			if (props.groupTotalsMatch) {
-				groupTotalsMatch = props.groupTotalsMatch.get(group.key)!
-			}*/
 			let groupTotals: null | number[] = null
 			if (props.groupTotals) {
 				groupTotals = props.groupTotals.get(group.key)!
@@ -527,6 +543,7 @@ function TableContent(props: TableContentProps) {
 						`Row length does not match defs length: data ${data.length}, defs ${props.defs.length}`
 					)
 				}
+
 				for (let i = 0; i < props.defs.length; i++) {
 					let def = props.defs[i]
 					if (def.format !== "date") continue
@@ -536,7 +553,6 @@ function TableContent(props: TableContentProps) {
 						break
 					}
 				}
-				if (hasDateValue) break
 			}
 
 			return <tbody key={groupI} className="group">
@@ -554,8 +570,20 @@ function TableContent(props: TableContentProps) {
 							`Row length does not match defs length data ${data.length} defs ${props.defs.length}`
 						)
 					}
+
+					let thisRowHasError = (() => {
+						if (valid.ok) return false
+						if (!valid.rowErrors) return false
+						for (const error of valid.rowErrors) {
+							if (error.rowId === id) {
+								return true
+							}
+						}
+						return false
+					})()
+
 					let rowClassName = ""
-					if (error) {
+					if (thisRowHasError) {
 						rowClassName = "dts-error"
 					}
 
@@ -580,12 +608,18 @@ function TableContent(props: TableContentProps) {
 												let metricIndex = colIndex - dimCount()
 												if (groupTotals) {
 													let v = groupTotals[metricIndex]
-													let t = props.totals[metricIndex]
-													if (v < t) {
-														cellClassName = "dts-warning"
-													} else if (v > t) {
+													if (props.totals) {
+														let t = props.totals[metricIndex]
+														if (v < t) {
+															cellClassName = "dts-warning"
+														} else if (v > t) {
+															cellClassName = "dts-error"
+														}
+
+													} else {
 														cellClassName = "dts-error"
 													}
+
 												}
 											}
 										}
@@ -619,32 +653,39 @@ function TableContent(props: TableContentProps) {
 						const colsForLabel = dimCount()
 
 						if (colIndex == 0) {
-							let hasError = false
-							let hasWarning = false
 
-							if (groupTotals) {
-								groupTotals.forEach((v, i) => {
-									const t = props.totals[i]
-									if (v > t) hasError = true
-									else if (v < t) hasWarning = true
-								})
-							}
+							let errorMsgStr = (() => {
+								if (valid.ok) return ""
+								if (!valid.groupErrors) return ""
+								for (const error of valid.groupErrors) {
+									if (error.groupKey === group.key) {
+										return error.message
+									}
+								}
+								return ""
+							})()
 
-							let messageWarning = null
-							if (hasWarning) {
-								messageWarning = (
-									<span className="dts-warning">
-										Subtotal is lower than the total, please check if this is intentional.
-									</span>
+							let warningMsgStr = (() => {
+								if (!valid.groupWarnings) return ""
+								for (const error of valid.groupWarnings) {
+									//console.log("checking", error.groupKey, group.key)
+									if (error.groupKey === group.key) {
+										return error.message
+									}
+								}
+								return ""
+							})()
+
+							let errorMsg
+							if (errorMsgStr) {
+								errorMsg = (
+									<span className="dts-error">{errorMsgStr}</span>
 								)
 							}
-
-							let messageError = null
-							if (hasError) {
-								messageError = (
-									<span className="dts-error">
-										Subtotal is higher than the total, please adjust to match.
-									</span>
+							let warningMsg
+							if (warningMsgStr) {
+								warningMsg = (
+									<span className="dts-warning">{warningMsgStr}</span>
 								)
 							}
 
@@ -672,8 +713,8 @@ function TableContent(props: TableContentProps) {
 										/>
 										Use as total
 									</label>
-									{messageWarning}
-									{messageError}
+									{warningMsg}
+									{errorMsg}
 								</td>
 							)
 						}
@@ -683,20 +724,23 @@ function TableContent(props: TableContentProps) {
 
 						if (def.role == "metric") {
 							let metricIndex = colIndex - dimCount()
+							let className = ""
 							if (groupTotals) {
 								let v = groupTotals[metricIndex]
-								let t = props.totals[metricIndex]
-								let className = ""
-								if (v < t) {
-									className = "dts-warning"
-								} else if (v > t) {
+								if (props.totals) {
+									let t = props.totals[metricIndex]
+									if (v < t) {
+										className = "dts-warning"
+									} else if (v > t) {
+										className = "dts-error"
+									}
+								} else {
 									className = "dts-error"
 								}
 								return <td key={colIndex} className="group-total">
 									<span className={className}>{v}</span>
 								</td>
 							} else {
-								console.log("missing group total", props.groupTotals, group.key)
 								return <td key={colIndex} className="group-total">Missing group total</td>
 							}
 

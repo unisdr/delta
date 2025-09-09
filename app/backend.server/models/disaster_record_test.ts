@@ -10,7 +10,9 @@ import {
 	eventTable,
 	hazardousEventTable,
 	disasterEventTable,
-	disasterRecordsTable
+	disasterRecordsTable,
+	countryAccounts,
+	countries
 } from '~/drizzle/schema'
 
 import { createTestData } from './hip_test'
@@ -96,10 +98,28 @@ async function disasterRecordTestData() {
 	await dr.execute(sql`TRUNCATE ${hazardousEventTable} CASCADE`)
 	await dr.execute(sql`TRUNCATE ${eventTable} CASCADE`)
 }
+export let testCountryId = "00000000-0000-0000-0000-000000000001"
+export let testCountryAccountsId = "00000000-0000-0000-0000-000000000001"
 
-// Legacy function for backward compatibility
+export async function createTestCountryAccount(tx: Tx) {
+	await dr.execute(sql`TRUNCATE ${countries}, ${countryAccounts} CASCADE`)
+
+	await tx.insert(countries)
+		.values({
+			id: testCountryId,
+			name: "test"
+		})
+	await tx.insert(countryAccounts)
+		.values({
+			id: testCountryAccountsId,
+			shortDescription: "test",
+			countryId: testCountryId
+		})
+}
+
 export async function createTestDisasterRecord1(tx: Tx) {
 	await createTestData()
+	await createTestCountryAccount(tx)
 
 	let res1 = await tx.insert(eventTable)
 		.values({} as typeof eventTable.$inferInsert)
@@ -108,6 +128,7 @@ export async function createTestDisasterRecord1(tx: Tx) {
 	await tx.insert(hazardousEventTable)
 		.values({
 			id: id1,
+			countryAccountsId: testCountryAccountsId,
 			hipTypeId: "type1",
 			startDate: new Date().toISOString().slice(0, 10),
 			endDate: new Date().toISOString().slice(0, 10),
@@ -120,12 +141,14 @@ export async function createTestDisasterRecord1(tx: Tx) {
 	await tx.insert(disasterEventTable)
 		.values({
 			id: id2,
-			hazardousEventId: id1
+			hazardousEventId: id1,
+			countryAccountsId: testCountryAccountsId,
 		} as typeof disasterEventTable.$inferInsert)
 	await tx.insert(disasterRecordsTable)
 		.values({
 			id: testDisasterRecord1Id,
-			disasterEventId: id2
+			disasterEventId: id2,
+			countryAccountsId: testCountryAccountsId,
 		} as typeof disasterRecordsTable.$inferInsert)
 		.returning({ id: disasterRecordsTable.id })
 }
@@ -272,3 +295,4 @@ describe('Disaster Record Tenant Isolation Tests', async () => {
 		assert.strictEqual(disasterRecord1Access, null, 'Disaster record should be deleted')
 	})
 })
+

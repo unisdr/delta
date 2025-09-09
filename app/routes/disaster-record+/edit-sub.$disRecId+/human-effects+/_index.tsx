@@ -5,7 +5,7 @@ import { validateTotalGroup } from "~/frontend/editabletable/data";
 import { LoaderFunction, LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { useLoaderData, Link } from "@remix-run/react";
 import { HumanEffectsTableFromString, HumanEffectTablesDefs } from "~/frontend/human_effects/defs";
-import { useFetcher } from "@remix-run/react"
+import { Form, useSubmit, useFetcher } from "@remix-run/react"
 import { loadData } from "~/backend.server/handlers/human_effects"
 import {
 	categoryPresenceSet,
@@ -73,17 +73,24 @@ export default function Screen() {
 		}
 	}, [data.totalGroupFlags, data.defs])
 
+	let submit = useSubmit()
+
 	return (
 		<MainContainer title="Human Effects">
 			<Link to={"/disaster-record/edit/" + ld.recordId}>
 				Back to disaster record
 			</Link>
 			<p>{data.tbl.label}</p>
-			<fetcher.Form method="get" action=".">
+
+			<Form>
 				<select
 					name="tbl"
 					value={data.tblId}
-					onChange={(e) => fetcher.submit(e.target.form)}
+					onChange={e => {
+						submit({ tbl: e.target.value }, {
+								replace: true
+						})
+					}}
 				>
 					{HumanEffectTablesDefs.map((def) => (
 						<option key={def.id} value={def.id}>
@@ -91,7 +98,7 @@ export default function Screen() {
 						</option>
 					))}
 				</select>
-			</fetcher.Form>
+			</Form>
 			<Table
 				lang="default"
 				recordId={data.recordId}

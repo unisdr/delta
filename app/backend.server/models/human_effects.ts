@@ -11,33 +11,18 @@ import {
 import { insertRow, updateRow, deleteRow, updateRowMergeJson } from "~/util/db"
 import { injuredTable, humanDsgTable, deathsTable, missingTable, affectedTable, displacedTable, humanCategoryPresenceTable, disasterRecordsTable } from "~/drizzle/schema"
 
-import { Def, DefEnum } from "~/frontend/editabletable/defs"
+import { Def, DefEnum } from "~/frontend/editabletable/base"
+import { ValidateRes, ETError, validateTotalsAreInData } from "~/frontend/editabletable/validate"
 
 import { HumanEffectsTable } from "~/frontend/human_effects/defs"
 import { toStandardDate } from "~/util/date"
 import { capitalizeFirstLetter, lowercaseFirstLetter } from "~/util/string";
-import { dataToGroupKey, groupKeyOnlyZeroes } from "~/frontend/editabletable/data"
-
-export class HEError extends Error {
-	code: string
-	rowId: any
-	constructor(code: string, message: string) {
-		super(message)
-		this.code = code
-	}
-	toJSON() {
-		return {
-			code: this.code,
-			message: this.message,
-			rowId: this.rowId
-		}
-	}
-}
+import { DataWithIdBasic } from "~/frontend/editabletable/base"
 
 
 export type Res =
 	| { ok: true, ids: string[] }
-	| { ok: false, error: HEError }
+	| { ok: false, error: ETError }
 
 function tableFromType(t: HumanEffectsTable): any {
 	switch (t) {
@@ -120,7 +105,7 @@ function splitDefsByShared(defs: Def[]): SplitRes {
 
 type ValidateRowRes =
 	{ ok: true; res: any[] } |
-	{ ok: false; error: HEError }
+	{ ok: false; error: ETError }
 
 function validateRow(
 	defs: Def[],
@@ -131,7 +116,7 @@ function validateRow(
 	let res: any[] = []
 
 	let invalidValueErr = function (msg: string): ValidateRowRes {
-		return { ok: false, error: new HEError("invalid_value", msg) }
+		return { ok: false, error: new ETError("invalid_value", msg) }
 	}
 
 	for (let i = 0; i < defs.length; i++) {
@@ -142,7 +127,7 @@ function validateRow(
 				res.push(undefined)
 				continue
 			} else {
-				return { ok: false, error: new HEError("invalid_value", "Undefined value in row") }
+				return { ok: false, error: new ETError("invalid_value", "Undefined value in row") }
 			}
 		}
 		if (dataStrings) {
@@ -198,20 +183,6 @@ function validateRow(
 	return { ok: true, res }
 }
 
-function sameDimentions(defs: Def[], d1: any[], d2: any[]): boolean {
-	for (let i = 0; i < defs.length; i++) {
-		let def = defs[i]
-		if (def.role != "dimension") {
-			continue
-		}
-		let a = d1[i]
-		let b = d2[i]
-		if (a != b) {
-			return false
-		}
-	}
-	return true
-}
 
 export async function create(
 	tx: Tx,
@@ -253,9 +224,16 @@ export async function create(
 	return { ok: true, ids }
 }
 
-export type ValidateRes =
-	| { ok: true }
-	| { ok: false, error?: HEError, errors?: HEError[] }
+
+
+function convert(cur: { ids: string[], data: any[][] }): DataWithIdBasic[] {
+	if (cur.data.length !== cur.ids.length) throw new Error('Length mismatch between data and ids')
+	let result = []
+	for (let i = 0; i < cur.data.length; i++) {
+		result.push({ id: cur.ids[i], data: cur.data[i] })
+	}
+	return result
+}
 
 export async function validate(
 	tx: Tx,
@@ -271,48 +249,10 @@ export async function validate(
 	if (!cur.ok) {
 		return cur
 	}
-	let errors = new Map<string, HEError>()
 
-	for (let [i, row] of cur.data.entries()) {
-		let gk = dataToGroupKey(row)
-		let id1 = cur.ids[i]
-		if (groupKeyOnlyZeroes(gk)) {
-			let e = new HEError("no_dimention_data", "Row has no disaggregation values.")
-			e.rowId = id1
-			errors.set(id1, e)
-		}
-	}
+	let data = convert(cur)
 
-	let checked = new Map<string, any[]>()
-	let dupErr = function (rowId: string) {
-		let e = new HEError("duplicate_dimension", "Two or more rows have the same disaggregation values.")
-		e.rowId = rowId
-		errors.set(rowId, e)
-	}
-	for (let [i, row1] of cur.data.entries()) {
-		let gk = dataToGroupKey(row1)
-		if (groupKeyOnlyZeroes(gk)) {
-			continue
-		}
-		let id1 = cur.ids[i]
-		for (let [id2, row2] of checked.entries()) {
-			let gk = dataToGroupKey(row2)
-			if (groupKeyOnlyZeroes(gk)) {
-				continue
-			}
-			if (sameDimentions(defs, row1, row2)) {
-				dupErr(id1)
-				dupErr(id2)
-			}
-		}
-		checked.set(id1, row1)
-	}
-	if (errors.size) {
-		let e2 = Array.from(errors.values())
-		e2.sort((a, b) => a.rowId.localeCompare(b.rowId))
-		return { ok: false, errors: e2 }
-	}
-	return { ok: true }
+	return validateTotalsAreInData(defs, data)
 }
 
 export async function update(
@@ -327,7 +267,7 @@ export async function update(
 	let tbl = tableFromType(tblId)
 
 	if (ids.length !== data.length) {
-		return { ok: false, error: new HEError("other", "Mismatch between ids and data rows") }
+		return { ok: false, error: new ETError("other", "Mismatch between ids and data rows") }
 	}
 
 	for (let i = 0; i < data.length; i++) {
@@ -347,11 +287,11 @@ export async function update(
 
 		let dsgIdRes = await tx.execute(sql`SELECT dsg_id FROM ${tbl} WHERE id = ${id}`)
 		if (!dsgIdRes.rows.length) {
-			return { ok: false, error: new HEError("other", `Update: record not found for id: ${id}`) }
+			return { ok: false, error: new ETError("other", `Update: record not found for id: ${id}`) }
 		}
 		let dsgId = dsgIdRes.rows[0].dsg_id
 		if (!dsgId) {
-			return { ok: false, error: new HEError("other", `Update: dsg_id missing`) }
+			return { ok: false, error: new ETError("other", `Update: dsg_id missing`) }
 		}
 		{
 			let cols = spl.defs.shared.map((c) => c.dbName)
@@ -387,7 +327,7 @@ export async function deleteRows(
 		let dsgId = dsgIdRes.rows[0]?.dsg_id
 
 		if (!dsgId) {
-			return { ok: false, error: new HEError("other", `Record not found for id: ${id}`) }
+			return { ok: false, error: new ETError("other", `Record not found for id: ${id}`) }
 		}
 
 		await deleteRow(tx, tbl, id)
@@ -422,7 +362,7 @@ WHERE human_dsg.record_id = ${recordId}
 
 export type GetRes =
 	| { ok: true, defs: Def[], ids: string[], data: any[][] }
-	| { ok: false, error: HEError }
+	| { ok: false, error: ETError }
 
 export async function get(
 	tx: Tx,
@@ -757,7 +697,31 @@ function categoryPresenceDbName(tbl: HumanEffectsTable, d: Def) {
 	return dbNamePrefix + "_" + d.dbName
 }
 
-export async function categoryPresenceGet(tx: Tx, recordId: string, countryAccountsId: string, tblId: HumanEffectsTable, defs: Def[]): Promise<Record<string, boolean>> {
+function categoryPresenceTotalJsName(tbl: HumanEffectsTable, d: Def) {
+	let dbNamePrefix = categoryPresenceTableDbNamePrefix(tbl)
+	let r = ""
+	if (!dbNamePrefix) {
+		r = d.jsName
+	} else {
+		r = lowercaseFirstLetter(tbl) + capitalizeFirstLetter(d.jsName)
+	}
+	r += "Total"
+	return r
+}
+function categoryPresenceTotalDbName(tbl: HumanEffectsTable, d: Def) {
+	let dbNamePrefix = categoryPresenceTableDbNamePrefix(tbl)
+	let r = ""
+	if (!dbNamePrefix) {
+		r = d.dbName
+	} else {
+		r = dbNamePrefix + "_" + d.dbName
+	}
+	r += "_total"
+	return r
+}
+
+
+export async function categoryPresenceGet(tx: Tx, recordId: string, countryAccountsId: string, tblId: HumanEffectsTable, defs: Def[]): Promise<Record<string, boolean | null>> {
 	// validate that it's not some other string
 	tableFromType(tblId)
 
@@ -775,11 +739,11 @@ export async function categoryPresenceGet(tx: Tx, recordId: string, countryAccou
 			)
 		);
 
-	if (!rows.length) {
-		return {}
+	let res: Record<string, boolean | null> = {}
+	let row
+	if (rows.length) {
+		row = rows[0].human_category_presence
 	}
-	let res: Record<string, boolean> = {};
-	let row = rows[0].human_category_presence;
 
 	for (let d of defs) {
 		if (d.role != "metric") {
@@ -789,9 +753,14 @@ export async function categoryPresenceGet(tx: Tx, recordId: string, countryAccou
 			throw new Error("Custom metrics not supported")
 		}
 		let jsNameWithPrefix = categoryPresenceJsName(tblId, d)
-		let v = (row as unknown as Record<string, boolean | null>)[jsNameWithPrefix]
-		if (v !== null) {
+		let v
+		if (row) {
+			v = (row as unknown as Record<string, boolean | null>)[jsNameWithPrefix]
+		}
+		if (v !== null && v !== undefined) {
 			res[d.jsName] = v
+		} else {
+			res[d.jsName] = null
 		}
 	}
 	return res
@@ -819,22 +788,20 @@ export async function categoryPresenceSet(tx: Tx, recordId: string, tblId: Human
 		cols.push(k)
 		vals.push(v)
 	}
-	await tx.transaction(async (tx) => {
-		let rows = await tx
-			.select({
-				id: humanCategoryPresenceTable.id
-			})
-			.from(humanCategoryPresenceTable)
-			.where(eq(humanCategoryPresenceTable.recordId, recordId))
-		if (rows.length) {
-			let id = rows[0].id
-			await updateRow(tx, humanCategoryPresenceTable, cols, vals, id)
-		} else {
-			cols.push("record_id")
-			vals.push(recordId)
-			await insertRow(tx, humanCategoryPresenceTable, cols, vals)
-		}
-	})
+	let rows = await tx
+		.select({
+			id: humanCategoryPresenceTable.id
+		})
+		.from(humanCategoryPresenceTable)
+		.where(eq(humanCategoryPresenceTable.recordId, recordId))
+	if (rows.length) {
+		let id = rows[0].id
+		await updateRow(tx, humanCategoryPresenceTable, cols, vals, id)
+	} else {
+		cols.push("record_id")
+		vals.push(recordId)
+		await insertRow(tx, humanCategoryPresenceTable, cols, vals)
+	}
 }
 
 export async function categoryPresenceDeleteAll(tx: Tx, recordId: string) {
@@ -878,22 +845,20 @@ export async function totalGroupSet(tx: Tx, recordId: string, tbl: HumanEffectsT
 	tableFromType(tbl)
 	let field = totalGroupDBName(tbl)
 	let val = JSON.stringify(groupKey)
-	await tx.transaction(async (tx) => {
-		let rows = await tx
-			.select({
-				id: humanCategoryPresenceTable.id
-			})
-			.from(humanCategoryPresenceTable)
-			.where(eq(humanCategoryPresenceTable.recordId, recordId))
-		if (rows.length) {
-			let id = rows[0].id
-			await updateRow(tx, humanCategoryPresenceTable, [field], [val], id)
-		} else {
-			let cols = ["record_id", field]
-			let vals = [recordId, val]
-			await insertRow(tx, humanCategoryPresenceTable, cols, vals)
-		}
-	})
+	let rows = await tx
+		.select({
+			id: humanCategoryPresenceTable.id
+		})
+		.from(humanCategoryPresenceTable)
+		.where(eq(humanCategoryPresenceTable.recordId, recordId))
+	if (rows.length) {
+		let id = rows[0].id
+		await updateRow(tx, humanCategoryPresenceTable, [field], [val], id)
+	} else {
+		let cols = ["record_id", field]
+		let vals = [recordId, val]
+		await insertRow(tx, humanCategoryPresenceTable, cols, vals)
+	}
 }
 
 async function deleteTotal(
@@ -916,7 +881,16 @@ async function deleteTotal(
 		isNull(hd.disability),
 		isNull(hd.globalPovertyLine),
 		isNull(hd.nationalPovertyLine),
-		sql`${hd.custom} = '{}'::jsonb`
+		sql`(
+					${hd.custom} IS NULL
+					OR ${hd.custom} = '{}'::jsonb
+					OR (
+						SELECT COUNT(*)
+						FROM jsonb_each(${hd.custom})
+						WHERE jsonb_typeof(value) != 'null'
+					) = 0
+				)`
+
 	]
 
 	for (let dim of dimDefs) {
@@ -936,6 +910,8 @@ async function deleteTotal(
 		.where(and(...where))
 		.execute()
 
+	console.log("found matching rows", r)
+
 	if (!r.length) {
 		return
 	}
@@ -946,11 +922,108 @@ async function deleteTotal(
 		throw new Error("got more than 1 row for delete")
 	}
 	let d = r[0].id
+	console.log("deleting", d)
 	await tx.delete(t).where(eq(t.dsgId, d)).execute()
 	await tx.delete(hd).where(eq(hd.id, d)).execute()
 }
 
 export async function setTotal(
+	tx: Tx,
+	tblId: HumanEffectsTable,
+	recordId: string,
+	defs: Def[],
+	data: any,
+) {
+	//console.log("setting totals", "data", data)
+	await setTotalPresenceTable(tx, tblId, recordId, defs, data)
+	await setTotalDsgTable(tx, tblId, recordId, defs, data)
+}
+
+export async function setTotalPresenceTable(
+	tx: Tx,
+	tblId: HumanEffectsTable,
+	recordId: string,
+	defs: Def[],
+	data: any,
+) {
+	// validate that it's not some other string
+	tableFromType(tblId)
+
+	let rowData: Record<string, boolean | null> = {}
+	for (let d of defs) {
+		if (d.role != "metric") {
+			continue
+		}
+		if (d.custom) {
+			throw new Error("Custom metrics not supported")
+		}
+		let v = data[d.jsName] ?? null
+		let name = categoryPresenceTotalDbName(tblId, d)
+		rowData[name] = v
+	}
+	let cols: string[] = []
+	let vals: any[] = []
+	for (let [k, v] of Object.entries(rowData)) {
+		cols.push(k)
+		vals.push(v)
+	}
+	let rows = await tx
+		.select({
+			id: humanCategoryPresenceTable.id
+		})
+		.from(humanCategoryPresenceTable)
+		.where(eq(humanCategoryPresenceTable.recordId, recordId))
+	if (rows.length) {
+		let id = rows[0].id
+		console.log("updated row", cols, vals)
+		await updateRow(tx, humanCategoryPresenceTable, cols, vals, id)
+	} else {
+		cols.push("record_id")
+		vals.push(recordId)
+		await insertRow(tx, humanCategoryPresenceTable, cols, vals)
+	}
+}
+export async function getTotalPresenceTable(
+	tx: Tx,
+	tblId: HumanEffectsTable,
+	recordId: string,
+	defs: Def[]
+): Promise<Record<string, number>> {
+	// validate that it's not some other string
+	tableFromType(tblId)
+
+	let rows = await tx
+		.select()
+		.from(humanCategoryPresenceTable)
+		.where(eq(humanCategoryPresenceTable.recordId, recordId))
+	let res: Record<string, number> = {}
+	let row
+	if (rows.length) {
+		row = rows[0]
+	}
+
+	for (let d of defs) {
+		if (d.role != "metric") {
+			continue
+		}
+		if (d.custom) {
+			throw new Error("Custom metrics not supported")
+		}
+		let jsNameWithPrefix = categoryPresenceTotalJsName(tblId, d)
+		let v
+		if (row) {
+			v = (row as unknown as Record<string, number>)[jsNameWithPrefix]
+		}
+		if (v !== null && v !== undefined) {
+			res[d.jsName] = v
+		} else {
+			res[d.jsName] = 0
+		}
+	}
+	return res
+}
+
+export async function setTotalDsgTable(
 	tx: Tx,
 	tblId: HumanEffectsTable,
 	recordId: string,
@@ -986,9 +1059,10 @@ export async function setTotal(
 		let vs = [d, ...mDefs.map(d => data[d.jsName])]
 		await insertRow(tx, t, cs, vs)
 	}
+	console.log("inserting", d)
 }
 
-export async function getTotal(
+export async function getTotalDsgTable(
 	tx: Tx,
 	tblId: HumanEffectsTable,
 	recordId: string,
@@ -1009,7 +1083,15 @@ export async function getTotal(
 				isNull(h.disability),
 				isNull(h.globalPovertyLine),
 				isNull(h.nationalPovertyLine),
-				sql`${h.custom} = '{}'::jsonb`
+				sql`(
+					${h.custom} IS NULL
+					OR ${h.custom} = '{}'::jsonb
+					OR (
+						SELECT COUNT(*)
+						FROM jsonb_each(${h.custom})
+						WHERE jsonb_typeof(value) != 'null'
+					) = 0
+				)`
 			)
 		)
 		.execute()
@@ -1116,6 +1198,10 @@ export async function calcTotalForGroup(
 		let customValid = true
 		if (hd.custom && Object.keys(hd.custom).length > 0) {
 			for (let key of Object.keys(hd.custom)) {
+				let value = hd.custom[key]
+				if (value === null){
+					continue
+				}
 				let dim = dimDefs.find(d => d.dbName === key)
 				if (!dim || !dim.custom) {
 					customValid = false
@@ -1123,7 +1209,9 @@ export async function calcTotalForGroup(
 				}
 			}
 		}
-		if (!customValid) continue
+		if (!customValid) {
+			continue
+		}
 
 		let match = true
 		for (let dim of dimDefs) {
@@ -1147,6 +1235,11 @@ export async function calcTotalForGroup(
 		}
 	}
 
+	for (let key in totals) {
+		if (totals[key] === 0) {
+			return { ok: false, error: new Error(`Total for ${key} is zero`) }
+		}
+	}
 
 	return { ok: true, totals }
 }
