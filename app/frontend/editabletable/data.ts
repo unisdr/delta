@@ -1,4 +1,11 @@
-import { DefData } from "~/frontend/editabletable/defs"
+import {
+	DefData,
+	DataWithIdBasic,
+} from "~/frontend/editabletable/base"
+import {
+	validateResToMessage,
+	validate as validateData
+} from "./validate"
 
 
 export interface PreviousUpdatesFromJson {
@@ -13,10 +20,6 @@ export interface PreviousUpdatesFromJson {
 // n - new
 type From = ("i" | "u" | "n")[]
 
-export interface DataWithIdBasic {
-	id: string
-	data: any[]
-}
 
 export interface DataWithId {
 	id: string
@@ -39,6 +42,17 @@ export interface DataManagerCols {
 export interface Group<T> {
 	key: string
 	data: T[]
+}
+
+export function flattenGroups(groups: Group<DataWithIdBasic>[]): DataWithIdBasic[] {
+	let result: DataWithIdBasic[] = []
+	for (let i = 0; i < groups.length; i++) {
+		let group = groups[i]
+		for (let j = 0; j < group.data.length; j++) {
+			result.push(group.data[j])
+		}
+	}
+	return result
 }
 
 // Example: 10010
@@ -73,8 +87,6 @@ export function totalGroupToString(defs: DefData[], tg: TotalGroupFlags): TotalG
 		}
 		res.push(tg.includes(def.dbName) ? '1' : '0')
 	}
-
-	console.log("tgToString", tg, res.join(""))
 	return res.join('')
 }
 
@@ -140,8 +152,7 @@ export class DataManager {
 	public sortOrder: sortOrderGroup[]
 	private sort: Sort
 
-	private totalsId: string
-
+	private totalsId: string | null
 
 	private totalGroupFlags: TotalGroupFlags = null
 
@@ -149,7 +160,7 @@ export class DataManager {
 
 	constructor() {
 		this.cols = { dimensions: 0, metrics: 0 }
-		this.totalsId = ""
+		this.totalsId = null
 		this.lastTempId = 0
 		this.initial = new Map()
 		this.updates = new Map()
@@ -161,7 +172,7 @@ export class DataManager {
 	}
 
 	init(defs: DefData[], cols: DataManagerCols, initialData: any[][], ids: string[], initialTotalGroup: TotalGroupFlags = null, previousUpdatesFromJson: PreviousUpdatesFromJson = {}) {
-		console.log("prev data", previousUpdatesFromJson)
+		//console.log("prev data", previousUpdatesFromJson)
 		this.cols = cols
 		if (cols.dimensions == 0) {
 			throw "cols.dimensions is 0"
@@ -203,6 +214,10 @@ export class DataManager {
 
 		this.sortOrder[0].ids.push(...Array.from(this.newRows.keys()))
 
+		this.totalsId = null
+
+		let totalsRows = 0
+
 		for (let row of this.applyUpdatesUnsorted()) {
 			let ok = true
 			for (let i = 0; i < this.cols.dimensions; i++) {
@@ -212,15 +227,22 @@ export class DataManager {
 					break
 				}
 			}
+			//console.log("checking row if totals", row, ok)
 			if (ok) {
+				totalsRows++
 				this.totalsId = row.id
-				break
 			}
 		}
+		if (totalsRows > 1) {
+			console.error("found more than 1 totals row", totalsRows)
+		}
+
+
+		/*
 		if (!this.totalsId) {
 			let id = this.addRow("end")
 			this.totalsId = id
-		}
+		}*/
 
 		this.sortDefault()
 
@@ -245,6 +267,8 @@ export class DataManager {
 	}
 
 	hasUnsavedChanges(): boolean {
+		//console.log("hasUnsavedChanges", this.updates, this.deletes, this.newRows)
+
 		return (
 			this.updates.size > 0 ||
 			this.deletes.size > 0 ||
@@ -252,30 +276,54 @@ export class DataManager {
 		)
 	}
 
-	getTotals() {
+	getTotalsFromGroup(): { data: number[] } | null {
 		let totalGroup = this.getTotalGroupString()
-		if (totalGroup) {
-			let allGroupTotals = this.groupTotals()
+		if (!totalGroup) {
+			return null
+		}
+		let allGroupTotals = this.groupTotals()
 
-			let groupTotal = allGroupTotals.get(totalGroup)
+		let groupTotal = allGroupTotals.get(totalGroup)
 
-			if (!groupTotal) {
-				return {
-					data: Array(this.cols.metrics).fill(0),
-				}
-			}
+		if (!groupTotal) {
 			return {
-				data: groupTotal,
+				data: Array(this.cols.metrics).fill(0),
 			}
 		}
-		let data: any[] = []
+		return {
+			data: groupTotal,
+		}
+	}
+
+	getTotals(): { id?: string, data: number[] } | null {
+		let v = this.getTotalsFromGroup()
+		if (v) {
+			return v
+		}
+		if (this.totalsId === null) {
+			return null
+		}
 		for (let row of this.applyUpdatesUnsorted()) {
-			if (row.id == this.totalsId) {
-				data = row.data.slice(this.cols.dimensions)
+			if (row.id === this.totalsId) {
+				let data: number[] = []
+				let i = this.cols.dimensions
+				while (i < row.data.length) {
+					let v = row.data[i]
+					if (v === null) {
+						data.push(0)
+					} else if (typeof v !== 'number' || isNaN(v)) {
+						throw new Error('Invalid totals row: non-number metric value')
+					} else {
+						data.push(v)
+					}
+					i = i + 1
+				}
+				//console.log("get totals res", row, data)
 				return { data, id: this.totalsId }
 			}
 		}
-		throw new Error("total row not found")
+		throw new Error('Totals row not found')
+
 	}
 
 	groupTotals(): Map<string, number[]> {
@@ -310,46 +358,13 @@ export class DataManager {
 	}
 
 	validate(): string {
-		if (!this.groupTotalsAreNotOver()) {
-			return "The sub-total for one of the group is larger than the total on the first row."
-		}
-
-		let totals = this.getTotals().data
-		let hasZero = totals.some(v => !v)
-		//console.log("totals", totals, "hasZero", hasZero, "this.tg", this.totalGroup)
-		let totalGroup = this.getTotalGroupString()
-		if (!totalGroup) {
-			if (hasZero) {
-				return "One of the columns has 0 for total value."
-			}
-		} else {
-			if (totalGroup == "invalid") {
-				return "Please select a group to use as total."
-			}
-			let data = this.applyUpdatesWithGroupKey()
-			const group = data.find(g => g.key === totalGroup);
-			if (!group || !group.data.length) {
-				return "Please select a group to use as total."
-			}
-			if (hasZero) {
-				return "The group used as total, has 0 value for one of the columns."
-			}
-		}
-		return ""
-	}
-
-	groupTotalsAreNotOver(): boolean {
-		let groupTotals = this.groupTotals()
-		let totalValues = this.getTotals().data
-
-		for (let [_, groupTotalRow] of groupTotals) {
-			for (let i = 0; i < totalValues.length; i++) {
-				if (groupTotalRow[i] > totalValues[i]) {
-					return false
-				}
-			}
-		}
-		return true
+		let data = this.applyUpdatesUnsorted()
+		let noTotalsRow = data.filter((row) => {
+			return row.id !== this.totalsId
+		})
+		let totals = this.getTotals()
+		let res = validateData(this.defs, noTotalsRow, totals?.data || null)
+		return validateResToMessage(res)
 	}
 
 	arraysEqualElements(arr1: any[], arr2: any[]): boolean[] {
@@ -398,18 +413,26 @@ export class DataManager {
 		}
 	}
 
-	updateTotals(fieldIndex: number, newValue: any) {
+	updateTotals(fieldIndex: number, newValue: number) {
+		if (this.totalsId === null) {
+			let id = this.addRow("end")
+			this.totalsId = id
+		}
+		//console.log("updateTotals", fieldIndex, newValue)
 		this.updateField(this.totalsId, fieldIndex + this.cols.dimensions, newValue)
+		//console.log("updateTotals new data", this.applyUpdatesUnsorted())
 	}
 
 	syncTotalsFromGroup() {
-		let totals = this.getTotals().data
-		for (let i = 0; i < totals.length; i++) {
-			this.updateTotals(i, totals[i])
+		let totals = this.getTotalsFromGroup()
+		if (!totals) {
+			return
+		}
+		let data = totals.data
+		for (let i = 0; i < data.length; i++) {
+			this.updateTotals(i, data[i])
 		}
 	}
-
-
 
 	deleteRow(rowId: string) {
 		if (this.rowIdIsNew(rowId)) {
@@ -422,7 +445,6 @@ export class DataManager {
 				key: g.key,
 				ids: g.ids.filter(id => id !== rowId)
 			}
-
 		})
 	}
 
@@ -524,7 +546,7 @@ export class DataManager {
 			newRows: Object.fromEntries(this.newRows.entries()),
 			totalGroupFlags: this.totalGroupFlags,
 		}
-		if (this.totalGroupFlags){
+		if (this.totalGroupFlags && this.totalsId !== null) {
 			this.updates.delete(this.totalsId)
 			this.deletes.delete(this.totalsId)
 		}
@@ -659,3 +681,5 @@ export function groupedSort(data: DataWithIdBasic[], index: number, order: "asc"
 		return { key: g.key, ids: g.data.map(a => a.id) }
 	})
 }
+
+

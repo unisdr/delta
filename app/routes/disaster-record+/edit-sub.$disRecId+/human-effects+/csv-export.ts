@@ -9,7 +9,7 @@ export const loader = authLoaderWithPerm("EditData", async (actionArgs) => {
 	const {params, request} = actionArgs
 	let recordId = params.disRecId
 	let url = new URL(request.url)
-	let tblStr = url.searchParams.get("tbl") || ""
+	let tblStr = url.searchParams.get("table") || ""
 	let res = await loadData(recordId, tblStr)
 	let all = [
 		res.defs.map((d) => d.jsName),

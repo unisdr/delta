@@ -72,8 +72,9 @@ td.dts-editable-table-calc-type > label > input {
 
 .dts-editable-table > tbody > tr > td.dts-init {
 }
-.dts-editable-table > tbody > tr > td.dts-update,
-.dts-editable-table > tbody > tr > td.dts-new,
+
+.dts-editable-table > tbody > tr:not(.dts-error) > td.dts-update,
+.dts-editable-table > tbody > tr:not(.dts-error) > td.dts-new,
 .dts-editable-table-legend > ul > .dts-new-or-update {
 	background: #DFF0D8;
 }

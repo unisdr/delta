@@ -688,6 +688,13 @@ export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	affectedIndirect: boolean("affected_indirect"),
 	displaced: boolean("displaced"),
 
+	deathsTotal: ourBigint("deaths_total"),
+	injuredTotal: ourBigint("injured_total"),
+	missingTotal: ourBigint("missing_total"),
+	affectedDirectTotal: ourBigint("affected_direct_total"),
+	affectedIndirectTotal: ourBigint("affected_indirect_total"),
+	displacedTotal: ourBigint("displaced_total"),
+
 	deathsTotalGroupColumnNames: jsonb("deaths_total_group_column_names"),
 	injuredTotalGroupColumnNames:jsonb("injured_total_group_column_names"),
 	missingTotalGroupColumnNames: jsonb("missing_total_group_column_names"),

@@ -1,4 +1,4 @@
-import {dr} from "~/db.server";
+import { dr } from "~/db.server";
 
 import {
 	useActionData,
@@ -17,20 +17,20 @@ import {
 	unstable_createMemoryUploadHandler
 } from "@remix-run/node";
 
-import {parseCSV} from "~/util/csv"
+import { parseCSV } from "~/util/csv"
 
-import {MainContainer} from "~/frontend/container";
-import {HumanEffectsTable, HumanEffectsTableFromString} from "~/frontend/human_effects/defs";
-import {create, clearData, defsForTable, validate} from "~/backend.server/models/human_effects";
-import {eqArr} from "~/util/array";
+import { MainContainer } from "~/frontend/container";
+import { HumanEffectsTable, HumanEffectsTableFromString } from "~/frontend/human_effects/defs";
+import { create, clearData, defsForTable, validate } from "~/backend.server/models/human_effects";
+import { eqArr } from "~/util/array";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
-	const {request, params} = loaderArgs
+	const { request, params } = loaderArgs
 	let recordId = params.disRecId || ""
 	let url = new URL(request.url)
 	let tblStr = url.searchParams.get("table") || ""
 	let tbl = HumanEffectsTableFromString(tblStr)
-	return {recordId, tbl}
+	return { recordId, tbl }
 });
 
 export interface Res {
@@ -47,7 +47,7 @@ class UserError extends Error {
 }
 
 export const action = authActionWithPerm("EditData", async (actionArgs): Promise<Res> => {
-	const {request, params} = actionArgs
+	const { request, params } = actionArgs
 	let recordId = params.disRecId || ""
 
 	const uploadHandler = unstable_composeUploadHandlers(
@@ -83,22 +83,22 @@ export const action = authActionWithPerm("EditData", async (actionArgs): Promise
 		try {
 			tableOpt = HumanEffectsTableFromString(tableIdStr)
 		} catch (e) {
-			return Response.json({ok: false, error: String(e)})
+			return Response.json({ ok: false, error: String(e) })
 		}
 		let table = tableOpt!
-		let defs = await defsForTable(table)
-
-		let expectedHeaders = defs.map(d => d.jsName)
-		if (!eqArr(all[0], expectedHeaders)) {
-			throw new UserError("Unexpected table, wanted: " + expectedHeaders.join(","))
-		}
-		for (let i = 1; i < all.length; i++) {
-			let row = all[i]
-			if (row.length != all[0].length) {
-				throw new UserError("Invalid row length")
-			}
-		}
 		await dr.transaction(async (tx) => {
+			let defs = await defsForTable(tx, table)
+
+			let expectedHeaders = defs.map(d => d.jsName)
+			if (!eqArr(all[0], expectedHeaders)) {
+				throw new UserError("Unexpected table, wanted: " + expectedHeaders.join(","))
+			}
+			for (let i = 1; i < all.length; i++) {
+				let row = all[i]
+				if (row.length != all[0].length) {
+					throw new UserError("Invalid row length")
+				}
+			}
 			{
 				let res = await clearData(tx, table, recordId)
 				if (!res.ok) {
@@ -126,13 +126,13 @@ export const action = authActionWithPerm("EditData", async (actionArgs): Promise
 				}
 			}
 		})
-		return {ok: true, imported}
+		return { ok: true, imported }
 	} catch (e) {
 		if (e instanceof UserError) {
-			return {ok: false, error: e.message}
+			return { ok: false, error: e.message }
 		}
 		console.error("Could not import csv", e)
-		return {ok: false, error: "Server error"};
+		return { ok: false, error: "Server error" };
 	}
 })
 
@@ -151,7 +151,7 @@ export default function Screen() {
 		}
 	}
 
-	let baseUrl = "/disaster-record-wip/edit/" + ld.recordId + "/human-effects"
+	let baseUrl = "/disaster-record/edit-sub/" + ld.recordId + "/human-effects"
 
 	return (
 		<MainContainer

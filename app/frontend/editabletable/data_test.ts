@@ -4,23 +4,27 @@ import {
 	DataManager,
 	groupedSort,
 	applySortOrder,
-	DataWithIdBasic,
 	dataToGroupKey,
 	dataKeySet,
 	DataManagerCols,
 } from './data'
-import { DefData } from "~/frontend/editabletable/defs"
+import {
+	DataWithIdBasic,
+	DefData
+} from "~/frontend/editabletable/base"
 
 describe('DataManager', () => {
 	let cols: DataManagerCols = { dimensions: 1, metrics: 1 }
 	let defs: DefData[] = [
 		{
 			dbName: "col1",
-			format:"enum",
+			format: "enum",
+			role: "dimension"
 		},
 		{
 			dbName: "col2",
-			format:"number"
+			format: "number",
+			role: "metric"
 		},
 	]
 
@@ -115,13 +119,11 @@ describe('DataManager', () => {
 		manager.updateField(id, 0, "Jane")
 
 		let res = manager.applyUpdates()
-		console.log("res", res)
-		assert.deepEqual(res, [
-			[
-				{ id: "_temp2", data: ["Jane", null], from: ["n", "n"] }
-			], [
-				{ id: "1", data: ["John", 25], from: ["i", "i"] },
-			]])
+		//console.log("res", JSON.stringify(res))
+		assert.deepEqual(res, [[
+			{ id: "_temp1", data: ["Jane", null], from: ["n", "n"] },
+			{ id: "1", data: ["John", 25], from: ["i", "i"] },
+		]])
 	})
 
 	it('exports updates for saving', () => {
@@ -142,8 +144,7 @@ describe('DataManager', () => {
 			updates: { "1": { "1": 26 } },
 			deletes: ["2"],
 			newRows: {
-				"_temp1": [null, null],
-				"_temp2": ["Bob", null]
+				"_temp1": ["Bob", null]
 			},
 			totalGroupFlags: null,
 		})
@@ -168,7 +169,7 @@ describe('DataManager', () => {
 		console.log("res", res)
 		assert.deepEqual(res, [
 			[
-				{ id: "_temp2", data: ["Bob", 28], from: ["n", "n"] },
+				{ id: "_temp1", data: ["Bob", 28], from: ["n", "n"] },
 				{ id: "1", data: ["John", 27], from: ["i", "u"] },
 			]])
 	})
@@ -209,7 +210,7 @@ describe('DataManager', () => {
 		assert.deepEqual(res, [
 			[
 				{ id: "2", data: ["Jane", 2], from: ["i", "i"] },
-				{ id: "_temp2", data: ["Jane", 2], from: ["n", "n"] },
+				{ id: "_temp1", data: ["Jane", 2], from: ["n", "n"] },
 				{ id: "1", data: ["John", 1], from: ["i", "i"] },
 			]])
 	})
@@ -223,7 +224,7 @@ describe('DataManager', () => {
 		const manager = new DataManager()
 		manager.init(defs, cols, initialData, ids)
 		manager.copyRow("2")
-		manager.deleteRow("_temp2")
+		manager.deleteRow("_temp1")
 		let res = manager.applyUpdates()
 		console.log(res)
 		assert.deepEqual(res, [
@@ -299,7 +300,7 @@ describe('DataManager', () => {
 	it('handle totals - new', () => {
 		const manager = new DataManager()
 		manager.init(defs, cols, [], [])
-		assert.deepEqual(manager.getTotals(), { data: [null], id: "_temp1" })
+		assert.deepEqual(manager.getTotals(), null)
 		assert.deepEqual(manager.applyUpdates(), [])
 	})
 
@@ -354,27 +355,6 @@ describe('DataManager', () => {
 		assert.deepEqual(res, want)
 	})
 
-	it('groupTotalsAreNotOver - true', () => {
-		let manager = new DataManager()
-		manager.init(defs, cols, [
-			[null, 11],
-			['a', 5],
-			['b', 6],
-		], ['id1', 'id2', 'id3'])
-		let res = manager.groupTotalsAreNotOver()
-		assert.equal(res, true)
-	})
-
-	it('groupTotalsAreNotOver - false', () => {
-		let manager = new DataManager()
-		manager.init(defs, cols, [
-			[null, 10],
-			['a', 5],
-			['b', 6],
-		], ['id1', 'id2', 'id3'])
-		let res = manager.groupTotalsAreNotOver()
-		assert.equal(res, false)
-	})
 })
 
 
@@ -418,3 +398,6 @@ describe('groupedSort', () => {
 		])
 	})
 })
+
+
+

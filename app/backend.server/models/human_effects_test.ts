@@ -11,14 +11,16 @@ import {
 	categoryPresenceSet,
 	totalGroupGet,
 	totalGroupSet,
-	setTotal,
-	getTotal,
+	setTotalDsgTable,
+	getTotalDsgTable,
+	setTotalPresenceTable,
+	getTotalPresenceTable,
 	calcTotalForGroup
 } from './human_effects'
 import { HumanEffectsTable } from "~/frontend/human_effects/defs"
 import { injuredTable, humanDsgTable, humanCategoryPresenceTable, disasterRecordsTable, disasterEventTable, hazardousEventTable } from '~/drizzle/schema'
 
-import { Def } from "~/frontend/editabletable/defs"
+import { Def } from "~/frontend/editabletable/base"
 
 import {
 	sql
@@ -113,7 +115,7 @@ describe("human_effects - number data", async () => {
 		}
 	})
 
-	it("create - validation - no duplicates", async () => {
+	it("validate - no duplicates", async () => {
 		let defs = defs1
 		let res1 = await create(dr, "Injured", rid1, defs, [
 			["m", 1],
@@ -122,10 +124,10 @@ describe("human_effects - number data", async () => {
 		assert(res1.ok)
 		let res = await validate(dr, "Injured", rid1, defs)
 		assert(!res.ok)
-		assert.equal(res.errors?.length, 2)
-		let e0 = res.errors[0]
-		let e1 = res.errors[1]
-		console.log("errors", res.errors)
+		assert.equal(res.rowErrors?.length, 2)
+		let e0 = res.rowErrors[0]
+		let e1 = res.rowErrors[1]
+		//console.log("errors", res.rowErrors)
 		assert.equal(e0.code, "duplicate_dimension")
 		assert.equal(e1.code, "duplicate_dimension")
 	})
@@ -440,7 +442,7 @@ describe("human_effects - category presence data", async () => {
 
 	it("no data", async () => {
 		let res = await categoryPresenceGet(dr, rid1, "Injured", defs)
-		assert.deepEqual(res, {})
+		assert.deepEqual(res, { injured: null })
 	})
 
 	it("insert", async () => {
@@ -469,7 +471,9 @@ describe("human_effects - category presence data", async () => {
 		await categoryPresenceSet(dr, rid1, "Injured", defs, {
 		})
 		let res = await categoryPresenceGet(dr, rid1, "Injured", defs)
-		assert.deepEqual(res, {})
+		assert.deepEqual(res, {
+			"injured": null
+		})
 	})
 
 	let defs2: Def[] = [
@@ -499,7 +503,9 @@ describe("human_effects - category presence data", async () => {
 		await categoryPresenceSet(dr, rid1, "Affected", defs, {
 		})
 		let res = await categoryPresenceGet(dr, rid1, "Affected", defs)
-		assert.deepEqual(res, {})
+		assert.deepEqual(res, {
+			direct: null
+		})
 	})
 
 })
@@ -545,17 +551,62 @@ describe("human_effects - total data", async () => {
 		await resetTestData()
 	})
 
-	it("set and get total", async () => {
+	it("set and get total - dsg table", async () => {
 		const tblId: HumanEffectsTable = "Injured"
 		const recordId = testDisasterRecord1Id
 		const data = { injured: 2 }
-		await setTotal(dr, tblId, recordId, defs1, data)
-		let res = await getTotal(dr, tblId, recordId, defs1)
+		await setTotalDsgTable(dr, tblId, recordId, defs1, data)
+		let res = await getTotalDsgTable(dr, tblId, recordId, defs1)
 		assert.deepEqual(res, { injured: 2 })
 	})
 
-	it("get returns empty when no matching total", async () => {
-		let res = await getTotal(dr, "Injured", testNonExistingRecordID, defs1)
+	it("set and get total - dsg table - custom", async () => {
+		const tblId: HumanEffectsTable = "Injured"
+
+		let defs = defsCustom
+		{
+			let res = await create(dr, "Injured", rid1, defs, [[null, 1]], false)
+			assert(res.ok)
+		}
+		{
+			let res = await get(dr, "Injured", rid1, defs)
+			console.log(res)
+			assert(res.ok)
+			assert.deepEqual(res.data, [[null, 1]])
+		}
+
+		await setTotalDsgTable(dr, tblId, rid1, defs, {"injured": 2})
+
+		{
+		let res = await getTotalDsgTable(dr, tblId, rid1, defs1)
+		assert.deepEqual(res, { injured: 2 })
+		}
+
+		{
+			let res = await get(dr, "Injured", rid1, defs)
+			console.log(res)
+			assert(res.ok)
+			assert.deepEqual(res.data, [[null, 2]])
+		}
+
+	})
+
+	it("get returns empty when no matching total - dsg table", async () => {
+		let res = await getTotalDsgTable(dr, "Injured", testNonExistingRecordID, defs1)
+		assert.deepEqual(res, { injured: 0 })
+	})
+
+	it("set and get total - presence table", async () => {
+		const tblId: HumanEffectsTable = "Injured"
+		const recordId = testDisasterRecord1Id
+		const data = { injured: 2 }
+		await setTotalPresenceTable(dr, tblId, recordId, defs1, data)
+		let res = await getTotalPresenceTable(dr, tblId, recordId, defs1)
+		assert.deepEqual(res, { injured: 2 })
+	})
+
+	it("get returns empty when no matching total - presence table", async () => {
+		let res = await getTotalPresenceTable(dr, "Injured", testNonExistingRecordID, defs1)
 		assert.deepEqual(res, { injured: 0 })
 	})
 })
@@ -625,7 +676,7 @@ describe("human_effects - calc total for group", async () => {
 		}
 	})
 
-	it.only("calcs total for group - global poverty line", async () => {
+	it("calcs total for group - global poverty line", async () => {
 		let defs: Def[] = [
 			{
 				shared: true,
@@ -808,6 +859,59 @@ describe("human_effects - calc total for group", async () => {
 			assert.equal(res.totals.injured, 2)
 		}
 	})
+
+	it("calcs total for group - custom cols - changed", async () => {
+		let defs1: Def[] = [
+			{
+				shared: true,
+				uiName: "Sex",
+				jsName: "sex",
+				dbName: "sex",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "m", label: "Male" },
+					{ key: "f", label: "Female" }
+				],
+			},
+			{
+				custom: true,
+				uiName: "My Custom",
+				jsName: "custom",
+				dbName: "custom",
+				format: "enum",
+				role: "dimension",
+				data: [
+					{ key: "v1", label: "l1" },
+					{ key: "v2", label: "l2" }
+				],
+			},
+			{
+				uiName: "Injured",
+				jsName: "injured",
+				dbName: "injured",
+				format: "number",
+				role: "metric",
+			}
+		]
+		{
+			let data = [
+				["m", null, 1],
+				["f", null, 1],
+			]
+			let res = await create(dr, "Injured", rid1, defs1, data, false)
+			console.log(res)
+			assert.equal(res.ok, true)
+		}
+		let defs2 = [defs1[0], defs1[2]]
+		{
+			let res = await calcTotalForGroup(dr, "Injured", rid1, defs2, ["sex"])
+			console.log("res", res)
+			assert.equal(res.ok, true)
+			assert.equal(res.totals.injured, 2)
+		}
+	})
+
 
 
 })
