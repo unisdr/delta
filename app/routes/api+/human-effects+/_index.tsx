@@ -107,7 +107,7 @@ Where [TABLE] can be one of: Deaths, Injured, Missing, Affected, Displaced
         ["m", "65+", "none", "below", "below", 2]
       ],
       "categoryPresence": {"deaths": true},
-      "totalGroup": "22"
+      "totalGroup": [ "sex", "age" ]
     }
 
 ### Response Fields Explained
@@ -115,7 +115,7 @@ Where [TABLE] can be one of: Deaths, Injured, Missing, Affected, Displaced
 -  \`ids\` : UUIDs for each record (same order as data array) 
 -  \`data\` : Actual records as arrays following the field order from defs. First row with null dimensions is the total.
 -  \`categoryPresence\` : Shows which categories are enabled for this disaster record
--  \`totalGroup\` : Calculated total across all records
+-  \`totalGroup\` : Identify if record is automatically calculated total (null if manually calculated total).
 
 ## Save Human Effects Data
 POST /api/human-effects/save?recordId={DISASTER_RECORD_UUID}
@@ -131,8 +131,9 @@ POST /api/human-effects/save?recordId={DISASTER_RECORD_UUID}
         "data": {
           "newRows": {
             "_temp1": [null, null, null, null, null, 8],
-            "_temp2": ["f", "0-14", "none", "below", "below", 3],
-            "_temp3": ["m", "15-64", "psychosocial", "above", "above", 5]
+            "_temp2": ["o", "0-14", null, null, null, 1],
+						"_temp3": ["o", "15-64", null, null, null, 1],
+						"_temp4": ["o", "65+", null, null, null, 1]
           },
           "updates": {
             "existing-uuid": ["f", "0-14", "none", "below", "below", 6]
@@ -216,6 +217,29 @@ POST /api/human-effects/category-presence-save?recordId={DISASTER_RECORD_UUID}
 - The table field must be specified
 - The data object contains boolean flags for each category
 - Can enable/disable multiple categories in a single request
+
+## Set the total to auto-calculated group  
+
+POST /api/human-effects/category-presence-save?recordId={DISASTER_RECORD_UUID}
+
+### Example Request
+
+    curl -X POST "http://localhost:3000/api/human-effects/category-presence-save?recordId={DISASTER_RECORD_UUID}" \\
+      -H "X-Auth: {YOUR_API_KEY_SECRET}" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "table": "Deaths",
+        "data": {
+          "totalGroupFlags": ["sex","age"]
+        }
+      }'
+
+### Example Response
+
+    {
+      "ok": true
+    }
+
 
 ## Field Value References
 
