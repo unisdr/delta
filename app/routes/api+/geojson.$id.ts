@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs } from "@remix-run/node";
 import { dr } from "~/db.server"; 
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -14,5 +14,5 @@ export async function loader({ params }: LoaderFunctionArgs) {
     throw new Response("GeoJSON not found", { status: 404 });
   }
 
-  return  {geojson: result.geojson };
+  return  Response.json({geojson: result.geojson });
 }
