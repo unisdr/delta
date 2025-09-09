@@ -1314,9 +1314,7 @@ export const dtsSystemInfo = pgTable("dts_system_info", {
 		.default('73f0defb-4eba-4398-84b3-5e6737fec2b7'),
 	dbVersionNo: varchar("db_version_no", { length: 50 }).notNull(),
 	appVersionNo: varchar("app_version_no", { length: 50 }).notNull(),
-	installedAt: timestamp("installed_at")
-		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+	installedAt: timestamp("installed_at"),
 	updatedAt: timestamp("updated_at"),
 });
 

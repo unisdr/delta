@@ -17,6 +17,7 @@ out/
 public/build/
 *.tgz
 *.tsbuildinfo
+dts_shared_binary/
 
 
 # Environment variables

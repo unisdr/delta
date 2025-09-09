@@ -536,7 +536,7 @@ CREATE TABLE public.dts_system_info (
     id uuid DEFAULT '73f0defb-4eba-4398-84b3-5e6737fec2b7'::uuid NOT NULL,
     db_version_no character varying(50) NOT NULL,
     app_version_no character varying(50) NOT NULL,
-    installed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    installed_at timestamp without time zone,
     updated_at timestamp without time zone
 );
 

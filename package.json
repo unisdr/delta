@@ -13,7 +13,9 @@
 		"start2": "remix-serve ./build/server/index.js",
 		"startprod": "cross-env NODE_ENV=production node ./server.js",
 		"typecheck": "tsc",
-		"dbsync": "yarn run drizzle-kit push && yarn run drizzle-kit migrate"
+		"dbsync": "yarn run drizzle-kit push && yarn run drizzle-kit migrate",
+		"build:binary:linux": "sh scripts/build-binary.sh",
+		"build:binary:win": ".\\scripts\\build_binary.bat"
 	},
 	"keywords": [],
 	"author": "",
