@@ -26,8 +26,6 @@ import PasswordInput from "~/components/PasswordInput";
 import Messages from "~/components/Messages";
 import { testDbConnection } from "~/db.server";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { dtsSystemInfoSelect, dtsSystemInfoUpsertRecord } from "~/backend.server/models/dts_system_info";
-import { configApplicationVersion } from "~/util/config";
 import { createCSRFToken } from "~/backend.server/utils/csrf";
 
 interface LoginFields {
@@ -81,15 +79,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			},
 		};
 		return Response.json({ data, errors }, { status: 400 });
-	}
-
-	// Check #2: Database table dts_system_info already populated otherwise pull the app version from package.json and save to db.
-	const rsSystemInfo = await dtsSystemInfoSelect();
-	if (!rsSystemInfo) { //if record doesn't exists create a singleton entry
-		await dtsSystemInfoUpsertRecord({
-			appVersionNo: await configApplicationVersion(),
-        	dbVersionNo: '0.0.0',
-		});
 	}
 
 	const headers = await createSuperAdminSession(res.superAdminId);
