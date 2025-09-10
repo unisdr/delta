@@ -34,9 +34,12 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
 - **Network**: Stable internet connection
 
 ### Software Dependencies
+#### Option A: Docker Deployment (Recommended)
+- **Docker & Docker Compose**: Latest versions (for containerized deployment)
+- **Git**: For source code management
+#### Option B: Manual Installation
 - **Node.js**: v22.x
 - **PostgreSQL**: v16 with PostGIS extension
-- **Docker & Docker Compose**: Latest versions (for containerized deployment)
 - **Git**: For source code management
 - **Yarn**: Package manager
 
@@ -194,23 +197,6 @@ For production environments:
 3. Create country accounts as needed through the admin panel
 
 
-
-#### Verify Database Setup
-```sql
--- Connect to database
-psql -U postgres -d dts_shared
-
--- Check if instance_system_settings exists
-SELECT COUNT(*) FROM instance_system_settings;
-
--- View default settings
-SELECT 
-    website_name, 
-    dts_instance_type, 
-    totp_issuer,
-    admin_setup_complete
-FROM instance_system_settings;
-```
 
 ### 4.2 Initial Super Admin Creation
 
