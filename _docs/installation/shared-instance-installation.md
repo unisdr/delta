@@ -132,6 +132,8 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    docker-compose up -d
    
    # Initialize the Database Schema and Run Migrations
+	docker-compose exec psql -U postgres -d dts_development -c "CREATE EXTENSION postgis;"
+	docker-compose exec psql -U postgres -d dts_development -c "CREATE EXTENSION IF NOT EXISTS pgcrypto"
    docker-compose exec app yarn dbsync
    ```
    > Note: This command runs both `drizzle-kit push` to load the schema and `drizzle-kit migrate` to execute migration scripts. Using only `drizzle-kit push` is insufficient as it only loads the schema without running migrations.
@@ -186,82 +188,17 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
 
 ## 4. Super Admin Setup
 
-### 4.1 Initial Database Setup
+### 4.1 Super Admin Default
 
-Before creating the super admin user, ensure the database has the required default settings:
+An account is created by default with user name admin@admin.com and password pvDT0g8Qsa36
 
-#### Production Environment Setup
-For production environments:
-1. The database schema will be created and migrations will be run by the `yarn dbsync` command
-2. Configure system settings manually through the super admin interface after login
-3. Create country accounts as needed through the admin panel
+### 4.2 Update Super Admin Password
 
-
-
-### 4.2 Initial Super Admin Creation
-
-After the initial installation, you need to create the super admin user to manage country accounts.
-
-#### Method 1: Direct Database Insertion (Recommended)
-
-This method uses an online tool to generate the password hash, making it simpler and more reliable.
-
-1. **Generate a bcrypt hash for your password:**
-
-   **Option A: Using an Online Tool**
-   - Visit a secure bcrypt generator website like https://bcrypt-generator.com/
-   - Enter your desired password and generate the hash
-   - Set rounds to 10** (recommended for security)
-   - Copy the generated hash (it will look like `$2a$10$...` or `$2b$10$...`)
-
-   **Option B: Using Node.js**
-   ```javascript
-   // Save as generate-hash.js (or generate-hash.cjs on Linux environments)
-   const bcrypt = require('bcryptjs');
-   const password = 'YourSecurePassword123!';
-   bcrypt.hash(password, 10).then(hash => console.log(hash));
-   ```
-   
-   Run it with:
-   ```bash
-   # For Docker deployment
-   docker-compose exec app node generate-hash.js
-   
-   # For manual installation
-   node generate-hash.js  # On Linux, you may need to use .cjs extension instead
-   ```
-   
-   > **Note for Linux users**: If you encounter issues executing .js files directly, rename the file to use the .cjs extension (e.g., generate-hash.cjs) and adjust the command accordingly.
-
-2. **Connect to the PostgreSQL database:**
-   ```bash
-   # For Docker deployment
-   docker-compose exec db psql -U postgres -d dts_shared
-   
-   # For manual installation
-   sudo -u postgres psql -d dts_shared
-   ```
-
-3. **Create the super admin user:**
-   ```sql
-   -- Insert a super admin user
-   INSERT INTO super_admin_users (
-       id,
-       email,
-       password,
-       first_name,
-       last_name
-   ) VALUES (
-       gen_random_uuid(),
-       'superadmin@your-domain.com',
-       'YOUR_BCRYPT_HASH_HERE', -- Replace with the hash you generated
-       'Super',
-       'Admin'
-   );
-   ```
-
-
-
+```bash
+   docker-compose exec psql -U postgres -d dts_development -c "UPDATE public.super_admin_users
+SET password = crypt('your_password_here', gen_salt('bf', 10))
+WHERE email = 'admin@admin.com';"
+```
 
 
 ### 4.3 Super Admin Login
@@ -272,8 +209,8 @@ This method uses an online tool to generate the password hash, making it simpler
    > **Important**: Super admins must use the dedicated admin login page at `/admin/login`, not the regular user login page.
 
 3. **Enter the super admin credentials:**
-   - **Email**: `superadmin@your-domain.com`
-   - **Password**: The password you set in the previous step
+   - **Email**: `admin@admin.com`
+   - **Password**: The password you set in the previous step or the default pvDT0g8Qsa36
 
 4. **Upon successful login**, you will be redirected to the country accounts management page (`/admin/country-accounts`).
 
@@ -287,115 +224,6 @@ This method uses an online tool to generate the password hash, making it simpler
 
 5. **After completing country account management tasks**, use the logout option to exit the system.
 
-### 4.4 Change Super Admin Password (Post-Installation)
-
-For security, change the super admin password after the initial setup:
-
-#### Method 1: Using a bcrypt Hash Generator
-
-1. **Generate a new bcrypt hash for your password:**
-
-   **Option A: Using an Online Tool**
-   - Visit a secure bcrypt generator website like https://bcrypt-generator.com/
-   - Enter your desired new password and generate the hash
-   - Copy the generated hash (starts with $2a$, $2b$, or $2y$)
-
-   **Option B: Using Node.js**
-   ```javascript
-   // Save as generate-hash.js
-   const bcrypt = require('bcryptjs');
-   const password = 'YourNewSecurePassword123!';
-   bcrypt.hash(password, 10).then(hash => console.log(hash));
-   ```
-   
-   Run it with:
-   ```bash
-   # For Docker deployment
-   docker-compose exec app node generate-hash.js
-   
-   # For manual installation
-   node generate-hash.js
-   ```
-
-2. **Connect to the PostgreSQL database:**
-   ```bash
-   # For Docker deployment
-   docker-compose exec db psql -U postgres -d dts_shared
-   
-   # For manual installation
-   sudo -u postgres psql -d dts_shared
-   ```
-
-3. **Update the super admin password:**
-   ```sql
-   -- Update the super admin password
-   UPDATE super_admin_users 
-   SET password = 'YOUR_NEW_BCRYPT_HASH_HERE' 
-   WHERE email = 'superadmin@your-domain.com';
-   ```
-
-4. **Log out and log back in** with the new password to verify it works
-
-           connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/dts_shared'
-       });
-       
-       await client.connect();
-       
-       const email = 'superadmin@your-domain.com'; // Use your super admin email
-       const newPassword = 'YourNewSecurePassword123!'; // Change this to your desired new password
-       
-       // Hash the password
-       const saltRounds = 10;
-       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-       
-       // Update the super admin's password
-       const result = await client.query(
-           'UPDATE super_admin_users SET password = $1 WHERE email = $2',
-           [hashedPassword, email]
-       );
-       
-       if (result.rowCount > 0) {
-           console.log('Super admin password updated successfully!');
-           console.log(`Email: ${email}`);
-           console.log(`New Password: ${newPassword}`);
-       } else {
-           console.log('Super admin user not found.');
-       }
-       
-       await client.end();
-   }
-   
-   updateSuperAdminPassword().catch(console.error);
-   ```
-
-2. **Run the password update script:**
-   ```bash
-   # For Docker deployment
-   docker-compose exec app node update-super-admin-password.js
-   
-   # For manual installation
-   node update-super-admin-password.js  # On Linux, you may need to use .cjs extension instead
-   ```
-
-2. **Update the password directly:**
-   ```sql
-   -- Generate a new password hash (replace 'your_new_password' with your desired password)
-   SELECT crypt('your_new_password', gen_salt('bf'));
-   
-   -- Copy the generated hash and use it in the update statement
-   UPDATE super_admin_users 
-   SET password = 'paste_generated_hash_here' 
-   WHERE email = 'superadmin@your-domain.com';
-   ```
-
-3. **Verify the update:**
-   ```sql
-   SELECT email FROM super_admin_users WHERE email = 'superadmin@your-domain.com';
-   ```
-
-4. **Log out and log back in** with the new password to verify it works
-
----
 
 ## 5. Country Account Management
 
