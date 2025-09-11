@@ -132,8 +132,6 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    docker-compose up -d
    
    # Initialize the Database Schema and Run Migrations
-	docker-compose exec psql -U postgres -d dts_development -c "CREATE EXTENSION postgis;"
-	docker-compose exec psql -U postgres -d dts_development -c "CREATE EXTENSION IF NOT EXISTS pgcrypto"
    docker-compose exec app yarn dbsync
    ```
    > Note: This command runs both `drizzle-kit push` to load the schema and `drizzle-kit migrate` to execute migration scripts. Using only `drizzle-kit push` is insufficient as it only loads the schema without running migrations.
@@ -157,6 +155,7 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    ```bash
    sudo -u postgres createdb dts_shared
    sudo -u postgres psql -d dts_shared -c "CREATE EXTENSION postgis;"
+   sudo -u postgres psql -d dts_shared -c " CREATE EXTENSION IF NOT EXISTS pgcrypto"
    ```
 
 3. **Clone and Setup Application**
