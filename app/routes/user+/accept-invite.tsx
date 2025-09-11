@@ -91,7 +91,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			headers: { "Set-Cookie": setCookie },
 		});
 	} else if (userCountryAccounts && userCountryAccounts.length > 1) {
-		return redirect("/select-instance", { headers: headers });
+		return redirect("/user/select-instance", { headers: headers });
 	}
 	return redirect("/", { headers });
 };
