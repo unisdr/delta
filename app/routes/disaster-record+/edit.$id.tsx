@@ -43,6 +43,7 @@ import {
 	getCountrySettingsFromSession,
 } from "~/util/session";
 import { buildTree } from "~/components/TreeView";
+import { DISASTER_RECORDS_UPLOAD_PATH, TEMP_UPLOAD_PATH } from "~/utils/paths";
 
 export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 	const { request, params } = loaderArgs;
@@ -199,8 +200,8 @@ export const action = authActionWithPerm(
 					? data.attachments
 					: [];
 
-				const save_path = `/uploads/disaster-record/${id}`;
-				const save_path_temp = `/uploads/temp`;
+				const save_path = `${DISASTER_RECORDS_UPLOAD_PATH}/${id}`;
+				const save_path_temp = TEMP_UPLOAD_PATH;
 
 				// Process the attachments data
 				const processedAttachments = ContentRepeaterUploadFile.save(

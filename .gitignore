@@ -40,7 +40,7 @@ app/drizzle/migrations/meta/*
 logs/
 
 # Uploads
-public/uploads/
+uploads/
 
 # IDE
 .vscode/

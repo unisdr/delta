@@ -26,6 +26,7 @@ import {
 	getCountryAccountsIdFromSession,
 	getCountrySettingsFromSession,
 } from "~/util/session";
+import { DISASTER_RECORDS_DISRUPTIONS_UPLOAD_PATH, TEMP_UPLOAD_PATH } from "~/utils/paths";
 
 interface LoaderRes {
 	item: DisruptionViewModel | null;
@@ -124,8 +125,8 @@ export const action = createActionWithoutCountryAccountsId({
 	redirectTo: (id) => `${route}/${id}`,
 	tableName: getTableName(disruptionTable),
 	postProcess: async (id, data) => {
-		const save_path = `/uploads/disaster-record/disruptions/${id}`;
-		const save_path_temp = `/uploads/temp`;
+		const save_path = `${DISASTER_RECORDS_DISRUPTIONS_UPLOAD_PATH}/${id}`;
+		const save_path_temp = TEMP_UPLOAD_PATH;
 
 		// Ensure attachments is an array, even if it's undefined or empty
 		const attachmentsArray = Array.isArray(data?.attachments)

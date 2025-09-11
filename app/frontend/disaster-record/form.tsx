@@ -31,6 +31,7 @@ import { AttachmentsFormView } from "~/frontend/attachmentsFormView";
 import { AttachmentsView } from "~/frontend/attachmentsView";
 
 import { UserForFrontend } from "~/util/auth";
+import { TEMP_UPLOAD_PATH } from "~/utils/paths";
 
 export const route = "/disaster-record"
 
@@ -173,7 +174,7 @@ export function DisasterRecordsForm(props: DisasterRecordsFormProps) {
 					attachments: (
 						<Field key="attachments" label="">
 							<AttachmentsFormView
-								save_path_temp="/uploads/temp"
+								save_path_temp={TEMP_UPLOAD_PATH}
 								file_viewer_temp_url="/disaster-record/file-temp-viewer"
 								file_viewer_url="/disaster-record/file-viewer?loc=record"
 								api_upload_url="/disaster-record/file-pre-upload"

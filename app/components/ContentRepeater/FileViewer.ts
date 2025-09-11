@@ -15,7 +15,7 @@ export async function handleFileRequest(
   }
 
   // Normalize and resolve the file path relative to the `upload_path`
-  const baseDirectory = path.resolve(`./public${upload_path}`);
+  const baseDirectory = path.resolve(`./${upload_path}`);
   const normalizedFilePath = path.normalize(fileName).replace(/^(\.\.(\/|\\|$))+/, ""); // Prevent path traversal
   const filePath = path.resolve(baseDirectory, normalizedFilePath);
 

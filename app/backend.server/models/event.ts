@@ -28,6 +28,7 @@ import { eq, sql, and } from "drizzle-orm";
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { getRequiredAndSetToNullHipFields } from "./hip_hazard_picker";
 import { parseFlexibleDate } from "../utils/dateFilters";
+import { TEMP_UPLOAD_PATH } from "~/utils/paths";
 
 interface TemporalValidationResult {
 	isValid: boolean;
@@ -1284,7 +1285,7 @@ async function processAndSaveAttachments(
 	if (!attachmentsData) return;
 
 	const save_path = `/uploads/${directory}/${resourceId}`;
-	const save_path_temp = `/uploads/temp`;
+	const save_path_temp = TEMP_UPLOAD_PATH
 
 	// Process the attachments data
 	const processedAttachments = ContentRepeaterUploadFile.save(
