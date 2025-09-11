@@ -53,9 +53,14 @@ cp -f app/drizzle/migrations/20250814092113_populate_hips_data_into_db.sql dts_s
 cp -f app/drizzle/migrations/20250908093239_init_dts_system_info.sql dts_shared_binary/dts_database/
 cp -f app/drizzle/migrations/20250909065957_populate_initial_super_admin_user.sql dts_shared_binary/dts_database/
 
-# Step 9: Copy shell scripts into dts_shared_binary
-next_step "Copying shell and batch scripts into dts_shared_binary"
+# Step 9: Copy shell and batch scripts into dts_shared_binary
+next_step "Copying shell scripts into dts_shared_binary"
 cp -r build dts_shared_binary/build
 cp -f scripts/init_db.bat dts_shared_binary/init_db.bat
 cp -f scripts/init_db.sh dts_shared_binary/init_db.sh
-cp -f scripts/init_webs_
+cp -f scripts/init_website.bat dts_shared_binary/init_website.bat
+cp -f scripts/init_website.sh dts_shared_binary/init_website.sh
+cp -f scripts/start.bat dts_shared_binary/start.bat
+cp -f scripts/start.bat dts_shared_binary/start.sh
+
+echo "=== Done ==="
