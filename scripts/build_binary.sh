@@ -48,10 +48,6 @@ next_step "Adding data initialization commands into dts_db_schema.sql"
 echo "" >> dts_shared_binary/dts_database/dts_db_schema.sql
 cat app/drizzle/migrations/20250629032135_populating_countries_table_data.sql >> dts_shared_binary/dts_database/dts_db_schema.sql
 echo "" >> dts_shared_binary/dts_database/dts_db_schema.sql
-cat app/drizzle/migrations/20250630074515_update_countries_table_to_add_iso3.sql >> dts_shared_binary/dts_database/dts_db_schema.sql
-echo "" >> dts_shared_binary/dts_database/dts_db_schema.sql
-cat app/drizzle/migrations/20250811095649_update_countries_table_add_flag_url_data.sql >> dts_shared_binary/dts_database/dts_db_schema.sql
-echo "" >> dts_shared_binary/dts_database/dts_db_schema.sql
 cat app/drizzle/migrations/20250813075915_populate_category_asset_and_sector_data.sql >> dts_shared_binary/dts_database/dts_db_schema.sql
 echo "" >> dts_shared_binary/dts_database/dts_db_schema.sql
 cat app/drizzle/migrations/20250814092113_populate_hips_data_into_db.sql >> dts_shared_binary/dts_database/dts_db_schema.sql
