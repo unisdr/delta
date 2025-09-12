@@ -11,6 +11,8 @@
 
 - [Dependencies](code-structure/dependencies.md)
 
+- [Human direct effects](human-direct-effects.md)
+
 ## Requirements
 
 - [IDs](ids.md) - Document IDs used for hazardous, disaster events and disaster records
