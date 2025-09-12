@@ -1,5 +1,5 @@
 -- Custom SQL migration file to update countries table with ISO3 codes
-UPDATE countries SET iso3 = CASE name
+UPDATE public.countries SET iso3 = CASE name
     WHEN 'Afghanistan' THEN 'AFG'
     WHEN 'Albania' THEN 'ALB'
     WHEN 'Algeria' THEN 'DZA'

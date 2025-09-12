@@ -1,6 +1,6 @@
 -- Custom SQL migration file, put your code below! --
 -- Populating 195 county list
-INSERT INTO countries (name) VALUES
+INSERT INTO public.countries (name) VALUES
 ('Afghanistan'),
 ('Albania'),
 ('Algeria'),
