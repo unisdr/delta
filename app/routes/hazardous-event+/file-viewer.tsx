@@ -1,8 +1,9 @@
 import { handleFileRequest } from "~/components/ContentRepeater/FileViewer";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { HAZARDOUS_EVENT_UPLOAD_PATH } from "~/utils/paths";
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: any) => {
   const url = new URL(request.url);
   const download = url.searchParams.get("download") === "true"; // Parse `download` as a boolean
-  return await handleFileRequest(request, "/uploads/hazardous-event", download);
+  return await handleFileRequest(request, HAZARDOUS_EVENT_UPLOAD_PATH, download);
 });

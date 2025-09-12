@@ -14,7 +14,7 @@ interface Item {
 const debug = false;
 
 class ContentRepeaterUploadFile {
-  static delete(itemsData: any[], publicPath: string = path.join(process.cwd(), "public"), countryAccountsId?: string): Item[] {
+  static delete(itemsData: any[], publicPath: string = path.join(process.cwd()), countryAccountsId?: string): Item[] {
     let items: Item[];
 
     try {
@@ -107,16 +107,16 @@ class ContentRepeaterUploadFile {
     itemsData: any[],
     tempPath: string,
     destinationPath: string,
-    publicPath: string = path.join(process.cwd(), "public") // Dynamic Public Path
+    publicPath: string = path.join(process.cwd()) 
   ): Item[] {
     let items: Item[];
-
+    
     try {
       items = itemsData;
     } catch (error) {
       throw new Error("Invalid JSON data.");
     }
-
+    
     // Normalize paths
     tempPath = tempPath.startsWith("/") ? tempPath.slice(1) : tempPath;
     destinationPath = destinationPath.startsWith("/") ? destinationPath.slice(1) : destinationPath;

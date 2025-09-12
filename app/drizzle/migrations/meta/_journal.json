@@ -33,47 +33,33 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1751269515383,
-      "tag": "20250630074515_update_countries_table_to_add_iso3",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1754906209290,
-      "tag": "20250811095649_update_countries_table_add_flag_url_data",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
       "when": 1755071955643,
       "tag": "20250813075915_populate_category_asset_and_sector_data",
       "breakpoints": true
     },
     {
-      "idx": 7,
+      "idx": 5,
       "version": "7",
       "when": 1755163273005,
       "tag": "20250814092113_populate_hips_data_into_db",
       "breakpoints": true
     },
     {
-      "idx": 8,
+      "idx": 6,
       "version": "7",
       "when": 1755511169168,
       "tag": "20250818095929_singleton_dts_system_info_table",
       "breakpoints": true
     },
     {
-      "idx": 9,
+      "idx": 7,
       "version": "7",
       "when": 1757323959650,
       "tag": "20250908093239_init_dts_system_info",
       "breakpoints": true
     },
     {
-      "idx": 10,
+      "idx": 8,
       "version": "7",
       "when": 1757401197278,
       "tag": "20250909065957_populate_initial_super_admin_user",

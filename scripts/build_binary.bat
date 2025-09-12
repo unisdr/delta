@@ -46,19 +46,16 @@ echo === Step !STEP!/%TOTAL_STEPS%!. Copying dts_db_schema.sql schema into dts_d
 copy scripts\dts_db_schema.sql dts_shared_binary\dts_database\dts_db_schema.sql /Y
 
 set /A STEP+=1
-echo === Step !STEP!/%TOTAL_STEPS%!. Copying initialization sql files into dts_database ===
-copy app\drizzle\migrations\20250629032135_populating_countries_table_data.sql dts_shared_binary\dts_database\20250629032135_populating_countries_table_data.sql /Y
-copy app\drizzle\migrations\20250630074515_update_countries_table_to_add_iso3.sql dts_shared_binary\dts_database\20250630074515_update_countries_table_to_add_iso3.sql /Y
-copy app\drizzle\migrations\20250811095649_update_countries_table_add_flag_url_data.sql dts_shared_binary\dts_database\20250811095649_update_countries_table_add_flag_url_data.sql /Y
-copy app\drizzle\migrations\20250813075915_populate_category_asset_and_sector_data.sql dts_shared_binary\dts_database\20250813075915_populate_category_asset_and_sector_data.sql /Y
-copy app\drizzle\migrations\20250814092113_populate_hips_data_into_db.sql dts_shared_binary\dts_database\20250814092113_populate_hips_data_into_db.sql /Y
-copy app\drizzle\migrations\20250908093239_init_dts_system_info.sql dts_shared_binary\dts_database\20250908093239_init_dts_system_info.sql /Y
-copy app\drizzle\migrations\20250909065957_populate_initial_super_admin_user.sql dts_shared_binary\dts_database\20250909065957_populate_initial_super_admin_user.sql /Y
+echo === Step !STEP!/%TOTAL_STEPS%!. Adding data initialization commands into dts_db_schema.sql ===
+type app\drizzle\migrations\20250629032135_populating_countries_table_data.sql >> dts_shared_binary\dts_database\dts_db_schema.sql
+type app\drizzle\migrations\20250813075915_populate_category_asset_and_sector_data.sql >> dts_shared_binary\dts_database\dts_db_schema.sql
+type app\drizzle\migrations\20250814092113_populate_hips_data_into_db.sql >> dts_shared_binary\dts_database\dts_db_schema.sql
+type app\drizzle\migrations\20250908093239_init_dts_system_info.sql >> dts_shared_binary\dts_database\dts_db_schema.sql
+type app\drizzle\migrations\20250909065957_populate_initial_super_admin_user.sql >> dts_shared_binary\dts_database\dts_db_schema.sql
 
 
 set /A STEP+=1
 echo === Step !STEP!/%TOTAL_STEPS%!. Copying shell scripts into dts_shared_binary ===
-xcopy /E /I /Y build dts_shared_binary\build
 copy .\scripts\init_db.bat dts_shared_binary\init_db.bat /Y
 copy .\scripts\init_db.sh dts_shared_binary\init_db.sh /Y
 copy .\scripts\init_website.bat dts_shared_binary\init_website.bat /Y

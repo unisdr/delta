@@ -33,6 +33,7 @@ import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
 import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
 import { AttachmentsFormView } from "~/frontend/attachmentsFormView";
 import { AttachmentsView } from "~/frontend/attachmentsView";
+import { TEMP_UPLOAD_PATH } from "~/utils/paths";
 
 export const route = "/disaster-event"
 
@@ -460,7 +461,7 @@ export function DisasterEventForm(props: DisasterEventFormProps) {
 				attachments: props.edit ? (
 					<Field key="attachments" label="">
 						<AttachmentsFormView
-							save_path_temp="/uploads/temp"
+							save_path_temp={TEMP_UPLOAD_PATH}
 							file_viewer_temp_url="/disaster-event/file-temp-viewer"
 							file_viewer_url="/disaster-event/file-viewer"
 							api_upload_url="/disaster-event/file-pre-upload"

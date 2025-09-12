@@ -1,5 +1,6 @@
 import { handleFileRequest } from "~/components/ContentRepeater/FileViewer";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
+import { DISASTER_RECORDS_UPLOAD_PATH } from "~/utils/paths";
 
 const ALLOWED_LOCS = new Set(["disruptions", "losses", "damages", "record"]);
 
@@ -13,8 +14,8 @@ export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }:
   }
   
   if (loc === "record") {
-    return await handleFileRequest(request, "/uploads/disaster-record", download);
+    return await handleFileRequest(request, DISASTER_RECORDS_UPLOAD_PATH, download);
   }
   
-  return await handleFileRequest(request, `/uploads/disaster-record/${loc}`, download);
+  return await handleFileRequest(request, `${DISASTER_RECORDS_UPLOAD_PATH}/${loc}`, download);
 });

@@ -76,7 +76,7 @@ export default class ContentRepeaterPreUploadFile {
         console.log("No valid tenant context available for file paths");
       }
 
-      const tempDirectory = path.resolve(`./public${tenantPath}${savePathTemp}`);
+      const tempDirectory = path.resolve(`./${tenantPath}${savePathTemp}`);
       const tempFilePath = path.join(tempDirectory, tempFilename);
 
       console.log("tempDirectory:", tempDirectory);
@@ -93,7 +93,7 @@ export default class ContentRepeaterPreUploadFile {
           prevPathWithTenant = pathParts.join('/');
         }
 
-        const prevFilePath = path.resolve(`./public${prevPathWithTenant}`);
+        const prevFilePath = path.resolve(`./${prevPathWithTenant}`);
         if (fs.existsSync(prevFilePath)) {
           try {
             fs.unlinkSync(prevFilePath);

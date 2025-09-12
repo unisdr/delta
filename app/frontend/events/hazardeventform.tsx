@@ -27,6 +27,7 @@ import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
 import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
 import { AttachmentsFormView } from "~/frontend/attachmentsFormView";
 import { AttachmentsView } from "~/frontend/attachmentsView";
+import { TEMP_UPLOAD_PATH } from "~/utils/paths";
 
 export const route = "/hazardous-event"
 
@@ -189,7 +190,7 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 				attachments: (
 					<Field key="attachments" label="">
 						<AttachmentsFormView
-							save_path_temp="/uploads/temp"
+							save_path_temp={TEMP_UPLOAD_PATH}
 							file_viewer_temp_url="/hazardous-event/file-temp-viewer"
 							file_viewer_url="/hazardous-event/file-viewer"
 							api_upload_url="/hazardous-event/file-pre-upload"

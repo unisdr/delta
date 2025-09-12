@@ -13,6 +13,7 @@ import { SpatialFootprintFormView } from '~/frontend/spatialFootprintFormView';
 import { SpatialFootprintView } from '~/frontend/spatialFootprintView';
 import { AttachmentsFormView } from "~/frontend/attachmentsFormView";
 import { AttachmentsView } from "~/frontend/attachmentsView";
+import { TEMP_UPLOAD_PATH } from "~/utils/paths";
 
 export const route = "/disaster-record/edit-sub/_/disruptions"
 
@@ -64,7 +65,7 @@ export function DisruptionForm(props: DisruptionFormProps) {
 				attachments: (
 					<Field key="attachments" label="">
 						<AttachmentsFormView
-							save_path_temp="/uploads/temp"
+							save_path_temp={TEMP_UPLOAD_PATH}
 							file_viewer_temp_url="/disaster-record/file-temp-viewer"
 							file_viewer_url="/disaster-record/file-viewer?loc=disruptions"
 							api_upload_url="/disaster-record/file-pre-upload"
