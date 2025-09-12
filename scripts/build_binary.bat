@@ -58,7 +58,6 @@ type app\drizzle\migrations\20250909065957_populate_initial_super_admin_user.sql
 
 set /A STEP+=1
 echo === Step !STEP!/%TOTAL_STEPS%!. Copying shell scripts into dts_shared_binary ===
-xcopy /E /I /Y build dts_shared_binary\build
 copy .\scripts\init_db.bat dts_shared_binary\init_db.bat /Y
 copy .\scripts\init_db.sh dts_shared_binary\init_db.sh /Y
 copy .\scripts\init_website.bat dts_shared_binary\init_website.bat /Y
