@@ -91,7 +91,9 @@ export const action = authActionWithPerm("EditData", async (actionArgs): Promise
 
 			let expectedHeaders = defs.map(d => d.jsName)
 			if (!eqArr(all[0], expectedHeaders)) {
-				throw new UserError("Unexpected table, wanted: " + expectedHeaders.join(","))
+				throw new UserError(
+					"Unexpected table, wanted columns: " + expectedHeaders.join(",") + " got: " + all[0].join(",")
+				);
 			}
 			for (let i = 1; i < all.length; i++) {
 				let row = all[i]
@@ -117,10 +119,12 @@ export const action = authActionWithPerm("EditData", async (actionArgs): Promise
 			}
 			let res = await validate(tx, table, recordId, defs)
 			if (!res.ok) {
-				if (res.error) {
-					throw new UserError(String(res.error))
-				} else if (res.errors) {
-					throw new UserError(String(res.errors[0]))
+				if (res.tableError) {
+					throw new UserError(res.tableError.message)
+				} else if (res.groupErrors) {
+					throw new UserError(res.groupErrors[0].message)
+				} else if (res.rowErrors) {
+					throw new UserError(res.rowErrors[0].message)
 				} else {
 					throw new Error("unknown validate error")
 				}
@@ -161,11 +165,10 @@ export default function Screen() {
 				<h3>Uploaded file will replace data for this record and table</h3>
 				<form method="post" encType="multipart/form-data" >
 					<input type="hidden" name="tableId" value={ld.tbl}></input>
-					{submitted && <p>Imported data, new row count is {imported}</p>
-					}
+					{!error && submitted && <p>Imported data, new row count is {imported}</p>}
 					{
 						error ? (
-							<p>{error} </p>
+							<p>Error: {error} </p>
 						) : null
 					}
 					<label>
