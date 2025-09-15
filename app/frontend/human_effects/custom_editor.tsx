@@ -1,4 +1,4 @@
-import { ETLocalizedString, EnumEntry, ColWidth } from "~/frontend/editabletable/defs"
+import { ETLocalizedString, EnumEntry, ColWidth } from "~/frontend/editabletable/base"
 import { HumanEffectsCustomDef } from "~/frontend/human_effects/defs"
 import { useState } from 'react'
 

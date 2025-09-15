@@ -10,6 +10,8 @@
 
 - [Dependencies](dependencies.md)
 
+- [Human direct effects](human-direct-effects.md)
+
 ## Requirements
 - [IDs](ids.md) - Document IDs used for hazardous, disaster events and disaster records
 
@@ -19,6 +21,7 @@
 
 ## API docs for data import
 - [API for Desinventar import](api-for-desinventar-import.md)
+
 ## Geographic divisions
 - [division_import_guide](division_import_guide)
 - [division_technical_implementation](division_technical_implementation)

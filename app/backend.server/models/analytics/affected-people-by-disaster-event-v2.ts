@@ -39,7 +39,7 @@ const totalsTablesAndCols = affectedTablesAndCols
 async function totalsForEachTable(tx: Tx, disasterEventId: string, conditions?: Conditions): Promise<Total> {
 	let entries = await Promise.all(
 		totalsTablesAndCols.map(async a => {
-			let v = await totalsForOneTable(tx, disasterEventId, a.table, a.col, a.presenceCol, conditions)
+			let v = await totalsForOneTable(tx, disasterEventId, a.presenceTotalCol, a.presenceCol, conditions)
 			return [a.code, v] as const
 		})
 	)
@@ -53,29 +53,15 @@ async function totalsForEachTable(tx: Tx, disasterEventId: string, conditions?: 
 // The code for deaths, injured, missing, displaced is exactly the same.
 // For directlyAffected has a minor variation that a table has both direct and indirect columns, we only need direct from there.
 
-async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any, resCol: any, presenceCol: any, conditions?: Conditions): Promise<number> {
+async function totalsForOneTable(tx: Tx, disasterEventId: string, resCol: any, presenceCol: any, conditions?: Conditions): Promise<number> {
 	/*
-	SELECT SUM(d.deaths)
+	SELECT SUM(hcp.deaths_total)
 	FROM disaster_event de
 	JOIN disaster_records dr ON de.id = dr.disaster_event_id
-	JOIN human_dsg hd ON dr.id = hd.record_id
-	JOIN deaths d ON hd.id = d.dsg_id
-	JOIN human_category_presence hcp ON hd.record_id = hcp.record_id
-	WHERE de.id = 'f41bd013-23cc-41ba-91d2-4e325f785171'
+	JOIN human_category_presence hcp ON dr.id = hcp.record_id
+	WHERE de.id = '641495e5-1ece-4376-ab31-40b6861ac001'
 			AND hcp.deaths IS TRUE
 		AND dr."approvalStatus" = 'published'
-		AND hd.sex IS NULL
-		AND hd.age IS NULL
-		AND hd.disability IS NULL
-		AND hd.global_poverty_line IS NULL
-		AND hd.national_poverty_line IS NULL
-		AND (hd.custom IS NULL
-			OR hd.custom = '{}'::jsonb
-			OR (
-				SELECT COUNT(*)
-				FROM jsonb_each(hd.custom)
-				WHERE jsonb_typeof(value) != 'null'
-			) = 0
 		AND EXISTS (
 			SELECT 1
 			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
@@ -86,8 +72,6 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 
 	let de = disasterEventTable
 	let dr = disasterRecordsTable
-	let hd = humanDsgTable
-	let vt = valTable
 	let hcp = humanCategoryPresenceTable
 
 	const res = await tx
@@ -96,28 +80,12 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 		})
 		.from(de)
 		.innerJoin(dr, eq(de.id, dr.disasterEventId))
-		.innerJoin(hd, eq(dr.id, hd.recordId))
-		.innerJoin(vt, eq(hd.id, vt.dsgId))
-		.innerJoin(hcp, eq(hd.recordId, hcp.recordId))
+		.innerJoin(hcp, eq(dr.id, hcp.recordId))
 		.where(
 			and(
 				eq(de.id, disasterEventId),
 				eq(presenceCol, true),
 				eq(dr.approvalStatus, "published"),
-				isNull(hd.sex),
-				isNull(hd.age),
-				isNull(hd.disability),
-				isNull(hd.globalPovertyLine),
-				isNull(hd.nationalPovertyLine),
-				sql`(
-					${hd.custom} IS NULL
-					OR ${hd.custom} = '{}'::jsonb
-					OR (
-						SELECT COUNT(*)
-						FROM jsonb_each(${hd.custom})
-						WHERE jsonb_typeof(value) != 'null'
-					) = 0
-				)`,
 				conditions?.divisionId ? sql`EXISTS (
 					SELECT 1
 					FROM jsonb_array_elements(${dr.spatialFootprint}) AS elem
@@ -139,44 +107,22 @@ async function totalsForOneTable(tx: Tx, disasterEventId: string, valTable: any,
 export async function totalsRecordsForTypeCol(tx: Tx, dataCode: humanEffectsDataCode, disasterEventId: string){
 	let record = totalsTablesAndCols.find(d => d.code == dataCode)
 	if (!record) throw new Error("invalid dataCode: " + dataCode)
-	return await totalsForOneTableRecords(tx, disasterEventId, record.table, record.col, record.presenceCol)
+	return await totalsForOneTableRecords(tx, disasterEventId, record.presenceTotalCol, record.presenceCol)
 }
 
-async function totalsForOneTableRecords(tx: Tx, disasterEventId: string, valTable: any, resCol: any, presenceCol: any) {
+async function totalsForOneTableRecords(tx: Tx, disasterEventId: string, resCol: any, presenceCol: any) {
 	/*
-	SELECT dr.id, d.deaths
+	SELECT dr.id, hcp.deaths_total
 	FROM disaster_event de
 	JOIN disaster_records dr ON de.id = dr.disaster_event_id
-	JOIN human_dsg hd ON dr.id = hd.record_id
-	JOIN deaths d ON hd.id = d.dsg_id
-	JOIN human_category_presence hcp ON hd.record_id = hcp.record_id
-	WHERE de.id = 'f41bd013-23cc-41ba-91d2-4e325f785171'
-			AND hcp.deaths IS TRUE
+	JOIN human_category_presence hcp ON dr.id = hcp.record_id
+	WHERE de.id = '641495e5-1ece-4376-ab31-40b6861ac001'
+		AND hcp.deaths IS TRUE
 		AND dr."approvalStatus" = 'published'
-		AND hd.sex IS NULL
-		AND hd.age IS NULL
-		AND hd.disability IS NULL
-		AND hd.global_poverty_line IS NULL
-		AND hd.national_poverty_line IS NULL
-		AND (hd.custom IS NULL
-			OR hd.custom = '{}'::jsonb
-			OR (
-				SELECT COUNT(*)
-				FROM jsonb_each(hd.custom)
-				WHERE jsonb_typeof(value) != 'null'
-			) = 0
-		AND EXISTS (
-			SELECT 1
-			FROM jsonb_array_elements(dr.spatial_footprint) AS elem
-			WHERE elem->'geojson'->'features'->0->'properties'->>'division_id' = '74'
-			OR elem->'geojson'->'features'->0->'properties'->'division_ids' @> '74'::jsonb
-		)
 	*/
 
 	let de = disasterEventTable
 	let dr = disasterRecordsTable
-	let hd = humanDsgTable
-	let vt = valTable
 	let hcp = humanCategoryPresenceTable
 
 	const res = await tx
@@ -186,28 +132,12 @@ async function totalsForOneTableRecords(tx: Tx, disasterEventId: string, valTabl
 		})
 		.from(de)
 		.innerJoin(dr, eq(de.id, dr.disasterEventId))
-		.innerJoin(hd, eq(dr.id, hd.recordId))
-		.innerJoin(vt, eq(hd.id, vt.dsgId))
-		.innerJoin(hcp, eq(hd.recordId, hcp.recordId))
+		.innerJoin(hcp, eq(dr.id, hcp.recordId))
 		.where(
 			and(
 				eq(de.id, disasterEventId),
 				eq(presenceCol, true),
 				eq(dr.approvalStatus, "published"),
-				isNull(hd.sex),
-				isNull(hd.age),
-				isNull(hd.disability),
-				isNull(hd.globalPovertyLine),
-				isNull(hd.nationalPovertyLine),
-				sql`(
-					${hd.custom} IS NULL
-					OR ${hd.custom} = '{}'::jsonb
-					OR (
-						SELECT COUNT(*)
-						FROM jsonb_each(${hd.custom})
-						WHERE jsonb_typeof(value) != 'null'
-					) = 0
-				)`,
 			)
 		)
 

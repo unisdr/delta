@@ -1,10 +1,15 @@
+// Example: 10010
+// 1 when disagg is set, 0 when not
+export type GroupKey = string
+
 export type DataFormat = "enum" | "number" | "date"
 export type DataRole = "dimension" | "metric"
-export type ColWidth = "thin"|"medium"|"wide"
+export type ColWidth = "thin" | "medium" | "wide"
 
 export interface DefData {
 	dbName: string
 	format: DataFormat
+	role: DataRole
 }
 
 export interface DefBase {
@@ -55,7 +60,13 @@ export function defData(defs: Def[]): DefData[] {
 		r.push({
 			dbName: d.dbName,
 			format: d.format,
+			role: d.role
 		})
 	}
 	return r
+}
+
+export interface DataWithIdBasic {
+	id: string
+	data: any[]
 }

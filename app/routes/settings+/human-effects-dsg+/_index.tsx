@@ -18,7 +18,7 @@ import {
 import { Form } from "@remix-run/react";
 import { HumanEffectsHidden } from "~/frontend/human_effects/defs";
 import { sharedDefsAll } from "~/backend.server/models/human_effects";
-import { etLocalizedStringForLang } from "~/frontend/editabletable/defs";
+import { etLocalizedStringForLang } from "~/frontend/editabletable/base";
 
 async function getConfig() {
 	let row = await dr.query.humanDsgConfigTable.findFirst()
