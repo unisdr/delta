@@ -102,7 +102,7 @@ The DTS Shared Instance uses a **Single Database Multi-Tenancy** architecture th
    # SSO_AZURE_B2C_USERFLOW_RESET_REDIRECT_URL=""
    
    # Application Environment
-   NODE_ENV="production"  # Use "development" for development environments
+   NODE_ENV="development"  # Use "production" for production environment.
    
  
    ```
@@ -304,7 +304,7 @@ Only infrastructure and security variables remain in `.env`:
 # Required Infrastructure Variables
 DATABASE_URL="postgresql://user:pass@host:port/db"
 SESSION_SECRET="secure-random-string"
-NODE_ENV="production"
+NODE_ENV="development"
 PORT=3000
 
 # Required Email Configuration
@@ -476,7 +476,7 @@ find $BACKUP_DIR -name "*.sql.gz" -mtime +30 -delete
 # Backup configuration and uploads
 tar -czf dts_app_backup_$(date +%Y%m%d).tar.gz \
     .env \
-    public/uploads/ \
+    ./uploads/ \
     docker-compose.yml
 ```
 

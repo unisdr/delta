@@ -1,4 +1,4 @@
-import { EnumEntry, ETLocalizedString, ColWidth } from "~/frontend/editabletable/defs"
+import { EnumEntry, ETLocalizedString, ColWidth } from "~/frontend/editabletable/base"
 
 export type HumanEffectsTable = "Deaths" | "Injured" | "Missing" | "Affected" | "Displaced"
 

@@ -1,14 +1,9 @@
-import {eq, sql, and, isNull, sum} from "drizzle-orm";
-import {Tx} from "~/db.server";
+import { eq, and, sum } from "drizzle-orm";
+import { Tx } from "~/db.server";
 import {
 	disasterRecordsTable,
-	humanDsgTable,
-	missingTable,
-	injuredTable,
-	deathsTable,
-	affectedTable,
-	displacedTable,
 	disasterEventTable,
+	humanCategoryPresenceTable,
 } from "~/drizzle/schema";
 
 
@@ -23,11 +18,11 @@ type Affected = {
 
 export async function getAffectedByDisasterEvent(tx: Tx, disasterEventId: string): Promise<Affected> {
 	let res = {
-		deaths: await getTotalForDisasterEvent(tx, disasterEventId, deathsTable, deathsTable.deaths),
-		injured: await getTotalForDisasterEvent(tx, disasterEventId, injuredTable, injuredTable.injured),
-		missing: await getTotalForDisasterEvent(tx, disasterEventId, missingTable, missingTable.missing),
-		directlyAffected: await getTotalForDisasterEvent(tx, disasterEventId, affectedTable, affectedTable.direct),
-		displaced: await getTotalForDisasterEvent(tx, disasterEventId, displacedTable, displacedTable.displaced)
+		deaths: await getTotalForDisasterEvent(tx, disasterEventId, humanCategoryPresenceTable.deathsTotal),
+		injured: await getTotalForDisasterEvent(tx, disasterEventId, humanCategoryPresenceTable.injuredTotal),
+		missing: await getTotalForDisasterEvent(tx, disasterEventId, humanCategoryPresenceTable.missingTotal),
+		directlyAffected: await getTotalForDisasterEvent(tx, disasterEventId, humanCategoryPresenceTable.affectedDirectTotal),
+		displaced: await getTotalForDisasterEvent(tx, disasterEventId, humanCategoryPresenceTable.displacedTotal)
 	}
 	let total = res.deaths + res.injured + res.missing + res.directlyAffected + res.displaced
 	return {
@@ -39,46 +34,30 @@ export async function getAffectedByDisasterEvent(tx: Tx, disasterEventId: string
 // The code for deaths, injured, missing, displaced is exactly the same.
 // For directlyAffected has a minor variation that a table has both direct and indirect columns, we only need direct from there.
 
-async function getTotalForDisasterEvent(tx: Tx, disasterEventId: string, valTable: any, resCol: any): Promise<number> {
+async function getTotalForDisasterEvent(tx: Tx, disasterEventId: string, valCol: any): Promise<number> {
 	/*
-	SELECT SUM(d.deaths)
+	SELECT sum(hcp.deaths_total)
 	FROM disaster_event de
 	JOIN disaster_records dr ON de.id = dr.disaster_event_id
-	JOIN human_dsg hd ON dr.id = hd.record_id
-	JOIN deaths d ON hd.id = d.dsg_id
-	WHERE de.id = 'f41bd013-23cc-41ba-91d2-4e325f785171'
-		AND dr."approvalStatus" = 'published'
-		AND hd.sex IS NULL
-		AND hd.age IS NULL
-		AND hd.disability IS NULL
-		AND hd.global_poverty_line IS NULL
-		AND hd.national_poverty_line IS NULL
-		AND hd.custom = '{}'::jsonb;
+	JOIN human_category_presence hcp on dr.id = hcp.record_id 
+	WHERE de.id = '641495e5-1ece-4376-ab31-40b6861ac001'
 	*/
 
 	let de = disasterEventTable
 	let dr = disasterRecordsTable
-	let hd = humanDsgTable
-	let vt = valTable
+	let hcp = humanCategoryPresenceTable
 
-	const res = await tx
+	let res = await tx
 		.select({
-			sum: sum(resCol),
+			sum: sum(valCol),
 		})
 		.from(de)
 		.innerJoin(dr, eq(de.id, dr.disasterEventId))
-		.innerJoin(hd, eq(dr.id, hd.recordId))
-		.innerJoin(vt, eq(hd.id, vt.dsgId))
+		.innerJoin(hcp, eq(dr.id, hcp.recordId))
 		.where(
 			and(
 				eq(de.id, disasterEventId),
-				eq(dr.approvalStatus, "published"),
-				isNull(hd.sex),
-				isNull(hd.age),
-				isNull(hd.disability),
-				isNull(hd.globalPovertyLine),
-				isNull(hd.nationalPovertyLine),
-				sql`${hd.custom} = '{}'::jsonb`
+				eq(dr.approvalStatus, "published")
 			)
 		)
 
