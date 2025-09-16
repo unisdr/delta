@@ -13,7 +13,11 @@ import {
 	updateCountryAccount,
 } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
-import { createUser, getUserByEmail, updateUserInviteCodeAndInviteExpirationByUserId } from "~/db/queries/user";
+import {
+	createUser,
+	getUserByEmail,
+	updateUserById,
+} from "~/db/queries/user";
 import { createUserCountryAccounts } from "~/db/queries/userCountryAccounts";
 import {
 	CountryAccountStatus,
@@ -129,7 +133,15 @@ export async function createCountryAccountService(
 			const inviteCode = randomBytes(32).toString("hex");
 			const expirationTime = addHours(new Date(), 7 * 24);
 
-			updateUserInviteCodeAndInviteExpirationByUserId(user.id, inviteCode,expirationTime, tx);
+			updateUserById(
+				user.id,
+				{
+					inviteSentAt: new Date(),
+					inviteCode: inviteCode,
+					inviteExpiresAt: expirationTime,
+				},
+				tx
+			);
 			await sendInviteForNewCountryAccountAdminUser(
 				user,
 				baseUrl,

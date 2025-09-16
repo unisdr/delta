@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { dr, Tx } from "../../db.server";
-import { SelectUser, userTable } from "../../drizzle/schema";
+import { InsertUser, SelectUser, userTable } from "../../drizzle/schema";
 
 export async function getUserById(id: string): Promise<SelectUser | null> {
 	const result = await dr
@@ -35,19 +35,25 @@ export async function createUser(email: string, tx?: Tx) {
 	return result[0];
 }
 
-export async function updateUserInviteCodeAndInviteExpirationByUserId(
-	userId: string,
-	inviteCode: string,
-	expirationTime: Date,
-	tx?: Tx
-) {
-	const db = tx || dr;
-	await db
-		.update(userTable)
-		.set({
-			inviteSentAt: new Date(),
-			inviteCode: inviteCode,
-			inviteExpiresAt: expirationTime,
-		})
-		.where(eq(userTable.id, userId));
+export async function updateUserById(
+  userId: string,
+  data: Partial<InsertUser>,
+  tx?: Tx
+): Promise<SelectUser | null> {
+  if (!userId) throw new Error("User ID is required");
+  if (!data || Object.keys(data).length === 0) {
+    throw new Error("No data provided to update");
+  }
+
+  const db = tx || dr;
+  const [updatedUser] = await db
+    .update(userTable)
+    .set({
+      ...data,
+      updatedAt: new Date(),
+    })
+    .where(eq(userTable.id, userId))
+    .returning();
+
+  return updatedUser ?? null;
 }
