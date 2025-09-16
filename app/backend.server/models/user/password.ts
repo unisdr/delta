@@ -11,6 +11,7 @@ import { sendEmail } from "~/util/email";
 import { addHours } from "~/util/time";
 
 import { checkPasswordComplexity, PasswordErrorType } from "./password_check";
+import { getUserById } from "~/db/queries/user";
 
 // rounds=10: ~10 hashes/sec
 // this measurements is from another implementation
@@ -189,14 +190,12 @@ export async function changePassword(
     return { ok: false, errors };
   }
 
-  const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
+  const user = await getUserById(userId);
 
-  if (!res || res.length === 0) {
+  if (!user) {
     errors.form = ["Application error. User not found"];
     return { ok: false, errors };
   }
-
-  const user = res[0];
 
   if (newPassword) {
     const res = checkPasswordComplexity(newPassword);

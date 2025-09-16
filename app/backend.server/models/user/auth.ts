@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import { superAdminUsers, userTable } from "~/drizzle/schema";
 import { passwordHashCompare } from "./password";
 import { isValidTotp } from "./totp";
+import { getUserById } from "~/db/queries/user";
 
 export type LoginResult =
 	| { ok: true; userId: string; countryAccountId?: string | null; role?: string }
@@ -199,11 +200,10 @@ export async function loginTotp(
 	token: string,
 	totpIssuer: string,
 ): Promise<LoginTotpResult> {
-	const res = await dr.select().from(userTable).where(eq(userTable.id, userId));
-	if (res.length == 0) {
+	const user = await getUserById(userId)
+	if (!user) {
 		return { ok: false, error: "Application error. User not found." };
 	}
-	const user = res[0];
 
 	if (!user.totpEnabled) {
 		return {
