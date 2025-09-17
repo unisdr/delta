@@ -439,3 +439,94 @@ export function validateParentChildRelationships(
 
   return { valid: true };
 }
+
+// Add to the end of geoValidation.ts
+
+/**
+ * Counts the number of divisions in a GeoJSON file
+ * @param geojsonData - GeoJSON FeatureCollection or single Feature
+ * @returns Number of divisions (features) in the file
+ */
+export function countDivisionsInGeoJSON(geojsonData: unknown): number {
+    // Reuse existing validateGeoJSON function
+    const validation = validateGeoJSON(geojsonData);
+    if (!validation.valid) {
+        throw new Error(`Invalid GeoJSON: ${validation.error}`);
+    }
+
+    const data = validation.data;
+
+    if (data.type === 'FeatureCollection') {
+        return data.features?.length || 0;
+    } else if (data.type === 'Feature') {
+        return 1;
+    } else {
+        return 1; // Pure geometry types count as 1 division
+    }
+}
+
+/**
+ * Extracts parent-child relationships from GeoJSON file
+ * @param geojsonData - GeoJSON FeatureCollection with administrative features
+ * @param format - Data source format ('salb' | 'gadm')
+ * @returns Array of divisions with their parent relationships
+ */
+export function extractDivisionHierarchy(
+    geojsonData: unknown, 
+    format: 'salb' | 'gadm'
+): Array<{id: string, name: string, parentId: string | null, level: number}> {
+    
+    const validation = validateGeoJSON(geojsonData);
+    if (!validation.valid) {
+        throw new Error(`Invalid GeoJSON: ${validation.error}`);
+    }
+
+    const data = validation.data;
+    const features = data.type === 'FeatureCollection' ? data.features : [data];
+    const divisions: Array<{id: string, name: string, parentId: string | null, level: number}> = [];
+
+    features.forEach((feature: any) => {
+        const props = feature.properties;
+        
+        if (format === 'salb') {
+            divisions.push({
+                id: props.adm2cd,
+                name: props.adm2_en || props.adm2_fr || 'Unknown',
+                parentId: props.adm1cd || null,
+                level: 2
+            });
+        } else if (format === 'gadm') {
+            // GADM level detection logic
+            let level = 0;
+            let currentId = '';
+            let parentId: string | null = null;
+            let name = '';
+
+            if (props.GID_2) {
+                level = 2;
+                currentId = props.GID_2;
+                parentId = props.GID_1;
+                name = props.NAME_2;
+            } else if (props.GID_1) {
+                level = 1;
+                currentId = props.GID_1;
+                parentId = props.GID_0;
+                name = props.NAME_1;
+            } else if (props.GID_0) {
+                level = 0;
+                currentId = props.GID_0;
+                parentId = null;
+                name = props.COUNTRY;
+            }
+
+            divisions.push({
+                id: currentId,
+                name: name || 'Unknown',
+                parentId: parentId,
+                level: level + 1 // Convert to 1-based level for DTS
+            });
+        }
+    });
+
+    return divisions;
+}
