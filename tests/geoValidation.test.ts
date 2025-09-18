@@ -20796,7 +20796,7 @@ describe("List Divisions with their parents in GeoJSON", () => {
 	});
 
 	it("List divisions in Cyprus admin level 1 downloaded from gadm.org", () => {
-		expect(extractDivisionHierarchy(cyprusSalbGeoJSON, "salb")).toEqual([
+		expect(extractDivisionHierarchy(cyprusAdmin1GadmlGeoJSON, "gadm")).toEqual([
 			{
 				id: "1",
 				name: "Ammochostos",
