@@ -44,6 +44,10 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {notifyError, notifyInfo} from "./frontend/utils/notifications";
 import { getInstanceSystemSettings } from "./backend.server/models/instanceSystemSettingDAO";
 
+import {
+	sessionActivityTimeoutMinutes,
+	sessionActivityWarningBeforeTimeoutMinutes
+} from "~/util/session-activity-config";
 
 export const links: LinksFunction = () => [
 	{rel: "stylesheet", href: '/assets/css/style-dts.css?asof=20250513'},
@@ -113,8 +117,6 @@ interface InactivityWarningProps {
 	loggedIn: boolean
 }
 function InactivityWarning(props: InactivityWarningProps) {
-	const sessionActivityTimeoutMinutes = 40;
-	const sessionActivityWarningBeforeTimeoutMinutes = 10;
 
 	const navigation = useNavigation();
 	const [lastActivity, setLastActivity] = useState(new Date());
