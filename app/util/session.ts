@@ -10,6 +10,9 @@ import { sessionTable, userTable } from "~/drizzle/schema";
 import { redirect } from "@remix-run/react";
 
 import { InferSelectModel, eq } from "drizzle-orm";
+import {
+	sessionActivityTimeoutMinutes
+} from "~/util/session-activity-config";
 
 export let _sessionCookie: SessionStorage<SessionData, SessionData> | null = null;
 export let _superAdminSessionCookie: SessionStorage<SessionData, SessionData> | null = null;
@@ -128,8 +131,6 @@ export async function cookieSessionDestroy(request: Request) {
 		"Set-Cookie": await sessionCookie().destroySession(session),
 	};
 }
-
-const sessionActivityTimeoutMinutes = 40;
 
 export interface UserSession {
 	user: InferSelectModel<typeof userTable>;
