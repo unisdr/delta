@@ -2,22 +2,17 @@ import type { MetaFunction } from "@remix-run/node";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { useLoaderData } from "@remix-run/react";
 import PreventionWebLandingPageWidget from "~/components/PreventionWebLandingPageWidget";
 import { loadMarkdownContent } from "~/util/loadMarkdownContent";
 
-export const loader = authLoaderPublicOrWithPerm(
-  "ViewData",
-  async () => {
-    // load .md file and its append file if exist
+export const loader = async () => {
     const { fullContent, appendContent } = await loadMarkdownContent(
       "about"
     );
 
     return Response.json({ fullContent, appendContent });
-  }
-);
+};
 
 // Meta function for page SEO
 export const meta: MetaFunction = () => {

@@ -35,6 +35,11 @@ import { notifyError, notifyInfo } from "./frontend/utils/notifications";
 
 import { configAuthSupportedForm } from "~/util/config";
 
+import {
+	sessionActivityTimeoutMinutes,
+	sessionActivityWarningBeforeTimeoutMinutes
+} from "~/util/session-activity-config";
+
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250530" },
 	{ rel: "stylesheet", href: allStylesHref },
@@ -110,8 +115,6 @@ interface InactivityWarningProps {
 	loggedIn: boolean;
 }
 function InactivityWarning(props: InactivityWarningProps) {
-	const sessionActivityTimeoutMinutes = 40;
-	const sessionActivityWarningBeforeTimeoutMinutes = 10;
 
 	const navigation = useNavigation();
 	const [lastActivity, setLastActivity] = useState(new Date());
