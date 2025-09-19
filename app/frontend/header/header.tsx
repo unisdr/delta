@@ -50,7 +50,7 @@ export function Header({
 	}
 
 	return (
-		<>
+		<> 
 			<header className={`dts-main-header ${isClient ? "js-enabled" : ""}`}>
 				<div className="dts-logo-with-name">
 					<LogoComponent src={siteLogo} alt="" />
@@ -191,6 +191,39 @@ function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1I
 
 	// Always add TOTP option
 	yourProfileItems.push({ name: "TOTP (2FA)", link: "/user/totp-enable" });
+
+	// this case should only happen for instance selection only /user/select-instance
+	if (userRole === "") {
+		return [
+			{
+				name: "",
+				title: "",
+				link: "",
+			},
+			{
+				name: "",
+				title: "",
+				link: "",
+			},
+			{
+				name: "",
+				title: "",
+				link: "",
+			},
+			{
+				name: "",
+				title: "",
+				link: "",
+			},
+			{
+				name: "Log out",
+				title: "User Login",
+				icon: "other/user-profile",
+				link: "/user/logout",
+			},
+		];
+	}
+
 
 	return [
 		{
