@@ -32,6 +32,29 @@ export function ListView(args: ListViewArgs) {
 
 	const pagination = Pagination(ld.data.pagination);
 
+	// Store the total count in a ref that persists across renders
+	const totalCountRef = useRef(ld.data.pagination.totalItems);
+
+	// Check if this is an unfiltered view
+	const isUnfiltered = !filters.hipHazardId && !filters.hipClusterId && !filters.hipTypeId && !filters.search;
+
+	// Use effect to update the ref when we see an unfiltered view with a higher count
+	useEffect(() => {
+		if (isUnfiltered && ld.data.pagination.totalItems > totalCountRef.current) {
+			totalCountRef.current = ld.data.pagination.totalItems;
+		}
+	}, [isUnfiltered, ld.data.pagination.totalItems]);
+
+	// Debug pagination values
+	// console.log('Pagination data:', {
+	// 	paginationObj: pagination,
+	// 	originalPagination: ld.data.pagination,
+	// 	itemsLength: items.length,
+	// 	totalItems: ld.data.pagination.totalItems,
+	// 	totalCountRef: totalCountRef.current,
+	// 	isUnfiltered
+	// });
+
 	// Refs for the status elements
 	const statusRefs = useRef(new Map<number, HTMLElement>());
 
@@ -75,7 +98,7 @@ export function ListView(args: ListViewArgs) {
 						{/* Add the EventCounter component */}
 						<span>
 							<strong>
-								<EventCounter totalEvents={items.length} />
+								<EventCounter filteredEvents={items.length} totalEvents={totalCountRef.current} />
 							</strong>
 						</span>
 					</div>
