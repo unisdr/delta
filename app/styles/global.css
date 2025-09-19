@@ -45,26 +45,26 @@ form>label {
 }
 
 .dts-status--draft {
-  background-color: #FFA500;
+  border: 1px solid #181823;
 }
 
 
-.dts-status--completed-waiting-for-approval {
-  background-color: #1E90FF;
+.dts-status--waiting-for-validation {
+  background-color: #D87838;
 }
 
 
-.dts-status--approved {
-  background-color: #28A745;
+.dts-status--needs-revision {
+  background-color: #AD66A1;
 }
 
 
-.dts-status--sent-for-review {
-  background-color: #FFC107;
+.dts-status--validated {
+  background-color: #106CB8;
 }
 
 .dts-status--published {
-  background-color: #6F42C1;
+  background-color: #6D9A75;
 }
 
 .dts-status--rejected {
@@ -537,15 +537,18 @@ table.table-border th.center {
 
 .button-group {
   display: flex;
-  flex-wrap: wrap;     /* Allows wrapping on smaller screens */
+  flex-wrap: wrap;
+  /* Allows wrapping on smaller screens */
   gap: 10px;
 }
 
 /* Optional tweak for very narrow screens */
 @media (max-width: 600px) {
   .button-group {
-    flex-direction: column; /* Stack buttons vertically on phones */
-    gap: 8px;               /* Slightly smaller gap if needed */
+    flex-direction: column;
+    /* Stack buttons vertically on phones */
+    gap: 8px;
+    /* Slightly smaller gap if needed */
   }
 }
 
@@ -566,6 +569,7 @@ table.table-border th.center {
   font-size: 14px;
   transition: all 0.2s;
 }
+
 .dts-pagination .mg-button--small.mg-button-ghost[aria-current="true"]:hover {
   background: #e3f0fd !important;
   color: #1565c0 !important;
@@ -584,7 +588,8 @@ table.table-border th.center {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 300px; /* can be overridden */
+  height: 300px;
+  /* can be overridden */
   border: 1px dashed #ccc;
   border-radius: 4px;
   background-color: #f9f9f9;
@@ -610,7 +615,8 @@ table.table-border th.center {
 }
 
 .dts-js-disabled-title {
-  color: #a10015; /* Darker red for better contrast */
+  color: #a10015;
+  /* Darker red for better contrast */
   margin-bottom: 2rem;
 }
 
@@ -668,7 +674,7 @@ table.table-border th.center {
   .dts-js-disabled-message {
     padding: 2rem 1rem;
   }
-  
+
   .dts-js-disabled-instructions .dts-body-text {
     max-width: 100%;
   }
