@@ -465,7 +465,11 @@ export function countDivisionsInGeoJSON(geojsonData: unknown): number {
       if (props.adm1cd) {
         uniqueDivisions.add(props.adm1cd);
       }
-      // For GADM format
+      // For GADM format - admin level 2
+      else if (props.GID_2) {
+        uniqueDivisions.add(props.GID_2);
+      }
+      // For GADM format - admin level 1
       else if (props.GID_1) {
         uniqueDivisions.add(props.GID_1);
       }
@@ -524,21 +528,41 @@ export function extractDivisionHierarchy(
         }
       }
     } else if (format === 'gadm') {
-      // GADM processing (now implemented)
-      const id = props.GID_1;        // CYP.1_1, CYP.2_1, etc.
-      const name = props.NAME_1;     // Famagusta, Larnaca, etc.
-      const parentId = props.GID_0;  // CYP
+      // Check if this is admin level 2 data (has GID_2)
+      if (props.GID_2) {
+        const id = props.GID_2;        // YEM.1.1_1, YEM.1.8_1, etc.
+        const name = props.NAME_2;     // AlBuraiqeh, KhurMaksar, etc.
+        const parentId = props.GID_1;  // YEM.1_1, YEM.2_1, etc.
 
-      if (id && String(id).trim()) {
-        // Check for duplicates (same as SALB logic)
-        const existingDivision = divisions.find(div => div.id === String(id).trim());
-        if (!existingDivision) {
-          divisions.push({
-            id: String(id).trim(),
-            name: String(name).trim(),
-            parentId: String(parentId).trim(),
-            level: 1  // This is Admin Level 1 data
-          });
+        if (id && String(id).trim()) {
+          // Check for duplicates
+          const existingDivision = divisions.find(div => div.id === String(id).trim());
+          if (!existingDivision) {
+            divisions.push({
+              id: String(id).trim(),
+              name: String(name).trim(),
+              parentId: String(parentId).trim(),
+              level: 2  // This is Admin Level 2 data
+            });
+          }
+        }
+      } else {
+        // GADM processing for admin level 1
+        const id = props.GID_1;        // CYP.1_1, CYP.2_1, etc.
+        const name = props.NAME_1;     // Famagusta, Larnaca, etc.
+        const parentId = props.GID_0;  // CYP
+
+        if (id && String(id).trim()) {
+          // Check for duplicates (same as SALB logic)
+          const existingDivision = divisions.find(div => div.id === String(id).trim());
+          if (!existingDivision) {
+            divisions.push({
+              id: String(id).trim(),
+              name: String(name).trim(),
+              parentId: String(parentId).trim(),
+              level: 1  // This is Admin Level 1 data
+            });
+          }
         }
       }
     }
