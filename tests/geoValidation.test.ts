@@ -21770,11 +21770,11 @@ describe("countDivisionsInGeoJSON", () => {
 	it("counts divisions in Cyprus admin level 1 downloaded from salb.un.org", () => {
 		expect(countDivisionsInGeoJSON(cyprusSalbGeoJSON)).toBe(6);
 	});
-	it("counts divisions in Cyprus admin level 1 downloaded from gadm.org", () => {
-		expect(countDivisionsInGeoJSON(cyprusAdmin1GadmlGeoJSON)).toBe(5);
-	});
 	it("counts divisions in Cyprus admin level 0 downloaded from gadm.org", () => {
 		expect(countDivisionsInGeoJSON(cyprusAdmin0GadmlGeoJSON)).toBe(1);
+	});
+	it("counts divisions in Cyprus admin level 1 downloaded from gadm.org", () => {
+		expect(countDivisionsInGeoJSON(cyprusAdmin1GadmlGeoJSON)).toBe(5);
 	});
 	it("counts divisions in Yemen admin level 2 downloaded from gadm.org", () => {
 		expect(countDivisionsInGeoJSON(yemenAdmin2GadmlGeoJSON)).toBe(6);
@@ -21825,6 +21825,17 @@ describe("List Divisions with their parents in GeoJSON", () => {
 				name: "Pafos",
 				parentId: "Cyprus",
 				level: 1,
+			},
+		]);
+	});
+
+	it("List divisions in Cyprus admin level 0 downloaded from gadm.org", () => {
+		expect(extractDivisionHierarchy(cyprusAdmin0GadmlGeoJSON, "gadm")).toEqual([
+			{
+				id: "CYP",
+				name: "Cyprus",
+				parentId: null,
+				level: 0,
 			},
 		]);
 	});
