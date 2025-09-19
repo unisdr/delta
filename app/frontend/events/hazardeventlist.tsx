@@ -1,21 +1,21 @@
-import {useEffect, useRef} from "react";
+import { useEffect, useRef } from "react";
 
-import {useLoaderData, Link} from "@remix-run/react";
+import { useLoaderData, Link } from "@remix-run/react";
 
-import {Pagination} from "~/frontend/pagination/view";
+import { Pagination } from "~/frontend/pagination/view";
 
-import {HazardPicker} from "~/frontend/hip/hazardpicker";
+import { HazardPicker } from "~/frontend/hip/hazardpicker";
 
-import {ActionLinks} from "~/frontend/form";
+import { ActionLinks } from "~/frontend/form";
 
-import {route} from "~/frontend/events/hazardeventform";
+import { route } from "~/frontend/events/hazardeventform";
 
-import {hazardousEventsLoader} from "~/backend.server/handlers/events/hazardevent";
+import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent";
 
-import {createFloatingTooltip} from "~/util/tooltip";
+import { createFloatingTooltip } from "~/util/tooltip";
 
-import {EventCounter} from "~/components/EventCounter";
-import {Filters} from "../components/list-page-filters";
+import { EventCounter } from "~/components/EventCounter";
+import { Filters } from "../components/list-page-filters";
 
 interface ListViewArgs {
 	isPublic: boolean;
@@ -27,8 +27,8 @@ interface ListViewArgs {
 export function ListView(args: ListViewArgs) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof hazardousEventsLoader>>>();
 
-	const {hip, filters} = ld;
-	const {items} = ld.data;
+	const { hip, filters } = ld;
+	const { items } = ld.data;
 
 	const pagination = Pagination(ld.data.pagination);
 
@@ -80,7 +80,7 @@ export function ListView(args: ListViewArgs) {
 						</span>
 					</div>
 					<div className="dts-legend">
-						<span className="dts-body-label">Status legend</span>
+						<span className="dts-body-label">Record Status</span>
 						<div className="dts-legend__item">
 							<span
 								className="dts-status dts-status--draft"
@@ -90,24 +90,24 @@ export function ListView(args: ListViewArgs) {
 						</div>
 						<div className="dts-legend__item">
 							<span
-								className="dts-status dts-status--wait-info"
+								className="dts-status dts-status--waiting-for-validation"
 								aria-labelledby="legend2"
 							></span>
-							<span id="legend2">Completed / Waiting for approval</span>
+							<span id="legend2">Waiting for validation</span>
 						</div>
 						<div className="dts-legend__item">
 							<span
-								className="dts-status dts-status--wait-valid"
-								aria-labelledby="legend2"
+								className="dts-status dts-status--needs-revision"
+								aria-labelledby="legend3"
 							></span>
-							<span id="legend2">Approved</span>
+							<span id="legend3">Needs revision</span>
 						</div>
 						<div className="dts-legend__item">
 							<span
-								className="dts-status dts-status--undrr"
-								aria-labelledby="legend2"
+								className="dts-status dts-status--validated"
+								aria-labelledby="legend4"
 							></span>
-							<span id="legend2">Sent for review</span>
+							<span id="legend4">Validated</span>
 						</div>
 						<div className="dts-legend__item">
 							<span
