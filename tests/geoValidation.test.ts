@@ -21637,6 +21637,136 @@ const burundiAdmin3GadmlGeoJSON = {
 	],
 };
 
+const burundiAdmin4GadmGeoJSON={
+	"type": "FeatureCollection",
+	"name": "gadm41_BDI_4",
+	"crs": {
+		"type": "name",
+		"properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+	},
+	"features": [
+		{
+			"type": "Feature",
+			"properties": {
+				"GID_4": "BDI.1.1.1.1_1",
+				"GID_0": "BDI",
+				"COUNTRY": "Burundi",
+				"GID_1": "BDI.1_1",
+				"NAME_1": "Bubanza",
+				"GID_2": "BDI.1.1_1",
+				"NAME_2": "Bubanza",
+				"GID_3": "BDI.1.1.1_1",
+				"NAME_3": "Buhororo",
+				"NAME_4": "Gicaca",
+				"VARNAME_4": "NA",
+				"TYPE_4": "SousColline",
+				"ENGTYPE_4": "SousColline",
+				"CC_4": "NA"
+			},
+			"geometry": {
+				"type": "MultiPolygon",
+				"coordinates": [
+					[
+						[
+							[29.4199, -3.054],
+							[29.4213, -3.0594],
+							[29.4128, -3.07],
+							[29.409, -3.0708],
+							[29.4061, -3.0744],
+							[29.394, -3.0762],
+							[29.3961, -3.068],
+							[29.3995, -3.0665],
+							[29.4019, -3.0608],
+							[29.4019, -3.0573],
+							[29.4104, -3.0568],
+							[29.4108, -3.0585],
+							[29.4133, -3.0581],
+							[29.4147, -3.0554],
+							[29.4199, -3.054]
+						]
+					]
+				]
+			}
+		},
+
+		{
+			"type": "Feature",
+			"properties": {
+				"GID_4": "BDI.9.7.17.1_1",
+				"GID_0": "BDI",
+				"COUNTRY": "Burundi",
+				"GID_1": "BDI.9_1",
+				"NAME_1": "Kayanza",
+				"GID_2": "BDI.9.7_1",
+				"NAME_2": "Muhanga",
+				"GID_3": "BDI.9.7.17_1",
+				"NAME_3": "Mbogwe",
+				"NAME_4": "Kivumu",
+				"VARNAME_4": "NA",
+				"TYPE_4": "SousColline",
+				"ENGTYPE_4": "SousColline",
+				"CC_4": "NA"
+			},
+			"geometry": {
+				"type": "MultiPolygon",
+				"coordinates": [
+					[
+						[
+							[29.7669, -3.0031],
+							[29.7657, -2.9995],
+							[29.7687, -2.9966],
+							[29.7729, -2.9959],
+							[29.7797, -2.9841],
+							[29.782, -2.985],
+							[29.7801, -2.992],
+							[29.7809, -2.999],
+							[29.7718, -3.0025],
+							[29.7697, -3.0059],
+							[29.7669, -3.0031]
+						]
+					]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": {
+				"GID_4": "BDI.9.7.17.2_1",
+				"GID_0": "BDI",
+				"COUNTRY": "Burundi",
+				"GID_1": "BDI.9_1",
+				"NAME_1": "Kayanza",
+				"GID_2": "BDI.9.7_1",
+				"NAME_2": "Muhanga",
+				"GID_3": "BDI.9.7.17_1",
+				"NAME_3": "Mbogwe",
+				"NAME_4": "Rutumva",
+				"VARNAME_4": "NA",
+				"TYPE_4": "SousColline",
+				"ENGTYPE_4": "SousColline",
+				"CC_4": "NA"
+			},
+			"geometry": {
+				"type": "MultiPolygon",
+				"coordinates": [
+					[
+						[
+							[29.7809, -2.999],
+							[29.7832, -3.0052],
+							[29.7799, -3.0149],
+							[29.7739, -3.0152],
+							[29.7697, -3.0059],
+							[29.7718, -3.0025],
+							[29.7809, -2.999]
+						]
+					]
+				]
+			}
+		}
+	]
+}
+
+
 describe("countDivisionsInGeoJSON", () => {
 	it("counts divisions in Cyprus admin level 1 downloaded from salb.un.org", () => {
 		expect(countDivisionsInGeoJSON(cyprusSalbGeoJSON)).toBe(6);
@@ -21652,6 +21782,9 @@ describe("countDivisionsInGeoJSON", () => {
 	});
 	it("counts divisions in Burundi admin level 3 downloaded from gadm.org", () => {
 		expect(countDivisionsInGeoJSON(burundiAdmin3GadmlGeoJSON)).toBe(4);
+	});
+	it("counts divisions in Burundi admin level 3 downloaded from gadm.org", () => {
+		expect(countDivisionsInGeoJSON(burundiAdmin4GadmGeoJSON)).toBe(3);
 	});
 });
 
@@ -21800,6 +21933,28 @@ describe("List Divisions with their parents in GeoJSON", () => {
 				name: "Ruyigi",
 				parentId: "BDI.17.7_1",
 				level: 3,
+			},
+		]);
+	});
+	it("List divisions in Burundi admin level 4 downloaded from gadm.org", () => {
+		expect(extractDivisionHierarchy(burundiAdmin4GadmGeoJSON, "gadm")).toEqual([
+			{
+				id: "BDI.1.1.1.1_1",
+				name: "Gicaca",
+				parentId: "BDI.1.1.1_1",
+				level: 4,
+			},
+			{
+				id: "BDI.9.7.17.1_1",
+				name: "Kivumu",
+				parentId: "BDI.9.7.17_1",
+				level: 4,
+			},
+			{
+				id: "BDI.9.7.17.2_1",
+				name: "Rutumva",
+				parentId: "BDI.9.7.17_1",
+				level: 4,
 			},
 		]);
 	});
