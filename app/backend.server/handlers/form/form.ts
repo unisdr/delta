@@ -139,9 +139,9 @@ interface FormSaveArgs<T> {
 
 let validApprovalStatusesForDataCollector = [
 	"draft",
-	"completed-waiting-for-approval",
-	"approved",
-	"sent-for-review",
+	"waiting-for-validation",
+	"needs-revision",
+	"validated",
 ];
 
 function adjustApprovalStatsBasedOnUserRole(
@@ -471,7 +471,7 @@ export function createOrUpdateAction<T>(
 			actionArgs,
 			fieldsDef,
 			save: async (tx, id, data) => {
-				data = {...data, countryAccountsId: args.countryAccountsId}
+				data = { ...data, countryAccountsId: args.countryAccountsId }
 				const user = authActionGetAuth(actionArgs);
 				user.user.id;
 				if (!id) {

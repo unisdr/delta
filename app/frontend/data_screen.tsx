@@ -37,7 +37,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 					<>
 						{!props.isPublic && (
 							<div className="dts-legend">
-								<span className="dts-body-label">Status legend</span>
+								<span className="dts-body-label">Record Status</span>
 								<div className="dts-legend__item">
 									<span
 										className="dts-status dts-status--draft"
@@ -47,24 +47,24 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 								</div>
 								<div className="dts-legend__item">
 									<span
-										className="dts-status dts-status--completed-waiting-for-approval"
+										className="dts-status dts-status--waiting-for-validation"
 										aria-labelledby="legend2"
 									></span>
-									<span id="legend2">Completed / Waiting for approval</span>
+									<span id="legend2">Waiting for validation</span>
 								</div>
 								<div className="dts-legend__item">
 									<span
-										className="dts-status dts-status--approved"
+										className="dts-status dts-status--needs-revision"
 										aria-labelledby="legend3"
 									></span>
-									<span id="legend3">Approved</span>
+									<span id="legend3">Needs revision</span>
 								</div>
 								<div className="dts-legend__item">
 									<span
-										className="dts-status dts-status--sent-for-review"
+										className="dts-status dts-status--validated"
 										aria-labelledby="legend4"
 									></span>
-									<span id="legend4">Sent for review</span>
+									<span id="legend4">Validated</span>
 								</div>
 								<div className="dts-legend__item">
 									<span

@@ -66,9 +66,9 @@ const approvalFields = {
 	approvalStatus: text({
 		enum: [
 			"draft",
-			"completed-waiting-for-approval",
-			"approved",
-			"sent-for-review",
+			"waiting-for-validation",
+			"needs-revision",
+			"validated",
 			"published",
 		],
 	})
@@ -721,7 +721,7 @@ export const humanCategoryPresenceTable = pgTable("human_category_presence", {
 	displacedTotal: ourBigint("displaced_total"),
 
 	deathsTotalGroupColumnNames: jsonb("deaths_total_group_column_names"),
-	injuredTotalGroupColumnNames:jsonb("injured_total_group_column_names"),
+	injuredTotalGroupColumnNames: jsonb("injured_total_group_column_names"),
 	missingTotalGroupColumnNames: jsonb("missing_total_group_column_names"),
 	affectedTotalGroupColumnNames: jsonb("affected_total_group_column_names"),
 	displacedTotalGroupColumnNames: jsonb("displaced_total_group_column_names"),
