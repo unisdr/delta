@@ -21637,35 +21637,35 @@ const burundiAdmin3GadmlGeoJSON = {
 	],
 };
 
-const burundiAdmin4GadmGeoJSON={
-	"type": "FeatureCollection",
-	"name": "gadm41_BDI_4",
-	"crs": {
-		"type": "name",
-		"properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+const burundiAdmin4GadmGeoJSON = {
+	type: "FeatureCollection",
+	name: "gadm41_BDI_4",
+	crs: {
+		type: "name",
+		properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" },
 	},
-	"features": [
+	features: [
 		{
-			"type": "Feature",
-			"properties": {
-				"GID_4": "BDI.1.1.1.1_1",
-				"GID_0": "BDI",
-				"COUNTRY": "Burundi",
-				"GID_1": "BDI.1_1",
-				"NAME_1": "Bubanza",
-				"GID_2": "BDI.1.1_1",
-				"NAME_2": "Bubanza",
-				"GID_3": "BDI.1.1.1_1",
-				"NAME_3": "Buhororo",
-				"NAME_4": "Gicaca",
-				"VARNAME_4": "NA",
-				"TYPE_4": "SousColline",
-				"ENGTYPE_4": "SousColline",
-				"CC_4": "NA"
+			type: "Feature",
+			properties: {
+				GID_4: "BDI.1.1.1.1_1",
+				GID_0: "BDI",
+				COUNTRY: "Burundi",
+				GID_1: "BDI.1_1",
+				NAME_1: "Bubanza",
+				GID_2: "BDI.1.1_1",
+				NAME_2: "Bubanza",
+				GID_3: "BDI.1.1.1_1",
+				NAME_3: "Buhororo",
+				NAME_4: "Gicaca",
+				VARNAME_4: "NA",
+				TYPE_4: "SousColline",
+				ENGTYPE_4: "SousColline",
+				CC_4: "NA",
 			},
-			"geometry": {
-				"type": "MultiPolygon",
-				"coordinates": [
+			geometry: {
+				type: "MultiPolygon",
+				coordinates: [
 					[
 						[
 							[29.4199, -3.054],
@@ -21682,34 +21682,34 @@ const burundiAdmin4GadmGeoJSON={
 							[29.4108, -3.0585],
 							[29.4133, -3.0581],
 							[29.4147, -3.0554],
-							[29.4199, -3.054]
-						]
-					]
-				]
-			}
+							[29.4199, -3.054],
+						],
+					],
+				],
+			},
 		},
 
 		{
-			"type": "Feature",
-			"properties": {
-				"GID_4": "BDI.9.7.17.1_1",
-				"GID_0": "BDI",
-				"COUNTRY": "Burundi",
-				"GID_1": "BDI.9_1",
-				"NAME_1": "Kayanza",
-				"GID_2": "BDI.9.7_1",
-				"NAME_2": "Muhanga",
-				"GID_3": "BDI.9.7.17_1",
-				"NAME_3": "Mbogwe",
-				"NAME_4": "Kivumu",
-				"VARNAME_4": "NA",
-				"TYPE_4": "SousColline",
-				"ENGTYPE_4": "SousColline",
-				"CC_4": "NA"
+			type: "Feature",
+			properties: {
+				GID_4: "BDI.9.7.17.1_1",
+				GID_0: "BDI",
+				COUNTRY: "Burundi",
+				GID_1: "BDI.9_1",
+				NAME_1: "Kayanza",
+				GID_2: "BDI.9.7_1",
+				NAME_2: "Muhanga",
+				GID_3: "BDI.9.7.17_1",
+				NAME_3: "Mbogwe",
+				NAME_4: "Kivumu",
+				VARNAME_4: "NA",
+				TYPE_4: "SousColline",
+				ENGTYPE_4: "SousColline",
+				CC_4: "NA",
 			},
-			"geometry": {
-				"type": "MultiPolygon",
-				"coordinates": [
+			geometry: {
+				type: "MultiPolygon",
+				coordinates: [
 					[
 						[
 							[29.7669, -3.0031],
@@ -21722,33 +21722,33 @@ const burundiAdmin4GadmGeoJSON={
 							[29.7809, -2.999],
 							[29.7718, -3.0025],
 							[29.7697, -3.0059],
-							[29.7669, -3.0031]
-						]
-					]
-				]
-			}
+							[29.7669, -3.0031],
+						],
+					],
+				],
+			},
 		},
 		{
-			"type": "Feature",
-			"properties": {
-				"GID_4": "BDI.9.7.17.2_1",
-				"GID_0": "BDI",
-				"COUNTRY": "Burundi",
-				"GID_1": "BDI.9_1",
-				"NAME_1": "Kayanza",
-				"GID_2": "BDI.9.7_1",
-				"NAME_2": "Muhanga",
-				"GID_3": "BDI.9.7.17_1",
-				"NAME_3": "Mbogwe",
-				"NAME_4": "Rutumva",
-				"VARNAME_4": "NA",
-				"TYPE_4": "SousColline",
-				"ENGTYPE_4": "SousColline",
-				"CC_4": "NA"
+			type: "Feature",
+			properties: {
+				GID_4: "BDI.9.7.17.2_1",
+				GID_0: "BDI",
+				COUNTRY: "Burundi",
+				GID_1: "BDI.9_1",
+				NAME_1: "Kayanza",
+				GID_2: "BDI.9.7_1",
+				NAME_2: "Muhanga",
+				GID_3: "BDI.9.7.17_1",
+				NAME_3: "Mbogwe",
+				NAME_4: "Rutumva",
+				VARNAME_4: "NA",
+				TYPE_4: "SousColline",
+				ENGTYPE_4: "SousColline",
+				CC_4: "NA",
 			},
-			"geometry": {
-				"type": "MultiPolygon",
-				"coordinates": [
+			geometry: {
+				type: "MultiPolygon",
+				coordinates: [
 					[
 						[
 							[29.7809, -2.999],
@@ -21757,15 +21757,14 @@ const burundiAdmin4GadmGeoJSON={
 							[29.7739, -3.0152],
 							[29.7697, -3.0059],
 							[29.7718, -3.0025],
-							[29.7809, -2.999]
-						]
-					]
-				]
-			}
-		}
-	]
-}
-
+							[29.7809, -2.999],
+						],
+					],
+				],
+			},
+		},
+	],
+};
 
 describe("countDivisionsInGeoJSON", () => {
 	it("counts divisions in Cyprus admin level 1 downloaded from salb.un.org", () => {
@@ -21909,32 +21908,34 @@ describe("List Divisions with their parents in GeoJSON", () => {
 	});
 
 	it("List divisions in Burundi admin level 3 downloaded from gadm.org", () => {
-		expect(extractDivisionHierarchy(burundiAdmin3GadmlGeoJSON, "gadm")).toEqual([
-			{
-				id: "BDI.1.1.1_1",
-				name: "Buhororo",
-				parentId: "BDI.1.1_1",
-				level: 3,
-			},
-			{
-				id: "BDI.3.3.6_1",
-				name: "Mena",
-				parentId: "BDI.3.3_1",
-				level: 3,
-			},
-			{
-				id: "BDI.3.3.7_1",
-				name: "Migera",
-				parentId: "BDI.3.3_1",
-				level: 3,
-			},
-			{
-				id: "BDI.17.7.23_1",
-				name: "Ruyigi",
-				parentId: "BDI.17.7_1",
-				level: 3,
-			},
-		]);
+		expect(extractDivisionHierarchy(burundiAdmin3GadmlGeoJSON, "gadm")).toEqual(
+			[
+				{
+					id: "BDI.1.1.1_1",
+					name: "Buhororo",
+					parentId: "BDI.1.1_1",
+					level: 3,
+				},
+				{
+					id: "BDI.3.3.6_1",
+					name: "Mena",
+					parentId: "BDI.3.3_1",
+					level: 3,
+				},
+				{
+					id: "BDI.3.3.7_1",
+					name: "Migera",
+					parentId: "BDI.3.3_1",
+					level: 3,
+				},
+				{
+					id: "BDI.17.7.23_1",
+					name: "Ruyigi",
+					parentId: "BDI.17.7_1",
+					level: 3,
+				},
+			]
+		);
 	});
 	it("List divisions in Burundi admin level 4 downloaded from gadm.org", () => {
 		expect(extractDivisionHierarchy(burundiAdmin4GadmGeoJSON, "gadm")).toEqual([
