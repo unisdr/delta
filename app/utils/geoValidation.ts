@@ -465,6 +465,10 @@ export function countDivisionsInGeoJSON(geojsonData: unknown): number {
       if (props.adm1cd) {
         uniqueDivisions.add(props.adm1cd);
       }
+      // For GADM format - admin level 3
+      else if (props.GID_3) {
+        uniqueDivisions.add(props.GID_3);
+      }
       // For GADM format - admin level 2
       else if (props.GID_2) {
         uniqueDivisions.add(props.GID_2);
@@ -528,8 +532,27 @@ export function extractDivisionHierarchy(
         }
       }
     } else if (format === 'gadm') {
+      // Check if this is admin level 3 data (has GID_3)
+      if (props.GID_3) {
+        const id = props.GID_3;        // BDI.1.1.1_1, BDI.3.3.6_1, etc.
+        const name = props.NAME_3;     // Buhororo, Mena, etc.
+        const parentId = props.GID_2;  // BDI.1.1_1, BDI.3.3_1, etc.
+
+        if (id && String(id).trim()) {
+          // Check for duplicates
+          const existingDivision = divisions.find(div => div.id === String(id).trim());
+          if (!existingDivision) {
+            divisions.push({
+              id: String(id).trim(),
+              name: String(name).trim(),
+              parentId: String(parentId).trim(),
+              level: 3  // This is Admin Level 3 data
+            });
+          }
+        }
+      }
       // Check if this is admin level 2 data (has GID_2)
-      if (props.GID_2) {
+      else if (props.GID_2) {
         const id = props.GID_2;        // YEM.1.1_1, YEM.1.8_1, etc.
         const name = props.NAME_2;     // AlBuraiqeh, KhurMaksar, etc.
         const parentId = props.GID_1;  // YEM.1_1, YEM.2_1, etc.
