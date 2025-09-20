@@ -592,12 +592,12 @@ export function extractDivisionHierarchy(
             });
           }
         }
-      } else {
+      } else if (props.GID_1) {
         // GADM processing for admin level 1
         const id = props.GID_1;        // CYP.1_1, CYP.2_1, etc.
         const name = props.NAME_1;     // Famagusta, Larnaca, etc.
         const parentId = props.GID_0;  // CYP
-
+        
         if (id && String(id).trim()) {
           // Check for duplicates (same as SALB logic)
           const existingDivision = divisions.find(div => div.id === String(id).trim());
@@ -607,6 +607,24 @@ export function extractDivisionHierarchy(
               name: String(name).trim(),
               parentId: String(parentId).trim(),
               level: 1  // This is Admin Level 1 data
+            });
+          }
+        }
+      } else if (props.GID_0) {
+        // GADM processing for admin level 0
+        const id = props.GID_0;        // CYP
+        const name = props.COUNTRY;     // Cyprus
+        const parentId = null;         // No parent for level 0
+        
+        if (id && String(id).trim()) {
+          // Check for duplicates
+          const existingDivision = divisions.find(div => div.id === String(id).trim());
+          if (!existingDivision) {
+            divisions.push({
+              id: String(id).trim(),
+              name: String(name).trim(),
+              parentId: parentId,
+              level: 0  // This is Admin Level 0 data
             });
           }
         }
