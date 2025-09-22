@@ -58,8 +58,7 @@ export type typeAzureB2CData =
 
 async function _code2Token(paramCode: string): Promise<typeAzureB2CData> {
 	const jsonAzureB2C: interfaceSSOAzureB2C = configSsoAzureB2C();
-	const urlSSOCode2Token = `${baseURL()}/token?p=${jsonAzureB2C.login_userflow
-		}`;
+	const urlSSOCode2Token = `${baseURL()}/token?p=${jsonAzureB2C.login_userflow}`;
 	let token: object = {};
 	let token_idp: object = {};
 	let data: interfaceAzureB2CData = {
@@ -83,11 +82,37 @@ async function _code2Token(paramCode: string): Promise<typeAzureB2CData> {
 			}),
 		});
 		const result = await response.json();
+		// console.log("DEBUG: Token response:", result);
 
 		if ("id_token" in result) {
 			token = decodeToken(result.id_token);
-			// console.log(token);
-			if ("idp_access_token" in token) {
+			// console.log("DEBUG: Token decoded:", token);
+
+			// Special handling for Google IDP to extract email from nested token
+			// as Azure B2C does not include email in the main token for Google IDP
+			// https://learn.microsoft.com/en-us/azure/active-directory-b2c/identity-provider-google?pivots=b2c-user-flow#claims
+			// https://learn.microsoft.com/en-us/azure/active-directory-b2c/tokens-overview?pivots=b2c-user-flow#id-tokens
+			if ("idp" in token && String(token.idp) === "google.com") {
+				if ("family_name" in token) {
+					data.lastName = String(token.family_name);
+				}
+				if ("given_name" in token) {
+					data.firstName = String(token.given_name);
+				}
+				if ("emails" in token) {
+					// data.email = String(token.emails);
+					if (Array.isArray(token.emails) && token.emails.length > 0) {
+						data.email = String(token.emails[0]);
+					} else if (typeof token.emails === "string") {
+						data.email = token.emails;
+					}
+					console.log("DEBUG: Email from token:", token.emails);
+					console.log("DEBUG: data.email:", data.email);
+				}
+			}
+			// Handle UN Staff login where email is in idp_access_token
+			// https://learn.microsoft.com/en-us/azure/active-directory-b2c/tokens-overview?pivots=b2c-user-flow
+			else if ("idp_access_token" in token) {
 				// console.log( token.idp_access_token );
 				token_idp = decodeToken(String(token.idp_access_token));
 				// console.log( token_idp );
@@ -156,7 +181,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 	data["firstName"] = "";
 	data["lastName"] = "";
 
-	// console.log("queryStringState= ", queryStringState);
 	// console.log("DEBUG: queryStringState received:", queryStringState);
 	// https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch
 	if (queryStringDesc) {
@@ -225,8 +249,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 		}
 	} else if ((queryStringState == "azure_sso_b2c-login" || queryStringState.includes("{")) && queryStringCode) {
 		// console.log("DEBUG: Processing SSO login with code and state");
+		// console.log("DEBUG: queryStringCode:", queryStringCode);
 		try {
 			const data2 = await _code2Token(queryStringCode);
+			// console.log("DEBUG: Token exchange result:", data2);
 
 			if (data2.okay) {
 				// First check if this is a super admin
