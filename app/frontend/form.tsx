@@ -1393,7 +1393,6 @@ export function ViewScreenPublicApproved<T>(
 		auditLogs?: any[];
 		user: UserForFrontend;
 	}>();
-	console.log("ld", ld);
 	if (!ld.item) {
 		throw "invalid";
 	}
