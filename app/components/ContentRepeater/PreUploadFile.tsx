@@ -5,6 +5,7 @@ import {
 import fs from "fs";
 import path from "path";
 import ContentRepeaterFileValidator from "./FileValidator";
+import { getCountryAccountsIdFromSession } from "~/util/session";
 
 export default class ContentRepeaterPreUploadFile {
   static async loader() {
@@ -14,14 +15,15 @@ export default class ContentRepeaterPreUploadFile {
     );
   }
 
-  static async action({ request, countryAccountsId }: { request: Request; countryAccountsId?: string }) {
-    console.log("PreUploadFile action called with tenant context:", countryAccountsId);
+  static async action({ request }: { request: Request }) {
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({ error: "Method not allowed" }),
         { status: 405, headers: { "Content-Type": "application/json" } }
       );
     }
+    const countryAccountsId = await getCountryAccountsIdFromSession(request);
+    console.log("PreUploadFile action called with tenant context:", countryAccountsId);
 
     const uploadHandler = unstable_createMemoryUploadHandler({});
 
