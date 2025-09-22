@@ -10,6 +10,7 @@ import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { route } from "~/frontend/disaster-record/form";
 import { Filters } from "~/frontend/components/list-page-filters";
 import { disasterEventLink } from "~/frontend/events/disastereventform";
+import { format } from "date-fns";
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
@@ -29,38 +30,53 @@ export default function Data() {
 	const ld = useLoaderData<typeof loader>();
 	const { filters } = ld;
 	const { items, pagination } = ld.data;
+	console.log("items= ", items);
 	return DataScreen({
 		isPublic: ld.isPublic,
 		plural: "Disaster records",
 		resourceName: "Disaster record",
 		baseRoute: route,
 		columns: ld.isPublic
-			? ["ID", "Disaster Event", "Start Date", "End Date"]
-			: ["ID", "Status", "Disaster Event", "Start Date", "End Date", "Actions"],
+			? ["Related Disaster Event", "Disaster Event", "Created", "Updated"]
+			: [
+					"Related Disaster Event",
+					"Record Status",
+					"Record UUID",
+					"Created",
+					"Updated",
+					"Actions",
+			  ],
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
 		beforeListElement: (
 			<Filters clearFiltersUrl={route} search={filters.search} />
 		),
+
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>
-					<Link to={`${route}/${item.id}`}>{item.id.slice(0, 5)}</Link>
+					{item.disasterEventId &&
+						disasterEventLink({ id: item.disasterEventId })}
 				</td>
+
 				{!ld.isPublic && (
 					<td className="dts-table__cell-centered">
 						<span
 							className={`dts-status dts-status--${item.approvalStatus}`}
 						></span>
+						{} {item.approvalStatus}
 					</td>
 				)}
 				<td>
-					{item.disasterEventId &&
-						disasterEventLink({ id: item.disasterEventId })}
+					<Link to={`${route}/${item.id}`}>{item.id.slice(0, 5)}</Link>
 				</td>
-				<td>{item.startDate}</td>
-				<td>{item.endDate}</td>
+				<td>{format(new Date(item.createdAt), "dd-MM-yyyy")}</td>
+				<td>
+					{item.updatedAt
+						? format(new Date(item.updatedAt), "dd-MM-yyyy")
+						: ""}
+				</td>
 				<td>
 					{ld.isPublic ? null : <ActionLinks route={route} id={item.id} />}
 				</td>

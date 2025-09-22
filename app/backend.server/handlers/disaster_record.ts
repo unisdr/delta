@@ -87,6 +87,8 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 				approvalStatus: true,
 				startDate: true,
 				endDate: true,
+				createdAt: true,
+				updatedAt: true,
 			},
 			orderBy: [desc(disasterRecordsTable.updatedAt)],
 			where: condition,
