@@ -40,8 +40,8 @@ export function DeleteButton(props: DeleteButtonProps) {
       {props.useIcon ? (
         <button
           type="button"
-          className="mg-button mg-button-outline"
-          style={{ color: "red" }}
+          className="mg-button mg-button-table"
+          aria-label="Delete"
           disabled={submitting}
           onClick={showDialog}
         >
