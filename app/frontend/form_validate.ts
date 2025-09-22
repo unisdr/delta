@@ -1,4 +1,4 @@
-import {isValidUUID} from "~/util/id"
+import { isValidUUID } from "~/util/id"
 import {
 	FormInputDef,
 	Errors,
@@ -10,7 +10,7 @@ import {
 
 function fieldRequiredError(def: FormInputDefSpecific): FormError {
 	let label = def.label || def.key
-	return {def, code: "required", message: `The field "${label}" is required.`}
+	return { def, code: "required", message: `The field "${label}" is required.` }
 }
 
 function unknownEnumValueError(def: FormInputDefSpecific, value: string, valid: string[]): FormError {
@@ -24,21 +24,21 @@ function unknownEnumValueError(def: FormInputDefSpecific, value: string, valid: 
 
 function invalidTypeError(def: FormInputDefSpecific, expectedType: string, value: any): FormError {
 	let label = def.label || def.key
-	return {def, code: "invalid_type", message: `The field "${label}" must be of type ${expectedType}. Got "${value}".`}
+	return { def, code: "invalid_type", message: `The field "${label}" must be of type ${expectedType}. Got "${value}".` }
 }
 
 function invalidDateFormatError(def: FormInputDefSpecific, value: any): FormError {
 	let label = def.label || def.key
-	return {def, code: "invalid_date_format", message: `The field "${label}" must be a valid RFC3339 date string. Got "${value}".`}
+	return { def, code: "invalid_date_format", message: `The field "${label}" must be a valid RFC3339 date string. Got "${value}".` }
 }
 
 function invalidJsonFieldError(def: FormInputDefSpecific, jsonError: Error, value: any): FormError {
 	let label = def.label || def.key
-	return {def, code: "invalid_json_field_value", message: `The field "${label}" must be valid JSON. Got error "${jsonError}". Got "${value}."`}
+	return { def, code: "invalid_json_field_value", message: `The field "${label}" must be valid JSON. Got error "${jsonError}". Got "${value}."` }
 }
 
 function unknownFieldError(key: string): FormError {
-	return {data: key, code: "unknown_field", message: `The field "${key}" is not recognized.`}
+	return { data: key, code: "unknown_field", message: `The field "${key}" is not recognized.` }
 }
 
 
@@ -126,11 +126,78 @@ export function validateFromJsonFull<T>(
 	return validateFromJson(data, fieldsDef, false, checkUnknownFields) as validateFullRes<T>
 }
 
+// Helper function to validate date ranges (startDate must be before or equal to endDate)
+function validateDateRange<T>(data: { [key: string]: string }, fieldsDef: FormInputDef<T>[]): Errors<T> | null {
+	// Find start date and end date fields
+	const startDateField = fieldsDef.find(field => field.key === 'startDate');
+	const endDateField = fieldsDef.find(field => field.key === 'endDate');
+
+	// If both fields don't exist, no validation needed
+	if (!startDateField || !endDateField) {
+		return null;
+	}
+
+	// Get values
+	const startDateValue = data['startDate']?.trim();
+	const endDateValue = data['endDate']?.trim();
+
+	// If either value is empty, no validation needed
+	if (!startDateValue || !endDateValue) {
+		return null;
+	}
+
+	// Parse dates - handle various formats
+	const parseDate = (dateStr: string) => {
+		// Handle year-only format (YYYY)
+		if (/^\d{4}$/.test(dateStr)) {
+			return new Date(`${dateStr}-01-01`);
+		}
+		// Handle year-month format (YYYY-MM)
+		if (/^\d{4}-\d{2}$/.test(dateStr)) {
+			return new Date(`${dateStr}-01`);
+		}
+		// Handle full date or ISO format
+		return new Date(dateStr);
+	};
+
+	const parsedStartDate = parseDate(startDateValue);
+	const parsedEndDate = parseDate(endDateValue);
+
+	// Check if dates are valid
+	if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+		return null; // Let the standard date validation handle this
+	}
+
+	// Check if end date is before start date
+	if (parsedEndDate < parsedStartDate) {
+		const errors: Errors<T> = {};
+		errors.fields = {} as any;
+		(errors.fields as any)['endDate'] = [{
+			code: "invalid_date_range",
+			message: "End date cannot be before start date"
+		}];
+		return errors;
+	}
+
+	return null;
+}
+
 export function validateFromMapFull<T>(
-	data: {[key: string]: string},
+	data: { [key: string]: string },
 	fieldsDef: FormInputDef<T>[],
 	checkUnknownFields: boolean,
 ): validateFullRes<T> {
+	// First check date range validity
+	const dateRangeErrors = validateDateRange(data, fieldsDef);
+	if (dateRangeErrors) {
+		return {
+			ok: false,
+			data: data as any,
+			errors: dateRangeErrors
+		};
+	}
+
+	// Continue with standard validation
 	return validateFromMap(data, fieldsDef, false, checkUnknownFields) as validateFullRes<T>
 }
 
@@ -213,7 +280,7 @@ export function validateFromJson<T>(
 }
 
 export function validateFromMap<T>(
-	data: {[key: string]: string},
+	data: { [key: string]: string },
 	fieldsDef: FormInputDef<T>[],
 	allowPartial: boolean,
 	checkUnknownFields: boolean
