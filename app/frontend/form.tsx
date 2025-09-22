@@ -1574,20 +1574,20 @@ interface ActionLinksProps {
 export function ActionLinks(props: ActionLinksProps) {
 	return (
 		<div style={{ display: "flex", justifyContent: "space-evenly" }}>
-			{!props.hideViewButton && (
-				<Link to={`${props.route}/${props.id}`}>
-					<button type="button" className="mg-button mg-button-outline">
+			{!props.hideEditButton && (
+				<Link to={`${props.route}/edit/${props.id}`}>
+					<button type="button" className="mg-button mg-button-table" aria-label="Edit">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="/assets/icons/eye-show-password.svg#eye-show" />
+							<use href="/assets/icons/edit.svg#edit" />
 						</svg>
 					</button>
 				</Link>
 			)}
-			{!props.hideEditButton && (
-				<Link to={`${props.route}/edit/${props.id}`}>
-					<button type="button" className="mg-button mg-button-outline">
+			{!props.hideViewButton && (
+				<Link to={`${props.route}/${props.id}`}>
+					<button type="button" className="mg-button mg-button-table" aria-label="View">
 						<svg aria-hidden="true" focusable="false" role="img">
-							<use href="/assets/icons/edit.svg#edit" />
+							<use href="/assets/icons/eye-show-password.svg#eye-show" />
 						</svg>
 					</button>
 				</Link>
