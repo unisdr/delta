@@ -100,7 +100,7 @@ export function EnumEntryRow(props: EnumEntryRowProps) {
 			</h4>
 
 			<LocalizedStringEditor
-				label="UI Name"
+				label="User Interface Name"
 				value={props.entry.label}
 				langs={props.langs}
 				onChange={label => props.onChange({ ...props.entry, key, label })}
@@ -190,7 +190,7 @@ export function DefEditor(props: DefEditorProps) {
 			</h3>
 
 			<LocalizedStringEditor
-				label="UI Name"
+				label="User Interface Name"
 				value={props.value.uiName}
 				langs={props.langs}
 				onChange={handleUiNameChange}
@@ -208,7 +208,7 @@ export function DefEditor(props: DefEditorProps) {
 					/>
 				</div>
 				<div className="dts-form-component">
-					<label>UI Col Width</label>
+					<label>User Interface Column Width</label>
 					<select
 						required={true}
 						value={props.value.uiColWidth || ""}
