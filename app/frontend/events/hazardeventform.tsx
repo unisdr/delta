@@ -207,6 +207,7 @@ interface HazardousEventViewProps {
 	item: HazardousEventViewModel;
 	isPublic: boolean;
 	auditLogs?: any[];
+	countryAccountsId?: string;
 }
 
 export function HazardousEventView(props: HazardousEventViewProps) {
@@ -282,6 +283,11 @@ export function HazardousEventView(props: HazardousEventViewProps) {
 							id={item.id}
 							initialData={(item?.attachments as any[]) || []}
 							file_viewer_url="/hazardous-event/file-viewer"
+							countryAccountsId={(() => {
+								// Use a type guard to ensure we return string or undefined
+								const id = props.countryAccountsId || item.countryAccountsId;
+								return typeof id === 'string' ? id : undefined;
+							})()}
 						/>
 					),
 				}}
