@@ -2,32 +2,149 @@ import fs from "fs";
 import path from "path";
 import ContentRepeaterFileValidator from "./FileValidator";
 
+interface UserSession {
+  id?: string;
+  countryAccountsId?: string;
+  role?: string;
+}
+
 export async function handleFileRequest(
   request: Request,
   upload_path: string,
-  download?: boolean
+  download?: boolean,
+  userSession?: UserSession
 ): Promise<Response> {
+  const debug = true; // Set to true for debugging
   const url = new URL(request.url);
   const fileName = url.searchParams.get("name");
+  const tenantPath = url.searchParams.get("tenantPath");
+  const requiredTenantId = url.searchParams.get("requiredTenantId");
+
+  if (debug) {
+    console.log(`File request: ${fileName}`);
+    console.log(`Tenant path: ${tenantPath}`);
+    console.log(`Required tenant ID: ${requiredTenantId}`);
+    console.log(`Base upload path: ${upload_path}`);
+    console.log(`User session:`, userSession);
+  }
 
   if (!fileName) {
     return new Response("File name is required", { status: 400 });
   }
 
-  // Normalize and resolve the file path relative to the `upload_path`
-  const baseDirectory = path.resolve(`.${upload_path}`);
-  const normalizedFilePath = path.normalize(fileName).replace(/^(\.\.(\/|\\|$))+/, ""); // Prevent path traversal
-  const filePath = path.resolve(baseDirectory, normalizedFilePath);
-
-  // Ensure the file is within the allowed directory
-  if (!filePath.startsWith(baseDirectory)) {
-    return new Response("Access denied", { status: 403 });
+  // Security check: Ensure user session is valid for tenant access
+  if (!userSession?.countryAccountsId) {
+    console.warn("File access attempted without valid user session");
+    // Redirect to unauthorized page with specific reason
+    const unauthorizedUrl = `/error/unauthorized?reason=no-tenant`;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: unauthorizedUrl,
+      },
+    });
   }
 
-  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-    return new Response("File not found", { status: 404 });
+  // Normalize file path to prevent path traversal
+  const normalizedFilePath = path.normalize(fileName).replace(/^(\.\.(\/|\\|$))+/, "");
+
+  // If tenantPath is provided, validate user has access to that tenant
+  if (tenantPath) {
+    const tenantIdFromPath = tenantPath.match(/tenant-([\w-]+)/);
+    const requestedTenantId = tenantIdFromPath ? tenantIdFromPath[1] : null;
+
+    if (requestedTenantId && requestedTenantId !== userSession.countryAccountsId) {
+      console.warn(`Security violation: User ${userSession.countryAccountsId} attempted to access tenant ${requestedTenantId}`);
+      // Redirect to unauthorized page with specific reason
+      const unauthorizedUrl = `/error/unauthorized?reason=access-denied`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: unauthorizedUrl,
+        },
+      });
+    }
   }
 
+  // If requiredTenantId is provided, validate user has access
+  if (requiredTenantId && requiredTenantId !== userSession.countryAccountsId) {
+    console.warn(`Security violation: User ${userSession.countryAccountsId} attempted to access required tenant ${requiredTenantId}`);
+    // Redirect to unauthorized page with specific reason
+    const unauthorizedUrl = `/error/unauthorized?reason=access-denied`;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: unauthorizedUrl,
+      },
+    });
+  }
+
+  // Build the user's tenant-specific base directory
+  const userTenantPath = `tenant-${userSession.countryAccountsId}`;
+  const userTenantDirectory = path.resolve(`./${userTenantPath}${upload_path}`);
+  const userTenantFilePath = path.resolve(userTenantDirectory, normalizedFilePath);
+
+  if (debug) {
+    console.log(`User tenant directory: ${userTenantDirectory}`);
+    console.log(`User tenant file path: ${userTenantFilePath}`);
+  }
+
+  // Ensure the file path is within the user's allowed directory
+  if (!userTenantFilePath.startsWith(userTenantDirectory)) {
+    console.warn(`Path traversal attempt: ${userTenantFilePath}`);
+    const unauthorizedUrl = `/error/unauthorized?reason=access-denied`;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: unauthorizedUrl,
+      },
+    });
+  }
+
+  // First, try to find the file in the user's tenant directory
+  if (fs.existsSync(userTenantFilePath) && fs.statSync(userTenantFilePath).isFile()) {
+    if (debug) console.log(`Found file in user's tenant: ${userTenantFilePath}`);
+    return serveFile(userTenantFilePath, fileName, download);
+  }
+
+  // If tenantPath was explicitly provided and matches user's tenant, try that path
+  if (tenantPath) {
+    const normalizedTenantPath = tenantPath.startsWith('/') ? tenantPath.substring(1) : tenantPath;
+    const explicitTenantDirectory = path.resolve(`./${normalizedTenantPath}${upload_path}`);
+    const explicitTenantFilePath = path.resolve(explicitTenantDirectory, normalizedFilePath);
+
+    // Validate this is still the user's tenant
+    if (explicitTenantFilePath.startsWith(userTenantDirectory)) {
+      if (fs.existsSync(explicitTenantFilePath) && fs.statSync(explicitTenantFilePath).isFile()) {
+        if (debug) console.log(`Found file at explicit tenant path: ${explicitTenantFilePath}`);
+        return serveFile(explicitTenantFilePath, fileName, download);
+      }
+    }
+  }
+
+  // As a fallback, try the standard upload directory (for legacy files)
+  // Only if no tenant-specific path was requested
+  if (!tenantPath && !requiredTenantId) {
+    const standardDirectory = path.resolve(`.${upload_path}`);
+    const standardFilePath = path.resolve(standardDirectory, normalizedFilePath);
+
+    if (standardFilePath.startsWith(standardDirectory)) {
+      if (fs.existsSync(standardFilePath) && fs.statSync(standardFilePath).isFile()) {
+        if (debug) console.log(`Found file at standard path: ${standardFilePath}`);
+        return serveFile(standardFilePath, fileName, download);
+      }
+    }
+  }
+
+  // File not found in any allowed location
+  if (debug) console.log(`File not found in any accessible location for user ${userSession.countryAccountsId}`);
+  return new Response("File not found", { status: 404 });
+}
+
+/**
+ * Helper function to serve a file with proper headers
+ */
+function serveFile(filePath: string, fileName: string, download?: boolean): Response {
   const fileExtension = path.extname(fileName).substring(1).toLowerCase();
   if (!ContentRepeaterFileValidator.allowedExtensions.includes(fileExtension)) {
     return new Response("Invalid file type", { status: 400 });
