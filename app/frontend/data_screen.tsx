@@ -10,11 +10,13 @@ interface DataScreenProps<T> {
 	columns: string[];
 	items: T[];
 	paginationData: any;
+	instanceName: string;
+	totalItems: number;
 	renderRow: (item: T, baseRoute: string) => React.ReactNode;
 	csvExportLinks?: boolean;
 	headerElement?: React.ReactNode;
 	beforeListElement?: React.ReactNode;
-	hideMainLinks?: boolean
+	hideMainLinks?: boolean,
 }
 
 export function DataScreen<T>(props: DataScreenProps<T>) {
@@ -22,6 +24,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 	return (
 		<MainContainer title={props.plural}>
 			<>
+			<h2>{props.totalItems} disaster records in {props.instanceName}</h2>
 				{props.headerElement}
 				{!props.hideMainLinks &&
 					<DataMainLinks
@@ -35,6 +38,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 				{props.beforeListElement}
 				{props.paginationData.totalItems ? (
 					<>
+						
 						{!props.isPublic && (
 							<div className="dts-legend">
 								<span className="dts-body-label">Record Status</span>
