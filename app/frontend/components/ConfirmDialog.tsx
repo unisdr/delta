@@ -59,6 +59,7 @@ export function ConfirmDialog({
         <div className="dts-form__actions">
           {confirmButtonFirst ? (
             <>
+              {/* Confirm button first (primary) */}
               <button
                 onClick={onConfirm}
                 className="mg-button mg-button-primary"
@@ -67,6 +68,7 @@ export function ConfirmDialog({
                 {confirmIcon && <span>{confirmIcon}</span>}
                 {confirmLabel}
               </button>
+              {/* Cancel button second (secondary) */}
               <button
                 onClick={onCancel}
                 className="mg-button mg-button-outline"
@@ -78,17 +80,19 @@ export function ConfirmDialog({
             </>
           ) : (
             <>
+              {/* Cancel button first (outline) */}
               <button
                 onClick={onCancel}
-                className="mg-button mg-button-primary"
+                className="mg-button mg-button-outline"
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 {cancelIcon && <span>{cancelIcon}</span>}
                 {cancelLabel}
               </button>
+              {/* Confirm button second (primary) */}
               <button
                 onClick={onConfirm}
-                className="mg-button mg-button-outline"
+                className="mg-button mg-button-primary"
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 {confirmIcon && <span>{confirmIcon}</span>}
