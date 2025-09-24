@@ -1,7 +1,7 @@
 // month 1-12
-export function getMonthName(month: number){
+export function getMonthName(month: number) {
 	const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-	return monthNames[month-1]
+	return monthNames[month - 1]
 }
 
 export function formatDate(date: Date | null): string {
@@ -62,12 +62,17 @@ export function formatDateDisplay(date: Date | string | null, format: string = "
 	if (isNaN(d.getTime())) return "Invalid Date";
 
 	const day = d.getDate();
-	const month = new Intl.DateTimeFormat("en-US", {month: "short"}).format(d);
+	const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(d);
+	const monthNum = d.getMonth() + 1; // JavaScript months are 0-indexed
 	const year = d.getFullYear();
 
+	// Format the date according to the specified format
 	return format
-		.replace("d", day.toString())
-		.replace("MMM", month)
+		.replace("dd", day.toString().padStart(2, '0')) // Padded day (01-31)
+		.replace("d", day.toString()) // Unpadded day (1-31)
+		.replace("MM", monthNum.toString().padStart(2, '0')) // Padded month (01-12)
+		.replace("M", monthNum.toString()) // Unpadded month (1-12)
+		.replace("MMM", month) // Month abbreviation (Jan, Feb, etc.)
 		.replace("yyyy", year.toString());
 }
 
@@ -78,7 +83,7 @@ export function isDateLike(input: string): boolean {
 
 export function convertToISODate(input: string): string | null {
 	const regex = /^(\d{1,2})\s([A-Za-z]+)\s(\d{4})$/;
-	const months: {[key: string]: string} = {
+	const months: { [key: string]: string } = {
 		jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
 		jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12",
 		january: "01", february: "02", march: "03", april: "04", june: "06",
