@@ -1,14 +1,20 @@
 import { useEffect, useRef } from "react";
-
 import { useLoaderData, Link, useRouteLoaderData } from "@remix-run/react";
-
 import { Pagination } from "~/frontend/pagination/view";
-
-import { HazardPicker } from "~/frontend/hip/hazardpicker";
-
+import { HazardousEventFilters } from "~/frontend/events/hazardevent-filters";
 import { HazardousEventDeleteButton } from "~/frontend/components/delete-dialog";
-
+import { EventCounter } from "~/components/EventCounter";
+import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent";
+import { createFloatingTooltip } from "~/util/tooltip";
+import { formatDateDisplay } from "~/util/date";
 import { route } from "~/frontend/events/hazardeventform";
+
+// Permission check functions will be defined below
+
+function roleHasPermission(role: any, permission: string): boolean {
+	// Basic role check - can be enhanced later
+	return role && role.permissions?.includes(permission);
+}
 
 /**
  * Specialized ActionLinks component for hazardous events that uses the
@@ -50,15 +56,6 @@ function HazardousEventActionLinks(props: {
 		</div>
 	);
 }
-
-import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent";
-
-import { createFloatingTooltip } from "~/util/tooltip";
-
-import { EventCounter } from "~/components/EventCounter";
-import { Filters } from "../components/list-page-filters";
-import { formatDateDisplay } from "~/util/date";
-import { roleHasPermission } from "~/frontend/user/roles";
 
 interface ListViewArgs {
 	isPublic: boolean;
@@ -209,19 +206,22 @@ export function ListView(args: ListViewArgs) {
 
 	return (
 		<div>
-			<Filters
+			{/* Enhanced filters component with all required filter options */}
+			<HazardousEventFilters
+				hipHazardId={filters.hipHazardId}
+				hipClusterId={filters.hipClusterId}
+				hipTypeId={filters.hipTypeId}
+				fromDate={filters.fromDate}
+				toDate={filters.toDate}
+				recordingOrganization={filters.recordingOrganization}
+				hazardousEventStatus={filters.hazardousEventStatus}
+				recordStatus={filters.recordStatus}
+				viewMyRecords={filters.viewMyRecords}
+				pendingMyAction={filters.pendingMyAction}
 				search={filters.search}
+				hip={hip}
+				organizations={ld.organizations || []}
 				clearFiltersUrl={args.basePath}
-				formStartElement=
-				<>
-					{/* <h4>Hazard classification</h4> */}
-					<HazardPicker
-						hip={hip}
-						hazardId={filters.hipHazardId}
-						clusterId={filters.hipClusterId}
-						typeId={filters.hipTypeId}
-					/>
-				</>
 			/>
 			{!args.isPublic && (
 				<>
