@@ -6,9 +6,50 @@ import { Pagination } from "~/frontend/pagination/view";
 
 import { HazardPicker } from "~/frontend/hip/hazardpicker";
 
-import { ActionLinks } from "~/frontend/form";
+import { HazardousEventDeleteButton } from "~/frontend/components/delete-dialog";
 
 import { route } from "~/frontend/events/hazardeventform";
+
+/**
+ * Specialized ActionLinks component for hazardous events that uses the
+ * HazardousEventDeleteButton with the required confirmation dialog
+ */
+function HazardousEventActionLinks(props: {
+	route: string;
+	id: string | number;
+	hideViewButton?: boolean;
+	hideEditButton?: boolean;
+	hideDeleteButton?: boolean;
+}) {
+	return (
+		<div style={{ display: "flex", justifyContent: "space-evenly" }}>
+			{!props.hideEditButton && (
+				<Link to={`${props.route}/edit/${props.id}`}>
+					<button type="button" className="mg-button mg-button-table" aria-label="Edit">
+						<svg aria-hidden="true" focusable="false" role="img">
+							<use href="/assets/icons/edit.svg#edit" />
+						</svg>
+					</button>
+				</Link>
+			)}
+			{!props.hideViewButton && (
+				<Link to={`${props.route}/${props.id}`}>
+					<button type="button" className="mg-button mg-button-table" aria-label="View">
+						<svg aria-hidden="true" focusable="false" role="img">
+							<use href="/assets/icons/eye-show-password.svg#eye-show" />
+						</svg>
+					</button>
+				</Link>
+			)}
+			{!props.hideDeleteButton && (
+				<HazardousEventDeleteButton
+					action={`${props.route}/delete/${props.id}`}
+					useIcon
+				/>
+			)}
+		</div>
+	);
+}
 
 import { hazardousEventsLoader } from "~/backend.server/handlers/events/hazardevent";
 
@@ -50,26 +91,26 @@ function getHazardDisplayName(item: any): string {
  */
 function canEdit(item: any, user: any): boolean {
 	if (!user) return false;
-	
+
 	// Data-viewers cannot edit any records
 	if (user.role === "data-viewer") return false;
-	
+
 	// Admin users should always be able to edit draft and waiting for validation records
 	if (user.role === "admin" || user.role === "super_admin") {
 		// Check record status - only Draft or Waiting for validation can be edited
 		const editableStatuses = ["draft", "waiting-for-validation"];
 		return editableStatuses.includes(item.approvalStatus.toLowerCase());
 	}
-	
+
 	// For non-admin users
 	// Check if user has edit permission
 	const hasEditPermission = roleHasPermission(user.role, "EditData");
 	if (!hasEditPermission) return false;
-	
+
 	// Check record status - only Draft or Waiting for validation can be edited
 	const editableStatuses = ["draft", "waiting-for-validation"];
 	if (!editableStatuses.includes(item.approvalStatus.toLowerCase())) return false;
-	
+
 	// Check if user created the record (simplified check - would need actual user ID comparison)
 	// This is a placeholder - actual implementation would need to check item.createdBy against user.id
 	return true;
@@ -84,24 +125,24 @@ function canEdit(item: any, user: any): boolean {
  */
 function canDelete(item: any, user: any): boolean {
 	if (!user) return false;
-	
+
 	// Data-viewers cannot delete any records
 	if (user.role === "data-viewer") return false;
-	
+
 	// Admin users should be able to delete non-published records
 	if (user.role === "admin" || user.role === "super_admin") {
 		// Published records cannot be deleted
 		return item.approvalStatus.toLowerCase() !== "published";
 	}
-	
+
 	// For non-admin users
 	// Check if user has delete permission
 	const hasDeletePermission = roleHasPermission(user.role, "DeleteValidatedData");
 	if (!hasDeletePermission) return false;
-	
+
 	// Published records cannot be deleted
 	if (item.approvalStatus.toLowerCase() === "published") return false;
-	
+
 	// Check if user is assigned to validate or has validated the record
 	// This is a placeholder - actual implementation would need to check validation assignments
 	return true;
@@ -110,7 +151,7 @@ function canDelete(item: any, user: any): boolean {
 export function ListView(args: ListViewArgs) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof hazardousEventsLoader>>>();
 	const rootData = useRouteLoaderData("root") as any; // Get user data from root loader
-	
+
 	// Get user data with role from root loader
 	const user = {
 		...rootData?.user,
@@ -232,7 +273,7 @@ export function ListView(args: ListViewArgs) {
 					</div>
 				</>
 			)}
-			
+
 			{ld.data.pagination.totalItems ? (
 				<>
 					<table className="dts-table">
@@ -273,9 +314,9 @@ export function ListView(args: ListViewArgs) {
 											{args.actions ? (
 												args.actions(item)
 											) : (
-												<ActionLinks 
-													route={route} 
-													id={item.id} 
+												<HazardousEventActionLinks
+													route={route}
+													id={item.id}
 													hideEditButton={!canEdit(item, user)}
 													hideDeleteButton={!canDelete(item, user)}
 												/>
