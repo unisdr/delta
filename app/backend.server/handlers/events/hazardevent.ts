@@ -24,7 +24,7 @@ import { getCountryAccountsIdFromSession } from '~/util/session';
 export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 	const { request } = args;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	if(!countryAccountsId){
+	if (!countryAccountsId) {
 		throw redirect("/user/select-instance");
 	}
 
@@ -82,14 +82,28 @@ export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 			columns: {
 				id: true,
 				hipHazardId: true,
+				hipClusterId: true,
+				hipTypeId: true,
 				startDate: true,
 				endDate: true,
 				description: true,
 				approvalStatus: true,
+				createdAt: true,
+				updatedAt: true,
 			},
 			orderBy: [desc(hazardousEventTable.updatedAt)],
 			with: {
 				hipHazard: {
+					columns: {
+						nameEn: true,
+					},
+				},
+				hipCluster: {
+					columns: {
+						nameEn: true,
+					},
+				},
+				hipType: {
 					columns: {
 						nameEn: true,
 					},
