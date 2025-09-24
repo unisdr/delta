@@ -13,7 +13,7 @@ import { and, eq, desc, or, ilike, sql } from "drizzle-orm";
 
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { approvalStatusIds } from "~/frontend/approval";
-import { getCountryAccountsIdFromSession } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 interface disasterRecordLoaderArgs {
 	loaderArgs: LoaderFunctionArgs;
@@ -36,6 +36,11 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	const isPublic = authLoaderIsPublic(loaderArgs);
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	let instanceName="Disaster Tracking System"
+	if(countryAccountsId){
+		const settigns= await getCountrySettingsFromSession(request);
+		instanceName=settigns.websiteName;
+	}
 	
 
 	if (!isPublic) {
@@ -106,5 +111,6 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		isPublic,
 		filters,
 		data: res,
+		instanceName
 	};
 }

@@ -30,7 +30,6 @@ export default function Data() {
 	const ld = useLoaderData<typeof loader>();
 	const { filters } = ld;
 	const { items, pagination } = ld.data;
-	console.log("items= ", items);
 	return DataScreen({
 		isPublic: ld.isPublic,
 		plural: "Disaster records",
@@ -52,7 +51,8 @@ export default function Data() {
 		beforeListElement: (
 			<Filters clearFiltersUrl={route} search={filters.search} />
 		),
-
+		instanceName: ld.instanceName,
+		totalItems: pagination.totalItems,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>
