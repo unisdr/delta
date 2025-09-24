@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData, Link, useRouteLoaderData } from "@remix-run/react";
 
 import { Pagination } from "~/frontend/pagination/view";
 
@@ -16,6 +16,8 @@ import { createFloatingTooltip } from "~/util/tooltip";
 
 import { EventCounter } from "~/components/EventCounter";
 import { Filters } from "../components/list-page-filters";
+import { formatDateDisplay } from "~/util/date";
+import { roleHasPermission } from "~/frontend/user/roles";
 
 interface ListViewArgs {
 	isPublic: boolean;
@@ -24,8 +26,96 @@ interface ListViewArgs {
 	actions?: (item: any) => React.ReactNode;
 }
 
+/**
+ * Helper function to get the appropriate hazard name based on hierarchy
+ * Shows specific hazard if available, otherwise cluster, otherwise type
+ */
+function getHazardDisplayName(item: any): string {
+	if (item.hipHazard?.nameEn) {
+		return item.hipHazard.nameEn;
+	} else if (item.hipCluster?.nameEn) {
+		return item.hipCluster.nameEn;
+	} else if (item.hipType?.nameEn) {
+		return item.hipType?.nameEn || "";
+	}
+	return "";
+}
+
+/**
+ * Determines if a user can edit a hazardous event
+ * Based on business rules:
+ * - Data-viewers cannot edit any records
+ * - Data collectors can edit their own records when status is Draft or Waiting for validation
+ * - Data validators/Admins can edit their own created records under same statuses
+ */
+function canEdit(item: any, user: any): boolean {
+	if (!user) return false;
+	
+	// Data-viewers cannot edit any records
+	if (user.role === "data-viewer") return false;
+	
+	// Admin users should always be able to edit draft and waiting for validation records
+	if (user.role === "admin" || user.role === "super_admin") {
+		// Check record status - only Draft or Waiting for validation can be edited
+		const editableStatuses = ["draft", "waiting-for-validation"];
+		return editableStatuses.includes(item.approvalStatus.toLowerCase());
+	}
+	
+	// For non-admin users
+	// Check if user has edit permission
+	const hasEditPermission = roleHasPermission(user.role, "EditData");
+	if (!hasEditPermission) return false;
+	
+	// Check record status - only Draft or Waiting for validation can be edited
+	const editableStatuses = ["draft", "waiting-for-validation"];
+	if (!editableStatuses.includes(item.approvalStatus.toLowerCase())) return false;
+	
+	// Check if user created the record (simplified check - would need actual user ID comparison)
+	// This is a placeholder - actual implementation would need to check item.createdBy against user.id
+	return true;
+}
+
+/**
+ * Determines if a user can delete a hazardous event
+ * Based on business rules:
+ * - Data-viewers cannot delete any records
+ * - Only Data validators/Admins who are assigned to validate or have already validated a record can delete
+ * - Records that are Published or Validated by someone else cannot be deleted
+ */
+function canDelete(item: any, user: any): boolean {
+	if (!user) return false;
+	
+	// Data-viewers cannot delete any records
+	if (user.role === "data-viewer") return false;
+	
+	// Admin users should be able to delete non-published records
+	if (user.role === "admin" || user.role === "super_admin") {
+		// Published records cannot be deleted
+		return item.approvalStatus.toLowerCase() !== "published";
+	}
+	
+	// For non-admin users
+	// Check if user has delete permission
+	const hasDeletePermission = roleHasPermission(user.role, "DeleteValidatedData");
+	if (!hasDeletePermission) return false;
+	
+	// Published records cannot be deleted
+	if (item.approvalStatus.toLowerCase() === "published") return false;
+	
+	// Check if user is assigned to validate or has validated the record
+	// This is a placeholder - actual implementation would need to check validation assignments
+	return true;
+}
+
 export function ListView(args: ListViewArgs) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof hazardousEventsLoader>>>();
+	const rootData = useRouteLoaderData("root") as any; // Get user data from root loader
+	
+	// Get user data with role from root loader
+	const user = {
+		...rootData?.user,
+		role: rootData?.userRole || rootData?.user?.role // Use userRole from root data if available
+	};
 
 	const { hip, filters } = ld;
 	const { items } = ld.data;
@@ -135,40 +225,31 @@ export function ListView(args: ListViewArgs) {
 						<div className="dts-legend__item">
 							<span
 								className="dts-status dts-status--published"
-								aria-labelledby="legend2"
+								aria-labelledby="legend5"
 							></span>
-							<span id="legend2">Published</span>
+							<span id="legend5">Published</span>
 						</div>
 					</div>
 				</>
 			)}
-
+			
 			{ld.data.pagination.totalItems ? (
 				<>
 					<table className="dts-table">
 						<thead>
 							<tr>
-								<th>ID</th>
-								{!args.isPublic && <th>Status</th>}
-								<th>Start Date</th>
-								<th>End Date</th>
-								<th>Hazard ID</th>
-								<th>Hazard Name</th>
-								<th>Event Description</th>
+								<th>Hazard</th>
+								{!args.isPublic && <th>Record Status</th>}
+								<th>Hazardous Event UUID</th>
+								<th>Created</th>
+								<th>Updated</th>
 								{!args.isPublic && <th>Actions</th>}
 							</tr>
 						</thead>
 						<tbody>
 							{items.map((item, index) => (
 								<tr key={index}>
-									<td>
-										<Link
-											to={`/hazardous-event/${item.id}`}
-											target={args.linksNewTab ? "_blank" : undefined}
-										>
-											{item.id.slice(0, 5)}
-										</Link>
-									</td>
+									<td>{getHazardDisplayName(item)}</td>
 									{!args.isPublic && (
 										<td className="dts-table__cell-centered">
 											<span
@@ -177,18 +258,30 @@ export function ListView(args: ListViewArgs) {
 											></span>
 										</td>
 									)}
-									<td>{item.startDate}</td>
-									<td>{item.endDate}</td>
-									<td>{item.hipHazardId}</td>
-									<td>{item.hipHazard?.nameEn || ""}</td>
-									<td>{item.description}</td>
 									<td>
-										{args.actions ? (
-											args.actions(item)
-										) : args.isPublic ? null : (
-											<ActionLinks route={route} id={item.id} />
-										)}
+										<Link
+											to={`/hazardous-event/${item.id}`}
+											target={args.linksNewTab ? "_blank" : undefined}
+										>
+											{item.id}
+										</Link>
 									</td>
+									<td>{formatDateDisplay(item.createdAt, "dd-MM-yyyy")}</td>
+									<td>{formatDateDisplay(item.updatedAt, "dd-MM-yyyy")}</td>
+									{!args.isPublic && (
+										<td>
+											{args.actions ? (
+												args.actions(item)
+											) : (
+												<ActionLinks 
+													route={route} 
+													id={item.id} 
+													hideEditButton={!canEdit(item, user)}
+													hideDeleteButton={!canDelete(item, user)}
+												/>
+											)}
+										</td>
+									)}
 								</tr>
 							))}
 						</tbody>
