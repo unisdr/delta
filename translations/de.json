@@ -1,1 +1,5 @@
-{}
+{
+    "dialog.greeting": {
+        "defaultMessage": "Hi (de) {name}"
+    }
+}
