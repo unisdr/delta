@@ -1,0 +1,6 @@
+{
+  "dialog.greeting": {
+    "defaultMessage": "Hi {name}",
+    "description": "Intro text in the dialog."
+  }
+}
