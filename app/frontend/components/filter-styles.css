@@ -1,4 +1,4 @@
-/* Enhanced filter styles for hazardous event filters */
+/* Enhanced filter styles for hazardous event filters - only non-conflicting styles */
 
 .dts-filter {
     background: #ffffff;
@@ -17,55 +17,9 @@
     font-weight: 600;
 }
 
-.dts-form-component {
-    margin-bottom: 1rem;
-}
+/* Remove conflicting dts-form-component, mg-grid, and mg-button styles to use main DTS styles */
 
-.dts-form-component label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #495057;
-    font-size: 0.875rem;
-}
-
-.dts-form-component input,
-.dts-form-component select {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    background-color: #ffffff;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.dts-form-component input:focus,
-.dts-form-component select:focus {
-    outline: none;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.dts-form-component input::placeholder {
-    color: #6c757d;
-    opacity: 1;
-}
-
-.mg-grid__col-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.mg-grid__col-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
+/* Keep only filter-specific styles that don't conflict with main DTS styles */
 .dts-filter__bottom-row {
     display: flex;
     justify-content: space-between;
@@ -103,52 +57,9 @@
     font-size: 0.875rem;
 }
 
-.dts-form__actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-shrink: 0;
-}
-
-.mg-button {
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-decoration: none;
-    border: 1px solid;
-    cursor: pointer;
-    transition: all 0.15s ease-in-out;
-}
-
-.mg-button-outline {
-    background-color: transparent;
-    border-color: #6c757d;
-    color: #6c757d;
-}
-
-.mg-button-outline:hover {
-    background-color: #6c757d;
-    color: #ffffff;
-}
-
-.mg-button-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-    color: #ffffff;
-}
-
-.mg-button-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
-}
+/* Remove conflicting mg-button styles - use main DTS button styles instead */
 
 @media (max-width: 768px) {
-
-    .mg-grid__col-2,
-    .mg-grid__col-3 {
-        grid-template-columns: 1fr;
-    }
-
     .dts-filter__bottom-row {
         flex-wrap: wrap;
         gap: 1rem;
@@ -159,7 +70,5 @@
         flex: none;
     }
 
-    .dts-form__actions {
-        flex: none;
-    }
+    /* Remove conflicting mg-grid responsive overrides - use main DTS grid system */
 }
