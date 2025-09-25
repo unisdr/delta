@@ -41,7 +41,6 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		instanceName = settigns.websiteName;
 	}
 
-	let table = damagesTable;
 	let dataFetcher = async (offsetLimit: OffsetLimit) => {
 		return dr.query.damagesTable.findMany({
 			...offsetLimit,
@@ -63,7 +62,17 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		});
 	};
 
-	const count = await dr.$count(table);
+	let countFetcher = async () => {
+		return dr.$count(
+			damagesTable,
+			and(
+				eq(damagesTable.sectorId, sectorId),
+				eq(damagesTable.recordId, recordId!)
+			)
+		);
+	};
+
+	const count = await countFetcher();
 
 	const res = await executeQueryForPagination3(request, count, dataFetcher, [
 		"sectorId",

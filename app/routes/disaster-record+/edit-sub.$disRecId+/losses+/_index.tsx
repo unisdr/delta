@@ -16,7 +16,10 @@ import {
 	OffsetLimit,
 } from "~/frontend/pagination/api.server";
 import { getSectorFullPathById } from "~/backend.server/models/sector";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	let { params, request } = loaderArgs;
@@ -37,7 +40,6 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		const settigns = await getCountrySettingsFromSession(request);
 		instanceName = settigns.websiteName;
 	}
-	let table = lossesTable;
 	let dataFetcher = async (offsetLimit: OffsetLimit) => {
 		return dr.query.lossesTable.findMany({
 			...offsetLimit,
@@ -51,13 +53,23 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 			},
 			where: and(
 				eq(lossesTable.sectorId, sectorId),
-				eq(lossesTable.recordId, recordId as string)
+				eq(lossesTable.recordId, recordId)
 			),
 			orderBy: [desc(lossesTable.id)],
 		});
 	};
 
-	const count = await dr.$count(table);
+	let countFetcher = async () => {
+		return dr.$count(
+			lossesTable,
+			and(
+				eq(lossesTable.sectorId, sectorId),
+				eq(lossesTable.recordId, recordId)
+			)
+		);
+	};
+	
+	const count = await countFetcher()
 
 	const res = await executeQueryForPagination3(request, count, dataFetcher, [
 		"sectorId",
@@ -65,7 +77,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 	const sectorFullPath = (await getSectorFullPathById(sectorId)) as string;
 
-	return { data: res, recordId, sectorId, sectorFullPath,instanceName };
+	return { data: res, recordId, sectorId, sectorFullPath, instanceName };
 });
 
 export default function Data() {
