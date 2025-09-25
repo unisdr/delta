@@ -20,6 +20,7 @@ import {
 import {authLoaderWithPerm} from "~/util/auth"
 import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server"
 import { getSectorFullPathById } from "~/backend.server/models/sector";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session"
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	let {params, request} = loaderArgs
@@ -33,6 +34,13 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 		console.log("sectorId was not provided in the url")
 		throw new Response("Not Found", {status: 404});
 	}
+
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+		let instanceName = "Disaster Tracking System";
+		if (countryAccountsId) {
+			const settigns = await getCountrySettingsFromSession(request);
+			instanceName = settigns.websiteName;
+		}
 
 	let table = disruptionTable
 	let dataFetcher = async (offsetLimit: OffsetLimit) => {
@@ -64,7 +72,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 
 	const sectorFullPath = await getSectorFullPathById(sectorId) as string;
 
-	return {data: res, recordId, sectorId, sectorFullPath}
+	return {data: res, recordId, sectorId, sectorFullPath,instanceName}
 });
 
 export default function Data() {
@@ -83,6 +91,9 @@ export default function Data() {
 			"ID", "Disaster Record ID", "Sector", "Duration (Days)", "Duration (Hours)", "Users Affected",
 			"Comment", "Response Operation", "Response Cost", "Response Currency", "Actions"
 		],
+		listName: "disruptions",
+		instanceName: ld.instanceName,
+		totalItems: pagination.totalItems,
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,

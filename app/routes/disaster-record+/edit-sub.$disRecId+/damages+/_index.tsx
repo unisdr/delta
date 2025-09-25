@@ -1,40 +1,47 @@
+import { useLoaderData, Link } from "@remix-run/react";
+
+import { damagesTable } from "~/drizzle/schema";
+
+import { dr } from "~/db.server";
+
+import { and, desc, eq } from "drizzle-orm";
+import { DataScreen } from "~/frontend/data_screen";
+
+import { ActionLinks } from "~/frontend/form";
+
+import { route2 } from "~/frontend/damages";
+import { authLoaderWithPerm } from "~/util/auth";
 import {
-	useLoaderData,
-	Link,
-} from "@remix-run/react"
-
-import {
-	damagesTable,
-} from "~/drizzle/schema"
-
-import {dr} from "~/db.server"
-
-import {and, desc, eq} from "drizzle-orm"
-import {DataScreen} from "~/frontend/data_screen"
-
-import {ActionLinks} from "~/frontend/form"
-
-import {
-	route2
-} from "~/frontend/damages"
-import {authLoaderWithPerm} from "~/util/auth"
-import {executeQueryForPagination3, OffsetLimit} from "~/frontend/pagination/api.server"
+	executeQueryForPagination3,
+	OffsetLimit,
+} from "~/frontend/pagination/api.server";
 import { getSectorFullPathById } from "~/backend.server/models/sector";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
-	let {params, request} = loaderArgs
-	let recordId = params.disRecId
+	let { params, request } = loaderArgs;
+	let recordId = params.disRecId;
 	if (!recordId) {
-		throw new Error("Route does not have disRecId param")
+		throw new Error("Route does not have disRecId param");
 	}
-	let url = new URL(request.url)
-	let sectorId = url.searchParams.get("sectorId") || ""
+	let url = new URL(request.url);
+	let sectorId = url.searchParams.get("sectorId") || "";
 	if (!sectorId) {
-		console.log("sectorId was not provided in the url")
-		throw new Response("Not Found", {status: 404});
+		console.log("sectorId was not provided in the url");
+		throw new Response("Not Found", { status: 404 });
 	}
 
-	let table = damagesTable
+	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	let instanceName = "Disaster Tracking System";
+	if (countryAccountsId) {
+		const settigns = await getCountrySettingsFromSession(request);
+		instanceName = settigns.websiteName;
+	}
+
+	let table = damagesTable;
 	let dataFetcher = async (offsetLimit: OffsetLimit) => {
 		return dr.query.damagesTable.findMany({
 			...offsetLimit,
@@ -48,46 +55,57 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 				asset: true,
 				sector: true,
 			},
-			where: and(eq(damagesTable.sectorId, sectorId), eq(damagesTable.recordId, recordId!)),
+			where: and(
+				eq(damagesTable.sectorId, sectorId),
+				eq(damagesTable.recordId, recordId!)
+			),
 			orderBy: [desc(damagesTable.id)],
-		})
-	}
+		});
+	};
 
-	const count = await dr.$count(table)
+	const count = await dr.$count(table);
 
-	const res = await executeQueryForPagination3(request, count, dataFetcher, ["sectorId"])
+	const res = await executeQueryForPagination3(request, count, dataFetcher, [
+		"sectorId",
+	]);
 
-	const sectorFullPath = await getSectorFullPathById(sectorId) as string;
+	const sectorFullPath = (await getSectorFullPathById(sectorId)) as string;
 
-	return {data: res, recordId, sectorId, sectorFullPath}
-})
+	return { data: res, recordId, sectorId, sectorFullPath, instanceName };
+});
 
 export default function Data() {
-	const ld = useLoaderData<typeof loader>()
-	const {items, pagination} = ld.data
+	const ld = useLoaderData<typeof loader>();
+	const { items, pagination } = ld.data;
 
 	return DataScreen({
 		headerElement: (
-			<Link to={"/disaster-record/edit/" + ld.recordId}>Back to disaster record</Link>
+			<Link to={"/disaster-record/edit/" + ld.recordId}>
+				Back to disaster record
+			</Link>
 		),
 		plural: "Damages: Sector Effects: " + ld.sectorFullPath,
 		resourceName: "Damage",
 		baseRoute: route2(ld.recordId),
 		searchParams: new URLSearchParams([["sectorId", String(ld.sectorId)]]),
-		columns: [
-			"ID", "Asset", "Sector", "Actions"
-		],
+		columns: ["ID", "Asset", "Sector", "Actions"],
+		listName: "damages",
+		instanceName: ld.instanceName,
+		totalItems: pagination.totalItems,
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
-				<td><Link to={`${route}/${item.id}`}>{item.id.slice(0,8)}</Link></td>
+				<td>
+					<Link to={`${route}/${item.id}`}>{item.id.slice(0, 8)}</Link>
+				</td>
 				<td>{item.asset.name}</td>
 				<td>{item.sector.sectorname}</td>
-				<td><ActionLinks route={route} id={item.id} /></td>
+				<td>
+					<ActionLinks route={route} id={item.id} />
+				</td>
 			</tr>
 		),
-	})
+	});
 }
-

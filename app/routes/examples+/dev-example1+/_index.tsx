@@ -13,22 +13,42 @@ import { ActionLinks } from "~/frontend/form";
 
 import { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { route } from "~/frontend/dev_example1";
-import { getCountryAccountsIdFromSession } from "~/util/session";
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const { request } = args;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	let instanceName = "Disaster Tracking System";
 
-	return createPaginatedLoader(async (offsetLimit) => {
-		return dr.query.devExample1Table.findMany({
-			...offsetLimit,
-			columns: { id: true, field1: true },
-			where: eq(devExample1Table.countryAccountsId, countryAccountsId),
-			orderBy: [desc(devExample1Table.field1)],
-		});
-	}, await dr.$count(devExample1Table, eq(devExample1Table.countryAccountsId, countryAccountsId)))(
-		args
+	if (countryAccountsId) {
+		const settings = await getCountrySettingsFromSession(request);
+		instanceName = settings.websiteName;
+	}
+
+	// Get paginated data
+	const paginatedLoader = createPaginatedLoader(
+		async (offsetLimit) => {
+			return dr.query.devExample1Table.findMany({
+				...offsetLimit,
+				columns: { id: true, field1: true },
+				where: eq(devExample1Table.countryAccountsId, countryAccountsId),
+				orderBy: [desc(devExample1Table.field1)],
+			});
+		},
+		await dr.$count(
+			devExample1Table,
+			eq(devExample1Table.countryAccountsId, countryAccountsId)
+		)
 	);
+
+	// Call the loader
+	const paginatedData = await paginatedLoader(args);
+
+	// Return both
+	return {
+		instanceName,
+		...paginatedData,
+	};
 };
 
 export default function Data() {
@@ -40,6 +60,9 @@ export default function Data() {
 		resourceName: "Dev example 1",
 		baseRoute: route,
 		columns: ["ID", "Field 1", "Actions"],
+		listName: "dev-examples",
+		instanceName: ld.instanceName,
+		totalItems: pagination.totalItems,
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,

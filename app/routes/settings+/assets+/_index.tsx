@@ -38,6 +38,9 @@ export default function Data() {
 			"Is Custom",
 			"Actions"
 		],
+		listName: "assets",
+		instanceName: ld.instanceName,
+		totalItems: pagination.totalItems,
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,

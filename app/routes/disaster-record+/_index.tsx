@@ -51,6 +51,9 @@ export default function Data() {
 		beforeListElement: (
 			<Filters clearFiltersUrl={route} search={filters.search} />
 		),
+		listName: "disaster records",
+		instanceName: ld.instanceName,
+		totalItems: pagination.totalItems,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>

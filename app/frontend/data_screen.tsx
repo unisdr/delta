@@ -10,6 +10,9 @@ interface DataScreenProps<T> {
 	columns: string[];
 	items: T[];
 	paginationData: any;
+	listName: string
+	instanceName: string;
+	totalItems: number;
 	renderRow: (item: T, baseRoute: string) => React.ReactNode;
 	csvExportLinks?: boolean;
 	headerElement?: React.ReactNode;
@@ -22,6 +25,7 @@ export function DataScreen<T>(props: DataScreenProps<T>) {
 	return (
 		<MainContainer title={props.plural}>
 			<>
+			<h2>{props.totalItems} {props.listName} in {props.instanceName}</h2>
 				{props.headerElement}
 				{!props.hideMainLinks &&
 					<DataMainLinks
