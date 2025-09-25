@@ -1565,6 +1565,9 @@ interface ActionLinksProps {
 	route: string;
 	id: string | number;
 	deleteMessage?: string;
+	deleteTitle?: string;
+	confirmDeleteLabel?: string;
+	cancelDeleteLabel?: string;
 	hideViewButton?: boolean;
 	hideEditButton?: boolean;
 	hideDeleteButton?: boolean;
@@ -1575,7 +1578,11 @@ export function ActionLinks(props: ActionLinksProps) {
 		<div style={{ display: "flex", justifyContent: "space-evenly" }}>
 			{!props.hideEditButton && (
 				<Link to={`${props.route}/edit/${props.id}`}>
-					<button type="button" className="mg-button mg-button-table" aria-label="Edit">
+					<button
+						type="button"
+						className="mg-button mg-button-table"
+						aria-label="Edit"
+					>
 						<svg aria-hidden="true" focusable="false" role="img">
 							<use href="/assets/icons/edit.svg#edit" />
 						</svg>
@@ -1584,7 +1591,11 @@ export function ActionLinks(props: ActionLinksProps) {
 			)}
 			{!props.hideViewButton && (
 				<Link to={`${props.route}/${props.id}`}>
-					<button type="button" className="mg-button mg-button-table" aria-label="View">
+					<button
+						type="button"
+						className="mg-button mg-button-table"
+						aria-label="View"
+					>
 						<svg aria-hidden="true" focusable="false" role="img">
 							<use href="/assets/icons/eye-show-password.svg#eye-show" />
 						</svg>
@@ -1597,6 +1608,15 @@ export function ActionLinks(props: ActionLinksProps) {
 					action={`${props.route}/delete/${props.id}`}
 					useIcon
 					confirmMessage={props.deleteMessage}
+					title={props.deleteTitle}
+					confirmLabel={props.confirmDeleteLabel}
+					cancelLabel={props.cancelDeleteLabel}
+					confirmIcon={
+						<svg aria-hidden="true" focusable="false" role="img">
+							<use href="/assets/icons/trash-alt.svg#delete" />
+						</svg>
+					}
+					confirmButtonFirst={false}
 				/>
 			)}
 		</div>

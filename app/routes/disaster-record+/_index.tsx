@@ -79,7 +79,11 @@ export default function Data() {
 						: ""}
 				</td>
 				<td>
-					{ld.isPublic ? null : <ActionLinks route={route} id={item.id} />}
+					{ld.isPublic ? null : <ActionLinks route={route} id={item.id} 
+					deleteMessage="This data cannot be recovered after being deleted." 
+					deleteTitle="Are you sure you want to delete this record?"
+					confirmDeleteLabel="Delete permanently"
+					cancelDeleteLabel="Do not delete"/>}
 				</td>
 			</tr>
 		),
