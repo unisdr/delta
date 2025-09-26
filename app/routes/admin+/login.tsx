@@ -24,7 +24,7 @@ import {
 } from "~/util/config";
 import PasswordInput from "~/components/PasswordInput";
 import Messages from "~/components/Messages";
-import { testDbConnection } from "~/db.server";
+// import { testDbConnection } from "~/db.server";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { createCSRFToken } from "~/backend.server/utils/csrf";
 
@@ -210,21 +210,26 @@ function validateRequiredEnvVars() {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	// Validate required environment variables
 	const configErrors = validateRequiredEnvVars();
-	const boolDbConnectionTest = await testDbConnection();
 
-	// Check #1: Test database connection before proceeding
-	if (boolDbConnectionTest === false) {
-		console.error('Database connection error');
-		configErrors.push({
-			variable: 'DATABASE_URL',
-			message: 'Could not connect to the database. Please check your connection string.'
-		});
-	}
 
 	// Add a message about the number of configuration errors
 	if (configErrors.length > 0) {
 		console.warn(`Found ${configErrors.length} configuration errors that need to be fixed before proceeding with setup.`);
 	}
+	// else {
+	// 	// Test database connection only if no other config errors
+
+	// 	const boolDbConnectionTest = await testDbConnection();
+
+	// 	// Check #1: Test database connection before proceeding
+	// 	if (boolDbConnectionTest === false) {
+	// 		console.error('Database connection error');
+	// 		configErrors.push({
+	// 			variable: 'DATABASE_URL',
+	// 			message: 'Could not connect to the database. Please check your connection string.'
+	// 		});
+	// 	}
+	// }
 
 	const superAdminSession = await getSuperAdminSession(request);
 
