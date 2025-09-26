@@ -73,9 +73,12 @@ export function AttachmentsView({
 
                       const fileName = attachment.file.name.split("/").pop();
                       const locParam = location ? `&loc=${location}` : '';
+                      
+                      // Check if file_viewer_url already contains query parameters
+                      const separator = file_viewer_url.includes('?') ? '&' : '?';
 
                       fileOrUrl = (
-                        <a href={`${file_viewer_url}/?name=${id}/${fileName}${locParam}${tenantPathParam}`} target="_blank" rel="noopener noreferrer">
+                        <a href={`${file_viewer_url}${separator}name=${id}/${fileName}${locParam}${tenantPathParam}`} target="_blank" rel="noopener noreferrer">
                           {fileName}
                         </a>
                       );
