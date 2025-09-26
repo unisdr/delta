@@ -247,7 +247,7 @@ export function LossesView(props: LossesViewProps) {
 			<AttachmentsView
 				id={props.item.id}
 				initialData={(props?.item?.attachments as any[]) || []}
-				file_viewer_url="/disaster-record/file-viewer"
+				file_viewer_url="/disaster-record/file-viewer?loc=losses"
 				location="losses"
 			/>
 		),
