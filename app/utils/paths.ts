@@ -1,6 +1,7 @@
 
 export const BASE_UPLOAD_PATH = "/uploads";
 export const HAZARDOUS_EVENT_UPLOAD_PATH = `${BASE_UPLOAD_PATH}/hazardous-event`;
+export const DISASTER_EVENT_UPLOAD_PATH = `${BASE_UPLOAD_PATH}/disaster-event`;
 export const DISASTER_RECORDS_UPLOAD_PATH = `${BASE_UPLOAD_PATH}/disaster-record`;
 export const DISASTER_RECORDS_LOSSES_UPLOAD_PATH = `${DISASTER_RECORDS_UPLOAD_PATH}/losses`;
 export const DISASTER_RECORDS_DISRUPTIONS_UPLOAD_PATH = `${DISASTER_RECORDS_UPLOAD_PATH}/disruptions`;
