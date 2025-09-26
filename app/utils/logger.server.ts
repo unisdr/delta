@@ -22,7 +22,6 @@ const maskApiKey = (apiKey: string): string => {
 // Validate API key on startup
 const validateApiKey = (apiKey: string | undefined): string | null => {
   if (!apiKey) {
-    console.warn('REMOTE_LOG_API_KEY not provided - remote logging disabled');
     return null;
   }
 
@@ -43,7 +42,6 @@ const validateApiKey = (apiKey: string | undefined): string | null => {
 // Validate endpoint security
 const validateEndpoint = (endpoint: string | undefined): string | null => {
   if (!endpoint) {
-    console.warn('REMOTE_LOG_ENDPOINT not provided - remote logging disabled');
     return null;
   }
 
