@@ -27,11 +27,11 @@ export function Filters(props: FiltersProps) {
 			<div className="dts-form__actions">
 				<input
 					type="submit"
-					value="Apply"
+					value="Apply filters"
 					className="mg-button mg-button-primary"
 				/>
 				<a href={props.clearFiltersUrl} className="mg-button mg-button-outline">
-					Clear filters
+					Clear
 				</a>
 			</div>
 		</Form>

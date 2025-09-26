@@ -33,7 +33,7 @@ export default function Data() {
 	return DataScreen({
 		isPublic: ld.isPublic,
 		plural: "Disaster records",
-		resourceName: "Disaster record",
+		resourceName: "record",
 		baseRoute: route,
 		columns: ld.isPublic
 			? ["Related Disaster Event", "Disaster Event", "Created", "Updated"]
