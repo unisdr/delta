@@ -123,6 +123,12 @@ export default function UnauthorizedError() {
 			errorDetails = "Please contact your administrator or technical support for assistance.";
 			break;
 
+		case "access-denied":
+			errorTitle = "File Access Denied";
+			errorMessage = "You do not have permission to access this file.";
+			errorDetails = "This file belongs to a different country instance. You can only access files that belong to your country account.";
+			break;
+
 		case "unauthorized":
 			errorTitle = "Access Denied";
 			errorMessage = "You do not have permission to access this resource.";
@@ -148,9 +154,9 @@ export default function UnauthorizedError() {
 						<a href="/" className="mg-button mg-button--primary mg-u-margin-right--md">
 							Return to Dashboard
 						</a>
-						<a href="javascript:history.back()" className="mg-button mg-button--secondary">
+						<button onClick={() => window.history.back()} className="mg-button mg-button--secondary">
 							Go Back
-						</a>
+						</button>
 					</div>
 				</div>
 			</div>

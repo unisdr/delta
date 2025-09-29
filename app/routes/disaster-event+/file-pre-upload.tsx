@@ -1,9 +1,8 @@
-import { handleFileRequest } from "~/components/ContentRepeater/FileViewer";
+import ContentRepeaterPreUploadFile from "~/components/ContentRepeater/PreUploadFile";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
-import { TEMP_UPLOAD_PATH } from "~/utils/paths";
 
-export const loader = authLoaderPublicOrWithPerm("ViewData", async ({ request }: any) => {
-  const url = new URL(request.url);
-  const download = url.searchParams.get("download") === "true"; // Parse `download` as a boolean
-  return await handleFileRequest(request, TEMP_UPLOAD_PATH, download);
-});
+export const loader = ContentRepeaterPreUploadFile.loader
+  ? authLoaderPublicOrWithPerm("ViewData", ContentRepeaterPreUploadFile.loader)
+  : undefined as never; // Ensures it's always defined
+
+export const action = ContentRepeaterPreUploadFile.action ?? (() => null);

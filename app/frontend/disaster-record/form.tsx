@@ -243,7 +243,7 @@ export function DisasterRecordsView(props: DisasterRecordsViewProps) {
 						<AttachmentsView
 							id={item?.id || ''}
 							initialData={(item?.attachments as any[]) || []}
-							file_viewer_url="/disaster-record/file-viewer"
+							file_viewer_url="/disaster-record/file-viewer?loc=record"
 						/>
 					),
 				}}
