@@ -686,3 +686,65 @@ table.table-border th.center {
   outline: 2px solid #004f91;
   outline-offset: 2px;
 }
+
+
+/* Top navigation and secondary navigation */
+[dir=rtl] .top-nav>nav>a,
+[dir=rtl] .secondary-nav>nav>a {
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+/* Autocomplete no-results placeholder */
+[dir=rtl] .autocomplete-list .no-results {
+  text-align: right;
+}
+
+/* Form component labels */
+[dir=rtl] .dts-form-component__label {
+  text-align: right;
+}
+
+/* Flex box adjustments if needed */
+[dir=rtl] .flex {
+  flex-direction: row-reverse;
+}
+
+/* Data boxes */
+[dir=rtl] .dts-data-box {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Pagination */
+[dir=rtl] .dts-pagination {
+  justify-content: left;
+}
+
+/* Search icon in input */
+[dir=rtl] .search-icon {
+  right: auto;
+  left: 10px;
+  transform: translateY(-50%);
+}
+
+/* List items inside dts-form-component */
+[dir=rtl] .dts-form-component li {
+  margin-left: 0;
+  margin-right: 20px;
+}
+
+/* JS disabled steps and links */
+[dir=rtl] .dts-js-disabled-steps,
+[dir=rtl] .dts-js-disabled-links {
+  margin-left: 0;
+  margin-right: 2rem;
+}
+
+/* JS disabled instructions text */
+[dir=rtl] .dts-js-disabled-instructions .dts-body-text {
+  text-align: right;
+  margin: 0 auto;
+}

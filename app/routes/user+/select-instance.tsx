@@ -4,7 +4,7 @@ import {
 	LoaderFunction,
 	redirect,
 } from "@remix-run/server-runtime";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Form, useLoaderData } from "@remix-run/react";
 import { LoaderFunctionArgs } from "@remix-run/server-runtime";
 
@@ -122,6 +122,11 @@ export default function SelectInstance() {
 	const [selectedCountryAccounts, setSelectedCountryAccounts] =
 		useState<LoaderDataType | null>(null);
 	const toast = useRef<ToastRef>(null);
+	const [isRtl, setIsRtl] = useState(false);
+
+  useEffect(() => {
+    setIsRtl(document.dir === "rtl"); 
+  }, []);
 
 	const countryTemplate = (option: LoaderDataType) => {
 		const instanceType = option.countryAccount.type;
@@ -138,7 +143,7 @@ export default function SelectInstance() {
 					<img
 						alt={option.countryAccount.country.name}
 						src={option.countryAccount.country.flagUrl}
-						style={{ width: "18px", marginRight: "12px" }}
+						style={{ width: "18px", marginInlineEnd: "12px" }}
 					/>
 					<div
 						style={{
@@ -170,7 +175,7 @@ export default function SelectInstance() {
 					/>
 					<img
 						alt="arrow"
-						src={`/assets/icons/arrow-right.svg`}
+						src={isRtl ? "/assets/icons/arrow-left.svg" : "/assets/icons/arrow-right.svg"}
 						style={{ width: "24px" }}
 					/>
 				</div>

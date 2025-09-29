@@ -41,7 +41,7 @@ import {
 } from "~/util/session-activity-config";
 
 export const links: LinksFunction = () => [
-	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250530" },
+	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250531" },
 	{ rel: "stylesheet", href: allStylesHref },
 ];
 

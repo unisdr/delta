@@ -14,6 +14,12 @@ const injectStyles = (appendCss?: string) => {
                 margin-top: 2rem !important;
                 margin-left: 4rem !important;
             }
+			
+			[dir="rtl"] p.tree {
+ 		   		margin-left: 0 !important;
+    			margin-right: 4rem !important;
+			}
+
             ul.tree {
                 margin-left: 5rem !important;
                 z-index: 1;
@@ -47,6 +53,14 @@ const injectStyles = (appendCss?: string) => {
                 color: #000;
             }
 
+			[dir="rtl"] .tree-intro,
+			[dir="rtl"] ul.tree li {
+    			padding-left: 0;
+    			padding-right: 3em;
+    			border-left: none;
+    			border-right: thin solid #000; /* flip border */
+			}
+
             ul.tree li:last-child {
                 border-left: none;
             }
@@ -63,6 +77,12 @@ const injectStyles = (appendCss?: string) => {
                 content: "";
                 display: inline-block;
             }
+
+			[dir="rtl"] ul.tree li:before {
+    			left: auto;
+    			right: 0; /* move the line to the right */
+    			border-bottom: thin solid #000; /* stays same */
+			}
 
             ul.tree li:last-child:before {
                 border-left: thin solid #000;
@@ -93,6 +113,10 @@ const injectStyles = (appendCss?: string) => {
                 white-space: nowrap;
                 cursor: pointer;
             }
+			[dir="rtl"] .tree-btn {
+			    margin-right: 0;
+    			margin-left: 1rem;
+			}
             .tree-btn.main-btn {
                 padding: 4px 8px 4px 8px;
             }
@@ -151,6 +175,10 @@ const injectStyles = (appendCss?: string) => {
             .tree-checkbox {
                 margin-right: 0.5rem;
             }
+			[dir="rtl"] .tree-checkbox {
+    			margin-right: 0;
+    			margin-left: 0.5rem;
+			}
             .tree-button-select {
                 display: inline-block;
                 background-color: buttonface;
@@ -343,6 +371,12 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			};
 		}, []);
 
+		const [isRtl, setIsRtl] = useState(false);
+
+		useEffect(() => {
+			setIsRtl(document.dir === "rtl");
+		}, []);
+
 		// Filter function with auto-expand logic
 		const filterTree = (
 			nodes: any[],
@@ -524,7 +558,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 										className="mg-button mg-button--small mg-button-system"
 										onClick={(e) => toggleExpand(e, enrichedNode.id)}
 									>
-										{expandedNodes[enrichedNode.id] ? "▼" : "►"}
+										{expandedNodes[enrichedNode.id] ? "▼" : isRtl ? "◄" : "►"}
 									</button>{" "}
 									{multiSelect && (
 										<input
@@ -742,7 +776,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 
 			if (typeof onItemClick === "function")
 				onItemClick(e, dialogRef?.current || null);
-
 		};
 
 		const findNamesByIds = (
@@ -769,11 +802,11 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 			treeViewClose: treeViewDiscard,
 			treeViewClear: treeViewClear,
 			getCheckedItemIds: () =>
-				Object.keys(checkedItems)
-					.filter((key) => checkedItems[key]), // Get only checked IDs
+				Object.keys(checkedItems).filter((key) => checkedItems[key]), // Get only checked IDs
 			getCheckedItemNames: () => {
-				const checkedIds = Object.keys(checkedItems)
-					.filter((key) => checkedItems[key]); // Filter only checked items
+				const checkedIds = Object.keys(checkedItems).filter(
+					(key) => checkedItems[key]
+				); // Filter only checked items
 
 				return findNamesByIds(treeData, checkedIds); // Now returns [{ id, name }, ...]
 			},
@@ -812,7 +845,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 						</a>
 						{search && (
 							<input
-							    id="search-input"
+								id="search-input"
 								name="search"
 								type="text"
 								placeholder="Search..."
@@ -941,7 +974,7 @@ export const buildTree = (
 	parentKey: string,
 	nameKey: string,
 	priorityKey?: string | null,
-	additionalFields?: string[], // Array of field keys for hidden data
+	additionalFields?: string[] // Array of field keys for hidden data
 ) => {
 	const map = new Map();
 

@@ -556,3 +556,23 @@
     border: 1px solid #000;
   }
 }
+
+
+/* rtl */
+[dir=rtl] .legend {
+  left: 10px;
+  right: auto;
+}
+
+
+[dir=rtl] .legend-mortality { border-right: 4px solid #f44336; }
+[dir=rtl] .legend-population { border-right: 4px solid #ff9800; }
+[dir=rtl] .legend-events { border-right: 4px solid #9c27b0; }
+
+[dir=rtl] .tooltip-metric-value { text-align: left; }
+
+[dir=rtl] .live-data-indicator { right: 10px; left: auto; }
+
+[dir=rtl] .ol-zoom { left: 20px; right: auto; }
+
+[dir=rtl] .metric-button { padding-left: 12px; padding-right: 16px; }

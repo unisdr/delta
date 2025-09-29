@@ -324,7 +324,7 @@ export default function Screen() {
 													: "input-normal"
 											}
 											style={{
-												paddingRight: "2.5rem",
+												paddingInlineEnd: "2.5rem",
 												width: "100%",
 											}}
 										/>
@@ -420,7 +420,7 @@ export default function Screen() {
 													: "input-normal"
 											}
 											style={{
-												paddingRight: "2.5rem",
+												paddingInlineEnd: "2.5rem",
 												width: "100%",
 											}}
 										/>

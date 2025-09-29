@@ -238,3 +238,66 @@ li.selected > .button-link > .dts-mobilemenu-expand-icon {
 .dts-mobilemenu-lvl1 > ul > li.selected > .button-link > .dts-mobilemenu-expand-icon {
 	transform: rotate(180deg);
 }
+
+
+/* Rtl */
+/* General list reset already direction-independent, no changes needed */
+
+/* Mega menu LTR → RTL */
+[dir=rtl] .dts-megamenu-lvl1 > ul > li > a > svg,
+[dir=rtl] .dts-megamenu-lvl1 > ul > li > .button-link > svg {
+  margin-right: 0;
+  margin-left: 5px;
+}
+
+/* Mega menu lvl2 container */
+[dir=rtl] .dts-megamenu-lvl2 {
+  left: auto;
+  right: calc((100vw - min(80vw, 1200px)) / 2);
+}
+
+@media (width < 768px) {
+  [dir=rtl] .dts-megamenu-lvl2 {
+    left: auto;
+    right: calc(8vw / 2);
+  }
+}
+
+/* Mega menu lvl2 col1 li */
+[dir=rtl] .dts-megamenu-lvl2 > .cols > .col1 > ul > li {
+  margin-left: 0;
+  margin-right: -20px;
+  padding-left: 0;
+  padding-right: 20px;
+}
+
+[dir=rtl] .dts-megamenu.js-enabled .dts-megamenu-lvl2 > .cols > .col1 > ul > li {
+  border-left: none;
+  border-right: 4px solid white;
+}
+
+[dir=rtl] .dts-megamenu.js-enabled .dts-megamenu-lvl2 > .cols > .col1 > ul > li.selected {
+  border-left: none;
+  border-right: 4px solid #b52a32;
+}
+
+/* Mobile menu SVG icons */
+[dir=rtl] .dts-mobilemenu-lvl1 > ul > li > a > svg:first-child,
+[dir=rtl] .dts-mobilemenu-lvl1 > ul > li > .button-link > svg:first-child {
+  margin-right: 0;
+  margin-left: 10px;
+}
+
+/* Mobile menu expand icon */
+[dir=rtl] .dts-mobilemenu-expand-icon {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir=rtl] li.selected > .button-link > .dts-mobilemenu-expand-icon {
+  transform: scale(0.7) rotate(-180deg);
+}
+
+[dir=rtl] .dts-mobilemenu-lvl1 > ul > li.selected > .button-link > .dts-mobilemenu-expand-icon {
+  transform: rotate(-180deg);
+}
