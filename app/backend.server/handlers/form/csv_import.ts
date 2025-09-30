@@ -95,7 +95,7 @@ export function createAction<T extends ObjectWithImportId>(
 					const countryAccountsId = await getCountryAccountsIdFromSession(request);
 					switch (importType) {
 						case "create": {
-							let res = await csvCreate(
+							let res = await csvCreate<T>(
 								{
 									data: all,
 									fieldsDef,
@@ -109,7 +109,7 @@ export function createAction<T extends ObjectWithImportId>(
 							return { imported, res };
 						}
 						case "update": {
-							let res = await csvUpdate(
+							let res = await csvUpdate<T>(
 								{
 									data: all,
 									fieldsDef,
@@ -123,13 +123,13 @@ export function createAction<T extends ObjectWithImportId>(
 							return { imported, res };
 						}
 						case "upsert": {
-							let res = await csvUpsert(
+							let res = await csvUpsert<T>(
 								{
 									data: all,
 									fieldsDef,
 									create: args.create,
 									update: args.update,
-									idByImportId: args.idByImportId,
+									idByImportIdAndCountryAccountsId: args.idByImportId,
 								},
 								countryAccountsId
 							);
