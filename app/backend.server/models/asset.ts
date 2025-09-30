@@ -278,7 +278,7 @@ export async function upsertRecord(record: InsertAsset): Promise<void> {
 			.insert(assetTable)
 			.values(record)
 			.onConflictDoUpdate({
-				target: assetTable.apiImportId,
+				target: [assetTable.apiImportId, assetTable.countryAccountsId],
 				set: {
 					id: record.id,
 					name: record.name,
@@ -294,7 +294,7 @@ export async function upsertRecord(record: InsertAsset): Promise<void> {
 			.insert(assetTable)
 			.values(record)
 			.onConflictDoUpdate({
-				target: assetTable.apiImportId,
+				target: [assetTable.apiImportId, assetTable.countryAccountsId],
 				set: {
 					name: record.name,
 					sectorIds: record.sectorIds,

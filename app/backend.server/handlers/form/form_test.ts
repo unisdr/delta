@@ -423,7 +423,7 @@ describe('csvUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields4>) => {
 			throw new Error('Should not reach this point')
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => null
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => null
 
 		const args: CsvUpsertArgs<TestFields4> = {
 			data: [
@@ -433,7 +433,7 @@ describe('csvUpsert', () => {
 			fieldsDef: fieldsDef4,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId
 		}
 
 		const res = await csvUpsert(args,countryAccountsId)
@@ -450,7 +450,7 @@ describe('csvUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields4>) => {
 			throw new Error('Should not reach this point')
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => null
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => null
 
 		const args: CsvUpsertArgs<TestFields4> = {
 			data: [
@@ -460,7 +460,7 @@ describe('csvUpsert', () => {
 			fieldsDef: fieldsDef4,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId
 		}
 
 		const res = await csvUpsert(args,countryAccountsId)
@@ -477,7 +477,7 @@ describe('csvUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields4>) => {
 			throw new Error('Should not reach this point')
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => null
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => null
 
 		const args: CsvUpsertArgs<TestFields4> = {
 			data: [
@@ -487,7 +487,7 @@ describe('csvUpsert', () => {
 			fieldsDef: fieldsDef4,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId
 		}
 
 		const res = await csvUpsert(args,countryAccountsId)
@@ -501,7 +501,7 @@ describe('csvUpsert', () => {
 		const updateMock = async (_tx: Tx, _id: string, _data: Partial<TestFields4>): Promise<UpdateResult<TestFields4>> => {
 			return {ok: true}
 		}
-		const idByImportId = async (_tx: Tx, _importId: string) => "existing-id"
+		const idByImportIdAndCountryAccountsId = async (_tx: Tx, _importId: string, _countryAccountsId: string) => "existing-id"
 
 		const args: CsvUpsertArgs<TestFields4> = {
 			data: [
@@ -511,7 +511,7 @@ describe('csvUpsert', () => {
 			fieldsDef: fieldsDef4,
 			create: createMock,
 			update: updateMock,
-			idByImportId: idByImportId
+			idByImportIdAndCountryAccountsId: idByImportIdAndCountryAccountsId
 		}
 
 		const res = await csvUpsert(args,countryAccountsId)

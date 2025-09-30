@@ -156,7 +156,7 @@ export interface CsvUpsertArgs<T extends ObjectWithImportId> {
 	fieldsDef: FormInputDef<T>[];
 	create: (tx: Tx, data: T, countryAccountsId: string) => Promise<CreateResult<T>>;
 	update: (tx: Tx, id: string, data: Partial<T>, countryAccountsId: string) => Promise<UpdateResult<T>>;
-	idByImportId: (tx: Tx, importId: string) => Promise<string | null>;
+	idByImportIdAndCountryAccountsId: (tx: Tx, importId: string, countryAccountsId: string) => Promise<string | null>;
 }
 
 export interface CsvUpsertRes {
@@ -200,7 +200,7 @@ export async function csvUpsert<T extends ObjectWithImportId>(
 				if (!validateRes.ok) {
 					return rerr(firstError(validateRes.errors)!);
 				}
-				const existingId = await args.idByImportId(tx, item.apiImportId);
+				const existingId = await args.idByImportIdAndCountryAccountsId(tx, item.apiImportId, countryAccountsId);
 				if (existingId) {
 					const updateRes = await args.update(
 						tx,
