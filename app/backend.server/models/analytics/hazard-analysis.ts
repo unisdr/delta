@@ -100,114 +100,61 @@ export async function getDisasterEventCountByYear(
 		toDate,
 	} = filters;
 
-	// Build WHERE conditions for disaster_event as SQL objects
-	const whereConditions: SQL[] = [];
-	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
-	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId)
-		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId)
-		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
-	if (fromDate || toDate) {
-		const from = fromDate || "0001-01-01";
-		const to = toDate || "9999-12-31";
-		whereConditions.push(sql`
-		(
-		  CASE 
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM-DD')
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM')
-			WHEN "start_date" ~ '^[0-9]{4}$' THEN TO_DATE("start_date", 'YYYY')
-			ELSE NULL
-		  END IS NULL OR 
-		  CASE 
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM-DD')
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM')
-			WHEN "start_date" ~ '^[0-9]{4}$' THEN TO_DATE("start_date", 'YYYY')
-			ELSE NULL
-		  END <= ${to}::date
-		) AND (
-		  CASE 
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM-DD')
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM')
-			WHEN "end_date" ~ '^[0-9]{4}$' THEN TO_DATE("end_date", 'YYYY')
-			ELSE NULL
-		  END IS NULL OR 
-		  CASE 
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM-DD')
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM')
-			WHEN "end_date" ~ '^[0-9]{4}$' THEN TO_DATE("end_date", 'YYYY')
-			ELSE NULL
-		  END >= ${from}::date
-		)
-	  `);
+	const conditions: any[] = [
+		eq(disasterEventTable.countryAccountsId, countryAccountsId),
+		eq(disasterEventTable.approvalStatus, "published"),
+	];
+
+	if (hazardTypeId) {
+		conditions.push(eq(disasterEventTable.hipTypeId, hazardTypeId));
 	}
 
-	// Combine conditions into a single WHERE clause for the subquery
-	const subqueryWhereClause =
-		whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
+	if (hazardClusterId) {
+		conditions.push(eq(disasterEventTable.hipClusterId, hazardClusterId));
+	}
 
-	// Construct the full raw SQL query with year extraction and ordering
-	const rawQuery = sql`
-	  WITH RECURSIVE division_hierarchy AS (
-		SELECT id, parent_id, id AS level1_id
-		FROM "division"
-		WHERE parent_id IS NULL
-		UNION ALL
-		SELECT d.id, d.parent_id, dh.level1_id
-		FROM "division" d
-		INNER JOIN division_hierarchy dh ON d.parent_id = dh.id
-	  )
-	  SELECT 
-		EXTRACT(YEAR FROM CASE 
-		  WHEN ds.start_date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(ds.start_date, 'YYYY-MM-DD')
-		  WHEN ds.start_date ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(ds.start_date, 'YYYY-MM')
-		  WHEN ds.start_date ~ '^[0-9]{4}$' THEN TO_DATE(ds.start_date, 'YYYY')
-		  ELSE NULL
-		END)::integer AS year,
-		COUNT(DISTINCT ds.record_id) AS disaster_count
-	  FROM (
-		SELECT "disaster_event"."id" AS record_id, 
-			   jsonb_array_elements("disaster_event"."spatial_footprint")->'geojson'->'properties'->>'division_id' AS division_id,
-			   "disaster_event"."start_date" AS start_date
-		FROM "disaster_event"
-		${subqueryWhereClause}
-	  ) ds
-	  LEFT JOIN division_hierarchy dh 
-		ON ds.division_id = dh.id::text
-	  WHERE ds.division_id IS NOT NULL
-	  ${
-			geographicLevelId
-				? sql`AND dh.level1_id IN (
-		SELECT level1_id 
-		FROM division_hierarchy 
-		WHERE id = ${geographicLevelId}
-	  )`
-				: sql``
-		}
-	  GROUP BY 
-		EXTRACT(YEAR FROM CASE 
-		  WHEN ds.start_date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(ds.start_date, 'YYYY-MM-DD')
-		  WHEN ds.start_date ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(ds.start_date, 'YYYY-MM')
-		  WHEN ds.start_date ~ '^[0-9]{4}$' THEN TO_DATE(ds.start_date, 'YYYY')
-		  ELSE NULL
-		END)::integer
-	  HAVING 
-		EXTRACT(YEAR FROM CASE 
-		  WHEN ds.start_date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(ds.start_date, 'YYYY-MM-DD')
-		  WHEN ds.start_date ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(ds.start_date, 'YYYY-MM')
-		  WHEN ds.start_date ~ '^[0-9]{4}$' THEN TO_DATE(ds.start_date, 'YYYY')
-		  ELSE NULL
-		END)::integer IS NOT NULL
-	  ORDER BY year ASC
-	`;
+	if (specificHazardId) {
+		conditions.push(eq(disasterEventTable.hipHazardId, specificHazardId));
+	}
 
-	// Execute the query
-	const result = await dr.execute(rawQuery);
+	if (geographicLevelId) {
+		conditions.push(
+			sql`jsonb_path_exists(
+        ${disasterEventTable.spatialFootprint},
+        concat(
+          '$[*].geojson.properties.division_id ? (@ == "',
+          ${geographicLevelId}::text,
+          '")'
+        )::jsonpath
+      )`
+		);
+	}
 
-	return result.rows.map((row: any) => ({
-		year: Number(row.year),
-		count: Number(row.disaster_count),
+	if (fromDate) {
+		conditions.push(gte(disasterEventTable.startDate, fromDate));
+	}
+
+	if (toDate) {
+		conditions.push(lte(disasterEventTable.endDate, toDate));
+	}
+
+	const yearExpr = sql<number>`
+  COALESCE(EXTRACT(YEAR FROM NULLIF(${disasterEventTable.endDate}, '')::date), 0)
+`;
+
+	const result = await dr
+		.select({
+			year: yearExpr,
+			disaster_count: sql<number>`COUNT(*)`,
+		})
+		.from(disasterEventTable)
+		.where(and(...conditions))
+		.groupBy(yearExpr)
+		.orderBy(yearExpr);
+
+	return result.map((r) => ({
+		year: Number(r.year),
+		count: Number(r.disaster_count),
 	}));
 }
 
