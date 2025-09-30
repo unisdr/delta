@@ -19,7 +19,9 @@ export const fetchHazardTypes = async (): Promise<HazardType[]> => {
         id: hipTypeTable.id,
         name: hipTypeTable.nameEn,
       })
-      .from(hipTypeTable);
+      .from(hipTypeTable)
+      .orderBy(hipTypeTable.nameEn)
+      
 
     return hazardTypes;
   } catch (error) {

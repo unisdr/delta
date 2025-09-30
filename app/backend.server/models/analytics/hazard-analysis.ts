@@ -1,5 +1,6 @@
-import { and, SQL, sql } from "drizzle-orm";
+import { and, eq, gte, lte, SQL, sql } from "drizzle-orm";
 import { dr } from "~/db.server";
+import { disasterEventTable } from "~/drizzle/schema";
 import createLogger from "~/utils/logger.server";
 
 // Initialize logger for this module
@@ -33,7 +34,71 @@ export async function getDisasterEventCount(
 		toDate,
 	} = filters;
 
-	logger.debug(`Getting disaster event count for tenant ${countryAccountsId}`);
+	const conditions: any[] = [
+		eq(disasterEventTable.countryAccountsId, countryAccountsId),
+		eq(disasterEventTable.approvalStatus, "published"),
+	];
+
+	if (hazardTypeId) {
+		conditions.push(eq(disasterEventTable.hipTypeId, hazardTypeId));
+	}
+
+	if (hazardClusterId) {
+		conditions.push(eq(disasterEventTable.hipClusterId, hazardClusterId));
+	}
+
+	if (specificHazardId) {
+		conditions.push(eq(disasterEventTable.hipHazardId, specificHazardId));
+	}
+
+	if (geographicLevelId) {
+		conditions.push(
+			sql`jsonb_path_exists(
+          ${disasterEventTable.spatialFootprint},
+          concat(
+            '$[*].geojson.properties.division_id ? (@ == "',
+            ${geographicLevelId}::text,
+            '")'
+          )::jsonpath
+        )`
+		);
+	}
+
+	if (fromDate) {
+		conditions.push(gte(disasterEventTable.startDate, fromDate));
+	}
+
+	if (toDate) {
+		conditions.push(lte(disasterEventTable.endDate, toDate));
+	}
+
+	const result = await dr
+		.select({
+			disaster_count: sql<number>`count(*)`,
+		})
+		.from(disasterEventTable)
+		.where(and(...conditions));
+
+	return Number(result[0]?.disaster_count ?? 0);
+}
+
+export interface YearlyDisasterCount {
+	year: number;
+	count: number;
+}
+
+export async function getDisasterEventCountByYear(
+	filters: HazardFilters
+): Promise<YearlyDisasterCount[]> {
+	const {
+		countryAccountsId,
+		hazardTypeId,
+		hazardClusterId,
+		specificHazardId,
+		geographicLevelId,
+		fromDate,
+		toDate,
+	} = filters;
 
 	// Build WHERE conditions for disaster_event as SQL objects
 	const whereConditions: SQL[] = [];
@@ -82,104 +147,6 @@ export async function getDisasterEventCount(
 	const subqueryWhereClause =
 		whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
 
-	// Construct the full raw SQL query
-	const rawQuery = sql`
-	  WITH RECURSIVE division_hierarchy AS (
-		SELECT id, parent_id, id AS level1_id
-		FROM "division"
-		WHERE parent_id IS NULL
-		UNION ALL
-		SELECT d.id, d.parent_id, dh.level1_id
-		FROM "division" d
-		INNER JOIN division_hierarchy dh ON d.parent_id = dh.id
-	  )
-	  SELECT 
-		COUNT(DISTINCT ds.record_id) AS disaster_count
-	  FROM (
-		SELECT "disaster_event"."id" AS record_id, 
-			   jsonb_array_elements("disaster_event"."spatial_footprint")->'geojson'->'properties'->>'division_id' AS division_id
-		FROM "disaster_event"
-		${subqueryWhereClause}
-	  ) ds
-	  LEFT JOIN division_hierarchy dh 
-		ON ds.division_id = dh.id::text
-	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
-		SELECT level1_id 
-		FROM division_hierarchy 
-		WHERE id = ${geographicLevelId}
-	  )`
-			: sql``
-		}
-	`;
-
-	// Execute the query
-	const result = await dr.execute(rawQuery);
-
-	return Number(result.rows[0]?.disaster_count ?? 0);
-}
-
-export interface YearlyDisasterCount {
-	year: number;
-	count: number;
-}
-
-export async function getDisasterEventCountByYear(filters: HazardFilters): Promise<YearlyDisasterCount[]> {
-	const {
-		countryAccountsId,
-		hazardTypeId,
-		hazardClusterId,
-		specificHazardId,
-		geographicLevelId,
-		fromDate,
-		toDate,
-	} = filters;
-
-	// Build WHERE conditions for disaster_event as SQL objects
-	const whereConditions: SQL[] = [];
-	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
-	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
-	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
-	if (fromDate || toDate) {
-		const from = fromDate || "0001-01-01";
-		const to = toDate || "9999-12-31";
-		whereConditions.push(sql`
-		(
-		  CASE 
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM-DD')
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM')
-			WHEN "start_date" ~ '^[0-9]{4}$' THEN TO_DATE("start_date", 'YYYY')
-			ELSE NULL
-		  END IS NULL OR 
-		  CASE 
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM-DD')
-			WHEN "start_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("start_date", 'YYYY-MM')
-			WHEN "start_date" ~ '^[0-9]{4}$' THEN TO_DATE("start_date", 'YYYY')
-			ELSE NULL
-		  END <= ${to}::date
-		) AND (
-		  CASE 
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM-DD')
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM')
-			WHEN "end_date" ~ '^[0-9]{4}$' THEN TO_DATE("end_date", 'YYYY')
-			ELSE NULL
-		  END IS NULL OR 
-		  CASE 
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM-DD')
-			WHEN "end_date" ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE("end_date", 'YYYY-MM')
-			WHEN "end_date" ~ '^[0-9]{4}$' THEN TO_DATE("end_date", 'YYYY')
-			ELSE NULL
-		  END >= ${from}::date
-		)
-	  `);
-	}
-
-	// Combine conditions into a single WHERE clause for the subquery
-	const subqueryWhereClause = whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
-
 	// Construct the full raw SQL query with year extraction and ordering
 	const rawQuery = sql`
 	  WITH RECURSIVE division_hierarchy AS (
@@ -209,11 +176,15 @@ export async function getDisasterEventCountByYear(filters: HazardFilters): Promi
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId ? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
-	  )` : sql``}
+	  )`
+				: sql``
+		}
 	  GROUP BY 
 		EXTRACT(YEAR FROM CASE 
 		  WHEN ds.start_date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(ds.start_date, 'YYYY-MM-DD')
@@ -249,7 +220,9 @@ interface AffectedPeopleResult {
 	totalAffectedIndirect: number;
 }
 
-export async function getAffectedPeopleByHazardFilters(filters: HazardFilters): Promise<AffectedPeopleResult> {
+export async function getAffectedPeopleByHazardFilters(
+	filters: HazardFilters
+): Promise<AffectedPeopleResult> {
 	const {
 		countryAccountsId,
 		hazardTypeId,
@@ -260,15 +233,19 @@ export async function getAffectedPeopleByHazardFilters(filters: HazardFilters): 
 		toDate,
 	} = filters;
 
-	logger.debug(`Getting affected people by hazard filters for tenant ${countryAccountsId}`);
+	logger.debug(
+		`Getting affected people by hazard filters for tenant ${countryAccountsId}`
+	);
 
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
 	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
+	if (hazardClusterId)
+		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
+	if (specificHazardId)
+		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
 	if (fromDate || toDate) {
 		const from = fromDate || "0001-01-01";
 		const to = toDate || "9999-12-31";
@@ -315,7 +292,8 @@ export async function getAffectedPeopleByHazardFilters(filters: HazardFilters): 
 		WHERE id = ${geographicLevelId}
 	  )`);
 	}
-	const combinedWhereClause = allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
+	const combinedWhereClause =
+		allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
 
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -369,7 +347,6 @@ export async function getAffectedPeopleByHazardFilters(filters: HazardFilters): 
 		ON hd.id = aff.dsg_id
 	`;
 
-
 	// Execute the query
 	const result = await dr.execute(rawQuery);
 
@@ -391,7 +368,9 @@ interface GenderTotals {
 	totalNonBinary: number;
 }
 
-export async function getGenderTotalsByHazardFilters(filters: HazardFilters): Promise<GenderTotals> {
+export async function getGenderTotalsByHazardFilters(
+	filters: HazardFilters
+): Promise<GenderTotals> {
 	const {
 		countryAccountsId,
 		hazardTypeId,
@@ -407,8 +386,10 @@ export async function getGenderTotalsByHazardFilters(filters: HazardFilters): Pr
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
 	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
+	if (hazardClusterId)
+		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
+	if (specificHazardId)
+		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
 	if (fromDate || toDate) {
 		const from = fromDate || "0001-01-01";
 		const to = toDate || "9999-12-31";
@@ -455,7 +436,8 @@ export async function getGenderTotalsByHazardFilters(filters: HazardFilters): Pr
 		WHERE id = ${geographicLevelId}
 	  )`);
 	}
-	const combinedWhereClause = allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
+	const combinedWhereClause =
+		allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
 
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -544,7 +526,9 @@ interface AgeTotals {
 	totalSeniors: number;
 }
 
-export async function getAgeTotalsByHazardFilters(filters: HazardFilters): Promise<AgeTotals> {
+export async function getAgeTotalsByHazardFilters(
+	filters: HazardFilters
+): Promise<AgeTotals> {
 	const {
 		countryAccountsId,
 		hazardTypeId,
@@ -560,8 +544,10 @@ export async function getAgeTotalsByHazardFilters(filters: HazardFilters): Promi
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
 	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
+	if (hazardClusterId)
+		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
+	if (specificHazardId)
+		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
 	if (fromDate || toDate) {
 		const from = fromDate || "0001-01-01";
 		const to = toDate || "9999-12-31";
@@ -608,7 +594,8 @@ export async function getAgeTotalsByHazardFilters(filters: HazardFilters): Promi
 		WHERE id = ${geographicLevelId}
 	  )`);
 	}
-	const combinedWhereClause = allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
+	const combinedWhereClause =
+		allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
 
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -690,7 +677,9 @@ export async function getAgeTotalsByHazardFilters(filters: HazardFilters): Promi
 	};
 }
 
-export async function getDisabilityTotalByHazardFilters(filters: HazardFilters): Promise<number> {
+export async function getDisabilityTotalByHazardFilters(
+	filters: HazardFilters
+): Promise<number> {
 	const {
 		countryAccountsId,
 		hazardTypeId,
@@ -706,8 +695,10 @@ export async function getDisabilityTotalByHazardFilters(filters: HazardFilters):
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
 	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
+	if (hazardClusterId)
+		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
+	if (specificHazardId)
+		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
 	if (fromDate || toDate) {
 		const from = fromDate || "0001-01-01";
 		const to = toDate || "9999-12-31";
@@ -754,7 +745,8 @@ export async function getDisabilityTotalByHazardFilters(filters: HazardFilters):
 		WHERE id = ${geographicLevelId}
 	  )`);
 	}
-	const combinedWhereClause = allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
+	const combinedWhereClause =
+		allConditions.length > 0 ? sql`WHERE ${and(...allConditions)}` : sql``;
 
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -817,7 +809,9 @@ export async function getDisabilityTotalByHazardFilters(filters: HazardFilters):
 	const row = result.rows[0] || {};
 	return Number(row.total_disability ?? 0);
 }
-export async function getInternationalPovertyTotalByHazardFilters(filters: HazardFilters): Promise<number> {
+export async function getInternationalPovertyTotalByHazardFilters(
+	filters: HazardFilters
+): Promise<number> {
 	const {
 		countryAccountsId,
 		hazardTypeId,
@@ -833,8 +827,10 @@ export async function getInternationalPovertyTotalByHazardFilters(filters: Hazar
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
 	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
+	if (hazardClusterId)
+		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
+	if (specificHazardId)
+		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
 	if (fromDate || toDate) {
 		const from = fromDate || "0001-01-01";
 		const to = toDate || "9999-12-31";
@@ -870,7 +866,8 @@ export async function getInternationalPovertyTotalByHazardFilters(filters: Hazar
 	}
 
 	// Combine conditions into a single WHERE clause for the subquery
-	const subqueryWhereClause = whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
+	const subqueryWhereClause =
+		whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
 
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -918,11 +915,15 @@ export async function getInternationalPovertyTotalByHazardFilters(filters: Hazar
 		AND hd.national_poverty_line IS NULL
 		AND hd.custom = '{}'::jsonb
 		AND hd.global_poverty_line = 'below'
-	  ${geographicLevelId ? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
-	  )` : sql``}
+	  )`
+				: sql``
+		}
 	`;
 
 	// Execute the query
@@ -931,7 +932,9 @@ export async function getInternationalPovertyTotalByHazardFilters(filters: Hazar
 	return Number(result.rows[0].total_poverty);
 }
 
-export async function getNationalPovertyTotalByHazardFilters(filters: HazardFilters): Promise<number> {
+export async function getNationalPovertyTotalByHazardFilters(
+	filters: HazardFilters
+): Promise<number> {
 	const {
 		countryAccountsId,
 		hazardTypeId,
@@ -947,8 +950,10 @@ export async function getNationalPovertyTotalByHazardFilters(filters: HazardFilt
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
 	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
+	if (hazardClusterId)
+		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
+	if (specificHazardId)
+		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
 	if (fromDate || toDate) {
 		const from = fromDate || "0001-01-01";
 		const to = toDate || "9999-12-31";
@@ -984,7 +989,8 @@ export async function getNationalPovertyTotalByHazardFilters(filters: HazardFilt
 	}
 
 	// Combine conditions into a single WHERE clause for the subquery
-	const subqueryWhereClause = whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
+	const subqueryWhereClause =
+		whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
 
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -1032,11 +1038,15 @@ export async function getNationalPovertyTotalByHazardFilters(filters: HazardFilt
 		AND hd.global_poverty_line IS NULL
 		AND hd.custom = '{}'::jsonb
 		AND hd.national_poverty_line = 'below'
-	  ${geographicLevelId ? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
-	  )` : sql``}
+	  )`
+				: sql``
+		}
 	`;
 
 	// Execute the query
@@ -1129,13 +1139,14 @@ export async function getTotalDamagesByHazardFilters(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	`;
 
@@ -1229,13 +1240,14 @@ export async function getTotalLossesByHazardFilters(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	`;
 
@@ -1344,13 +1356,14 @@ export async function getTotalDamagesByYear(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	  GROUP BY 
 		COALESCE(
@@ -1479,13 +1492,14 @@ export async function getTotalLossesByYear(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	  GROUP BY 
 		EXTRACT(YEAR FROM CASE 
@@ -1595,13 +1609,14 @@ export async function getTotalDamagesByDivision(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	  GROUP BY dh.level1_id
 	`;
@@ -1704,13 +1719,14 @@ export async function getTotalLossesByDivision(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	  GROUP BY dh.level1_id
 	`;
@@ -1827,13 +1843,14 @@ export async function getTotalDeathsByDivision(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	  GROUP BY dh.level1_id
 	`;
@@ -1957,13 +1974,14 @@ export async function getTotalAffectedPeopleByDivision(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	  GROUP BY dh.level1_id
 	`;
@@ -2064,13 +2082,14 @@ export async function getDisasterEventCountByDivision(
 	  LEFT JOIN division_hierarchy dh 
 		ON ds.division_id = dh.id::text
 	  WHERE ds.division_id IS NOT NULL
-	  ${geographicLevelId
-			? sql`AND dh.level1_id IN (
+	  ${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		SELECT level1_id 
 		FROM division_hierarchy 
 		WHERE id = ${geographicLevelId}
 	  )`
-			: sql``
+				: sql``
 		}
 	  GROUP BY dh.level1_id
 	`;
@@ -2095,7 +2114,9 @@ export interface DisasterSummary {
 	totalAffectedPeople: number;
 }
 
-export async function getDisasterSummary(filters: HazardFilters): Promise<DisasterSummary[]> {
+export async function getDisasterSummary(
+	filters: HazardFilters
+): Promise<DisasterSummary[]> {
 	const {
 		countryAccountsId,
 		hazardTypeId,
@@ -2111,8 +2132,10 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 	whereConditions.push(sql`"approvalStatus" = ${"published"}`);
 	whereConditions.push(sql`"country_accounts_id" = ${countryAccountsId}`);
 	if (hazardTypeId) whereConditions.push(sql`"hip_type_id" = ${hazardTypeId}`);
-	if (hazardClusterId) whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
-	if (specificHazardId) whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
+	if (hazardClusterId)
+		whereConditions.push(sql`"hip_cluster_id" = ${hazardClusterId}`);
+	if (specificHazardId)
+		whereConditions.push(sql`"hip_hazard_id" = ${specificHazardId}`);
 	if (fromDate || toDate) {
 		const from = fromDate || "0001-01-01";
 		const to = toDate || "9999-12-31";
@@ -2120,7 +2143,8 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 	}
 
 	// Combine conditions for disaster_event (excluding geographicLevelId for now)
-	const eventWhereClause = whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
+	const eventWhereClause =
+		whereConditions.length > 0 ? sql`WHERE ${and(...whereConditions)}` : sql``;
 
 	// Construct the full raw SQL query
 	const rawQuery = sql`
@@ -2145,11 +2169,15 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 			WHERE div_id = dh.id::text
 		  )
 		${eventWhereClause}
-		${geographicLevelId ? sql`AND dh.level1_id IN (
+		${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		  SELECT level1_id 
 		  FROM division_hierarchy 
 		  WHERE id = ${geographicLevelId}
-		)` : sql``}
+		)`
+				: sql``
+		}
 	  ),
 	  affected_people AS (
 		SELECT 
@@ -2194,11 +2222,15 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 			WHERE div_id = dh.id::text
 		  )
 		${eventWhereClause}
-		${geographicLevelId ? sql`AND dh.level1_id IN (
+		${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		  SELECT level1_id 
 		  FROM division_hierarchy 
 		  WHERE id = ${geographicLevelId}
-		)` : sql``}
+		)`
+				: sql``
+		}
 		GROUP BY de."id"
 		HAVING STRING_AGG(DISTINCT (sf->'geojson'->'properties'->'name'->>'en'), ', ') IS NOT NULL
 	  ),
@@ -2211,11 +2243,15 @@ export async function getDisasterSummary(filters: HazardFilters): Promise<Disast
 		LEFT JOIN division_hierarchy dh 
 		  ON (sf->'geojson'->'properties'->>'division_id') = dh.id::text
 		WHERE dr."approvalStatus" = 'published'
-		${geographicLevelId ? sql`AND dh.level1_id IN (
+		${
+			geographicLevelId
+				? sql`AND dh.level1_id IN (
 		  SELECT level1_id 
 		  FROM division_hierarchy 
 		  WHERE id = ${geographicLevelId}
-		)` : sql``}
+		)`
+				: sql``
+		}
 	  )
 	  SELECT 
 		de."id" AS disaster_id,
