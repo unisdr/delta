@@ -79,7 +79,7 @@ const approvalFields = {
 // need function wrapper to avoid unique relation drizzle error
 function apiImportIdField() {
 	return {
-		apiImportId: text("api_import_id").unique(),
+		apiImportId: text("api_import_id"),
 	};
 }
 
@@ -241,7 +241,13 @@ export const devExample1Table = pgTable("dev_example1", {
 		() => countryAccounts.id,
 		{ onDelete: "cascade" }
 	),
-});
+}, (table) => ({
+	// Composite unique constraint for tenant-scoped api_import_id
+	devExample1ApiImportIdTenantUnique: unique("dev_example1_api_import_id_tenant_unique").on(
+		table.apiImportId,
+		table.countryAccountsId
+	),
+}));
 
 export type SelectDevExample1 = typeof devExample1Table.$inferSelect;
 export type InsertDevExample1 = typeof devExample1Table.$inferInsert;
@@ -384,7 +390,13 @@ export const hazardousEventTable = pgTable("hazardous_event", {
 		enum: ["forecasted", "ongoing", "passed"],
 	}),
 	dataSource: zeroText("data_source"),
-});
+}, (table) => ({
+	// Composite unique constraint for tenant-scoped api_import_id
+	hazardousEventApiImportIdTenantUnique: unique("hazardous_event_api_import_id_tenant_unique").on(
+		table.apiImportId,
+		table.countryAccountsId
+	),
+}));
 
 export const hazardousEventTableConstraits = {
 	apiImportId: "hazardous_event_apiImportId_unique",
@@ -610,7 +622,13 @@ export const disasterEventTable = pgTable("disaster_event", {
 	spatialFootprint: jsonb("spatial_footprint"),
 
 	legacyData: jsonb("legacy_data"),
-});
+}, (table) => ({
+	// Composite unique constraint for tenant-scoped api_import_id
+	disasterEventApiImportIdTenantUnique: unique("disaster_event_api_import_id_tenant_unique").on(
+		table.apiImportId,
+		table.countryAccountsId
+	),
+}));
 
 export type SelectDisasterEvent = typeof disasterEventTable.$inferSelect;
 export type InsertDisasterEvent = typeof disasterEventTable.$inferInsert;
@@ -921,7 +939,13 @@ export const assetTable = pgTable("asset", {
 		() => countryAccounts.id,
 		{ onDelete: "cascade" }
 	),
-});
+}, (table) => ({
+	// Composite unique constraint for tenant-scoped api_import_id
+	assetApiImportIdTenantUnique: unique("asset_api_import_id_tenant_unique").on(
+		table.apiImportId,
+		table.countryAccountsId
+	),
+}));
 
 export type SelectAsset = typeof assetTable.$inferSelect;
 export type InsertAsset = typeof assetTable.$inferInsert;
@@ -1071,7 +1095,13 @@ export const disasterRecordsTable = pgTable("disaster_records", {
 	attachments: jsonb("attachments"),
 	...approvalFields,
 	...createdUpdatedTimestamps,
-});
+}, (table) => ({
+	// Composite unique constraint for tenant-scoped api_import_id
+	disasterRecordsApiImportIdTenantUnique: unique("disaster_records_api_import_id_tenant_unique").on(
+		table.apiImportId,
+		table.countryAccountsId
+	),
+}));
 
 export const disasterRecordsRel = relations(
 	disasterRecordsTable,
