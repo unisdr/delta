@@ -8,7 +8,6 @@ import { useLoaderData, MetaFunction, Link } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 
 import { route } from "~/frontend/disaster-record/form";
-import { Filters } from "~/frontend/components/list-page-filters";
 import { disasterEventLink } from "~/frontend/events/disastereventform";
 import { format } from "date-fns";
 import { DisasterRecordsFilter } from "~/frontend/components/DisasterRecordsFilter";
