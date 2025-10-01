@@ -1,6 +1,5 @@
 import { Form } from "@remix-run/react";
 
-import { Field } from "~/frontend/form";
 
 interface Props {
 	search: string;
