@@ -11,6 +11,7 @@ import { route } from "~/frontend/disaster-record/form";
 import { Filters } from "~/frontend/components/list-page-filters";
 import { disasterEventLink } from "~/frontend/events/disastereventform";
 import { format } from "date-fns";
+import { DisasterRecordsFilter } from "~/frontend/components/DisasterRecordsFilter";
 
 export const loader = authLoaderPublicOrWithPerm(
 	"ViewData",
@@ -49,7 +50,8 @@ export default function Data() {
 		paginationData: pagination,
 		csvExportLinks: true,
 		beforeListElement: (
-			<Filters clearFiltersUrl={route} search={filters.search} />
+			<DisasterRecordsFilter clearFiltersUrl={route} search={filters.disasterEventUUID} />
+
 		),
 		listName: "disaster records",
 		instanceName: ld.instanceName,

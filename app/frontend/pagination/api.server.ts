@@ -19,8 +19,10 @@ export function paginationQueryFromURL(request: Request, extraParams: string[]) 
 	}
 
 	const params: Record<string, string[]> = {};
+	console.log("extraParams = ", extraParams)
 	for (const param of extraParams) {
 		const values = url.searchParams.getAll(param);
+		console.log(param, " = ", values)
 		if (values.length > 0) {
 			params[param] = values;
 		}
@@ -131,6 +133,7 @@ export async function executeQueryForPagination3<T>(
 ) {
 
 	const pagination = paginationQueryFromURL(request, extraParams);
+	console.log("pagination= ", pagination)
 
 	const items = await q({ offset: pagination.query.skip, limit: pagination.query.take })
 
