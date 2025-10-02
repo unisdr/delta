@@ -1,7 +1,10 @@
 import { Form } from "@remix-run/react";
+import { SelectSector } from "~/drizzle/schema";
+import { RECORD_STATUS_OPTIONS } from "../events/hazardevent-filters";
 
 interface Props {
 	search: string;
+	sectors: SelectSector[];
 	clearFiltersUrl: string;
 	formStartElement?: React.ReactNode;
 }
@@ -44,7 +47,8 @@ export function DisasterRecordsFilter(props: Props) {
 								type="date"
 								defaultValue={props.search}
 								placeholder="Select date"
-							/>
+								disabled
+								/>
 						</label>
 					</div>
 					<div className="dts-form-component">
@@ -55,7 +59,8 @@ export function DisasterRecordsFilter(props: Props) {
 								type="date"
 								defaultValue={props.search}
 								placeholder="Select date"
-							/>
+								disabled
+								/>
 						</label>
 					</div>
 					<div className="dts-form-component">
@@ -78,15 +83,15 @@ export function DisasterRecordsFilter(props: Props) {
 							<select
 								id="sector"
 								name="sector"
-								// value={sector || ""}
+								defaultValue={props.search}
 								disabled
 							>
 								<option value="">Select sector</option>
-								{/* {sectors.map((sector) => (
-								<option key={sector.id} value={sector.id}>
-									{sector.name}
-								</option>
-							))} */}
+								{props.sectors.map((sector) => (
+									<option key={sector.id} value={sector.id}>
+										{sector.sectorname}
+									</option>
+								))}
 							</select>
 						</label>
 					</div>
@@ -114,15 +119,14 @@ export function DisasterRecordsFilter(props: Props) {
 							<select
 								id="recordStatus"
 								name="recordStatus"
-								// value={recordStatus || ""}
-								disabled
+								defaultValue={props.search}
 							>
-								<option value="">Record status</option>
-								{/* {recordStatues.map((recordStatus) => (
-								<option key={recordStatus.id} value={recordStatus.id}>
-								{recordStatus.name}
-								</option>
-								))} */}
+								<option value="">Select record status</option>
+								{RECORD_STATUS_OPTIONS.map((recordStatus) => (
+									<option key={recordStatus.value} value={recordStatus.value}>
+										{recordStatus.label}
+									</option>
+								))}
 							</select>
 						</label>
 					</div>

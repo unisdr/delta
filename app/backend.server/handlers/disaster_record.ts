@@ -17,6 +17,7 @@ import {
 	getCountryAccountsIdFromSession,
 	getCountrySettingsFromSession,
 } from "~/util/session";
+import { getSectorByLevel } from "~/db/queries/sector";
 
 interface disasterRecordLoaderArgs {
 	loaderArgs: LoaderFunctionArgs;
@@ -27,15 +28,17 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	const { request } = loaderArgs;
 
 	const url = new URL(request.url);
-	const extraParams = ["disasterEventUUID", "disasterRecordUUID"];
+	const extraParams = ["disasterEventUUID", "disasterRecordUUID", "recordStatus"];
 	const filters: {
 		approvalStatus?: approvalStatusIds;
 		disasterEventUUID: string;
 		disasterRecordUUID: string;
+		recordStatus: string;
 	} = {
 		approvalStatus: "published",
 		disasterEventUUID: url.searchParams.get("disasterEventUUID") || "",
 		disasterRecordUUID: url.searchParams.get("disasterRecordUUID") || "",
+		recordStatus: url.searchParams.get("recordStatus") || "",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs);
@@ -47,6 +50,8 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		instanceName = settigns.websiteName;
 	}
 
+	const sectors=await getSectorByLevel(2);
+
 	if (!isPublic) {
 		filters.approvalStatus = undefined;
 	}
@@ -55,6 +60,7 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 
 	let searchDisasterEventUIID = "%" + filters.disasterEventUUID + "%";
 	let searchDisasterRecordUIID = "%" + filters.disasterRecordUUID + "%";
+	let searchRecordStatus = "%" + filters.recordStatus + "%";
 
 	let condition = and(
 		countryAccountsId
@@ -70,6 +76,9 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 			: undefined,
 		filters.disasterRecordUUID !== ""
 			? sql`${disasterRecordsTable.id}::text ILIKE ${searchDisasterRecordUIID}`
+			: undefined,
+		filters.recordStatus !== ""
+			? sql`${disasterRecordsTable.approvalStatus}::text ILIKE ${searchRecordStatus}`
 			: undefined
 	);
 
@@ -104,5 +113,6 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		filters,
 		data: res,
 		instanceName,
+		sectors
 	};
 }

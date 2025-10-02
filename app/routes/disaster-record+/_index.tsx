@@ -49,7 +49,7 @@ export default function Data() {
 		paginationData: pagination,
 		csvExportLinks: true,
 		beforeListElement: (
-			<DisasterRecordsFilter clearFiltersUrl={route} search={filters.disasterEventUUID} />
+			<DisasterRecordsFilter clearFiltersUrl={route} search={filters.disasterEventUUID} sectors={ld.sectors}/>
 
 		),
 		listName: "disaster records",

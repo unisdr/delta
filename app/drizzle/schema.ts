@@ -1310,8 +1310,8 @@ export const sectorDisasterRecordsRel = relations(
 );
 
 // Types for TypeScript
-export type Sector = typeof sectorTable.$inferSelect;
-export type SectorInsert = typeof sectorTable.$inferInsert;
+export type SelectSector = typeof sectorTable.$inferSelect;
+export type InsertSector = typeof sectorTable.$inferInsert;
 
 export type SelectSectorDisasterRecordsRelation =
 	typeof sectorDisasterRecordsRelationTable.$inferSelect;

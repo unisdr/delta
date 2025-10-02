@@ -36,7 +36,7 @@ const EVENT_STATUS_OPTIONS = [
   { value: "passed", label: "Passed" }
 ];
 
-const RECORD_STATUS_OPTIONS = [
+export const RECORD_STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
   { value: "waiting-for-validation", label: "Waiting for validation" },
   { value: "needs-revision", label: "Needs revision" },
