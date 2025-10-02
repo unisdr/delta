@@ -106,7 +106,6 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		events,
 		extraParams
 	);
-	console.log("res =", res);
 
 	return {
 		isPublic,
