@@ -285,7 +285,13 @@ export function HazardousEventFilters({
             </div>
           </div>
 
-          {/* Fourth Row: Checkboxes and Action Buttons */}
+          
+          <div className="dts-form__actions">
+            <input type="submit" className="mg-button mg-button-primary" value="Apply filters" />
+            <a href={clearFiltersUrl} className="mg-button mg-button-outline">Clear</a>
+          </div>
+
+          {/* Fourth Row: Checkboxes and Action Buttons
           <div className="dts-form__actions dts-form__actions--standalone" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
               <div className="dts-form-component">
@@ -324,7 +330,7 @@ export function HazardousEventFilters({
                 Apply filters
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Hidden search field to maintain compatibility */}
           {search && <input type="hidden" name="search" value={search} />}
