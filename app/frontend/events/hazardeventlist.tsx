@@ -304,7 +304,7 @@ export function ListView(args: ListViewArgs) {
 											to={`/hazardous-event/${item.id}`}
 											target={args.linksNewTab ? "_blank" : undefined}
 										>
-											{item.id}
+											{item.id.slice(0, 5)}
 										</Link>
 									</td>
 									<td>{formatDateDisplay(item.createdAt, "dd-MM-yyyy")}</td>
