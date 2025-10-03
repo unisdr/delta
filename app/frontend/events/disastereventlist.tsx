@@ -6,9 +6,8 @@ import { ActionLinks } from "~/frontend/form";
 
 import { route } from "~/frontend/events/disastereventform";
 
-import { hazardousEventLink } from "~/frontend/events/hazardeventform"
 import { Filters } from "../components/list-page-filters";
-
+import { formatDateDisplay } from "~/util/date";
 
 interface ListViewProps {
 	titleOverride?: string
@@ -21,6 +20,7 @@ export function ListView(props: ListViewProps) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof disasterEventsLoader>>>()
 	const { filters } = ld
 	const { items, pagination } = ld.data;
+
 	return DataScreen({
 		hideMainLinks: props.hideMainLinks,
 		isPublic: ld.isPublic,
@@ -28,16 +28,18 @@ export function ListView(props: ListViewProps) {
 		resourceName: "Disaster event",
 		baseRoute: route,
 		columns: ld.isPublic ? [
-			"ID",
-			"Hazardous Event",
-			"Start Date",
-			"End Date",
+			"Disaster Event Name",
+			"Disaster Event UUID",
+			"Records Affiliated",
+			"Created",
+			"Updated",
 		] : [
-			"ID",
-			"Status",
-			"Hazardous Event",
-			"Start Date",
-			"End Date",
+			"Disaster Event Name",
+			"Record Status",
+			"Disaster Event UUID",
+			"Records Affiliated",
+			"Created",
+			"Updated",
 			"Actions",
 		],
 		listName: "disaster events",
@@ -52,6 +54,14 @@ export function ListView(props: ListViewProps) {
 		/>,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
+				<td>{item.nameNational.length == 0 ? item.nameGlobalOrRegional : item.nameNational}</td>
+				{!ld.isPublic && (
+					<td className="dts-table__cell-centered">
+						<span
+							className={`dts-status dts-status--${item.approvalStatus}`}
+						></span>
+					</td>
+				)}
 				<td>
 					<Link
 						to={`${route}/${item.id}`}
@@ -60,16 +70,10 @@ export function ListView(props: ListViewProps) {
 						{item.id.slice(0, 5)}
 					</Link>
 				</td>
-				{!ld.isPublic && (
-					<td className="dts-table__cell-centered">
-						<span
-							className={`dts-status dts-status--${item.approvalStatus}`}
-						></span>
-					</td>
-				)}
-				<td>{item.hazardousEvent && hazardousEventLink(item.hazardousEvent)}</td>
-				<td>{item.startDate}</td>
-				<td>{item.endDate}</td>
+				
+				<td>TODO</td>
+				<td>{formatDateDisplay(item.createdAt, "dd-MM-yyyy")}</td>
+				<td>{formatDateDisplay(item.updatedAt, "dd-MM-yyyy")}</td>
 
 				<td>
 					{props.actions ?

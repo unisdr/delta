@@ -57,8 +57,8 @@ export function HazardousEventFilters({
   recordingOrganization = "",
   hazardousEventStatus = "",
   recordStatus = "",
-  viewMyRecords = false,
-  pendingMyAction = false,
+  // viewMyRecords = false,
+  // pendingMyAction = false,
   search = "",
   hip,
   clearFiltersUrl
