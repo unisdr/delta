@@ -20,6 +20,8 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@chakra-ui/react": "^3.27.0",
+    "@emotion/react": "^11.14.0",
     "@floating-ui/dom": "^1.6.13",
     "@remix-run/express": "^2.14.0",
     "@remix-run/node": "^2.14.0",

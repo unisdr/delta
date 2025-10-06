@@ -526,7 +526,8 @@ svg.dts-icon--ocha {
   align-items: center;
   justify-content: center;
 }
-
+/*
+TODO: chakraui test
 button {
   display: flex;
   font-family: "Roboto", "Noto Sans SC", "Noto Sans Arabic", sans-serif;
@@ -535,6 +536,7 @@ button {
   border: none;
   cursor: pointer;
 }
+*/
 
 mark {
   background-color: #B5D2D2;
