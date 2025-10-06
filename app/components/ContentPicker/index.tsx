@@ -391,6 +391,7 @@ export const ContentPicker = forwardRef<HTMLDivElement, ContentPickerProps>(
                             <div className="dts-dialog__header" style={{ justifyContent: "space-between" }}>
                                 <h2 className="dts-heading-2">{caption}</h2>
                                 <a type="button" aria-label="Close dialog" onClick={discardPicker}
+                                className="dts-dialog-close-button"
                                 >
                                     <svg aria-hidden="true" focusable="false" role="img" style={{ cursor: "pointer" }}>
                                         <use href={`${base_path}/assets/icons/close.svg#close`}></use>

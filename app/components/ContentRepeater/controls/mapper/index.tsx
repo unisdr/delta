@@ -90,6 +90,7 @@ export const renderMapperDialog = (
 						aria-label="Close dialog"
 						onClick={closeMapDialog}
 						style={{ color: "#000" }}
+						className="dts-dialog-close-button"
 					>
 						<svg aria-hidden="true" focusable="false" role="img">
 							<use href={`${base_path}/assets/icons/close.svg#close`}></use>

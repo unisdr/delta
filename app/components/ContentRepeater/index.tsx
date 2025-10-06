@@ -1445,7 +1445,7 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
       <dialog ref={dialogRef} className="dts-dialog" {...(isDialogOpen ? { open: true } : {})}>
         <div className="dts-dialog__content">
           <div className="dts-dialog__header">
-            <a type="button" aria-label="Close dialog" onClick={closeDialog} style={{ color: "#000" }}>
+            <a type="button" aria-label="Close dialog" onClick={closeDialog} style={{ color: "#000" }} className="dts-dialog-close-button">
               <svg aria-hidden="true" focusable="false" role="img">
                 <use href={`${base_path}/assets/icons/close.svg#close`}></use>
               </svg>

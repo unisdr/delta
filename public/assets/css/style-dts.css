@@ -20,6 +20,9 @@ html {
   -webkit-text-size-adjust: 100%;
   /* 2. Prevent adjustments of font size after orientation changes in iOS. */
   tab-size: 4;
+
+  font-size: 10px;
+  -webkit-tap-highlight-color: transparent;
   /* 3. Use a more readable tab size (opinionated). */
 }
 
@@ -29,7 +32,9 @@ Sections
 */
 body {
   margin: 0;
-  /* Remove the margin in all browsers. */
+  padding: 0 !important;
+  font-family: "Roboto", "Noto Sans SC", "Noto Sans Arabic", sans-serif;
+  color: #181823;
 }
 
 /*
@@ -109,13 +114,9 @@ optgroup,
 select,
 textarea {
   font-family: inherit;
-  /* 1 */
   font-size: 100%;
-  /* 1 */
   line-height: 1.15;
-  /* 1 */
   margin: 0;
-  /* 2 */
 }
 
 /**
@@ -322,108 +323,7 @@ summary {
   /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
-/**
- * @tokens Colors - basic
- * @presenter Color
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Colors - neutral
- * @presenter Color
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Colors - accent
- * @presenter Color
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Colors - interactive
- * @presenter Color
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens UNDRR Colors
- * @presenter Color
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Sendai Framework Colors
- * @presenter Color
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Spacing
- * @presenter Spacing
- */
-/**
- * @tokens Font sizes
- * @presenter FontSize
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Font families
- * @presenter FontFamily
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Widths
- * @presenter Spacing
- */
-/**
- * @tokens Breakpoints
- * @presenter Spacing
- */
-/**
- * @tokens Colors - component
- * @presenter Color
- *
- * https://github.com/UX-and-I/storybook-design-token
- */
-/**
- * @tokens Component sizing
- * @presenter Spacing
- */
-/**
-  * @tokens-end
-  */
-/* variables end */
-/*
- * DTS Colors - BEGIN
- */
-/*
- * 
- */
-/*
- * DTS Spacing - BEGIN
- */
-/*
- * 
- */
-/*
- * DTS mg variables overwrite - BEGIN
- */
-/*
- * 
- */
-/*
- * DTS new variables - BEGIN
- */
-/*
- * 
- */
-/* mixing  end */
-/* placeholder start */
-/* placeholder end */
-/* base start */
+
 .show-large {
   display: none;
   /* medium design - 1024px up */
@@ -505,18 +405,6 @@ summary {
   content: "";
 }
 
-/* base end */
-html {
-  font-size: 10px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  padding: 0 !important;
-  font-family: "Roboto", "Noto Sans SC", "Noto Sans Arabic", sans-serif;
-  color: #181823;
-}
-
 h1,
 h2,
 h3,
@@ -545,7 +433,12 @@ a:hover {
   text-decoration: underline;
 }
 
-svg {
+/* svg {
+  width: 2.4rem;
+  height: 2.4rem;
+} */
+
+.dts-svg-24{
   width: 2.4rem;
   height: 2.4rem;
 }
@@ -558,14 +451,14 @@ svg.dts-icon--ocha {
   justify-content: center;
 }
 
-button {
+/* button {
   display: flex;
   font-family: "Roboto", "Noto Sans SC", "Noto Sans Arabic", sans-serif;
   background-color: transparent;
   padding: 0;
   border: none;
   cursor: pointer;
-}
+} */
 
 mark {
   background-color: #B5D2D2;
@@ -1013,10 +906,6 @@ nav ul {
   }
 }
 
-.dts-page-title .mg-container {
-  /* large design - 1164px up */
-}
-
 @media (width >=1164px) {
   .dts-page-title .mg-container {
     padding: 0 6.4rem;
@@ -1046,6 +935,14 @@ header .mg-container {
   padding: 3.2rem 1.6rem;
   background-color: #fff;
   /* medium design - 768px up */
+}
+
+.dts-dialog-close-button{
+  display: flex;
+  background-color: transparent;
+  padding: 0;
+  border: none;
+  cursor: pointer;
 }
 
 @media (width >=768px) {
@@ -1390,9 +1287,6 @@ header .mg-container {
   }
 }
 
-.dts-footer__bottom-bar-text {
-  /* medium design - 1024px up */
-}
 
 @media (width >=1024px) {
   .dts-footer__bottom-bar-text {
@@ -1422,10 +1316,6 @@ header .mg-container {
 .dts-form--spaced {
   gap: 4rem;
   text-align: center;
-}
-
-.dts-form:not(.dts-form--horizontal):not(.dts-form--vertical):not(.dts-form--spaced) {
-  /* large design - 1164px up */
 }
 
 @media (width >=1164px) {
@@ -1532,10 +1422,6 @@ header .mg-container {
 .dts-form .dts-form__body .dts-form__actions--standalone {
   flex-direction: row;
   margin-top: 0;
-}
-
-.dts-form:not(.dts-form--vertical) .dts-form__actions:not(.dts-form__actions--centered):not(.dts-form__actions--standalone) {
-  /* medium design - 768px up */
 }
 
 @media (width >=768px) {

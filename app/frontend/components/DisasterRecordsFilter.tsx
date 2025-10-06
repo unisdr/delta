@@ -48,7 +48,7 @@ export function DisasterRecordsFilter(props: Props) {
 								defaultValue={props.search}
 								placeholder="Select date"
 								disabled
-								/>
+							/>
 						</label>
 					</div>
 					<div className="dts-form-component">
@@ -60,7 +60,7 @@ export function DisasterRecordsFilter(props: Props) {
 								defaultValue={props.search}
 								placeholder="Select date"
 								disabled
-								/>
+							/>
 						</label>
 					</div>
 					<div className="dts-form-component">

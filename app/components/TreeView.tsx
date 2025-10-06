@@ -942,6 +942,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 									type="button"
 									aria-label="Close dialog"
 									onClick={treeViewDiscard}
+									className="dts-dialog-close-button"
 								>
 									<svg aria-hidden="true" focusable="false" role="img">
 										<use
