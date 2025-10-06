@@ -44,7 +44,7 @@ import {
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css"; 
-import { PrimeReactProvider } from 'primereact/api';
+// import { PrimeReactProvider } from 'primereact/api';
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250531123412" },
@@ -320,11 +320,11 @@ export default function Screen() {
 							</header>
 						)}
 						<main className="dts-main-container">
-							<PrimeReactProvider value={{
+							{/* <PrimeReactProvider value={{
 						        "ripple": true,
-							}}>
+							}}> */}
 								<Outlet />
-							</PrimeReactProvider>
+							{/* </PrimeReactProvider> */}
 						</main>
 						<footer>
 							{boolShowHeaderFooter && (
