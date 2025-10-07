@@ -110,7 +110,7 @@ function DTSComboboxStaticList(props: { data: string[] }) {
 		() =>
 			props.data.filter((item) =>
 				item.toLowerCase().includes(searchValue.toLowerCase()),
-			),
+			).slice(0, 50),
 		[searchValue],
 	)
 
