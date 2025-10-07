@@ -1,6 +1,6 @@
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { ActionBar, Checkbox } from "@chakra-ui/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { LuShare, LuTrash2 } from "react-icons/lu"
 
 import {
@@ -42,6 +42,12 @@ import {
 } from "@remix-run/react";
 
 
+import {
+	HStack,
+	Span,
+	Spinner,
+	useListCollection,
+} from "@chakra-ui/react"
 
 export const loader = authLoaderPublicOrWithPerm("ViewData", async () => {
 
@@ -70,6 +76,9 @@ export default function Page() {
 
 			<h2 style={{ marginTop: "20px" }}>Combobox (assets, preloaded via loader)</h2>
 			<DTSComboboxStaticList data={assets}></DTSComboboxStaticList>
+
+			<h2 style={{ marginTop: "20px" }}>Combobox (assets, server search on demand)</h2>
+			<DTSComboboxServerSearch></DTSComboboxServerSearch>
 
 			<h2 style={{ marginTop: "20px" }}>Action bar</h2>
 			<DTSActionBar></DTSActionBar>
@@ -156,6 +165,111 @@ function DTSComboboxStaticList(props: { data: string[] }) {
 		</Combobox.Root>
 	);
 }
+
+function DTSComboboxServerSearch() {
+
+	const [isClient, setIsClient] = useState(false);
+	const [loading, setLoading] = useState(false);
+
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
+	const [inputValue, setInputValue] = useState("")
+
+	const { collection, set } = useListCollection<Asset>({
+		initialItems: [],
+		itemToString: (item) => item.name,
+		itemToValue: (item) => item.name,
+	})
+
+	useEffect(() => {
+		if (!isClient) return;
+		if (!inputValue) return;
+
+		setLoading(true);
+		const controller = new AbortController();
+
+		const timeoutId = window.setTimeout(async () => {
+			try {
+				const q = encodeURIComponent(inputValue);
+				const response = await fetch(`/api/asset/search?query=${q}`, {
+					signal: controller.signal,
+				});
+
+				if (!response.ok) return;
+				const data = await response.json();
+				set(data);
+			} catch (err) {
+				if ((err as any).name !== "AbortError") {
+					console.error(err);
+				}
+			} finally {
+				if (!controller.signal.aborted) {
+					setLoading(false);
+				}
+			}
+		}, 400);
+
+		return () => {
+			clearTimeout(timeoutId);
+			controller.abort();
+		};
+
+	}, [inputValue, set]);
+
+	return (
+		<Combobox.Root
+			width="320px"
+			collection={collection}
+			onInputValueChange={(e) => setInputValue(e.inputValue)}
+			positioning={{ sameWidth: false, placement: "bottom-start" }}
+		>
+			<Combobox.Label>Search</Combobox.Label>
+
+			<Combobox.Control>
+				<Combobox.Input placeholder="Type to search" />
+				<Combobox.IndicatorGroup>
+					<Combobox.ClearTrigger />
+					<Combobox.Trigger />
+				</Combobox.IndicatorGroup>
+			</Combobox.Control>
+
+			<Portal>
+				<Combobox.Positioner>
+					<Combobox.Content minW="sm">
+						{loading ? (
+							<HStack p="2">
+								<Spinner size="xs" borderWidth="1px" />
+								<Span>Loading...</Span>
+							</HStack>
+						) : (
+							collection.items.map((a) => (
+								<Combobox.Item key={a.id} item={a}>
+									<HStack justify="space-between" textStyle="sm">
+										<Span fontWeight="medium" truncate>
+											{a.name}
+										</Span>
+										<Span fontWeight="medium" truncate>
+											id: {a.id.slice(0, 5)}
+										</Span>
+									</HStack>
+									<Combobox.ItemIndicator />
+								</Combobox.Item>
+							))
+						)}
+					</Combobox.Content>
+				</Combobox.Positioner>
+			</Portal>
+		</Combobox.Root>
+	)
+}
+
+interface Asset {
+	id: string
+	name: string
+}
+
 
 function DTSActionBar() {
 	const [checked, setChecked] = useState(false)
