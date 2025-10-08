@@ -39,6 +39,7 @@ import {
 
 import {
 	useLoaderData,
+	useFetcher
 } from "@remix-run/react";
 
 
@@ -79,6 +80,9 @@ export default function Page() {
 
 			<h2 style={{ marginTop: "20px" }}>Combobox (assets, server search on demand)</h2>
 			<DTSComboboxServerSearch></DTSComboboxServerSearch>
+
+			<h2 style={{ marginTop: "20px" }}>Combobox (assets, server search on demand, using remix useFetcher)</h2>
+			<DTSComboboxServerSearchUseFetcher></DTSComboboxServerSearchUseFetcher>
 
 			<h2 style={{ marginTop: "20px" }}>Action bar</h2>
 			<DTSActionBar></DTSActionBar>
@@ -263,6 +267,91 @@ function DTSComboboxServerSearch() {
 			</Portal>
 		</Combobox.Root>
 	)
+}
+
+function DTSComboboxServerSearchUseFetcher() {
+	const fetcher = useFetcher<Asset[]>();
+	const [isClient, setIsClient] = useState(false);
+	const [inputValue, setInputValue] = useState("");
+
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
+	const { collection, set } = useListCollection<Asset>({
+		initialItems: [],
+		itemToString: (item) => item.name,
+		itemToValue: (item) => item.name,
+	});
+
+	useEffect(() => {
+		if (!isClient) return;
+		if (!inputValue) {
+			set([]);
+			return;
+		}
+
+		const timeoutId = window.setTimeout(() => {
+			const href = `/api/asset/search?query=${encodeURIComponent(inputValue)}`;
+			fetcher.load(href);
+		}, 400);
+
+		return () => clearTimeout(timeoutId);
+	}, [inputValue, fetcher, isClient]);
+
+	useEffect(() => {
+		if (fetcher.data) {
+			set(fetcher.data);
+		}
+	}, [fetcher.data, set]);
+
+	return (
+		<Combobox.Root
+			width="320px"
+			collection={collection}
+			onInputValueChange={(e) => setInputValue(e.inputValue)}
+			positioning={{ sameWidth: false, placement: "bottom-start" }}
+		>
+			<Combobox.Label>Search</Combobox.Label>
+
+			<Combobox.Control>
+				<Combobox.Input placeholder="Type to search" />
+				<Combobox.IndicatorGroup>
+					<Combobox.ClearTrigger />
+					<Combobox.Trigger />
+				</Combobox.IndicatorGroup>
+			</Combobox.Control>
+
+			<Portal>
+				<Combobox.Positioner>
+					<Combobox.Content minW="sm">
+						{fetcher.state !== "idle" ? (
+							<HStack p="2">
+								<Spinner size="xs" borderWidth="1px" />
+								<Span>Loading...</Span>
+							</HStack>
+						) : collection.items.length > 0 ? (
+							collection.items.map((a) => (
+								<Combobox.Item key={a.id} item={a}>
+									<HStack justify="space-between" textStyle="sm">
+										<Span fontWeight="medium" truncate>
+											{a.name}
+										</Span>
+										<Span fontWeight="medium" truncate>
+											id: {a.id.slice(0, 5)}
+										</Span>
+									</HStack>
+									<Combobox.ItemIndicator />
+								</Combobox.Item>
+							))
+						) : (
+							<Span p="2">No results found</Span>
+						)}
+					</Combobox.Content>
+				</Combobox.Positioner>
+			</Portal>
+		</Combobox.Root>
+	);
 }
 
 interface Asset {
