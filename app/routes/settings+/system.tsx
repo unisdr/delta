@@ -14,15 +14,12 @@ import { getSystemInfo } from "~/db/queries/dtsSystemInfo";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountryAccountsIdFromSession } from "~/util/session";
-<<<<<<< HEAD
 import {
 	SelectCountries,
 	InstanceSystemSettings,
 	SelectDtsSystemInfo,
+	countryAccountTypes,
 } from "~/drizzle/schema";
-=======
-import { SelectCountries, InstanceSystemSettings, SelectDtsSystemInfo, countryAccountTypes } from "~/drizzle/schema";
->>>>>>> 085c5efa9c667091710de2f7f85092da4c2e0667
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
 import {
@@ -89,10 +86,7 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 			dtsSystemInfo,
 			country,
 			userRole: userRole,
-<<<<<<< HEAD
-=======
-			countryAccountType: countryAccount?.type
->>>>>>> 085c5efa9c667091710de2f7f85092da4c2e0667
+			countryAccountType: countryAccount?.type,
 		});
 	}
 );
