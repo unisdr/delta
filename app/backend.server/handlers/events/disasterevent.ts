@@ -9,7 +9,7 @@ import {
 	OffsetLimit,
 } from "~/frontend/pagination/api.server";
 
-import { hazardBasicInfoJoin } from "~/backend.server/models/event";
+// import { hazardBasicInfoJoin } from "~/backend.server/models/event";
 
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 

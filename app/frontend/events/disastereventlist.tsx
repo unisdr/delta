@@ -8,6 +8,7 @@ import { route } from "~/frontend/events/disastereventform";
 
 import { Filters } from "../components/list-page-filters";
 import { formatDateDisplay } from "~/util/date";
+import { EventCounter } from "~/components/EventCounter";
 
 interface ListViewProps {
 	titleOverride?: string
@@ -48,10 +49,19 @@ export function ListView(props: ListViewProps) {
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
-		beforeListElement: <Filters
-			clearFiltersUrl={route}
-			search={filters.search}
-		/>,
+		beforeListElement: <>
+			<Filters
+				clearFiltersUrl={route}
+				search={filters.search}
+			/>
+			<div>
+				<span>
+					<strong>
+						<EventCounter filteredEvents={items.length} totalEvents={pagination.totalItems} description="disaster events" />
+					</strong>
+				</span>
+			</div>
+		</>,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>{item.nameNational.length == 0 ? item.nameGlobalOrRegional : item.nameNational}</td>
