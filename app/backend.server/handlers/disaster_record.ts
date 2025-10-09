@@ -28,7 +28,11 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	const { request } = loaderArgs;
 
 	const url = new URL(request.url);
-	const extraParams = ["disasterEventUUID", "disasterRecordUUID", "recordStatus"];
+	const extraParams = [
+		"disasterEventUUID",
+		"disasterRecordUUID",
+		"recordStatus",
+	];
 	const filters: {
 		approvalStatus?: approvalStatusIds;
 		disasterEventUUID: string;
@@ -44,13 +48,13 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	const isPublic = authLoaderIsPublic(loaderArgs);
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	let instanceName = "Disaster Tracking System";
+	let instanceName = "DELTA Resilience";
 	if (countryAccountsId) {
 		const settigns = await getCountrySettingsFromSession(request);
 		instanceName = settigns.websiteName;
 	}
 
-	const sectors=await getSectorByLevel(2);
+	const sectors = await getSectorByLevel(2);
 
 	if (!isPublic) {
 		filters.approvalStatus = undefined;
@@ -112,6 +116,6 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		filters,
 		data: res,
 		instanceName,
-		sectors
+		sectors,
 	};
 }

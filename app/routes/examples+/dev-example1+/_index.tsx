@@ -13,12 +13,15 @@ import { ActionLinks } from "~/frontend/form";
 
 import { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { route } from "~/frontend/dev_example1";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const { request } = args;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	let instanceName = "Disaster Tracking System";
+	let instanceName = "DELTA Resilience";
 
 	if (countryAccountsId) {
 		const settings = await getCountrySettingsFromSession(request);
@@ -26,20 +29,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	}
 
 	// Get paginated data
-	const paginatedLoader = createPaginatedLoader(
-		async (offsetLimit) => {
-			return dr.query.devExample1Table.findMany({
-				...offsetLimit,
-				columns: { id: true, field1: true },
-				where: eq(devExample1Table.countryAccountsId, countryAccountsId),
-				orderBy: [desc(devExample1Table.field1)],
-			});
-		},
-		await dr.$count(
-			devExample1Table,
-			eq(devExample1Table.countryAccountsId, countryAccountsId)
-		)
-	);
+	const paginatedLoader = createPaginatedLoader(async (offsetLimit) => {
+		return dr.query.devExample1Table.findMany({
+			...offsetLimit,
+			columns: { id: true, field1: true },
+			where: eq(devExample1Table.countryAccountsId, countryAccountsId),
+			orderBy: [desc(devExample1Table.field1)],
+		});
+	}, await dr.$count(devExample1Table, eq(devExample1Table.countryAccountsId, countryAccountsId)));
 
 	// Call the loader
 	const paginatedData = await paginatedLoader(args);

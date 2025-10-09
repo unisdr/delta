@@ -50,7 +50,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 	let searchIlike = "%" + filters.search + "%";
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	let instanceName = "Disaster Tracking System";
+	let instanceName = "DELTA Resilience";
 	if (countryAccountsId) {
 		const settigns = await getCountrySettingsFromSession(request);
 		instanceName = settigns.websiteName;
@@ -223,6 +223,6 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 		isPublic,
 		filters,
 		data: res,
-		instanceName
+		instanceName,
 	};
 }

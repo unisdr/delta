@@ -35,7 +35,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	}
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	let instanceName = "Disaster Tracking System";
+	let instanceName = "DELTA Resilience";
 	if (countryAccountsId) {
 		const settigns = await getCountrySettingsFromSession(request);
 		instanceName = settigns.websiteName;
