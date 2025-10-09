@@ -68,7 +68,6 @@ function Dialog({ visible, onClose, header, children, footer }: DialogProps) {
 			<div className="dts-form__body">{children}</div>
 
 			<div className="dts-form__actions">{footer}</div>
-			::backdrop
 		</dialog>
 	);
 }
