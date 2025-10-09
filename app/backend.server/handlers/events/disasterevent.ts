@@ -1,4 +1,4 @@
-import { disasterEventTable } from "~/drizzle/schema";
+import { disasterEventTable, disasterRecordsTable, hazardousEventTable } from "~/drizzle/schema";
 
 import { authLoaderIsPublic } from "~/util/auth";
 
@@ -189,33 +189,62 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 	);
 
 	const count = await dr.$count(disasterEventTable, condition);
-	const events = async (offsetLimit: OffsetLimit) => {
-		return await dr.query.disasterEventTable.findMany({
-			...offsetLimit,
-			columns: {
-				id: true,
-				startDate: true,
-				endDate: true,
-				approvalStatus: true,
-				updatedAt: true,
-				createdAt: true,
-				nameNational: true,
-				nameGlobalOrRegional: true,
-			},
-			with: {
-				hazardousEvent: {
-					with: hazardBasicInfoJoin,
-				},
-			},
-			orderBy: [desc(disasterEventTable.updatedAt)],
-			where: condition,
-		});
+	// const events = async (offsetLimit: OffsetLimit) => {
+	// 	return await dr.query.disasterEventTable.findMany({
+	// 		...offsetLimit,
+	// 		columns: {
+	// 			id: true,
+	// 			startDate: true,
+	// 			endDate: true,
+	// 			approvalStatus: true,
+	// 			updatedAt: true,
+	// 			createdAt: true,
+	// 			nameNational: true,
+	// 			nameGlobalOrRegional: true,
+	// 		},
+	// 		with: {
+	// 			hazardousEvent: {
+	// 				with: hazardBasicInfoJoin,
+	// 			},
+	// 		},
+	// 		orderBy: [desc(disasterEventTable.updatedAt)],
+	// 		where: condition,
+	// 	});
+	// };
+
+	const events2 = async (offsetLimit: OffsetLimit) => {
+		return await dr
+			.select({
+				id: disasterEventTable.id,
+				startDate: disasterEventTable.startDate,
+				endDate: disasterEventTable.endDate,
+				approvalStatus: disasterEventTable.approvalStatus,
+				updatedAt: disasterEventTable.updatedAt,
+				createdAt: disasterEventTable.createdAt,
+				nameNational: disasterEventTable.nameNational,
+				nameGlobalOrRegional: disasterEventTable.nameGlobalOrRegional,
+
+				// Hazardous Event fields
+				hazardId: hazardousEventTable.id,
+
+				// Optional: count of disaster records
+				recordCount: sql<number>`(
+					SELECT COUNT(*) FROM ${disasterRecordsTable}
+					WHERE ${disasterRecordsTable.disasterEventId} = ${disasterEventTable.id}
+				)`.as('recordCount'),
+			})
+			.from(disasterEventTable)
+			.leftJoin(hazardousEventTable, eq(hazardousEventTable.id, disasterEventTable.hazardousEventId))
+			.where(condition)
+			.orderBy(desc(disasterEventTable.updatedAt))
+			.limit(offsetLimit.limit)
+			.offset(offsetLimit.offset);
 	};
 
 	const res = await executeQueryForPagination3(
 		request,
 		count,
-		events,
+		events2,
 		extraParams
 	);
 
