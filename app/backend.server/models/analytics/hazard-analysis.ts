@@ -1,10 +1,6 @@
 import { and, eq, gte, lte, SQL, sql } from "drizzle-orm";
 import { dr } from "~/db.server";
 import { disasterEventTable } from "~/drizzle/schema";
-import createLogger from "~/utils/logger.server";
-
-// Initialize logger for this module
-const logger = createLogger("backend.server/models/analytics/hazard-analysis");
 
 interface HazardFilters {
 	countryAccountsId: string;
@@ -179,10 +175,6 @@ export async function getAffectedPeopleByHazardFilters(
 		fromDate,
 		toDate,
 	} = filters;
-
-	logger.debug(
-		`Getting affected people by hazard filters for tenant ${countryAccountsId}`
-	);
 
 	// Build WHERE conditions for disaster_records as SQL objects
 	const whereConditions: SQL[] = [];

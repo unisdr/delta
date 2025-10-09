@@ -14,11 +14,15 @@ import { getSystemInfo } from "~/db/queries/dtsSystemInfo";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountryAccountsIdFromSession } from "~/util/session";
+<<<<<<< HEAD
 import {
 	SelectCountries,
 	InstanceSystemSettings,
 	SelectDtsSystemInfo,
 } from "~/drizzle/schema";
+=======
+import { SelectCountries, InstanceSystemSettings, SelectDtsSystemInfo, countryAccountTypes } from "~/drizzle/schema";
+>>>>>>> 085c5efa9c667091710de2f7f85092da4c2e0667
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
 import {
@@ -44,6 +48,7 @@ interface LoaderData {
 	dtsSystemInfo: SelectDtsSystemInfo | null;
 	country: SelectCountries;
 	userRole: string;
+	countryAccountType: string | null;
 }
 
 export const loader: LoaderFunction = authLoaderWithPerm(
@@ -84,6 +89,10 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 			dtsSystemInfo,
 			country,
 			userRole: userRole,
+<<<<<<< HEAD
+=======
+			countryAccountType: countryAccount?.type
+>>>>>>> 085c5efa9c667091710de2f7f85092da4c2e0667
 		});
 	}
 );
@@ -269,6 +278,9 @@ export default function Settings() {
 								<strong>Country:</strong> {loaderData.country.name}
 							</li>
 							<li>
+								<strong>Type:</strong> {loaderData.countryAccountType} instance
+							</li>
+							<li>
 								<strong>ISO 3:</strong>{" "}
 								{loaderData.instanceSystemSettings?.dtsInstanceCtryIso3}
 							</li>
@@ -310,11 +322,11 @@ export default function Settings() {
 						</ul>
 					</li>
 					<li>
-						<strong>Website Name:</strong>{" "}
+						<strong>Instance Name:</strong>{" "}
 						{loaderData.instanceSystemSettings?.websiteName}{" "}
 					</li>
 					<li>
-						<strong>Website Logo URL:</strong>{" "}
+						<strong>Instance Logo URL:</strong>{" "}
 						{loaderData.instanceSystemSettings?.websiteLogo}{" "}
 					</li>
 					<li>
