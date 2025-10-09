@@ -6,16 +6,17 @@ import {
 	useNavigate,
 	useFetcher,
 } from "@remix-run/react";
-import {
-	Form,
-	SubmitButton,
-	FormResponse,
-} from "~/frontend/form";
+import { Form, SubmitButton, FormResponse } from "~/frontend/form";
 import { getCountryRoles } from "~/frontend/user/roles";
 import { authLoaderWithPerm, authActionWithPerm } from "~/util/auth";
 import { formStringData } from "~/util/httputil";
 import { MainContainer } from "~/frontend/container";
-import { redirectWithMessage, sessionCookie, getUserFromSession, getCountryAccountsIdFromSession } from "~/util/session";
+import {
+	redirectWithMessage,
+	sessionCookie,
+	getUserFromSession,
+	getCountryAccountsIdFromSession,
+} from "~/util/session";
 import {
 	adminUpdateUser,
 	AdminUpdateUserFields,
@@ -29,7 +30,7 @@ import { getUserCountryAccountsByUserIdAndCountryAccountsId } from "~/db/queries
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Edit User - DTS" },
+		{ title: "Edit User - DELTA Resilience" },
 		{ name: "description", content: "Edit User." },
 	];
 };
@@ -49,10 +50,16 @@ export const loader = authLoaderWithPerm("EditUsers", async (loaderArgs) => {
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
-	const item = await getUserCountryAccountsByUserIdAndCountryAccountsId(id, countryAccountsId);
+	const item = await getUserCountryAccountsByUserIdAndCountryAccountsId(
+		id,
+		countryAccountsId
+	);
 
 	if (!item) {
-		throw new Response("User not found or you don't have permission to edit this user", { status: 404 });
+		throw new Response(
+			"User not found or you don't have permission to edit this user",
+			{ status: 404 }
+		);
 	}
 
 	return {
@@ -80,14 +87,20 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 		throw new Response("Missing ID", { status: 400 });
 	}
 
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-	const countryAccountsId = session.get("countryAccountsId")
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const countryAccountsId = session.get("countryAccountsId");
 
 	if (!countryAccountsId) {
 		throw new Response("Unauthorized - No tenant context", { status: 401 });
 	}
 
-	const userCountryAccounts = await getUserCountryAccountsByUserIdAndCountryAccountsId(id, countryAccountsId)
+	const userCountryAccounts =
+		await getUserCountryAccountsByUserIdAndCountryAccountsId(
+			id,
+			countryAccountsId
+		);
 	if (!userCountryAccounts) {
 		throw new Response("Unauthorized Access", { status: 401 });
 	}
@@ -99,10 +112,10 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 	}
 
 	const formData = formStringData(await request.formData());
-	console.log("formData", formData)
+	console.log("formData", formData);
 
 	const updatedData = adminUpdateUserFieldsFromMap(formData);
-	console.log("updatedData", updatedData)
+	console.log("updatedData", updatedData);
 
 	if (!updatedData.firstName || updatedData.firstName.trim() === "") {
 		return json<ActionResponse>({
@@ -134,7 +147,12 @@ export const action = authActionWithPerm("EditUsers", async (actionArgs) => {
 		});
 	}
 
-	const res = await adminUpdateUser(id, updatedData, session.get("userId"), countryAccountsId);
+	const res = await adminUpdateUser(
+		id,
+		updatedData,
+		session.get("userId"),
+		countryAccountsId
+	);
 
 	if (!res.ok) {
 		return json<ActionResponse>({
@@ -251,8 +269,9 @@ export default function Screen() {
 							}}
 						>
 							<span
-								className={`status-dot ${fields.activated ? "activated" : "pending"
-									}`}
+								className={`status-dot ${
+									fields.activated ? "activated" : "pending"
+								}`}
 								style={{
 									height: "10px",
 									width: "10px",

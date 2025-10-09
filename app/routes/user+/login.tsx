@@ -69,7 +69,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			{
 				data,
 				errors: {
-					general: ["CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again."],
+					general: [
+						"CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again.",
+					],
 				},
 			},
 			{ status: 400 }
@@ -173,7 +175,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			if (countryAccountsId) {
 				return redirect(redirectTo, { headers: { "Set-Cookie": setCookie } });
 			} else {
-				return redirect("/user/select-instance", { headers: { "Set-Cookie": setCookie } });
+				return redirect("/user/select-instance", {
+					headers: { "Set-Cookie": setCookie },
+				});
 			}
 		}
 		return redirect(redirectTo, { headers: { "Set-Cookie": setCookie } });
@@ -212,7 +216,7 @@ export function getSafeRedirectTo(
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Sign-in - DTS" },
+		{ title: "Sign-in - DELTA Resilience" },
 		{ name: "description", content: "Login." },
 	];
 };
@@ -295,8 +299,16 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
-							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
+							<input
+								type="hidden"
+								name="redirectTo"
+								value={loaderData.redirectTo}
+							/>
+							<input
+								type="hidden"
+								name="csrfToken"
+								value={loaderData.csrfToken}
+							/>
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
@@ -391,8 +403,16 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
-							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
+							<input
+								type="hidden"
+								name="redirectTo"
+								value={loaderData.redirectTo}
+							/>
+							<input
+								type="hidden"
+								name="csrfToken"
+								value={loaderData.csrfToken}
+							/>
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}

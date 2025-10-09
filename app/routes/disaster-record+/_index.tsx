@@ -21,7 +21,7 @@ export const loader = authLoaderPublicOrWithPerm(
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Disaster Records - DTS" },
+		{ title: "Disaster Records - DELTA Resilience" },
 		{ name: "description", content: "Disaster Records Repository." },
 	];
 };
@@ -49,8 +49,11 @@ export default function Data() {
 		paginationData: pagination,
 		csvExportLinks: true,
 		beforeListElement: (
-			<DisasterRecordsFilter clearFiltersUrl={route} search={filters.disasterEventUUID} sectors={ld.sectors}/>
-
+			<DisasterRecordsFilter
+				clearFiltersUrl={route}
+				search={filters.disasterEventUUID}
+				sectors={ld.sectors}
+			/>
 		),
 		listName: "disaster records",
 		instanceName: ld.instanceName,
@@ -75,16 +78,19 @@ export default function Data() {
 				</td>
 				<td>{format(new Date(item.createdAt), "dd-MM-yyyy")}</td>
 				<td>
-					{item.updatedAt
-						? format(new Date(item.updatedAt), "dd-MM-yyyy")
-						: ""}
+					{item.updatedAt ? format(new Date(item.updatedAt), "dd-MM-yyyy") : ""}
 				</td>
 				<td>
-					{ld.isPublic ? null : <ActionLinks route={route} id={item.id} 
-					deleteMessage="This data cannot be recovered after being deleted." 
-					deleteTitle="Are you sure you want to delete this record?"
-					confirmDeleteLabel="Delete permanently"
-					cancelDeleteLabel="Do not delete"/>}
+					{ld.isPublic ? null : (
+						<ActionLinks
+							route={route}
+							id={item.id}
+							deleteMessage="This data cannot be recovered after being deleted."
+							deleteTitle="Are you sure you want to delete this record?"
+							confirmDeleteLabel="Delete permanently"
+							cancelDeleteLabel="Do not delete"
+						/>
+					)}
 				</td>
 			</tr>
 		),

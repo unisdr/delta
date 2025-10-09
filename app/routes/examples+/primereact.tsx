@@ -28,10 +28,10 @@ export const loader = async () => {
 // Meta function for page SEO
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "PrimeReact Testing Components Page - DTS" },
+		{ title: "PrimeReact Testing Components Page - DELTA Resilience" },
 		{
 			name: "description",
-			content: "PrimeReact Testing Components Page - DTS",
+			content: "PrimeReact Testing Components Page - DELTA Resilience",
 		},
 	];
 };
@@ -338,7 +338,10 @@ export default function PrimeReactTestPage() {
 				</div>
 
 				<div className="flex">
-					<label htmlFor="autoComplete2" className="flex justify-content-center mb-1">
+					<label
+						htmlFor="autoComplete2"
+						className="flex justify-content-center mb-1"
+					>
 						Assets Fetch from API
 					</label>
 				</div>

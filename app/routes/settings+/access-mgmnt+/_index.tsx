@@ -8,20 +8,16 @@ import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { getUserCountryAccountsWithUserByCountryAccountsId } from "~/db/queries/userCountryAccounts";
 import { MainContainer } from "~/frontend/container";
-import {
-	paginationQueryFromURL,
-} from "~/frontend/pagination/api.server";
+import { paginationQueryFromURL } from "~/frontend/pagination/api.server";
 import { Pagination } from "~/frontend/pagination/view";
 import { NavSettings } from "~/routes/settings/nav";
 import { authLoaderWithPerm } from "~/util/auth";
 import { getCountryAccountsIdFromSession } from "~/util/session";
-import {
-	sessionCookie,
-} from "~/util/session";
+import { sessionCookie } from "~/util/session";
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Access Management - DTS" },
+		{ title: "Access Management - DELTA Resilience" },
 		{ name: "description", content: "Access Management." },
 	];
 };
@@ -42,15 +38,15 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	);
 
 	const session = await sessionCookie().getSession(
-			request.headers.get("Cookie")
-		);
-	
+		request.headers.get("Cookie")
+	);
+
 	const userRole = session.get("userRole");
 
 	return {
 		...items,
 		search,
-		userRole: userRole
+		userRole: userRole,
 	};
 });
 
@@ -78,7 +74,7 @@ export default function Settings() {
 		totalItems: ld.pagination.total,
 		page: ld.pagination.pageNumber,
 		pageSize: ld.pagination.pageSize,
-		extraParams:ld.pagination.extraParams, 
+		extraParams: ld.pagination.extraParams,
 	});
 
 	const handleOrganizationFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,10 +111,10 @@ export default function Settings() {
 		(item) => !item.user.emailVerified
 	).length;
 
-	const navSettings = <NavSettings userRole={ ld.userRole } />;
+	const navSettings = <NavSettings userRole={ld.userRole} />;
 
 	return (
-		<MainContainer title="Access management" headerExtra={ navSettings }>
+		<MainContainer title="Access management" headerExtra={navSettings}>
 			<div className="dts-page-intro">
 				<div className="dts-additional-actions">
 					<a
@@ -267,7 +263,10 @@ export default function Settings() {
 											{/* Capitalizes the first letter */}
 										</span>
 									</td>
-									<td>{item.user.updatedAt && format(item.user.updatedAt, "dd-MM-yyyy")}</td>
+									<td>
+										{item.user.updatedAt &&
+											format(item.user.updatedAt, "dd-MM-yyyy")}
+									</td>
 									<td>
 										<button
 											aria-label={`Edit item ${item.user.id}`}
