@@ -1,20 +1,21 @@
-# DTS Project Technical Documentation
+# DELTA Resilience Project Technical Documentation
 
 ## Version History
 
-| Version | Date (YYYY-MM-DD) | Author        | Description                                                                  |
-| ------- | ----------------- | ------------- | ---------------------------------------------------------------------------- |
+| Version | Date (YYYY-MM-DD) | Author        | Description                                                                                                                        |
+| ------- | ----------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | 2.1     | 2025-08-11        | Dieka Jr.     | Updated repository URLs and project structure. Fixed incorrect GitHub repository reference and added proper checkout instructions. |
-| 2.0     | 2025-05-26        | Dieka Jr.     | Comprehensive update with detailed installation guide and troubleshooting.  |
-| 1.0     | 2025-01-08        | Haroon Nasher | Initial draft of the DTS technical documentation.                           |
+| 2.0     | 2025-05-26        | Dieka Jr.     | Comprehensive update with detailed installation guide and troubleshooting.                                                         |
+| 1.0     | 2025-01-08        | Haroon Nasher | Initial draft of the DELTA Resilience technical documentation.                                                                     |
 
 ---
 
 ## 1. Overview
 
-The DTS Project is a web application designed for efficient data collection, visualization, and management with secure user access controls. It provides an intuitive interface accessible through modern web browsers and serves as a digital workspace for data-driven operations.
+The DELTA Resilience Project is a web application designed for efficient data collection, visualization, and management with secure user access controls. It provides an intuitive interface accessible through modern web browsers and serves as a digital workspace for data-driven operations.
 
 ### Key Features
+
 - Efficient data collection capabilities
 - Clear data visualization tools
 - Secure user access management
@@ -27,7 +28,7 @@ The DTS Project is a web application designed for efficient data collection, vis
 
 ### High-Level Architecture (C4 Model - Level 1)
 
-The DTS system follows a modern web application architecture with the following components:
+The DELTA Resilience system follows a modern web application architecture with the following components:
 
 - **User Interface Layer**: Web browsers (Chrome, Firefox, Edge)
 - **Application Layer**: React + Remix + TypeScript web application
@@ -60,27 +61,28 @@ The DTS system follows a modern web application architecture with the following 
 
 ### Minimum Requirements
 
-| Component           | Specification                                    |
-| ------------------- | ------------------------------------------------ |
-| **Operating System** | Windows 10, macOS 10.15, or Ubuntu 18.04      |
-| **Processor**       | 4-core CPU minimum                              |
-| **Memory (RAM)**    | 8GB minimum                                     |
-| **Storage**         | 100GB free space minimum                       |
-| **Internet**        | Stable broadband connection                     |
-| **Browser**         | Chrome 90+, Firefox 88+, Edge 90+              |
+| Component            | Specification                            |
+| -------------------- | ---------------------------------------- |
+| **Operating System** | Windows 10, macOS 10.15, or Ubuntu 18.04 |
+| **Processor**        | 4-core CPU minimum                       |
+| **Memory (RAM)**     | 8GB minimum                              |
+| **Storage**          | 100GB free space minimum                 |
+| **Internet**         | Stable broadband connection              |
+| **Browser**          | Chrome 90+, Firefox 88+, Edge 90+        |
 
 ### Recommended Requirements
 
-| Component           | Specification                                    |
-| ------------------- | ------------------------------------------------ |
-| **Operating System** | Windows 11, macOS 12+, or Ubuntu 20.04+       |
-| **Processor**       | Multi-core CPU (6+ cores recommended)          |
-| **Memory (RAM)**    | 16GB or more                                    |
-| **Storage**         | 200GB+ SSD storage                              |
-| **Internet**        | High-speed broadband                            |
-| **Browser**         | Latest version of any modern browser            |
+| Component            | Specification                           |
+| -------------------- | --------------------------------------- |
+| **Operating System** | Windows 11, macOS 12+, or Ubuntu 20.04+ |
+| **Processor**        | Multi-core CPU (6+ cores recommended)   |
+| **Memory (RAM)**     | 16GB or more                            |
+| **Storage**          | 200GB+ SSD storage                      |
+| **Internet**         | High-speed broadband                    |
+| **Browser**          | Latest version of any modern browser    |
 
 ### Additional Requirements
+
 - Administrator/admin rights on the installation computer
 - Ability to temporarily disable antivirus software if needed
 - 2-3 hours available for complete installation
@@ -92,37 +94,37 @@ The DTS system follows a modern web application architecture with the following 
 
 ### Backend Technologies
 
-| Component                | Technology                                      | Version |
-| ------------------------ | ----------------------------------------------- | ------- |
-| **Runtime Environment** | [Node.js](https://nodejs.org/en)               | v22.x   |
-| **Web Framework**       | [Remix](https://remix.run/)                    | Latest  |
-| **Database**            | [PostgreSQL](https://www.postgresql.org/)      | v16     |
-| **Geographic Extension**| [PostGIS](https://postgis.net/)                | v3      |
-| **ORM**                 | Drizzle                                         | Latest  |
-| **Package Manager**     | Yarn                                            | Latest  |
+| Component                | Technology                                | Version |
+| ------------------------ | ----------------------------------------- | ------- |
+| **Runtime Environment**  | [Node.js](https://nodejs.org/en)          | v22.x   |
+| **Web Framework**        | [Remix](https://remix.run/)               | Latest  |
+| **Database**             | [PostgreSQL](https://www.postgresql.org/) | v16     |
+| **Geographic Extension** | [PostGIS](https://postgis.net/)           | v3      |
+| **ORM**                  | Drizzle                                   | Latest  |
+| **Package Manager**      | Yarn                                      | Latest  |
 
 ### Frontend Technologies
 
-| Component          | Technology                                      | Version |
-| ------------------ | ----------------------------------------------- | ------- |
-| **UI Framework**   | [React](https://react.dev/)                    | Latest  |
-| **Language**       | TypeScript                                      | Latest  |
-| **Styling**        | CSS                                             | Latest  |
-| **Icons**          | Various sources (react-icons, FontAwesome)     | Latest  |
+| Component        | Technology                                 | Version |
+| ---------------- | ------------------------------------------ | ------- |
+| **UI Framework** | [React](https://react.dev/)                | Latest  |
+| **Language**     | TypeScript                                 | Latest  |
+| **Styling**      | CSS                                        | Latest  |
+| **Icons**        | Various sources (react-icons, FontAwesome) | Latest  |
 
 ### Development Tools
 
-| Component              | Technology                                   | Purpose                    |
-| ---------------------- | -------------------------------------------- | -------------------------- |
-| **Version Control**    | [Git](https://git-scm.com)                  | Source code management     |
-| **Containerization**   | [Docker](https://www.docker.com/)           | Deployment packaging       |
-| **Database Admin**     | pgAdmin 4                                    | Database management        |
+| Component            | Technology                        | Purpose                |
+| -------------------- | --------------------------------- | ---------------------- |
+| **Version Control**  | [Git](https://git-scm.com)        | Source code management |
+| **Containerization** | [Docker](https://www.docker.com/) | Deployment packaging   |
+| **Database Admin**   | pgAdmin 4                         | Database management    |
 
 ---
 
 ## 5. Installation Types and Deployment Options
 
-The DTS system supports multiple deployment methods to accommodate different infrastructure needs:
+The DELTA Resilience system supports multiple deployment methods to accommodate different infrastructure needs:
 
 ### 5.1 Development Installation (Local)
 
@@ -136,7 +138,8 @@ The DTS system supports multiple deployment methods to accommodate different inf
 **Purpose**: Production deployment with containerization
 **Requirements**: Docker and Docker Compose
 **Access**: http://localhost:3004
-**Benefits**: 
+**Benefits**:
+
 - Portable across different infrastructures
 - Consistent deployment environment
 - Easy scaling and management
@@ -146,6 +149,7 @@ The DTS system supports multiple deployment methods to accommodate different inf
 **Purpose**: Country-specific deployments with local infrastructure management
 **Requirements**: Server infrastructure, Git access
 **Benefits**:
+
 - Local control and customization
 - Country-specific configurations
 - Direct infrastructure management
@@ -159,6 +163,7 @@ The DTS system supports multiple deployment methods to accommodate different inf
 #### Prerequisites Installation
 
 1. **Install Node.js v22**
+
    ```bash
    # Verify installation
    node --version  # Should show v22.x.x
@@ -166,16 +171,18 @@ The DTS system supports multiple deployment methods to accommodate different inf
    ```
 
 2. **Install PostgreSQL 16 with PostGIS**
+
    - Download and install PostgreSQL 16 from [official website](https://www.postgresql.org/download/)
    - During installation, select the PostGIS extension when prompted
+
    ```bash
    # Verify PostgreSQL installation
    psql --version  # Should show PostgreSQL 16.x
-   
+
    # Verify or install PostGIS extension
    # Connect to your database and run:
    CREATE EXTENSION IF NOT EXISTS postgis;
-   
+
    # Verify PostGIS installation
    SELECT PostGIS_Version();
    ```
@@ -188,38 +195,41 @@ The DTS system supports multiple deployment methods to accommodate different inf
 
 #### Project Setup
 
-1. **Download DTS Project**
+1. **Download DELTA Resilience Project**
+
    ```bash
    # Method A: Git clone
    git clone https://github.com/unisdr/dts.git DTS-Project
    cd DTS-Project
    git checkout dev
-   
+
    # Method B: Download ZIP and extract to DTS-Project folder
    ```
 
 2. **Configure Environment**
+
    ```bash
    # Copy environment template
    cp example.env .env
    ```
-   
+
    Edit the `.env` file with appropriate values. Below is a comprehensive list of environment variables:
-   
-   | Variable | Required | Default | Description |
-   |----------|----------|---------|-------------|
-   | DATABASE_URL | Yes | - | PostgreSQL connection string |
-   | PORT | No | 3000 | Port for the application server |
-   | NODE_ENV | No | development | Environment (development, production, test) |
-   | ADMIN_EMAIL | No | - | Initial admin account email |
-   | ADMIN_PASSWORD | No | - | Initial admin account password |
-   | SMTP_HOST | No | - | SMTP server for email notifications |
-   | SMTP_PORT | No | 587 | SMTP port |
-   | SMTP_USER | No | - | SMTP username |
-   | SMTP_PASSWORD | No | - | SMTP password |
-   | SESSION_SECRET | Yes | - | Secret for session encryption |
-   
+
+   | Variable       | Required | Default     | Description                                 |
+   | -------------- | -------- | ----------- | ------------------------------------------- |
+   | DATABASE_URL   | Yes      | -           | PostgreSQL connection string                |
+   | PORT           | No       | 3000        | Port for the application server             |
+   | NODE_ENV       | No       | development | Environment (development, production, test) |
+   | ADMIN_EMAIL    | No       | -           | Initial admin account email                 |
+   | ADMIN_PASSWORD | No       | -           | Initial admin account password              |
+   | SMTP_HOST      | No       | -           | SMTP server for email notifications         |
+   | SMTP_PORT      | No       | 587         | SMTP port                                   |
+   | SMTP_USER      | No       | -           | SMTP username                               |
+   | SMTP_PASSWORD  | No       | -           | SMTP password                               |
+   | SESSION_SECRET | Yes      | -           | Secret for session encryption               |
+
    Example configuration:
+
    ```
    DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/dts_project"
    PORT=3000
@@ -228,30 +238,33 @@ The DTS system supports multiple deployment methods to accommodate different inf
    ```
 
 3. **Create Database and Enable PostGIS**
+
    ```sql
    -- Using psql or pgAdmin
    CREATE DATABASE dts_project;
-   
+
    -- Connect to the new database
    \c dts_project
-   
+
    -- Enable PostGIS extension
    CREATE EXTENSION IF NOT EXISTS postgis;
    ```
 
 4. **Install Dependencies**
+
    ```bash
    # Install Yarn globally
    npm install --global yarn
-   
+
    # Install project dependencies
    yarn install
-   
+
    # Setup database structure
    yarn run drizzle-kit push
    ```
 
 5. **Start Application**
+
    ```bash
    yarn run dev
    # Access at http://localhost:3000
@@ -268,9 +281,10 @@ The DTS system supports multiple deployment methods to accommodate different inf
 
 ### 6.2 Docker Container Deployment
 
-#### Installing DTS as Country Instance
+#### Installing DELTA Resilience as Country Instance
 
 1. **Clone Repository**
+
    ```bash
    git clone https://github.com/unisdr/dts.git
    cd dts
@@ -278,22 +292,26 @@ The DTS system supports multiple deployment methods to accommodate different inf
    ```
 
 2. **Build Container Images**
+
    ```bash
    docker-compose build
    ```
 
 3. **Build Production Code**
+
    ```bash
    ./build.sh
    ```
 
 4. **Configure Environment**
+
    ```bash
    cp ./example.env ./.env
    # Edit .env file with appropriate values
    ```
 
 5. **Update Database**
+
    ```bash
    ./db-update.sh
    ```
@@ -307,17 +325,20 @@ The DTS system supports multiple deployment methods to accommodate different inf
 ## 7. Security Features
 
 ### Authentication Methods
+
 - **JWT (JSON Web Tokens)** for secure session management
 - **OAuth2** integration capabilities for third-party authentication
 - Role-based access control (RBAC)
 - Secure password handling with encryption
 
 ### Database Security
+
 - **PostgreSQL security features** including user privileges and access controls
 - **Encrypted connections** between application and database
 - **SQL injection prevention** through parameterized queries via Drizzle ORM
 
 ### Network Security
+
 - **HTTPS support** for production deployments
 - **CORS (Cross-Origin Resource Sharing)** configuration
 - **Environment variable protection** for sensitive configuration data
@@ -327,12 +348,14 @@ The DTS system supports multiple deployment methods to accommodate different inf
 ## 8. API and Integration Capabilities
 
 ### RESTful API
+
 - **Standardized REST endpoints** for data operations
 - **JSON data format** for request/response payloads
 - **HTTP status codes** for proper error handling
 - **API versioning** support for backward compatibility
 
 ### External Integrations
+
 - **SFM (Sendai Framework Monitor)** integration capabilities
 - **Geographic data services** through PostGIS
 - **Third-party authentication providers**
@@ -345,6 +368,7 @@ The DTS system supports multiple deployment methods to accommodate different inf
 ### Daily Operations
 
 #### Starting the Application
+
 ```bash
 # Navigate to project directory
 cd path/to/DTS-Project
@@ -357,6 +381,7 @@ docker-compose up -d
 ```
 
 #### Stopping the Application
+
 ```bash
 # Development server
 Ctrl + C  # In terminal where yarn run dev is running
@@ -370,11 +395,13 @@ docker-compose down
 Below are recommended maintenance tasks that should be performed according to your organization's operational procedures and requirements.
 
 #### System Updates
+
 - Check for system updates
 - Update Node.js for security patches
-- Check for DTS Project updates
+- Check for DELTA Resilience Project updates
 
 #### Data Management
+
 - Backup important data
 - Backup PostgreSQL database:
   ```bash
@@ -383,6 +410,7 @@ Below are recommended maintenance tasks that should be performed according to yo
 - Review and clean up log files
 
 #### Performance Maintenance
+
 - Monitor disk space usage
 - Clear browser cache if performance issues occur
 - Full system backup and recovery testing
@@ -392,6 +420,7 @@ Below are recommended maintenance tasks that should be performed according to yo
 ### Database Backup and Recovery
 
 #### Backup Procedures
+
 ```bash
 # Create database backup
 pg_dump -U postgres -h localhost -d dts_project > dts_backup.sql
@@ -401,6 +430,7 @@ pg_dump -U postgres -h localhost -d dts_project | gzip > dts_backup.sql.gz
 ```
 
 #### Recovery Procedures
+
 ```bash
 # Restore from backup
 psql -U postgres -h localhost -d dts_project < dts_backup.sql
@@ -422,6 +452,7 @@ For troubleshooting assistance, please refer to the FAQ section below. The FAQ i
 ### Support Structure
 
 #### Country Instance Support
+
 - **Self-help resources** available
 - **Community support** through shared documentation
 - **Country-specific customization** guidance
@@ -429,12 +460,14 @@ For troubleshooting assistance, please refer to the FAQ section below. The FAQ i
 ### Documentation Resources
 
 #### Technical Documentation
+
 - **Installation guides** (this document)
 - **API documentation** for developers
-- **Database schema** documentation *(in development - will be available in future updates)*
+- **Database schema** documentation _(in development - will be available in future updates)_
 - **Configuration reference** guides
 
 #### User Documentation
+
 - **User manuals** for end-users
 - **Training materials** for administrators
 - **Best practices** guides
@@ -443,25 +476,30 @@ For troubleshooting assistance, please refer to the FAQ section below. The FAQ i
 ### Getting Help
 
 #### Self-Help Resources
+
 1. Check troubleshooting section in this document
 2. Review error messages for specific solutions
 3. Search project GitHub issues for known problems
 4. Consult community documentation
 
 #### Support Contact Process
+
 **When contacting support, provide:**
+
 - System information (OS, versions, hardware specs)
 - Exact error messages with screenshots
 - Steps that led to the issue
 - Previous troubleshooting attempts
-- DTS Project version information
+- DELTA Resilience Project version information
 
 ---
 
 ## 12. Version Management and Updates
 
 ### Version Numbering
-The DTS Project follows semantic versioning (SemVer):
+
+The DELTA Resilience Project follows semantic versioning (SemVer):
+
 - **Major.Minor.Patch** format (e.g., 0.0.7)
 - **Major**: Breaking changes
 - **Minor**: New features, backward compatible
@@ -470,6 +508,7 @@ The DTS Project follows semantic versioning (SemVer):
 ### Update Procedures
 
 #### Development Environment Updates
+
 ```bash
 # Check current version
 node --version
@@ -483,6 +522,7 @@ yarn run drizzle-kit push
 ```
 
 #### Production Environment Updates
+
 1. **Backup current installation**
 2. **Test updates in staging environment**
 3. **Schedule maintenance window**
@@ -495,14 +535,14 @@ yarn run drizzle-kit push
 
 ### General Questions
 
-**Q: What is the DTS Project?**
-A: DTS is a web application for data collection, visualization, and management with secure user access controls.
+**Q: What is the DELTA Resilience Project?**
+A: DELTA Resilience is a web application for data collection, visualization, and management with secure user access controls.
 
 **Q: What browsers are supported?**
 A: Modern browsers including Chrome 90+, Firefox 88+, and Edge 90+.
 
-**Q: Can DTS run on mobile devices?**
-A: Yes, DTS is web-based and responsive, working on tablets and mobile browsers.
+**Q: Can DELTA Resilience run on mobile devices?**
+A: Yes, DELTA Resilience is web-based and responsive, working on tablets and mobile browsers.
 
 ### Installation Questions
 
@@ -512,19 +552,19 @@ A: Complete installation typically takes 2-3 hours for new installations.
 **Q: Do I need administrator rights?**
 A: Yes, administrator privileges are required for installing system components.
 
-**Q: Can I install DTS on a shared server?**
+**Q: Can I install DELTA Resilience on a shared server?**
 A: Yes, both Docker and direct installation methods support server deployment.
 
 ### Technical Questions
 
-**Q: What database does DTS use?**
+**Q: What database does DELTA Resilience use?**
 A: PostgreSQL 16 with PostGIS extension for geographic data support.
 
-**Q: Is DTS open source?**
-A: Yes, DTS uses open-source technologies and provides source code access.
+**Q: Is DELTA Resilience open source?**
+A: Yes, DELTA Resilience uses open-source technologies and provides source code access.
 
-**Q: Can DTS integrate with other systems?**
-A: Yes, DTS provides RESTful APIs and supports various integration methods.
+**Q: Can DELTA Resilience integrate with other systems?**
+A: Yes, DELTA Resilience provides RESTful APIs and supports various integration methods.
 
 ### Troubleshooting Questions
 
@@ -542,6 +582,7 @@ A: Reinstall Node.js with "Add to PATH" option, manually add Node.js to system P
 
 **Q: I get 'Error: listen EADDRINUSE: address already in use :::3000'**
 A: Another process is using port 3000. Find and kill the process or use an alternative port:
+
 ```bash
 # Windows
 netstat -ano | findstr :3000
@@ -571,6 +612,7 @@ A: 1) Backup your data, 2) Uninstall components (Node.js, PostgreSQL, Git), 3) F
 ### Appendix A: Command Reference
 
 #### Essential Commands
+
 ```bash
 # Version checks
 node --version
@@ -591,12 +633,12 @@ pg_dump -U postgres dts_project > backup.sql  # Backup database
 
 ### Appendix B: Port Reference
 
-| Service           | Default Port | Purpose                    |
-| ----------------- | ------------ | -------------------------- |
-| DTS Development   | 3000         | Local development server   |
-| DTS Production    | 3004         | Docker container deployment |
-| PostgreSQL        | 5432         | Database server            |
-| pgAdmin           | 5050         | Database administration    |
+| Service         | Default Port | Purpose                     |
+| --------------- | ------------ | --------------------------- |
+| DTS Development | 3000         | Local development server    |
+| DTS Production  | 3004         | Docker container deployment |
+| PostgreSQL      | 5432         | Database server             |
+| pgAdmin         | 5050         | Database administration     |
 
 ### Appendix C: File Structure Reference
 
@@ -625,4 +667,4 @@ dts/
 
 ---
 
-*This document serves as the comprehensive technical reference for the DTS Project. For the latest updates and additional resources, please refer to the project repository and official documentation channels.*
+_This document serves as the comprehensive technical reference for the DELTA Resilience Project. For the latest updates and additional resources, please refer to the project repository and official documentation channels._

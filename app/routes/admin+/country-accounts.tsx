@@ -4,7 +4,7 @@ import {
 	useActionData,
 	useLoaderData,
 	useNavigate,
-	MetaFunction
+	MetaFunction,
 } from "@remix-run/react";
 import {
 	CountryAccountWithCountryAndPrimaryAdminUser,
@@ -36,8 +36,11 @@ import { Toast, ToastRef } from "~/components/Toast";
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Country Accounts - Super Admin - DTS" },
-		{ name: "description", content: "Super Admin Country Accounts Management." },
+		{ title: "Country Accounts - Super Admin - DELTA Resilience" },
+		{
+			name: "description",
+			content: "Super Admin Country Accounts Management.",
+		},
 	];
 };
 
@@ -66,7 +69,11 @@ export const action: ActionFunction = authActionWithPerm(
 		try {
 			if (id) {
 				// Update existing account
-				await updateCountryAccountStatusService(id, Number(status), shortDescription);
+				await updateCountryAccountStatusService(
+					id,
+					Number(status),
+					shortDescription
+				);
 				return { success: true, operation: "update" };
 			} else {
 				// Create new account
@@ -163,7 +170,7 @@ export default function CountryAccounts() {
 		setStatus(countryAccountStatuses.ACTIVE);
 		setType(countryAccountTypes.OFFICIAL);
 		setEmail("");
-		setShortDescription("")
+		setShortDescription("");
 		navigate(".", { replace: true });
 	}
 
@@ -213,7 +220,7 @@ export default function CountryAccounts() {
 				<Toast ref={toast} />
 			</div>
 			<div className="dts-page-intro" style={{ paddingRight: 0 }}>
-				<div className="dts-additional-actions" >
+				<div className="dts-additional-actions">
 					<button
 						className="mg-button mg-button-secondary"
 						onClick={() => addCountryAccount()}
@@ -403,7 +410,7 @@ export default function CountryAccounts() {
 										checked={
 											type === countryAccountTypes.OFFICIAL ||
 											editingCountryAccount?.type ===
-											countryAccountTypes.OFFICIAL
+												countryAccountTypes.OFFICIAL
 										}
 										label="Official"
 									/>
@@ -416,7 +423,7 @@ export default function CountryAccounts() {
 										checked={
 											type === countryAccountTypes.TRAINING ||
 											editingCountryAccount?.type ===
-											countryAccountTypes.TRAINING
+												countryAccountTypes.TRAINING
 										}
 										label="Training"
 									/>

@@ -2,13 +2,13 @@
 
 ## Overview
 
-This document explains how API keys are linked to users in the DTS system and how this relationship affects key validity and management.
+This document explains how API keys are linked to users in the DELTA Resilience system and how this relationship affects key validity and management.
 
 ## API Keys and User Relationships
 
 ### Types of API Key Assignments
 
-In the DTS system, API keys can be:
+In the DELTA Resilience system, API keys can be:
 
 1. **Admin self-managed keys**: Created by an admin for their own use
 2. **User-assigned keys**: Created by an admin and assigned to a specific user
@@ -26,7 +26,7 @@ API key validity is directly linked to user status:
 
 ### Role-Based Permissions
 
-In the DTS system, API key management is restricted by user role:
+In the DELTA Resilience system, API key management is restricted by user role:
 
 - **Admin** users can create and manage API keys for themselves and others
 - **Regular users** (Data Viewer, Data Collector, Data Validator) cannot create or manage API keys
@@ -78,6 +78,7 @@ To create a key and assign it to a user:
 ### User Status Effects
 
 When viewing API keys:
+
 - Keys assigned to inactive users will be marked as disabled
 - Clicking on a disabled key will show a message: "This key is disabled as the related user is disabled"
 

@@ -15,10 +15,10 @@ export const loader = async () => {
 // Meta function for page SEO
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "About the System - DTS" },
+		{ title: "About the System - DELTA Resilience" },
 		{
 			name: "description",
-			content: "About the System page under DTS.",
+			content: "About the System page under DELTA Resilience.",
 		},
 	];
 };

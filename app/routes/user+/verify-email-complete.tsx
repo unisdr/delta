@@ -13,65 +13,74 @@ import { redirect } from "@remix-run/node";
 
 import { sendEmail } from "~/util/email";
 
-
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 export const meta: MetaFunction = (request) => {
 	// Extract the query string
 	const queryString = request.location.search;
 
 	// Parse the query string using URLSearchParams
-	const params = new URLSearchParams(queryString) || "";;
+	const params = new URLSearchParams(queryString) || "";
 
 	// Access the individual query parameters
-	const step = params.get('step') || "";
-	let intStep:number = 0;
+	const step = params.get("step") || "";
+	let intStep: number = 0;
 
-	if (typeof step == 'string' && (step == '' || step == '0')) {
+	if (typeof step == "string" && (step == "" || step == "0")) {
 		intStep = 1;
-	}
-	else if (typeof step == 'string' && parseInt(step) >= 1 && parseInt(step) <= 4) {
+	} else if (
+		typeof step == "string" &&
+		parseInt(step) >= 1 &&
+		parseInt(step) <= 4
+	) {
 		intStep = parseInt(step);
 		intStep++;
-	} 
-	else if (typeof step == 'string' && parseInt(step) >= 5) {
+	} else if (typeof step == "string" && parseInt(step) >= 5) {
 		intStep = 5;
-	} 
+	}
 
 	return [
-		{ title: "System Taxonomy - DTS"},
+		{ title: "System Taxonomy - DELTA Resilience" },
 		{ name: "description", content: "Admin setup - System Taxonomy page." },
-		{ httpEquiv:"refresh", content: `10; URL='/user/verify-email-complete?step=${intStep}'` },
+		{
+			httpEquiv: "refresh",
+			content: `10; URL='/user/verify-email-complete?step=${intStep}'`,
+		},
 	];
 };
 
 export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
-	const {request} = actionArgs;
+	const { request } = actionArgs;
 	const { user } = authActionGetAuth(actionArgs);
 	const url = new URL(request.url);
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	
-	const settings= await getInstanceSystemSettingsByCountryAccountId(countryAccountsId);
-	if(!settings){
-		throw new Response ("System settings cannot be found.",{status:500})
+
+	const settings = await getInstanceSystemSettingsByCountryAccountId(
+		countryAccountsId
+	);
+	if (!settings) {
+		throw new Response("System settings cannot be found.", { status: 500 });
 	}
-	
-	var countryName='';
-	if(settings){
-		countryName=settings.countryName;
+
+	var countryName = "";
+	if (settings) {
+		countryName = settings.countryName;
 	}
-	
+
 	//Send confirmation email
-	const subject = `Welcome to DTS ${settings.websiteName}`;
+	const subject = `Welcome to DELTA Resilience ${settings.websiteName}`;
 	const siteURL = `${url.protocol}//${url.host}`;
 	const html = `
     <p>
       Dear ${user.firstName} ${user.lastName},
     </p>
     <p>
-      Welcome to the DTS ${countryName} system. Your user account has been successfully created.
+      Welcome to the DELTA Resilience ${countryName} system. Your user account has been successfully created.
     </p>
     <p>
       Click the link below to access your account:
@@ -91,7 +100,7 @@ export const action = authActionWithPerm("ViewUsers", async (actionArgs) => {
   `;
 
 	const text = `Dear ${user.firstName} ${user.lastName}
-                Welcome to the DTS ${countryName} system. Your user account has been successfully created.
+                Welcome to the DELTA Resilience ${countryName} system. Your user account has been successfully created.
                 Copy and paste the following link into your browser URL to access your account:
                 ${siteURL}/settings/access-mgmnt" 
                 `;
@@ -105,10 +114,10 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 	const url = new URL(loaderArgs.request.url);
 	let qsStep = url.searchParams.get("step") || "";
 
-	var siteName="Disaster Losses Tracking System";
-	const settings = await getCountrySettingsFromSession(loaderArgs.request)
-	if(settings){
-		siteName=settings.websiteName
+	var siteName = "DELTA Resilience";
+	const settings = await getCountrySettingsFromSession(loaderArgs.request);
+	if (settings) {
+		siteName = settings.websiteName;
 	}
 	return {
 		configSiteName: siteName,
@@ -118,7 +127,7 @@ export const loader = authLoaderWithPerm("ViewUsers", async (loaderArgs) => {
 
 export default function Data() {
 	const pageData = useLoaderData<typeof loader>();
-	let isSubmitting=false;
+	let isSubmitting = false;
 
 	return (
 		<div className="dts-page-container">
@@ -134,67 +143,86 @@ export default function Data() {
 						</div>
 						<div className="dts-form__intro">
 							<div className="dts-form__additional-content dts-form__additional-content--centered">
-								{ pageData.qsStep && (parseInt(pageData.qsStep) < 5 || pageData.qsStep == '') && (<>
-									<h1 className="dts-heading-1">Welcome to { pageData.configSiteName }</h1>
-									<div>Setting up the system.</div>
-									<div>Do not close this window. This can take a while.</div>
-								</>)}
+								{pageData.qsStep &&
+									(parseInt(pageData.qsStep) < 5 || pageData.qsStep == "") && (
+										<>
+											<h1 className="dts-heading-1">
+												Welcome to {pageData.configSiteName}
+											</h1>
+											<div>Setting up the system.</div>
+											<div>
+												Do not close this window. This can take a while.
+											</div>
+										</>
+									)}
 
-								{ pageData.qsStep && parseInt(pageData.qsStep) == 5 && (<>
-									<h1 className="dts-heading-1">System setup complete</h1>
-									<div>Click the button below to continue.</div>
-								</>)}
+								{pageData.qsStep && parseInt(pageData.qsStep) == 5 && (
+									<>
+										<h1 className="dts-heading-1">System setup complete</h1>
+										<div>Click the button below to continue.</div>
+									</>
+								)}
 							</div>
 						</div>
 						<div className="dts-form__body">
 							<div className="dts-form-component">
-								{ pageData.qsStep && parseInt(pageData.qsStep) >= 0 && parseInt(pageData.qsStep) < 5 && (
-									<p>1 of 4: Installing Assets taxonomy {' '}
-										{ parseInt(pageData.qsStep) >= 1 ?
-											<>complete</>
-											:
-											<>starting</>
-										}
-									</p>
-								)}
-								{ pageData.qsStep && parseInt(pageData.qsStep) >= 1 && parseInt(pageData.qsStep) < 5 && (
-									<p>2 of 4: Installing Categories taxonomy {' '}
-										{ parseInt(pageData.qsStep) >= 2 ?
-											<>complete</>
-											:
-											<>starting</>
-										}
-									</p>
-								)}
-								{ pageData.qsStep && parseInt(pageData.qsStep) >= 2 && parseInt(pageData.qsStep) < 5 && (
-									<p>3 of 4: Installing Hazard Information Profile taxonomy {' '}
-										{ parseInt(pageData.qsStep) >= 3 ?
-											<>complete</>
-											:
-											<>starting</>
-										}
-									</p>
-								)}
-								{ pageData.qsStep && parseInt(pageData.qsStep) >= 3 && parseInt(pageData.qsStep) < 5 && (
-									<p>4 of 4: Installing Sectors taxonomy {' '}
-										{ parseInt(pageData.qsStep) >= 4 ?
-											<>complete</>
-											:
-											<>starting</>
-										}
-									</p>
-								)}
+								{pageData.qsStep &&
+									parseInt(pageData.qsStep) >= 0 &&
+									parseInt(pageData.qsStep) < 5 && (
+										<p>
+											1 of 4: Installing Assets taxonomy{" "}
+											{parseInt(pageData.qsStep) >= 1 ? (
+												<>complete</>
+											) : (
+												<>starting</>
+											)}
+										</p>
+									)}
+								{pageData.qsStep &&
+									parseInt(pageData.qsStep) >= 1 &&
+									parseInt(pageData.qsStep) < 5 && (
+										<p>
+											2 of 4: Installing Categories taxonomy{" "}
+											{parseInt(pageData.qsStep) >= 2 ? (
+												<>complete</>
+											) : (
+												<>starting</>
+											)}
+										</p>
+									)}
+								{pageData.qsStep &&
+									parseInt(pageData.qsStep) >= 2 &&
+									parseInt(pageData.qsStep) < 5 && (
+										<p>
+											3 of 4: Installing Hazard Information Profile taxonomy{" "}
+											{parseInt(pageData.qsStep) >= 3 ? (
+												<>complete</>
+											) : (
+												<>starting</>
+											)}
+										</p>
+									)}
+								{pageData.qsStep &&
+									parseInt(pageData.qsStep) >= 3 &&
+									parseInt(pageData.qsStep) < 5 && (
+										<p>
+											4 of 4: Installing Sectors taxonomy{" "}
+											{parseInt(pageData.qsStep) >= 4 ? (
+												<>complete</>
+											) : (
+												<>starting</>
+											)}
+										</p>
+									)}
 							</div>
 						</div>
-						{ pageData.qsStep && parseInt(pageData.qsStep) == 5 && (
+						{pageData.qsStep && parseInt(pageData.qsStep) == 5 && (
 							<div className="dts-form__actions">
 								<button
 									type="submit"
 									className="mg-button mg-button-primary"
 									disabled={
-										typeof window !== "undefined"
-											? isSubmitting
-											: undefined
+										typeof window !== "undefined" ? isSubmitting : undefined
 									}
 								>
 									Get started

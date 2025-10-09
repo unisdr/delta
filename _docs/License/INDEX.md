@@ -1,8 +1,8 @@
-# UNDRR DTS License Documentation
+# UNDRR DELTA Resilience License Documentation
 
 ## Project Overview
 
-The UNDRR DELTA Resilience is a comprehensive platform designed to support country-level disaster tracking and management. This directory contains all documentation related to licensing and Digital Public Goods (DPG) compliance for DTS.
+The UNDRR DELTA Resilience is a comprehensive platform designed to support country-level disaster tracking and management. This directory contains all documentation related to licensing and Digital Public Goods (DPG) compliance for DELTA Resilience.
 
 ## Quick Navigation
 
@@ -14,7 +14,7 @@ The UNDRR DELTA Resilience is a comprehensive platform designed to support count
 
 ## License Status
 
-DTS is currently evaluating the implementation of the Apache License 2.0, as recommended in the license recommendation document. This license has been selected for its patent protection, international deployment suitability, and alignment with DPG requirements.
+DELTA Resilience is currently evaluating the implementation of the Apache License 2.0, as recommended in the license recommendation document. This license has been selected for its patent protection, international deployment suitability, and alignment with DPG requirements.
 
 ## Available Documents
 
@@ -48,7 +48,7 @@ DTS is currently evaluating the implementation of the Apache License 2.0, as rec
 5. [license-recommendation.md](./license-recommendation.md)
 
    - Comprehensive license recommendation
-   - Analysis of MIT vs Apache 2.0 for DTS
+   - Analysis of MIT vs Apache 2.0 for DELTA Resilience
    - Detailed rationale for Apache 2.0
    - Risk assessment and compatibility analysis
 
@@ -62,7 +62,7 @@ DTS is currently evaluating the implementation of the Apache License 2.0, as rec
 
 ## DPG Application Status
 
-The DTS project is actively working toward Digital Public Goods (DPG) registry inclusion. Current status:
+The DELTA Resilience project is actively working toward Digital Public Goods (DPG) registry inclusion. Current status:
 
 - **Compliance Assessment**: Completed (June 2025)
 - **Current Compliance Score**: 72% (5 fully compliant indicators, 3 partially compliant)
@@ -94,4 +94,4 @@ The DTS project is actively working toward Digital Public Goods (DPG) registry i
 
 - [DPG Standard](https://github.com/DPGAlliance/DPG-Standard/blob/main/standard.md) - Official Digital Public Goods Standard
 - [DPG Registry](https://digitalpublicgoods.net/registry/) - Official registry of recognized Digital Public Goods
-- [UNDRR DTS Technical Documentation](../index.md) - Main technical documentation for the DTS platform
+- [UNDRR DELTA Resilience Technical Documentation](../index.md) - Main technical documentation for the DELTA Resilience platform

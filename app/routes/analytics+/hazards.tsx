@@ -1,11 +1,6 @@
-import {
-	MetaFunction
-} from "@remix-run/node";
+import { MetaFunction } from "@remix-run/node";
 import { useEffect, useState } from "react";
-import {
-	useActionData,
-	useLoaderData,
-} from "@remix-run/react";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 import { fetchHazardTypes } from "~/backend.server/models/analytics/hazard-types";
 import { fetchAllSpecificHazards } from "~/backend.server/models/analytics/specific-hazards";
@@ -33,13 +28,19 @@ import { MainContainer } from "~/frontend/container";
 import { NavSettings } from "~/routes/settings/nav";
 import HazardFilters from "~/frontend/analytics/hazards/sections/HazardFilters";
 import ImpactByHazard from "~/frontend/analytics/hazards/sections/ImpactByHazard";
-import { getDivisionByLevel, getDivisionIdAndNameByLevel } from "~/backend.server/models/division";
+import {
+	getDivisionByLevel,
+	getDivisionIdAndNameByLevel,
+} from "~/backend.server/models/division";
 import { fetchHazardClusters } from "~/backend.server/models/analytics/hazard-clusters";
 import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
 import DamagesAndLoses from "~/frontend/analytics/hazards/sections/DamagesAndLoses";
 import DisasterEventsList from "~/frontend/analytics/hazards/sections/DisasterEventsList";
 import HazardImpactMap from "~/frontend/analytics/hazards/sections/HazardImpactMap";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 // Define an interface for the structure of the JSON objects
 interface interfaceMap {
@@ -52,27 +53,32 @@ interface interfaceMap {
 
 /**
  * Loader for hazards analytics page
- * 
+ *
  * @returns {Promise<Response>} - Response object
  */
-export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs: any) => {
-	const { request } = loaderArgs;
-	const settings = await getCountrySettingsFromSession(request);
+export const loader = authLoaderPublicOrWithPerm(
+	"ViewData",
+	async (loaderArgs: any) => {
+		const { request } = loaderArgs;
+		const settings = await getCountrySettingsFromSession(request);
 
-	const currency = settings.currencyCode;
-	const hazardTypes = await fetchHazardTypes();
-	const hazardClusters = await fetchHazardClusters(null);
-	const specificHazards = await fetchAllSpecificHazards();
-	const level1DivisionNames = await getDivisionIdAndNameByLevel(1, settings.countryAccountsId);
+		const currency = settings.currencyCode;
+		const hazardTypes = await fetchHazardTypes();
+		const hazardClusters = await fetchHazardClusters(null);
+		const specificHazards = await fetchAllSpecificHazards();
+		const level1DivisionNames = await getDivisionIdAndNameByLevel(
+			1,
+			settings.countryAccountsId
+		);
 
-	return {
-		currency,
-		hazardTypes,
-		hazardClusters,
-		specificHazards,
-		level1DivisionNames
-	};
-}
+		return {
+			currency,
+			hazardTypes,
+			hazardClusters,
+			specificHazards,
+			level1DivisionNames,
+		};
+	}
 );
 
 function getStringValue(value: FormDataEntryValue | null): string | null {
@@ -85,7 +91,7 @@ function getStringValue(value: FormDataEntryValue | null): string | null {
 export const action = async (actionArgs: any) => {
 	const { request } = actionArgs;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	
+
 	const formData = await request.formData();
 	const hazardTypeId = getStringValue(formData.get("hazardTypeId"));
 	const hazardClusterId = getStringValue(formData.get("hazardClusterId"));
@@ -115,7 +121,8 @@ export const action = async (actionArgs: any) => {
 
 	const disasterCount = await getDisasterEventCount(filters);
 	const yearlyDisasterCounts = await getDisasterEventCountByYear(filters);
-	const { totalMen, totalWomen, totalNonBinary } = await getGenderTotalsByHazardFilters(filters);
+	const { totalMen, totalWomen, totalNonBinary } =
+		await getGenderTotalsByHazardFilters(filters);
 	const {
 		totalDeaths,
 		totalInjured,
@@ -124,10 +131,14 @@ export const action = async (actionArgs: any) => {
 		totalAffectedDirect,
 		totalAffectedIndirect,
 	} = await getAffectedPeopleByHazardFilters(filters);
-	const { totalChildren, totalAdults, totalSeniors } = await getAgeTotalsByHazardFilters(filters);
+	const { totalChildren, totalAdults, totalSeniors } =
+		await getAgeTotalsByHazardFilters(filters);
 	const totalDisability = await getDisabilityTotalByHazardFilters(filters);
-	const totalInternationalPoorPeople = await getInternationalPovertyTotalByHazardFilters(filters);
-	const totalNationalPoorPeople = await getNationalPovertyTotalByHazardFilters(filters);
+	const totalInternationalPoorPeople =
+		await getInternationalPovertyTotalByHazardFilters(filters);
+	const totalNationalPoorPeople = await getNationalPovertyTotalByHazardFilters(
+		filters
+	);
 	const totalDamages = await getTotalDamagesByHazardFilters(filters);
 	const totalLosses = await getTotalLossesByHazardFilters(filters);
 	const totalDamagesByYear = await getTotalDamagesByYear(filters);
@@ -135,13 +146,22 @@ export const action = async (actionArgs: any) => {
 	const damagesByDivision = await getTotalDamagesByDivision(filters);
 	const lossesByDivision = await getTotalLossesByDivision(filters);
 	const deathsByDivision = await getTotalDeathsByDivision(filters);
-	const affectedPeopleByDivision = await getTotalAffectedPeopleByDivision(filters);
-	const disasterEventCountByDivision = await getDisasterEventCountByDivision(filters);
+	const affectedPeopleByDivision = await getTotalAffectedPeopleByDivision(
+		filters
+	);
+	const disasterEventCountByDivision = await getDisasterEventCountByDivision(
+		filters
+	);
 
 	// Build damagesGeoData
-	const maxDamages = Math.max(...damagesByDivision.map((d) => d.totalDamages), 1);
+	const maxDamages = Math.max(
+		...damagesByDivision.map((d) => d.totalDamages),
+		1
+	);
 	const damagesGeoData: interfaceMap[] = geographicLevel1.map((division) => {
-		const divisionDamage = damagesByDivision.find((d) => d.divisionId === division.id.toString());
+		const divisionDamage = damagesByDivision.find(
+			(d) => d.divisionId === division.id.toString()
+		);
 		const total = divisionDamage ? divisionDamage.totalDamages : 0;
 		return {
 			total,
@@ -155,7 +175,9 @@ export const action = async (actionArgs: any) => {
 	// Build lossesGeoData
 	const maxLosses = Math.max(...lossesByDivision.map((l) => l.totalLosses), 1);
 	const lossesGeoData: interfaceMap[] = geographicLevel1.map((division) => {
-		const divisionLoss = lossesByDivision.find((l) => l.divisionId === division.id.toString());
+		const divisionLoss = lossesByDivision.find(
+			(l) => l.divisionId === division.id.toString()
+		);
 		const total = divisionLoss ? divisionLoss.totalLosses : 0;
 		return {
 			total,
@@ -169,7 +191,9 @@ export const action = async (actionArgs: any) => {
 	// Build deathsGeoData
 	const maxDeaths = Math.max(...deathsByDivision.map((d) => d.totalDeaths), 1);
 	const deathsGeoData: interfaceMap[] = geographicLevel1.map((division) => {
-		const divisionDeaths = deathsByDivision.find((d) => d.divisionId === division.id.toString());
+		const divisionDeaths = deathsByDivision.find(
+			(d) => d.divisionId === division.id.toString()
+		);
 		const total = divisionDeaths ? divisionDeaths.totalDeaths : 0;
 		return {
 			total,
@@ -181,32 +205,46 @@ export const action = async (actionArgs: any) => {
 	});
 
 	// Build affectedPeopleGeoData
-	const maxAffected = Math.max(...affectedPeopleByDivision.map((a) => a.totalAffected), 1);
-	const affectedPeopleGeoData: interfaceMap[] = geographicLevel1.map((division) => {
-		const divisionAffected = affectedPeopleByDivision.find((a) => a.divisionId === division.id.toString());
-		const total = divisionAffected ? divisionAffected.totalAffected : 0;
-		return {
-			total,
-			name: division.name["en"] || "Unknown",
-			description: `Total Affected People: ${total}`,
-			colorPercentage: total / maxAffected,
-			geojson: division.geojson || {},
-		};
-	});
+	const maxAffected = Math.max(
+		...affectedPeopleByDivision.map((a) => a.totalAffected),
+		1
+	);
+	const affectedPeopleGeoData: interfaceMap[] = geographicLevel1.map(
+		(division) => {
+			const divisionAffected = affectedPeopleByDivision.find(
+				(a) => a.divisionId === division.id.toString()
+			);
+			const total = divisionAffected ? divisionAffected.totalAffected : 0;
+			return {
+				total,
+				name: division.name["en"] || "Unknown",
+				description: `Total Affected People: ${total}`,
+				colorPercentage: total / maxAffected,
+				geojson: division.geojson || {},
+			};
+		}
+	);
 
 	// Build disasterEventGeoData
-	const maxEvents = Math.max(...disasterEventCountByDivision.map((e) => e.eventCount), 1);
-	const disasterEventGeoData: interfaceMap[] = geographicLevel1.map((division) => {
-		const divisionEvents = disasterEventCountByDivision.find((e) => e.divisionId === division.id.toString());
-		const total = divisionEvents ? divisionEvents.eventCount : 0;
-		return {
-			total,
-			name: division.name["en"] || "Unknown",
-			description: `Disaster Events: ${total}`,
-			colorPercentage: total / maxEvents,
-			geojson: division.geojson || {},
-		};
-	});
+	const maxEvents = Math.max(
+		...disasterEventCountByDivision.map((e) => e.eventCount),
+		1
+	);
+	const disasterEventGeoData: interfaceMap[] = geographicLevel1.map(
+		(division) => {
+			const divisionEvents = disasterEventCountByDivision.find(
+				(e) => e.divisionId === division.id.toString()
+			);
+			const total = divisionEvents ? divisionEvents.eventCount : 0;
+			return {
+				total,
+				name: division.name["en"] || "Unknown",
+				description: `Disaster Events: ${total}`,
+				colorPercentage: total / maxEvents,
+				geojson: division.geojson || {},
+			};
+		}
+	);
 
 	const disasterSummary = await getDisasterSummary(filters);
 
@@ -254,9 +292,8 @@ export default function HazardAnalysis() {
 		hazardTypes,
 		hazardClusters,
 		specificHazards,
-		level1DivisionNames
+		level1DivisionNames,
 		// geographicLevel1: geographicLevels,
-
 	} = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
 
@@ -304,27 +341,27 @@ export default function HazardAnalysis() {
 	const hazardName =
 		appliedFilters.specificHazardId && specificHazards.length > 0
 			? specificHazards.find((h) => h.id === appliedFilters.specificHazardId)
-				?.nameEn || "Unknown Hazard"
+					?.nameEn || "Unknown Hazard"
 			: appliedFilters.hazardClusterId && hazardClusters.length > 0
-				? hazardClusters.find((c) => c.id === appliedFilters.hazardClusterId)
+			? hazardClusters.find((c) => c.id === appliedFilters.hazardClusterId)
 					?.name || "Unknown Cluster"
-				: appliedFilters.hazardTypeId
-					? hazardTypes.find((t) => t.id === appliedFilters.hazardTypeId)?.name ||
-					"Unknown Type"
-					: null;
+			: appliedFilters.hazardTypeId
+			? hazardTypes.find((t) => t.id === appliedFilters.hazardTypeId)?.name ||
+			  "Unknown Type"
+			: null;
 
 	const geographicName =
 		appliedFilters.geographicLevelId && level1DivisionNames.length > 0
 			? level1DivisionNames.find(
-				(g) => g.id.toString() === appliedFilters.geographicLevelId
-			)?.name["en"] || "Unknown Level"
+					(g) => g.id.toString() === appliedFilters.geographicLevelId
+			  )?.name["en"] || "Unknown Level"
 			: null;
 
 	const totalPeopleAffected = actionData
 		? Number(actionData.totalAffectedDirect) +
-		Number(actionData.totalDisplaced) +
-		Number(actionData.totalInjured) +
-		Number(actionData.totalMissing)
+		  Number(actionData.totalDisplaced) +
+		  Number(actionData.totalInjured) +
+		  Number(actionData.totalMissing)
 		: 0;
 
 	return (
@@ -447,7 +484,10 @@ export default function HazardAnalysis() {
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Hazards Analysis - DTS" },
-		{ name: "description", content: "Hazards analysis page under DTS." },
+		{ title: "Hazards Analysis - DELTA Resilience" },
+		{
+			name: "description",
+			content: "Hazards analysis page under DELTA Resilience.",
+		},
 	];
 };

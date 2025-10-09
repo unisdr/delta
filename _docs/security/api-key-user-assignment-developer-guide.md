@@ -2,17 +2,19 @@
 
 ## Overview
 
-This document explains the implementation of the API key user assignment feature in the DTS system. This feature allows API keys to be linked to specific users, with the key's validity tied to the user's status.
+This document explains the implementation of the API key user assignment feature in the DELTA Resilience system. This feature allows API keys to be linked to specific users, with the key's validity tied to the user's status.
 
 ## Implementation Details
 
 ### Data Structure
 
 API keys are linked to users through two fields:
+
 - `managedByUserId`: The admin user who created the key
 - `assignedToUserId`: The user to whom the key is assigned (optional)
 
 The assignment is stored in the API key's name with a special suffix format:
+
 ```
 {original_name}__ASSIGNED_USER_{userId}
 ```
@@ -72,27 +74,28 @@ The form component in `app/frontend/api_key.tsx` conditionally renders a user as
 
 ```typescript
 if (props.isAdmin && props.userOptions && props.userOptions.length > 0) {
-  fieldOverrides.assignedToUserId = (
-    <div key="assignedToUserId" className="form-group">
-      <label htmlFor="assignedToUserId">Assign to User (Optional)</label>
-      <select
-        id="assignedToUserId"
-        name="assignedToUserId"
-        className="form-control"
-        defaultValue={props.fields?.assignedToUserId || ''}
-      >
-        <option value="">-- Select User (Optional) --</option>
-        {props.userOptions.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <small className="form-text text-muted">
-        If selected, this API key will only be valid when the assigned user is active.
-      </small>
-    </div>
-  );
+	fieldOverrides.assignedToUserId = (
+		<div key="assignedToUserId" className="form-group">
+			<label htmlFor="assignedToUserId">Assign to User (Optional)</label>
+			<select
+				id="assignedToUserId"
+				name="assignedToUserId"
+				className="form-control"
+				defaultValue={props.fields?.assignedToUserId || ""}
+			>
+				<option value="">-- Select User (Optional) --</option>
+				{props.userOptions.map((option) => (
+					<option key={option.value} value={option.value}>
+						{option.label}
+					</option>
+				))}
+			</select>
+			<small className="form-text text-muted">
+				If selected, this API key will only be valid when the assigned user is
+				active.
+			</small>
+		</div>
+	);
 }
 ```
 
@@ -103,10 +106,10 @@ When saving an API key, the assigned user ID is incorporated into the key name:
 ```typescript
 // For update, we need to use only the fields that apiKeyUpdate expects
 return apiKeyUpdate(tx, id, {
-  name: fields.assignedToUserId 
-    ? `${fields.name}__ASSIGNED_USER_${fields.assignedToUserId}` 
-    : fields.name,
-  // Other fields...
+	name: fields.assignedToUserId
+		? `${fields.name}__ASSIGNED_USER_${fields.assignedToUserId}`
+		: fields.name,
+	// Other fields...
 });
 ```
 
@@ -118,7 +121,6 @@ API key management is controlled by the `EditAPIKeys` permission, which is only 
 
 - **admin**
 
-
 Other roles like **data-viewer**, **data-collector**, and **data-validator** do not have this permission and cannot create or manage API keys.
 
 ### Permission Implementation
@@ -126,13 +128,19 @@ Other roles like **data-viewer**, **data-collector**, and **data-validator** do 
 The permission check is implemented in the route handlers using `authLoaderWithPerm` and `authActionWithPerm`:
 
 ```typescript
-export const loader = authLoaderWithPerm("EditAPIKeys", async ({ request, params }) => {
-  // API key loading logic
-});
+export const loader = authLoaderWithPerm(
+	"EditAPIKeys",
+	async ({ request, params }) => {
+		// API key loading logic
+	}
+);
 
-export const action = authActionWithPerm("EditAPIKeys", async ({ request, params }) => {
-  // API key saving logic
-});
+export const action = authActionWithPerm(
+	"EditAPIKeys",
+	async ({ request, params }) => {
+		// API key saving logic
+	}
+);
 ```
 
 ### User Types and Capabilities
@@ -142,7 +150,6 @@ export const action = authActionWithPerm("EditAPIKeys", async ({ request, params
    - Can create and assign API keys to other users
    - See the user assignment dropdown with all verified users
    - Can manage keys created by themselves or other admins
-
 
 ## Key Validation Flow
 

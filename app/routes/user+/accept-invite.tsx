@@ -29,7 +29,7 @@ import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instan
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Create your account - DTS" },
+		{ title: "Create your account - DELTA Resilience" },
 		{ name: "description", content: "Create your account page." },
 	];
 };

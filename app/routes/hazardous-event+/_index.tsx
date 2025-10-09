@@ -15,7 +15,7 @@ import { MainContainer } from "~/frontend/container";
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "List of Hazardous Events - DTS" },
+		{ title: "List of Hazardous Events - DELTA Resilience" },
 		{ name: "description", content: "Hazardous Events." },
 	];
 };

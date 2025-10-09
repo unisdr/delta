@@ -1,4 +1,9 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
+import {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	MetaFunction,
+	redirect,
+} from "@remix-run/node";
 import { useLoaderData, useActionData } from "@remix-run/react";
 import { configAuthSupportedForm } from "~/util/config";
 import {
@@ -20,9 +25,7 @@ import { randomBytes } from "crypto";
 import { sendEmail } from "~/util/email";
 import { toast } from "react-toastify/unstyled";
 import Messages from "~/components/Messages";
-import {
-	sessionCookie,
-} from "~/util/session";
+import { sessionCookie } from "~/util/session";
 import { createCSRFToken } from "~/backend.server/utils/csrf";
 
 interface FormFields {
@@ -31,15 +34,13 @@ interface FormFields {
 
 // Add loader to check if form auth is supported
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	
-
 	// If form authentication is not supported, redirect to login
 	if (!configAuthSupportedForm()) {
 		return redirect("/user/login");
 	}
 
 	const csrfToken = createCSRFToken();
-	
+
 	// Set the CSRF token in the session variable
 	const cookieHeader = request.headers.get("Cookie") || "";
 	const session = await sessionCookie().getSession(cookieHeader);
@@ -73,13 +74,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			{
 				data,
 				errors: {
-					general: ["CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again."],
+					general: [
+						"CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again.",
+					],
 				},
 			},
 			{ status: 400 }
 		);
 	}
-
 
 	let errors: FormErrors<FormFields> = {};
 
@@ -135,8 +137,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			data,
 			errors: {
 				fields: {
-					email: ["Unable to send email due to a system configuration issue. Please contact your system administrator to report this problem."],
-				}
+					email: [
+						"Unable to send email due to a system configuration issue. Please contact your system administrator to report this problem.",
+					],
+				},
 			},
 			status: "error",
 		});
@@ -151,11 +155,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Forgot Password - DTS" },
+		{ title: "Forgot Password - DELTA Resilience" },
 		{ name: "description", content: "Forgot Password." },
 	];
 };
-
 
 export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
@@ -191,7 +194,11 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
+							<input
+								type="hidden"
+								name="csrfToken"
+								value={loaderData.csrfToken}
+							/>
 							<div className="dts-form__header">
 								<a
 									href="/user/login"

@@ -89,7 +89,7 @@ export const createAssessmentMetadata = async (
 		confidenceLevel,
 		currency: "USD", // Use first configured currency or USD as fallback
 		assessmentDate: new Date().toISOString(),
-		assessedBy: "DTS Analytics System",
+		assessedBy: "DELTA Resilience Analytics System",
 		notes: "Automatically generated assessment based on database records",
 	};
 };
