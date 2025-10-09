@@ -210,10 +210,11 @@ export function HazardousEventForm(props: HazardousEventFormProps) {
 				parent: (
 					<Field key="parent" label="Parent">
 						{selected ? hazardousEventLink(selected) : "-"}&nbsp;
-						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"}>
+						<Link target="_blank" rel="opener" to={"/hazardous-event/picker"} className="mx-2">
 							Change
 						</Link>
-						<button
+						<button 
+						className="mg-button mg-button-outline"
 							onClick={(e: any) => {
 								e.preventDefault();
 								setSelected(undefined);
