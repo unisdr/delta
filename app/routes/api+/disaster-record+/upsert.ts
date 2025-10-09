@@ -7,6 +7,7 @@ import {
 	disasterRecordsUpdate,
 	disasterRecordsIdByImportId,
 	DisasterRecordsFields,
+	disasterRecordsIdByImportIdAndCountryAccountsId,
 } from "~/backend.server/models/disaster_record";
 
 import { fieldsDefApi } from "~/frontend/disaster-record/form";
@@ -49,7 +50,7 @@ export const action: ActionFunction = async (args: ActionFunctionArgs) => {
 		update: async (tx: any, id: string, fields: any) => {
 			return disasterRecordsUpdate(tx, id, fields, countryAccountsId);
 		},
-		idByImportIdAndCountryAccountsId: disasterRecordsIdByImportId,
+		idByImportIdAndCountryAccountsId: disasterRecordsIdByImportIdAndCountryAccountsId,
 		countryAccountsId,
 	});
 
