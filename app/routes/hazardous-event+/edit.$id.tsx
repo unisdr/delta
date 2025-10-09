@@ -13,6 +13,7 @@ import { formScreen } from "~/frontend/form";
 import { formSave } from "~/backend.server/handlers/form/form";
 
 import {
+	authActionGetAuth,
 	authActionWithPerm,
 	authLoaderGetUserForFrontend,
 	authLoaderWithPerm,
@@ -107,6 +108,8 @@ export const loader = authLoaderWithPerm("EditData", async (loaderArgs) => {
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const { request } = actionArgs;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	const userSession = authActionGetAuth(actionArgs);
+
 
 	return formSave({
 		actionArgs,
@@ -115,6 +118,7 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 			const updatedData = {
 				...data,
 				countryAccountsId,
+				updatedBy: userSession.user.id,
 			};
 			if (id) {
 				return hazardousEventUpdate(tx, id, updatedData);

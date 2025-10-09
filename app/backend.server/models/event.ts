@@ -23,12 +23,13 @@ import { checkConstraintError } from "./common";
 
 import { dr, Tx } from "~/db.server";
 
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, getTableName } from "drizzle-orm";
 
 import { ContentRepeaterUploadFile } from "~/components/ContentRepeater/UploadFile";
 import { getRequiredAndSetToNullHipFields } from "./hip_hazard_picker";
 import { parseFlexibleDate } from "../utils/dateFilters";
 import { TEMP_UPLOAD_PATH } from "~/utils/paths";
+import { logAudit } from "./auditLogs";
 
 interface TemporalValidationResult {
 	isValid: boolean;
@@ -48,7 +49,8 @@ export interface HazardousEventFields
 		Omit<InsertHazardousEvent, "id">,
 		ObjectWithImportId {
 	parent: string;
-	// countryAccountsId will be auto-assigned from tenant context, not user input
+	createdBy: string;
+	updatedBy: string;
 }
 
 export function validate(
@@ -120,7 +122,7 @@ export async function hazardousEventCreate(
 		...fields,
 	};
 	try {
-		await tx
+		const [insertedHazardousEvent] = await tx
 			.insert(hazardousEventTable)
 			.values({
 				...values,
@@ -128,6 +130,18 @@ export async function hazardousEventCreate(
 				createdAt: new Date(),
 			})
 			.returning();
+
+		const createByUserId = fields.createdBy;
+		if (createByUserId) {
+			logAudit({
+				tableName: getTableName(hazardousEventTable),
+				recordId: insertedHazardousEvent.id,
+				action: "Create hazardous event",
+				newValues: JSON.stringify(insertedHazardousEvent),
+				oldValues: null,
+				userId: createByUserId,
+			})
+		}
 
 		if (res.length > 0) {
 			await processAndSaveAttachments(
@@ -311,7 +325,7 @@ export async function hazardousEventUpdate(
 			}
 
 			// 3. Update the hazardous event
-			await tx
+			const [updatedHazardousEvent] = await tx
 				.update(hazardousEventTable)
 				.set({
 					...fields,
@@ -319,6 +333,18 @@ export async function hazardousEventUpdate(
 				})
 				.where(eq(hazardousEventTable.id, id))
 				.returning();
+
+			const updatedByUserId = fields.updatedBy;
+			if (updatedByUserId) {
+				logAudit({
+					tableName: getTableName(hazardousEventTable),
+					recordId: updatedHazardousEvent.id,
+					action: "Update hazardous event",
+					newValues: updatedHazardousEvent,
+					oldValues: oldRecord,
+					userId: updatedByUserId,
+				})
+			}
 
 			// 5. Process attachments
 			if (Array.isArray(fields?.attachments)) {
