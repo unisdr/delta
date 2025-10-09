@@ -1,10 +1,11 @@
 # MIT vs Apache 2.0 License Comparison
 
-This document provides a detailed comparison between the MIT License and Apache License 2.0, focusing on aspects particularly relevant to the UNDRR Disaster Tracking System (DTS) country instance platform.
+This document provides a detailed comparison between the MIT License and Apache License 2.0, focusing on aspects particularly relevant to the UNDRR DELTA Resilience country instance platform.
 
 ## 1. License Basics
 
 ### MIT License
+
 - Full name: MIT License
 - Created by: Massachusetts Institute of Technology
 - First published: 1988
@@ -13,6 +14,7 @@ This document provides a detailed comparison between the MIT License and Apache 
 - Type: Permissive
 
 ### Apache License 2.0
+
 - Full name: Apache License 2.0
 - Created by: Apache Software Foundation
 - First published: 2004
@@ -23,14 +25,17 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 2. Core Rights and Permissions
 
 ### Redistribution
+
 - **MIT**: Can redistribute in source and binary form
 - **Apache 2.0**: Can redistribute in source and binary form
 
 ### Modification
+
 - **MIT**: Can modify and create derivative works
 - **Apache 2.0**: Can modify and create derivative works
 
 ### Patent Protection
+
 - **MIT**: No explicit patent protection
 - **Apache 2.0**: Explicit patent protection clause
   - Grants patent license to recipients
@@ -40,11 +45,13 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 3. Attribution Requirements
 
 ### MIT License
+
 - Must include copyright notice
 - Must include license text
 - Must include disclaimer
 
 ### Apache License 2.0
+
 - Must include copyright notice
 - Must include license text
 - Must include NOTICE file if provided
@@ -54,10 +61,12 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 4. Redistribution Terms
 
 ### MIT License
+
 - Can redistribute in source or binary form
 - Must include copyright notice and license text
 
 ### Apache License 2.0
+
 - Can redistribute in source or binary form
 - Must include copyright notice and license text
 - Must include NOTICE file if provided
@@ -67,10 +76,12 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 5. Modification and Derivative Works
 
 ### MIT License
+
 - Can modify and create derivative works
 - Must include copyright notice and license text
 
 ### Apache License 2.0
+
 - Can modify and create derivative works
 - Must include copyright notice and license text
 - Must include NOTICE file if provided
@@ -81,10 +92,12 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 6. Trademark Usage
 
 ### MIT License
+
 - No explicit trademark provisions
 - Trademark usage is not addressed
 
 ### Apache License 2.0
+
 - Cannot use contributors' names for endorsement
 - Must include trademark notices
 - More control over branding
@@ -92,11 +105,13 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 7. Liability and Warranty
 
 ### MIT License
+
 - Software provided "as is"
 - No warranty
 - No liability
 
 ### Apache License 2.0
+
 - Software provided "as is"
 - No warranty
 - No liability
@@ -105,12 +120,14 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 8. Contribution Model
 
 ### MIT License
+
 - Simple contribution model
 - Contributors retain copyright
 - Simple attribution
 - No explicit contribution agreement
 
 ### Apache License 2.0
+
 - More structured contribution model
 - Contributors retain copyright
 - More detailed attribution
@@ -121,12 +138,14 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 9. International Considerations
 
 ### MIT License
+
 - Simple international terms
 - Generally accepted worldwide
 - Few jurisdiction-specific issues
 - No explicit international provisions
 
 ### Apache License 2.0
+
 - Explicit international provisions
 - Better suited for cross-border deployments
 - More aligned with international IP laws
@@ -136,12 +155,14 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 10. Corporate Participation
 
 ### MIT License
+
 - Simple corporate participation
 - Easy for companies to contribute
 - Few legal barriers
 - No explicit corporate protections
 
 ### Apache License 2.0
+
 - More structured corporate participation
 - Better patent protection for companies
 - Clearer contribution terms
@@ -152,12 +173,14 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 11. Government Use
 
 ### MIT License
+
 - Simple government use
 - Easy for government adoption
 - Few legal barriers
 - No explicit government provisions
 
 ### Apache License 2.0
+
 - More structured government use
 - Better patent protection for government
 - More aligned with government procurement policies
@@ -168,12 +191,14 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 12. UNDRR-Specific Considerations
 
 ### MIT License
+
 - May be insufficient for UNDRR needs
 - Lacks explicit patent protection
 - Less structured contribution model
 - Fewer international protections
 
 ### Apache License 2.0
+
 - Better suited for UNDRR projects
 - Stronger patent protection
 - More structured contribution model
@@ -184,6 +209,7 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 13. Digital Public Goods Alignment
 
 ### MIT License
+
 - OSI-approved license
 - Meets DPG minimum requirements
 - Simple compliance verification
@@ -192,6 +218,7 @@ This document provides a detailed comparison between the MIT License and Apache 
 - Minimal barriers to adoption
 
 ### Apache 2.0
+
 - OSI-approved license
 - Meets DPG minimum requirements
 - Better patent protection for public good
@@ -203,6 +230,7 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 14. Sustainability and Reuse
 
 ### MIT License
+
 - Simple reuse model
 - Easy adoption by other projects
 - Minimal barriers to forking
@@ -211,6 +239,7 @@ This document provides a detailed comparison between the MIT License and Apache 
 - Community-friendly approach
 
 ### Apache 2.0
+
 - Structured reuse model
 - Better protection for sustainable development
 - Clear terms for modifications
@@ -222,6 +251,7 @@ This document provides a detailed comparison between the MIT License and Apache 
 ## 15. Public Good Protection
 
 ### MIT License
+
 - Basic public good protection
 - Relies on simplicity
 - Limited control over modifications
@@ -230,6 +260,7 @@ This document provides a detailed comparison between the MIT License and Apache 
 - Minimal barriers to public use
 
 ### Apache 2.0
+
 - Strong public good protection
 - Patent protection benefits public sector
 - Better control over modifications

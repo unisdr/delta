@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-The UNDRR Disaster Tracking System (DTS) is a comprehensive platform designed to support country-level disaster tracking and management. This directory contains all documentation related to licensing and Digital Public Goods (DPG) compliance for DTS.
+The UNDRR DELTA Resilience is a comprehensive platform designed to support country-level disaster tracking and management. This directory contains all documentation related to licensing and Digital Public Goods (DPG) compliance for DTS.
 
 ## Quick Navigation
 

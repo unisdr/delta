@@ -11,7 +11,10 @@ import { and, asc, or, ilike, sql, eq } from "drizzle-orm";
 
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { stringToBoolean } from "~/util/string";
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 
 interface assetLoaderArgs {
 	loaderArgs: LoaderFunctionArgs;
@@ -26,7 +29,7 @@ export async function assetLoader(args: assetLoaderArgs) {
 		throw new Response("Unauthorized, no selected instance", { status: 401 });
 	}
 
-	let instanceName = "Disaster Tracking System";
+	let instanceName = "DELTA Resilience";
 
 	if (countryAccountsId) {
 		const settings = await getCountrySettingsFromSession(request);
@@ -120,6 +123,6 @@ export async function assetLoader(args: assetLoaderArgs) {
 	return {
 		filters,
 		data: res,
-		instanceName
+		instanceName,
 	};
 }

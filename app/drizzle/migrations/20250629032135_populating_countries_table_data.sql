@@ -1,227 +1,227 @@
 -- Populating 224 county list based on preventionweb: https://data.undrr.org/api/json/preventionweb/countries-territories/1.0.0/
 INSERT INTO public.countries (id, name, iso3, flag_url)
 VALUES
-('704e8850-d5e2-422c-956c-bce5312ab266', 'Afghanistan', 'AFG', 'https://www.preventionweb.net/assets/shared/images/flags/afg.jpg')
-('e34ef71f-0a72-40c4-a6e0-dd19fb26f391', 'Albania', 'ALB', 'https://www.preventionweb.net/assets/shared/images/flags/alb.jpg')
-('4af50751-bfb0-4ca3-a4b3-d8c2ad6ec62d', 'Algeria', 'DZA', 'https://www.preventionweb.net/assets/shared/images/flags/dza.jpg')
-('11750269-2ff2-449f-b10e-c3bd88487298', 'American Samoa', 'ASM', 'https://www.preventionweb.net/assets/shared/images/flags/asm.jpg')
-('1b641fce-aca9-4522-ba15-f620fa0f309b', 'Andorra', 'AND', 'https://www.preventionweb.net/assets/shared/images/flags/and.jpg')
-('73de5df3-592a-45cd-8e18-254af7dc7b8e', 'Angola', 'AGO', 'https://www.preventionweb.net/assets/shared/images/flags/ago.jpg')
-('79725a26-9fa4-4b1a-8a5b-ea2c9d3a9ded', 'Anguilla', 'AIA', 'https://www.preventionweb.net/assets/shared/images/flags/aia.jpg')
-('41b0d20a-0d98-46df-b389-710ac0c96427', 'Antigua and Barbuda', 'ATG', 'https://www.preventionweb.net/assets/shared/images/flags/atg.jpg')
-('525434cb-f24b-4f47-8bda-4ba50754a129', 'Argentina', 'ARG', 'https://www.preventionweb.net/assets/shared/images/flags/arg.jpg')
-('eef26331-4334-4951-b990-8cee438e9fb5', 'Armenia', 'ARM', 'https://www.preventionweb.net/assets/shared/images/flags/arm.jpg')
-('0e7a6922-7f98-4496-9864-534322b8aead', 'Aruba', 'ABW', 'https://www.preventionweb.net/assets/shared/images/flags/abw.jpg')
-('b16ec05d-7dac-4c99-b0ba-ac3e7d4cabee', 'Australia', 'AUS', 'https://www.preventionweb.net/assets/shared/images/flags/aus.jpg')
-('82f05a87-4bbd-49ef-85b3-cb54deff0234', 'Austria', 'AUT', 'https://www.preventionweb.net/assets/shared/images/flags/aut.jpg')
-('1804c265-07cd-4226-8bd2-437b94577fb8', 'Azerbaijan', 'AZE', 'https://www.preventionweb.net/assets/shared/images/flags/aze.jpg')
-('0098f8c0-0b0d-4823-986d-bea7b6c48705', 'Bahamas', 'BHS', 'https://www.preventionweb.net/assets/shared/images/flags/bhs.jpg')
-('02c66fc5-c640-43b4-95ea-37b4d047f9a7', 'Bahrain', 'BHR', 'https://www.preventionweb.net/assets/shared/images/flags/bhr.jpg')
-('a0f72f40-4f17-4c96-99ad-5fbfd2847035', 'Bangladesh', 'BGD', 'https://www.preventionweb.net/assets/shared/images/flags/bgd.jpg')
-('9314d619-344f-431c-9ea2-4970bbbf174a', 'Barbados', 'BRB', 'https://www.preventionweb.net/assets/shared/images/flags/brb.jpg')
-('d78ea2e2-cde2-416b-b95e-855b81fdaa9b', 'Belarus', 'BLR', 'https://www.preventionweb.net/assets/shared/images/flags/blr.jpg')
-('b1a8f7b4-c21e-4885-afd2-076551fbc0c0', 'Belgium', 'BEL', 'https://www.preventionweb.net/assets/shared/images/flags/bel.jpg')
-('7e129d0f-8c45-45cd-bf91-a3c0551cef02', 'Belize', 'BLZ', 'https://www.preventionweb.net/assets/shared/images/flags/blz.jpg')
-('8a6c4b24-b4df-407a-8d75-aae50859be7b', 'Benin', 'BEN', 'https://www.preventionweb.net/assets/shared/images/flags/ben.jpg')
-('2ccafa00-33e6-4faf-b519-9e02ba28a02f', 'Bermuda', 'BMU', 'https://www.preventionweb.net/assets/shared/images/flags/bmu.jpg')
-('863228a9-e58b-46a2-8f9e-26f080c84fe5', 'Bhutan', 'BTN', 'https://www.preventionweb.net/assets/shared/images/flags/btn.jpg')
-('0a9a548f-6a1b-4b40-9525-385367d72a20', 'Bolivia, Plurinational State of', 'BOL', 'https://www.preventionweb.net/assets/shared/images/flags/bol.jpg')
-('c71424c6-cc7a-4a0a-bfd4-04ff99e2bb89', 'Bosnia and Herzegovina', 'BIH', 'https://www.preventionweb.net/assets/shared/images/flags/bih.jpg')
-('b8ff3d2b-05de-43cb-8576-5b158d6231bb', 'Botswana', 'BWA', 'https://www.preventionweb.net/assets/shared/images/flags/bwa.jpg')
-('0ecbd87d-aaaf-47ac-a60a-fa674765aef6', 'Brazil', 'BRA', 'https://www.preventionweb.net/assets/shared/images/flags/bra.jpg')
-('b5fc1969-6154-4fbf-ba66-1d92e0aae3bf', 'British Virgin Islands', 'VGB', 'https://www.preventionweb.net/assets/shared/images/flags/vgb.jpg')
-('a9d19d4c-febe-4f78-8abe-fbffe066d4fd', 'Brunei Darussalam', 'BRN', 'https://www.preventionweb.net/assets/shared/images/flags/brn.jpg')
-('624484cc-ae6b-4840-a821-fbb92241d52f', 'Bulgaria', 'BGR', 'https://www.preventionweb.net/assets/shared/images/flags/bgr.jpg')
-('05d675c7-3470-43b5-b980-f5351c3ad5af', 'Burkina Faso', 'BFA', 'https://www.preventionweb.net/assets/shared/images/flags/bfa.jpg')
-('243fd43c-b48b-4a04-adce-27218d08b1b8', 'Burundi', 'BDI', 'https://www.preventionweb.net/assets/shared/images/flags/bdi.jpg')
-('362fdfac-8cc9-4cd4-8681-b4466fd90723', 'Cabo Verde', 'CPV', 'https://www.preventionweb.net/assets/shared/images/flags/cpv.jpg')
-('fd5329fe-8c60-4d39-9ecb-d104478be2f9', 'Cambodia', 'KHM', 'https://www.preventionweb.net/assets/shared/images/flags/khm.jpg')
-('a06d7bdf-5701-461a-ba79-f412bce04697', 'Cameroon', 'CMR', 'https://www.preventionweb.net/assets/shared/images/flags/cmr.jpg')
-('5834ea4e-e957-4ee8-bcee-6da279082297', 'Canada', 'CAN', 'https://www.preventionweb.net/assets/shared/images/flags/can.jpg')
-('da7576aa-dde4-4ddb-b068-0ce17dc66f60', 'Cayman Islands', 'CYM', 'https://www.preventionweb.net/assets/shared/images/flags/cym.jpg')
-('07f25a89-5f8f-4c23-80e7-0ea090b93c4e', 'Central African Republic', 'CAF', 'https://www.preventionweb.net/assets/shared/images/flags/caf.jpg')
-('596cd94b-4946-4611-9f12-3ab8ccf99738', 'Chad', 'TCD', 'https://www.preventionweb.net/assets/shared/images/flags/tcd.jpg')
-('ef03d376-4822-4170-9f5e-883ff29c7339', 'Chile', 'CHL', 'https://www.preventionweb.net/assets/shared/images/flags/chl.jpg')
-('0874fc23-f2b0-4fab-bfba-5bb49694b36a', 'China', 'CHN', 'https://www.preventionweb.net/assets/shared/images/flags/chn.jpg')
-('9022dd46-8bd5-4040-b7da-368662f404f9', 'Colombia', 'COL', 'https://www.preventionweb.net/assets/shared/images/flags/col.jpg')
-('7be1ad90-410c-40c7-824d-fecf25210b18', 'Comoros', 'COM', 'https://www.preventionweb.net/assets/shared/images/flags/com.jpg')
-('4df6f7ed-795e-4566-ab05-b9992bba1028', 'Democratic Republic of the Congo', 'COD', 'https://www.preventionweb.net/assets/shared/images/flags/cod.jpg')
-('bb380c1d-380b-4da4-a80c-06e4b0f1f29c', 'Republic of the Congo', 'COG', 'https://www.preventionweb.net/assets/shared/images/flags/cog.jpg')
-('f05e985a-002e-40e6-9606-f2a5c61df76d', 'Cook Islands', 'COK', 'https://www.preventionweb.net/assets/shared/images/flags/cok.jpg')
-('198840e9-051f-45ae-a3e8-f625e76c403f', 'Costa Rica', 'CRI', 'https://www.preventionweb.net/assets/shared/images/flags/cri.jpg')
-('643d576d-d4e0-473e-b3b7-b0c5c0852817', 'Côte d''Ivoire', 'CIV', 'https://www.preventionweb.net/assets/shared/images/flags/civ.jpg')
-('9e06c44b-3f0f-4408-8e2c-c7ef63b00ef0', 'Croatia', 'HRV', 'https://www.preventionweb.net/assets/shared/images/flags/hrv.jpg')
-('c014465d-8134-4d74-92cc-783eec7e2cf2', 'Cuba', 'CUB', 'https://www.preventionweb.net/assets/shared/images/flags/cub.jpg')
-('f3cb925b-e831-46b8-8650-7faeab52ed9e', 'Cyprus', 'CYP', 'https://www.preventionweb.net/assets/shared/images/flags/cyp.jpg')
-('c4539af0-327c-4815-add9-3c50947da988', 'Czech Republic', 'CZE', 'https://www.preventionweb.net/assets/shared/images/flags/cze.jpg')
-('2c91b114-af80-42b0-ba1b-f9dd3b7803c6', 'Denmark', 'DNK', 'https://www.preventionweb.net/assets/shared/images/flags/dnk.jpg')
-('3db53449-8e33-43b8-8735-013147400d70', 'Djibouti', 'DJI', 'https://www.preventionweb.net/assets/shared/images/flags/dji.jpg')
-('63305a07-314a-442a-a623-fa3df20dc056', 'Dominica', 'DMA', 'https://www.preventionweb.net/assets/shared/images/flags/dma.jpg')
-('5deaedca-f182-47f6-8e78-462241780bf9', 'Dominican Republic', 'DOM', 'https://www.preventionweb.net/assets/shared/images/flags/dom.jpg')
-('3ef546c0-b52c-4240-bcbc-beac2d28bc1d', 'Ecuador', 'ECU', 'https://www.preventionweb.net/assets/shared/images/flags/ecu.jpg')
-('89d14089-cf2c-40b5-ae92-84221166f578', 'Egypt', 'EGY', 'https://www.preventionweb.net/assets/shared/images/flags/egy.jpg')
-('ea935731-1ece-4bf0-88f2-1bf6cecd297f', 'El Salvador', 'SLV', 'https://www.preventionweb.net/assets/shared/images/flags/slv.jpg')
-('e4cc9a9b-f397-4f41-807b-49599e82f8e4', 'Equatorial Guinea', 'GNQ', 'https://www.preventionweb.net/assets/shared/images/flags/gnq.jpg')
-('a82fcf7f-00eb-423f-89ca-38cde379c632', 'Eritrea', 'ERI', 'https://www.preventionweb.net/assets/shared/images/flags/eri.jpg')
-('ebb06aec-0d1b-4f13-8649-575eae42ce9a', 'Estonia', 'EST', 'https://www.preventionweb.net/assets/shared/images/flags/est.jpg')
-('daf7a178-9cb6-493f-9845-85392bd5fdd4', 'Eswatini', 'SWZ', 'https://www.preventionweb.net/assets/shared/images/flags/swz.jpg')
-('3a6d1f31-2446-4621-9dee-61c9bc40f91b', 'Ethiopia', 'ETH', 'https://www.preventionweb.net/assets/shared/images/flags/eth.jpg')
-('9333c4ca-60e1-488a-bebe-d64ca42c8c35', 'Fiji', 'FJI', 'https://www.preventionweb.net/assets/shared/images/flags/fji.jpg')
-('292c8b18-483c-4c4f-92f3-f5b13fc7886b', 'Finland', 'FIN', 'https://www.preventionweb.net/assets/shared/images/flags/fin.jpg')
-('7a1f7289-2a39-4000-b101-577f3607eddb', 'France', 'FRA', 'https://www.preventionweb.net/assets/shared/images/flags/fra.jpg')
-('ee8389a0-6b2d-42ae-b6bf-86ceba3dc595', 'French Guiana', 'GUF', 'https://www.preventionweb.net/assets/shared/images/flags/guf.jpg')
-('dd270ac5-5902-4330-88f4-1f228edc1d51', 'French Polynesia', 'PYF', 'https://www.preventionweb.net/assets/shared/images/flags/pyf.jpg')
-('dec4eae0-e403-4fae-885c-db5a4d1156b8', 'Gabon', 'GAB', 'https://www.preventionweb.net/assets/shared/images/flags/gab.jpg')
-('197fa126-1dba-49f7-bab4-4392d709d7bc', 'Gambia, Republic of The', 'GMB', 'https://www.preventionweb.net/assets/shared/images/flags/gmb.jpg')
-('56656064-6337-4148-bbf2-9fcbfc275cda', 'Georgia', 'GEO', 'https://www.preventionweb.net/assets/shared/images/flags/geo.jpg')
-('81980191-e681-4f80-b16f-38d172a5a3ad', 'Germany', 'DEU', 'https://www.preventionweb.net/assets/shared/images/flags/deu.jpg')
-('7dbd4afd-e659-477f-ab3b-52cde6bd24b0', 'Ghana', 'GHA', 'https://www.preventionweb.net/assets/shared/images/flags/gha.jpg')
-('fe2aa99e-812a-4314-9475-52590e4ee16f', 'Greece', 'GRC', 'https://www.preventionweb.net/assets/shared/images/flags/grc.jpg')
-('cbd759f6-4359-4a6a-80ed-4eef3a1649cc', 'Grenada', 'GRD', 'https://www.preventionweb.net/assets/shared/images/flags/grd.jpg')
-('d7a3b52b-6e84-4912-a87d-6d3659e2a275', 'Guadeloupe', 'GLP', 'https://www.preventionweb.net/assets/shared/images/flags/glp.jpg')
-('c5ae8ae2-1925-4471-a24e-fc0fe88bae97', 'Guam', 'GUM', 'https://www.preventionweb.net/assets/shared/images/flags/gum.jpg')
-('73c26e32-cbba-47c0-be12-de9f13926fac', 'Guatemala', 'GTM', 'https://www.preventionweb.net/assets/shared/images/flags/gtm.jpg')
-('0901e1ab-4cd8-4d11-a102-3d99c45b7cfe', 'Guinea', 'GIN', 'https://www.preventionweb.net/assets/shared/images/flags/gin.jpg')
-('3cc0150d-c354-4652-a27d-9bfa9bb54aa1', 'Guinea-Bissau', 'GNB', 'https://www.preventionweb.net/assets/shared/images/flags/gnb.jpg')
-('9ec6e95c-9199-4bcd-a20b-2eebd39b0441', 'Guyana', 'GUY', 'https://www.preventionweb.net/assets/shared/images/flags/guy.jpg')
-('800c08a7-5ac9-47c1-ac16-ec9e25a04d16', 'Haiti', 'HTI', 'https://www.preventionweb.net/assets/shared/images/flags/hti.jpg')
-('ab157e21-72c8-4a2d-939c-3af1a7f3b7b3', 'Holy See', 'VAT', 'https://www.preventionweb.net/assets/shared/images/flags/vat.jpg')
-('01b197a3-2495-4682-acd6-d48853d6fcc7', 'Honduras', 'HND', 'https://www.preventionweb.net/assets/shared/images/flags/hnd.jpg')
-('b94090f8-475e-4499-aa3b-bd48b6a5d4ae', 'Hong Kong (China)', 'HKG', 'https://www.preventionweb.net/assets/shared/images/flags/hkg.jpg')
-('535e4882-c1ba-4306-969b-cc0141abd0df', 'Hungary', 'HUN', 'https://www.preventionweb.net/assets/shared/images/flags/hun.jpg')
-('cc917261-52de-4c73-b88b-4cc0550f868d', 'Iceland', 'ISL', 'https://www.preventionweb.net/assets/shared/images/flags/isl.jpg')
-('4a8caa07-6de5-4845-8b8e-94aad6498e58', 'India', 'IND', 'https://www.preventionweb.net/assets/shared/images/flags/ind.jpg')
-('c665d957-50f7-4c4f-9c81-e2285db927b4', 'Indonesia', 'IDN', 'https://www.preventionweb.net/assets/shared/images/flags/idn.jpg')
-('692cc30e-2bbd-4825-9fd4-6ab0f207e1f7', 'Iran, Islamic Rep of', 'IRN', 'https://www.preventionweb.net/assets/shared/images/flags/irn.jpg')
-('43af24f4-f135-40f4-b24f-6cd6217ce5ab', 'Iraq', 'IRQ', 'https://www.preventionweb.net/assets/shared/images/flags/irq.jpg')
-('47990480-65b0-435b-9357-1b611022dc42', 'Ireland', 'IRL', 'https://www.preventionweb.net/assets/shared/images/flags/irl.jpg')
-('b79f5c91-4eb0-42aa-b0dd-8c58b7ce6438', 'Israel', 'ISR', 'https://www.preventionweb.net/assets/shared/images/flags/isr.jpg')
-('20ab9b75-512e-45c6-b420-2da5c749c601', 'Italy', 'ITA', 'https://www.preventionweb.net/assets/shared/images/flags/ita.jpg')
-('1928f61f-feb2-404e-b061-e688ede1b9fc', 'Jamaica', 'JAM', 'https://www.preventionweb.net/assets/shared/images/flags/jam.jpg')
-('3ab7da78-6340-422a-948b-c2f71e399a49', 'Japan', 'JPN', 'https://www.preventionweb.net/assets/shared/images/flags/jpn.jpg')
-('9fdd65ac-f763-457a-9441-e5a952ccc986', 'Jordan', 'JOR', 'https://www.preventionweb.net/assets/shared/images/flags/jor.jpg')
-('651f17c8-7a1b-4d8b-a876-676882237cd6', 'Kazakhstan', 'KAZ', 'https://www.preventionweb.net/assets/shared/images/flags/kaz.jpg')
-('6896f1e9-72b7-49f0-af38-7b4984110553', 'Kenya', 'KEN', 'https://www.preventionweb.net/assets/shared/images/flags/ken.jpg')
-('2b95c384-2f75-4803-ac24-69f8985b1323', 'Kiribati', 'KIR', 'https://www.preventionweb.net/assets/shared/images/flags/kir.jpg')
-('48e63eb9-1c57-4141-8692-b799b22c7600', 'Korea, Dem People''s Rep of', 'PRK', 'https://www.preventionweb.net/assets/shared/images/flags/prk.jpg')
-('57cebaf1-7fc8-4619-9092-1eaeaf3e5976', 'Korea, Rep of', 'KOR', 'https://www.preventionweb.net/assets/shared/images/flags/kor.jpg')
-('7255a212-5689-476e-9fb1-d43f384bcf34', 'Kuwait', 'KWT', 'https://www.preventionweb.net/assets/shared/images/flags/kwt.jpg')
-('39ade2f0-5bc8-4c20-a62e-60b8010a9dec', 'Kyrgyzstan', 'KGZ', 'https://www.preventionweb.net/assets/shared/images/flags/kgz.jpg')
-('9ea3ab13-f196-4d3f-b953-6e0a78c484be', 'Lao People''s Democratic Republic', 'LAO', 'https://www.preventionweb.net/assets/shared/images/flags/lao.jpg')
-('f8f36a65-4201-47b6-8013-06d3b2aedd6c', 'Latvia', 'LVA', 'https://www.preventionweb.net/assets/shared/images/flags/lva.jpg')
-('ca5015cf-f87f-458c-8d90-7f7416ce9f5c', 'Lebanon', 'LBN', 'https://www.preventionweb.net/assets/shared/images/flags/lbn.jpg')
-('fea9fe4a-7fd9-4239-9631-df8b5aaf2492', 'Lesotho', 'LSO', 'https://www.preventionweb.net/assets/shared/images/flags/lso.jpg')
-('70a25a1a-6192-4b19-8f92-3b5f90ce29d7', 'Liberia', 'LBR', 'https://www.preventionweb.net/assets/shared/images/flags/lbr.jpg')
-('3e0dd05c-5412-4572-b5ef-3af0e0bb3e35', 'Libya', 'LBY', 'https://www.preventionweb.net/assets/shared/images/flags/lby.jpg')
-('1912cf48-447d-49cb-bc45-960681e2a6c8', 'Liechtenstein', 'LIE', 'https://www.preventionweb.net/assets/shared/images/flags/lie.jpg')
-('ac55fda9-5666-4d66-9bd4-290e73df4c7f', 'Lithuania', 'LTU', 'https://www.preventionweb.net/assets/shared/images/flags/ltu.jpg')
-('65b1a1fd-0c75-499a-a950-9a66e47960eb', 'Luxembourg', 'LUX', 'https://www.preventionweb.net/assets/shared/images/flags/lux.jpg')
-('83781cef-2824-45a3-bcde-dc570af94d8f', 'Macao (China)', 'MAC', 'https://www.preventionweb.net/assets/shared/images/flags/mac.jpg')
-('6c0c91f7-7ac2-40c2-82f7-db6235c4972a', 'Madagascar', 'MDG', 'https://www.preventionweb.net/assets/shared/images/flags/mdg.jpg')
-('be0a753b-79a2-48cd-bfe5-2b72dd707f22', 'Malawi', 'MWI', 'https://www.preventionweb.net/assets/shared/images/flags/mwi.jpg')
-('8bb41959-c612-443a-850f-3c310abe7aba', 'Malaysia', 'MYS', 'https://www.preventionweb.net/assets/shared/images/flags/mys.jpg')
-('b048dc8c-ee8d-4605-9772-3f9e65e76481', 'Maldives', 'MDV', 'https://www.preventionweb.net/assets/shared/images/flags/mdv.jpg')
-('0265aa2d-bceb-44b2-ab42-9e825ff245f2', 'Mali', 'MLI', 'https://www.preventionweb.net/assets/shared/images/flags/mli.jpg')
-('8124cb0e-c931-446b-8a63-f36bc0d2e048', 'Malta', 'MLT', 'https://www.preventionweb.net/assets/shared/images/flags/mlt.jpg')
-('44f2b86a-895f-475d-bfc9-c76edff05a91', 'Marshall Islands', 'MHL', 'https://www.preventionweb.net/assets/shared/images/flags/mhl.jpg')
-('789dd216-44df-40f3-b62c-289a19c69057', 'Martinique', 'MTQ', 'https://www.preventionweb.net/assets/shared/images/flags/mtq.jpg')
-('471cba90-5cc9-40df-80f7-3f73501c8121', 'Mauritania', 'MRT', 'https://www.preventionweb.net/assets/shared/images/flags/mrt.jpg')
-('d57db03e-bee6-4eae-92eb-61dc3b2c3417', 'Mauritius', 'MUS', 'https://www.preventionweb.net/assets/shared/images/flags/mus.jpg')
-('d5f9dbdf-4f9d-452e-8bc6-aed703d04ab8', 'Mayotte', 'MYT', 'https://www.preventionweb.net/assets/shared/images/flags/myt.jpg')
-('d88f37fd-b81d-4bdc-803e-04d2897dd74e', 'Mexico', 'MEX', 'https://www.preventionweb.net/assets/shared/images/flags/mex.jpg')
-('c3f1ae3d-722a-4f8b-b662-9ec77521550c', 'Micronesia, Fed States of', 'FSM', 'https://www.preventionweb.net/assets/shared/images/flags/fsm.jpg')
-('e46c8127-9ecd-4bf1-b111-ca33e233cf5a', 'Republic of Moldova', 'MDA', 'https://www.preventionweb.net/assets/shared/images/flags/mda.jpg')
-('0d7a3350-17ad-4649-91f6-5cfec11a168e', 'Monaco', 'MCO', 'https://www.preventionweb.net/assets/shared/images/flags/mco.jpg')
-('20d23aa9-3f7f-4b60-9bed-488c6953cb80', 'Mongolia', 'MNG', 'https://www.preventionweb.net/assets/shared/images/flags/mng.jpg')
-('ecc11593-3f2c-4c39-be05-407e315b2075', 'Montenegro', 'MNE', 'https://www.preventionweb.net/assets/shared/images/flags/mne.jpg')
-('7ef013c9-a1aa-495f-9cd2-9e10ed23a91d', 'Montserrat', 'MSR', 'https://www.preventionweb.net/assets/shared/images/flags/msr.jpg')
-('4f08750e-e38b-4c33-956f-d9199e310ba7', 'Morocco', 'MAR', 'https://www.preventionweb.net/assets/shared/images/flags/mar.jpg')
-('c3824b7d-c951-48fa-ac35-b3f386b3549b', 'Mozambique', 'MOZ', 'https://www.preventionweb.net/assets/shared/images/flags/moz.jpg')
-('c2b997cd-af4f-44c3-a76d-d9376bcdf4cc', 'Myanmar', 'MMR', 'https://www.preventionweb.net/assets/shared/images/flags/mmr.jpg')
-('04ae3fbb-1f43-40ec-8eb2-799f9687bebb', 'Namibia', 'NAM', 'https://www.preventionweb.net/assets/shared/images/flags/nam.jpg')
-('6605c4e5-2da3-411f-bfd4-745ba710a7a3', 'Nauru', 'NRU', 'https://www.preventionweb.net/assets/shared/images/flags/nru.jpg')
-('15972f49-7299-4fa6-a0ca-5a82116a8a50', 'Nepal', 'NPL', 'https://www.preventionweb.net/assets/shared/images/flags/npl.jpg')
-('62a9ea2a-8709-4d9b-ade9-fe9e2a4b3014', 'Netherlands, the', 'NLD', 'https://www.preventionweb.net/assets/shared/images/flags/nld.jpg')
-('f161c63f-32f8-4ac5-853c-23673dec62ea', 'New Caledonia', 'NCL', 'https://www.preventionweb.net/assets/shared/images/flags/ncl.jpg')
-('df5eea6d-f1b1-461e-be75-90eae37b4acc', 'New Zealand', 'NZL', 'https://www.preventionweb.net/assets/shared/images/flags/nzl.jpg')
-('d017da25-6138-4344-a0cb-b6d97a4ec12c', 'Nicaragua', 'NIC', 'https://www.preventionweb.net/assets/shared/images/flags/nic.jpg')
-('a1f2f162-ca24-457e-8033-986dc0d79c85', 'Niger', 'NER', 'https://www.preventionweb.net/assets/shared/images/flags/ner.jpg')
-('df80997b-f0f2-4454-8940-efc48048cf53', 'Nigeria', 'NGA', 'https://www.preventionweb.net/assets/shared/images/flags/nga.jpg')
-('46667076-f1c1-4da4-a19b-03839742dfe8', 'Niue', 'NIU', 'https://www.preventionweb.net/assets/shared/images/flags/niu.jpg')
-('3ba6cfab-a26e-4510-b0ba-e499ad97f101', 'Norfolk Island', 'NFK', 'https://www.preventionweb.net/assets/shared/images/flags/nfk.jpg')
-('3aa3fbfe-b9a7-4eb9-a155-a18f94c03c1c', 'North Macedonia', 'MKD', 'https://www.preventionweb.net/assets/shared/images/flags/mkd.jpg')
-('744be52e-df58-4bfb-84dc-8ae832e8db31', 'Northern Mariana Islands', 'MNP', 'https://www.preventionweb.net/assets/shared/images/flags/mnp.jpg')
-('4e0f8155-982a-43bb-b7e2-b3030fa7bfc1', 'Norway', 'NOR', 'https://www.preventionweb.net/assets/shared/images/flags/nor.jpg')
-('e471f20a-fd05-478e-8bdf-0509fa79de7b', 'Oman', 'OMN', 'https://www.preventionweb.net/assets/shared/images/flags/omn.jpg')
-('3fb6627b-7b5b-4611-9882-578ab82ddf9a', 'Pakistan', 'PAK', 'https://www.preventionweb.net/assets/shared/images/flags/pak.jpg')
-('9784ab8a-99db-49fa-8a97-ae87c8c4512c', 'Palau', 'PLW', 'https://www.preventionweb.net/assets/shared/images/flags/plw.jpg')
-('1f370a8e-f42f-425f-ae70-75925107ca10', 'Palestine, State of', 'PSE', 'https://www.preventionweb.net/assets/shared/images/flags/pse.jpg')
-('c667542f-554f-405f-928d-9ef4e410af2c', 'Panama', 'PAN', 'https://www.preventionweb.net/assets/shared/images/flags/pan.jpg')
-('8ab7f277-2134-4bf9-b4be-6f6f75f036a3', 'Papua New Guinea', 'PNG', 'https://www.preventionweb.net/assets/shared/images/flags/png.jpg')
-('a9969c88-1b18-4602-9ef7-1def74b3a41f', 'Paraguay', 'PRY', 'https://www.preventionweb.net/assets/shared/images/flags/pry.jpg')
-('34b36990-dcc3-422c-8d0e-6420499cb5a0', 'Peru', 'PER', 'https://www.preventionweb.net/assets/shared/images/flags/per.jpg')
-('0bf26858-9765-4789-999a-e43d25dcd482', 'Philippines', 'PHL', 'https://www.preventionweb.net/assets/shared/images/flags/phl.jpg')
-('fc28ae57-fccc-4355-bec7-5d5153b7937d', 'Poland', 'POL', 'https://www.preventionweb.net/assets/shared/images/flags/pol.jpg')
-('e1569bf2-88bf-4be1-bc09-63227f4fc817', 'Portugal', 'PRT', 'https://www.preventionweb.net/assets/shared/images/flags/prt.jpg')
-('e6474541-c35a-4141-8143-595e23f04db6', 'Puerto Rico', 'PRI', 'https://www.preventionweb.net/assets/shared/images/flags/pri.jpg')
-('fa23b430-4de0-4359-bd8a-448b35fadd8a', 'Qatar', 'QAT', 'https://www.preventionweb.net/assets/shared/images/flags/qat.jpg')
-('47ba785c-ef56-4547-8301-3b0e26591cd7', 'Reunion', 'REU', 'https://www.preventionweb.net/assets/shared/images/flags/reu.jpg')
-('26036c8d-703c-4ef2-9c0b-916a789085c6', 'Romania', 'ROU', 'https://www.preventionweb.net/assets/shared/images/flags/rou.jpg')
-('eea79fd8-511b-4549-8f09-929814122590', 'Russian Federation', 'RUS', 'https://www.preventionweb.net/assets/shared/images/flags/rus.jpg')
-('bf4413b1-3bbe-4c52-b6c2-a9fa22e11c74', 'Rwanda', 'RWA', 'https://www.preventionweb.net/assets/shared/images/flags/rwa.jpg')
-('470b89f0-48a5-421d-ab93-898dd2b0de28', 'Saint Kitts and Nevis', 'KNA', 'https://www.preventionweb.net/assets/shared/images/flags/kna.jpg')
-('9a22fe25-86c2-42bd-9553-d3ccaaa0b873', 'Saint Lucia', 'LCA', 'https://www.preventionweb.net/assets/shared/images/flags/lca.jpg')
-('625047e9-1ccd-4712-9557-212fca234737', 'Saint Pierre and Miquelon', 'SPM', 'https://www.preventionweb.net/assets/shared/images/flags/spm.jpg')
-('c5435851-9874-4946-acde-7a4eb4f69d9c', 'Saint Vincent and the Grenadines', 'VCT', 'https://www.preventionweb.net/assets/shared/images/flags/vct.jpg')
-('db98298d-1864-49c1-97d3-86801c1456dc', 'Samoa', 'WSM', 'https://www.preventionweb.net/assets/shared/images/flags/wsm.jpg')
-('d100cbc8-a076-489c-832a-d6851bc54825', 'San Marino', 'SMR', 'https://www.preventionweb.net/assets/shared/images/flags/smr.jpg')
-('ea632d47-e10a-4d57-93ee-dab8c8f839bc', 'Sao Tome and Principe', 'STP', 'https://www.preventionweb.net/assets/shared/images/flags/stp.jpg')
-('f7473922-38fe-4993-b71e-b16dd1360f6a', 'Saudi Arabia', 'SAU', 'https://www.preventionweb.net/assets/shared/images/flags/sau.jpg')
-('d2b068c0-3a05-4611-af72-782b830a47ab', 'Senegal', 'SEN', 'https://www.preventionweb.net/assets/shared/images/flags/sen.jpg')
-('0add34b0-4f70-4c6b-b71d-45abcdcb1411', 'Serbia', 'SRB', 'https://www.preventionweb.net/assets/shared/images/flags/srb.jpg')
-('b33209ee-e0cf-4020-863a-e165b643cf35', 'Seychelles', 'SYC', 'https://www.preventionweb.net/assets/shared/images/flags/syc.jpg')
-('d5f4b6a1-283d-4467-adef-4ebf0ce4fb82', 'Sierra Leone', 'SLE', 'https://www.preventionweb.net/assets/shared/images/flags/sle.jpg')
-('c07bc2c1-a278-4857-9fb9-1b12fc4e5e43', 'Singapore', 'SGP', 'https://www.preventionweb.net/assets/shared/images/flags/sgp.jpg')
-('78ccfb77-8a84-43c9-b688-f1c46e506011', 'Slovakia', 'SVK', 'https://www.preventionweb.net/assets/shared/images/flags/svk.jpg')
-('5d50d75e-a687-4923-9e56-83303f5b577c', 'Slovenia', 'SVN', 'https://www.preventionweb.net/assets/shared/images/flags/svn.jpg')
-('a6eea0b5-ae70-42d3-9a86-baaf0cf4dba1', 'Solomon Islands', 'SLB', 'https://www.preventionweb.net/assets/shared/images/flags/slb.jpg')
-('25adca6d-ceb1-40ff-9b86-257141b05e27', 'Somalia', 'SOM', 'https://www.preventionweb.net/assets/shared/images/flags/som.jpg')
-('60f9f4e7-55d0-492a-910e-fd5d5716bdb6', 'South Africa', 'ZAF', 'https://www.preventionweb.net/assets/shared/images/flags/zaf.jpg')
-('aba391aa-d920-44f8-8a4b-a724e463e68d', 'South Sudan', 'SSD', 'https://www.preventionweb.net/assets/shared/images/flags/ssd.jpg')
-('56fb06a9-5326-4678-92b1-9b7b86b43aa6', 'Spain', 'ESP', 'https://www.preventionweb.net/assets/shared/images/flags/esp.jpg')
-('ce86428f-04ba-4ee1-98b1-fa02a367e17a', 'Sri Lanka', 'LKA', 'https://www.preventionweb.net/assets/shared/images/flags/lka.jpg')
-('5e09dd8d-4595-4c89-a1fe-bff7e6968b06', 'Sudan', 'SDN', 'https://www.preventionweb.net/assets/shared/images/flags/sdn.jpg')
-('7508df7c-9ffb-4f43-b084-d8954ea94885', 'Suriname', 'SUR', 'https://www.preventionweb.net/assets/shared/images/flags/sur.jpg')
-('8334c696-f4ed-40c4-a046-6194ffd75e8b', 'Sweden', 'SWE', 'https://www.preventionweb.net/assets/shared/images/flags/swe.jpg')
-('22af78c6-b700-4bb1-9823-4bcac2890816', 'Switzerland', 'CHE', 'https://www.preventionweb.net/assets/shared/images/flags/che.jpg')
-('73d53899-2fe6-441c-8eb7-6823dfe6ba70', 'Syrian Arab Republic', 'SYR', 'https://www.preventionweb.net/assets/shared/images/flags/syr.jpg')
-('d60237fe-d48d-4c4c-a6c4-3f7e56ea163e', 'Tajikistan', 'TJK', 'https://www.preventionweb.net/assets/shared/images/flags/tjk.jpg')
-('e370afaf-1826-4aca-a179-bc22666151f4', 'Tanzania, United Rep of', 'TZA', 'https://www.preventionweb.net/assets/shared/images/flags/tza.jpg')
-('f59cc61e-8ee9-4fb5-a86e-4f7ee418c408', 'Thailand', 'THA', 'https://www.preventionweb.net/assets/shared/images/flags/tha.jpg')
-('b52ef707-97a8-4f7f-b9dd-cc0d6aa06f8e', 'Timor-Leste', 'TLS', 'https://www.preventionweb.net/assets/shared/images/flags/tls.jpg')
-('4000f991-19b2-443d-aeb8-0d647c41c2a2', 'Togo', 'TGO', 'https://www.preventionweb.net/assets/shared/images/flags/tgo.jpg')
-('74f1c170-c0bd-451b-9aef-44e3f6c502db', 'Tokelau', 'TKL', 'https://www.preventionweb.net/assets/shared/images/flags/tkl.jpg')
-('12af80b5-839c-46ae-b8fd-b4c2580dd8a5', 'Tonga', 'TON', 'https://www.preventionweb.net/assets/shared/images/flags/ton.jpg')
-('7e825b50-ffe4-4e75-b760-d90b31451c8e', 'Trinidad and Tobago', 'TTO', 'https://www.preventionweb.net/assets/shared/images/flags/tto.jpg')
-('2ad58f41-eed6-49bb-93e3-85a92559a44e', 'Tunisia', 'TUN', 'https://www.preventionweb.net/assets/shared/images/flags/tun.jpg')
-('fdc1ed69-3b06-4d75-b605-aa4a7f9dba46', 'Türkiye', 'TUR', 'https://www.preventionweb.net/assets/shared/images/flags/tur.jpg')
-('f4ef536b-ea6c-45a8-a3de-195473fd0835', 'Turkmenistan', 'TKM', 'https://www.preventionweb.net/assets/shared/images/flags/tkm.jpg')
-('7dd388b8-2658-4e1c-966c-f7deab5e484a', 'Turks and Caicos Islands', 'TCA', 'https://www.preventionweb.net/assets/shared/images/flags/tca.jpg')
-('fb607843-e3f0-42f8-b00e-42a00f917281', 'Tuvalu', 'TUV', 'https://www.preventionweb.net/assets/shared/images/flags/tuv.jpg')
-('a9464f99-a3fb-4327-ba9b-8b6d6d780690', 'Uganda', 'UGA', 'https://www.preventionweb.net/assets/shared/images/flags/uga.jpg')
-('38432b5f-700f-432a-9165-fd2055a8c4cf', 'Ukraine', 'UKR', 'https://www.preventionweb.net/assets/shared/images/flags/ukr.jpg')
-('c645762b-301b-4ecb-ad5c-9212a9ec208f', 'United Arab Emirates', 'ARE', 'https://www.preventionweb.net/assets/shared/images/flags/are.jpg')
-('1120f73e-f98a-4cd3-86c9-ad4a2a93cc11', 'United Kingdom of Great Britain and Northern Ireland', 'GBR', 'https://www.preventionweb.net/assets/shared/images/flags/gbr.jpg')
-('0e1a5089-2111-4fa0-a8dc-403164c29d57', 'United States of America', 'USA', 'https://www.preventionweb.net/assets/shared/images/flags/usa.jpg')
-('4cc3a385-5396-4fcf-8f5a-72855625f45d', 'United States Virgin Islands', 'VIR', 'https://www.preventionweb.net/assets/shared/images/flags/vir.jpg')
-('02221e73-c758-433f-b519-616e631d0dac', 'Uruguay', 'URY', 'https://www.preventionweb.net/assets/shared/images/flags/ury.jpg')
-('3daba758-e061-42d9-9465-ef61cc5bb0dc', 'Uzbekistan', 'UZB', 'https://www.preventionweb.net/assets/shared/images/flags/uzb.jpg')
-('db022d4b-ecf5-4386-9868-34583ce40819', 'Vanuatu', 'VUT', 'https://www.preventionweb.net/assets/shared/images/flags/vut.jpg')
-('483bbd4c-b675-43d2-a461-84759b6efaf6', 'Venezuela, Bolivarian Rep of', 'VEN', 'https://www.preventionweb.net/assets/shared/images/flags/ven.jpg')
-('0dff578e-34d2-47b9-abc1-25cef1d7ffb4', 'Viet Nam', 'VNM', 'https://www.preventionweb.net/assets/shared/images/flags/vnm.jpg')
-('dc92b5cc-713e-4d2b-8e27-84d5acc84bc0', 'Wallis and Futuna Islands', 'WLF', 'https://www.preventionweb.net/assets/shared/images/flags/wlf.jpg')
-('5c26a1f7-cc69-4066-b0df-2cfd42b5a52a', 'Yemen', 'YEM', 'https://www.preventionweb.net/assets/shared/images/flags/yem.jpg')
-('7835a1ef-10ea-4035-bdc9-c05911677a54', 'Zambia', 'ZMB', 'https://www.preventionweb.net/assets/shared/images/flags/zmb.jpg')
-('c6ed5c81-62d4-4ba4-a9d7-73ba4f9a420a', 'Zimbabwe', 'ZWE', 'https://www.preventionweb.net/assets/shared/images/flags/zwe.jpg')
-('0eabbdb7-927f-4c5f-96bb-d661b4a85e97', 'Sint Maarten', 'SXM', 'https://www.preventionweb.net/assets/shared/images/flags/vir.jpg')
+('704e8850-d5e2-422c-956c-bce5312ab266', 'Afghanistan', 'AFG', 'https://www.preventionweb.net/assets/shared/images/flags/afg.jpg'),
+('e34ef71f-0a72-40c4-a6e0-dd19fb26f391', 'Albania', 'ALB', 'https://www.preventionweb.net/assets/shared/images/flags/alb.jpg'),
+('4af50751-bfb0-4ca3-a4b3-d8c2ad6ec62d', 'Algeria', 'DZA', 'https://www.preventionweb.net/assets/shared/images/flags/dza.jpg'),
+('11750269-2ff2-449f-b10e-c3bd88487298', 'American Samoa', 'ASM', 'https://www.preventionweb.net/assets/shared/images/flags/asm.jpg'),
+('1b641fce-aca9-4522-ba15-f620fa0f309b', 'Andorra', 'AND', 'https://www.preventionweb.net/assets/shared/images/flags/and.jpg'),
+('73de5df3-592a-45cd-8e18-254af7dc7b8e', 'Angola', 'AGO', 'https://www.preventionweb.net/assets/shared/images/flags/ago.jpg'),
+('79725a26-9fa4-4b1a-8a5b-ea2c9d3a9ded', 'Anguilla', 'AIA', 'https://www.preventionweb.net/assets/shared/images/flags/aia.jpg'),
+('41b0d20a-0d98-46df-b389-710ac0c96427', 'Antigua and Barbuda', 'ATG', 'https://www.preventionweb.net/assets/shared/images/flags/atg.jpg'),
+('525434cb-f24b-4f47-8bda-4ba50754a129', 'Argentina', 'ARG', 'https://www.preventionweb.net/assets/shared/images/flags/arg.jpg'),
+('eef26331-4334-4951-b990-8cee438e9fb5', 'Armenia', 'ARM', 'https://www.preventionweb.net/assets/shared/images/flags/arm.jpg'),
+('0e7a6922-7f98-4496-9864-534322b8aead', 'Aruba', 'ABW', 'https://www.preventionweb.net/assets/shared/images/flags/abw.jpg'),
+('b16ec05d-7dac-4c99-b0ba-ac3e7d4cabee', 'Australia', 'AUS', 'https://www.preventionweb.net/assets/shared/images/flags/aus.jpg'),
+('82f05a87-4bbd-49ef-85b3-cb54deff0234', 'Austria', 'AUT', 'https://www.preventionweb.net/assets/shared/images/flags/aut.jpg'),
+('1804c265-07cd-4226-8bd2-437b94577fb8', 'Azerbaijan', 'AZE', 'https://www.preventionweb.net/assets/shared/images/flags/aze.jpg'),
+('0098f8c0-0b0d-4823-986d-bea7b6c48705', 'Bahamas', 'BHS', 'https://www.preventionweb.net/assets/shared/images/flags/bhs.jpg'),
+('02c66fc5-c640-43b4-95ea-37b4d047f9a7', 'Bahrain', 'BHR', 'https://www.preventionweb.net/assets/shared/images/flags/bhr.jpg'),
+('a0f72f40-4f17-4c96-99ad-5fbfd2847035', 'Bangladesh', 'BGD', 'https://www.preventionweb.net/assets/shared/images/flags/bgd.jpg'),
+('9314d619-344f-431c-9ea2-4970bbbf174a', 'Barbados', 'BRB', 'https://www.preventionweb.net/assets/shared/images/flags/brb.jpg'),
+('d78ea2e2-cde2-416b-b95e-855b81fdaa9b', 'Belarus', 'BLR', 'https://www.preventionweb.net/assets/shared/images/flags/blr.jpg'),
+('b1a8f7b4-c21e-4885-afd2-076551fbc0c0', 'Belgium', 'BEL', 'https://www.preventionweb.net/assets/shared/images/flags/bel.jpg'),
+('7e129d0f-8c45-45cd-bf91-a3c0551cef02', 'Belize', 'BLZ', 'https://www.preventionweb.net/assets/shared/images/flags/blz.jpg'),
+('8a6c4b24-b4df-407a-8d75-aae50859be7b', 'Benin', 'BEN', 'https://www.preventionweb.net/assets/shared/images/flags/ben.jpg'),
+('2ccafa00-33e6-4faf-b519-9e02ba28a02f', 'Bermuda', 'BMU', 'https://www.preventionweb.net/assets/shared/images/flags/bmu.jpg'),
+('863228a9-e58b-46a2-8f9e-26f080c84fe5', 'Bhutan', 'BTN', 'https://www.preventionweb.net/assets/shared/images/flags/btn.jpg'),
+('0a9a548f-6a1b-4b40-9525-385367d72a20', 'Bolivia, Plurinational State of', 'BOL', 'https://www.preventionweb.net/assets/shared/images/flags/bol.jpg'),
+('c71424c6-cc7a-4a0a-bfd4-04ff99e2bb89', 'Bosnia and Herzegovina', 'BIH', 'https://www.preventionweb.net/assets/shared/images/flags/bih.jpg'),
+('b8ff3d2b-05de-43cb-8576-5b158d6231bb', 'Botswana', 'BWA', 'https://www.preventionweb.net/assets/shared/images/flags/bwa.jpg'),
+('0ecbd87d-aaaf-47ac-a60a-fa674765aef6', 'Brazil', 'BRA', 'https://www.preventionweb.net/assets/shared/images/flags/bra.jpg'),
+('b5fc1969-6154-4fbf-ba66-1d92e0aae3bf', 'British Virgin Islands', 'VGB', 'https://www.preventionweb.net/assets/shared/images/flags/vgb.jpg'),
+('a9d19d4c-febe-4f78-8abe-fbffe066d4fd', 'Brunei Darussalam', 'BRN', 'https://www.preventionweb.net/assets/shared/images/flags/brn.jpg'),
+('624484cc-ae6b-4840-a821-fbb92241d52f', 'Bulgaria', 'BGR', 'https://www.preventionweb.net/assets/shared/images/flags/bgr.jpg'),
+('05d675c7-3470-43b5-b980-f5351c3ad5af', 'Burkina Faso', 'BFA', 'https://www.preventionweb.net/assets/shared/images/flags/bfa.jpg'),
+('243fd43c-b48b-4a04-adce-27218d08b1b8', 'Burundi', 'BDI', 'https://www.preventionweb.net/assets/shared/images/flags/bdi.jpg'),
+('362fdfac-8cc9-4cd4-8681-b4466fd90723', 'Cabo Verde', 'CPV', 'https://www.preventionweb.net/assets/shared/images/flags/cpv.jpg'),
+('fd5329fe-8c60-4d39-9ecb-d104478be2f9', 'Cambodia', 'KHM', 'https://www.preventionweb.net/assets/shared/images/flags/khm.jpg'),
+('a06d7bdf-5701-461a-ba79-f412bce04697', 'Cameroon', 'CMR', 'https://www.preventionweb.net/assets/shared/images/flags/cmr.jpg'),
+('5834ea4e-e957-4ee8-bcee-6da279082297', 'Canada', 'CAN', 'https://www.preventionweb.net/assets/shared/images/flags/can.jpg'),
+('da7576aa-dde4-4ddb-b068-0ce17dc66f60', 'Cayman Islands', 'CYM', 'https://www.preventionweb.net/assets/shared/images/flags/cym.jpg'),
+('07f25a89-5f8f-4c23-80e7-0ea090b93c4e', 'Central African Republic', 'CAF', 'https://www.preventionweb.net/assets/shared/images/flags/caf.jpg'),
+('596cd94b-4946-4611-9f12-3ab8ccf99738', 'Chad', 'TCD', 'https://www.preventionweb.net/assets/shared/images/flags/tcd.jpg'),
+('ef03d376-4822-4170-9f5e-883ff29c7339', 'Chile', 'CHL', 'https://www.preventionweb.net/assets/shared/images/flags/chl.jpg'),
+('0874fc23-f2b0-4fab-bfba-5bb49694b36a', 'China', 'CHN', 'https://www.preventionweb.net/assets/shared/images/flags/chn.jpg'),
+('9022dd46-8bd5-4040-b7da-368662f404f9', 'Colombia', 'COL', 'https://www.preventionweb.net/assets/shared/images/flags/col.jpg'),
+('7be1ad90-410c-40c7-824d-fecf25210b18', 'Comoros', 'COM', 'https://www.preventionweb.net/assets/shared/images/flags/com.jpg'),
+('4df6f7ed-795e-4566-ab05-b9992bba1028', 'Democratic Republic of the Congo', 'COD', 'https://www.preventionweb.net/assets/shared/images/flags/cod.jpg'),
+('bb380c1d-380b-4da4-a80c-06e4b0f1f29c', 'Republic of the Congo', 'COG', 'https://www.preventionweb.net/assets/shared/images/flags/cog.jpg'),
+('f05e985a-002e-40e6-9606-f2a5c61df76d', 'Cook Islands', 'COK', 'https://www.preventionweb.net/assets/shared/images/flags/cok.jpg'),
+('198840e9-051f-45ae-a3e8-f625e76c403f', 'Costa Rica', 'CRI', 'https://www.preventionweb.net/assets/shared/images/flags/cri.jpg'),
+('643d576d-d4e0-473e-b3b7-b0c5c0852817', 'Côte d''Ivoire', 'CIV', 'https://www.preventionweb.net/assets/shared/images/flags/civ.jpg'),
+('9e06c44b-3f0f-4408-8e2c-c7ef63b00ef0', 'Croatia', 'HRV', 'https://www.preventionweb.net/assets/shared/images/flags/hrv.jpg'),
+('c014465d-8134-4d74-92cc-783eec7e2cf2', 'Cuba', 'CUB', 'https://www.preventionweb.net/assets/shared/images/flags/cub.jpg'),
+('f3cb925b-e831-46b8-8650-7faeab52ed9e', 'Cyprus', 'CYP', 'https://www.preventionweb.net/assets/shared/images/flags/cyp.jpg'),
+('c4539af0-327c-4815-add9-3c50947da988', 'Czech Republic', 'CZE', 'https://www.preventionweb.net/assets/shared/images/flags/cze.jpg'),
+('2c91b114-af80-42b0-ba1b-f9dd3b7803c6', 'Denmark', 'DNK', 'https://www.preventionweb.net/assets/shared/images/flags/dnk.jpg'),
+('3db53449-8e33-43b8-8735-013147400d70', 'Djibouti', 'DJI', 'https://www.preventionweb.net/assets/shared/images/flags/dji.jpg'),
+('63305a07-314a-442a-a623-fa3df20dc056', 'Dominica', 'DMA', 'https://www.preventionweb.net/assets/shared/images/flags/dma.jpg'),
+('5deaedca-f182-47f6-8e78-462241780bf9', 'Dominican Republic', 'DOM', 'https://www.preventionweb.net/assets/shared/images/flags/dom.jpg'),
+('3ef546c0-b52c-4240-bcbc-beac2d28bc1d', 'Ecuador', 'ECU', 'https://www.preventionweb.net/assets/shared/images/flags/ecu.jpg'),
+('89d14089-cf2c-40b5-ae92-84221166f578', 'Egypt', 'EGY', 'https://www.preventionweb.net/assets/shared/images/flags/egy.jpg'),
+('ea935731-1ece-4bf0-88f2-1bf6cecd297f', 'El Salvador', 'SLV', 'https://www.preventionweb.net/assets/shared/images/flags/slv.jpg'),
+('e4cc9a9b-f397-4f41-807b-49599e82f8e4', 'Equatorial Guinea', 'GNQ', 'https://www.preventionweb.net/assets/shared/images/flags/gnq.jpg'),
+('a82fcf7f-00eb-423f-89ca-38cde379c632', 'Eritrea', 'ERI', 'https://www.preventionweb.net/assets/shared/images/flags/eri.jpg'),
+('ebb06aec-0d1b-4f13-8649-575eae42ce9a', 'Estonia', 'EST', 'https://www.preventionweb.net/assets/shared/images/flags/est.jpg'),
+('daf7a178-9cb6-493f-9845-85392bd5fdd4', 'Eswatini', 'SWZ', 'https://www.preventionweb.net/assets/shared/images/flags/swz.jpg'),
+('3a6d1f31-2446-4621-9dee-61c9bc40f91b', 'Ethiopia', 'ETH', 'https://www.preventionweb.net/assets/shared/images/flags/eth.jpg'),
+('9333c4ca-60e1-488a-bebe-d64ca42c8c35', 'Fiji', 'FJI', 'https://www.preventionweb.net/assets/shared/images/flags/fji.jpg'),
+('292c8b18-483c-4c4f-92f3-f5b13fc7886b', 'Finland', 'FIN', 'https://www.preventionweb.net/assets/shared/images/flags/fin.jpg'),
+('7a1f7289-2a39-4000-b101-577f3607eddb', 'France', 'FRA', 'https://www.preventionweb.net/assets/shared/images/flags/fra.jpg'),
+('ee8389a0-6b2d-42ae-b6bf-86ceba3dc595', 'French Guiana', 'GUF', 'https://www.preventionweb.net/assets/shared/images/flags/guf.jpg'),
+('dd270ac5-5902-4330-88f4-1f228edc1d51', 'French Polynesia', 'PYF', 'https://www.preventionweb.net/assets/shared/images/flags/pyf.jpg'),
+('dec4eae0-e403-4fae-885c-db5a4d1156b8', 'Gabon', 'GAB', 'https://www.preventionweb.net/assets/shared/images/flags/gab.jpg'),
+('197fa126-1dba-49f7-bab4-4392d709d7bc', 'Gambia, Republic of The', 'GMB', 'https://www.preventionweb.net/assets/shared/images/flags/gmb.jpg'),
+('56656064-6337-4148-bbf2-9fcbfc275cda', 'Georgia', 'GEO', 'https://www.preventionweb.net/assets/shared/images/flags/geo.jpg'),
+('81980191-e681-4f80-b16f-38d172a5a3ad', 'Germany', 'DEU', 'https://www.preventionweb.net/assets/shared/images/flags/deu.jpg'),
+('7dbd4afd-e659-477f-ab3b-52cde6bd24b0', 'Ghana', 'GHA', 'https://www.preventionweb.net/assets/shared/images/flags/gha.jpg'),
+('fe2aa99e-812a-4314-9475-52590e4ee16f', 'Greece', 'GRC', 'https://www.preventionweb.net/assets/shared/images/flags/grc.jpg'),
+('cbd759f6-4359-4a6a-80ed-4eef3a1649cc', 'Grenada', 'GRD', 'https://www.preventionweb.net/assets/shared/images/flags/grd.jpg'),
+('d7a3b52b-6e84-4912-a87d-6d3659e2a275', 'Guadeloupe', 'GLP', 'https://www.preventionweb.net/assets/shared/images/flags/glp.jpg'),
+('c5ae8ae2-1925-4471-a24e-fc0fe88bae97', 'Guam', 'GUM', 'https://www.preventionweb.net/assets/shared/images/flags/gum.jpg'),
+('73c26e32-cbba-47c0-be12-de9f13926fac', 'Guatemala', 'GTM', 'https://www.preventionweb.net/assets/shared/images/flags/gtm.jpg'),
+('0901e1ab-4cd8-4d11-a102-3d99c45b7cfe', 'Guinea', 'GIN', 'https://www.preventionweb.net/assets/shared/images/flags/gin.jpg'),
+('3cc0150d-c354-4652-a27d-9bfa9bb54aa1', 'Guinea-Bissau', 'GNB', 'https://www.preventionweb.net/assets/shared/images/flags/gnb.jpg'),
+('9ec6e95c-9199-4bcd-a20b-2eebd39b0441', 'Guyana', 'GUY', 'https://www.preventionweb.net/assets/shared/images/flags/guy.jpg'),
+('800c08a7-5ac9-47c1-ac16-ec9e25a04d16', 'Haiti', 'HTI', 'https://www.preventionweb.net/assets/shared/images/flags/hti.jpg'),
+('ab157e21-72c8-4a2d-939c-3af1a7f3b7b3', 'Holy See', 'VAT', 'https://www.preventionweb.net/assets/shared/images/flags/vat.jpg'),
+('01b197a3-2495-4682-acd6-d48853d6fcc7', 'Honduras', 'HND', 'https://www.preventionweb.net/assets/shared/images/flags/hnd.jpg'),
+('b94090f8-475e-4499-aa3b-bd48b6a5d4ae', 'Hong Kong (China)', 'HKG', 'https://www.preventionweb.net/assets/shared/images/flags/hkg.jpg'),
+('535e4882-c1ba-4306-969b-cc0141abd0df', 'Hungary', 'HUN', 'https://www.preventionweb.net/assets/shared/images/flags/hun.jpg'),
+('cc917261-52de-4c73-b88b-4cc0550f868d', 'Iceland', 'ISL', 'https://www.preventionweb.net/assets/shared/images/flags/isl.jpg'),
+('4a8caa07-6de5-4845-8b8e-94aad6498e58', 'India', 'IND', 'https://www.preventionweb.net/assets/shared/images/flags/ind.jpg'),
+('c665d957-50f7-4c4f-9c81-e2285db927b4', 'Indonesia', 'IDN', 'https://www.preventionweb.net/assets/shared/images/flags/idn.jpg'),
+('692cc30e-2bbd-4825-9fd4-6ab0f207e1f7', 'Iran, Islamic Rep of', 'IRN', 'https://www.preventionweb.net/assets/shared/images/flags/irn.jpg'),
+('43af24f4-f135-40f4-b24f-6cd6217ce5ab', 'Iraq', 'IRQ', 'https://www.preventionweb.net/assets/shared/images/flags/irq.jpg'),
+('47990480-65b0-435b-9357-1b611022dc42', 'Ireland', 'IRL', 'https://www.preventionweb.net/assets/shared/images/flags/irl.jpg'),
+('b79f5c91-4eb0-42aa-b0dd-8c58b7ce6438', 'Israel', 'ISR', 'https://www.preventionweb.net/assets/shared/images/flags/isr.jpg'),
+('20ab9b75-512e-45c6-b420-2da5c749c601', 'Italy', 'ITA', 'https://www.preventionweb.net/assets/shared/images/flags/ita.jpg'),
+('1928f61f-feb2-404e-b061-e688ede1b9fc', 'Jamaica', 'JAM', 'https://www.preventionweb.net/assets/shared/images/flags/jam.jpg'),
+('3ab7da78-6340-422a-948b-c2f71e399a49', 'Japan', 'JPN', 'https://www.preventionweb.net/assets/shared/images/flags/jpn.jpg'),
+('9fdd65ac-f763-457a-9441-e5a952ccc986', 'Jordan', 'JOR', 'https://www.preventionweb.net/assets/shared/images/flags/jor.jpg'),
+('651f17c8-7a1b-4d8b-a876-676882237cd6', 'Kazakhstan', 'KAZ', 'https://www.preventionweb.net/assets/shared/images/flags/kaz.jpg'),
+('6896f1e9-72b7-49f0-af38-7b4984110553', 'Kenya', 'KEN', 'https://www.preventionweb.net/assets/shared/images/flags/ken.jpg'),
+('2b95c384-2f75-4803-ac24-69f8985b1323', 'Kiribati', 'KIR', 'https://www.preventionweb.net/assets/shared/images/flags/kir.jpg'),
+('48e63eb9-1c57-4141-8692-b799b22c7600', 'Korea, Dem People''s Rep of', 'PRK', 'https://www.preventionweb.net/assets/shared/images/flags/prk.jpg'),
+('57cebaf1-7fc8-4619-9092-1eaeaf3e5976', 'Korea, Rep of', 'KOR', 'https://www.preventionweb.net/assets/shared/images/flags/kor.jpg'),
+('7255a212-5689-476e-9fb1-d43f384bcf34', 'Kuwait', 'KWT', 'https://www.preventionweb.net/assets/shared/images/flags/kwt.jpg'),
+('39ade2f0-5bc8-4c20-a62e-60b8010a9dec', 'Kyrgyzstan', 'KGZ', 'https://www.preventionweb.net/assets/shared/images/flags/kgz.jpg'),
+('9ea3ab13-f196-4d3f-b953-6e0a78c484be', 'Lao People''s Democratic Republic', 'LAO', 'https://www.preventionweb.net/assets/shared/images/flags/lao.jpg'),
+('f8f36a65-4201-47b6-8013-06d3b2aedd6c', 'Latvia', 'LVA', 'https://www.preventionweb.net/assets/shared/images/flags/lva.jpg'),
+('ca5015cf-f87f-458c-8d90-7f7416ce9f5c', 'Lebanon', 'LBN', 'https://www.preventionweb.net/assets/shared/images/flags/lbn.jpg'),
+('fea9fe4a-7fd9-4239-9631-df8b5aaf2492', 'Lesotho', 'LSO', 'https://www.preventionweb.net/assets/shared/images/flags/lso.jpg'),
+('70a25a1a-6192-4b19-8f92-3b5f90ce29d7', 'Liberia', 'LBR', 'https://www.preventionweb.net/assets/shared/images/flags/lbr.jpg'),
+('3e0dd05c-5412-4572-b5ef-3af0e0bb3e35', 'Libya', 'LBY', 'https://www.preventionweb.net/assets/shared/images/flags/lby.jpg'),
+('1912cf48-447d-49cb-bc45-960681e2a6c8', 'Liechtenstein', 'LIE', 'https://www.preventionweb.net/assets/shared/images/flags/lie.jpg'),
+('ac55fda9-5666-4d66-9bd4-290e73df4c7f', 'Lithuania', 'LTU', 'https://www.preventionweb.net/assets/shared/images/flags/ltu.jpg'),
+('65b1a1fd-0c75-499a-a950-9a66e47960eb', 'Luxembourg', 'LUX', 'https://www.preventionweb.net/assets/shared/images/flags/lux.jpg'),
+('83781cef-2824-45a3-bcde-dc570af94d8f', 'Macao (China)', 'MAC', 'https://www.preventionweb.net/assets/shared/images/flags/mac.jpg'),
+('6c0c91f7-7ac2-40c2-82f7-db6235c4972a', 'Madagascar', 'MDG', 'https://www.preventionweb.net/assets/shared/images/flags/mdg.jpg'),
+('be0a753b-79a2-48cd-bfe5-2b72dd707f22', 'Malawi', 'MWI', 'https://www.preventionweb.net/assets/shared/images/flags/mwi.jpg'),
+('8bb41959-c612-443a-850f-3c310abe7aba', 'Malaysia', 'MYS', 'https://www.preventionweb.net/assets/shared/images/flags/mys.jpg'),
+('b048dc8c-ee8d-4605-9772-3f9e65e76481', 'Maldives', 'MDV', 'https://www.preventionweb.net/assets/shared/images/flags/mdv.jpg'),
+('0265aa2d-bceb-44b2-ab42-9e825ff245f2', 'Mali', 'MLI', 'https://www.preventionweb.net/assets/shared/images/flags/mli.jpg'),
+('8124cb0e-c931-446b-8a63-f36bc0d2e048', 'Malta', 'MLT', 'https://www.preventionweb.net/assets/shared/images/flags/mlt.jpg'),
+('44f2b86a-895f-475d-bfc9-c76edff05a91', 'Marshall Islands', 'MHL', 'https://www.preventionweb.net/assets/shared/images/flags/mhl.jpg'),
+('789dd216-44df-40f3-b62c-289a19c69057', 'Martinique', 'MTQ', 'https://www.preventionweb.net/assets/shared/images/flags/mtq.jpg'),
+('471cba90-5cc9-40df-80f7-3f73501c8121', 'Mauritania', 'MRT', 'https://www.preventionweb.net/assets/shared/images/flags/mrt.jpg'),
+('d57db03e-bee6-4eae-92eb-61dc3b2c3417', 'Mauritius', 'MUS', 'https://www.preventionweb.net/assets/shared/images/flags/mus.jpg'),
+('d5f9dbdf-4f9d-452e-8bc6-aed703d04ab8', 'Mayotte', 'MYT', 'https://www.preventionweb.net/assets/shared/images/flags/myt.jpg'),
+('d88f37fd-b81d-4bdc-803e-04d2897dd74e', 'Mexico', 'MEX', 'https://www.preventionweb.net/assets/shared/images/flags/mex.jpg'),
+('c3f1ae3d-722a-4f8b-b662-9ec77521550c', 'Micronesia, Fed States of', 'FSM', 'https://www.preventionweb.net/assets/shared/images/flags/fsm.jpg'),
+('e46c8127-9ecd-4bf1-b111-ca33e233cf5a', 'Republic of Moldova', 'MDA', 'https://www.preventionweb.net/assets/shared/images/flags/mda.jpg'),
+('0d7a3350-17ad-4649-91f6-5cfec11a168e', 'Monaco', 'MCO', 'https://www.preventionweb.net/assets/shared/images/flags/mco.jpg'),
+('20d23aa9-3f7f-4b60-9bed-488c6953cb80', 'Mongolia', 'MNG', 'https://www.preventionweb.net/assets/shared/images/flags/mng.jpg'),
+('ecc11593-3f2c-4c39-be05-407e315b2075', 'Montenegro', 'MNE', 'https://www.preventionweb.net/assets/shared/images/flags/mne.jpg'),
+('7ef013c9-a1aa-495f-9cd2-9e10ed23a91d', 'Montserrat', 'MSR', 'https://www.preventionweb.net/assets/shared/images/flags/msr.jpg'),
+('4f08750e-e38b-4c33-956f-d9199e310ba7', 'Morocco', 'MAR', 'https://www.preventionweb.net/assets/shared/images/flags/mar.jpg'),
+('c3824b7d-c951-48fa-ac35-b3f386b3549b', 'Mozambique', 'MOZ', 'https://www.preventionweb.net/assets/shared/images/flags/moz.jpg'),
+('c2b997cd-af4f-44c3-a76d-d9376bcdf4cc', 'Myanmar', 'MMR', 'https://www.preventionweb.net/assets/shared/images/flags/mmr.jpg'),
+('04ae3fbb-1f43-40ec-8eb2-799f9687bebb', 'Namibia', 'NAM', 'https://www.preventionweb.net/assets/shared/images/flags/nam.jpg'),
+('6605c4e5-2da3-411f-bfd4-745ba710a7a3', 'Nauru', 'NRU', 'https://www.preventionweb.net/assets/shared/images/flags/nru.jpg'),
+('15972f49-7299-4fa6-a0ca-5a82116a8a50', 'Nepal', 'NPL', 'https://www.preventionweb.net/assets/shared/images/flags/npl.jpg'),
+('62a9ea2a-8709-4d9b-ade9-fe9e2a4b3014', 'Netherlands, the', 'NLD', 'https://www.preventionweb.net/assets/shared/images/flags/nld.jpg'),
+('f161c63f-32f8-4ac5-853c-23673dec62ea', 'New Caledonia', 'NCL', 'https://www.preventionweb.net/assets/shared/images/flags/ncl.jpg'),
+('df5eea6d-f1b1-461e-be75-90eae37b4acc', 'New Zealand', 'NZL', 'https://www.preventionweb.net/assets/shared/images/flags/nzl.jpg'),
+('d017da25-6138-4344-a0cb-b6d97a4ec12c', 'Nicaragua', 'NIC', 'https://www.preventionweb.net/assets/shared/images/flags/nic.jpg'),
+('a1f2f162-ca24-457e-8033-986dc0d79c85', 'Niger', 'NER', 'https://www.preventionweb.net/assets/shared/images/flags/ner.jpg'),
+('df80997b-f0f2-4454-8940-efc48048cf53', 'Nigeria', 'NGA', 'https://www.preventionweb.net/assets/shared/images/flags/nga.jpg'),
+('46667076-f1c1-4da4-a19b-03839742dfe8', 'Niue', 'NIU', 'https://www.preventionweb.net/assets/shared/images/flags/niu.jpg'),
+('3ba6cfab-a26e-4510-b0ba-e499ad97f101', 'Norfolk Island', 'NFK', 'https://www.preventionweb.net/assets/shared/images/flags/nfk.jpg'),
+('3aa3fbfe-b9a7-4eb9-a155-a18f94c03c1c', 'North Macedonia', 'MKD', 'https://www.preventionweb.net/assets/shared/images/flags/mkd.jpg'),
+('744be52e-df58-4bfb-84dc-8ae832e8db31', 'Northern Mariana Islands', 'MNP', 'https://www.preventionweb.net/assets/shared/images/flags/mnp.jpg'),
+('4e0f8155-982a-43bb-b7e2-b3030fa7bfc1', 'Norway', 'NOR', 'https://www.preventionweb.net/assets/shared/images/flags/nor.jpg'),
+('e471f20a-fd05-478e-8bdf-0509fa79de7b', 'Oman', 'OMN', 'https://www.preventionweb.net/assets/shared/images/flags/omn.jpg'),
+('3fb6627b-7b5b-4611-9882-578ab82ddf9a', 'Pakistan', 'PAK', 'https://www.preventionweb.net/assets/shared/images/flags/pak.jpg'),
+('9784ab8a-99db-49fa-8a97-ae87c8c4512c', 'Palau', 'PLW', 'https://www.preventionweb.net/assets/shared/images/flags/plw.jpg'),
+('1f370a8e-f42f-425f-ae70-75925107ca10', 'Palestine, State of', 'PSE', 'https://www.preventionweb.net/assets/shared/images/flags/pse.jpg'),
+('c667542f-554f-405f-928d-9ef4e410af2c', 'Panama', 'PAN', 'https://www.preventionweb.net/assets/shared/images/flags/pan.jpg'),
+('8ab7f277-2134-4bf9-b4be-6f6f75f036a3', 'Papua New Guinea', 'PNG', 'https://www.preventionweb.net/assets/shared/images/flags/png.jpg'),
+('a9969c88-1b18-4602-9ef7-1def74b3a41f', 'Paraguay', 'PRY', 'https://www.preventionweb.net/assets/shared/images/flags/pry.jpg'),
+('34b36990-dcc3-422c-8d0e-6420499cb5a0', 'Peru', 'PER', 'https://www.preventionweb.net/assets/shared/images/flags/per.jpg'),
+('0bf26858-9765-4789-999a-e43d25dcd482', 'Philippines', 'PHL', 'https://www.preventionweb.net/assets/shared/images/flags/phl.jpg'),
+('fc28ae57-fccc-4355-bec7-5d5153b7937d', 'Poland', 'POL', 'https://www.preventionweb.net/assets/shared/images/flags/pol.jpg'),
+('e1569bf2-88bf-4be1-bc09-63227f4fc817', 'Portugal', 'PRT', 'https://www.preventionweb.net/assets/shared/images/flags/prt.jpg'),
+('e6474541-c35a-4141-8143-595e23f04db6', 'Puerto Rico', 'PRI', 'https://www.preventionweb.net/assets/shared/images/flags/pri.jpg'),
+('fa23b430-4de0-4359-bd8a-448b35fadd8a', 'Qatar', 'QAT', 'https://www.preventionweb.net/assets/shared/images/flags/qat.jpg'),
+('47ba785c-ef56-4547-8301-3b0e26591cd7', 'Reunion', 'REU', 'https://www.preventionweb.net/assets/shared/images/flags/reu.jpg'),
+('26036c8d-703c-4ef2-9c0b-916a789085c6', 'Romania', 'ROU', 'https://www.preventionweb.net/assets/shared/images/flags/rou.jpg'),
+('eea79fd8-511b-4549-8f09-929814122590', 'Russian Federation', 'RUS', 'https://www.preventionweb.net/assets/shared/images/flags/rus.jpg'),
+('bf4413b1-3bbe-4c52-b6c2-a9fa22e11c74', 'Rwanda', 'RWA', 'https://www.preventionweb.net/assets/shared/images/flags/rwa.jpg'),
+('470b89f0-48a5-421d-ab93-898dd2b0de28', 'Saint Kitts and Nevis', 'KNA', 'https://www.preventionweb.net/assets/shared/images/flags/kna.jpg'),
+('9a22fe25-86c2-42bd-9553-d3ccaaa0b873', 'Saint Lucia', 'LCA', 'https://www.preventionweb.net/assets/shared/images/flags/lca.jpg'),
+('625047e9-1ccd-4712-9557-212fca234737', 'Saint Pierre and Miquelon', 'SPM', 'https://www.preventionweb.net/assets/shared/images/flags/spm.jpg'),
+('c5435851-9874-4946-acde-7a4eb4f69d9c', 'Saint Vincent and the Grenadines', 'VCT', 'https://www.preventionweb.net/assets/shared/images/flags/vct.jpg'),
+('db98298d-1864-49c1-97d3-86801c1456dc', 'Samoa', 'WSM', 'https://www.preventionweb.net/assets/shared/images/flags/wsm.jpg'),
+('d100cbc8-a076-489c-832a-d6851bc54825', 'San Marino', 'SMR', 'https://www.preventionweb.net/assets/shared/images/flags/smr.jpg'),
+('ea632d47-e10a-4d57-93ee-dab8c8f839bc', 'Sao Tome and Principe', 'STP', 'https://www.preventionweb.net/assets/shared/images/flags/stp.jpg'),
+('f7473922-38fe-4993-b71e-b16dd1360f6a', 'Saudi Arabia', 'SAU', 'https://www.preventionweb.net/assets/shared/images/flags/sau.jpg'),
+('d2b068c0-3a05-4611-af72-782b830a47ab', 'Senegal', 'SEN', 'https://www.preventionweb.net/assets/shared/images/flags/sen.jpg'),
+('0add34b0-4f70-4c6b-b71d-45abcdcb1411', 'Serbia', 'SRB', 'https://www.preventionweb.net/assets/shared/images/flags/srb.jpg'),
+('b33209ee-e0cf-4020-863a-e165b643cf35', 'Seychelles', 'SYC', 'https://www.preventionweb.net/assets/shared/images/flags/syc.jpg'),
+('d5f4b6a1-283d-4467-adef-4ebf0ce4fb82', 'Sierra Leone', 'SLE', 'https://www.preventionweb.net/assets/shared/images/flags/sle.jpg'),
+('c07bc2c1-a278-4857-9fb9-1b12fc4e5e43', 'Singapore', 'SGP', 'https://www.preventionweb.net/assets/shared/images/flags/sgp.jpg'),
+('78ccfb77-8a84-43c9-b688-f1c46e506011', 'Slovakia', 'SVK', 'https://www.preventionweb.net/assets/shared/images/flags/svk.jpg'),
+('5d50d75e-a687-4923-9e56-83303f5b577c', 'Slovenia', 'SVN', 'https://www.preventionweb.net/assets/shared/images/flags/svn.jpg'),
+('a6eea0b5-ae70-42d3-9a86-baaf0cf4dba1', 'Solomon Islands', 'SLB', 'https://www.preventionweb.net/assets/shared/images/flags/slb.jpg'),
+('25adca6d-ceb1-40ff-9b86-257141b05e27', 'Somalia', 'SOM', 'https://www.preventionweb.net/assets/shared/images/flags/som.jpg'),
+('60f9f4e7-55d0-492a-910e-fd5d5716bdb6', 'South Africa', 'ZAF', 'https://www.preventionweb.net/assets/shared/images/flags/zaf.jpg'),
+('aba391aa-d920-44f8-8a4b-a724e463e68d', 'South Sudan', 'SSD', 'https://www.preventionweb.net/assets/shared/images/flags/ssd.jpg'),
+('56fb06a9-5326-4678-92b1-9b7b86b43aa6', 'Spain', 'ESP', 'https://www.preventionweb.net/assets/shared/images/flags/esp.jpg'),
+('ce86428f-04ba-4ee1-98b1-fa02a367e17a', 'Sri Lanka', 'LKA', 'https://www.preventionweb.net/assets/shared/images/flags/lka.jpg'),
+('5e09dd8d-4595-4c89-a1fe-bff7e6968b06', 'Sudan', 'SDN', 'https://www.preventionweb.net/assets/shared/images/flags/sdn.jpg'),
+('7508df7c-9ffb-4f43-b084-d8954ea94885', 'Suriname', 'SUR', 'https://www.preventionweb.net/assets/shared/images/flags/sur.jpg'),
+('8334c696-f4ed-40c4-a046-6194ffd75e8b', 'Sweden', 'SWE', 'https://www.preventionweb.net/assets/shared/images/flags/swe.jpg'),
+('22af78c6-b700-4bb1-9823-4bcac2890816', 'Switzerland', 'CHE', 'https://www.preventionweb.net/assets/shared/images/flags/che.jpg'),
+('73d53899-2fe6-441c-8eb7-6823dfe6ba70', 'Syrian Arab Republic', 'SYR', 'https://www.preventionweb.net/assets/shared/images/flags/syr.jpg'),
+('d60237fe-d48d-4c4c-a6c4-3f7e56ea163e', 'Tajikistan', 'TJK', 'https://www.preventionweb.net/assets/shared/images/flags/tjk.jpg'),
+('e370afaf-1826-4aca-a179-bc22666151f4', 'Tanzania, United Rep of', 'TZA', 'https://www.preventionweb.net/assets/shared/images/flags/tza.jpg'),
+('f59cc61e-8ee9-4fb5-a86e-4f7ee418c408', 'Thailand', 'THA', 'https://www.preventionweb.net/assets/shared/images/flags/tha.jpg'),
+('b52ef707-97a8-4f7f-b9dd-cc0d6aa06f8e', 'Timor-Leste', 'TLS', 'https://www.preventionweb.net/assets/shared/images/flags/tls.jpg'),
+('4000f991-19b2-443d-aeb8-0d647c41c2a2', 'Togo', 'TGO', 'https://www.preventionweb.net/assets/shared/images/flags/tgo.jpg'),
+('74f1c170-c0bd-451b-9aef-44e3f6c502db', 'Tokelau', 'TKL', 'https://www.preventionweb.net/assets/shared/images/flags/tkl.jpg'),
+('12af80b5-839c-46ae-b8fd-b4c2580dd8a5', 'Tonga', 'TON', 'https://www.preventionweb.net/assets/shared/images/flags/ton.jpg'),
+('7e825b50-ffe4-4e75-b760-d90b31451c8e', 'Trinidad and Tobago', 'TTO', 'https://www.preventionweb.net/assets/shared/images/flags/tto.jpg'),
+('2ad58f41-eed6-49bb-93e3-85a92559a44e', 'Tunisia', 'TUN', 'https://www.preventionweb.net/assets/shared/images/flags/tun.jpg'),
+('fdc1ed69-3b06-4d75-b605-aa4a7f9dba46', 'Türkiye', 'TUR', 'https://www.preventionweb.net/assets/shared/images/flags/tur.jpg'),
+('f4ef536b-ea6c-45a8-a3de-195473fd0835', 'Turkmenistan', 'TKM', 'https://www.preventionweb.net/assets/shared/images/flags/tkm.jpg'),
+('7dd388b8-2658-4e1c-966c-f7deab5e484a', 'Turks and Caicos Islands', 'TCA', 'https://www.preventionweb.net/assets/shared/images/flags/tca.jpg'),
+('fb607843-e3f0-42f8-b00e-42a00f917281', 'Tuvalu', 'TUV', 'https://www.preventionweb.net/assets/shared/images/flags/tuv.jpg'),
+('a9464f99-a3fb-4327-ba9b-8b6d6d780690', 'Uganda', 'UGA', 'https://www.preventionweb.net/assets/shared/images/flags/uga.jpg'),
+('38432b5f-700f-432a-9165-fd2055a8c4cf', 'Ukraine', 'UKR', 'https://www.preventionweb.net/assets/shared/images/flags/ukr.jpg'),
+('c645762b-301b-4ecb-ad5c-9212a9ec208f', 'United Arab Emirates', 'ARE', 'https://www.preventionweb.net/assets/shared/images/flags/are.jpg'),
+('1120f73e-f98a-4cd3-86c9-ad4a2a93cc11', 'United Kingdom of Great Britain and Northern Ireland', 'GBR', 'https://www.preventionweb.net/assets/shared/images/flags/gbr.jpg'),
+('0e1a5089-2111-4fa0-a8dc-403164c29d57', 'United States of America', 'USA', 'https://www.preventionweb.net/assets/shared/images/flags/usa.jpg'),
+('4cc3a385-5396-4fcf-8f5a-72855625f45d', 'United States Virgin Islands', 'VIR', 'https://www.preventionweb.net/assets/shared/images/flags/vir.jpg'),
+('02221e73-c758-433f-b519-616e631d0dac', 'Uruguay', 'URY', 'https://www.preventionweb.net/assets/shared/images/flags/ury.jpg'),
+('3daba758-e061-42d9-9465-ef61cc5bb0dc', 'Uzbekistan', 'UZB', 'https://www.preventionweb.net/assets/shared/images/flags/uzb.jpg'),
+('db022d4b-ecf5-4386-9868-34583ce40819', 'Vanuatu', 'VUT', 'https://www.preventionweb.net/assets/shared/images/flags/vut.jpg'),
+('483bbd4c-b675-43d2-a461-84759b6efaf6', 'Venezuela, Bolivarian Rep of', 'VEN', 'https://www.preventionweb.net/assets/shared/images/flags/ven.jpg'),
+('0dff578e-34d2-47b9-abc1-25cef1d7ffb4', 'Viet Nam', 'VNM', 'https://www.preventionweb.net/assets/shared/images/flags/vnm.jpg'),
+('dc92b5cc-713e-4d2b-8e27-84d5acc84bc0', 'Wallis and Futuna Islands', 'WLF', 'https://www.preventionweb.net/assets/shared/images/flags/wlf.jpg'),
+('5c26a1f7-cc69-4066-b0df-2cfd42b5a52a', 'Yemen', 'YEM', 'https://www.preventionweb.net/assets/shared/images/flags/yem.jpg'),
+('7835a1ef-10ea-4035-bdc9-c05911677a54', 'Zambia', 'ZMB', 'https://www.preventionweb.net/assets/shared/images/flags/zmb.jpg'),
+('c6ed5c81-62d4-4ba4-a9d7-73ba4f9a420a', 'Zimbabwe', 'ZWE', 'https://www.preventionweb.net/assets/shared/images/flags/zwe.jpg'),
+('0eabbdb7-927f-4c5f-96bb-d661b4a85e97', 'Sint Maarten', 'SXM', 'https://www.preventionweb.net/assets/shared/images/flags/vir.jpg'),
 ('4a3e51d7-1f92-4a80-94a4-eeadf1f05d6c', 'Saint Martin', 'MAF', ' https://www.preventionweb.net/assets/shared/images/flags/ury.jpg');

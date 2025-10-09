@@ -64,17 +64,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const baseUrl = `${url.protocol}//${url.host}`;
 
 	const settings = await getCountrySettingsFromSession(request);
-	const websiteName = settings
-		? settings.websiteName
-		: "Disaster Tracking System";
+	const websiteName = settings ? settings.websiteName : "DELTA Resilience";
 	const res = await acceptInvite(inviteCode, data2, baseUrl, websiteName);
 	if (!res.ok) {
 		return { data, errors: res.errors };
 	}
 	const headers = await createUserSession(res.userId);
-	const userCountryAccounts = await getUserCountryAccountsByUserId(
-		res.userId
-	);
+	const userCountryAccounts = await getUserCountryAccountsByUserId(res.userId);
 
 	if (userCountryAccounts && userCountryAccounts.length === 1) {
 		const countrySettings = await getInstanceSystemSettingsByCountryAccountId(
