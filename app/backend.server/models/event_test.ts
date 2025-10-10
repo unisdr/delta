@@ -38,7 +38,9 @@ function testHazardFields(id: number) {
 		spatialFootprint: "todo",
 		recordOriginator: "external-user",
 		dataSource: "external",
-		approvalStatus: "draft"
+		approvalStatus: "draft",
+		createdBy: "test-user",
+		updatedBy: "test-user"
 	}
 	return data
 }

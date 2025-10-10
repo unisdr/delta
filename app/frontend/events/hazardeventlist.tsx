@@ -229,7 +229,7 @@ export function ListView(args: ListViewArgs) {
 						{/* Add the EventCounter component */}
 						<span>
 							<strong>
-								<EventCounter filteredEvents={items.length} totalEvents={totalCountRef.current} />
+								<EventCounter filteredEvents={items.length} totalEvents={totalCountRef.current} description="hazardous events" />
 							</strong>
 						</span>
 					</div>

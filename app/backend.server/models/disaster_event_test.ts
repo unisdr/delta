@@ -82,7 +82,9 @@ async function createTestHazardousEvent() {
         hipTypeId: "type1", // Required field
         hipClusterId: "cluster1", // Required field
         hipHazardId: "hazard1", // Required field
-        parent: "" // Required field, empty string means no parent
+        parent: "", // Required field, empty string means no parent
+        createdBy: "test-user",
+        updatedBy: "test-user",
     }
 
     const result = await hazardousEventCreate(dr, hazardFields)

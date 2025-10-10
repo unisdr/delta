@@ -8,6 +8,7 @@ import { route } from "~/frontend/events/disastereventform";
 
 import { Filters } from "../components/list-page-filters";
 import { formatDateDisplay } from "~/util/date";
+import { EventCounter } from "~/components/EventCounter";
 
 interface ListViewProps {
 	titleOverride?: string
@@ -48,10 +49,19 @@ export function ListView(props: ListViewProps) {
 		items: items,
 		paginationData: pagination,
 		csvExportLinks: true,
-		beforeListElement: <Filters
-			clearFiltersUrl={route}
-			search={filters.search}
-		/>,
+		beforeListElement: <>
+			<Filters
+				clearFiltersUrl={route}
+				search={filters.search}
+			/>
+			<div>
+				<span>
+					<strong>
+						<EventCounter filteredEvents={items.length} totalEvents={pagination.totalItems} description="disaster events" />
+					</strong>
+				</span>
+			</div>
+		</>,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
 				<td>{item.nameNational.length == 0 ? item.nameGlobalOrRegional : item.nameNational}</td>
@@ -71,14 +81,30 @@ export function ListView(props: ListViewProps) {
 					</Link>
 				</td>
 				
-				<td>TODO</td>
+				<td>
+					{ item.recordCount > 0 ?
+						<Link
+						to={`/disaster-record?disasterEventId=${item.id}`}
+						>
+							{ item.recordCount }
+						</Link>
+						:
+						( item.recordCount )
+					}
+				</td>
 				<td>{formatDateDisplay(item.createdAt, "dd-MM-yyyy")}</td>
 				<td>{formatDateDisplay(item.updatedAt, "dd-MM-yyyy")}</td>
 
 				<td>
 					{props.actions ?
 						props.actions(item) :
-						(ld.isPublic ? null : <ActionLinks route={route} id={item.id} />)
+						(ld.isPublic ? null : <ActionLinks 
+								deleteTitle="Are you sure you want to delete this event?"
+								deleteMessage="This data cannot be recovered after being deleted."
+								confirmDeleteLabel="Delete permanently"
+								cancelDeleteLabel="Do not delete"
+								route={route} id={item.id} 
+							/>)
 					}
 				</td>
 			</tr>

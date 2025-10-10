@@ -18,7 +18,6 @@ import {
 	SelectCountries,
 	InstanceSystemSettings,
 	SelectDtsSystemInfo,
-	countryAccountTypes,
 } from "~/drizzle/schema";
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
