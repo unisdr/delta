@@ -29,7 +29,7 @@ import { getCountryById } from "~/db/queries/countries";
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Adding New User - DTS" },
+		{ title: "Adding New User - DELTA Resilience" },
 		{ name: "description", content: "Invite User." },
 	];
 };

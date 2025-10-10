@@ -16,11 +16,15 @@ import {
 	errorToString,
 } from "~/frontend/form";
 import { formStringData } from "~/util/httputil";
-import { createSuperAdminSession, getSuperAdminSession, sessionCookie } from "~/util/session";
+import {
+	createSuperAdminSession,
+	getSuperAdminSession,
+	sessionCookie,
+} from "~/util/session";
 import { superAdminLogin } from "~/backend.server/models/user/auth";
 import {
 	configAuthSupportedAzureSSOB2C,
-	configAuthSupportedForm
+	configAuthSupportedForm,
 } from "~/util/config";
 import PasswordInput from "~/components/PasswordInput";
 import Messages from "~/components/Messages";
@@ -63,7 +67,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			{
 				data,
 				errors: {
-					general: ["CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again."],
+					general: [
+						"CSRF validation failed. Please ensure you're submitting the form from a valid session. For your security, please restart your browser and try again.",
+					],
 				},
 			},
 			{ status: 400 }
@@ -96,67 +102,74 @@ function validateRequiredEnvVars() {
 	// Check DATABASE_URL
 	if (!process.env.DATABASE_URL) {
 		errors.push({
-			variable: 'DATABASE_URL',
-			message: 'Database connection string is missing'
+			variable: "DATABASE_URL",
+			message: "Database connection string is missing",
 		});
-	} else if (!process.env.DATABASE_URL.startsWith('postgresql://')) {
+	} else if (!process.env.DATABASE_URL.startsWith("postgresql://")) {
 		errors.push({
-			variable: 'DATABASE_URL',
-			message: 'Database connection string is invalid (must be PostgreSQL)'
+			variable: "DATABASE_URL",
+			message: "Database connection string is invalid (must be PostgreSQL)",
 		});
 	}
 
 	// Check if the database URL contains invalid characters or paths
-	if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('?host=/var/run/postgresql/')) {
+	if (
+		process.env.DATABASE_URL &&
+		process.env.DATABASE_URL.includes("?host=/var/run/postgresql/")
+	) {
 		errors.push({
-			variable: 'DATABASE_URL',
-			message: 'Database connection string contains invalid Unix socket path. Please use a standard PostgreSQL connection string format.'
+			variable: "DATABASE_URL",
+			message:
+				"Database connection string contains invalid Unix socket path. Please use a standard PostgreSQL connection string format.",
 		});
 	}
 
 	// Check SESSION_SECRET
 	if (!process.env.SESSION_SECRET) {
 		errors.push({
-			variable: 'SESSION_SECRET',
-			message: 'Session secret is missing'
+			variable: "SESSION_SECRET",
+			message: "Session secret is missing",
 		});
-	} else if (process.env.NODE_ENV === 'production' && process.env.SESSION_SECRET === 'not-random-dev-secret') {
+	} else if (
+		process.env.NODE_ENV === "production" &&
+		process.env.SESSION_SECRET === "not-random-dev-secret"
+	) {
 		errors.push({
-			variable: 'SESSION_SECRET',
-			message: 'Session secret is using default value in production'
+			variable: "SESSION_SECRET",
+			message: "Session secret is using default value in production",
 		});
 	}
 
 	// Check EMAIL_TRANSPORT and related settings
 	if (!process.env.EMAIL_TRANSPORT) {
 		errors.push({
-			variable: 'EMAIL_TRANSPORT',
-			message: 'Email transport configuration is missing'
+			variable: "EMAIL_TRANSPORT",
+			message: "Email transport configuration is missing",
 		});
-	} else if (process.env.EMAIL_TRANSPORT === 'smtp') {
+	} else if (process.env.EMAIL_TRANSPORT === "smtp") {
 		// Check required SMTP settings when SMTP transport is selected
 		if (!process.env.SMTP_HOST) {
 			errors.push({
-				variable: 'SMTP_HOST',
-				message: 'SMTP host is required when using SMTP transport'
+				variable: "SMTP_HOST",
+				message: "SMTP host is required when using SMTP transport",
 			});
 		}
 		if (!process.env.SMTP_PORT) {
 			errors.push({
-				variable: 'SMTP_PORT',
-				message: 'SMTP port is required when using SMTP transport'
+				variable: "SMTP_PORT",
+				message: "SMTP port is required when using SMTP transport",
 			});
 		}
 		if (!process.env.SMTP_USER) {
 			errors.push({
-				variable: 'SMTP_USER',
-				message: 'SMTP username is required when using SMTP transport'
+				variable: "SMTP_USER",
+				message: "SMTP username is required when using SMTP transport",
 			});
 		}
 		if (!process.env.SMTP_PASS) {
 			errors.push({
-				variable: 'SMTP_PASS',
-				message: 'SMTP password is required when using SMTP transport'
+				variable: "SMTP_PASS",
+				message: "SMTP password is required when using SMTP transport",
 			});
 		}
 	}
@@ -164,21 +177,24 @@ function validateRequiredEnvVars() {
 	// Check EMAIL_FROM
 	if (!process.env.EMAIL_FROM) {
 		errors.push({
-			variable: 'EMAIL_FROM',
-			message: 'Email sender address is missing'
+			variable: "EMAIL_FROM",
+			message: "Email sender address is missing",
 		});
-	} else if (!process.env.EMAIL_FROM.includes('@') || !process.env.EMAIL_FROM.includes('.')) {
+	} else if (
+		!process.env.EMAIL_FROM.includes("@") ||
+		!process.env.EMAIL_FROM.includes(".")
+	) {
 		errors.push({
-			variable: 'EMAIL_FROM',
-			message: 'Email sender address appears to be invalid'
+			variable: "EMAIL_FROM",
+			message: "Email sender address appears to be invalid",
 		});
 	}
 
 	// Check AUTHENTICATION_SUPPORTED
 	if (!process.env.AUTHENTICATION_SUPPORTED) {
 		errors.push({
-			variable: 'AUTHENTICATION_SUPPORTED',
-			message: 'Authentication methods configuration is missing'
+			variable: "AUTHENTICATION_SUPPORTED",
+			message: "Authentication methods configuration is missing",
 		});
 	}
 
@@ -186,20 +202,20 @@ function validateRequiredEnvVars() {
 	if (configAuthSupportedAzureSSOB2C()) {
 		if (!process.env.SSO_AZURE_B2C_TENANT) {
 			errors.push({
-				variable: 'SSO_AZURE_B2C_TENANT',
-				message: 'Azure B2C tenant is required when SSO is enabled'
+				variable: "SSO_AZURE_B2C_TENANT",
+				message: "Azure B2C tenant is required when SSO is enabled",
 			});
 		}
 		if (!process.env.SSO_AZURE_B2C_CLIENT_ID) {
 			errors.push({
-				variable: 'SSO_AZURE_B2C_CLIENT_ID',
-				message: 'Azure B2C client ID is required when SSO is enabled'
+				variable: "SSO_AZURE_B2C_CLIENT_ID",
+				message: "Azure B2C client ID is required when SSO is enabled",
 			});
 		}
 		if (!process.env.SSO_AZURE_B2C_CLIENT_SECRET) {
 			errors.push({
-				variable: 'SSO_AZURE_B2C_CLIENT_SECRET',
-				message: 'Azure B2C client secret is required when SSO is enabled'
+				variable: "SSO_AZURE_B2C_CLIENT_SECRET",
+				message: "Azure B2C client secret is required when SSO is enabled",
 			});
 		}
 	}
@@ -211,10 +227,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	// Validate required environment variables
 	const configErrors = validateRequiredEnvVars();
 
-
 	// Add a message about the number of configuration errors
 	if (configErrors.length > 0) {
-		console.warn(`Found ${configErrors.length} configuration errors that need to be fixed before proceeding with setup.`);
+		console.warn(
+			`Found ${configErrors.length} configuration errors that need to be fixed before proceeding with setup.`
+		);
 	}
 	// else {
 	// 	// Test database connection only if no other config errors
@@ -246,7 +263,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const setCookie = await sessionCookie().commitSession(session);
 
 	if (superAdminSession) {
-		return Response.json({ redirectTo, isFormAuthSupported: true, isSSOAuthSupported: true, configErrors: configErrors, csrfToken: csrfToken }, { headers: { "Set-Cookie": setCookie } });
+		return Response.json(
+			{
+				redirectTo,
+				isFormAuthSupported: true,
+				isSSOAuthSupported: true,
+				configErrors: configErrors,
+				csrfToken: csrfToken,
+			},
+			{ headers: { "Set-Cookie": setCookie } }
+		);
 	}
 
 	const isFormAuthSupported = configAuthSupportedForm();
@@ -283,7 +309,7 @@ export function getSafeRedirectTo(
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Sign-in - Super Admin - DTS" },
+		{ title: "Sign-in - Super Admin - DELTA Resilience" },
 		{ name: "description", content: "Login." },
 	];
 };
@@ -313,54 +339,61 @@ export default function Screen() {
 	if (configErrors && configErrors.length > 0) {
 		return (
 			<div className="dts-page-container">
-					<main className="dts-main-container">
-						<div className="mg-container">
-							<div className="dts-form dts-form--vertical">
-									<div className="dts-form__header"></div>
-									<div className="dts-form__body">
-										<div style={{
-											background: '#fff0f0',
-											border: '1px solid #ffcccc',
-											borderRadius: '4px',
-											padding: '16px',
-											marginBottom: '20px'
-										}}>
-											<div style={{
-												display: 'flex',
-												alignItems: 'center',
-												marginBottom: '10px',
-												color: '#cc0000',
-												fontWeight: 'bold'
-											}}>
-												<FaExclamationTriangle style={{ marginRight: '8px' }} />
-												System Configuration Errors
-											</div>
-											<p style={{ marginBottom: '10px' }}>
-												The following required configuration variables are missing or have invalid values in your <code>.env</code> file:
-											</p>
-											<ul style={{
-												listStyleType: 'disc',
-												paddingLeft: '20px',
-												margin: '0'
-											}}>
-												{configErrors.map((error:any, index:number) => (
-													<li key={index} style={{ marginBottom: '5px' }}>
-														<strong>{error.variable}</strong>: {error.message}
-													</li>
-												))}
-											</ul>
-											<p style={{ marginTop: '10px', marginBottom: '0' }}>
-												Please update your <code>.env</code> file with the correct values before proceeding.
-											</p>
-										</div>
+				<main className="dts-main-container">
+					<div className="mg-container">
+						<div className="dts-form dts-form--vertical">
+							<div className="dts-form__header"></div>
+							<div className="dts-form__body">
+								<div
+									style={{
+										background: "#fff0f0",
+										border: "1px solid #ffcccc",
+										borderRadius: "4px",
+										padding: "16px",
+										marginBottom: "20px",
+									}}
+								>
+									<div
+										style={{
+											display: "flex",
+											alignItems: "center",
+											marginBottom: "10px",
+											color: "#cc0000",
+											fontWeight: "bold",
+										}}
+									>
+										<FaExclamationTriangle style={{ marginRight: "8px" }} />
+										System Configuration Errors
 									</div>
+									<p style={{ marginBottom: "10px" }}>
+										The following required configuration variables are missing
+										or have invalid values in your <code>.env</code> file:
+									</p>
+									<ul
+										style={{
+											listStyleType: "disc",
+											paddingLeft: "20px",
+											margin: "0",
+										}}
+									>
+										{configErrors.map((error: any, index: number) => (
+											<li key={index} style={{ marginBottom: "5px" }}>
+												<strong>{error.variable}</strong>: {error.message}
+											</li>
+										))}
+									</ul>
+									<p style={{ marginTop: "10px", marginBottom: "0" }}>
+										Please update your <code>.env</code> file with the correct
+										values before proceeding.
+									</p>
+								</div>
 							</div>
 						</div>
-					</main>
-				</div>
+					</div>
+				</main>
+			</div>
 		);
 	}
-
 
 	// If only SSO is supported, show SSO-only interface
 	if (!isFormAuthSupported && isSSOAuthSupported) {
@@ -374,7 +407,8 @@ export default function Screen() {
 								{errors?.general && <Messages messages={errors.general} />}
 								<h2 className="dts-heading-1">Sign in - Admin Management</h2>
 								<p>
-									Use your organization's Single Sign-On to access your admin account.
+									Use your organization's Single Sign-On to access your admin
+									account.
 								</p>
 							</div>
 							<div
@@ -418,13 +452,23 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
-							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
+							<input
+								type="hidden"
+								name="redirectTo"
+								value={loaderData.redirectTo}
+							/>
+							<input
+								type="hidden"
+								name="csrfToken"
+								value={loaderData.csrfToken}
+							/>
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
 								<h2 className="dts-heading-1">Sign in - Admin Management</h2>
-								<p>Enter your admin credentials to access the management panel.</p>
+								<p>
+									Enter your admin credentials to access the management panel.
+								</p>
 								<p style={{ marginBottom: "2px" }}>*Required information</p>
 							</div>
 
@@ -510,13 +554,24 @@ export default function Screen() {
 							className="dts-form dts-form--vertical"
 							errors={errors}
 						>
-							<input type="hidden" name="redirectTo" value={loaderData.redirectTo} />
-							<input type="hidden" name="csrfToken" value={loaderData.csrfToken} />
+							<input
+								type="hidden"
+								name="redirectTo"
+								value={loaderData.redirectTo}
+							/>
+							<input
+								type="hidden"
+								name="csrfToken"
+								value={loaderData.csrfToken}
+							/>
 							<div className="dts-form__header"></div>
 							<div className="dts-form__intro">
 								{errors.general && <Messages messages={errors.general} />}
 								<h2 className="dts-heading-1">Sign in - Admin Management</h2>
-								<p>Enter your admin credentials or use SSO to access the management panel.</p>
+								<p>
+									Enter your admin credentials or use SSO to access the
+									management panel.
+								</p>
 								<p style={{ marginBottom: "2px" }}>*Required information</p>
 							</div>
 							<div className="dts-form__body" style={{ marginBottom: "5px" }}>

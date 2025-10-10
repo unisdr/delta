@@ -51,7 +51,7 @@ const ImpactByHazard: React.FC<ImpactByHazardProps> = ({
 					className="mg-container"
 					style={{ maxWidth: "100%", overflow: "hidden" }}
 				> */}
-				<h2 className="text-sm text-gray-600 mb-4">{title}</h2>
+				<h2 className="text-gray-600 mb-4">{title}</h2>
 				<div className="mg-grid mg-grid__col-2">
 					{/* Events impacting sectors */}
 					<div className="mg-grid mg-grid--gap-default">

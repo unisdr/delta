@@ -26,7 +26,7 @@ import { notifyInfo, notifyError } from "~/frontend/utils/notifications";
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Account Setup Email Verification - DTS" },
+		{ title: "Account Setup Email Verification - DELTA Resilience" },
 		{ name: "description", content: "Admin setup." },
 	];
 };
@@ -201,7 +201,7 @@ export default function Data() {
 							>
 								Back
 							</button>
-							<span>Disaster Tracking System</span>
+							<span>DELTA Resilience</span>
 						</div>
 						<div className="dts-form__intro">
 							<h2 className="dts-heading-1">Enter code we sent to you at</h2>

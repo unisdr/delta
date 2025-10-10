@@ -698,7 +698,7 @@ CREATE TABLE public.instance_system_settings (
     footer_url_terms_conditions character varying,
     admin_setup_complete boolean DEFAULT false NOT NULL,
     website_logo character varying DEFAULT '/assets/country-instance-logo.png'::character varying NOT NULL,
-    website_name character varying(250) DEFAULT 'Disaster Tracking System'::character varying NOT NULL,
+    website_name character varying(250) DEFAULT 'DELTA Resilience'::character varying NOT NULL,
     "approvedRecordsArePublic" boolean DEFAULT false NOT NULL,
     totp_issuer character varying(250) DEFAULT 'example-app'::character varying NOT NULL,
     dts_instance_type character varying DEFAULT 'country'::character varying NOT NULL,

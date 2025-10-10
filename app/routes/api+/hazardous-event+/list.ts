@@ -23,6 +23,7 @@ export const loader: LoaderFunction = async (args: LoaderFunctionArgs) => {
 		async (offsetLimit) => {
 			return await dr.query.hazardousEventTable.findMany({
 			...offsetLimit,
+			where: eq(hazardousEventTable.countryAccountsId, countryAccountsId),
 			orderBy: [desc(hazardousEventTable.startDate)],
 			with: {
 				hipHazard: {

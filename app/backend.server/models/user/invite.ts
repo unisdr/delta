@@ -163,8 +163,8 @@ export async function sendInviteForNewUser(
 
 	const inviteURL =
 		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
-	const subject = `Invitation to join DTS ${siteName}`;
-	const html = `<p>You have been invited to join the DTS ${siteName} system as 
+	const subject = `Invitation to join DELTA Resilience ${siteName}`;
+	const html = `<p>You have been invited to join the DELTA Resilience ${siteName} system as 
                    a ${role} user for the country ${countryName} ${countryAccountType} instance.
                 </p>
                 <p>Click on the link below to create your account.</p>
@@ -177,7 +177,7 @@ export async function sendInviteForNewUser(
                 </p>
                 <p><a href="${inviteURL}">${inviteURL}</a></p>`;
 
-	const text = `You have been invited to join the DTS ${siteName} system as 
+	const text = `You have been invited to join the DELTA Resilience ${siteName} system as 
                 a ${role} user for the country ${countryName} ${countryAccountType} instance. 
                 Copy and paste the following link into your browser url to create your account:
                 ${inviteURL}`;
@@ -192,8 +192,8 @@ export async function sendInviteForExistingUser(
 	countryName: string,
 	countryAccountType: string
 ) {
-	const subject = `Invitation to join DTS ${siteName}`;
-	const html = `<p>You have been invited to join the DTS ${siteName} system as 
+	const subject = `Invitation to join DELTA Resilience ${siteName}`;
+	const html = `<p>You have been invited to join the DELTA Resilience ${siteName} system as 
                    a ${role} user for the country ${countryName} ${countryAccountType} instance.
                 </p>
                 <p>Click on the link below to login to your account.</p>
@@ -206,7 +206,7 @@ export async function sendInviteForExistingUser(
                 </p>
                 <p><a href="${siteUrl}">${siteUrl}</a></p>`;
 
-	const text = `You have been invited to join the DTS ${siteName} system as 
+	const text = `You have been invited to join the DELTA Resilience ${siteName} system as 
                 a ${role} user for the country ${countryName} ${countryAccountType} instance. 
                 Copy and paste the following link into your browser url to login to your account:
                 ${siteUrl}`;
@@ -223,8 +223,8 @@ export async function sendInviteForNewCountryAccountAdminUser(
 ) {
 	const inviteURL =
 		siteUrl + "/user/accept-invite-welcome?inviteCode=" + inviteCode;
-	const subject = `Invitation to join DTS ${siteName}`;
-	const html = `<p>You have been invited to join the DTS ${siteName} as 
+	const subject = `Invitation to join DELTA Resilience ${siteName}`;
+	const html = `<p>You have been invited to join the DELTA Resilience ${siteName} as 
                    a(an) ${role} user for the country ${countryName} ${countryAccountType} instance.
                 </p>
                 <p>Click on the link below to create your account.</p>
@@ -237,7 +237,7 @@ export async function sendInviteForNewCountryAccountAdminUser(
                 </p>
                 <p><a href="${inviteURL}">${inviteURL}</a></p>`;
 
-	const text = `You have been invited to join the DTS ${siteName} system as 
+	const text = `You have been invited to join the DELTA Resilience ${siteName} system as 
                 a ${role} user for the country ${countryName} ${countryAccountType} instance.
                 Copy and paste the following link into your browser url to create your account:
                 ${inviteURL}`;
@@ -252,8 +252,8 @@ export async function sendInviteForExistingCountryAccountAdminUser(
 	countryName: string,
 	countryAccountType: string
 ) {
-	const subject = `Invitation to join DTS ${siteName}`;
-	const html = `<p>You have been invited to join the DTS ${siteName} system as 
+	const subject = `Invitation to join DELTA Resilience ${siteName}`;
+	const html = `<p>You have been invited to join the DELTA Resilience ${siteName} system as 
                    a ${role} user for the country ${countryName} ${countryAccountType} instance
                 </p>
                 <p>Click on the link below to login to your account.</p>
@@ -266,7 +266,7 @@ export async function sendInviteForExistingCountryAccountAdminUser(
                 </p>
                 <p><a href="${siteUrl}">${siteUrl}</a></p>`;
 
-	const text = `You have been invited to join the DTS ${siteName} system as 
+	const text = `You have been invited to join the DELTA Resilience ${siteName} system as 
                 a ${role} user for the country ${countryName} ${countryAccountType} instance
                 Copy and paste the following link into your browser url to login to your account:
                 ${siteUrl}`;
@@ -379,10 +379,10 @@ export async function acceptInvite(
 	user = res[0];
 
 	const accessAccountURL = siteUrl + "/user/settings/";
-	const subject = `Welcome to DTS ${siteName}`;
+	const subject = `Welcome to DELTA Resilience ${siteName}`;
 	const html = `<p>Dear ${user.firstName} ${user.lastName},</p>
 
-			<p>Welcome to the DTS ${siteName} system. Your user account has been successfully created.</p>
+			<p>Welcome to the DELTA Resilience ${siteName} system. Your user account has been successfully created.</p>
 
 			<p>Click the link below to access your account.</p>
 
@@ -392,7 +392,7 @@ export async function acceptInvite(
 
 	const text = `Dear ${user.firstName} ${user.lastName},
 
-			Welcome to the DTS ${siteName} system. Your user account has been successfully created.
+			Welcome to the DELTA Resilience ${siteName} system. Your user account has been successfully created.
 
 			Click the link below to access your account.
 

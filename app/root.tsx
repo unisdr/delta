@@ -37,14 +37,14 @@ import { configAuthSupportedForm } from "~/util/config";
 
 import {
 	sessionActivityTimeoutMinutes,
-	sessionActivityWarningBeforeTimeoutMinutes
+	sessionActivityWarningBeforeTimeoutMinutes,
 } from "~/util/session-activity-config";
 // import "primereact/resources/themes/lara-light-blue/theme.css";
 // import "primereact/resources/themes/bootstrap4-light-purple/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
-import "primeflex/primeflex.css"; 
-import { PrimeReactProvider } from 'primereact/api';
+import "primeflex/primeflex.css";
+import { PrimeReactProvider } from "primereact/api";
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250531123412" },
@@ -63,7 +63,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	// Determine if this is a super admin session and on an admin route
 	const url = new URL(request.url);
-	const isAdminRoute = url.pathname.startsWith('/admin/');
+	const isAdminRoute = url.pathname.startsWith("/admin/");
 	const isSuperAdmin = !!superAdminSession && isAdminRoute;
 	const effectiveUserRole = isSuperAdmin ? "super_admin" : userRole;
 
@@ -77,9 +77,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		settings = await getCountrySettingsFromSession(request);
 	}
 
-	const websiteName = settings
-		? settings.websiteName
-		: "Disaster Tracking System";
+	const websiteName = settings ? settings.websiteName : "DELTA Resilience";
 	const websiteLogo = settings
 		? settings.websiteLogo
 		: "/assets/country-instance-logo.png";
@@ -90,7 +88,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? settings.footerUrlTermsConditions
 		: "";
 	const dtsInstanceCtryIso3 = settings ? settings.dtsInstanceCtryIso3 : "USA";
-	const currencyCode = settings ? settings.currencyCode : 'USD';
+	const currencyCode = settings ? settings.currencyCode : "USD";
 
 	return Response.json(
 		{
@@ -121,7 +119,6 @@ interface InactivityWarningProps {
 	loggedIn: boolean;
 }
 function InactivityWarning(props: InactivityWarningProps) {
-
 	const navigation = useNavigation();
 	const [lastActivity, setLastActivity] = useState(new Date());
 	const [showWarning, setShowWarning] = useState(false);
@@ -142,7 +139,7 @@ function InactivityWarning(props: InactivityWarningProps) {
 			if (
 				minutesSinceLastActivity >
 				sessionActivityTimeoutMinutes -
-				sessionActivityWarningBeforeTimeoutMinutes
+					sessionActivityWarningBeforeTimeoutMinutes
 			) {
 				setShowWarning(true);
 				setExpiresInMinutes(
@@ -320,9 +317,11 @@ export default function Screen() {
 							</header>
 						)}
 						<main className="dts-main-container">
-							<PrimeReactProvider value={{
-						        "ripple": true,
-							}}>
+							<PrimeReactProvider
+								value={{
+									ripple: true,
+								}}
+							>
 								<Outlet />
 							</PrimeReactProvider>
 						</main>

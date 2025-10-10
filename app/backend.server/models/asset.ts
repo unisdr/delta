@@ -1,5 +1,5 @@
 import { dr, Tx } from "~/db.server";
-import { assetTable, InsertAsset } from "~/drizzle/schema";
+import { assetTable, InsertAsset, SelectAsset } from "~/drizzle/schema";
 import { eq, sql, inArray, and, or, asc } from "drizzle-orm";
 import {
 	CreateResult,
@@ -305,4 +305,11 @@ export async function upsertRecord(record: InsertAsset): Promise<void> {
 				},
 			});
 	}
+}
+
+export async function getBuiltInAssets(): Promise<SelectAsset[]> {
+	return await dr
+		.select()
+		.from(assetTable)
+		.where(eq(assetTable.isBuiltIn, true));
 }

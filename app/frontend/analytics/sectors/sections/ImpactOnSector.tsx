@@ -235,7 +235,7 @@ function ImpactOnSector({
 					style={{ maxWidth: "100%", overflow: "hidden" }}
 				>
 					<h2 className="dts-heading-2">{renderTitle()}</h2>
-					<p className="text-sm text-gray-600 mb-4">
+					<p className="text-gray-600 mb-4">
 						This dashboard shows the aggregated impact data for the selected
 						sector, including all its subsectors.
 					</p>
@@ -386,7 +386,7 @@ function ImpactOnSector({
 					style={{ maxWidth: "100%", overflow: "hidden" }}
 				>
 					<h2 className="dts-heading-2">{renderTitle()}</h2>
-					<p className="text-sm text-gray-600 mb-4">
+					<p className="text-gray-600 mb-4">
 						This dashboard shows the aggregated impact data for the selected
 						sector, including all its subsectors.
 					</p>

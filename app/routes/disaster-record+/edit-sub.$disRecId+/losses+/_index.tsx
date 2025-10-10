@@ -35,7 +35,7 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 	}
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	let instanceName = "Disaster Tracking System";
+	let instanceName = "DELTA Resilience";
 	if (countryAccountsId) {
 		const settigns = await getCountrySettingsFromSession(request);
 		instanceName = settigns.websiteName;
@@ -68,8 +68,8 @@ export const loader = authLoaderWithPerm("ViewData", async (loaderArgs) => {
 			)
 		);
 	};
-	
-	const count = await countFetcher()
+
+	const count = await countFetcher();
 
 	const res = await executeQueryForPagination3(request, count, dataFetcher, [
 		"sectorId",

@@ -27,7 +27,7 @@ import { contentPickerConfigCategory } from "../content-picker-config";
 // Meta function for page SEO
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Non-economic Losses - Disaster Records - DTS" },
+		{ title: "Non-economic Losses - Disaster Records - DELTA Resilience" },
 		{ name: "description", content: "Non-economic Losses page." },
 	];
 };

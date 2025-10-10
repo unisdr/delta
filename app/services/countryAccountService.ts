@@ -13,11 +13,7 @@ import {
 	updateCountryAccount,
 } from "~/db/queries/countryAccounts";
 import { createInstanceSystemSetting } from "~/db/queries/instanceSystemSetting";
-import {
-	createUser,
-	getUserByEmail,
-	updateUserById,
-} from "~/db/queries/user";
+import { createUser, getUserByEmail, updateUserById } from "~/db/queries/user";
 import { createUserCountryAccounts } from "~/db/queries/userCountryAccounts";
 import {
 	CountryAccountStatus,
@@ -145,7 +141,7 @@ export async function createCountryAccountService(
 			await sendInviteForNewCountryAccountAdminUser(
 				user,
 				baseUrl,
-				"Disaster Tracking System",
+				"DELTA Resilience",
 				role,
 				country.name,
 				countryAccountType,
@@ -155,7 +151,7 @@ export async function createCountryAccountService(
 			await sendInviteForExistingCountryAccountAdminUser(
 				user,
 				baseUrl,
-				"Disaster Tracking System",
+				"DELTA Resilience",
 				"Admin",
 				country.name,
 				countryAccountType

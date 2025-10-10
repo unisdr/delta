@@ -8,7 +8,7 @@ export function usePrimeTheme(initialTheme = "lara-light-blue") {
     const themeId = "prime-theme-link";
     let link = document.getElementById(themeId) as HTMLLinkElement | null;
 
-    const newHref = `/public/themes/${theme}/theme.css`;
+    const newHref = `/themes/${theme}/theme.css`;
 
     if (link) {
       // If the link exists, update href

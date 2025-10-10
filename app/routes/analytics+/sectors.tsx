@@ -16,7 +16,10 @@ import ImpactMap from "~/frontend/analytics/sectors/sections/ImpactMap";
 import EffectDetails from "~/frontend/analytics/sectors/sections/EffectDetails";
 import MostDamagingEvents from "~/frontend/analytics/sectors/sections/MostDamagingEvents";
 
-import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from "~/util/session";
+import {
+	getCountryAccountsIdFromSession,
+	getCountrySettingsFromSession,
+} from "~/util/session";
 import { getImpactOnSector } from "~/backend.server/handlers/analytics/ImpactonSectors";
 import { handleGeographicImpactQuery } from "~/backend.server/handlers/analytics/geographicImpact";
 import { getHazardImpact } from "~/backend.server/handlers/analytics/hazardImpact";
@@ -539,8 +542,11 @@ export const loader = authLoaderPublicOrWithPerm(
 // Meta function for page SEO
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "Sectors Analysis - DTS" },
-		{ name: "description", content: "Sector analysis page under DTS." },
+		{ title: "Sectors Analysis - DELTA Resilience" },
+		{
+			name: "description",
+			content: "Sector analysis page under DELTA Resilience.",
+		},
 	];
 };
 function SectorsAnalysisContent() {

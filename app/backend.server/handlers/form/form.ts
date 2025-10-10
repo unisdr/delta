@@ -647,7 +647,6 @@ export function createViewLoaderPublicApprovedWithAuditLog<
 	return async (loaderArgs: LoaderFunctionArgs) => {
 		return authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
 			const { params } = loaderArgs;
-			// const item = await getItem2(params, args.getByIdAndCountryAccountsId, countryAccountsId );
 			const item = await getItem2(params, args.getById);
 			if (!item) {
 				throw new Response("Not Found", { status: 404 });

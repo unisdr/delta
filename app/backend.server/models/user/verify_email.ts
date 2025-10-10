@@ -30,7 +30,7 @@ export async function sendEmailVerification(
 
 	const subject = "Verify your account";
 	const html = `<p>
-                  To continue setting up your DTS account, please verify that this is your email address.
+                  To continue setting up your DELTA Resilience account, please verify that this is your email address.
                 </p>
 
                 <br/><br/> 
@@ -39,7 +39,7 @@ export async function sendEmailVerification(
                 </p>
                 <br/>
                 <strong>${verificationCode}</strong>`;
-	const text = `To continue setting up your DTS account, please verify that this is your email address.
+	const text = `To continue setting up your DELTA Resilience account, please verify that this is your email address.
                 Please use the following code to activate and finalise the setup of your account. The code will expire in 30 minutes:
                 ${verificationCode}`;
 

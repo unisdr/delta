@@ -2,7 +2,6 @@ import type { MetaFunction } from "@remix-run/node";
 
 import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
-import { loadMarkdownContent } from "~/util/loadMarkdownContent";
 import { useState } from "react";
 import {
 	AutoComplete,
@@ -17,27 +16,32 @@ import { TreeNode } from "primereact/treenode";
 import { Menubar } from "primereact/menubar";
 import { usePrimeTheme } from "~/hooks/usePrimeTheme";
 import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
+import { getBuiltInAssets } from "~/backend.server/models/asset";
+import { useLoaderData } from "@remix-run/react";
+import { SelectAsset } from "~/drizzle/schema";
 
 export const loader = async () => {
-	const { fullContent, appendContent } = await loadMarkdownContent("about");
-
-	return Response.json({ fullContent, appendContent });
+	const builtInAssets = await getBuiltInAssets();
+	return Response.json({ builtInAssets });
 };
 
 // Meta function for page SEO
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "PrimeReact Testing Components Page - DTS" },
+		{ title: "PrimeReact Testing Components Page - DELTA Resilience" },
 		{
 			name: "description",
-			content: "PrimeReact Testing Components Page - DTS",
+			content: "PrimeReact Testing Components Page - DELTA Resilience",
 		},
 	];
 };
 
-// React component for About the System page
-export default function AboutTheSystem() {
+// React component for PrimeReact test page
+export default function PrimeReactTestPage() {
+	const { builtInAssets } = useLoaderData<{ builtInAssets: SelectAsset[] }>();
+
 	const { theme, setTheme } = usePrimeTheme("lara-light-blue");
+
 	const themes = [
 		// 🌈 Bootstrap
 		{ name: "Bootstrap Light Blue", code: "bootstrap4-light-blue" },
@@ -152,8 +156,34 @@ export default function AboutTheSystem() {
 	const [value, setValue] = useState<string>("");
 	const [items, setItems] = useState<string[]>([]);
 
+	//Search function gets data of assets from query function
 	const search = (event: AutoCompleteCompleteEvent) => {
-		setItems([...Array(10).keys()].map((item) => event.query + "-" + item));
+		const query = event.query.toLowerCase();
+
+		// Filter based on user input
+		const filtered = builtInAssets
+			.map((asset) => asset.name)
+			.filter((name) => name.toLowerCase().includes(query));
+
+		setItems(filtered);
+	};
+
+	//This function gets data of assets from calling api
+	const search2 = async (event: AutoCompleteCompleteEvent) => {
+		const query = event.query.trim();
+		if (!query) {
+			setItems([]);
+			return;
+		}
+
+		// ✅ Fetch filtered assets from backend
+		const res = await fetch(
+			`/api/asset/getassets?q=${encodeURIComponent(query)}`
+		);
+		const data = await res.json();
+
+		// Map to names or show full objects if needed
+		setItems(data.map((asset: { name: string }) => asset.name));
 	};
 
 	const [visible, setVisible] = useState<boolean>(false);
@@ -277,26 +307,53 @@ export default function AboutTheSystem() {
 
 			<div className="card flex justify-content-center mb-4">
 				<Dropdown
-					defaultValue={theme}
-					onChange={(e: DropdownChangeEvent) => 
-						setTheme(e.target.value.code)
-					}
+					value={theme}
+					onChange={(e: DropdownChangeEvent) => setTheme(e.target.value)}
 					options={themes}
 					optionLabel="name"
+					optionValue="code"
 					placeholder="Select a Theme"
 					className="w-full md:w-14rem"
 				/>
 			</div>
 
 			<div className="card">
-				<div className=" flex justify-content-center mb-4">
+				<label
+					htmlFor="autoComplete1"
+					className="flex justify-content-center mb-1"
+				>
+					Assets Fetch from loader
+				</label>
+				<div className="card flex justify-content-center mb-4">
 					<AutoComplete
+						id="autoComplete1"
 						value={value}
 						suggestions={items}
 						completeMethod={search}
 						onChange={(e: AutoCompleteChangeEvent) => setValue(e.value)}
 						dropdown
-						forceSelection 
+						forceSelection
+						placeholder="Search for an asset"
+					/>
+				</div>
+
+				<div className="flex">
+					<label
+						htmlFor="autoComplete2"
+						className="flex justify-content-center mb-1"
+					>
+						Assets Fetch from API
+					</label>
+				</div>
+				<div className="card flex justify-content-center mb-4">
+					<AutoComplete
+						id="autoComplete2"
+						value={value}
+						suggestions={items}
+						completeMethod={search2}
+						onChange={(e: AutoCompleteChangeEvent) => setValue(e.value)}
+						forceSelection
+						placeholder="Search for an asset"
 					/>
 				</div>
 

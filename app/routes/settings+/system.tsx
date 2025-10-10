@@ -14,7 +14,11 @@ import { getSystemInfo } from "~/db/queries/dtsSystemInfo";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import Dialog from "~/components/Dialog";
 import { getCountryAccountsIdFromSession } from "~/util/session";
-import { SelectCountries, InstanceSystemSettings, SelectDtsSystemInfo } from "~/drizzle/schema";
+import {
+	SelectCountries,
+	InstanceSystemSettings,
+	SelectDtsSystemInfo,
+} from "~/drizzle/schema";
 import { getCountryAccountById } from "~/db/queries/countryAccounts";
 import { getCountryById } from "~/db/queries/countries";
 import {
@@ -24,9 +28,7 @@ import {
 import Messages from "~/components/Messages";
 import { Toast, ToastRef } from "~/components/Toast";
 import { getCurrencyList } from "~/util/currency";
-import {
-	sessionCookie,
-} from "~/util/session";
+import { sessionCookie } from "~/util/session";
 
 // Define the loader data type
 interface LoaderData {
@@ -42,22 +44,21 @@ interface LoaderData {
 	dtsSystemInfo: SelectDtsSystemInfo | null;
 	country: SelectCountries;
 	userRole: string;
+	countryAccountType: string | null;
 }
 
 export const loader: LoaderFunction = authLoaderWithPerm(
 	"ManageCountrySettings",
 	async (loaderArgs) => {
-		const {request} = loaderArgs;
+		const { request } = loaderArgs;
 		const countryAccountsId = await getCountryAccountsIdFromSession(request);
-		
+
 		const settings = await getInstanceSystemSettingsByCountryAccountId(
 			countryAccountsId
 		);
-		const countryAccount = await getCountryAccountById(
-			countryAccountsId
-		);
+		const countryAccount = await getCountryAccountById(countryAccountsId);
 		let country = null;
-		if(countryAccount){
+		if (countryAccount) {
 			country = await getCountryById(countryAccount.countryId);
 		}
 		const dtsSystemInfo = await getSystemInfo();
@@ -73,7 +74,7 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 		const session = await sessionCookie().getSession(
 			request.headers.get("Cookie")
 		);
-			
+
 		const userRole = session.get("userRole");
 
 		return Response.json({
@@ -83,7 +84,8 @@ export const loader: LoaderFunction = authLoaderWithPerm(
 			instanceSystemSettings: settings,
 			dtsSystemInfo,
 			country,
-			userRole: userRole
+			userRole: userRole,
+			countryAccountType: countryAccount?.type,
 		});
 	}
 );
@@ -130,7 +132,7 @@ export const action: ActionFunction = authLoaderWithPerm(
 
 export const meta: MetaFunction = () => {
 	return [
-		{ title: "System Settings - DTS" },
+		{ title: "System Settings - DELTA Resilience" },
 		{ name: "description", content: "System settings." },
 	];
 };
@@ -187,7 +189,7 @@ export default function Settings() {
 				loaderData.instanceSystemSettings.approvedRecordsArePublic
 			);
 			setTotpIssuer(loaderData.instanceSystemSettings.totpIssuer || "");
-			setCurrency(loaderData.instanceSystemSettings.currencyCode); 
+			setCurrency(loaderData.instanceSystemSettings.currencyCode);
 		}
 		setIsDialogOpen(true);
 	}
@@ -207,10 +209,10 @@ export default function Settings() {
 		}
 	}, [actionData]);
 
-	const navSettings = <NavSettings userRole={ loaderData.userRole } />;
+	const navSettings = <NavSettings userRole={loaderData.userRole} />;
 
 	return (
-		<MainContainer title="System Settings" headerExtra={ navSettings }>
+		<MainContainer title="System Settings" headerExtra={navSettings}>
 			<Toast ref={toast} />
 			<div className="mg-container">
 				<div className="dts-page-intro">
@@ -269,6 +271,9 @@ export default function Settings() {
 								<strong>Country:</strong> {loaderData.country.name}
 							</li>
 							<li>
+								<strong>Type:</strong> {loaderData.countryAccountType} instance
+							</li>
+							<li>
 								<strong>ISO 3:</strong>{" "}
 								{loaderData.instanceSystemSettings?.dtsInstanceCtryIso3}
 							</li>
@@ -281,7 +286,7 @@ export default function Settings() {
 						</ul>
 					</li>
 					<li>
-						<strong>DTS software application version:</strong>{" "}
+						<strong>DELTA Resilience software application version:</strong>{" "}
 						{loaderData.dtsSystemInfo?.appVersionNo ?? ""}
 					</li>
 					<li>
@@ -310,11 +315,11 @@ export default function Settings() {
 						</ul>
 					</li>
 					<li>
-						<strong>Website Name:</strong>{" "}
+						<strong>Instance Name:</strong>{" "}
 						{loaderData.instanceSystemSettings?.websiteName}{" "}
 					</li>
 					<li>
-						<strong>Website Logo URL:</strong>{" "}
+						<strong>Instance Logo URL:</strong>{" "}
 						{loaderData.instanceSystemSettings?.websiteLogo}{" "}
 					</li>
 					<li>

@@ -139,8 +139,8 @@ function navItemsNotLoggedIn(_userRole: string): Lvl1Item[] {
 			],
 		},
 		{
-			name: "Log in",
-			title: "User Login",
+			name: "Sign in",
+			title: "User Sign in",
 			icon: "other/user-profile",
 			link: "/user/login",
 		},
@@ -170,7 +170,7 @@ function navItemsSuperAdmin(): Lvl1Item[] {
 			link: "",
 		},
 		{
-			name: "Log out",
+			name: "Sign out",
 			title: "Super Admin Logout",
 			icon: "other/user-profile",
 			link: "/admin/logout",
@@ -216,8 +216,8 @@ function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1I
 				link: "",
 			},
 			{
-				name: "Log out",
-				title: "User Login",
+				name: "Sign out",
+				title: "User sign out",
 				icon: "other/user-profile",
 				link: "/user/logout",
 			},
@@ -349,8 +349,8 @@ function navItemsLoggedIn(userRole: string, isFormAuthSupported: boolean): Lvl1I
 			],
 		},
 		{
-			name: "Log out",
-			title: "User Login",
+			name: "Sign out",
+			title: "User sign out",
 			icon: "other/user-profile",
 			link: "/user/logout",
 		},
