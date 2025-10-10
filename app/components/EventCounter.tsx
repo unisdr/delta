@@ -8,13 +8,18 @@ export function EventCounter({ filteredEvents, totalEvents, description }: Event
     // If filteredEvents is not provided, use totalEvents for both
     const filtered = filteredEvents !== undefined ? filteredEvents : totalEvents;
 
-    return (
-        <div className="">
-            <p>
-                Showing <strong>{filtered}</strong> of <strong>{totalEvents}</strong> { description ?? ""  }
-            </p>
-        </div>
-    );
+    if (totalEvents == 0) {
+        return <></>
+    }
+    else {
+        return (
+            <div className="">
+                <p>
+                    Showing <strong>{filtered}</strong> of <strong>{totalEvents}</strong> { description ?? ""  }
+                </p>
+            </div>
+        );
+    }
 }
 
 interface HazardEventHeaderProps {

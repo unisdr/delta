@@ -292,11 +292,12 @@ export function ListView(args: ListViewArgs) {
 								<tr key={index}>
 									<td>{getHazardDisplayName(item)}</td>
 									{!args.isPublic && (
-										<td className="dts-table__cell-centered">
+										<td>
 											<span
 												ref={(el) => statusRefs.current.set(index, el!)}
 												className={`dts-status dts-status--${item.approvalStatus.toLowerCase()}`}
 											></span>
+											{` ${item.approvalStatus}`}
 										</td>
 									)}
 									<td>
