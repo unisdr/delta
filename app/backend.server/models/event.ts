@@ -140,7 +140,7 @@ export async function hazardousEventCreate(
 				newValues: JSON.stringify(insertedHazardousEvent),
 				oldValues: null,
 				userId: createByUserId,
-			})
+			});
 		}
 
 		if (res.length > 0) {
@@ -343,7 +343,7 @@ export async function hazardousEventUpdate(
 					newValues: updatedHazardousEvent,
 					oldValues: oldRecord,
 					userId: updatedByUserId,
-				})
+				});
 			}
 
 			// 5. Process attachments
@@ -928,12 +928,14 @@ export async function hazardousEventDelete(id: string): Promise<DeleteResult> {
 
 export interface DisasterEventFields
 	extends Omit<EventInsert, "id">,
-		Omit<InsertDisasterEvent, "id" /*| "countryAccountsId"*/> {}
+		Omit<InsertDisasterEvent, "id"> {
+	createdBy: string;
+	updatedBy: string;
+}
 
 export async function disasterEventCreate(
 	tx: Tx,
 	fields: DisasterEventFields
-	//countryAccountsId: string
 ): Promise<CreateResult<DisasterEventFields>> {
 	let errors: Errors<DisasterEventFields> = {};
 	errors.fields = {};
@@ -983,11 +985,25 @@ export async function disasterEventCreate(
 		...fields,
 	};
 	try {
-		await tx.insert(disasterEventTable).values({
-			...values,
-			id: eventId,
-			// countryAccountsId: fields.countryAccountsId,
-		});
+		const [insertedDisasterEvent] = await tx
+			.insert(disasterEventTable)
+			.values({
+				...values,
+				id: eventId,
+			})
+			.returning();
+
+		const createByUserId = fields.createdBy;
+		if (createByUserId) {
+			logAudit({
+				tableName: getTableName(disasterEventTable),
+				recordId: insertedDisasterEvent.id,
+				action: "Create disaster event",
+				newValues: JSON.stringify(insertedDisasterEvent),
+				oldValues: null,
+				userId: createByUserId,
+			});
+		}
 	} catch (error: any) {
 		let res = checkConstraintError(error, disasterEventTableConstrains);
 		if (res) {
@@ -1031,7 +1047,7 @@ export async function disasterEventUpdate(
 		};
 	}
 
-	const event = await tx
+	const [oldRecord] = await tx
 		.select({ id: disasterEventTable.id })
 		.from(disasterEventTable)
 		.where(
@@ -1041,7 +1057,7 @@ export async function disasterEventUpdate(
 			)
 		);
 
-	if (event.length === 0) {
+	if (!oldRecord) {
 		return {
 			ok: false,
 			errors: {
@@ -1052,7 +1068,7 @@ export async function disasterEventUpdate(
 	}
 
 	try {
-		await tx
+		const [updatedDisasterEvent] = await tx
 			.update(disasterEventTable)
 			.set({
 				...fields,
@@ -1062,7 +1078,20 @@ export async function disasterEventUpdate(
 					eq(disasterEventTable.id, id),
 					eq(disasterEventTable.countryAccountsId, fields.countryAccountsId)
 				)
-			);
+			)
+			.returning();
+
+		const updatedByUserId = fields.updatedBy;
+		if (updatedByUserId) {
+			logAudit({
+				tableName: getTableName(disasterEventTable),
+				recordId: updatedDisasterEvent.id,
+				action: "Update disaster event",
+				newValues: updatedDisasterEvent,
+				oldValues: oldRecord,
+				userId: updatedByUserId,
+			});
+		}
 
 		await processAndSaveAttachments(
 			disasterEventTable,
@@ -1311,7 +1340,7 @@ async function processAndSaveAttachments(
 	if (!attachmentsData) return;
 
 	const save_path = `/uploads/${directory}/${resourceId}`;
-	const save_path_temp = TEMP_UPLOAD_PATH
+	const save_path_temp = TEMP_UPLOAD_PATH;
 
 	// Process the attachments data
 	const processedAttachments = ContentRepeaterUploadFile.save(

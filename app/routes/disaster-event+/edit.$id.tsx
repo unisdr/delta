@@ -63,7 +63,7 @@ async function getDivisionGeoJSON(countryAccountsId: string) {
 
 export const action = authActionWithPerm("EditData", async (actionArgs) => {
 	const { request } = actionArgs;
-	authActionGetAuth(actionArgs);
+	const userSession = authActionGetAuth(actionArgs);
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
@@ -71,7 +71,12 @@ export const action = authActionWithPerm("EditData", async (actionArgs) => {
 		actionArgs,
 		fieldsDef,
 		save: async (tx, id, data) => {
-			const updatedData = { ...data, countryAccountsId };
+			const updatedData = {
+				...data,
+				countryAccountsId,
+				createdBy: userSession.user.id,
+				updatedBy: userSession.user.id,
+			};
 			if (id) {
 				return disasterEventUpdate(tx, id, updatedData);
 			} else {
