@@ -21,7 +21,7 @@ export function initDB() {
     throw "DATABASE_URL missing";
   }
   dr = drizzle(process.env.DATABASE_URL!, {
-    logger: false,
+    logger: true,
     schema,
   });
   pool = dr.$client;
