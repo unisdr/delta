@@ -29,8 +29,8 @@ import { NavSettings } from "~/routes/settings/nav";
 import HazardFilters from "~/frontend/analytics/hazards/sections/HazardFilters";
 import ImpactByHazard from "~/frontend/analytics/hazards/sections/ImpactByHazard";
 import {
+	getAllDivisionsByCountryAccountsId,
 	getDivisionByLevel,
-	getDivisionIdAndNameByLevel,
 } from "~/backend.server/models/division";
 import { fetchHazardClusters } from "~/backend.server/models/analytics/hazard-clusters";
 import HumanAffects from "~/frontend/analytics/hazards/sections/HumanAffects";
@@ -66,17 +66,14 @@ export const loader = authLoaderPublicOrWithPerm(
 		const hazardTypes = await fetchHazardTypes();
 		const hazardClusters = await fetchHazardClusters(null);
 		const specificHazards = await fetchAllSpecificHazards();
-		const level1DivisionNames = await getDivisionIdAndNameByLevel(
-			1,
-			settings.countryAccountsId
-		);
+		const allDivisions = await getAllDivisionsByCountryAccountsId(settings.countryAccountsId);
 
 		return {
 			currency,
 			hazardTypes,
 			hazardClusters,
 			specificHazards,
-			level1DivisionNames,
+			allDivisions,
 		};
 	}
 );
@@ -106,7 +103,6 @@ export const action = async (actionArgs: any) => {
 		currency = settings.currencyCode;
 	}
 
-	// Create tenant context from user session
 	const filters = {
 		countryAccountsId,
 		hazardTypeId,
@@ -292,8 +288,7 @@ export default function HazardAnalysis() {
 		hazardTypes,
 		hazardClusters,
 		specificHazards,
-		level1DivisionNames,
-		// geographicLevel1: geographicLevels,
+		allDivisions,
 	} = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
 
@@ -351,8 +346,8 @@ export default function HazardAnalysis() {
 			: null;
 
 	const geographicName =
-		appliedFilters.geographicLevelId && level1DivisionNames.length > 0
-			? level1DivisionNames.find(
+		appliedFilters.geographicLevelId && allDivisions.length > 0
+			? allDivisions.find(
 					(g) => g.id.toString() === appliedFilters.geographicLevelId
 			  )?.name["en"] || "Unknown Level"
 			: null;
@@ -366,13 +361,13 @@ export default function HazardAnalysis() {
 
 	return (
 		<MainContainer title="Hazards Analysis" headerExtra={<NavSettings />}>
-			<div style={{ maxWidth: "100%", overflow: "hidden" }}>
-				<div className="sectors-page">
+			<div>
+				<div>
 					<HazardFilters
 						hazardTypes={hazardTypes}
 						hazardClusters={hazardClusters}
 						specificHazards={specificHazards}
-						geographicLevels={level1DivisionNames}
+						geographicLevels={allDivisions}
 						onClearFilters={handleClearFilters}
 						selectedHazardClusterId={appliedFilters.hazardClusterId}
 						selectedSpecificHazardId={appliedFilters.specificHazardId}

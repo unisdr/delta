@@ -6,7 +6,8 @@ import { selectTranslated } from './common';
 
 import {
   divisionTable,
-  DivisionInsert,
+  InsertDivision,
+  SelectDivision,
 } from '~/drizzle/schema';
 
 import { dr, Tx } from '~/db.server';
@@ -623,7 +624,7 @@ async function importDivision(
     }
 
     // Prepare division data for validation and insertion/update
-    const divisionData: DivisionInsert = {
+    const divisionData: InsertDivision = {
       nationalId: division.nationalId !== "" ? division.nationalId : null,
       importId,
       parentId: parentDbId,
@@ -711,7 +712,7 @@ async function importDivision(
   }
 }
 
-export function fromForm(formData: Record<string, string>): DivisionInsert {
+export function fromForm(formData: Record<string, string>): InsertDivision {
   const { parentId, ...nameFields } = formData;
 
   const names = Object.entries(nameFields)
@@ -735,7 +736,7 @@ export function fromForm(formData: Record<string, string>): DivisionInsert {
  */
 async function validateDivisionData(
   tx: Tx,
-  data: DivisionInsert,
+  data: InsertDivision,
   countryAccountsId: string,
   existingId?: string
 ): Promise<{ valid: boolean; errors: string[]; level?: number }> {
@@ -910,7 +911,7 @@ async function checkCircularReference(
   return false;
 }
 
-export async function createDivision(data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
+export async function createDivision(data: InsertDivision, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
@@ -942,7 +943,7 @@ export async function createDivision(data: DivisionInsert, countryAccountsId: st
   }
 }
 
-export async function update(id: string, data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
+export async function update(id: string, data: InsertDivision, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
   try {
     return await dr.transaction(async (tx: Tx) => {
       try {
@@ -1055,35 +1056,26 @@ export async function getAllChildren(divisionId: number, countryAccountsId: stri
   }
 }
 
-export type DivisionIdAndNameResult = {
-  id: string;
-  name: Record<string, string>;
-  level: number | null;
-}[];
-
-
-export async function getDivisionIdAndNameByLevel(level: number, countryAccountId: string): Promise<DivisionIdAndNameResult> {
+export type PartialDivision = Pick<SelectDivision, 'id' | 'name' | 'parentId'>;
+export async function getAllDivisionsByCountryAccountsId(countryAccountId: string): Promise<PartialDivision[]> {
   try {
     const divisions = await dr
       .select({
         id: divisionTable.id,
         name: divisionTable.name,
-        level: divisionTable.level
+        parentId: divisionTable.parentId,
       })
       .from(divisionTable)
-      .where(and(
-        eq(divisionTable.level, level),
+      .where(
         eq(divisionTable.countryAccountsId, countryAccountId)
-      ));
+      );
 
-    // Map results to ensure correct typing
     return divisions.map((division) => ({
       id: division.id,
       name: division.name,
-      level: division.level
+      parentId: division.parentId,
     }));
   } catch (error) {
-    console.error("Error fetching divisions by level:", error);
     throw new Error("Failed to fetch divisions");
   }
 }

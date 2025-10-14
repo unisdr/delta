@@ -45,6 +45,7 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import { PrimeReactProvider } from "primereact/api";
+import { usePrimeTheme } from "./hooks/usePrimeTheme";
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250531123412" },
@@ -255,6 +256,7 @@ export default function Screen() {
 	const isUrlSuperAdmin = matches.some((match) =>
 		match.pathname.startsWith("/admin")
 	);
+	usePrimeTheme("lara-light-blue");
 
 	// Do not show header and footer for certain pages [user invitation | admin registration]
 	// But show header for super admin pages if the user is a super admin
