@@ -66,10 +66,11 @@ export function ListView(props: ListViewProps) {
 			<tr key={item.id}>
 				<td>{item.nameNational.length == 0 ? item.nameGlobalOrRegional : item.nameNational}</td>
 				{!ld.isPublic && (
-					<td className="dts-table__cell-centered">
+					<td>
 						<span
 							className={`dts-status dts-status--${item.approvalStatus}`}
 						></span>
+						{` ${item.approvalStatus}`}
 					</td>
 				)}
 				<td>
@@ -84,7 +85,7 @@ export function ListView(props: ListViewProps) {
 				<td>
 					{ item.recordCount > 0 ?
 						<Link
-						to={`/disaster-record?disasterEventId=${item.id}`}
+						to={`/disaster-record?disasterEventUUID=${item.id}`}
 						>
 							{ item.recordCount }
 						</Link>
