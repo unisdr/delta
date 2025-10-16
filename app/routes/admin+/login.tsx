@@ -113,7 +113,6 @@ function validateRequiredEnvVars() {
 	}
 
 	// Check if the database URL contains invalid characters or paths
-	/*
 	if (
 		process.env.DATABASE_URL &&
 		process.env.DATABASE_URL.includes("?host=/var/run/postgresql/")
@@ -123,7 +122,7 @@ function validateRequiredEnvVars() {
 			message:
 				"Database connection string contains invalid Unix socket path. Please use a standard PostgreSQL connection string format.",
 		});
-	}*/
+	}
 
 	// Check SESSION_SECRET
 	if (!process.env.SESSION_SECRET) {
