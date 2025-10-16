@@ -376,21 +376,21 @@ export default function HazardAnalysis() {
 					{!hazardName && (
 						<div
 							style={{
-								marginTop: "2rem",
+								marginTop: "1.43rem",
 								textAlign: "center",
-								padding: "2rem",
+								padding: "1.43rem",
 								borderRadius: "8px",
 								backgroundColor: "#f9f9f9",
 								color: "#333",
-								fontSize: "1.6rem",
-								lineHeight: "1.8rem",
+								fontSize: "1.14rem",
+								lineHeight: "1.29rem",
 							}}
 						>
 							<h3
 								style={{
 									color: "#004f91",
-									fontSize: "2rem",
-									marginBottom: "1rem",
+									fontSize: "1.43rem",
+									marginBottom: "0.71rem",
 								}}
 							>
 								Welcome to the Hazard Dashboard! 🌟
@@ -402,7 +402,7 @@ export default function HazardAnalysis() {
 						<div
 							className="sectors-content"
 							style={{
-								marginTop: "2rem",
+								marginTop: "1.43rem",
 								maxWidth: "100%",
 								overflow: "hidden",
 							}}

@@ -10,7 +10,7 @@ const Tag = ({ value, severity = "info" }: TagProps) => {
 		borderRadius: "8px",
 		color: "#000",
 		fontWeight: 500,
-		fontSize: "1.2rem",
+		fontSize: "0.86rem",
 		textAlign: "center",
 		margin:"2px"
 	};
