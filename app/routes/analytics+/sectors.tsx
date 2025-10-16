@@ -693,10 +693,6 @@ function SectorsAnalysisContent() {
 		setPendingFilters(newFilters);
 	}, []);
 
-	const handleAdvancedSearch = useCallback(() => {
-		// TODO: Implement advanced search functionality
-	}, []);
-
 	const handleClearFilters = useCallback(() => {
 		setPendingFilters(null);
 		setFilters(null);
@@ -711,7 +707,6 @@ function SectorsAnalysisContent() {
 					<ErrorBoundary>
 						<Filters
 							onApplyFilters={handleApplyFilters}
-							onAdvancedSearch={handleAdvancedSearch}
 							onClearFilters={handleClearFilters}
 							sectorsData={sectorsData}
 							geographicLevelsData={geographicLevelsData}

@@ -211,7 +211,7 @@ export function SpatialFootprintFormView({
 							onClick={treeViewDiscard}
 							className="dts-dialog-close-button"
 						>
-							<svg aria-hidden="true" focusable="false" role="img">
+							<svg aria-hidden="true" focusable="false" role="img" className="dts-svg-24">
 								<use href={`/assets/icons/close.svg#close`}></use>
 							</svg>
 						</a>
