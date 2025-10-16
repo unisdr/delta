@@ -48,7 +48,7 @@ import { PrimeReactProvider } from "primereact/api";
 import { usePrimeTheme } from "./hooks/usePrimeTheme";
 
 export const links: LinksFunction = () => [
-	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250531123412" },
+	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250531" },
 	{ rel: "stylesheet", href: allStylesHref },
 ];
 
