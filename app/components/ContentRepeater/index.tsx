@@ -1444,17 +1444,15 @@ export const ContentRepeater = forwardRef<HTMLDivElement, ContentRepeaterProps>(
 
       <dialog ref={dialogRef} className="dts-dialog" {...(isDialogOpen ? { open: true } : {})}>
         <div className="dts-dialog__content">
-          <div className="dts-dialog__header">
+          <div className="dts-dialog__header" style={{ justifyContent: "space-between" }}>
+            <h2 className="dts-heading-2">{editingItem ? "Edit Item" : "Add New Item"}</h2>
             <a type="button" aria-label="Close dialog" onClick={closeDialog} style={{ color: "#000" }} className="dts-dialog-close-button">
-              <svg aria-hidden="true" focusable="false" role="img">
+              <svg aria-hidden="true" focusable="false" role="img" className="dts-svg-24">
                 <use href={`${base_path}/assets/icons/close.svg#close`}></use>
               </svg>
             </a>
           </div>
           <div>
-            <div className="dts-form__intro">
-              <h2 className="dts-heading-2">{editingItem ? "Edit Item" : "Add New Item"}</h2>
-            </div>
             <div className="dts-form__body">
               <div className="dts-alert dts-alert--error" style={{display: "none"}}></div>
               {currentDialogFields.map((field, index) => {

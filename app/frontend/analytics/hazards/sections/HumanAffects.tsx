@@ -176,7 +176,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 							}}
 						>
 							<img
-								src="/assets/icons/Injured.svg"
+								src="/assets/icons/Injured-1.svg"
 								alt="Injured Icon"
 								style={{ width: "60px", height: "60px" }}
 							/>

@@ -179,8 +179,6 @@ const MapChart = forwardRef<MapChartRef, MapChartProps>(
       if (!isClient || !isLeafletLoaded || typeof window === "undefined") return;
       if (!dataSource || dataSource.length === 0) return;
 
-      console.log("Updating map with new data:", dataSource);
-
       const L = (window as any).L;
       if (!L) {
         console.error("Leaflet is still not available.");

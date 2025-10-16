@@ -1,13 +1,13 @@
 import { Link } from "@remix-run/react";
 
 import { Form, Field, SubmitButton, FieldErrors } from "~/frontend/form";
-import { DivisionInsert } from "~/drizzle/schema";
+import { InsertDivision } from "~/drizzle/schema";
 
 import { DivisionBreadcrumbRow } from "~/backend.server/models/division";
 
 interface DivisionFormProps {
 	edit: boolean;
-	fields: DivisionInsert;
+	fields: InsertDivision;
 	errors: any;
 	breadcrumbs: DivisionBreadcrumbRow[] | null;
 	view?: string | null;

@@ -54,7 +54,6 @@ interface FiltersProps {
     toDate: string | null;
     disasterEventId: string | null;
   }) => void;
-  onAdvancedSearch: () => void;
   onClearFilters: () => void;
   // Props to receive data from loader instead of fetching via API
   sectorsData?: any;

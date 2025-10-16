@@ -693,10 +693,6 @@ function SectorsAnalysisContent() {
 		setPendingFilters(newFilters);
 	}, []);
 
-	const handleAdvancedSearch = useCallback(() => {
-		// TODO: Implement advanced search functionality
-	}, []);
-
 	const handleClearFilters = useCallback(() => {
 		setPendingFilters(null);
 		setFilters(null);
@@ -711,7 +707,6 @@ function SectorsAnalysisContent() {
 					<ErrorBoundary>
 						<Filters
 							onApplyFilters={handleApplyFilters}
-							onAdvancedSearch={handleAdvancedSearch}
 							onClearFilters={handleClearFilters}
 							sectorsData={sectorsData}
 							geographicLevelsData={geographicLevelsData}
@@ -726,21 +721,21 @@ function SectorsAnalysisContent() {
 					{!filters && (
 						<div
 							style={{
-								marginTop: "2rem",
+								marginTop: "1.43rem",
 								textAlign: "center",
-								padding: "2rem",
+								padding: "1.43rem",
 								borderRadius: "8px",
 								backgroundColor: "#f9f9f9",
 								color: "#333",
-								fontSize: "1.6rem",
-								lineHeight: "1.8rem",
+								fontSize: "1.14rem",
+								lineHeight: "1.29rem",
 							}}
 						>
 							<h3
 								style={{
 									color: "#004f91",
-									fontSize: "2rem",
-									marginBottom: "1rem",
+									fontSize: "1.43rem",
+									marginBottom: "0.71rem",
 								}}
 							>
 								Welcome to the Sectors Dashboard! 🌟
@@ -756,16 +751,16 @@ function SectorsAnalysisContent() {
 								style={{
 									display: "flex",
 									justifyContent: "flex-end",
-									marginTop: "1rem",
-									marginBottom: "1rem",
-									gap: "1rem",
+									marginTop: "0.71rem",
+									marginBottom: "0.71rem",
+									gap: "0.71rem",
 								}}
 							></div>
 
 							<div
 								className="sectors-content"
 								style={{
-									marginTop: "1rem",
+									marginTop: "0.71rem",
 									maxWidth: "100%",
 									overflow: "hidden",
 									position: "relative",

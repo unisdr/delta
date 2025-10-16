@@ -8,7 +8,7 @@ import {
 	update
 } from "~/backend.server/models/division";
 
-import { divisionTable, DivisionInsert } from "~/drizzle/schema";
+import { divisionTable, InsertDivision } from "~/drizzle/schema";
 
 import { divisionBreadcrumb, DivisionBreadcrumbRow, divisionById } from "~/backend.server/models/division";
 
@@ -113,7 +113,7 @@ export const action = authActionWithPerm("ManageCountrySettings", async (actionA
 
 
 export default function Screen() {
-	let fields: DivisionInsert
+	let fields: InsertDivision
 	const loaderData = useLoaderData<typeof loader>(); //console.log('loaderData:', loaderData);
 	fields = loaderData.data;
 	let errors = {};

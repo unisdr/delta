@@ -1,4 +1,4 @@
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData, Link, useRouteLoaderData } from "@remix-run/react";
 import { disasterEventsLoader } from "~/backend.server/handlers/events/disasterevent";
 
 import { DataScreen } from "~/frontend/data_screen";
@@ -21,6 +21,14 @@ export function ListView(props: ListViewProps) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof disasterEventsLoader>>>()
 	const { filters } = ld
 	const { items, pagination } = ld.data;
+	const rootData = useRouteLoaderData("root") as any; // Get user data from root loader
+
+	// Get user data with role from root loader
+	const user = {
+		...rootData?.user,
+		role: rootData?.userRole || rootData?.user?.role // Use userRole from root data if available
+	};
+	console.log("User in DisasterEventList:", user);
 
 	return DataScreen({
 		hideMainLinks: props.hideMainLinks,
@@ -66,10 +74,11 @@ export function ListView(props: ListViewProps) {
 			<tr key={item.id}>
 				<td>{item.nameNational.length == 0 ? item.nameGlobalOrRegional : item.nameNational}</td>
 				{!ld.isPublic && (
-					<td className="dts-table__cell-centered">
+					<td>
 						<span
 							className={`dts-status dts-status--${item.approvalStatus}`}
 						></span>
+						{` ${item.approvalStatus}`}
 					</td>
 				)}
 				<td>
@@ -84,7 +93,7 @@ export function ListView(props: ListViewProps) {
 				<td>
 					{ item.recordCount > 0 ?
 						<Link
-						to={`/disaster-record?disasterEventId=${item.id}`}
+						to={`/disaster-record?disasterEventUUID=${item.id}`}
 						>
 							{ item.recordCount }
 						</Link>
@@ -104,6 +113,8 @@ export function ListView(props: ListViewProps) {
 								confirmDeleteLabel="Delete permanently"
 								cancelDeleteLabel="Do not delete"
 								route={route} id={item.id} 
+								user={user} 
+								approvalStatus={item.approvalStatus}
 							/>)
 					}
 				</td>

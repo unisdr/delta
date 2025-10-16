@@ -5,8 +5,9 @@ import {
 import { selectTranslated } from './common';
 
 import {
-	divisionTable,
-	DivisionInsert,
+  divisionTable,
+  InsertDivision,
+  SelectDivision,
 } from '~/drizzle/schema';
 
 import { dr, Tx } from '~/db.server';
@@ -637,13 +638,13 @@ async function importDivision(
 			}
 		}
 
-		// Prepare division data for validation and insertion/update
-		const divisionData: DivisionInsert = {
-			nationalId: division.nationalId !== "" ? division.nationalId : null,
-			importId,
-			parentId: parentDbId,
-			name: division.name
-		};
+    // Prepare division data for validation and insertion/update
+    const divisionData: InsertDivision = {
+      nationalId: division.nationalId !== "" ? division.nationalId : null,
+      importId,
+      parentId: parentDbId,
+      name: division.name
+    };
 
 		// Check if division exists
 		const existingDivision = await tx
@@ -726,8 +727,8 @@ async function importDivision(
 	}
 }
 
-export function fromForm(formData: Record<string, string>): DivisionInsert {
-	const { parentId, ...nameFields } = formData;
+export function fromForm(formData: Record<string, string>): InsertDivision {
+  const { parentId, ...nameFields } = formData;
 
 	const names = Object.entries(nameFields)
 		.filter(([key]) => key.startsWith("names[") && key.endsWith("]"))
@@ -749,10 +750,10 @@ export function fromForm(formData: Record<string, string>): DivisionInsert {
  * and ensures proper level calculation based on parent
  */
 async function validateDivisionData(
-	tx: Tx,
-	data: DivisionInsert,
-	countryAccountsId: string,
-	existingId?: string
+  tx: Tx,
+  data: InsertDivision,
+  countryAccountsId: string,
+  existingId?: string
 ): Promise<{ valid: boolean; errors: string[]; level?: number }> {
 	const errors: string[] = [];
 	let level = 1; // Default level for root divisions
@@ -925,12 +926,12 @@ async function checkCircularReference(
 	return false;
 }
 
-export async function createDivision(data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
-	try {
-		return await dr.transaction(async (tx: Tx) => {
-			try {
-				// Validate division data
-				const validation = await validateDivisionData(tx, data, countryAccountsId);
+export async function createDivision(data: InsertDivision, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
+  try {
+    return await dr.transaction(async (tx: Tx) => {
+      try {
+        // Validate division data
+        const validation = await validateDivisionData(tx, data, countryAccountsId);
 
 				if (!validation.valid) {
 					return { ok: false, errors: validation.errors };
@@ -957,17 +958,17 @@ export async function createDivision(data: DivisionInsert, countryAccountsId: st
 	}
 }
 
-export async function update(id: string, data: DivisionInsert, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
-	try {
-		return await dr.transaction(async (tx: Tx) => {
-			try {
-				// Verify division exists and belongs to the tenant
-				const existingDivision = await tx.query.divisionTable.findFirst({
-					where: and(
-						eq(divisionTable.id, id),
-						eq(divisionTable.countryAccountsId, countryAccountsId)
-					)
-				});
+export async function update(id: string, data: InsertDivision, countryAccountsId: string): Promise<{ ok: boolean; errors?: string[] }> {
+  try {
+    return await dr.transaction(async (tx: Tx) => {
+      try {
+        // Verify division exists and belongs to the tenant
+        const existingDivision = await tx.query.divisionTable.findFirst({
+          where: and(
+            eq(divisionTable.id, id),
+            eq(divisionTable.countryAccountsId, countryAccountsId)
+          )
+        });
 
 				if (!existingDivision) {
 					return { ok: false, errors: ["Division not found or access denied"] };
@@ -1070,37 +1071,28 @@ export async function getAllChildren(divisionId: number, countryAccountsId: stri
 	}
 }
 
-export type DivisionIdAndNameResult = {
-	id: string;
-	name: Record<string, string>;
-	level: number | null;
-}[];
+export type PartialDivision = Pick<SelectDivision, 'id' | 'name' | 'parentId'>;
+export async function getAllDivisionsByCountryAccountsId(countryAccountId: string): Promise<PartialDivision[]> {
+  try {
+    const divisions = await dr
+      .select({
+        id: divisionTable.id,
+        name: divisionTable.name,
+        parentId: divisionTable.parentId,
+      })
+      .from(divisionTable)
+      .where(
+        eq(divisionTable.countryAccountsId, countryAccountId)
+      );
 
-
-export async function getDivisionIdAndNameByLevel(level: number, countryAccountId: string): Promise<DivisionIdAndNameResult> {
-	try {
-		const divisions = await dr
-			.select({
-				id: divisionTable.id,
-				name: divisionTable.name,
-				level: divisionTable.level
-			})
-			.from(divisionTable)
-			.where(and(
-				eq(divisionTable.level, level),
-				eq(divisionTable.countryAccountsId, countryAccountId)
-			));
-
-		// Map results to ensure correct typing
-		return divisions.map((division) => ({
-			id: division.id,
-			name: division.name,
-			level: division.level
-		}));
-	} catch (error) {
-		console.error("Error fetching divisions by level:", error);
-		throw new Error("Failed to fetch divisions");
-	}
+    return divisions.map((division) => ({
+      id: division.id,
+      name: division.name,
+      parentId: division.parentId,
+    }));
+  } catch (error) {
+    throw new Error("Failed to fetch divisions");
+  }
 }
 
 export async function getDivisionByLevel(level: number, countryAccountId: string) {

@@ -20,7 +20,7 @@ import {
 	damagesTable,
 	lossesTable,
 	divisionTable,
-	type Division,
+	type SelectDivision,
 	disasterEventTable,
 	hazardousEventTable,
 	hipHazardTable,
@@ -102,7 +102,7 @@ interface CleanDivisionValues {
 
 interface GeographicImpactResult {
 	success: boolean;
-	divisions: Division[];
+	divisions: SelectDivision[];
 	values: { [key: string]: CleanDivisionValues };
 	error?: string;
 }
@@ -478,7 +478,7 @@ export async function getGeographicImpact(
 				)
 			);
 
-		let divisions: Division[] = [];
+		let divisions: SelectDivision[] = [];
 		try {
 			divisions = await baseDivisionsQuery;
 
