@@ -1,4 +1,4 @@
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData, Link, useRouteLoaderData } from "@remix-run/react";
 import { disasterEventsLoader } from "~/backend.server/handlers/events/disasterevent";
 
 import { DataScreen } from "~/frontend/data_screen";
@@ -21,6 +21,14 @@ export function ListView(props: ListViewProps) {
 	const ld = useLoaderData<Awaited<ReturnType<typeof disasterEventsLoader>>>()
 	const { filters } = ld
 	const { items, pagination } = ld.data;
+	const rootData = useRouteLoaderData("root") as any; // Get user data from root loader
+
+	// Get user data with role from root loader
+	const user = {
+		...rootData?.user,
+		role: rootData?.userRole || rootData?.user?.role // Use userRole from root data if available
+	};
+	console.log("User in DisasterEventList:", user);
 
 	return DataScreen({
 		hideMainLinks: props.hideMainLinks,
@@ -105,6 +113,8 @@ export function ListView(props: ListViewProps) {
 								confirmDeleteLabel="Delete permanently"
 								cancelDeleteLabel="Do not delete"
 								route={route} id={item.id} 
+								user={user} 
+								approvalStatus={item.approvalStatus}
 							/>)
 					}
 				</td>

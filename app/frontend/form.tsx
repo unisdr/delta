@@ -1571,6 +1571,8 @@ interface ActionLinksProps {
 	hideViewButton?: boolean;
 	hideEditButton?: boolean;
 	hideDeleteButton?: boolean;
+	user?: any;
+	approvalStatus?: string | undefined;
 }
 
 export function ActionLinks(props: ActionLinksProps) {
@@ -1602,7 +1604,7 @@ export function ActionLinks(props: ActionLinksProps) {
 					</button>
 				</Link>
 			)}
-			{!props.hideDeleteButton && (
+			{!props.hideDeleteButton && canDelete(props.approvalStatus, props.user) && (
 				<DeleteButton
 					key={props.id}
 					action={`${props.route}/delete/${props.id}`}
@@ -1621,6 +1623,22 @@ export function ActionLinks(props: ActionLinksProps) {
 			)}
 		</div>
 	);
+}
+
+/**
+ * Determines if a user can delete
+ * Based on business rules:
+ * - Data-viewers cannot delete any records
+ * - Records that are Published or Validated by someone else cannot be deleted
+ */
+function canDelete(approvalStatus: string | undefined, user: any): boolean {
+	if (!user) return false;
+
+	// Data-viewers cannot delete any records
+	if (user.role === "data-viewer") return false;
+
+	// Published or validated records cannot be deleted
+	return approvalStatus?.toLowerCase() !== "published" && approvalStatus?.toLowerCase() !== "validated";
 }
 
 /**
