@@ -7,12 +7,8 @@ import {
 	importZip
 } from "~/backend.server/models/division";
 
-import { getCountryAccountsIdFromSession } from "~/util/session";
-
-export async function handleRequest(request: Request) {
+export async function handleRequest(request: Request, countryAccountsId: string) {
 	let fileBytes: Uint8Array | null = null;
-
-	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 
 	const uploadHandler = unstable_composeUploadHandlers(
 		async ({ name, contentType, data, filename }) => {

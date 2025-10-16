@@ -14,13 +14,16 @@ import { NavSettings } from "~/routes/settings/nav";
 import { MainContainer } from "~/frontend/container";
 import { handleRequest } from "~/backend.server/handlers/geography_upload";
 
+import { getCountryAccountsIdFromSession } from "~/util/session";
+
 export const loader = authLoaderWithPerm("ManageCountrySettings", async () => {
 	return null;
 });
 
 export const action = authActionWithPerm("ManageCountrySettings", async (actionArgs) => {
 	const { request } = actionArgs;
-	return handleRequest(request)
+		const countryAccountsId = await getCountryAccountsIdFromSession(request);
+	return handleRequest(request, countryAccountsId)
 });
 
 
