@@ -789,7 +789,7 @@ async function validateDivisionData(
 		}
 	}
 
-	if (!data.name){
+	if (!(data.name && Object.keys(data.name).length > 0)){
 		errors.push('Division name is required');
 	}
 
