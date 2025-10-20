@@ -22,7 +22,7 @@ export async function getAffected(tx: Tx, disasterEventId: string, conditions?: 
 }
 
 type Total = {
-	total: number
+	totalPeopleAffected: number
 	tables: {
 		deaths: number
 		injured: number
@@ -45,9 +45,9 @@ async function totalsForEachTable(tx: Tx, disasterEventId: string, conditions?: 
 	)
 
 	let tables = Object.fromEntries(entries)
-	let total = Object.values(tables).reduce((sum, v) => sum + v, 0)
+	let totalPeopleAffected = Object.values(tables).reduce((sum, v) => sum + v, 0) - tables.deaths;
 
-	return { total, tables } as Total
+	return { totalPeopleAffected, tables } as Total
 }
 
 // The code for deaths, injured, missing, displaced is exactly the same.

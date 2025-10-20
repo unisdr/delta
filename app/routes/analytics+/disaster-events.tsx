@@ -259,11 +259,11 @@ export const loader = authLoaderPublicOrWithPerm(
 
 						// Populate the geoData for the map for the human effects
 						humanEffectsGeoData.push({
-							total: humanEffectsPerDivision.noDisaggregations.total,
+							total: humanEffectsPerDivision.noDisaggregations.totalPeopleAffected,
 							name: String(item.name["en"]),
 							description:
 								"Total People Affected: " +
-								humanEffectsPerDivision.noDisaggregations.total.toLocaleString(
+								humanEffectsPerDivision.noDisaggregations.totalPeopleAffected.toLocaleString(
 									navigator.language,
 									{ minimumFractionDigits: 0 }
 								),
@@ -673,7 +673,7 @@ function DisasterEventsAnalysisContent() {
 							</div>
 						</section>
 
-						{Number(ld.totalAffectedPeople2.noDisaggregations.total) > 0 && (
+						{Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0 && (
 							<>
 								<section className="dts-page-section">
 									<div className="mg-container">
@@ -706,11 +706,8 @@ function DisasterEventsAnalysisContent() {
 												</h3>
 												<div className="dts-indicator dts-indicator--target-box-f">
 													<span>
-														{(
-															ld.totalAffectedPeople2.noDisaggregations.total -
-															ld.totalAffectedPeople2.noDisaggregations.tables
-																.deaths
-														).toLocaleString(navigator.language, {
+														{
+														ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected.toLocaleString(navigator.language, {
 															minimumFractionDigits: 0,
 														})}
 													</span>
