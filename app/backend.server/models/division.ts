@@ -789,33 +789,7 @@ async function validateDivisionData(
 		}
 	}
 
-	// Check for duplicate division names within the same tenant and level
-	if (data.name && Object.keys(data.name).length > 0) {
-		// Get a representative name for checking (using first available language)
-		const firstLang = Object.keys(data.name)[0];
-		const nameValue = data.name[firstLang];
-
-		if (nameValue) {
-			const query = and(
-				sql`${divisionTable.name}->>${firstLang} = ${nameValue}`,
-				eq(divisionTable.level, level),
-				eq(divisionTable.countryAccountsId, countryAccountsId)
-			);
-
-			// If updating an existing division, exclude it from the duplicate check
-			const whereClause = existingId
-				? and(query, sql`${divisionTable.id} != ${existingId}`)
-				: query;
-
-			const existingWithSameName = await tx.query.divisionTable.findFirst({
-				where: whereClause
-			});
-
-			if (existingWithSameName) {
-				errors.push(`A division with the name "${nameValue}" already exists at level ${level}`);
-			}
-		}
-	} else {
+	if (!data.name){
 		errors.push('Division name is required');
 	}
 
