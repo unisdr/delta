@@ -301,6 +301,9 @@ function jsonPayloadExample<T>(
 			case "json":
 				val = { k: "any json" };
 				break;
+			case "money":
+				val = "100.01"
+				break
 			default:
 				val = null;
 		}
