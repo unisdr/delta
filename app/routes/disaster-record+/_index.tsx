@@ -11,13 +11,22 @@ import { route } from "~/frontend/disaster-record/form";
 import { disasterEventLink } from "~/frontend/events/disastereventform";
 import { format } from "date-fns";
 import { DisasterRecordsFilter } from "~/frontend/components/DisasterRecordsFilter";
+import { getUserFromSession, getUserRoleFromSession } from "~/util/session";
 
-export const loader = authLoaderPublicOrWithPerm(
-	"ViewData",
-	async (loaderArgs) => {
-		return disasterRecordLoader({ loaderArgs });
+export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
+	const { request } = loaderArgs;
+	const loggedInUser = await getUserFromSession(request);
+	const userRole = await getUserRoleFromSession(request);
+	
+	const user = {
+		id:loggedInUser?.user.id,
+		role: userRole
 	}
-);
+
+	const data = await disasterRecordLoader({ loaderArgs });
+
+	return { ...data, user };
+});
 
 export const meta: MetaFunction = () => {
 	return [
@@ -89,6 +98,8 @@ export default function Data() {
 							deleteTitle="Are you sure you want to delete this record?"
 							confirmDeleteLabel="Delete permanently"
 							cancelDeleteLabel="Do not delete"
+							user={ld.user}
+							approvalStatus={item.approvalStatus}
 						/>
 					)}
 				</td>
