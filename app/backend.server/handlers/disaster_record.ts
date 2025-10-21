@@ -99,6 +99,13 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 				createdAt: true,
 				updatedAt: true,
 			},
+			with: {
+				disasterEvent: {
+					columns: {
+						nameNational: true,
+					}
+				}
+			},
 			orderBy: [desc(disasterRecordsTable.updatedAt)],
 			where: condition,
 		});

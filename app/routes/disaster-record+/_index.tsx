@@ -8,25 +8,27 @@ import { useLoaderData, MetaFunction, Link } from "@remix-run/react";
 import { authLoaderPublicOrWithPerm } from "~/util/auth";
 
 import { route } from "~/frontend/disaster-record/form";
-import { disasterEventLink } from "~/frontend/events/disastereventform";
 import { format } from "date-fns";
 import { DisasterRecordsFilter } from "~/frontend/components/DisasterRecordsFilter";
 import { getUserFromSession, getUserRoleFromSession } from "~/util/session";
 
-export const loader = authLoaderPublicOrWithPerm("ViewData", async (loaderArgs) => {
-	const { request } = loaderArgs;
-	const loggedInUser = await getUserFromSession(request);
-	const userRole = await getUserRoleFromSession(request);
-	
-	const user = {
-		id:loggedInUser?.user.id,
-		role: userRole
+export const loader = authLoaderPublicOrWithPerm(
+	"ViewData",
+	async (loaderArgs) => {
+		const { request } = loaderArgs;
+		const loggedInUser = await getUserFromSession(request);
+		const userRole = await getUserRoleFromSession(request);
+
+		const user = {
+			id: loggedInUser?.user.id,
+			role: userRole,
+		};
+
+		const data = await disasterRecordLoader({ loaderArgs });
+
+		return { ...data, user };
 	}
-
-	const data = await disasterRecordLoader({ loaderArgs });
-
-	return { ...data, user };
-});
+);
 
 export const meta: MetaFunction = () => {
 	return [
@@ -69,10 +71,7 @@ export default function Data() {
 		totalItems: pagination.totalItems,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
-				<td>
-					{item.disasterEventId &&
-						disasterEventLink({ id: item.disasterEventId })}
-				</td>
+				<td>{item.disasterEvent && item.disasterEvent?.nameNational}</td>
 
 				{!ld.isPublic && (
 					<td className="dts-table__cell-centered">
