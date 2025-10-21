@@ -245,8 +245,7 @@ export const loader = authLoaderPublicOrWithPerm(
 						settings.countryAccountsId
 					);
 					for (const item of divisionLevel1) {
-						const totalPerDivision =
-							await disasterEventSectorTotal__ByDivisionId(
+						const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(
 								qsDisEventId,
 								item.id,
 								currency

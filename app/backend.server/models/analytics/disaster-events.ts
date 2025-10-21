@@ -124,7 +124,7 @@ export async function disasterEvent_DisasterRecordsCount__ById(id: any) {
 	return record[0].count;
 }
 
-export async function disasterEventTotalLosses_RecordsAssets__ById(disasterEventId: string, sectorId: string) {
+export async function disasterEventTotalLosses_RecordsAssets__ById(disasterEventId: string, disasterRecordId: string, sectorId: string) {
 	const queryLossesTable = dr.selectDistinctOn(
 		[lossesTable.id],
 		{
@@ -157,6 +157,8 @@ export async function disasterEventTotalLosses_RecordsAssets__ById(disasterEvent
 				eq(disasterEventTable.id, disasterEventId),
 				eq(sectorDisasterRecordsRelationTable.withLosses, true),
 				eq(lossesTable.sectorId, sectorId),
+				eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordId),
+				eq(lossesTable.recordId, disasterRecordId),
 				isNull(sectorDisasterRecordsRelationTable.lossesCost),
 				eq(disasterRecordsTable.approvalStatus, "published"),
 				eq(disasterEventTable.approvalStatus, "published"),
@@ -199,7 +201,7 @@ export async function disasterEventTotalRecovery_RecordsAssets__ById(disasterEve
 	return queryDamageTable.execute();
 }
 
-export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEventId: string, sectorId: string) {
+export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEventId: string, disasterRecordId: string, sectorId: string) {
 	const queryDamageTable = dr.selectDistinctOn(
 		[damagesTable.id],
 		{
@@ -232,6 +234,8 @@ export async function disasterEventTotalDamages_RecordsAssets__ById(disasterEven
 				eq(disasterEventTable.id, disasterEventId),
 				eq(sectorDisasterRecordsRelationTable.withDamage, true),
 				eq(damagesTable.sectorId, sectorId),
+				eq(sectorDisasterRecordsRelationTable.disasterRecordId, disasterRecordId),
+				eq(damagesTable.recordId, disasterRecordId),
 				isNull(sectorDisasterRecordsRelationTable.damageCost),
 				eq(disasterRecordsTable.approvalStatus, "published"),
 				eq(disasterEventTable.approvalStatus, "published"),
@@ -327,7 +331,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 		}
 	});
 
-	// Get recpvery from Asset level records
+	// Get recovery from Asset level records
 	for (const item of recordsAssetRecoveryIdArray) {
 		try {
 			const recordsAssetRecovery = await disasterEventTotalRecovery_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
@@ -342,7 +346,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 	// Get damages from Asset level records
 	for (const item of recordsAssetDamagesIdArray) {
 		try {
-			const recordsAssetDamages = await disasterEventTotalDamages_RecordsAssets__ById(disasterEventId, item.record_ids);
+			const recordsAssetDamages = await disasterEventTotalDamages_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
 			recordsAssetDamages.forEach((item2) => {
 				totalDamages += Number(item2.totalRepairReplacement);
 			});
@@ -355,7 +359,7 @@ export async function disasterEventSectorTotal__ByDivisionId(disasterEventId: st
 	for (const item of recordsAssetLossesIdArray) {
 
 		try {
-			const recordsAssetlosses = await disasterEventTotalLosses_RecordsAssets__ById(disasterEventId, item.record_id);
+			const recordsAssetlosses = await disasterEventTotalLosses_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
 			recordsAssetlosses.forEach((item2) => {
 				if (item2.publicCostTotalOverride) {
 					totalLosses += Number(item2.publicCostTotal);
@@ -482,7 +486,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 	// Get damages from Asset level records
 	for (const item of recordsAssetDamagesIdArray) {
 		try {
-			const recordsAssetDamages = await disasterEventTotalDamages_RecordsAssets__ById(disasterEventId, item.record_id);
+			const recordsAssetDamages = await disasterEventTotalDamages_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
 			recordsAssetDamages.forEach((item2) => {
 				totalDamages += Number(item2.totalRepairReplacement);
 			});
@@ -495,7 +499,7 @@ export async function disasterEventSectorTotal__ById(disasterEventId: string, is
 	for (const item of recordsAssetLossesIdArray) {
 
 		try {
-			const recordsAssetlosses = await disasterEventTotalLosses_RecordsAssets__ById(disasterEventId, item.record_id);
+			const recordsAssetlosses = await disasterEventTotalLosses_RecordsAssets__ById(disasterEventId, item.record_id, item.sector_id);
 			recordsAssetlosses.forEach((item2) => {
 				if (item2.publicCostTotalOverride) {
 					totalLosses += Number(item2.publicCostTotal);
