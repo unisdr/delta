@@ -1069,6 +1069,30 @@ export async function getAllDivisionsByCountryAccountsId(countryAccountId: strin
   }
 }
 
+/**
+ * Get the number of top-level (level 1) divisions for a given country account.
+ *
+ * This helper performs a tenant-scoped count of rows in the `division` table
+ * where `level = 1` and `country_accounts_id` matches the provided ID.
+ *
+ * Notes:
+ * - Returns a number representing the count of level-1 divisions.
+ * - This function delegates directly to the global `dr` database handle and
+ *   does not open an explicit transaction. Callers that need transactional
+ *   guarantees should handle that externally.
+ *
+ * @param countryAccountId - Tenant (country account) UUID to scope the count
+ * @returns Promise<number> count of level 1 divisions for the tenant
+ */
+export async function getCountDivisionByLevel1(countryAccountId: string) {
+	const countLevel1 = await dr.$count(divisionTable, and(
+			eq(divisionTable.level, 1),
+			eq(divisionTable.countryAccountsId, countryAccountId)
+	));
+
+	return countLevel1;
+}
+
 export async function getDivisionByLevel(level: number, countryAccountId: string) {
 	try {
 		return await dr.transaction(async (tx: Tx) => {
