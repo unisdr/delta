@@ -62,7 +62,7 @@ export default function Data() {
 		beforeListElement: (
 			<DisasterRecordsFilter
 				clearFiltersUrl={route}
-				search={filters.disasterEventUUID}
+				search={filters.disasterEventName}
 				sectors={ld.sectors}
 			/>
 		),
@@ -71,7 +71,7 @@ export default function Data() {
 		totalItems: pagination.totalItems,
 		renderRow: (item, route) => (
 			<tr key={item.id}>
-				<td>{item.disasterEvent && item.disasterEvent?.nameNational}</td>
+				<td>{item.nameNational && item.nameNational}</td>
 
 				{!ld.isPublic && (
 					<td className="dts-table__cell-centered">

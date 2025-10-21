@@ -18,13 +18,13 @@ export function DisasterRecordsFilter(props: Props) {
 					<div className="dts-form-component mg-grid__col--span-2">
 						<label>
 							<div className="dts-form-component__label">
-								Disaster event UUID
+								Disaster event name
 							</div>
 							<input
-								name="disasterEventUUID"
+								name="disasterEventName"
 								type="text"
 								defaultValue={props.search}
-								placeholder="All disaster events UUID"
+								placeholder="All disaster events"
 							/>
 						</label>
 					</div>
