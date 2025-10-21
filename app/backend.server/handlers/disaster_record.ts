@@ -38,14 +38,17 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		disasterEventName: string;
 		disasterRecordUUID: string;
 		recordStatus: string;
+		fromDate: string;
+		toDate: string;
 	} = {
 		approvalStatus: "published",
 		disasterEventName: url.searchParams.get("disasterEventName") || "",
 		disasterRecordUUID: url.searchParams.get("disasterRecordUUID") || "",
 		recordStatus: url.searchParams.get("recordStatus") || "",
+		fromDate: url.searchParams.get("fromDate") || "",
+		toDate: url.searchParams.get("toDate") || "",
 	};
 	const isPublic = authLoaderIsPublic(loaderArgs);
-
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	let instanceName = "DELTA Resilience";
 	if (countryAccountsId) {
@@ -78,6 +81,20 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 			: undefined,
 		filters.recordStatus !== ""
 			? sql`${disasterRecordsTable.approvalStatus}::text ILIKE ${searchRecordStatus}`
+			: undefined,
+		filters.fromDate && filters.toDate
+			? sql`
+				TO_DATE(
+					CASE
+					WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01-01'
+					WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01'
+					WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)}
+					ELSE NULL
+					END,
+					'YYYY-MM-DD'
+				)
+				BETWEEN ${filters.fromDate}::date AND ${filters.toDate}::date
+				`
 			: undefined
 	);
 

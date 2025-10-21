@@ -39,7 +39,6 @@ export const meta: MetaFunction = () => {
 
 export default function Data() {
 	const ld = useLoaderData<typeof loader>();
-	const { filters } = ld;
 	const { items, pagination } = ld.data;
 	return DataScreen({
 		isPublic: ld.isPublic,
@@ -62,7 +61,6 @@ export default function Data() {
 		beforeListElement: (
 			<DisasterRecordsFilter
 				clearFiltersUrl={route}
-				search={filters.disasterEventName}
 				sectors={ld.sectors}
 			/>
 		),
