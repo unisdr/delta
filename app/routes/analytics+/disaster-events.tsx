@@ -674,7 +674,10 @@ function DisasterEventsAnalysisContent() {
 							</div>
 						</section>
 
-						{Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0 && (
+						{
+							(Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0) ||
+							(ld.totalAffectedPeople2.noDisaggregations.tables.deaths > 0)
+							&& (
 							<>
 								<section className="dts-page-section">
 									<div className="mg-container">
@@ -1217,6 +1220,8 @@ function DisasterEventsAnalysisContent() {
 										</div>
 									)}
 								</div>
+
+								<div>&nbsp;</div>
 
 								{Object.keys(ld.sectorBarChartData).length > 0 && (
 									<div className="mg-grid mg-grid__col-1">
