@@ -674,9 +674,7 @@ function DisasterEventsAnalysisContent() {
 								</div>
 							</div>
 						</section>
-{
-console.log(ld.totalAffectedPeople2.noDisaggregations.tables.deaths)
-}
+
 						{
 							((Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0) ||
 							(Number(ld.totalAffectedPeople2.noDisaggregations.tables.deaths) > 0))

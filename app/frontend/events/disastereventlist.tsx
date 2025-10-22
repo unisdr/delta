@@ -6,7 +6,6 @@ import { ActionLinks } from "~/frontend/form";
 
 import { route } from "~/frontend/events/disastereventform";
 
-import { Filters } from "../components/list-page-filters";
 import { formatDateDisplay } from "~/util/date";
 import { EventCounter } from "~/components/EventCounter";
 import { DisasterEventsFilter } from "~/frontend/components/list-page-disasterevents-filters";
@@ -60,10 +59,6 @@ export function ListView(props: ListViewProps) {
 		paginationData: pagination,
 		csvExportLinks: true,
 		beforeListElement: <>
-			<Filters
-				clearFiltersUrl={route}
-				search={filters.search}
-			/>
 			<DisasterEventsFilter
 				clearFiltersUrl={route}
 				sectors={[]}
