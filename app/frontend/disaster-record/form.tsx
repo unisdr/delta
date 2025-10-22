@@ -65,6 +65,7 @@ export const fieldsDef: FormInputDef<DisasterRecordsFields>[] = [
 export const fieldsDefApi: FormInputDef<DisasterRecordsFields>[] = [
 	...fieldsDef,
 	{ key: "apiImportId", label: "", type: "other" },
+	{ key: "countryAccountsId", label: "", type: "other" },
 ];
 
 // Use keyof to ensure type safety
