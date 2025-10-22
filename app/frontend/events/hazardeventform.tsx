@@ -116,6 +116,7 @@ export const fieldsDef: FormInputDef<HazardousEventFields>[] = [
 export const fieldsDefApi: FormInputDef<HazardousEventFields>[] = [
 	...fieldsDef,
 	{ key: "apiImportId", label: "API Import ID", type: "other" },
+	{ key: "countryAccountsId", label: "", type: "other" },
 ];
 
 export const fieldsDefView: FormInputDef<HazardousEventViewModel>[] = [

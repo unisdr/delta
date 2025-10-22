@@ -119,6 +119,7 @@ export const loader = authLoaderPublicOrWithPerm(
 		// Use the shared public tenant context for analytics
 		const countryAccountsId = await getCountryAccountsIdFromSession(request);
 		const countDivisionByLevel1 = await getCountDivisionByLevel1(countryAccountsId);
+		const geoLevelSelectorOverride = countDivisionByLevel1 === 1 ? 2 : 1; // Adjust geographic level to level 2 if only one value exists in level 1 division
 
 		if (qsDisEventId) {
 			// Pass public tenant context for analytics access
@@ -242,7 +243,7 @@ export const loader = authLoaderPublicOrWithPerm(
 					totalAffectedPeople2 = await getAffected(dr, qsDisEventId);
 
 					const divisionLevel1 = await getDivisionByLevel(
-						countDivisionByLevel1 === 1 ? 2 : 1,
+						geoLevelSelectorOverride,
 						settings.countryAccountsId
 					);
 					for (const item of divisionLevel1) {
@@ -675,8 +676,8 @@ function DisasterEventsAnalysisContent() {
 						</section>
 
 						{
-							(Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0) ||
-							(ld.totalAffectedPeople2.noDisaggregations.tables.deaths > 0)
+							((Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0) ||
+							(Number(ld.totalAffectedPeople2.noDisaggregations.tables.deaths) > 0))
 							&& (
 							<>
 								<section className="dts-page-section">

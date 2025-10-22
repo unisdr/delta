@@ -34,9 +34,23 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 	const filters: {
 		approvalStatus?: approvalStatusIds;
 		search: string;
+
+		// New filter parameters
+		disasterEventName?: string;
+		recordingInstitution?: string;
+		fromDate?: string;
+		toDate?: string;
+		recordStatus?: string;
 	} = {
 		approvalStatus: "published",
 		search: url.searchParams.get("search") || "",
+
+		// New filters
+		disasterEventName: url.searchParams.get("disasterEventName") || "",
+		recordingInstitution: url.searchParams.get("recordingInstitution") || "",
+		fromDate: url.searchParams.get("fromDate") || "",
+		toDate: url.searchParams.get("toDate") || "",
+		recordStatus: url.searchParams.get("recordStatus") || "",
 	};
 
 	const isPublic = authLoaderIsPublic(loaderArgs);
@@ -44,10 +58,15 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 	if (!isPublic) {
 		filters.approvalStatus = undefined;
 	}
+	if (isPublic) {
+		filters.recordStatus = undefined;
+	}
 
 	filters.search = filters.search.trim();
 
 	let searchIlike = "%" + filters.search + "%";
+	let disasterEventNameIlike = "%" + filters.disasterEventName + "%";
+	let recordingInstitutionIlike = "%" + filters.recordingInstitution + "%";
 
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	let instanceName = "DELTA Resilience";
@@ -63,6 +82,21 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 		filters.approvalStatus
 			? eq(disasterEventTable.approvalStatus, filters.approvalStatus)
 			: undefined,
+		filters.disasterEventName
+			? or(
+				sql`${disasterEventTable.nameNational}::text ILIKE ${disasterEventNameIlike}`,
+				sql`${disasterEventTable.nameGlobalOrRegional}::text ILIKE ${disasterEventNameIlike}`,
+			)
+			: undefined,
+		filters.recordingInstitution
+			? sql`${disasterEventTable.recordingInstitution}::text ILIKE ${recordingInstitutionIlike}`
+			: undefined,
+		filters.recordStatus
+			? sql`${disasterEventTable.approvalStatus}::text ILIKE ${filters.recordStatus}`
+			: undefined,
+		// Date range filters (for event dates, not record creation)
+		filters.fromDate ? sql`${disasterEventTable.startDate} >= ${filters.fromDate}` : undefined,
+		filters.toDate ? sql`${disasterEventTable.endDate} <= ${filters.toDate}` : undefined,
 		filters.search !== ""
 			? or(
 					filters.search
