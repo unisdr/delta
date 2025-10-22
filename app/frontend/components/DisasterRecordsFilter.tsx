@@ -103,53 +103,6 @@ export function DisasterRecordsFilter(props: Props) {
 				</div>
 
 				<div className="dts-form-component">
-					<label>
-						<div className="dts-form-component__label">
-							Recording Organization
-						</div>
-						<input
-							name="recordingOrganization"
-							type="text"
-							placeholder="Search organization"
-							disabled
-						/>
-					</label>
-				</div>
-
-				{/* Sector dropdowns, etc. */}
-				<div className="dts-form-component">
-					<label>
-						<div className="dts-form-component__label">Sector</div>
-						<select id="sector" name="sector" disabled>
-							<option value="">Select sector</option>
-							{props.sectors.map((sector) => (
-								<option key={sector.id} value={sector.id}>
-									{sector.sectorname}
-								</option>
-							))}
-						</select>
-					</label>
-				</div>
-				<div className="dts-form-component">
-					<label>
-						<div className="dts-form-component__label">Sub sector</div>
-						<select
-							id="sub_sector"
-							name="subSector"
-							// value={subSector || ""}
-							disabled
-						>
-							<option value="">Select sub sector</option>
-							{/* {subSectors.map((subSector) => (
-								<option key={subSector.id} value={subSector.id}>
-								{subSector.name}
-								</option>
-								))} */}
-						</select>
-					</label>
-				</div>
-
-				<div className="dts-form-component">
 					<div className="dts-form-component__label">Record Status</div>
 					<label>
 						<select id="recordStatus" name="recordStatus">
