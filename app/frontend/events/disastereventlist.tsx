@@ -9,6 +9,8 @@ import { route } from "~/frontend/events/disastereventform";
 import { Filters } from "../components/list-page-filters";
 import { formatDateDisplay } from "~/util/date";
 import { EventCounter } from "~/components/EventCounter";
+import { DisasterEventsFilter } from "~/frontend/components/list-page-disasterevents-filters";
+
 
 interface ListViewProps {
 	titleOverride?: string
@@ -62,6 +64,17 @@ export function ListView(props: ListViewProps) {
 				clearFiltersUrl={route}
 				search={filters.search}
 			/>
+			<DisasterEventsFilter
+				clearFiltersUrl={route}
+				sectors={[]}
+				disasterEventName={filters.disasterEventName}
+				recordingInstitution={filters.recordingInstitution}
+				fromDate={filters.fromDate}
+				toDate={filters.toDate}
+				recordStatus={filters.recordStatus}
+			/>
+			
+
 			<div>
 				<span>
 					<strong>
