@@ -253,3 +253,39 @@ export async function getCountryAccountsIdFromSession(request: Request) {
 	const countryAccountsId = session.get("countryAccountsId");
 	return countryAccountsId;
 }
+
+export async function getLanguageFromSession(request: Request): Promise<string | undefined> {
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const language = session.get("language");
+	return language;
+}
+
+export async function setLanguageInSession(request: Request, language: string) {
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	session.set("language", language);
+	return {
+		"Set-Cookie": await sessionCookie().commitSession(session),
+	};
+}
+
+export async function getDirectionFromSession(request: Request): Promise<'ltr' | 'rtl' | undefined> {
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	const direction = session.get("direction");
+	return direction;
+}
+
+export async function setDirectionInSession(request: Request, direction: 'ltr' | 'rtl') {
+	const session = await sessionCookie().getSession(
+		request.headers.get("Cookie")
+	);
+	session.set("direction", direction);
+	return {
+		"Set-Cookie": await sessionCookie().commitSession(session),
+	};
+}

@@ -20,7 +20,9 @@ import {
 	getFlashMessage,
 	getUserFromSession,
 	getCountrySettingsFromSession,
-	getSuperAdminSession, // Added import for super admin session detection
+	getSuperAdminSession,
+	getLanguageFromSession,
+	getDirectionFromSession, // Added import for super admin session detection
 } from "~/util/session";
 
 import { useEffect, useState } from "react";
@@ -47,12 +49,20 @@ import "primeflex/primeflex.css";
 import { PrimeReactProvider } from "primereact/api";
 import { usePrimeTheme } from "./hooks/usePrimeTheme";
 
+import { i18next } from "./i18next.server";
+import { useTranslation } from "react-i18next";
+
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: "/assets/css/style-dts.css?asof=20250531" },
 	{ rel: "stylesheet", href: allStylesHref },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+	const sessionLanguage = await getLanguageFromSession(request);
+	const sessionDirection = await getDirectionFromSession(request);
+	const locale = sessionLanguage || await i18next.getLocale(request);
+
+	// let locale = await i18next.getLocale(request);
 	const user = await getUserFromSession(request);
 	const superAdminSession = await getSuperAdminSession(request); // Add super admin session detection
 	const session = await sessionCookie().getSession(
@@ -107,6 +117,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				CURRENCY_CODES: currencyCode,
 				DTS_INSTANCE_CTRY_ISO3: dtsInstanceCtryIso3,
 			},
+			locale,
+			sessionDirection
 		},
 		{
 			headers: {
@@ -114,6 +126,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			},
 		}
 	);
+};
+
+export let handle = {
+  i18n: ['common'],
 };
 
 interface InactivityWarningProps {
@@ -238,7 +254,14 @@ export default function Screen() {
 		userRole,
 		isSuperAdmin,
 		isFormAuthSupported,
+		locale,
+		sessionDirection
 	} = loaderData;
+	let { i18n } = useTranslation();
+	const isRTL = i18n.language === 'ar';
+	const dir = sessionDirection || (locale === 'ar' ? 'rtl' : 'ltr');
+
+
 	let boolShowHeaderFooter: boolean = true;
 	const matches = useMatches();
 	const isUrlPathUserInvite = matches.some((match) =>
@@ -282,7 +305,7 @@ export default function Screen() {
 	}, [flashMessage]);
 
 	return (
-		<html lang="en">
+		<html lang={locale} dir={dir}>
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -290,7 +313,7 @@ export default function Screen() {
 				<Meta />
 				<Links />
 			</head>
-			<body>
+			<body dir={dir}>
 				<QueryClientProvider client={queryClient}>
 					<ToastContainer
 						position="top-center"
@@ -324,7 +347,9 @@ export default function Screen() {
 									ripple: true,
 								}}
 							>
-								<Outlet />
+								<div dir={isRTL ? 'rtl' : 'ltr'}>
+									<Outlet />
+								</div>
 							</PrimeReactProvider>
 						</main>
 						<footer>

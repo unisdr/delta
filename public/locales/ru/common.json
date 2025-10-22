@@ -1,0 +1,4 @@
+{
+  "authenticationConfigurationError": "Методы аутентификации не настроены. Проверьте переменную окружения AUTHENTICATION_SUPPORTED.",
+  "signIn": "Войти"
+}

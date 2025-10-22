@@ -1,0 +1,7 @@
+{
+  "welcome": "Welcome",
+  "hello": "Hello {{name}}",
+  "description": "This is a description",
+  "authenticationConfigurationError":"No authentication methods configured. Please check AUTHENTICATION_SUPPORTED environment variable.",
+  "signIn":"Sign in"
+}

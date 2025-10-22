@@ -11,7 +11,7 @@ declare module "@remix-run/server-runtime" {
 
 export default defineConfig({
 	ssr: {
-		noExternal: ["primereact", "primeflex", "primeicons"],
+		noExternal: ["primereact", "primeflex", "primeicons","remix-i18next"],
 	},
 	plugins: [
 		remix({
@@ -58,7 +58,11 @@ export default defineConfig({
 		alias: {
 			"~": path.resolve(__dirname, "app"), // Define "~" as an alias for the "app" directory
 			"~node_modules": path.resolve(__dirname, "node_modules"), // Points to "node_modules"
+			"i18next-fs-backend": "i18next-fs-backend",
 		},
 	},
 	publicDir: path.resolve(__dirname, "public"), // Ensures the "public" folder is correctly configured
+	optimizeDeps: {
+    	exclude: ["i18next-fs-backend"],
+  	},
 });

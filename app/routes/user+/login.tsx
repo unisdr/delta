@@ -33,6 +33,9 @@ import Messages from "~/components/Messages";
 import { getUserCountryAccountsByUserId } from "~/db/queries/userCountryAccounts";
 import { getInstanceSystemSettingsByCountryAccountId } from "~/db/queries/instanceSystemSetting";
 import { createCSRFToken } from "~/backend.server/utils/csrf";
+import { i18next } from "~/i18next.server";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "~/components/LanguageSwitcher";
 
 interface LoginFields {
 	email: string;
@@ -151,6 +154,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+	let t = await i18next.getFixedT(request, "common");
+
 	const user = await getUserFromSession(request);
 
 	const url = new URL(request.url);
@@ -188,9 +193,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	// If no authentication methods are configured, show error
 	if (!isFormAuthSupported && !isSSOAuthSupported) {
-		throw new Error(
-			"No authentication methods configured. Please check AUTHENTICATION_SUPPORTED environment variable."
-		);
+		throw new Error(t("authenticationConfigurationError"));
 	}
 
 	return Response.json(
@@ -225,6 +228,8 @@ export default function Screen() {
 	const loaderData = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
 
+	let { t } = useTranslation("common");
+
 	const errors = actionData?.errors || {};
 	const data = actionData?.data;
 
@@ -243,318 +248,172 @@ export default function Screen() {
 		}
 	}, [isFormAuthSupported]);
 
-	// If only SSO is supported, show SSO-only interface
-	if (!isFormAuthSupported && isSSOAuthSupported) {
-		return (
-			<div className="dts-page-container">
-				<main className="dts-main-container">
-					<div className="mg-container">
-						<div className="dts-form dts-form--vertical">
-							<div className="dts-form__header"></div>
-							<div className="dts-form__intro">
-								{errors.general && <Messages messages={errors.general} />}
-								<h2 className="dts-heading-1">Sign in</h2>
-								<p>
-									Use your organization's Single Sign-On to access your account.
-								</p>
-							</div>
-							<div
-								className="dts-dialog__form-actions"
-								style={{
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									gap: "0.8rem",
-									marginTop: "2rem",
-								}}
-							>
-								<Link
-									className="mg-button mg-button-primary"
-									to="/sso/azure-b2c/login"
-									style={{
-										width: "100%",
-										padding: "10px 20px",
-										textAlign: "center",
-										textDecoration: "none",
-									}}
-								>
-									Sign in with Azure B2C SSO
-								</Link>
-							</div>
-						</div>
-					</div>
-				</main>
-			</div>
-		);
-	}
-
-	// If only form is supported, show form-only interface
-	if (isFormAuthSupported && !isSSOAuthSupported) {
-		return (
-			<div className="dts-page-container">
-				<main className="dts-main-container">
-					<div className="mg-container">
-						<Form
-							id="login-form"
-							className="dts-form dts-form--vertical"
-							errors={errors}
-						>
-							<input
-								type="hidden"
-								name="redirectTo"
-								value={loaderData.redirectTo}
-							/>
-							<input
-								type="hidden"
-								name="csrfToken"
-								value={loaderData.csrfToken}
-							/>
-							<div className="dts-form__header"></div>
-							<div className="dts-form__intro">
-								{errors.general && <Messages messages={errors.general} />}
-								<h2 className="dts-heading-1">Sign in</h2>
-								<p>Enter your credentials to access your account.</p>
-								<p style={{ marginBottom: "2px" }}>*Required information</p>
-							</div>
-							<div className="dts-form__body" style={{ marginBottom: "5px" }}>
-								<div
-									className="dts-form-component"
-									style={{ marginBottom: "10px" }}
-								>
-									<Field label="">
-										<span className="mg-u-sr-only">Email address*</span>
-										<input
-											type="email"
-											autoComplete="off"
-											name="email"
-											placeholder="*Email address"
-											defaultValue={data?.email}
-											required
-											className={
-												errors?.fields?.email && errors.fields.email.length > 0
-													? "input-error"
-													: "input-normal"
-											}
-											style={{
-												paddingInlineEnd: "2.5rem",
-												width: "100%",
-											}}
-										/>
-									</Field>
-								</div>
-								<div className="dts-form-component">
-									<Field label="">
-										<PasswordInput
-											name="password"
-											placeholder="*Password"
-											defaultValue={data?.password}
-											errors={errors}
-											required={true}
-										/>
-										{errors?.fields?.password && (
-											<div className="dts-form-component__hint--error">
-												{errorToString(errors.fields.password[0])}
-											</div>
-										)}
-									</Field>
-								</div>
-							</div>
-							<u>
-								{isFormAuthSupported && (
-									<Link to="/user/forgot-password">Forgot password?</Link>
-								)}
-							</u>
-							<div
-								className="dts-dialog__form-actions"
-								style={{
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									gap: "0.8rem",
-									marginTop: "2rem",
-								}}
-							>
-								<SubmitButton
-									className="mg-button mg-button-primary"
-									label="Sign in"
-									id="login-button"
-									style={{
-										width: "100%",
-										padding: "10px 20px",
-										marginBottom: "10px",
-									}}
-								/>
-							</div>
-						</Form>
-					</div>
-				</main>
-			</div>
-		);
-	}
-
-	// If both form and SSO are supported, show both options
-	if (isFormAuthSupported && isSSOAuthSupported) {
-		return (
-			<div className="dts-page-container">
-				<main className="dts-main-container">
-					<div className="mg-container">
-						<Form
-							id="login-form"
-							className="dts-form dts-form--vertical"
-							errors={errors}
-						>
-							<input
-								type="hidden"
-								name="redirectTo"
-								value={loaderData.redirectTo}
-							/>
-							<input
-								type="hidden"
-								name="csrfToken"
-								value={loaderData.csrfToken}
-							/>
-							<div className="dts-form__header"></div>
-							<div className="dts-form__intro">
-								{errors.general && <Messages messages={errors.general} />}
-								<h2 className="dts-heading-1">Sign in</h2>
-								<p>Enter your credentials or use SSO to access your account.</p>
-								<p style={{ marginBottom: "2px" }}>*Required information</p>
-							</div>
-							<div className="dts-form__body" style={{ marginBottom: "5px" }}>
-								<div
-									className="dts-form-component"
-									style={{ marginBottom: "10px" }}
-								>
-									<Field label="">
-										<span className="mg-u-sr-only">Email address*</span>
-										<input
-											type="email"
-											autoComplete="off"
-											name="email"
-											placeholder="*Email address"
-											defaultValue={data?.email}
-											required
-											className={
-												errors?.fields?.email && errors.fields.email.length > 0
-													? "input-error"
-													: "input-normal"
-											}
-											style={{
-												paddingInlineEnd: "2.5rem",
-												width: "100%",
-											}}
-										/>
-									</Field>
-								</div>
-								<div className="dts-form-component">
-									<Field label="">
-										<PasswordInput
-											name="password"
-											placeholder="*Password"
-											defaultValue={data?.password}
-											errors={errors}
-											required={true}
-										/>
-										{errors?.fields?.password && (
-											<div className="dts-form-component__hint--error">
-												{errorToString(errors.fields.password[0])}
-											</div>
-										)}
-									</Field>
-								</div>
-							</div>
-							<u>
-								{isFormAuthSupported && (
-									<Link to="/user/forgot-password">Forgot password?</Link>
-								)}
-							</u>
-							<div
-								className="dts-dialog__form-actions"
-								style={{
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									gap: "0.8rem",
-									marginTop: "2rem",
-								}}
-							>
-								<SubmitButton
-									className="mg-button mg-button-primary"
-									label="Sign in"
-									id="login-button"
-									style={{
-										width: "100%",
-										padding: "10px 20px",
-										marginBottom: "10px",
-									}}
-								/>
-
-								{/* Divider */}
-								<div
-									style={{
-										width: "100%",
-										textAlign: "center",
-										margin: "10px 0",
-										position: "relative",
-									}}
-								>
-									<hr
-										style={{
-											border: "none",
-											borderTop: "1px solid #ccc",
-											margin: "0",
-										}}
-									/>
-									<span
-										style={{
-											position: "absolute",
-											top: "-10px",
-											left: "50%",
-											transform: "translateX(-50%)",
-											backgroundColor: "white",
-											padding: "0 15px",
-											color: "#666",
-											fontSize: "14px",
-										}}
-									>
-										OR
-									</span>
-								</div>
-
-								<Link
-									className="mg-button mg-button-outline"
-									to="/sso/azure-b2c/login"
-									style={{
-										width: "100%",
-										padding: "10px 20px",
-										textAlign: "center",
-										textDecoration: "none",
-									}}
-								>
-									Sign in with Azure B2C SSO
-								</Link>
-							</div>
-						</Form>
-					</div>
-				</main>
-			</div>
-		);
-	}
-
-	// Fallback - should not reach here if configuration is correct
 	return (
 		<div className="dts-page-container">
 			<main className="dts-main-container">
 				<div className="mg-container">
-					<div className="dts-form dts-form--vertical">
-						<div className="dts-form__intro">
-							<h2 className="dts-heading-1">Authentication Not Available</h2>
+					<LanguageSwitcher />
+					<div className="dts-form__intro dts-form dts-form--vertical">
+						{errors.general && <Messages messages={errors.general} />}
+						<h2 className="dts-heading-1">{t("signIn")}</h2>
+						{isFormAuthSupported && isSSOAuthSupported && (
+							<>
+								<p>Enter your credentials or use SSO to access your account.</p>
+								<p style={{ marginBottom: "2px" }}>*Required information</p>
+							</>
+						)}
+						{isFormAuthSupported && !isSSOAuthSupported && (
+							<>
+								<p>Enter your credentials access your account.</p>
+								<p style={{ marginBottom: "2px" }}>*Required information</p>
+							</>
+						)}
+						{!isFormAuthSupported && isSSOAuthSupported && (
 							<p>
-								No valid authentication methods are configured. Please contact
-								your system administrator.
+								Use your organization's Single Sign-On to access your account.
 							</p>
-						</div>
+						)}
 					</div>
+					{isFormAuthSupported && (
+						<Form
+							id="login-form"
+							className="dts-form dts-form--vertical"
+							errors={errors}
+						>
+							<input
+								type="hidden"
+								name="redirectTo"
+								value={loaderData.redirectTo}
+							/>
+							<input
+								type="hidden"
+								name="csrfToken"
+								value={loaderData.csrfToken}
+							/>
+
+							<div className="dts-form__body" style={{ marginBottom: "5px" }}>
+								<div
+									className="dts-form-component"
+									style={{ marginBottom: "10px" }}
+								>
+									<Field label="">
+										<span className="mg-u-sr-only">Email address*</span>
+										<input
+											type="email"
+											autoComplete="off"
+											name="email"
+											placeholder="*Email address"
+											defaultValue={data?.email}
+											required
+											className={
+												errors?.fields?.email && errors.fields.email.length > 0
+													? "input-error"
+													: "input-normal"
+											}
+											style={{
+												paddingInlineEnd: "2.5rem",
+												width: "100%",
+											}}
+										/>
+									</Field>
+								</div>
+								<div className="dts-form-component">
+									<Field label="">
+										<PasswordInput
+											name="password"
+											placeholder="*Password"
+											defaultValue={data?.password}
+											errors={errors}
+											required={true}
+										/>
+										{errors?.fields?.password && (
+											<div className="dts-form-component__hint--error">
+												{errorToString(errors.fields.password[0])}
+											</div>
+										)}
+									</Field>
+								</div>
+							</div>
+							<u>
+								{isFormAuthSupported && (
+									<Link to="/user/forgot-password">Forgot password?</Link>
+								)}
+							</u>
+							<div
+								style={{
+									display: "flex",
+									flexDirection: "column",
+									alignItems: "center",
+									gap: "0.8rem",
+									marginTop: "2rem",
+								}}
+							>
+								<SubmitButton
+									className="mg-button mg-button-primary"
+									label="Sign in"
+									id="login-button"
+									style={{
+										width: "100%",
+										padding: "10px 20px",
+										marginBottom: "10px",
+									}}
+								/>
+							</div>
+						</Form>
+					)}
+
+					{/* Divider */}
+					{isFormAuthSupported && isSSOAuthSupported && (
+						<div className="dts-form dts-form--vertical">
+							<div
+								style={{
+									width: "100%",
+									textAlign: "center",
+									margin: "10px 0",
+									position: "relative",
+								}}
+							>
+								<hr
+									style={{
+										border: "none",
+										borderTop: "1px solid #ccc",
+										margin: "0",
+									}}
+								/>
+								<span
+									style={{
+										position: "absolute",
+										top: "-10px",
+										left: "50%",
+										transform: "translateX(-50%)",
+										backgroundColor: "white",
+										padding: "0 15px",
+										color: "#666",
+										fontSize: "14px",
+									}}
+								>
+									OR
+								</span>
+							</div>
+						</div>
+					)}
+
+					{isSSOAuthSupported && (
+						<div className="dts-form dts-form--vertical">
+							<Link
+								className="mg-button mg-button-outline"
+								to="/sso/azure-b2c/login"
+								style={{
+									width: "100%",
+									padding: "10px 20px",
+									textAlign: "center",
+									textDecoration: "none",
+								}}
+							>
+								Sign in with Azure B2C SSO
+							</Link>
+						</div>
+					)}
 				</div>
 			</main>
 		</div>

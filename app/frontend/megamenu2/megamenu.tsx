@@ -3,6 +3,7 @@ import {MegaMenuProps, Lvl1Item, Lvl2Item, Lvl3Item, Lvl4Item} from "./common"
 import { MobileMenu } from "./mobilemenu"
 
 import { Icon } from "~/frontend/icons/undp-icon-set/icons";
+import { Link } from "@remix-run/react";
 
 
 export function MegaMenu({ items }: MegaMenuProps) {
@@ -29,7 +30,9 @@ export function MegaMenu({ items }: MegaMenuProps) {
 	}
 	return (
 		 <div className={`dts-megamenu ${isClient ? "js-enabled" : ""}`}>
-			<a className="open-menu" href="#dts-main-header-open">Open</a>
+			<Link className="open-menu" to="#dts-main-header-open">
+				Open
+			</Link>
 			<Lvl1 items={items} />
 		</div>
 	);
@@ -64,12 +67,10 @@ export function Lvl1({items}: Lvl1Props){
 					onMouseLeave={handleMouseLeave}
 					>
 					{item.link ? (
-						<a href={item.link}>
-							{item.icon && (
-								<Icon icon={item.icon} />
-							)}
+						<Link to={item.link}>
+							{item.icon && <Icon icon={item.icon} />}
 							{item.name}
-						</a>
+						</Link>
 					) : (
 						<button className="button-link">
 							{item.icon && (
@@ -117,7 +118,9 @@ export function Lvl2({items, title}: Lvl2Props){
 							onMouseEnter={() => handleMouseEnter(item.id)}
 							className={selectedId === item.id ? "selected" : ""}
 							>
-							<a onClick={(e) => e.preventDefault()} href={"#"+item.id}>{item.name}</a>
+							<Link onClick={(e) => e.preventDefault()} to={"#" + item.id}>
+  								{item.name}
+							</Link>
 						</li>
 					))}
 				</ul>
@@ -166,7 +169,7 @@ export function Lvl4({items}: Lvl4Props){
 	<ul className="dts-megamenu-lvl4">
 		{items.map((item, index) => (
 			<li key={index}>
-				<a href={item.link}>{item.name}</a>
+				<Link to={item.link}>{item.name}</Link>
 			</li>
 		))}
 	</ul>

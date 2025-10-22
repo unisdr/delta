@@ -9,6 +9,13 @@ import {renderToPipeableStream} from "react-dom/server";
 // OUR CODE
 
 import {initServer} from "./init.server"
+import { i18next } from "./i18next.server";
+import { createInstance } from "i18next";
+import { resolve } from "node:path";
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import Backend from 'i18next-fs-backend';
+import i18n from './i18n';
+
 console.log("entry.server.tsx starting...")
 initServer()
 
@@ -19,12 +26,29 @@ initServer()
 
 const ABORT_DELAY = 5_000;
 
-export default function handleRequest(
+export default async function handleRequest(
 	request: Request,
 	responseStatusCode: number,
 	responseHeaders: Headers,
 	remixContext: EntryContext,
 ) {
+	// Get locale from request
+  	let locale = await i18next.getLocale(request);
+
+	// Create i18next instance for this request
+    let instance = createInstance();
+    await instance
+     .use(initReactI18next)
+     .use(Backend)
+     .init({
+      ...i18n,
+      lng: locale,
+      ns: ['common'],
+      backend: {
+        loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json'),
+      },
+    });
+
 	let prohibitOutOfOrderStreaming =
 		isBotRequest(request.headers.get("user-agent")) || remixContext.isSpaMode;
 
@@ -33,13 +57,15 @@ export default function handleRequest(
 			request,
 			responseStatusCode,
 			responseHeaders,
-			remixContext
+			remixContext,
+			instance
 		)
 		: handleBrowserRequest(
 			request,
 			responseStatusCode,
 			responseHeaders,
-			remixContext
+			remixContext,
+			instance
 		);
 }
 
@@ -68,16 +94,19 @@ function handleBotRequest(
 	request: Request,
 	responseStatusCode: number,
 	responseHeaders: Headers,
-	remixContext: EntryContext
+	remixContext: EntryContext,
+	i18nInstance: any
 ) {
 	return new Promise((resolve, reject) => {
 		let shellRendered = false;
 		const {pipe, abort} = renderToPipeableStream(
-			<RemixServer
-				context={remixContext}
-				url={request.url}
-				abortDelay={ABORT_DELAY}
-			/>,
+			<I18nextProvider i18n={i18nInstance}>
+				<RemixServer
+					context={remixContext}
+					url={request.url}
+					abortDelay={ABORT_DELAY}
+				/>,
+			</I18nextProvider>,
 			{
 				onAllReady() {
 					shellRendered = true;
@@ -118,16 +147,19 @@ function handleBrowserRequest(
 	request: Request,
 	responseStatusCode: number,
 	responseHeaders: Headers,
-	remixContext: EntryContext
+	remixContext: EntryContext,
+	i18nInstance: any
 ) {
 	return new Promise((resolve, reject) => {
 		let shellRendered = false;
 		const {pipe, abort} = renderToPipeableStream(
-			<RemixServer
-				context={remixContext}
-				url={request.url}
-				abortDelay={ABORT_DELAY}
-			/>,
+			<I18nextProvider i18n={i18nInstance}>
+				<RemixServer
+					context={remixContext}
+					url={request.url}
+					abortDelay={ABORT_DELAY}
+				/>
+			</I18nextProvider>,
 			{
 				onShellReady() {
 					shellRendered = true;

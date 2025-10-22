@@ -1,0 +1,7 @@
+{
+  "welcome": "مرحبا",
+  "hello": "مرحبا {{name}}",
+  "description": "هذا وصف",
+  "authenticationConfigurationError":"لم يتم تكوين أي طرق مصادقة. يُرجى التحقق من متغير البيئة AUTHENTICATION_SUPPORTED.",
+  "signIn":"تسجيل الدخول"
+}
