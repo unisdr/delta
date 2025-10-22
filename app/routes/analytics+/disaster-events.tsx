@@ -24,7 +24,7 @@ import {
 
 import { sectorChildrenById } from "~/backend.server/models/sector";
 
-import { getDivisionByLevel } from "~/backend.server/models/division";
+import { getDivisionByLevel, getCountDivisionByLevel1 } from "~/backend.server/models/division";
 import { dr } from "~/db.server"; // Drizzle ORM instance
 import MapChart, { MapChartRef } from "~/components/MapChart";
 import { getAffected } from "~/backend.server/models/analytics/affected-people-by-disaster-event-v2";
@@ -118,6 +118,7 @@ export const loader = authLoaderPublicOrWithPerm(
 
 		// Use the shared public tenant context for analytics
 		const countryAccountsId = await getCountryAccountsIdFromSession(request);
+		const countDivisionByLevel1 = await getCountDivisionByLevel1(countryAccountsId);
 
 		if (qsDisEventId) {
 			// Pass public tenant context for analytics access
@@ -241,12 +242,11 @@ export const loader = authLoaderPublicOrWithPerm(
 					totalAffectedPeople2 = await getAffected(dr, qsDisEventId);
 
 					const divisionLevel1 = await getDivisionByLevel(
-						1,
+						countDivisionByLevel1 === 1 ? 2 : 1,
 						settings.countryAccountsId
 					);
 					for (const item of divisionLevel1) {
-						const totalPerDivision =
-							await disasterEventSectorTotal__ByDivisionId(
+						const totalPerDivision = await disasterEventSectorTotal__ByDivisionId(
 								qsDisEventId,
 								item.id,
 								currency
@@ -572,6 +572,7 @@ function DisasterEventsAnalysisContent() {
 								<h2 className="dts-heading-2">{ld.cpDisplayName}</h2>
 								<p>
 									<strong>Affiliated record(s)</strong>:
+									&nbsp;
 									{ld.countRelatedDisasterRecords}{" "}
 									{ld.countRelatedDisasterRecords &&
 										ld.countRelatedDisasterRecords > 0 && (
@@ -673,7 +674,10 @@ function DisasterEventsAnalysisContent() {
 							</div>
 						</section>
 
-						{Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0 && (
+						{
+							(Number(ld.totalAffectedPeople2.noDisaggregations.totalPeopleAffected) > 0) ||
+							(ld.totalAffectedPeople2.noDisaggregations.tables.deaths > 0)
+							&& (
 							<>
 								<section className="dts-page-section">
 									<div className="mg-container">
@@ -1216,6 +1220,8 @@ function DisasterEventsAnalysisContent() {
 										</div>
 									)}
 								</div>
+
+								<div>&nbsp;</div>
 
 								{Object.keys(ld.sectorBarChartData).length > 0 && (
 									<div className="mg-grid mg-grid__col-1">
