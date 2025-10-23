@@ -10,13 +10,6 @@
       "breakpoints": true
     },
     {
-      "idx": 1,
-      "version": "7",
-      "when": 1743047018563,
-      "tag": "20250326043824_updating_geom",
-      "breakpoints": true
-    },
-    {
       "idx": 2,
       "version": "7",
       "when": 1744609431010,
