@@ -84,6 +84,7 @@ export async function disasterEventsLoader(args: disasterEventLoaderArgs) {
 			: undefined,
 		filters.disasterEventName
 			? or(
+				sql`${disasterEventTable.id}::text ILIKE ${disasterEventNameIlike}`,
 				sql`${disasterEventTable.nameNational}::text ILIKE ${disasterEventNameIlike}`,
 				sql`${disasterEventTable.nameGlobalOrRegional}::text ILIKE ${disasterEventNameIlike}`,
 			)
