@@ -55,9 +55,14 @@ export function csvExportLoader<T>(args: csvExportLoaderArgs<T>) {
 }
 
 function valueToCsvString(value: any): string {
-	if (value instanceof Date) {
-		return value.toISOString();
-	}
-	return String(value ?? "");
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return JSON.stringify(value);
 }
-
