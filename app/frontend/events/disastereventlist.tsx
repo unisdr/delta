@@ -29,7 +29,6 @@ export function ListView(props: ListViewProps) {
 		...rootData?.user,
 		role: rootData?.userRole || rootData?.user?.role // Use userRole from root data if available
 	};
-	console.log("User in DisasterEventList:", user);
 
 	return DataScreen({
 		hideMainLinks: props.hideMainLinks,
