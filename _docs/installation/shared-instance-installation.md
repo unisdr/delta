@@ -59,8 +59,8 @@ The DELTA Resilience Shared Instance uses a **Single Database Multi-Tenancy** ar
 1. **Clone the Shared Instance Repository**
 
    ```bash
-   git clone https://github.com/unisdr/dts-shared-instance.git
-   cd dts-shared-instance
+   git clone https://github.com/unisdr/delta.git
+   cd delta
    ```
 
 2. **Configure Environment Variables**
@@ -116,21 +116,6 @@ The DELTA Resilience Shared Instance uses a **Single Database Multi-Tenancy** ar
 
    ```
 
-   #### Configuration Moved to Database
-
-   The following settings are now managed through the database (`instance_system_settings` table) and can be configured via the super admin interface after installation:
-
-   - `WEBSITE_LOGO` → `instance_system_settings.website_logo`
-   - `WEBSITE_NAME` → `instance_system_settings.website_name`
-   - `APPROVED_RECORDS_ARE_PUBLIC` → `instance_system_settings.approved_records_are_public`
-   - `TOTP_ISSUER` → `instance_system_settings.totp_issuer`
-   - `DTS_INSTANCE_TYPE` → `instance_system_settings.dts_instance_type`
-   - `DTS_INSTANCE_CTRY_ISO3` → `instance_system_settings.dts_instance_ctry_iso3`
-   - `CURRENCY_CODE` → `instance_system_settings.currency_code`
-   - Footer URLs (privacy policy, terms & conditions)
-   - Admin setup status
-
-   > **Important**: These settings should NOT be included in the `.env` file as they are now managed through the database.
 
 4. **Build and Start the Application**
 

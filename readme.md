@@ -1,73 +1,173 @@
-# Build and run
+# DELTA Resilience (**D**isaster & Hazardous **E**vents, **L**osses and Damages **T**racking & **A**nalysis)
 
-## Technology Stack
+DELTA Resilience is a comprehensive system, not just an open-source software. Co-developed with data producers and users and building on DesInventar Sendai, DELTA brings together:
 
-The software tools and technologies used to build the DELTA Resilience web application. This includes programming languages, frameworks, libraries, patterns, servers, UI/UX solutions, software, and tools used by developers.
+* Methodological frameworks
+* Data standards and governance,
+* Capacity development and technical assistance,
+* Open-source software
 
+It supports nationally owned Disaster Tracking Systems to monitor hazardous events and record losses and damages at national and subnational levels—whether countries use the DELTA Resilience software interface or strengthen their existing national platforms.
+
+Visit the [project website for more details](https://www.undrr.org/building-risk-knowledge/disaster-losses-and-damages-tracking-system-delta-resilience).
+
+## Features
+
+- Create, edit and publish hazardous events, disaster events and disaster records
+- Geospatial footprints
+- Import tools for legacy datasets (DesInventar using [DIX - DesInventar eXchange](https://github.com/unisdr/dts-import-middleware))
+- Role based access
+
+
+## Technology stack
 - TypeScript
-- Node (version 22)
-- React
-- Remix
+- Node.js (v22 recommended)
+- Remix (React)
 - Drizzle ORM
-- PostgreSQL (version 16 with PostGIS add-on)
+- PostgreSQL 16 + PostGIS
 
-## License
 
-This is an open source platform developed by UNDRR for country-level disaster tracking systems.
+## Project structure
 
-The open-source license for this platform is currently under evaluation, with **MIT License** and **Apache License 2.0** as the primary options under consideration. The final choice will align with licensing best practices, compatibility requirements, and open-source community engagement goals.
-
-The software incorporates several third-party components under permissive licenses (MIT, Apache 2.0, PostgreSQL, etc.).
-
-For more details, see [LICENSE](./_docs/License/LICENSE.md).
-
-This instance is intended for country-level deployment by UNDRR and is available for use by government agencies and other authorized organizations.
+Below is a view of the repository layout and the purpose of key folders/files to help new contributors navigate the codebase.
+ 
 
 ```
-public/icons/undp-icon-set
-https://github.com/undp/design-system/tree/master/stories/assets/icons
-Licensed under MIT License
+├── app/                       # Remix app source (routes, components, backend.server code)
+│   ├── backend.server/        # Server-side API handlers and models
+│   ├── frontend/              # Shared frontend components and views
+│   ├── routes/                # Remix route modules
+│   ├── db/                    # DB helpers
+│   └── ...
+├── build/                     # Build output (client/server bundles)
+├── dts/                       # Primary app folder (this folder contains many app-level resources)
+│   ├── docker-compose.yml
+│   ├── Dockerfile.app
+│   ├── package.json
+│   ├── server.js
+│   ├── vite.config.ts
+│   └── _docs/                 # Developer docs and design docs
+├── dts_shared_binary/         # Binary and helper scripts for deployments
+├── scripts/                   # Database init, build and deployment scripts
+├── public/                    # Static assets served by the app
+│   └── assets/
+├── uploads/                   # Uploaded files storage
+├── logs/                      # Application logs
+├── example.env                # Example environment variables
+└── start.sh                   # Launch helper for local/dev
 ```
 
-## Other Resources
+ 
 
-- [Developer documentation](_docs/index.md)
+Notes:
 
-- [HTML & CSS Templates] https://rawgit.com/PreventionWeb/templates/dts/dts/dist/template-index.html
-- [Figma Design System] https://www.figma.com/design/noegprarmNGSsk4BQlMVtY/DLDTS-Design-System-and-Screens?node-id=1569-5938&node-type=canvas&t=13qOkaBV7VQnRkzY-0
-- [DELTA Resilience Variables] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7BEC43CA17-E8FF-44E6-9B1C-5DC0B386DF2A%7D&file=DTS%20Variables%20and%20baselines.xlsx&action=default&mobileredirect=true
-- [All Sectors Taxonomy and Assets] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7BD2395365-1B2D-4E11-BAE8-F40D0C6C8838%7D&file=All%20sectors_%20Taxonomies.xlsx&action=default&mobileredirect=true
-- [Excel master file to manage sectors] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/Shared%20Documents/Technology%20Track/Data%20Model/Entities%20DTS%20Database.xlsx?d=w544fc777f3994d2ea18389925503cbd7&csf=1&web=1&e=nE3pWa
-- [Excel master file to manage assets] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/Shared%20Documents/Technology%20Track/Data%20Model/assets.xlsx?d=w9655344ddd85470fb2e2a0e945f8aa31&csf=1&web=1&e=dx2QpX
-- [Decision logs - at the moment] https://unitednations.sharepoint.com/:x:/r/sites/UNDRR-OnaDLASproject/_layouts/15/Doc.aspx?sourcedoc=%7B0F193113-B9F3-4931-996E-256CAC55E730%7D&file=4-DLDTS-MVP-Future-Feature-List-%20Copy-15-08-2024.xlsx&wdOrigin=TEAMS-MAGLEV.p2p_ns.rwc&action=default&mobileredirect=true
+- The `app/` directory contains the bulk of the application code (Remix routes, frontend components, and server models).
 
-## Running locally
+- `_docs/` and `dts/_docs/` contain developer and design documentation — consult these before contributing.
 
-### Manual
+- `scripts/` includes db schema and initialization scripts used in CI/deploy flows.
 
-#### Install PostgreSQL
+- `public/` contains static front-end assets and theme files.
 
-#### Configure application
-
-Copy example.env to .env and adjust the options.
-
-#### Build and run
-
+ 
+## Quick start (local development)
+Prerequisites:
+- Node.js (22.x recommended)
+- Yarn (or use npm)
+- PostgreSQL 16 with PostGIS
+ 
+1. Clone the repository
+```bash
+    git clone https://github.com/unisdr/delta.git
+    cd delta
 ```
-npm install --global yarn
+
+2. Install dependencies
+ 
+```bash
 yarn install
-yarn run drizzle-kit push
+```
+ 
+3. Copy example env and configure
+ 
+```bash
+cp example.env .env
+# edit .env and set DATABASE_URL, SESSION_SECRET, EMAIL config, etc.
+```
+ 
+4. Apply database schema (drizzle)
+ 
+```bash
+yarn run dbsync
+```
+ 
+5. Run in development mode
+ 
+```bash
 yarn run dev
 ```
-
-#### Run tests
-
-```
+ 
+Open http://localhost:3000.
+ 
+Follow this [full guide](_docs/installation/shared-instance-installation.md) or [continue with the admin setup](_docs/installation/shared-instance-installation.md#4-super-admin-setup).
+ 
+### Environment variables
+Copy `example.env` to `.env` and update values. Key variables:
+ 
+- DATABASE_URL (required): Postgres connection string. Example: `postgresql://user:pass@localhost:5432/dts?schema=public`
+- SESSION_SECRET (required): long random string for session signing
+- EMAIL_TRANSPORT: `smtp` or `file` (file is useful for dev)
+- EMAIL_FROM: default sender address for outgoing emails
+- SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE: SMTP settings when EMAIL_TRANSPORT=smtp
+- AUTHENTICATION_SUPPORTED: `form`, `sso_azure_b2c`, or comma-separated values
+- SSO_AZURE_B2C_*: configuration for Azure B2C SSO when used
+Security notes:
+- Never commit `.env` to source control. Use a secrets manager for production.
+ 
+### Database
+- Uses PostgreSQL 16 with PostGIS. Create your DB and enable PostGIS extensions before applying migrations.
+- Apply migrations using drizzle-kit: `yarn dbsync`.
+- Backup and restore: use `pg_dump`/`pg_restore` for database backups; ensure PostGIS types are preserved.
+ 
+### Testing
+- Run unit and integration tests with Jest (or the configured test runner):
+ 
+```bash
 yarn run dotenv -e .env.test drizzle-kit push
 yarn run test
 ```
 
-## Admin Setup
+### Useful commands
+ 
+- Install dependencies: `yarn install`
+- Run dev: `yarn run dev`
+- Apply migrations: `yarn run dbsync`
+- Run tests: `yarn run test`
+- Build production artifact: `yarn run build`
 
-- Setup the admin account: http://localhost:3000/setup/admin-account-welcome
-- Import HIPs taxonomy: http://localhost:3000/setup/import-hip
+## Production deployment (recommendations)
+- Use a managed Postgres (RDS, Cloud SQL, Azure DB) or a highly available Postgres cluster
+- Use Docker or Kubernetes for deployment. Store secrets in a vault or orchestrator secrets store
+- Terminate TLS at the load balancer / ingress and enable secure cookies and HSTS
+- Configure monitoring (logs, metrics, Sentry for errors)
+- Use a CDN for static assets if serving at scale
+ 
+### Minimal production checklist:
+- Strong `SESSION_SECRET` and secure storage of DB credentials
+- HTTPS enabled
+- Backups and monitoring configured
+ 
+### Security & secrets
+- Set `SESSION_SECRET` to a secure, randomly generated value
+- Use environment-based secret management (Vault, cloud secrets manager)
+- Validate and sanitize uploads; enforce limits on attachment sizes
+- Change the default password
+
+
+## Contributing
+- Please follow the guidelines in `_docs/code-structure/code-structure.md` and related docs before contributing
+- Identify and fix issues in the codebase.
+- Open issues for bugs with clear descriptions and reproduceable steps.
+- Help improve user guides and documentations.
+- Try out DEV versions and report regressions.
+- Identify vulnerabilities and suggest mitigations.
