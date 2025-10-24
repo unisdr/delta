@@ -165,9 +165,24 @@ yarn run test
 
 
 ## Contributing
-- Please follow the guidelines in `_docs/code-structure/code-structure.md` and related docs before contributing
-- Identify and fix issues in the codebase.
-- Open issues for bugs with clear descriptions and reproduceable steps.
-- Help improve user guides and documentations.
-- Try out DEV versions and report regressions.
-- Identify vulnerabilities and suggest mitigations.
+
+We are currently in active development phase and anticipate making significant changes to the project. To help maintain stability, we kindly ask contributors to focus on:
+
+- Bug fixes
+- Documentation improvements
+- Minor improvements
+
+Before contributing, please follow the conventions outlined in `_docs/code-structure/code-structure.md` and related documentation. This helps ensure consistency and maintainability across the codebase.
+
+At this time, we are not accepting large features or major refactors. This temporary policy helps ensure the codebase remains stable and maintainable. We will revisit and update these guidelines as the project evolves.
+
+Thank you for your interest in contributing.
+
+
+### Licensing Note
+
+All development contributions must comply with the Apache License 2.0. By submitting a contribution, you agree to license your work under these terms.
+
+
+
+
