@@ -1,6 +1,6 @@
 {
-	"name": "undrr-dts",
-	"version": "0.0.9",
+	"name": "undrr-delta",
+	"version": "0.1.1",
 	"description": "desc",
 	"type": "module",
 	"main": "vite.config.js",
@@ -19,7 +19,7 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "UNLICENSED",
+	"license": "Apache-2.0",
 	"private": true,
 	"dependencies": {
 		"@floating-ui/dom": "^1.6.13",
