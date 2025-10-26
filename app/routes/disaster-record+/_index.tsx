@@ -61,7 +61,11 @@ export default function Data() {
 		beforeListElement: (
 			<DisasterRecordsFilter
 				clearFiltersUrl={route}
-				sectors={ld.sectors}
+				disasterEventName={ld.filters.disasterEventName}
+				disasterRecordUUID={ld.filters.disasterRecordUUID}
+				fromDate={ld.filters.fromDate}
+				toDate={ld.filters.toDate}
+				recordStatus={ld.filters.recordStatus}
 			/>
 		),
 		listName: "disaster records",

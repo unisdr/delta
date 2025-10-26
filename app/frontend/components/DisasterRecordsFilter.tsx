@@ -1,65 +1,103 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Toast } from "primereact/toast";
-import { SelectSector } from "~/drizzle/schema";
 import { RECORD_STATUS_OPTIONS } from "../events/hazardevent-filters";
-import { Form } from "@remix-run/react";
+import { Form, useSubmit } from "@remix-run/react";
 
 interface Props {
-	sectors: SelectSector[];
 	clearFiltersUrl: string;
 	formStartElement?: React.ReactNode;
+	disasterEventName: string;
+	disasterRecordUUID: string;
+	fromDate: string;
+	toDate: string;
+	recordStatus: string;
+}
+
+interface FilterState {
+	disasterEventName: string;
+	disasterRecordUUID: string;
+	fromDate: string;
+	toDate: string;
+	recordStatus: string;
 }
 
 export function DisasterRecordsFilter(props: Props) {
+	const {
+		clearFiltersUrl,
+		formStartElement,
+		disasterEventName,
+		disasterRecordUUID,
+		fromDate,
+		toDate,
+		recordStatus,
+	} = props;
+
 	const toast = useRef<Toast>(null);
+	const submit = useSubmit();
+
+	const [filters, setFilters] = useState<FilterState>({
+		disasterEventName,
+		disasterRecordUUID,
+		fromDate,
+		toDate,
+		recordStatus,
+	});
+
+	// Update state when props change (after loader runs)
+	useEffect(() => {
+		setFilters({
+			disasterEventName,
+			disasterRecordUUID,
+			fromDate,
+			toDate,
+			recordStatus,
+		});
+	}, [disasterEventName, disasterRecordUUID, fromDate, toDate, recordStatus]);
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault(); 
+		e.preventDefault();
 
-		console.log("handleSubmit");
-		const formData = new FormData(e.currentTarget);
-		const fromDateStr = formData.get("fromDate") as string;
-		const toDateStr = formData.get("toDate") as string;
+		const { fromDate, toDate } = filters;
 
 		// Validation
-		if (fromDateStr && !toDateStr) {
+		if (
+			(fromDate && !toDate) ||
+			(!fromDate && toDate) ||
+			(fromDate && toDate && new Date(toDate) < new Date(fromDate))
+		) {
 			toast.current?.show({
 				severity: "error",
 				summary: "Invalid Date Range",
-				detail: "Please select a 'To' date when 'From' date is set.",
+				detail:
+					fromDate && !toDate
+						? "Please select a 'To' date when 'From' date is set."
+						: !fromDate && toDate
+						? "Please select a 'From' date when 'To' date is set."
+						: "'To' date cannot be earlier than 'From' date.",
 				life: 4000,
 			});
 			return;
-		} else if (!fromDateStr && toDateStr) {
-			toast.current?.show({
-				severity: "error",
-				summary: "Invalid Date Range",
-				detail: "Please select a 'From' date when 'To' date is set.",
-				life: 4000,
-			});
-			return;
-		} else if (fromDateStr && toDateStr) {
-			const fromDate = new Date(fromDateStr);
-			const toDate = new Date(toDateStr);
-
-			if (toDate < fromDate) {
-				toast.current?.show({
-					severity: "error",
-					summary: "Invalid Date Range",
-					detail: "'To' date cannot be earlier than 'From' date.",
-					life: 4000,
-				});
-				return;
-			}
 		}
 
-		e.currentTarget.submit();
+		submit(e.currentTarget, { method: "get" });
+	};
+
+	const handleClear = () => {
+		const cleared: FilterState = {
+			disasterEventName: "",
+			disasterRecordUUID: "",
+			fromDate: "",
+			toDate: "",
+			recordStatus: "",
+		};
+		setFilters(cleared);
+		submit(new FormData(), { method: "get", action: clearFiltersUrl });
 	};
 
 	return (
 		<Form onSubmit={handleSubmit} className="dts-form">
 			<Toast ref={toast} />
-			{props.formStartElement}
+			{formStartElement}
 
 			<div className="mg-grid mg-grid__col-3">
 				{/* Disaster event name */}
@@ -70,6 +108,8 @@ export function DisasterRecordsFilter(props: Props) {
 							name="disasterEventName"
 							type="text"
 							placeholder="All disaster events"
+							value={filters.disasterEventName}
+							onChange={(e) => setFilters({...filters, disasterEventName:e.target.value})}
 						/>
 					</label>
 				</div>
@@ -82,6 +122,8 @@ export function DisasterRecordsFilter(props: Props) {
 							name="disasterRecordUUID"
 							type="text"
 							placeholder="Search for UUID"
+							value={filters.disasterRecordUUID}
+							onChange={(e) => setFilters({...filters, disasterRecordUUID:e.target.value})}
 						/>
 					</label>
 				</div>
@@ -90,7 +132,13 @@ export function DisasterRecordsFilter(props: Props) {
 				<div className="dts-form-component">
 					<label>
 						<div className="dts-form-component__label">From</div>
-						<input name="fromDate" type="date" placeholder="Select date" />
+						<input
+							name="fromDate"
+							type="date"
+							placeholder="Select date"
+							value={filters.fromDate}
+							onChange={(e) => setFilters({...filters, fromDate:e.target.value})}
+						/>
 					</label>
 				</div>
 
@@ -98,14 +146,26 @@ export function DisasterRecordsFilter(props: Props) {
 				<div className="dts-form-component">
 					<label>
 						<div className="dts-form-component__label">To</div>
-						<input name="toDate" type="date" placeholder="Select date" />
+						<input
+							name="toDate"
+							type="date"
+							placeholder="Select date"
+							defaultValue={toDate}
+							value={filters.toDate}
+							onChange={(e) => setFilters({...filters, toDate:e.target.value})}
+						/>
 					</label>
 				</div>
 
 				<div className="dts-form-component">
 					<div className="dts-form-component__label">Record Status</div>
 					<label>
-						<select id="recordStatus" name="recordStatus">
+						<select
+							id="recordStatus"
+							name="recordStatus"
+							value={filters.recordStatus}
+							onChange={(e) => setFilters({...filters, recordStatus:e.target.value})}
+						>
 							<option value="">Select record status</option>
 							{RECORD_STATUS_OPTIONS.map((recordStatus) => (
 								<option key={recordStatus.value} value={recordStatus.value}>
@@ -124,9 +184,13 @@ export function DisasterRecordsFilter(props: Props) {
 					value="Apply filters"
 					className="mg-button mg-button-primary"
 				/>
-				<a href={props.clearFiltersUrl} className="mg-button mg-button-outline">
+				<button
+					type="button"
+					onClick={handleClear}
+					className="mg-button mg-button-outline"
+				>
 					Clear
-				</a>
+				</button>
 			</div>
 		</Form>
 	);
