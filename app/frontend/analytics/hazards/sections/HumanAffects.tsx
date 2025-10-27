@@ -2,6 +2,7 @@ import React from "react";
 import HorizontalBarChart from "~/components/HorizontalBarChart";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 import { createFloatingTooltip } from "~/util/tooltip";
+import { formatNumberWithoutDecimals } from "~/util/currency";
 
 interface HumanAffectsProps {
 	totalPeopleAffected: number;
@@ -101,7 +102,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 						</h3>
 						<div className="dts-indicator dts-indicator--target-box-g">
 							<span className="dts-indicator__value">
-								{totalPeopleAffected}
+								{formatNumberWithoutDecimals(totalPeopleAffected)}
 							</span>
 						</div>
 					</div>
@@ -142,7 +143,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								style={{ width: "60px", height: "60px" }}
 							/>
 							<span style={{ marginLeft: "130px", fontSize: "1.2em" }}>
-								{totalDeaths}
+								{formatNumberWithoutDecimals(totalDeaths)}
 							</span>
 						</div>
 					</div>
@@ -181,7 +182,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								style={{ width: "60px", height: "60px" }}
 							/>
 							<span style={{ marginLeft: "150px", fontSize: "1.2em" }}>
-								{totalInjured}
+								{formatNumberWithoutDecimals(totalInjured)}
 							</span>
 						</div>
 					</div>
@@ -220,7 +221,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								style={{ width: "60px", height: "60px" }}
 							/>
 							<span style={{ marginLeft: "150px", fontSize: "1.2em" }}>
-								{totalMissing}
+								{formatNumberWithoutDecimals(totalMissing)}
 							</span>
 						</div>
 					</div>
@@ -261,7 +262,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								style={{ width: "60px", height: "60px" }}
 							/>
 							<span style={{ marginLeft: "250px", fontSize: "1.2em" }}>
-								{totalPeopleDirectlyAffected}
+								{formatNumberWithoutDecimals(totalPeopleDirectlyAffected)}
 							</span>
 						</div>
 					</div>
@@ -300,7 +301,7 @@ const HumanAffects: React.FC<HumanAffectsProps> = ({
 								style={{ width: "60px", height: "60px" }}
 							/>
 							<span style={{ marginLeft: "250px", fontSize: "1.2em" }}>
-								{totalDisplaced}
+								{formatNumberWithoutDecimals(totalDisplaced)}
 							</span>
 						</div>
 					</div>

@@ -41,6 +41,7 @@ import {
 	getCountryAccountsIdFromSession,
 	getCountrySettingsFromSession,
 } from "~/util/session";
+import { formatNumberWithoutDecimals } from "~/util/currency";
 
 // Define an interface for the structure of the JSON objects
 interface interfaceMap {
@@ -162,7 +163,7 @@ export const action = async (actionArgs: any) => {
 		return {
 			total,
 			name: division.name["en"] || "Unknown",
-			description: `Total Damages: ${total} ${currency}`,
+			description: `Total Damages: ${formatNumberWithoutDecimals(total)} ${currency}`,
 			colorPercentage: total / maxDamages,
 			geojson: division.geojson || {},
 		};
@@ -178,7 +179,7 @@ export const action = async (actionArgs: any) => {
 		return {
 			total,
 			name: division.name["en"] || "Unknown",
-			description: `Total Losses: ${total} ${currency}`,
+			description: `Total Losses: ${formatNumberWithoutDecimals(total)} ${currency}`,
 			colorPercentage: total / maxLosses,
 			geojson: division.geojson || {},
 		};
@@ -194,7 +195,7 @@ export const action = async (actionArgs: any) => {
 		return {
 			total,
 			name: division.name["en"] || "Unknown",
-			description: `Total Deaths: ${total}`,
+			description: `Total Deaths: ${formatNumberWithoutDecimals(total)}`,
 			colorPercentage: total / maxDeaths,
 			geojson: division.geojson || {},
 		};
@@ -214,7 +215,7 @@ export const action = async (actionArgs: any) => {
 			return {
 				total,
 				name: division.name["en"] || "Unknown",
-				description: `Total Affected People: ${total}`,
+				description: `Total Affected People: ${formatNumberWithoutDecimals(total)}`,
 				colorPercentage: total / maxAffected,
 				geojson: division.geojson || {},
 			};
@@ -235,7 +236,7 @@ export const action = async (actionArgs: any) => {
 			return {
 				total,
 				name: division.name["en"] || "Unknown",
-				description: `Disaster Events: ${total}`,
+				description: `Disaster Events: ${formatNumberWithoutDecimals(total)}`,
 				colorPercentage: total / maxEvents,
 				geojson: division.geojson || {},
 			};

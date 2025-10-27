@@ -1,5 +1,6 @@
 import React from "react";
 import { DisasterSummary } from "~/backend.server/models/analytics/hazard-analysis";
+import { formatNumberWithoutDecimals } from "~/util/currency";
 
 interface DisasterEventsListProps {
 	hazardName: string;
@@ -42,9 +43,9 @@ const DisasterEventsList: React.FC<DisasterEventsListProps> = ({
 										<td>{disasterSummaryRecord.startDate}</td>
 										<td>{disasterSummaryRecord.endDate}</td>
 										<td>{disasterSummaryRecord.provinceAffected}</td>
-										<td>{disasterSummaryRecord.totalDamages}</td>
-										<td>{disasterSummaryRecord.totalLosses}</td>
-										<td>{disasterSummaryRecord.totalAffectedPeople}</td>
+										<td>{formatNumberWithoutDecimals(disasterSummaryRecord.totalDamages)}</td>
+										<td>{formatNumberWithoutDecimals(disasterSummaryRecord.totalLosses)}</td>
+										<td>{formatNumberWithoutDecimals(disasterSummaryRecord.totalAffectedPeople)}</td>
 									</tr>
 								);
 							})}

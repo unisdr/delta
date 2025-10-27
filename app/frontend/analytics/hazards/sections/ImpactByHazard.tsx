@@ -11,6 +11,7 @@ import {
 import { createFloatingTooltip } from "~/util/tooltip";
 import EmptyChartPlaceholder from "~/components/EmptyChartPlaceholder";
 import { YearlyDisasterCount } from "~/backend.server/models/analytics/hazard-analysis";
+import { formatNumberWithoutDecimals } from "~/util/currency";
 
 interface ImpactByHazardProps {
 	hazardName: string;
@@ -79,7 +80,7 @@ const ImpactByHazard: React.FC<ImpactByHazardProps> = ({
 							</h3>
 							<div className="dts-indicator dts-indicator--target-box-g">
 								{disasterCount > 0 ? (
-									<span>{disasterCount}</span>
+									<span>{formatNumberWithoutDecimals(disasterCount)}</span>
 								) : (
 									<>
 										<img src="/assets/images/empty.png" alt="No data" />
