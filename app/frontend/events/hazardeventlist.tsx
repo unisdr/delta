@@ -31,7 +31,11 @@ function HazardousEventActionLinks(props: {
 		<div style={{ display: "flex", justifyContent: "space-evenly" }}>
 			{!props.hideEditButton && (
 				<Link to={`${props.route}/edit/${props.id}`}>
-					<button type="button" className="mg-button mg-button-table" aria-label="Edit">
+					<button
+						type="button"
+						className="mg-button mg-button-table"
+						aria-label="Edit"
+					>
 						<svg aria-hidden="true" focusable="false" role="img">
 							<use href="/assets/icons/edit.svg#edit" />
 						</svg>
@@ -40,7 +44,11 @@ function HazardousEventActionLinks(props: {
 			)}
 			{!props.hideViewButton && (
 				<Link to={`${props.route}/${props.id}`}>
-					<button type="button" className="mg-button mg-button-table" aria-label="View">
+					<button
+						type="button"
+						className="mg-button mg-button-table"
+						aria-label="View"
+					>
 						<svg aria-hidden="true" focusable="false" role="img">
 							<use href="/assets/icons/eye-show-password.svg#eye-show" />
 						</svg>
@@ -106,7 +114,8 @@ function canEdit(item: any, user: any): boolean {
 
 	// Check record status - only Draft or Waiting for validation can be edited
 	const editableStatuses = ["draft", "waiting-for-validation"];
-	if (!editableStatuses.includes(item.approvalStatus.toLowerCase())) return false;
+	if (!editableStatuses.includes(item.approvalStatus.toLowerCase()))
+		return false;
 
 	// Check if user created the record (simplified check - would need actual user ID comparison)
 	// This is a placeholder - actual implementation would need to check item.createdBy against user.id
@@ -134,7 +143,10 @@ function canDelete(item: any, user: any): boolean {
 
 	// For non-admin users
 	// Check if user has delete permission
-	const hasDeletePermission = roleHasPermission(user.role, "DeleteValidatedData");
+	const hasDeletePermission = roleHasPermission(
+		user.role,
+		"DeleteValidatedData"
+	);
 	if (!hasDeletePermission) return false;
 
 	// Published records cannot be deleted
@@ -152,7 +164,7 @@ export function ListView(args: ListViewArgs) {
 	// Get user data with role from root loader
 	const user = {
 		...rootData?.user,
-		role: rootData?.userRole || rootData?.user?.role // Use userRole from root data if available
+		role: rootData?.userRole || rootData?.user?.role, // Use userRole from root data if available
 	};
 
 	const { hip, filters } = ld;
@@ -164,7 +176,11 @@ export function ListView(args: ListViewArgs) {
 	const totalCountRef = useRef(ld.data.pagination.totalItems);
 
 	// Check if this is an unfiltered view
-	const isUnfiltered = !filters.hipHazardId && !filters.hipClusterId && !filters.hipTypeId && !filters.search;
+	const isUnfiltered =
+		!filters.hipHazardId &&
+		!filters.hipClusterId &&
+		!filters.hipTypeId &&
+		!filters.search;
 
 	// Use effect to update the ref when we see an unfiltered view with a higher count
 	useEffect(() => {
@@ -229,7 +245,11 @@ export function ListView(args: ListViewArgs) {
 						{/* Add the EventCounter component */}
 						<span>
 							<strong>
-								<EventCounter filteredEvents={items.length} totalEvents={totalCountRef.current} description="hazardous events" />
+								<EventCounter
+									filteredEvents={items.length}
+									totalEvents={totalCountRef.current}
+									description="hazardous event(s)"
+								/>
 							</strong>
 						</span>
 					</div>
