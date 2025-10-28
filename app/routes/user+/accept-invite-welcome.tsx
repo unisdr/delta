@@ -2,13 +2,15 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Link } from "react-router-dom";
 
-import { configAuthSupportedAzureSSOB2C } from "~/util/config";
+import { configAuthSupportedAzureSSOB2C, configAuthSupportedForm } from "~/util/config";
 
 import { validateInviteCode } from "~/backend.server/models/user/invite";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const confAuthSupportedAzureSSOB2C: boolean =
 		configAuthSupportedAzureSSOB2C();
+	const confAuthSupportedForm: boolean =
+		configAuthSupportedForm();
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("inviteCode") || "";
 	const state = url.searchParams.get("state") || "";
@@ -21,6 +23,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		code: queryStringCode,
 		state: state,
 		confAuthSupportedAzureSSOB2C: confAuthSupportedAzureSSOB2C,
+		confAuthSupportedForm: confAuthSupportedForm,
 	};
 };
 
@@ -52,12 +55,14 @@ export default function Screen() {
 					</div>
 
 					<div className="dts-form__actions">
-						<Link
-							className="mg-button mg-button-primary"
-							to={`/user/accept-invite?inviteCode=${inviteCode}`}
-						>
-							Set up account
-						</Link>
+						{loaderData.confAuthSupportedForm && (
+							<Link
+								className="mg-button mg-button-primary"
+								to={`/user/accept-invite?inviteCode=${inviteCode}`}
+							>
+								Set up account
+							</Link>
+						)}
 
 						{loaderData.confAuthSupportedAzureSSOB2C && (
 							<>
