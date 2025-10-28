@@ -82,20 +82,56 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		filters.recordStatus !== ""
 			? sql`${disasterRecordsTable.approvalStatus}::text ILIKE ${searchRecordStatus}`
 			: undefined,
-		filters.fromDate && filters.toDate
-			? sql`
-				TO_DATE(
+		filters.fromDate
+			? and(
+					sql`${disasterEventTable.startDate} != ''`,
+					sql`
 					CASE
-					WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01-01'
-					WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01'
-					WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)}
-					ELSE NULL
-					END,
-					'YYYY-MM-DD'
-				)
-				BETWEEN ${filters.fromDate}::date AND ${filters.toDate}::date
+						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY') >= TO_DATE(${filters.fromDate}, 'YYYY')
+						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
+						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
+						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+					ELSE 
+						${disasterEventTable.startDate} >= ${filters.fromDate}
+					END
 				`
+			  )
+			: undefined,
+		filters.toDate
+			? and(
+					sql`${disasterEventTable.endDate} != ''`,
+					sql`
+					CASE
+						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY') <= TO_DATE(${filters.toDate}, 'YYYY')
+						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
+						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
+						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+					ELSE 
+						${disasterEventTable.endDate} <= ${filters.toDate}
+					END
+				`
+			  )
 			: undefined
+		// filters.fromDate && filters.toDate
+		// 	? sql`
+		// 		TO_DATE(
+		// 			CASE
+		// 			WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01-01'
+		// 			WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01'
+		// 			WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)}
+		// 			ELSE NULL
+		// 			END,
+		// 			'YYYY-MM-DD'
+		// 		)
+		// 		BETWEEN ${filters.fromDate}::date AND ${filters.toDate}::date
+		// 		`
+		// 	: undefined
 	);
 
 	// count and select must now join the disasterEventTable

@@ -59,21 +59,15 @@ export function DisasterRecordsFilter(props: Props) {
 
 		const { fromDate, toDate } = filters;
 
-		// Validation
 		if (
-			(fromDate && !toDate) ||
-			(!fromDate && toDate) ||
-			(fromDate && toDate && new Date(toDate) < new Date(fromDate))
+			fromDate &&
+			toDate &&
+			new Date(toDate) < new Date(fromDate)
 		) {
 			toast.current?.show({
 				severity: "error",
 				summary: "Invalid Date Range",
-				detail:
-					fromDate && !toDate
-						? "Please select a 'To' date when 'From' date is set."
-						: !fromDate && toDate
-						? "Please select a 'From' date when 'To' date is set."
-						: "'To' date cannot be earlier than 'From' date.",
+				detail: "'To' date cannot be earlier than 'From' date.",
 				life: 4000,
 			});
 			return;
@@ -109,7 +103,9 @@ export function DisasterRecordsFilter(props: Props) {
 							type="text"
 							placeholder="All disaster events"
 							value={filters.disasterEventName}
-							onChange={(e) => setFilters({...filters, disasterEventName:e.target.value})}
+							onChange={(e) =>
+								setFilters({ ...filters, disasterEventName: e.target.value })
+							}
 						/>
 					</label>
 				</div>
@@ -123,7 +119,9 @@ export function DisasterRecordsFilter(props: Props) {
 							type="text"
 							placeholder="Search for UUID"
 							value={filters.disasterRecordUUID}
-							onChange={(e) => setFilters({...filters, disasterRecordUUID:e.target.value})}
+							onChange={(e) =>
+								setFilters({ ...filters, disasterRecordUUID: e.target.value })
+							}
 						/>
 					</label>
 				</div>
@@ -137,7 +135,9 @@ export function DisasterRecordsFilter(props: Props) {
 							type="date"
 							placeholder="Select date"
 							value={filters.fromDate}
-							onChange={(e) => setFilters({...filters, fromDate:e.target.value})}
+							onChange={(e) =>
+								setFilters({ ...filters, fromDate: e.target.value })
+							}
 						/>
 					</label>
 				</div>
@@ -152,7 +152,9 @@ export function DisasterRecordsFilter(props: Props) {
 							placeholder="Select date"
 							defaultValue={toDate}
 							value={filters.toDate}
-							onChange={(e) => setFilters({...filters, toDate:e.target.value})}
+							onChange={(e) =>
+								setFilters({ ...filters, toDate: e.target.value })
+							}
 						/>
 					</label>
 				</div>
@@ -164,7 +166,9 @@ export function DisasterRecordsFilter(props: Props) {
 							id="recordStatus"
 							name="recordStatus"
 							value={filters.recordStatus}
-							onChange={(e) => setFilters({...filters, recordStatus:e.target.value})}
+							onChange={(e) =>
+								setFilters({ ...filters, recordStatus: e.target.value })
+							}
 						>
 							<option value="">Select record status</option>
 							{RECORD_STATUS_OPTIONS.map((recordStatus) => (
