@@ -190,7 +190,6 @@ const getAllSubsectorIds = async (sectorId: string): Promise<string[]> => {
 			})
 			.from(sectorTable)
 			.where(eq(sectorTable.id, sectorId))
-			.limit(1);
 
 		if (sectorInfo.length === 0) {
 			return [];
@@ -664,7 +663,6 @@ async function getDisasterRecordsForDivision(
 			})
 			.from(divisionTable)
 			.where(eq(divisionTable.id, divisionId))
-			.limit(1);
 
 		if (division.length === 0 || !division[0].geom) {
 			return [];
@@ -775,6 +773,7 @@ async function getDisasterRecordsForDivision(
 					}
 				}
 			} catch (error) {
+				console.error(error)
 			}
 		}
 
@@ -798,14 +797,6 @@ async function getDisasterRecordsForDivision(
 					disasterRecordsTable.id
 				)
 			)
-			.innerJoin(
-				disasterEventTable,
-				eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-			)
-			.innerJoin(
-				hazardousEventTable,
-				eq(disasterEventTable.hazardousEventId, hazardousEventTable.id)
-			);
 
 
 		const descendantIds = await getDescendantDivisionIds(divisionId);
@@ -1053,7 +1044,6 @@ async function getDisasterRecordsForDivision(
 					})
 					.from(divisionTable)
 					.where(eq(divisionTable.id, divisionId))
-					.limit(1);
 
 				if (divisionDetails.length > 0 && divisionDetails[0].name) {
 					const divisionName = divisionDetails[0].name.en || "";

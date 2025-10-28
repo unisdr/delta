@@ -553,12 +553,6 @@ const aggregateDamagesData = async (
 		}
 	}
 
-	logger.info("Completed damage data aggregation", {
-		totalDamage: total,
-		yearsWithData: byYear.size,
-		recordsProcessed: recordIds.length,
-	});
-
 	return { total, byYear };
 };
 
@@ -716,12 +710,6 @@ const aggregateLossesData = async (
 		}
 	}
 
-	logger.info("Completed loss data aggregation", {
-		totalLoss: total,
-		yearsWithData: byYear.size,
-		recordsProcessed: recordIds.length,
-	});
-
 	return { total, byYear };
 };
 
@@ -818,16 +806,6 @@ export async function fetchSectorImpactData(
 			aggregateLossesData(recordIds, sectorId),
 			getEventCountsByYear(recordIds),
 		]);
-
-		logger.info("Completed sector impact analysis", {
-			sectorId,
-			eventCount: recordIds.length,
-			totalDamage: damagesResult.total,
-			totalLoss: lossesResult.total,
-			yearsWithDamageData: damagesResult.byYear.size,
-			yearsWithLossData: lossesResult.byYear.size,
-			yearsWithEvents: eventCounts.size,
-		});
 
 		// Create assessment metadata
 		const metadata = await createAssessmentMetadata(

@@ -217,25 +217,18 @@ export const loader = authLoaderPublicOrWithPerm(
 
 			// Fetch geographic levels data for filters
 			try {
-				if (countryAccountsId) {
-					const geographicLevelsResponse = await getGeographicLevelsHandler(
-						countryAccountsId
-					);
-					if (
-						geographicLevelsResponse.success &&
-						geographicLevelsResponse.levels
-					) {
-						geographicLevelsData = geographicLevelsResponse;
-					} else {
-						console.error(
-							"LOADER ERROR - Failed to fetch geographic levels data:",
-							geographicLevelsResponse.error
-						);
-						geographicLevelsData = null;
-					}
+				const geographicLevelsResponse = await getGeographicLevelsHandler(
+					countryAccountsId
+				);
+				if (
+					geographicLevelsResponse.success &&
+					geographicLevelsResponse.levels
+				) {
+					geographicLevelsData = geographicLevelsResponse;
 				} else {
-					console.error(
-						"LOADER ERROR - Missing tenant context for geographic levels"
+						console.error(
+						"LOADER ERROR - Failed to fetch geographic levels data:",
+						geographicLevelsResponse.error
 					);
 					geographicLevelsData = null;
 				}

@@ -474,15 +474,6 @@ export async function getMostDamagingEvents(countryAccountsId: string, params: M
       }
     };
 
-    // resultsCache.set(cacheKey, paginatedResult);
-    const executionTime = Date.now() - startTime;
-    logger.info("Successfully completed most damaging events analysis", {
-      totalResults: total,
-      returnedResults: events.length,
-      executionTime: `${executionTime}ms`,
-      executionTimeMs: executionTime
-    });
-
     return paginatedResult;
   } catch (error) {
     const executionTime = Date.now() - startTime;
