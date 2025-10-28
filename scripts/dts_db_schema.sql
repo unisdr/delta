@@ -17,6 +17,20 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
 -- Name: postgis; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -647,7 +661,13 @@ CREATE TABLE public.human_category_presence (
     injured_total_group_column_names jsonb,
     missing_total_group_column_names jsonb,
     affected_total_group_column_names jsonb,
-    displaced_total_group_column_names jsonb
+    displaced_total_group_column_names jsonb,
+    deaths_total bigint,
+    injured_total bigint,
+    missing_total bigint,
+    affected_direct_total bigint,
+    affected_indirect_total bigint,
+    displaced_total bigint
 );
 
 
@@ -913,11 +933,11 @@ ALTER TABLE ONLY public.api_key
 
 
 --
--- Name: asset asset_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: asset asset_api_import_id_tenant_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.asset
-    ADD CONSTRAINT asset_api_import_id_unique UNIQUE (api_import_id);
+    ADD CONSTRAINT asset_api_import_id_tenant_unique UNIQUE (api_import_id, country_accounts_id);
 
 
 --
@@ -977,14 +997,6 @@ ALTER TABLE ONLY public.country_accounts
 
 
 --
--- Name: damages damages_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.damages
-    ADD CONSTRAINT damages_api_import_id_unique UNIQUE (api_import_id);
-
-
---
 -- Name: damages damages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1001,11 +1013,11 @@ ALTER TABLE ONLY public.deaths
 
 
 --
--- Name: dev_example1 dev_example1_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: dev_example1 dev_example1_api_import_id_tenant_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.dev_example1
-    ADD CONSTRAINT dev_example1_api_import_id_unique UNIQUE (api_import_id);
+    ADD CONSTRAINT dev_example1_api_import_id_tenant_unique UNIQUE (api_import_id, country_accounts_id);
 
 
 --
@@ -1017,11 +1029,11 @@ ALTER TABLE ONLY public.dev_example1
 
 
 --
--- Name: disaster_event disaster_event_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: disaster_event disaster_event_api_import_id_tenant_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_event
-    ADD CONSTRAINT disaster_event_api_import_id_unique UNIQUE (api_import_id);
+    ADD CONSTRAINT disaster_event_api_import_id_tenant_unique UNIQUE (api_import_id, country_accounts_id);
 
 
 --
@@ -1033,11 +1045,11 @@ ALTER TABLE ONLY public.disaster_event
 
 
 --
--- Name: disaster_records disaster_records_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: disaster_records disaster_records_api_import_id_tenant_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.disaster_records
-    ADD CONSTRAINT disaster_records_api_import_id_unique UNIQUE (api_import_id);
+    ADD CONSTRAINT disaster_records_api_import_id_tenant_unique UNIQUE (api_import_id, country_accounts_id);
 
 
 --
@@ -1054,14 +1066,6 @@ ALTER TABLE ONLY public.disaster_records
 
 ALTER TABLE ONLY public.displaced
     ADD CONSTRAINT displaced_pkey PRIMARY KEY (id);
-
-
---
--- Name: disruption disruption_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.disruption
-    ADD CONSTRAINT disruption_api_import_id_unique UNIQUE (api_import_id);
 
 
 --
@@ -1105,11 +1109,11 @@ ALTER TABLE ONLY public.event
 
 
 --
--- Name: hazardous_event hazardous_event_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: hazardous_event hazardous_event_api_import_id_tenant_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hazardous_event
-    ADD CONSTRAINT hazardous_event_api_import_id_unique UNIQUE (api_import_id);
+    ADD CONSTRAINT hazardous_event_api_import_id_tenant_unique UNIQUE (api_import_id, country_accounts_id);
 
 
 --
@@ -1177,14 +1181,6 @@ ALTER TABLE ONLY public.instance_system_settings
 
 
 --
--- Name: losses losses_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.losses
-    ADD CONSTRAINT losses_api_import_id_unique UNIQUE (api_import_id);
-
-
---
 -- Name: losses losses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1201,14 +1197,6 @@ ALTER TABLE ONLY public.missing
 
 
 --
--- Name: noneco_losses noneco_losses_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.noneco_losses
-    ADD CONSTRAINT noneco_losses_api_import_id_unique UNIQUE (api_import_id);
-
-
---
 -- Name: noneco_losses noneco_losses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1222,14 +1210,6 @@ ALTER TABLE ONLY public.noneco_losses
 
 ALTER TABLE ONLY public.noneco_losses
     ADD CONSTRAINT "nonecolosses_sectorIdx" UNIQUE (disaster_record_id, category_id);
-
-
---
--- Name: sector_disaster_records_relation sector_disaster_records_relation_api_import_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.sector_disaster_records_relation
-    ADD CONSTRAINT sector_disaster_records_relation_api_import_id_unique UNIQUE (api_import_id);
 
 
 --

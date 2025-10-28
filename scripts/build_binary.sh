@@ -15,6 +15,12 @@ next_step() {
 
 # Step 1: Create folder dts_shared_binary
 next_step "Creating folder dts_shared_binary"
+
+if [ -d "dts_shared_binary" ]; then
+  echo "Removing existing dts_shared_binary folder..."
+  rm -rf dts_shared_binary
+fi
+
 mkdir -p dts_shared_binary
 
 # Step 2: Create folder dts_database inside dts_shared_binary

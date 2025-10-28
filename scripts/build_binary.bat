@@ -10,8 +10,13 @@ set STEP=0
 
 set /A STEP+=1
 echo === Step !STEP!/%TOTAL_STEPS%!. Creating folder dts_shared_binary ===
-if not exist dts_shared_binary mkdir dts_shared_binary
 
+if exist dts_shared_binary (
+    echo Removing existing dts_shared_binary folder...
+    rmdir /s /q dts_shared_binary
+)
+
+mkdir dts_shared_binary
 
 set /A STEP+=1
 echo === Step !STEP!/%TOTAL_STEPS%!. Creating folder dts_database inside dts_shared_binary ===
