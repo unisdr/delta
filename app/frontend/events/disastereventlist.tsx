@@ -56,7 +56,7 @@ export function ListView(props: ListViewProps) {
 		totalItems: pagination.totalItems,
 		items: items,
 		paginationData: pagination,
-		csvExportLinks: true,
+		csvExportLinks: false,
 		beforeListElement: <>
 			<DisasterEventsFilter
 				clearFiltersUrl={route}
