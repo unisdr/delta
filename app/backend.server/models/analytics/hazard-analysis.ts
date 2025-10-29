@@ -1827,8 +1827,7 @@ export async function getTotalAffectedPeopleByDivision(
 		  COALESCE("injured"."injured", 0) +
 		  COALESCE("missing"."missing", 0) +
 		  COALESCE("displaced"."displaced", 0) +
-		  COALESCE("affected"."direct", 0) +
-		  COALESCE("affected"."indirect", 0) AS total_affected
+		  COALESCE("affected"."direct", 0) AS total_affected
 		FROM "disaster_records"
 		LEFT JOIN "human_dsg" ON "disaster_records"."id" = "human_dsg"."record_id"
 		LEFT JOIN "injured" ON "human_dsg"."id" = "injured"."dsg_id"
