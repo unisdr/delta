@@ -1,23 +1,17 @@
-import { disasterEventTable, disasterRecordsTable } from "~/drizzle/schema";
+import { disasterEventTable, disasterRecordsTable } from '~/drizzle/schema';
 
-import { authLoaderIsPublic } from "~/util/auth";
+import { authLoaderIsPublic } from '~/util/auth';
 
-import { dr } from "~/db.server";
+import { dr } from '~/db.server';
 
-import {
-	executeQueryForPagination3,
-	OffsetLimit,
-} from "~/frontend/pagination/api.server";
+import { executeQueryForPagination3, OffsetLimit } from '~/frontend/pagination/api.server';
 
-import { and, eq, desc, sql, ilike } from "drizzle-orm";
+import { and, eq, desc, sql, ilike } from 'drizzle-orm';
 
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { approvalStatusIds } from "~/frontend/approval";
-import {
-	getCountryAccountsIdFromSession,
-	getCountrySettingsFromSession,
-} from "~/util/session";
-import { getSectorByLevel } from "~/db/queries/sector";
+import { LoaderFunctionArgs } from '@remix-run/node';
+import { approvalStatusIds } from '~/frontend/approval';
+import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from '~/util/session';
+import { getSectorByLevel } from '~/db/queries/sector';
 
 interface disasterRecordLoaderArgs {
 	loaderArgs: LoaderFunctionArgs;
@@ -28,11 +22,7 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	const { request } = loaderArgs;
 
 	const url = new URL(request.url);
-	const extraParams = [
-		"disasterEventUUID",
-		"disasterRecordUUID",
-		"recordStatus",
-	];
+	const extraParams = ['disasterEventUUID', 'disasterRecordUUID', 'recordStatus'];
 	const filters: {
 		approvalStatus?: approvalStatusIds;
 		disasterEventName: string;
@@ -41,16 +31,16 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		fromDate: string;
 		toDate: string;
 	} = {
-		approvalStatus: "published",
-		disasterEventName: url.searchParams.get("disasterEventName") || "",
-		disasterRecordUUID: url.searchParams.get("disasterRecordUUID") || "",
-		recordStatus: url.searchParams.get("recordStatus") || "",
-		fromDate: url.searchParams.get("fromDate") || "",
-		toDate: url.searchParams.get("toDate") || "",
+		approvalStatus: 'published',
+		disasterEventName: url.searchParams.get('disasterEventName') || '',
+		disasterRecordUUID: url.searchParams.get('disasterRecordUUID') || '',
+		recordStatus: url.searchParams.get('recordStatus') || '',
+		fromDate: url.searchParams.get('fromDate') || '',
+		toDate: url.searchParams.get('toDate') || '',
 	};
 	const isPublic = authLoaderIsPublic(loaderArgs);
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	let instanceName = "DELTA Resilience";
+	let instanceName = 'DELTA Resilience';
 	if (countryAccountsId) {
 		const settigns = await getCountrySettingsFromSession(request);
 		instanceName = settigns.websiteName;
@@ -64,88 +54,69 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 
 	filters.disasterEventName = filters.disasterEventName.trim();
 
-	let searchDisasterEventName = "%" + filters.disasterEventName + "%";
-	let searchDisasterRecordUIID = "%" + filters.disasterRecordUUID + "%";
-	let searchRecordStatus = "%" + filters.recordStatus + "%";
+	let searchDisasterEventName = '%' + filters.disasterEventName + '%';
+	let searchDisasterRecordUIID = '%' + filters.disasterRecordUUID + '%';
+	let searchRecordStatus = '%' + filters.recordStatus + '%';
 
 	// build base condition
 	let baseCondition = and(
-		countryAccountsId
-			? eq(disasterRecordsTable.countryAccountsId, countryAccountsId)
-			: undefined,
+		countryAccountsId ? eq(disasterRecordsTable.countryAccountsId, countryAccountsId) : undefined,
 		filters.approvalStatus
 			? eq(disasterRecordsTable.approvalStatus, filters.approvalStatus)
 			: undefined,
-		filters.disasterRecordUUID !== ""
+		filters.disasterRecordUUID !== ''
 			? sql`${disasterRecordsTable.id}::text ILIKE ${searchDisasterRecordUIID}`
 			: undefined,
-		filters.recordStatus !== ""
+		filters.recordStatus !== ''
 			? sql`${disasterRecordsTable.approvalStatus}::text ILIKE ${searchRecordStatus}`
 			: undefined,
 		filters.fromDate
 			? and(
-					sql`${disasterEventTable.startDate} != ''`,
+					sql`${disasterRecordsTable.startDate} != ''`,
 					sql`
 					CASE
-						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY') >= TO_DATE(${filters.fromDate}, 'YYYY')
-						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
-						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
-						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
-						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
-						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
-						WHEN ${disasterEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY') >= TO_DATE(${filters.fromDate}, 'YYYY')
+						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
+						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
+						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
 					ELSE 
-						${disasterEventTable.startDate} >= ${filters.fromDate}
+						${disasterRecordsTable.startDate} >= ${filters.fromDate}
 					END
 				`
 			  )
 			: undefined,
 		filters.toDate
 			? and(
-					sql`${disasterEventTable.endDate} != ''`,
+					sql`${disasterRecordsTable.endDate} != ''`,
 					sql`
 					CASE
-						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY') <= TO_DATE(${filters.toDate}, 'YYYY')
-						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
-						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
-						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
-						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
-						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
-						WHEN ${disasterEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${disasterEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY') <= TO_DATE(${filters.toDate}, 'YYYY')
+						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
+						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
+						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
 					ELSE 
-						${disasterEventTable.endDate} <= ${filters.toDate}
+						${disasterRecordsTable.endDate} <= ${filters.toDate}
 					END
 				`
 			  )
 			: undefined
-		// filters.fromDate && filters.toDate
-		// 	? sql`
-		// 		TO_DATE(
-		// 			CASE
-		// 			WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01-01'
-		// 			WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)} || '-01'
-		// 			WHEN ${sql.raw(`"disaster_records"."start_date"`)} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN ${sql.raw(`"disaster_records"."start_date"`)}
-		// 			ELSE NULL
-		// 			END,
-		// 			'YYYY-MM-DD'
-		// 		)
-		// 		BETWEEN ${filters.fromDate}::date AND ${filters.toDate}::date
-		// 		`
-		// 	: undefined
 	);
 
 	// count and select must now join the disasterEventTable
 	const countResult = await dr
 		.select({ count: sql<number>`count(*)` })
 		.from(disasterRecordsTable)
-		.leftJoin(
-			disasterEventTable,
-			eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-		)
+		.leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
 		.where(
 			and(
 				baseCondition,
-				filters.disasterEventName !== ""
+				filters.disasterEventName !== ''
 					? ilike(disasterEventTable.nameNational, searchDisasterEventName)
 					: undefined
 			)
@@ -168,14 +139,11 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 				nameNational: disasterEventTable.nameNational,
 			})
 			.from(disasterRecordsTable)
-			.leftJoin(
-				disasterEventTable,
-				eq(disasterRecordsTable.disasterEventId, disasterEventTable.id)
-			)
+			.leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
 			.where(
 				and(
 					baseCondition,
-					filters.disasterEventName !== ""
+					filters.disasterEventName !== ''
 						? ilike(disasterEventTable.nameNational, searchDisasterEventName)
 						: undefined
 				)
@@ -185,12 +153,7 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 			.offset(offsetLimit.offset);
 	};
 
-	const res = await executeQueryForPagination3(
-		request,
-		count,
-		events,
-		extraParams
-	);
+	const res = await executeQueryForPagination3(request, count, events, extraParams);
 
 	return {
 		isPublic,
