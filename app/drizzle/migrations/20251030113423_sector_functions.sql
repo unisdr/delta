@@ -2,13 +2,13 @@
 
 
 DROP FUNCTION IF EXISTS "dts_get_sector_all_idonly";
-CREATE FUNCTION "dts_get_sector_all_idonly" (IN "SECTOR_ID" uuid) RETURNS _uuid LANGUAGE plpgsql AS 'BEGIN
+CREATE FUNCTION "dts_get_sector_all_idonly" (IN "param_sector_id" uuid) RETURNS _uuid LANGUAGE plpgsql AS 'BEGIN
 	RETURN ARRAY(
 		WITH RECURSIVE ParentCTE AS (
 			-- Start from the child node
 			SELECT id, sectorname, parent_id
 			FROM sector
-			WHERE id = SECTOR_ID
+			WHERE id = param_sector_id
 
 			UNION ALL
 
@@ -21,7 +21,7 @@ CREATE FUNCTION "dts_get_sector_all_idonly" (IN "SECTOR_ID" uuid) RETURNS _uuid 
 			-- Find all descendants (children)
 			SELECT id, sectorname, parent_id, level
 			FROM sector
-			WHERE id = SECTOR_ID
+			WHERE id = param_sector_id
 			UNION ALL
 			SELECT t.id, t.sectorname, t.parent_id, t.level
 			FROM sector t
@@ -39,13 +39,13 @@ END;
 
 
 DROP FUNCTION IF EXISTS "dts_get_sector_children_idonly";
-CREATE FUNCTION "dts_get_sector_children_idonly" (IN "SECTOR_ID" uuid) RETURNS _uuid LANGUAGE plpgsql AS 'BEGIN
+CREATE FUNCTION "dts_get_sector_children_idonly" (IN "param_sector_id" uuid) RETURNS _uuid LANGUAGE plpgsql AS 'BEGIN
 	RETURN ARRAY(
 		WITH RECURSIVE ChildCTE AS (
 			-- Find all descendants (children)
 			SELECT id
 			FROM sector
-			WHERE id = SECTOR_ID
+			WHERE id = param_sector_id
 			UNION ALL
 			SELECT t.id
 			FROM sector t
@@ -58,13 +58,13 @@ END;
 
 
 DROP FUNCTION IF EXISTS "dts_get_sector_parent_idonly";
-CREATE FUNCTION "dts_get_sector_parent_idonly" (IN "SECTOR_ID" uuid) RETURNS _uuid LANGUAGE plpgsql AS 'BEGIN
+CREATE FUNCTION "dts_get_sector_parent_idonly" (IN "param_sector_id" uuid) RETURNS _uuid LANGUAGE plpgsql AS 'BEGIN
 	RETURN ARRAY(
 		WITH RECURSIVE ParentCTE AS (
 		  -- Start from the child node
 		  SELECT id, sectorname, parent_id
 		  FROM sector
-		  WHERE id = SECTOR_ID
+		  WHERE id = param_sector_id
 
 		  UNION ALL
 
