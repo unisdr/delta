@@ -1,23 +1,16 @@
-import {
-	hazardousEventTable,
-} from '~/drizzle/schema';
+import { hazardousEventTable } from '~/drizzle/schema';
 
-import {
-	authLoaderIsPublic
-} from "~/util/auth";
+import { authLoaderIsPublic } from '~/util/auth';
 
-import { dr } from "~/db.server";
+import { dr } from '~/db.server';
 
-import { executeQueryForPagination3, OffsetLimit } from "~/frontend/pagination/api.server";
+import { executeQueryForPagination3, OffsetLimit } from '~/frontend/pagination/api.server';
 
 import { sql, and, eq, desc, ilike, or } from 'drizzle-orm';
 
-import { dataForHazardPicker } from "~/backend.server/models/hip_hazard_picker";
+import { dataForHazardPicker } from '~/backend.server/models/hip_hazard_picker';
 
-import {
-	LoaderFunctionArgs,
-	redirect,
-} from "@remix-run/node";
+import { LoaderFunctionArgs, redirect } from '@remix-run/node';
 import { approvalStatusIds } from '~/frontend/approval';
 import { getCountryAccountsIdFromSession, sessionCookie } from '~/util/session';
 
@@ -25,16 +18,23 @@ export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 	const { request } = args;
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
 	if (!countryAccountsId) {
-		throw redirect("/user/select-instance");
+		throw redirect('/user/select-instance');
 	}
 
 	const url = new URL(request.url);
 	const extraParams = [
-		"hipHazardId", "hipClusterId", "hipTypeId", "search",
-		"fromDate", "toDate", "recordingOrganization", 
-		"hazardousEventStatus", "recordStatus", 
-		"viewMyRecords", "pendingMyAction"
-	]
+		'hipHazardId',
+		'hipClusterId',
+		'hipTypeId',
+		'search',
+		'fromDate',
+		'toDate',
+		'recordingOrganization',
+		'hazardousEventStatus',
+		'recordStatus',
+		'viewMyRecords',
+		'pendingMyAction',
+	];
 
 	const filters: {
 		hipHazardId: string;
@@ -53,35 +53,35 @@ export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 		userId?: string; // For user-specific filters
 	} = {
 		// Existing filters
-		hipHazardId: url.searchParams.get("hipHazardId") || "",
-		hipClusterId: url.searchParams.get("hipClusterId") || "",
-		hipTypeId: url.searchParams.get("hipTypeId") || "",
-		approvalStatus: "published",
-		search: url.searchParams.get("search") || "",
-		
+		hipHazardId: url.searchParams.get('hipHazardId') || '',
+		hipClusterId: url.searchParams.get('hipClusterId') || '',
+		hipTypeId: url.searchParams.get('hipTypeId') || '',
+		approvalStatus: 'published',
+		search: url.searchParams.get('search') || '',
+
 		// New filters
-		fromDate: url.searchParams.get("fromDate") || "",
-		toDate: url.searchParams.get("toDate") || "",
-		recordingOrganization: url.searchParams.get("recordingOrganization") || "",
-		hazardousEventStatus: url.searchParams.get("hazardousEventStatus") || "",
-		recordStatus: url.searchParams.get("recordStatus") || "",
-		viewMyRecords: url.searchParams.get("viewMyRecords") === "true",
-		pendingMyAction: url.searchParams.get("pendingMyAction") === "true",
+		fromDate: url.searchParams.get('fromDate') || '',
+		toDate: url.searchParams.get('toDate') || '',
+		recordingOrganization: url.searchParams.get('recordingOrganization') || '',
+		hazardousEventStatus: url.searchParams.get('hazardousEventStatus') || '',
+		recordStatus: url.searchParams.get('recordStatus') || '',
+		viewMyRecords: url.searchParams.get('viewMyRecords') === 'true',
+		pendingMyAction: url.searchParams.get('pendingMyAction') === 'true',
 	};
 
-	const isPublic = authLoaderIsPublic(args)
+	const isPublic = authLoaderIsPublic(args);
 
 	if (!isPublic) {
-		filters.approvalStatus = undefined
+		filters.approvalStatus = undefined;
 	}
-	
+
 	// Get user ID for user-specific filters
-	const session = await sessionCookie().getSession(request.headers.get("Cookie"));
-	const user = session.get("user");
+	const session = await sessionCookie().getSession(request.headers.get('Cookie'));
+	const user = session.get('user');
 	filters.userId = user?.id;
 
-	filters.search = filters.search.trim()
-	let searchIlike = "%" + filters.search + "%"
+	filters.search = filters.search.trim();
+	let searchIlike = '%' + filters.search + '%';
 
 	let condition = and(
 		// Existing filters
@@ -89,52 +89,100 @@ export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 		filters.hipHazardId ? eq(hazardousEventTable.hipHazardId, filters.hipHazardId) : undefined,
 		filters.hipClusterId ? eq(hazardousEventTable.hipClusterId, filters.hipClusterId) : undefined,
 		filters.hipTypeId ? eq(hazardousEventTable.hipTypeId, filters.hipTypeId) : undefined,
-		filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.approvalStatus) : undefined,
-		
+		filters.approvalStatus
+			? eq(hazardousEventTable.approvalStatus, filters.approvalStatus)
+			: undefined,
+
 		// Date range filters (for event dates, not record creation)
-		filters.fromDate ? sql`${hazardousEventTable.startDate} >= ${filters.fromDate}` : undefined,
-		filters.toDate ? sql`${hazardousEventTable.endDate} <= ${filters.toDate}` : undefined,
-		
+		filters.fromDate
+			? and(
+					sql`${hazardousEventTable.startDate} != ''`,
+					sql`
+					CASE
+						WHEN ${hazardousEventTable.startDate} ~ '^[0-9]{4}$' THEN TO_DATE(${hazardousEventTable.startDate}, 'YYYY') >= TO_DATE(${filters.fromDate}, 'YYYY')
+						WHEN ${hazardousEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${hazardousEventTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
+						WHEN ${hazardousEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${hazardousEventTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
+						WHEN ${hazardousEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${hazardousEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${hazardousEventTable.startDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${hazardousEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${hazardousEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${hazardousEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+						WHEN ${hazardousEventTable.startDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${hazardousEventTable.startDate}, 'YYYY-MM-DD') >= TO_DATE(${filters.fromDate}, 'YYYY-MM-DD')
+					ELSE 
+						${hazardousEventTable.startDate} >= ${filters.fromDate}
+					END
+				`
+			  )
+			: undefined,
+		filters.toDate
+			? and(
+					sql`${hazardousEventTable.endDate} != ''`,
+					sql`
+					CASE
+						WHEN ${hazardousEventTable.endDate} ~ '^[0-9]{4}$' THEN TO_DATE(${hazardousEventTable.endDate}, 'YYYY') <= TO_DATE(${filters.toDate}, 'YYYY')
+						WHEN ${hazardousEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${hazardousEventTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
+						WHEN ${hazardousEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}$' THEN TO_DATE(${hazardousEventTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
+						WHEN ${hazardousEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{1}$' THEN TO_DATE(${hazardousEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${hazardousEventTable.endDate} ~ '^[0-9]{4}-[0-9]{1}-[0-9]{2}$' THEN TO_DATE(${hazardousEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${hazardousEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{1}$' THEN TO_DATE(${hazardousEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+						WHEN ${hazardousEventTable.endDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN TO_DATE(${hazardousEventTable.endDate}, 'YYYY-MM-DD') <= TO_DATE(${filters.toDate}, 'YYYY-MM-DD')
+					ELSE 
+						${hazardousEventTable.endDate} <= ${filters.toDate}
+					END
+				`
+			  )
+			: undefined,
+
 		// Recording organization filter
-		filters.recordingOrganization ? eq(hazardousEventTable.recordOriginator, filters.recordingOrganization) : undefined,
-		
+		filters.recordingOrganization
+			? eq(hazardousEventTable.recordOriginator, filters.recordingOrganization)
+			: undefined,
+
 		// Hazardous event status filter
-		filters.hazardousEventStatus ? eq(hazardousEventTable.hazardousEventStatus, filters.hazardousEventStatus as "forecasted" | "ongoing" | "passed") : undefined,
-		
+		filters.hazardousEventStatus
+			? eq(
+					hazardousEventTable.hazardousEventStatus,
+					filters.hazardousEventStatus as 'forecasted' | 'ongoing' | 'passed'
+			  )
+			: undefined,
+
 		// Record status filter (if not using approvalStatus)
-		filters.recordStatus && !filters.approvalStatus ? eq(hazardousEventTable.approvalStatus, filters.recordStatus as any) : undefined,
-		
+		filters.recordStatus && !filters.approvalStatus
+			? eq(hazardousEventTable.approvalStatus, filters.recordStatus as any)
+			: undefined,
+
 		// User-specific filters - Note: These fields may need to be added to schema
 		// For now, commenting out until proper user tracking fields are available
-		// filters.viewMyRecords && filters.userId ? 
+		// filters.viewMyRecords && filters.userId ?
 		// 	or(
 		// 		eq(hazardousEventTable.createdBy, filters.userId),
 		// 		eq(hazardousEventTable.assignedTo, filters.userId)
 		// 	) : undefined,
-		
-		// Pending action filter - simplified for now
-		filters.pendingMyAction ? 
-			or(
-				eq(hazardousEventTable.approvalStatus, "waiting-for-validation"),
-				eq(hazardousEventTable.approvalStatus, "needs-revision")
-			) : undefined,
-		
-		// Text search filter
-		filters.search ? or(
-			sql`${hazardousEventTable.id}::text ILIKE ${searchIlike}`,
-			ilike(hazardousEventTable.status, searchIlike),
-			ilike(hazardousEventTable.nationalSpecification, searchIlike),
-			ilike(hazardousEventTable.startDate, searchIlike),
-			ilike(hazardousEventTable.endDate, searchIlike),
-			ilike(hazardousEventTable.description, searchIlike),
-			ilike(hazardousEventTable.chainsExplanation, searchIlike),
-			ilike(hazardousEventTable.magnitude, searchIlike),
-			ilike(hazardousEventTable.recordOriginator, searchIlike),
-			ilike(hazardousEventTable.dataSource, searchIlike)
-		) : undefined,
-	)
 
-	const count = await dr.$count(hazardousEventTable, condition)
+		// Pending action filter - simplified for now
+		filters.pendingMyAction
+			? or(
+					eq(hazardousEventTable.approvalStatus, 'waiting-for-validation'),
+					eq(hazardousEventTable.approvalStatus, 'needs-revision')
+			  )
+			: undefined,
+
+		// Text search filter
+		filters.search
+			? or(
+					sql`${hazardousEventTable.id}::text ILIKE ${searchIlike}`,
+					ilike(hazardousEventTable.status, searchIlike),
+					ilike(hazardousEventTable.nationalSpecification, searchIlike),
+					ilike(hazardousEventTable.startDate, searchIlike),
+					ilike(hazardousEventTable.endDate, searchIlike),
+					ilike(hazardousEventTable.description, searchIlike),
+					ilike(hazardousEventTable.chainsExplanation, searchIlike),
+					ilike(hazardousEventTable.magnitude, searchIlike),
+					ilike(hazardousEventTable.recordOriginator, searchIlike),
+					ilike(hazardousEventTable.dataSource, searchIlike)
+			  )
+			: undefined
+	);
+
+	const count = await dr.$count(hazardousEventTable, condition);
 
 	const events = async (offsetLimit: OffsetLimit) => {
 		return await dr.query.hazardousEventTable.findMany({
@@ -167,23 +215,23 @@ export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 					columns: {
 						nameEn: true,
 					},
-				}
+				},
 			},
-			where: condition
-		})
-	}
+			where: condition,
+		});
+	};
 
-	const res = await executeQueryForPagination3(request, count, events, extraParams)
+	const res = await executeQueryForPagination3(request, count, events, extraParams);
 	let hip = await dataForHazardPicker();
 
 	// Simple organizations list - this should be fetched from settings in the future
 	const organizations = [
-		{ id: "government", name: "Government Agency" },
-		{ id: "ngo", name: "Non-Governmental Organization" },
-		{ id: "private", name: "Private Sector" },
-		{ id: "academic", name: "Academic Institution" },
-		{ id: "international", name: "International Organization" },
-		{ id: "other", name: "Other" }
+		{ id: 'government', name: 'Government Agency' },
+		{ id: 'ngo', name: 'Non-Governmental Organization' },
+		{ id: 'private', name: 'Private Sector' },
+		{ id: 'academic', name: 'Academic Institution' },
+		{ id: 'international', name: 'International Organization' },
+		{ id: 'other', name: 'Other' },
 	];
 
 	return {
@@ -193,5 +241,5 @@ export async function hazardousEventsLoader(args: LoaderFunctionArgs) {
 		data: res,
 		countryAccountsId,
 		organizations,
-	}
+	};
 }

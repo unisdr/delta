@@ -45,7 +45,7 @@ export function DisasterEventsFilter(props: Props) {
 	};
 
 	return (
-		<Form onSubmit={handleSubmit} className="dts-form">
+		<Form onSubmit={handleSubmit} style={{ padding: 0 }} className="dts-form">
 			<Toast ref={toast} />
 			{props.formStartElement}
 
@@ -95,11 +95,10 @@ export function DisasterEventsFilter(props: Props) {
 				<div className="dts-form-component">
 					<div className="dts-form-component__label">Record Status</div>
 					<label>
-						<select id="recordStatus" name="recordStatus">
+						<select id="recordStatus" name="recordStatus" defaultValue={props.recordStatus}>
 							<option value="">Select record status</option>
 							{RECORD_STATUS_OPTIONS.map((recordStatus) => (
 								<option key={recordStatus.value} 
-									selected={props.recordStatus === recordStatus.value}
 									value={recordStatus.value}>
 									{recordStatus.label}
 								</option>
