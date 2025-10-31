@@ -10,11 +10,14 @@ import {
 import { dr } from "~/db.server";
 import {
     disasterRecordsTable,
-    // disasterEventTable,
+    disasterEventTable,
     sectorDisasterRecordsRelationTable,
     damagesTable,
     lossesTable,
     disruptionTable,
+    hipTypeTable,
+    hipClusterTable,
+    hipHazardTable,
 } from "~/drizzle/schema";
 
 
@@ -81,7 +84,54 @@ export const getImpactOnSector = async (countryAccountsId: string, sectorId: str
   }
 };
 
-
+/**
+ * Retrieves the total impact of a specified type on a sector by using the provided arguments.
+ * This function can calculate impacts based on damages, losses, or disruptions 
+ * for a particular country account and may involve additional  SQL conditions.
+ * 
+ * @param {Object} args - The arguments required to fetch the sector impact total.
+ * @param {string} args.countryAccountsId - The unique identifier for the country account 
+ *                                           from which the impact data is to be retrieved.
+ * @param {'damages' | 'losses' | 'disruption'} args.impact - Specifies the type of impact 
+ *                                                            to be retrieved. It can be either 
+ *                                                            'damages', 'losses', or 'disruption'.
+ * @param {Object} [args.type] - An object representing additional filtering criteria:
+ *                                - { sectorId: string } - Filters by specific sector.
+ *                                - { disasterEventId: string } - Filters by specific disaster event.
+ *                                - { hazardTypeId?: string, hazardClusterId?: string, hazardId?: string } - 
+ *                                  Filters based on hazard categories, optionally providing data for hazard type,
+ *                                  cluster, and general hazard ID.
+ * @param {string | null} [args.divisionId] - An optional identifier for a division 
+ *                                             that further narrows down the results. This can be null if no division 
+ *                                             filtering is needed.
+ * @param {SQL[] | null} [extraConditions] - Optional parameter for additional SQL conditions 
+ *                                            that can be applied to the query. Can be null if no extra conditions 
+ *                                            are required.
+ *
+ * @example
+ * // Get damages for a specific sector
+ * await getSectorImpactTotal({
+ *   countryAccountsId: "UUID",
+ *   impact: "damages",
+  * });
+ * 
+ * @example
+ * // Get losses for a specific disaster with extra conditions
+ * await getSectorImpactTotal({
+ *   countryAccountsId: "UUID",
+ *   impact: "losses",
+ *   type: { disasterEventId: "UUID" },
+ *   divisionId: "UUID"
+ * }, [sql`${disasterRecordsTable.startDate} > '2024-01-01'`]); 
+ * 
+ * @returns {Promise<Object>} - A promise that resolves to an object containing the total impact values based on the type of impact requested:
+ *  - If `args.impact` is 'damages':
+ *      - { damagesTotal: number, recoveryTotal: number } 
+ *  - If `args.impact` is 'losses':
+ *      - { lossesTotal: number } 
+ *  - If `args.impact` is 'disruption':
+ *      - { disruptionTotal: number } 
+ */
 export async function getSectorImpactTotal(
     args: {
       countryAccountsId: string;
@@ -93,7 +143,7 @@ export async function getSectorImpactTotal(
       } | {
         hazardTypeId?: string;
         hazardClusterId?: string;
-        HazardId?: string;
+        hazardId?: string;
       },
       divisionId?: string | null,
     },
@@ -206,14 +256,64 @@ export async function getSectorImpactTotal(
         baseWhere.push(eq(sectorDisasterRecordsRelationTable.withDisruption, true));
     }
 
+    // Condition for division
     if (args.divisionId) {
         baseWhere.push(sql`(
             disaster_records.spatial_footprint->'geojson'->'properties'->'division_ids' @> to_jsonb(ARRAY[${args.divisionId}])
             OR jsonb_path_exists(disaster_records.spatial_footprint, ${`$[*].geojson.properties.division_ids  ? (@ == "${args.divisionId}")`})
         )`);
     }
+
+    // Condition for Type = sector (sectorId)
     if (args.type && 'sectorId' in args.type) {
-      baseWhere.push(eq(disasterRecordsTable.disasterEventId, args.type.sectorId));
+        q = q.innerJoin(
+          sql`unnest(dts_get_sector_children_idonly(${args.type.sectorId})) AS func_sectors`,
+          sql`func_sectors = ${sectorDisasterRecordsRelationTable.sectorId}`
+        );
+    }
+
+    // Condition for Type = disaster event (disasterEventId)
+    if (args.type && 'disasterEventId' in args.type) {
+        q = q.innerJoin(
+          disasterEventTable,
+          eq(disasterEventTable.id, disasterRecordsTable.disasterEventId)
+        );
+
+        baseWhere.push(eq(disasterEventTable.id, args.type.disasterEventId));
+    }
+
+    // Condition for Type = HIPs (disasterEventId)
+    if (args.type && 'hazardTypeId' in args.type || args.type && 'hazardClusterId' in args.type || args.type && 'hazardId' in args.type) {
+        if (args.type && 'hazardTypeId' in args.type) {
+          q = q.innerJoin(
+            hipTypeTable,
+            eq(hipTypeTable.id, disasterRecordsTable.hipTypeId)
+          );
+
+          if (args.type.hazardTypeId) {
+            baseWhere.push(eq(hipTypeTable.id, args.type.hazardTypeId));
+          }
+        }
+        if (args.type && 'hazardClusterId' in args.type) {
+          q = q.innerJoin(
+            hipClusterTable,
+            eq(hipClusterTable.id, disasterRecordsTable.hipClusterId)
+          );
+
+          if (args.type.hazardClusterId) {
+            baseWhere.push(eq(hipClusterTable.id, args.type.hazardClusterId));
+          }
+        }
+        if (args.type && 'hazardId' in args.type) {
+          q = q.innerJoin(
+            hipHazardTable,
+            eq(hipHazardTable.id, disasterRecordsTable.hipHazardId)
+          );
+
+          if (args.type.hazardId) {
+            baseWhere.push(eq(hipHazardTable.id, args.type.hazardId));
+          }
+        }
     }
 
     if (extraConditions && extraConditions.length) baseWhere.push(...extraConditions);

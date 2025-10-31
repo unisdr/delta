@@ -64,6 +64,13 @@
       "when": 1757401197278,
       "tag": "20250909065957_populate_initial_super_admin_user",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1761824063061,
+      "tag": "20251030113423_sector_functions",
+      "breakpoints": true
     }
   ]
 }

@@ -929,8 +929,8 @@ export async function hazardousEventDelete(id: string): Promise<DeleteResult> {
 export interface DisasterEventFields
 	extends Omit<EventInsert, "id">,
 		Omit<InsertDisasterEvent, "id"> {
-	createdBy: string;
-	updatedBy: string;
+	createdBy?: string;
+	updatedBy?: string;
 }
 
 export async function disasterEventCreate(

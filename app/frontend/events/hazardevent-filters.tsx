@@ -122,119 +122,123 @@ export function HazardousEventFilters({
 				overflow: 'hidden',
 			}}
 		>
-			<Form className="dts-form" method="get" style={{ padding: 0 }}>
+			<Form className="dts-form" method="get">
 				<div className="dts-form__body">
 					{/* First Row: Hazard Classification - 3 columns */}
 					<div className="mg-grid mg-grid__col-3">
 						<div className="dts-form-component">
 							<label htmlFor="hipTypeId" className="dts-form-component__label">
-								Hazard type
+								<div className="dts-form-component__label">Hazard type</div>
+
+								<select
+									id="hipTypeId"
+									name="hipTypeId"
+									value={selectedTypeId}
+									onChange={(e) => {
+										setSelectedTypeId(e.target.value);
+										setSelectedClusterId(''); // Reset cluster when type changes
+										setSearchTerm(''); // Reset hazard search
+									}}
+								>
+									<option value="">All hazard types</option>
+									{hip.types?.map((type: any) => (
+										<option key={type.id} value={type.id}>
+											{type.name}
+										</option>
+									))}
+								</select>
 							</label>
-							<select
-								id="hipTypeId"
-								name="hipTypeId"
-								value={selectedTypeId}
-								onChange={(e) => {
-									setSelectedTypeId(e.target.value);
-									setSelectedClusterId(''); // Reset cluster when type changes
-									setSearchTerm(''); // Reset hazard search
-								}}
-							>
-								<option value="">All hazard types</option>
-								{hip.types?.map((type: any) => (
-									<option key={type.id} value={type.id}>
-										{type.name}
-									</option>
-								))}
-							</select>
 						</div>
 
 						<div className="dts-form-component">
 							<label htmlFor="hipClusterId" className="dts-form-component__label">
-								Cluster
+								<div className="dts-form-component__label">Cluster</div>
+								<select
+									id="hipClusterId"
+									name="hipClusterId"
+									value={selectedClusterId}
+									onChange={(e) => {
+										setSelectedClusterId(e.target.value);
+										setSearchTerm(''); // Reset hazard search when cluster changes
+									}}
+								>
+									<option value="">All clusters</option>
+									{filteredClusters.map((cluster: any) => (
+										<option key={cluster.id} value={cluster.id}>
+											{cluster.name}
+										</option>
+									))}
+								</select>
 							</label>
-							<select
-								id="hipClusterId"
-								name="hipClusterId"
-								value={selectedClusterId}
-								onChange={(e) => {
-									setSelectedClusterId(e.target.value);
-									setSearchTerm(''); // Reset hazard search when cluster changes
-								}}
-							>
-								<option value="">All clusters</option>
-								{filteredClusters.map((cluster: any) => (
-									<option key={cluster.id} value={cluster.id}>
-										{cluster.name}
-									</option>
-								))}
-							</select>
 						</div>
 
 						<div className="dts-form-component" style={{ position: 'relative' }}>
 							<label htmlFor="hipHazardId-display" className="dts-form-component__label">
-								Specific hazard
-							</label>
-							<input
-								type="text"
-								id="hipHazardId-display"
-								value={searchTerm}
-								onChange={(e) => {
-									setSearchTerm(e.target.value);
-									setSelectedHazardId(''); // Clear selection when typing
-									setShowDropdown(true);
-								}}
-								onFocus={() => setShowDropdown(true)}
-								onBlur={() => {
-									// Delay hiding dropdown to allow for clicks
-									setTimeout(() => setShowDropdown(false), 200);
-								}}
-								placeholder="Enter hazard name or HIPS code..."
-							/>
-							{/* Hidden input that contains the actual hazard ID for form submission */}
-							<input type="hidden" name="hipHazardId" value={selectedHazardId} />
-							{showDropdown && searchTerm && filteredHazards.length > 0 && (
-								<ul
-									style={{
-										position: 'absolute',
-										top: '100%',
-										left: 0,
-										right: 0,
-										backgroundColor: 'white',
-										border: '1px solid #ccc',
-										borderTop: 'none',
-										borderRadius: '0 0 4px 4px',
-										maxHeight: '200px',
-										overflowY: 'auto',
-										zIndex: 1000,
-										listStyle: 'none',
-										margin: 0,
-										padding: 0,
-										display: 'inline-block',
-										boxShadow: '0 2px 4px rgba(9, 3, 3, 0.1)',
+								<div className="dts-form-component__label">Specific hazard</div>
+								<input
+									type="text"
+									id="hipHazardId-display"
+									value={searchTerm}
+									onChange={(e) => {
+										setSearchTerm(e.target.value);
+										setSelectedHazardId(''); // Clear selection when typing
+										setShowDropdown(true);
 									}}
-								>
-									{filteredHazards.slice(0, 20).map((hazard: any) => (
-										<li
-											key={hazard.id}
-											onClick={() => handleHazardSelect(hazard)}
-											style={{
-												padding: '5px 12px',
-												margin: 0,
-												cursor: 'pointer',
-											}}
-											onMouseEnter={(e) => {
-												(e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
-											}}
-											onMouseLeave={(e) => {
-												(e.target as HTMLElement).style.backgroundColor = 'white';
-											}}
-										>
-											{hazard.name}
-										</li>
-									))}
-								</ul>
-							)}
+									onFocus={() => setShowDropdown(true)}
+									onBlur={() => {
+										// Delay hiding dropdown to allow for clicks
+										setTimeout(() => setShowDropdown(false), 200);
+									}}
+									placeholder="Enter hazard name or HIPS ID ..."
+								/>
+								{/* Hidden input that contains the actual hazard ID for form submission */}
+								<input type="hidden" name="hipHazardId" value={selectedHazardId} />
+								{showDropdown && searchTerm && filteredHazards.length > 0 && (
+									<ul
+										style={{
+											position: 'absolute',
+											top: '100%',
+											left: 0,
+											right: 0,
+											backgroundColor: 'white',
+											border: '1px solid #ccc',
+											borderTop: 'none',
+											borderRadius: '0 0 4px 4px',
+											maxHeight: '200px',
+											overflowY: 'auto',
+											zIndex: 1000,
+											listStyle: 'none',
+											marginTop: '-10px',
+											marginBottom: 0,
+											marginLeft: 0,
+											marginRight: 0,
+											padding: 0,
+											display: 'inline-block',
+											boxShadow: '0 2px 4px rgba(9, 3, 3, 0.1)',
+										}}
+									>
+										{filteredHazards.slice(0, 20).map((hazard: any) => (
+											<li
+												key={hazard.id}
+												onClick={() => handleHazardSelect(hazard)}
+												style={{
+													padding: '5px 12px',
+													margin: 0,
+													cursor: 'pointer',
+												}}
+												onMouseEnter={(e) => {
+													(e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
+												}}
+												onMouseLeave={(e) => {
+													(e.target as HTMLElement).style.backgroundColor = 'white';
+												}}
+											>
+												{hazard.name}
+											</li>
+										))}
+									</ul>
+								)}
+							</label>
 						</div>
 					</div>
 
@@ -242,29 +246,31 @@ export function HazardousEventFilters({
 					<div className="mg-grid mg-grid__col-3">
 						<div className="dts-form-component">
 							<label htmlFor="fromDate" className="dts-form-component__label">
-								From
+								<div className="dts-form-component__label">From</div>
+
+								<input type="date" id="fromDate" name="fromDate" defaultValue={fromDate} />
 							</label>
-							<input type="date" id="fromDate" name="fromDate" defaultValue={fromDate} />
 						</div>
 
 						<div className="dts-form-component">
 							<label htmlFor="toDate" className="dts-form-component__label">
-								To
+								<div className="dts-form-component__label">To</div>
+
+								<input type="date" id="toDate" name="toDate" defaultValue={toDate} />
 							</label>
-							<input type="date" id="toDate" name="toDate" defaultValue={toDate} />
 						</div>
 
 						<div className="dts-form-component">
 							<label htmlFor="recordingOrganization" className="dts-form-component__label">
-								Recording organization
+								<div className="dts-form-component__label">Recording organization</div>
+								<input
+									type="text"
+									id="recordingOrganization"
+									name="recordingOrganization"
+									defaultValue={recordingOrganization}
+									placeholder="Search organization..."
+								/>
 							</label>
-							<input
-								type="text"
-								id="recordingOrganization"
-								name="recordingOrganization"
-								defaultValue={recordingOrganization}
-								placeholder="Search organization..."
-							/>
 						</div>
 					</div>
 
@@ -272,34 +278,34 @@ export function HazardousEventFilters({
 					<div className="mg-grid mg-grid__col-2">
 						<div className="dts-form-component">
 							<label htmlFor="hazardousEventStatus" className="dts-form-component__label">
-								Hazardous event status
+								<div className="dts-form-component__label">Hazardous event status</div>
+								<select
+									id="hazardousEventStatus"
+									name="hazardousEventStatus"
+									defaultValue={hazardousEventStatus}
+								>
+									<option value="">All event statuses</option>
+									{EVENT_STATUS_OPTIONS.map((option) => (
+										<option key={option.value} value={option.value}>
+											{option.label}
+										</option>
+									))}
+								</select>
 							</label>
-							<select
-								id="hazardousEventStatus"
-								name="hazardousEventStatus"
-								defaultValue={hazardousEventStatus}
-							>
-								<option value="">All event statuses</option>
-								{EVENT_STATUS_OPTIONS.map((option) => (
-									<option key={option.value} value={option.value}>
-										{option.label}
-									</option>
-								))}
-							</select>
 						</div>
 
 						<div className="dts-form-component">
 							<label htmlFor="recordStatus" className="dts-form-component__label">
-								Record status
+								<div className="dts-form-component__label">Record status</div>
+								<select id="recordStatus" name="recordStatus" defaultValue={recordStatus}>
+									<option value="">All record statuses</option>
+									{RECORD_STATUS_OPTIONS.map((option) => (
+										<option key={option.value} value={option.value}>
+											{option.label}
+										</option>
+									))}
+								</select>
 							</label>
-							<select id="recordStatus" name="recordStatus" defaultValue={recordStatus}>
-								<option value="">All record statuses</option>
-								{RECORD_STATUS_OPTIONS.map((option) => (
-									<option key={option.value} value={option.value}>
-										{option.label}
-									</option>
-								))}
-							</select>
 						</div>
 					</div>
 

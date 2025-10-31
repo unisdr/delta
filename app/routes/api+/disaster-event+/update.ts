@@ -8,6 +8,7 @@ import {
 } from "~/backend.server/models/event";
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { apiAuth } from "~/backend.server/models/api_key";
+import { SelectDisasterEvent } from "~/drizzle/schema";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -28,7 +29,11 @@ export const action = async (args: ActionFunctionArgs) => {
 	}
 
 	return authActionApi(async (args) => {
-		const data = await args.request.json();
+		let data: SelectDisasterEvent[] = await args.request.json();
+		data = data.map((item) => ({
+			...item,
+			countryAccountsId: countryAccountsId,
+		}));
 
 		const saveRes = await jsonUpdate({
 			data,
