@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Toast } from "primereact/toast";
 import { RECORD_STATUS_OPTIONS } from "../events/hazardevent-filters";
 import { Form, useSubmit } from "@remix-run/react";
+import { SelectSector } from "~/drizzle/schema";
 
 interface Props {
 	clearFiltersUrl: string;
@@ -11,6 +12,8 @@ interface Props {
 	fromDate: string;
 	toDate: string;
 	recordStatus: string;
+	sectors: SelectSector[];
+	sectorId: string;
 }
 
 interface FilterState {
@@ -19,6 +22,7 @@ interface FilterState {
 	fromDate: string;
 	toDate: string;
 	recordStatus: string;
+	sectorId: string;
 }
 
 export function DisasterRecordsFilter(props: Props) {
@@ -30,6 +34,8 @@ export function DisasterRecordsFilter(props: Props) {
 		fromDate,
 		toDate,
 		recordStatus,
+		sectorId,
+		sectors,
 	} = props;
 
 	const toast = useRef<Toast>(null);
@@ -41,6 +47,7 @@ export function DisasterRecordsFilter(props: Props) {
 		fromDate,
 		toDate,
 		recordStatus,
+		sectorId,
 	});
 
 	// Update state when props change (after loader runs)
@@ -51,6 +58,7 @@ export function DisasterRecordsFilter(props: Props) {
 			fromDate,
 			toDate,
 			recordStatus,
+			sectorId,
 		});
 	}, [disasterEventName, disasterRecordUUID, fromDate, toDate, recordStatus]);
 
@@ -83,6 +91,7 @@ export function DisasterRecordsFilter(props: Props) {
 			fromDate: "",
 			toDate: "",
 			recordStatus: "",
+			sectorId: "",
 		};
 		setFilters(cleared);
 		submit(new FormData(), { method: "get", action: clearFiltersUrl });
@@ -150,7 +159,6 @@ export function DisasterRecordsFilter(props: Props) {
 							name="toDate"
 							type="date"
 							placeholder="Select date"
-							defaultValue={toDate}
 							value={filters.toDate}
 							onChange={(e) =>
 								setFilters({ ...filters, toDate: e.target.value })
@@ -174,6 +182,27 @@ export function DisasterRecordsFilter(props: Props) {
 							{RECORD_STATUS_OPTIONS.map((recordStatus) => (
 								<option key={recordStatus.value} value={recordStatus.value}>
 									{recordStatus.label}
+								</option>
+							))}
+						</select>
+					</label>
+				</div>
+
+				<div className="dts-form-component">
+					<div className="dts-form-component__label">Sector</div>
+					<label>
+						<select
+							id="sectorId"
+							name="sectorId"
+							value={filters.sectorId}
+							onChange={(e) =>
+								setFilters({ ...filters, sectorId: e.target.value })
+							}
+						>
+							<option value="">All sectors</option>
+							{sectors.map((sector) => (
+								<option key={sector.id} value={sector.id}>
+									{sector.sectorname}
 								</option>
 							))}
 						</select>

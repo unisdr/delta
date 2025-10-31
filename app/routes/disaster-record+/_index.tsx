@@ -66,6 +66,8 @@ export default function Data() {
 				fromDate={ld.filters.fromDate}
 				toDate={ld.filters.toDate}
 				recordStatus={ld.filters.recordStatus}
+				sectors={ld.sectors}
+				sectorId={ld.filters.sectorId}
 			/>
 		),
 		listName: "disaster records",

@@ -1,4 +1,8 @@
-import { disasterEventTable, disasterRecordsTable } from '~/drizzle/schema';
+import {
+	disasterEventTable,
+	disasterRecordsTable,
+	sectorDisasterRecordsRelationTable,
+} from '~/drizzle/schema';
 
 import { authLoaderIsPublic } from '~/util/auth';
 
@@ -30,6 +34,7 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		recordStatus: string;
 		fromDate: string;
 		toDate: string;
+		sectorId: string;
 	} = {
 		approvalStatus: 'published',
 		disasterEventName: url.searchParams.get('disasterEventName') || '',
@@ -37,6 +42,7 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 		recordStatus: url.searchParams.get('recordStatus') || '',
 		fromDate: url.searchParams.get('fromDate') || '',
 		toDate: url.searchParams.get('toDate') || '',
+		sectorId: url.searchParams.get('sectorId') || '',
 	};
 	const isPublic = authLoaderIsPublic(loaderArgs);
 	const countryAccountsId = await getCountryAccountsIdFromSession(request);
@@ -105,14 +111,30 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 					END
 				`
 			  )
+			: undefined,
+		filters.sectorId
+			? sql`${sectorDisasterRecordsRelationTable.sectorId} = ANY(
+    			ARRAY[${filters.sectorId}]::uuid[]
+				||
+				(
+				SELECT ARRAY(
+					SELECT (elem->>'id')::uuid
+					FROM jsonb_array_elements(dts_get_sector_decendants(${filters.sectorId})::jsonb) AS elem
+				)
+				)
+  			)`
 			: undefined
 	);
 
 	// count and select must now join the disasterEventTable
 	const countResult = await dr
-		.select({ count: sql<number>`count(*)` })
+		.select({ count: sql<number>`COUNT(DISTINCT ${disasterRecordsTable.id})` })
 		.from(disasterRecordsTable)
 		.leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+		.leftJoin(
+			sectorDisasterRecordsRelationTable,
+			eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
+		)
 		.where(
 			and(
 				baseCondition,
@@ -128,7 +150,7 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 	// query with the same condition
 	const events = async (offsetLimit: OffsetLimit) => {
 		return await dr
-			.select({
+			.selectDistinct({
 				id: disasterRecordsTable.id,
 				disasterEventId: disasterRecordsTable.disasterEventId,
 				approvalStatus: disasterRecordsTable.approvalStatus,
@@ -140,6 +162,10 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 			})
 			.from(disasterRecordsTable)
 			.leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+			.leftJoin(
+				sectorDisasterRecordsRelationTable,
+				eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
+			)
 			.where(
 				and(
 					baseCondition,
