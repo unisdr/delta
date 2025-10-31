@@ -6,6 +6,7 @@ import { jsonUpdate } from "~/backend.server/handlers/form/form_api";
 import { hazardousEventUpdateByIdAndCountryAccountsId } from "~/backend.server/models/event";
 import { apiAuth } from "~/backend.server/models/api_key";
 import { ActionFunction, ActionFunctionArgs } from "@remix-run/server-runtime";
+import { SelectHazardousEvent } from "~/drizzle/schema";
 
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
@@ -26,7 +27,13 @@ export const action: ActionFunction = async (args: ActionFunctionArgs) => {
 	}
 
 	return authActionApi(async (args) => {
-		const data = await args.request.json();
+		let data: SelectHazardousEvent[] = await args.request.json();
+
+		// Forced the countryAccountsId from API link injected so it won't be manipulated via input data
+		data = data.map((item) => ({
+			...item,
+			countryAccountsId: countryAccountsId,
+		}));
 
 		const saveRes = await jsonUpdate({
 			data,

@@ -8,6 +8,8 @@ import { disasterRecordsUpdate } from "~/backend.server/models/disaster_record";
 import { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { apiAuth } from "~/backend.server/models/api_key";
 
+import { SelectDisasterRecords } from "~/drizzle/schema";
+
 export const loader = authLoaderApi(async () => {
 	return Response.json("Use POST");
 });
@@ -26,8 +28,15 @@ export const action = async (args: ActionFunctionArgs) => {
 		throw new Response("Unauthorized", { status: 401 });
 	}
 
+
 	return authActionApi(async (args) => {
-		const data = await args.request.json();
+		let data: SelectDisasterRecords[] = await args.request.json();
+
+		// Forced the countryAccountsId from API link injected so it won't be manipulated via input data
+		data = data.map((item) => ({
+			...item,
+			countryAccountsId: countryAccountsId,
+		}));
 
 		const saveRes = await jsonUpdate({
 			data,
