@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { Toast } from "primereact/toast";
-import { RECORD_STATUS_OPTIONS } from "../events/hazardevent-filters";
-import { Form, useSubmit } from "@remix-run/react";
-import { SelectSector } from "~/drizzle/schema";
+import { useEffect, useRef, useState } from 'react';
+import { Toast } from 'primereact/toast';
+import { RECORD_STATUS_OPTIONS } from '../events/hazardevent-filters';
+import { Form, useFetcher, useSubmit } from '@remix-run/react';
+import { SelectSector } from '~/drizzle/schema';
 
 interface Props {
   clearFiltersUrl: string;
@@ -14,6 +14,7 @@ interface Props {
   recordStatus: string;
   sectors: SelectSector[];
   sectorId: string;
+  subSectorId: string;
 }
 
 interface FilterState {
@@ -23,6 +24,7 @@ interface FilterState {
   toDate: string;
   recordStatus: string;
   sectorId: string;
+  subSectorId: string;
 }
 
 export function DisasterRecordsFilter(props: Props) {
@@ -36,10 +38,12 @@ export function DisasterRecordsFilter(props: Props) {
     recordStatus,
     sectorId,
     sectors,
+    subSectorId,
   } = props;
 
   const toast = useRef<Toast>(null);
   const submit = useSubmit();
+  const fetcher = useFetcher<{ subSectors: SelectSector[] }>();
 
   const [filters, setFilters] = useState<FilterState>({
     disasterEventName,
@@ -48,7 +52,10 @@ export function DisasterRecordsFilter(props: Props) {
     toDate,
     recordStatus,
     sectorId,
+    subSectorId,
   });
+
+  const [subSectors, setSubSectors] = useState<SelectSector[]>([]);
 
   // Update state when props change (after loader runs)
   useEffect(() => {
@@ -59,8 +66,41 @@ export function DisasterRecordsFilter(props: Props) {
       toDate,
       recordStatus,
       sectorId,
+      subSectorId,
     });
-  }, [disasterEventName, disasterRecordUUID, fromDate, toDate, recordStatus]);
+  }, [
+    disasterEventName,
+    disasterRecordUUID,
+    fromDate,
+    toDate,
+    recordStatus,
+    sectorId,
+    subSectorId,
+  ]);
+
+  const handleSectorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedSectorId = e.target.value;
+
+    setFilters({
+      ...filters,
+      sectorId: selectedSectorId,
+      subSectorId: '',
+    });
+
+    if (!selectedSectorId) {
+      setSubSectors([]);
+      return;
+    }
+
+    console.log('handleSectorChange called');
+    fetcher.load(`/api/subsectors?sectorId=${selectedSectorId}`);
+  };
+
+  useEffect(() => {
+    if (fetcher.data?.subSectors) {
+      setSubSectors(fetcher.data.subSectors);
+    }
+  }, [fetcher.data]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,29 +109,32 @@ export function DisasterRecordsFilter(props: Props) {
 
     if (fromDate && toDate && new Date(toDate) < new Date(fromDate)) {
       toast.current?.show({
-        severity: "error",
-        summary: "Invalid Date Range",
+        severity: 'error',
+        summary: 'Invalid Date Range',
         detail: "'To' date cannot be earlier than 'From' date.",
         life: 4000,
       });
       return;
     }
 
-    submit(e.currentTarget, { method: "get" });
+    submit(e.currentTarget, { method: 'get' });
   };
 
   const handleClear = () => {
     const cleared: FilterState = {
-      disasterEventName: "",
-      disasterRecordUUID: "",
-      fromDate: "",
-      toDate: "",
-      recordStatus: "",
-      sectorId: "",
+      disasterEventName: '',
+      disasterRecordUUID: '',
+      fromDate: '',
+      toDate: '',
+      recordStatus: '',
+      sectorId: '',
+      subSectorId: '',
     };
     setFilters(cleared);
-    submit(new FormData(), { method: "get", action: clearFiltersUrl });
+    submit(new FormData(), { method: 'get', action: clearFiltersUrl });
   };
+
+  useEffect(() => {}, [subSectors, filters.sectorId]);
 
   return (
     <Form onSubmit={handleSubmit} className="dts-form" style={{ padding: 0 }}>
@@ -108,9 +151,7 @@ export function DisasterRecordsFilter(props: Props) {
               type="text"
               placeholder="All disaster events"
               value={filters.disasterEventName}
-              onChange={(e) =>
-                setFilters({ ...filters, disasterEventName: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, disasterEventName: e.target.value })}
             />
           </label>
         </div>
@@ -124,9 +165,7 @@ export function DisasterRecordsFilter(props: Props) {
               type="text"
               placeholder="Search for UUID"
               value={filters.disasterRecordUUID}
-              onChange={(e) =>
-                setFilters({ ...filters, disasterRecordUUID: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, disasterRecordUUID: e.target.value })}
             />
           </label>
         </div>
@@ -140,9 +179,7 @@ export function DisasterRecordsFilter(props: Props) {
               type="date"
               placeholder="Select date"
               value={filters.fromDate}
-              onChange={(e) =>
-                setFilters({ ...filters, fromDate: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
             />
           </label>
         </div>
@@ -156,9 +193,7 @@ export function DisasterRecordsFilter(props: Props) {
               type="date"
               placeholder="Select date"
               value={filters.toDate}
-              onChange={(e) =>
-                setFilters({ ...filters, toDate: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
             />
           </label>
         </div>
@@ -170,9 +205,7 @@ export function DisasterRecordsFilter(props: Props) {
               id="recordStatus"
               name="recordStatus"
               value={filters.recordStatus}
-              onChange={(e) =>
-                setFilters({ ...filters, recordStatus: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, recordStatus: e.target.value })}
             >
               <option value="">Select record status</option>
               {RECORD_STATUS_OPTIONS.map((recordStatus) => (
@@ -191,9 +224,7 @@ export function DisasterRecordsFilter(props: Props) {
               id="sectorId"
               name="sectorId"
               value={filters.sectorId}
-              onChange={(e) =>
-                setFilters({ ...filters, sectorId: e.target.value })
-              }
+              onChange={handleSectorChange}
             >
               <option value="">All sectors</option>
               {sectors.map((sector) => (
@@ -204,20 +235,31 @@ export function DisasterRecordsFilter(props: Props) {
             </select>
           </label>
         </div>
+        <div className="dts-form-component">
+          <div className="dts-form-component__label">Sub sector</div>
+          <label>
+            <select
+              id="subSectorId"
+              name="subSectorId"
+              value={filters.subSectorId}
+              onChange={(e) => setFilters({ ...filters, subSectorId: e.target.value })}
+              disabled={!filters.sectorId || subSectors.length === 0}
+            >
+              <option value="">Select sub sector</option>
+              {subSectors.map((subSector) => (
+                <option key={subSector.id} value={subSector.id}>
+                  {subSector.sectorname}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {/* Buttons */}
       <div className="dts-form__actions">
-        <input
-          type="submit"
-          value="Apply filters"
-          className="mg-button mg-button-primary"
-        />
-        <button
-          type="button"
-          onClick={handleClear}
-          className="mg-button mg-button-outline"
-        >
+        <input type="submit" value="Apply filters" className="mg-button mg-button-primary" />
+        <button type="button" onClick={handleClear} className="mg-button mg-button-outline">
           Clear
         </button>
       </div>

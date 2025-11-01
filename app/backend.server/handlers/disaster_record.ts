@@ -1,7 +1,7 @@
 import {
-	disasterEventTable,
-	disasterRecordsTable,
-	sectorDisasterRecordsRelationTable,
+  disasterEventTable,
+  disasterRecordsTable,
+  sectorDisasterRecordsRelationTable,
 } from '~/drizzle/schema';
 
 import { authLoaderIsPublic } from '~/util/auth';
@@ -18,68 +18,70 @@ import { getCountryAccountsIdFromSession, getCountrySettingsFromSession } from '
 import { getSectorByLevel } from '~/db/queries/sector';
 
 interface disasterRecordLoaderArgs {
-	loaderArgs: LoaderFunctionArgs;
+  loaderArgs: LoaderFunctionArgs;
 }
 
 export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
-	const { loaderArgs } = args;
-	const { request } = loaderArgs;
+  const { loaderArgs } = args;
+  const { request } = loaderArgs;
 
-	const url = new URL(request.url);
-	const extraParams = ['disasterEventUUID', 'disasterRecordUUID', 'recordStatus'];
-	const filters: {
-		approvalStatus?: approvalStatusIds;
-		disasterEventName: string;
-		disasterRecordUUID: string;
-		recordStatus: string;
-		fromDate: string;
-		toDate: string;
-		sectorId: string;
-	} = {
-		approvalStatus: 'published',
-		disasterEventName: url.searchParams.get('disasterEventName') || '',
-		disasterRecordUUID: url.searchParams.get('disasterRecordUUID') || '',
-		recordStatus: url.searchParams.get('recordStatus') || '',
-		fromDate: url.searchParams.get('fromDate') || '',
-		toDate: url.searchParams.get('toDate') || '',
-		sectorId: url.searchParams.get('sectorId') || '',
-	};
-	const isPublic = authLoaderIsPublic(loaderArgs);
-	const countryAccountsId = await getCountryAccountsIdFromSession(request);
-	let instanceName = 'DELTA Resilience';
-	if (countryAccountsId) {
-		const settigns = await getCountrySettingsFromSession(request);
-		instanceName = settigns.websiteName;
-	}
+  const url = new URL(request.url);
+  const extraParams = ['disasterEventUUID', 'disasterRecordUUID', 'recordStatus'];
+  const filters: {
+    approvalStatus?: approvalStatusIds;
+    disasterEventName: string;
+    disasterRecordUUID: string;
+    recordStatus: string;
+    fromDate: string;
+    toDate: string;
+    sectorId: string;
+    subSectorId: string;
+  } = {
+    approvalStatus: 'published',
+    disasterEventName: url.searchParams.get('disasterEventName') || '',
+    disasterRecordUUID: url.searchParams.get('disasterRecordUUID') || '',
+    recordStatus: url.searchParams.get('recordStatus') || '',
+    fromDate: url.searchParams.get('fromDate') || '',
+    toDate: url.searchParams.get('toDate') || '',
+    sectorId: url.searchParams.get('sectorId') || '',
+    subSectorId: url.searchParams.get('subSectorId') || '',
+  };
+  const isPublic = authLoaderIsPublic(loaderArgs);
+  const countryAccountsId = await getCountryAccountsIdFromSession(request);
+  let instanceName = 'DELTA Resilience';
+  if (countryAccountsId) {
+    const settigns = await getCountrySettingsFromSession(request);
+    instanceName = settigns.websiteName;
+  }
 
-	const sectors = await getSectorByLevel(2);
+  const sectors = await getSectorByLevel(2);
 
-	if (!isPublic) {
-		filters.approvalStatus = undefined;
-	}
+  if (!isPublic) {
+    filters.approvalStatus = undefined;
+  }
 
-	filters.disasterEventName = filters.disasterEventName.trim();
+  filters.disasterEventName = filters.disasterEventName.trim();
 
-	let searchDisasterEventName = '%' + filters.disasterEventName + '%';
-	let searchDisasterRecordUIID = '%' + filters.disasterRecordUUID + '%';
-	let searchRecordStatus = '%' + filters.recordStatus + '%';
+  let searchDisasterEventName = '%' + filters.disasterEventName + '%';
+  let searchDisasterRecordUIID = '%' + filters.disasterRecordUUID + '%';
+  let searchRecordStatus = '%' + filters.recordStatus + '%';
 
-	// build base condition
-	let baseCondition = and(
-		countryAccountsId ? eq(disasterRecordsTable.countryAccountsId, countryAccountsId) : undefined,
-		filters.approvalStatus
-			? eq(disasterRecordsTable.approvalStatus, filters.approvalStatus)
-			: undefined,
-		filters.disasterRecordUUID !== ''
-			? sql`${disasterRecordsTable.id}::text ILIKE ${searchDisasterRecordUIID}`
-			: undefined,
-		filters.recordStatus !== ''
-			? sql`${disasterRecordsTable.approvalStatus}::text ILIKE ${searchRecordStatus}`
-			: undefined,
-		filters.fromDate
-			? and(
-					sql`${disasterRecordsTable.startDate} != ''`,
-					sql`
+  // build base condition
+  let baseCondition = and(
+    countryAccountsId ? eq(disasterRecordsTable.countryAccountsId, countryAccountsId) : undefined,
+    filters.approvalStatus
+      ? eq(disasterRecordsTable.approvalStatus, filters.approvalStatus)
+      : undefined,
+    filters.disasterRecordUUID !== ''
+      ? sql`${disasterRecordsTable.id}::text ILIKE ${searchDisasterRecordUIID}`
+      : undefined,
+    filters.recordStatus !== ''
+      ? sql`${disasterRecordsTable.approvalStatus}::text ILIKE ${searchRecordStatus}`
+      : undefined,
+    filters.fromDate
+      ? and(
+          sql`${disasterRecordsTable.startDate} != ''`,
+          sql`
 					CASE
 						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY') >= TO_DATE(${filters.fromDate}, 'YYYY')
 						WHEN ${disasterRecordsTable.startDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.startDate}, 'YYYY-MM') >= TO_DATE(${filters.fromDate}, 'YYYY-MM')
@@ -91,13 +93,13 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 					ELSE 
 						${disasterRecordsTable.startDate} >= ${filters.fromDate}
 					END
-				`
-			  )
-			: undefined,
-		filters.toDate
-			? and(
-					sql`${disasterRecordsTable.endDate} != ''`,
-					sql`
+				`,
+        )
+      : undefined,
+    filters.toDate
+      ? and(
+          sql`${disasterRecordsTable.endDate} != ''`,
+          sql`
 					CASE
 						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY') <= TO_DATE(${filters.toDate}, 'YYYY')
 						WHEN ${disasterRecordsTable.endDate} ~ '^[0-9]{4}-[0-9]{1}$' THEN TO_DATE(${disasterRecordsTable.endDate}, 'YYYY-MM') <= TO_DATE(${filters.toDate}, 'YYYY-MM')
@@ -109,11 +111,22 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 					ELSE 
 						${disasterRecordsTable.endDate} <= ${filters.toDate}
 					END
-				`
-			  )
-			: undefined,
-		filters.sectorId
-			? sql`${sectorDisasterRecordsRelationTable.sectorId} = ANY(
+				`,
+        )
+      : undefined,
+    filters.subSectorId
+      ? sql`${sectorDisasterRecordsRelationTable.sectorId} = ANY(
+    			ARRAY[${filters.subSectorId}]::uuid[]
+				||
+				(
+				SELECT ARRAY(
+					SELECT (elem->>'id')::uuid
+					FROM jsonb_array_elements(dts_get_sector_decendants(${filters.subSectorId})::jsonb) AS elem
+				)
+				)
+  			)`
+      : filters.sectorId
+        ? sql`${sectorDisasterRecordsRelationTable.sectorId} = ANY(
     			ARRAY[${filters.sectorId}]::uuid[]
 				||
 				(
@@ -123,69 +136,69 @@ export async function disasterRecordLoader(args: disasterRecordLoaderArgs) {
 				)
 				)
   			)`
-			: undefined
-	);
+        : undefined,
+  );
 
-	// count and select must now join the disasterEventTable
-	const countResult = await dr
-		.select({ count: sql<number>`COUNT(DISTINCT ${disasterRecordsTable.id})` })
-		.from(disasterRecordsTable)
-		.leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
-		.leftJoin(
-			sectorDisasterRecordsRelationTable,
-			eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
-		)
-		.where(
-			and(
-				baseCondition,
-				filters.disasterEventName !== ''
-					? ilike(disasterEventTable.nameNational, searchDisasterEventName)
-					: undefined
-			)
-		);
+  // count and select must now join the disasterEventTable
+  const countResult = await dr
+    .select({ count: sql<number>`COUNT(DISTINCT ${disasterRecordsTable.id})` })
+    .from(disasterRecordsTable)
+    .leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+    .leftJoin(
+      sectorDisasterRecordsRelationTable,
+      eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId),
+    )
+    .where(
+      and(
+        baseCondition,
+        filters.disasterEventName !== ''
+          ? ilike(disasterEventTable.nameNational, searchDisasterEventName)
+          : undefined,
+      ),
+    );
 
-	// extract numeric count
-	const count = countResult[0]?.count ?? 0;
+  // extract numeric count
+  const count = countResult[0]?.count ?? 0;
 
-	// query with the same condition
-	const events = async (offsetLimit: OffsetLimit) => {
-		return await dr
-			.selectDistinct({
-				id: disasterRecordsTable.id,
-				disasterEventId: disasterRecordsTable.disasterEventId,
-				approvalStatus: disasterRecordsTable.approvalStatus,
-				startDate: disasterRecordsTable.startDate,
-				endDate: disasterRecordsTable.endDate,
-				createdAt: disasterRecordsTable.createdAt,
-				updatedAt: disasterRecordsTable.updatedAt,
-				nameNational: disasterEventTable.nameNational,
-			})
-			.from(disasterRecordsTable)
-			.leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
-			.leftJoin(
-				sectorDisasterRecordsRelationTable,
-				eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId)
-			)
-			.where(
-				and(
-					baseCondition,
-					filters.disasterEventName !== ''
-						? ilike(disasterEventTable.nameNational, searchDisasterEventName)
-						: undefined
-				)
-			)
-			.orderBy(desc(disasterRecordsTable.updatedAt))
-			.limit(offsetLimit.limit)
-			.offset(offsetLimit.offset);
-	};
+  // query with the same condition
+  const events = async (offsetLimit: OffsetLimit) => {
+    return await dr
+      .selectDistinct({
+        id: disasterRecordsTable.id,
+        disasterEventId: disasterRecordsTable.disasterEventId,
+        approvalStatus: disasterRecordsTable.approvalStatus,
+        startDate: disasterRecordsTable.startDate,
+        endDate: disasterRecordsTable.endDate,
+        createdAt: disasterRecordsTable.createdAt,
+        updatedAt: disasterRecordsTable.updatedAt,
+        nameNational: disasterEventTable.nameNational,
+      })
+      .from(disasterRecordsTable)
+      .leftJoin(disasterEventTable, eq(disasterRecordsTable.disasterEventId, disasterEventTable.id))
+      .leftJoin(
+        sectorDisasterRecordsRelationTable,
+        eq(disasterRecordsTable.id, sectorDisasterRecordsRelationTable.disasterRecordId),
+      )
+      .where(
+        and(
+          baseCondition,
+          filters.disasterEventName !== ''
+            ? ilike(disasterEventTable.nameNational, searchDisasterEventName)
+            : undefined,
+        ),
+      )
+      .orderBy(desc(disasterRecordsTable.updatedAt))
+      .limit(offsetLimit.limit)
+      .offset(offsetLimit.offset);
+  };
 
-	const res = await executeQueryForPagination3(request, count, events, extraParams);
+  const res = await executeQueryForPagination3(request, count, events, extraParams);
 
-	return {
-		isPublic,
-		filters,
-		data: res,
-		instanceName,
-		sectors,
-	};
+  return {
+    isPublic,
+    filters,
+    data: res,
+    instanceName,
+    sectors,
+  };
 }
